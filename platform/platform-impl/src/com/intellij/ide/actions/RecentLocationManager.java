@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -19,7 +20,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -243,7 +243,7 @@ public class RecentLocationManager implements ProjectComponent {
   private static class RecentLocationFixedSizeHashMap extends LinkedHashMap<PlaceInfo, PlaceInfoPersistentItem> {
     @Override
     protected boolean removeEldestEntry(Map.Entry<PlaceInfo, PlaceInfoPersistentItem> eldest) {
-      return size() > Registry.intValue("recent.locations.list.size", 10);
+      return size() > UISettings.getInstance().getRecentLocationsLimit();
     }
   }
 }

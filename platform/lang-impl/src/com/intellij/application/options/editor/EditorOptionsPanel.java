@@ -96,10 +96,12 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   private JCheckBox    myCbEnableRichCopyByDefault;
   private JCheckBox    myShowLSTInGutterCheckBox;
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
-  private JCheckBox myCbKeepTrailingSpacesOnCaretLine;
+  private JCheckBox    myCbKeepTrailingSpacesOnCaretLine;
+  private JTextField   myRecentLocationsLimitField;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
+  private static final UINumericRange RECENT_LOCATIONS_RANGE = new UINumericRange(10, 1, 100);
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel(getConfigurables());
 
@@ -208,6 +210,7 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
 
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.getRecentFilesLimit()));
+    myRecentLocationsLimitField.setText(Integer.toString(uiSettings.getRecentLocationsLimit()));
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
     myPreselectCheckBox.setSelected(editorSettings.isPreselectRename());
@@ -349,6 +352,11 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
       uiSettings.fireUISettingsChanged();
     }
 
+    uiSettingsChanged = setRecentLocationLimit(uiSettings, myRecentLocationsLimitField.getText()) || uiSettingsChanged;
+    if (uiSettingsChanged) {
+      uiSettings.fireUISettingsChanged();
+    }
+
     myErrorHighlightingPanel.apply();
     super.apply();
     UISettings.getInstance().fireUISettingsChanged();
@@ -362,6 +370,19 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     restartDaemons();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied();
+  }
+
+  private static boolean setRecentLocationLimit(@NotNull UISettings uiSettings, @NotNull String recentLocationsLimit) {
+    try {
+      int newRecentLocationsLimit = Integer.parseInt(recentLocationsLimit.trim());
+      if (uiSettings.getRecentLocationsLimit() != newRecentLocationsLimit) {
+        uiSettings.getState().setRecentLocationsLimit(newRecentLocationsLimit);
+        return true;
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return false;
   }
 
   private int getQuickDocDelayFromGui() {
@@ -461,6 +482,7 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().getRecentFilesLimit(), RECENT_FILES_RANGE);
+    isModified |= isModified(myRecentLocationsLimitField, UISettings.getInstance().getRecentLocationsLimit(), RECENT_LOCATIONS_RANGE);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
     isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());

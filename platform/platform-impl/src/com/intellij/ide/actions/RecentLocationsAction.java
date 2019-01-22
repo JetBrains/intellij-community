@@ -333,15 +333,9 @@ public class RecentLocationsAction extends AnAction {
     List<RecentLocationItem> caretsList = ContainerUtil.newArrayList();
     for (PlaceInfo placeInfo : places) {
       EditorEx editor = createEditor(project, placeInfo);
-      if (editor == null) {
-        continue;
+      if (editor != null) {
+        caretsList.add(new RecentLocationItem(editor, placeInfo));
       }
-
-      if (caretsList.size() > Registry.intValue("recent.locations.list.size", 10) - 1) {
-        break;
-      }
-
-      caretsList.add(new RecentLocationItem(editor, placeInfo));
     }
 
     return caretsList;
