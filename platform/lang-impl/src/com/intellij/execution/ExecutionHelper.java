@@ -11,6 +11,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -346,6 +347,10 @@ public class ExecutionHelper {
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null && title2 != null) {
         indicator.setText2(title2);
+      }
+      Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread() && application.isInternal() && !application.isHeadlessEnvironment()) {
+        LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
       }
       process.run();
     }
