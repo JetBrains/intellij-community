@@ -2001,8 +2001,9 @@ public class InferenceSession {
         final PsiClass tClass = PsiUtil.resolveClassInClassTypeOnly(tBound);
         if (tClass != null) {
 
-          final LinkedHashSet<PsiClass> tSupers = InheritanceUtil.getSuperClasses(tClass);
+          final LinkedHashSet<PsiClass> tSupers = new LinkedHashSet<>();
           tSupers.add(tClass);
+          tSupers.addAll(InheritanceUtil.getSuperClasses(tClass));
           tSupers.retainAll(superClasses);
 
           for (PsiClass gClass : tSupers) {
