@@ -168,6 +168,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
   public void testNameConflictBetweenFreshVariables() { doTest(); }
   public void testOrderOfGenericsParameterizations() { doTest(); }
+  public void testLowerBoundAssignability() { doTest(); }
   public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() { doTest(); }
   public void testCapturedConversionDuringDirectSuperCheck() { doTest(); }
   //public void _testResolutionOrderForVariableCycles() { doTest(); }

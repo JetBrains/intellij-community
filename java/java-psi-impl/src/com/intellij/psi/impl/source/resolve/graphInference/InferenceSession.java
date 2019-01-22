@@ -1211,7 +1211,7 @@ public class InferenceSession {
           eqBound = capturedWildcard;
         }
       }
-      if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
+      if (isLowerBoundNotAssignable(var, eqBound, true)) {
         final String incompatibleBoundsMessage =
           incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION);
         registerIncompatibleErrorMessage(incompatibleBoundsMessage);
@@ -1219,7 +1219,7 @@ public class InferenceSession {
       } else {
         type = eqBound;
 
-        if (!TypeConversionUtil.isAssignable(eqBound, lowerBound, false)) {
+        if (isLowerBoundNotAssignable(var, eqBound, false)) {
           setErased();
         }
 
@@ -1281,6 +1281,13 @@ public class InferenceSession {
       }, ", "));
     }
     return type;
+  }
+
+  private boolean isLowerBoundNotAssignable(InferenceVariable var, PsiType eqBound, boolean allowUncheckedConversion) {
+    return var
+      .getBounds(InferenceBound.LOWER)
+      .stream()
+      .anyMatch(lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
   }
 
   private static String getConjunctsConflict(PsiIntersectionType type) {
