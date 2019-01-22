@@ -261,6 +261,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         exclude(name: "PREBUILT")
         exclude(name: "BUILD")
         exclude(name: "data/layoutlib.jar")
+        exclude(name: "data/res/**")
       }
     }
 
