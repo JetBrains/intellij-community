@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
@@ -14,6 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstructi
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Max Medvedev
@@ -157,15 +160,21 @@ public class DFAType {
 
     final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
     final DFAType type = new DFAType(primary);
-
-    for (Mixin mixin1 : t1.mixins) {
-      for (Mixin mixin2 : t2.mixins) {
-        if (mixin1.equals(mixin2) && mixin1.myNegated == mixin2.myNegated) {
-          type.mixins.add(mixin1);
-        }
-      }
+    final PsiType type1 = reduce(t1.mixins);
+    final PsiType type2 = reduce(t2.mixins);
+    if (type1 != null && type2 != null) {
+      type.addMixin(GenericsUtil.getLeastUpperBound(type1, type2, manager), null);
     }
+
     return type;
+  }
+
+  private static PsiType reduce(List<Mixin> mixins) {
+    List<PsiType> types = mixins.stream()
+      .filter(it -> !it.myNegated)
+      .map(it -> it.myType)
+      .collect(toList());
+    return types.isEmpty() ? null : PsiIntersectionType.createIntersection(types);
   }
 
   @Override

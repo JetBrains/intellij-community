@@ -104,6 +104,8 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
 
   void testIfNegatedInstanceofElse() { doTest() }
 
+  void testIfInstanceofOr() { doTest() }
+
   void testReturnMapFromClosure() { doTest() }
 
   void testSwitchInTryWithThrows() { doTest() }

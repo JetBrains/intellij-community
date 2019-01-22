@@ -558,6 +558,19 @@ def foo(bar) {
 }''', 'java.lang.Runnable')
   }
 
+  void 'test instanceof or instanceof'() {
+    doTest '''\
+class A {}
+class B extends A {}
+class C extends A {}
+def foo(a) {
+    if (a instanceof B || a instanceof C) {
+        <caret>a
+    }
+}
+''', 'A'
+  }
+
   void 'test enum constant'() {
     doTest('''\
 import static MyEnum.*
