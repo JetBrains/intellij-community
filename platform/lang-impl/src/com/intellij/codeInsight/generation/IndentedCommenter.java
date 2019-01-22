@@ -36,5 +36,5 @@ public interface IndentedCommenter extends Commenter {
   @Nullable
   default Boolean forceIndentedBlockComment() {
     return forceIndentedLineComment();
-  };
+  }
 }

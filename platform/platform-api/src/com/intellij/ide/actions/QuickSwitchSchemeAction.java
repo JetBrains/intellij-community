@@ -39,7 +39,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     protected Icon compute() {
       return EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
     }
-  };;
+  };
 
   protected String myActionPlace = ActionPlaces.UNKNOWN;
 

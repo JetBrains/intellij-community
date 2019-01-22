@@ -154,8 +154,8 @@ public class ThreadBlockedMonitor {
   }
 
   public static class InvocationWatcher {
-    private final AtomicBoolean myObsolete = new AtomicBoolean();;
-    private final AtomicBoolean myAllResumed = new AtomicBoolean();;
+    private final AtomicBoolean myObsolete = new AtomicBoolean();
+    private final AtomicBoolean myAllResumed = new AtomicBoolean();
     private final Future myTask;
     private final ThreadReferenceProxyImpl myThread;
     private final DebugProcessImpl myProcess;
