@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -16,7 +17,7 @@ class VfsEventGenerationHelper {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
   private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
   private final List<VFileEvent> myEvents = new ArrayList<>();
-  
+
   @NotNull
   public List<VFileEvent> getEvents() {
     return myEvents;
@@ -32,11 +33,11 @@ class VfsEventGenerationHelper {
       scheduleUpdateContent(file, oldTimestamp, newTimestamp, oldLength, newLength);
     }
   }
-  
+
   void scheduleUpdateContent(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-        "update file=" + file + 
+        "update file=" + file +
         (oldTimestamp != newTimestamp ? ", oldtimestamp=" + oldTimestamp + ", newtimestamp=" + newTimestamp : "") +
         (oldLength != newLength ? ", oldlength=" + oldLength + ", length=" + newLength : "")
       );
@@ -44,9 +45,9 @@ class VfsEventGenerationHelper {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
   }
 
-  void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
-    if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
+  void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, @NotNull FileAttributes attributes) {
+    if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes, true));
   }
 
   void scheduleDeletion(@Nullable VirtualFile file) {

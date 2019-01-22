@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -185,7 +185,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, childAttributes.isDirectory());
+            myHelper.scheduleCreation(dir, name, childAttributes);
           }
           else {
             if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -267,7 +267,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, childAttributes.isDirectory());
+            myHelper.scheduleCreation(dir, name, childAttributes);
           }
         }
 
@@ -331,7 +331,7 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      myHelper.scheduleCreation(parent, child.getName(), upToDateIsDirectory);
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes);
       return true;
     }
 

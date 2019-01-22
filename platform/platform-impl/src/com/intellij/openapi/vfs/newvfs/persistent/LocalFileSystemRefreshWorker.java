@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -283,12 +269,12 @@ class LocalFileSystemRefreshWorker {
         boolean directory = attrs.isDirectory();
 
         if (child == null) { // new file is created
-          myHelper.scheduleCreation(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), name, directory);
+          myHelper.scheduleCreation(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), name, convert(file, attrs));
           return FileVisitResult.CONTINUE;
         }
 
         checkCancelled(child);
-        
+
         if (!child.isDirty()) {
           return FileVisitResult.CONTINUE;
         }
@@ -299,7 +285,7 @@ class LocalFileSystemRefreshWorker {
 
         boolean isSpecial = attrs.isOther();
         boolean isLink = attrs.isSymbolicLink();
-        
+
         if (isSpecial && directory && SystemInfo.isWindows) {
           // Windows junction is special directory, handle it as symlink
           isSpecial = false;
@@ -310,7 +296,7 @@ class LocalFileSystemRefreshWorker {
             oldIsSymlink != isLink ||
             oldIsSpecial != isSpecial) { // symlink or directory or special changed
           myHelper.scheduleDeletion(child);
-          myHelper.scheduleCreation(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), child.getName(), directory);
+          myHelper.scheduleCreation(myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent(), child.getName(), convert(file, attrs));
           // ignore everything else
           child.markClean();
           return FileVisitResult.CONTINUE;
@@ -409,6 +395,31 @@ class LocalFileSystemRefreshWorker {
       }
 
       return myHelper;
+    }
+  }
+
+  private static FileAttributes convert(Path path, BasicFileAttributes a) throws IOException {
+    boolean isSymlink = a.isSymbolicLink() || SystemInfo.isWindows && a.isOther() && a.isDirectory();
+
+    if (isSymlink) {
+      Class<? extends BasicFileAttributes> schema = SystemInfo.isWindows ? DosFileAttributes.class : PosixFileAttributes.class;
+      try {
+        a = Files.readAttributes(path, schema);
+      }
+      catch (NoSuchFileException | AccessDeniedException e) {
+        return FileAttributes.BROKEN_SYMLINK;
+      }
+    }
+
+    long lastModified = a.lastModifiedTime().toMillis();
+    if (SystemInfo.isWindows) {
+      boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
+      boolean writable = a.isDirectory() || !((DosFileAttributes)a).isReadOnly();
+      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
+    }
+    else {
+      boolean writable = Files.isWritable(path);
+      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
     }
   }
 }
