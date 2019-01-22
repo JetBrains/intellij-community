@@ -459,7 +459,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
       classpath.add(new File(root, "intellij.maven.server.m2.impl"));
       addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
-      addRepositoryLibrariesDev(classpath, new File(parentFile, "maven2-server-impl/test-libs.txt"));
     }
     else {
       classpath.add(new File(root, "intellij.maven.server.m3.common"));
