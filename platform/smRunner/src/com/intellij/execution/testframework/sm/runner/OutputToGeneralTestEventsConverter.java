@@ -50,7 +50,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, boolean stdinEnabled) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(stdinEnabled) {
+    mySplitter = new OutputLineSplitter() {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
         processConsistentText(text, outputType, tcLikeFakeOutput);
@@ -93,11 +93,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
-    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX()) {
+    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitterKt.SM_MESSAGE_PREFIX) {
       final StringBuilder builder = new StringBuilder(myCycleBufferSize);
-      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX());
+      builder.append(text, 0, myCycleBufferSize - OutputLineSplitterKt.SM_MESSAGE_PREFIX);
       builder.append(ELLIPSIS);
-      builder.append(text, text.length() - OutputLineSplitter.Companion.getSM_MESSAGE_PREFIX() + ELLIPSIS.length(), text.length());
+      builder.append(text, text.length() - OutputLineSplitterKt.SM_MESSAGE_PREFIX + ELLIPSIS.length(), text.length());
       text = builder.toString();
     }
 
@@ -148,7 +148,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     final ServiceMessage message;
     try {
       message = ServiceMessage.parse(text.trim());
-    } catch (ParseException e) {
+    }
+    catch (ParseException e) {
       LOG.error("Failed to parse service message", e, text);
       return false;
     }
@@ -664,7 +665,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       catch (NumberFormatException ex) {
         final String diagnosticInfo = msg.getAttributes().get(ATTR_KEY_DIAGNOSTIC);
-        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse long error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
+        LOG
+          .error(getTFrameworkPrefix(myTestFrameworkName) + "Parse long error." + (diagnosticInfo == null ? "" : " " + diagnosticInfo), ex);
       }
       return count;
     }

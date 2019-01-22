@@ -19,196 +19,241 @@ import com.intellij.execution.impl.ConsoleBuffer
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 
-import java.util.ArrayList
 
+/**
+ * Processes text from test framework streams and runs [onLineAvailable] when consistency is guaranteed.
+ * Class is not thread safe in that matter that you can't call [process] for same stream (i.e. stderr) from different threads,
+ * but [flush] could be called from any thread.
+ *
+ * See [process] for more info
+ *
+ */
+abstract class OutputLineSplitter() {
 
-abstract class OutputLineSplitter(private val myStdinSupportEnabled: Boolean) {
+  @Suppress("UNUSED_PARAMETER") // For backward compatibility
+  @Deprecated(message = "Output is flushed automatically when possible")
+  constructor(ignored: Boolean) : this()
 
-  private val myStdOutChunks = ArrayList<OutputChunk>()
-  private val myStdErrChunks = ArrayList<OutputChunk>()
-  private val mySystemChunks = ArrayList<OutputChunk>()
-  private val myCurrentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
+  private val currentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize()
+
+  private val tcMessagesManager = StdOutTcMessagesProcessor()
 
   /**
-   * @return if current stdout cache contains part of TC message.
+   * [outputType] could be one of [ProcessOutputTypes] or any other [ProcessOutputType].
+   * Only stdout ([ProcessOutputType.isStdout]) accepts Teamcity Messages ([ServiceMessage]).
+   *
+   * Stderr and System are flushed automatically, Stdout may be buffered until the end of the message.
+   * Make sure you do not process same type from different threads.
    */
-  protected val isInTeamcityMessage: Boolean
-    get() = myStdOutChunks.stream().anyMatch { chunk -> chunk.text!!.startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX) }
-
   fun process(text: String, outputType: Key<*>) {
-    var from = 0
-    // new line char and teamcity message start are two reasons to flush previous line
-    var newLineInd = text.indexOf(NEW_LINE.toInt())
-    var teamcityMessageStartInd = text.indexOf(TEAMCITY_SERVICE_MESSAGE_PREFIX)
-    while (from < text.length) {
-      val nextFrom = Math.min(if (newLineInd != -1) newLineInd + 1 else text.length,
-                              if (teamcityMessageStartInd != -1) teamcityMessageStartInd else text.length)
-      val chunk = text.substring(from, nextFrom)
-      processLine(chunk, outputType)
-      from = nextFrom
-      if (nextFrom == teamcityMessageStartInd) {
-        flush() // Message may still go to buffer if it does not end with new line, force flush
-        teamcityMessageStartInd = text.indexOf(TEAMCITY_SERVICE_MESSAGE_PREFIX, nextFrom + TEAMCITY_SERVICE_MESSAGE_PREFIX.length)
-      }
-      if (newLineInd != -1 && nextFrom == newLineInd + 1) {
-        newLineInd = text.indexOf(NEW_LINE.toInt(), nextFrom)
-      }
-    }
-  }
+    val castedOutputType: ProcessOutputType = (outputType as? ProcessOutputType) ?: ProcessOutputTypes.STDERR as ProcessOutputType
 
-  private fun processLine(text: String, outputType: Key<*>) {
-    if (text.isEmpty()) {
-      return
-    }
-    if (ProcessOutputType.isStdout(outputType)) {
-      processStdOutConsistently(text, outputType)
+    if (castedOutputType.isStdout) {
+      // Synced because flush may be called from different thread
+      synchronized(tcMessagesManager) {
+        flushToStdOut(tcMessagesManager.processStdout(text, outputType))
+      }
     }
     else {
-      var chunksToFlush: List<OutputChunk>? = null
-      val chunks = if (outputType === ProcessOutputTypes.SYSTEM) mySystemChunks else myStdErrChunks
-
-      synchronized(chunks) {
-        val lastChunk = ContainerUtil.getLastItem<OutputChunk, List<OutputChunk>>(chunks)
-        if (lastChunk != null && outputType == lastChunk.key) {
-          lastChunk.append(text)
-        }
-        else {
-          chunks.add(OutputChunk(outputType, text))
-        }
-        if (StringUtil.endsWithChar(text, NEW_LINE)) {
-          chunksToFlush = ArrayList(chunks)
-          chunks.clear()
-        }
-      }
-      if (chunksToFlush != null) {
-        onChunksAvailable(chunksToFlush!!, false)
-      }
+      // Everything but stdout
+      onLineAvailable(text, outputType, false)
     }
   }
 
-  private fun processStdOutConsistently(text: String, outputType: Key<*>) {
-    val textLength = text.length
 
-    synchronized(myStdOutChunks) {
-      myStdOutChunks.add(OutputChunk(outputType, text))
-    }
-
-    val lastChar = text[textLength - 1]
-    if (lastChar == '\n' || lastChar == '\r') {
-      // buffer contains consistent string
-      flushStdOutBuffer()
-    }
-    else {
-      // test framework may show some promt and ask user for smth. Question may not
-      // finish with \n or \r thus buffer wont be flushed and user will have to input smth
-      // before question. And question will became visible with next portion of text.
-      // Such behaviour is confusing. So
-      // 1. Let's assume that sevice messages starts with \n if console is editable
-      // 2. Then we can suggest that each service message will start from new line and buffer should
-      //    be flushed before every service message. Thus if chunks list is empty and output doesn't end
-      //    with \n or \r but starts with ##teamcity then it is a service message and should be buffered otherwise
-      //    we can safely flush buffer.
-
-      // TODO if editable:
-      if (myStdinSupportEnabled && !isInTeamcityMessage) {
-        // We should not flush in the middle of TC message because of [PY-7659]
-        flushStdOutBuffer()
-      }
-    }
-  }
-
-  private fun flushStdOutBuffer() {
-    // if osColoredProcessHandler was attached it can split string with several colors
-    // in several  parts. Thus '\n' symbol may be send as one part with some color
-    // such situation should differ from single '\n' from process that is used by TC reporters
-    // to separate TC commands from other stuff + optimize flushing
-    // TODO: probably in IDEA mode such runners shouldn't add explicit \n because we can
-    // successfully process broken messages across several flushes
-    // size of parts may tell us either \n was single in original flushed data or it was
-    // separated by process handler
-    val chunks = ArrayList<OutputChunk>()
-    var lastChunk: OutputChunk? = null
-    synchronized(myStdOutChunks) {
-      for (chunk in myStdOutChunks) {
-        if (lastChunk != null && chunk.key === lastChunk!!.key) {
-          val chunkText = chunk.text
-          if (USE_CYCLE_BUFFER) {
-            val builder = lastChunk!!.myBuilder
-            if (builder != null &&
-                builder.length + chunkText!!.length > myCurrentCyclicBufferSize &&
-                myCurrentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
-              builder.delete(SM_MESSAGE_PREFIX, Math.min(builder.length, myCurrentCyclicBufferSize - SM_MESSAGE_PREFIX))
-            }
-          }
-          lastChunk!!.append(chunkText)
-        }
-        else {
-          lastChunk = chunk
-          chunks.add(chunk)
-        }
-      }
-
-      myStdOutChunks.clear()
-    }
-    onChunksAvailable(chunks, chunks.size == 1)
-  }
-
+  /**
+   * Flush remainder. Call as last step.
+   */
   fun flush() {
-    flushStdOutBuffer()
-
-    val stderrChunksToFlush: List<OutputChunk>
-    synchronized(myStdErrChunks) {
-      stderrChunksToFlush = ArrayList(myStdErrChunks)
-      myStdErrChunks.clear()
-    }
-    onChunksAvailable(stderrChunksToFlush, false)
-
-    val systemChunksToFlush: List<OutputChunk>
-    synchronized(mySystemChunks) {
-      systemChunksToFlush = ArrayList(mySystemChunks)
-      mySystemChunks.clear()
-    }
-    onChunksAvailable(systemChunksToFlush, false)
-  }
-
-  private fun onChunksAvailable(chunks: List<OutputChunk>, tcLikeFakeOutput: Boolean) {
-    for (chunk in chunks) {
-      onLineAvailable(chunk.text!!, chunk.key, tcLikeFakeOutput)
+    synchronized(tcMessagesManager) {
+      flushToStdOut(tcMessagesManager.popAllChunks())
     }
   }
 
+  private fun flushToStdOut(chunks: List<OutputChunk>) {
+    chunks.forEach { chunk ->
+      val builder = chunk.builder
+
+      // Cut long lines
+      if (USE_CYCLE_BUFFER &&
+          builder.length > currentCyclicBufferSize &&
+          currentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
+        builder.delete(SM_MESSAGE_PREFIX, Math.min(builder.length, currentCyclicBufferSize - SM_MESSAGE_PREFIX))
+      }
+
+      val chunkText = builder.toString()
+      onLineAvailable(chunkText, chunk.key, true)
+    }
+  }
+
+  /**
+   * For stderr and system [text] is provided as fast as possible.
+   * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
+   * or chunk of process output
+   */
   protected abstract fun onLineAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean)
+}
 
-  private class OutputChunk private constructor(val key: Key<*>, private var myText: String?) {
-    private var myBuilder: StringBuilder? = null
 
-    val text: String?
-      get() {
-        if (myBuilder != null) {
-          myText = myBuilder!!.toString()
-          myBuilder = null
+const val SM_MESSAGE_PREFIX = 105
+
+private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
+private const val TC_MESSAGE_PREFIX = ServiceMessage.SERVICE_MESSAGE_START
+private const val TC_MESSAGE_LAST_CHAR_INDEX = TC_MESSAGE_PREFIX.length - 1
+private val TC_MESSAGE_FIRST_CHAR = TC_MESSAGE_PREFIX[0]
+
+
+/**
+ * Process stdout char-by-char ([processStdout]) to guarantee tc messages are consistent.
+ * Result is returned by [popAllChunks] which is a list of [OutputChunk]. Each chunk is plaintext or TC service message.
+ *
+ * May be in the following states:
+ * * outside of TC message
+ * * inside of [TC_MESSAGE_PREFIX] (#(here)#team for example): [insideOfPrefixIndices] is not null in this case
+ * * inside of message itself (between [TC_MESSAGE_PREFIX] and new line): [insideOfTcMessage] is true
+ */
+private class StdOutTcMessagesProcessor {
+  private var insideOfPrefixIndices: InsideOfPrefixIndices? = null
+  private val mayBeInTcPrefix get() = insideOfPrefixIndices != null
+  private var insideOfTcMessage = false
+  private val chunksCollection = ChunksCollection()
+
+  /**
+   * [text] may have different [outputType] but it must be [ProcessOutputType.isStdout].
+   * [outputType] can't be changed inside of message.
+   */
+  fun processStdout(text: String, outputType: Key<*>): List<OutputChunk> {
+    if (chunksCollection.changeTypeIfRequired(outputType)) {
+      assert(!insideOfTcMessage) { "Can't change chunk type $outputType when in message" }
+    }
+
+    for (char in text) {
+      chunksCollection.builder.append(char)
+      val currentInsideOfMessagePrefix = insideOfPrefixIndices
+      when {
+        (char == '\n' && insideOfTcMessage) -> {
+          // Message finished
+          chunksCollection.addNextChunk()
+          insideOfTcMessage = false
         }
-        return myText
+        (!mayBeInTcPrefix && !insideOfTcMessage) -> {
+          // Some random char, may be start of TC prefix
+          startInsideOfPrefixIfNeeded(char)
+        }
+        (currentInsideOfMessagePrefix != null) -> {
+          // We are inside of message prefix probably, promote index to next char
+          val nextIndex = ++currentInsideOfMessagePrefix.indexInTcMessagePrefix
+          if (char != TC_MESSAGE_PREFIX[nextIndex]) {
+            // Next char is not part of prefix: it was not prefix, just some ## chars.
+            insideOfPrefixIndices = null
+            startInsideOfPrefixIfNeeded(char) //But is till can be first char of prefix
+          }
+          else if (nextIndex == TC_MESSAGE_LAST_CHAR_INDEX) {
+            // Message prefix just finished, we are inside of message
+            if (chunksCollection.builder.length != TC_MESSAGE_LAST_CHAR_INDEX + 1) {
+              //Current chunk has something behind prefix. We need to cut this prefix, and create new chunk.
+              // Chunk("foo ##teamcity[") --> Chunk("foo"), Chunk("##teamcity[")
+              chunksCollection.builder.delete(insideOfPrefixIndices!!.indexOfPrefixStartInChunk, chunksCollection.builder.length + 1)
+              chunksCollection.addNextChunk()
+              chunksCollection.builder.append(TC_MESSAGE_PREFIX)
+            }
+            insideOfPrefixIndices = null
+            insideOfTcMessage = true
+          }
+        }
       }
+    }
 
-    fun append(text: String?) {
-      if (myBuilder == null) {
-        myBuilder = StringBuilder(myText!!)
-        myText = null
-      }
-      myBuilder!!.append(text)
+    // If not inside of message and prefix then flush.
+    // It could ne that text ends with something that looks like TC prefix. It will not be flushed here
+    // but will be flushed explicitly on flush()
+    return if (!insideOfTcMessage && insideOfPrefixIndices == null) {
+      popAllChunks()
+    }
+    else {
+      emptyList()
     }
   }
 
-  companion object {
-    val SM_MESSAGE_PREFIX = 105
-
-    private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
-    private val TEAMCITY_SERVICE_MESSAGE_PREFIX = ServiceMessage.SERVICE_MESSAGE_START
-    private val NEW_LINE = '\n'
+  private fun startInsideOfPrefixIfNeeded(char: Char) {
+    if (char == TC_MESSAGE_FIRST_CHAR) {
+      insideOfPrefixIndices = InsideOfPrefixIndices(indexOfPrefixStartInChunk = chunksCollection.builder.length - 1)
+    }
   }
+
+  fun popAllChunks() = chunksCollection.popAllChunks()
+}
+
+private class OutputChunk(val key: Key<*>) {
+  val builder = StringBuilder()
+  override fun toString() = builder.toString()
+
+}
+
+/**
+ * When [StdOutTcMessagesProcessor] is inside of TC prefix, it has 2 indices:
+ * * [indexOfPrefixStartInChunk] position of TC prefix start inside of chunk (will be used to cut it later).
+ * Chunk("f##te") --> 0 in this case.
+ *
+ * * [indexInTcMessagePrefix] current position inside of [TC_MESSAGE_PREFIX]. "#(here)#mess" is 1.
+ */
+private data class InsideOfPrefixIndices(
+  var indexOfPrefixStartInChunk: Int,
+  var indexInTcMessagePrefix: Int = 0
+)
+
+/**
+ * Stores collection of [chunks] providing access to [builder] of last chunk.
+ * Schedule next chunk creation by calling [addNextChunk] (will be created in lazy manner).
+ * First, chunk type must be set with [changeTypeIfRequired]
+ *
+ * Get result with [popAllChunks]
+ */
+private class ChunksCollection {
+
+  private var nextChunk: Key<*>? = null
+  private val chunks = mutableListOf<OutputChunk>()
+  private val currentChunk: OutputChunk
+    get() {
+      createNextChunkIfRequired()
+      return chunks.lastOrNull() ?: throw AssertionError("No last chunk. No ${::changeTypeIfRequired} nor ${::addNextChunk} called")
+    }
+
+  private fun createNextChunkIfRequired() {
+    nextChunk?.let {
+      chunks.add(OutputChunk(it))
+      nextChunk = null
+    }
+  }
+
+  /**
+   * Use current chunk builder to modify chars
+   */
+  val builder get() = currentChunk.builder
+
+
+  /**
+   * returns true if type changed, false if type set first type
+   */
+  fun changeTypeIfRequired(type: Key<*>): Boolean {
+    if (chunks.lastOrNull()?.key != type) {
+      nextChunk = type
+      return true
+    }
+    return false
+  }
+
+  fun addNextChunk() {
+    nextChunk = currentChunk.key
+  }
+
+
+  fun popAllChunks(): List<OutputChunk> {
+    val result = ArrayList(chunks)
+    chunks.clear()
+    return result
+  }
+
 }
