@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -208,10 +209,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           if (component != null) {
             Dimension size = component.getPreferredSize();
             result = Math.max(size.height, result);
-            if (component instanceof JLabel && ((JLabel)component).getText().isEmpty()) {
-              ((JLabel)component).setText("Jj");
-              size = component.getPreferredSize();
-              result = Math.max(size.height, result);
+            if (component instanceof JLabel) {
+              String labelText = ((JLabel)component).getText();
+              if (StringUtil.isEmpty(labelText)) {
+                ((JLabel)component).setText("Jj");
+                size = component.getPreferredSize();
+                result = Math.max(size.height, result);
+              }
             }
           }
         }
