@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
@@ -92,6 +93,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
                                                              LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
                                                              LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
+        LegacyFUSProjectUsageTrigger.cleanup(project);
       }
 
       @Override
