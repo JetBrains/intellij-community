@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -139,6 +139,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @NotNull private TIntFunction myLineNumberConvertor = value -> value;
   @Nullable private TIntFunction myAdditionalLineNumberConvertor;
   private boolean myShowDefaultGutterPopup = true;
+  private boolean myCanCloseAnnotations = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
   private final TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<>();
   private boolean myPaintBackground = true;
@@ -1823,6 +1824,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void closeAllAnnotations() {
+    if (!myCanCloseAnnotations) return;
+
     for (TextAnnotationGutterProvider provider : myTextAnnotationGutters) {
       provider.gutterClosed();
     }
@@ -1892,6 +1895,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
+  public void setCanCloseAnnotations(boolean canCloseAnnotations) {
+    myCanCloseAnnotations = canCloseAnnotations;
+  }
+
+  @Override
   public void setGutterPopupGroup(@Nullable ActionGroup group) {
     myCustomGutterPopupGroup = group;
   }
@@ -1919,9 +1927,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
-      actionGroup.add(new CloseAnnotationsAction());
       final List<AnAction> addActions = new ArrayList<>();
+      if (myCanCloseAnnotations) addActions.add(new CloseAnnotationsAction());
       final Point p = e.getPoint();
       int line = EditorUtil.yPositionToLogicalLine(myEditor, p);
       //if (line >= myEditor.getDocument().getLineCount()) return;
@@ -1936,11 +1943,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         }
       }
-      for (AnAction addAction : addActions) {
-        actionGroup.add(addAction);
+      if (!addActions.isEmpty()) {
+        DefaultActionGroup actionGroup = new DefaultActionGroup(EditorBundle.message("editor.annotations.action.group.name"), true);
+        for (AnAction addAction : addActions) {
+          actionGroup.add(addAction);
+        }
+        JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
+        menu.show(this, e.getX(), e.getY());
       }
-      JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
-      menu.show(this, e.getX(), e.getY());
       e.consume();
     }
     else {
