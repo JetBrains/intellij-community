@@ -459,7 +459,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInBestPositionFor(@NotNull DataContext dataContext) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
       showInBestPositionFor(editor);
     }
