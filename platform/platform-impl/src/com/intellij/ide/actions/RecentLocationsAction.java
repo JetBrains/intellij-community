@@ -74,6 +74,11 @@ public class RecentLocationsAction extends AnAction {
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
+  private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
+  private static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
+                                                                 SHORTCUT_FOREGROUND_COLOR.getRed(),
+                                                                 SHORTCUT_FOREGROUND_COLOR.getGreen(),
+                                                                 SHORTCUT_FOREGROUND_COLOR.getBlue());
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -107,6 +112,7 @@ public class RecentLocationsAction extends AnAction {
     RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch);
     list.setCellRenderer(renderer);
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
+    list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
@@ -271,15 +277,17 @@ public class RecentLocationsAction extends AnAction {
     CheckboxAction action = new RecentLocationsCheckboxAction(project);
     CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
     action.registerCustomShortcutSet(set, listWithFilter);
-    action.getTemplatePresentation()
-      .setText(IdeBundle.message("recent.locations.title.text", KeymapUtil.getShortcutsText(set.getShortcuts())));
+    action.getTemplatePresentation().setText("<html>" +
+                                             IdeBundle.message("recent.locations.title.text") +
+                                             " <font color=\"" + SHORTCUT_HEX_COLOR + "\">" +
+                                             KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>" +
+                                             "</html>");
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());
     action.getTemplatePresentation().putClientProperty(COMPONENT_KEY, checkbox);
     action.setSelected(event, changed);
     checkbox.setBorder(BorderFactory.createEmptyBorder());
-    checkbox.setForeground(UIUtil.getContextHelpForeground());
 
     return checkbox;
   }
