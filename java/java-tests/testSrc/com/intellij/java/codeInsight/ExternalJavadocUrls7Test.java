@@ -57,4 +57,12 @@ public class ExternalJavadocUrls7Test extends ExternalJavadocUrlsTest {
            "sort(T[], Comparator)", "sort(T[],Comparator)", "sort-T:A-Comparator-"
     );
   }
+
+  @Override
+  public void testConstructor() {
+    doTest("class Test {\n" +
+           "  Test<caret>() { }\n" +
+           "}",
+           "Test()", "<init>()", "Test--");
+  }
 }
