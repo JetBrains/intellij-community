@@ -8,6 +8,7 @@ class X {
           default: break;
         }
         default:
+            throw new IllegalStateException("Unexpected value: " + i);
     }
   }
 }

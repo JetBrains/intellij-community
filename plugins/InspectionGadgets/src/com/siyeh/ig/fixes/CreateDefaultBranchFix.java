@@ -4,17 +4,25 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 public class CreateDefaultBranchFix extends BaseSwitchFix {
 
@@ -64,45 +72,47 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
     Editor editor = prepareForTemplateAndObtainEditor(block);
     if (editor == null) return;
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
-    PsiExpression expression = null;
-    int offset = -1;
-    if (lastStatement instanceof PsiBreakStatement) {
-      expression = ((PsiBreakStatement)lastStatement).getExpression();
-    } else if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {
-      PsiStatement ruleBody = ((PsiSwitchLabeledRuleStatement)lastStatement).getBody();
-      if (ruleBody instanceof PsiExpressionStatement) {
-        expression = ((PsiExpressionStatement)ruleBody).getExpression();
-      } else if (ruleBody instanceof PsiBlockStatement) {
-        offset = ruleBody.getTextRange().getStartOffset()+1;
-      }
-    } else if (lastStatement instanceof PsiSwitchLabelStatement) {
-      offset = lastStatement.getTextRange().getEndOffset();
+    if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {
+      lastStatement = ((PsiSwitchLabeledRuleStatement)lastStatement).getBody();
     }
-    if (expression == null) {
-      if (offset != -1) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    } else {
+    if (lastStatement != null) {
       TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(block);
-      builder.replaceElement(expression, new ConstantNode(expression.getText()));
+      builder.replaceElement(lastStatement, new ConstantNode(lastStatement.getText()));
       builder.run(editor, true);
     }
   }
 
   private static List<String> generateStatements(PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
-    if (switchBlock instanceof PsiSwitchExpression) {
-      String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
-      if (isRuleBasedFormat) {
-        return Collections.singletonList("default -> " + value + ";");
-      } else {
-        return Arrays.asList("default:", "break " + value + ";");
+    Project project = switchBlock.getProject();
+    FileTemplate branchTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_SWITCH_DEFAULT_BRANCH);
+    Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
+    PsiExpression expression = switchBlock.getExpression();
+    props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION, expression == null ? "" : expression.getText());
+    PsiType expressionType = expression == null ? null : expression.getType();
+    props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION_TYPE, expressionType == null ? "" : expressionType.getCanonicalText());
+    PsiStatement statement;
+    try {
+      String text = branchTemplate.getText(props);
+      if (text.trim().isEmpty()) {
+        if (switchBlock instanceof PsiSwitchExpression) {
+          String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
+          text = isRuleBasedFormat ? value + ";" : "break " + value + ";";
+        }
       }
-    } else {
-      if (isRuleBasedFormat) {
-        return Collections.singletonList("default -> {}");
-      } else {
-        return Collections.singletonList("default:");
-      }
+      statement = JavaPsiFacade.getElementFactory(project).createStatementFromText("{" + text + "}", switchBlock);
+    }
+    catch (IOException | IncorrectOperationException e) {
+      throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+    }
+    PsiStatement stripped = ControlFlowUtils.stripBraces(statement);
+    if (!isRuleBasedFormat || stripped instanceof PsiThrowStatement) {
+      statement = stripped;
+    }
+    if (isRuleBasedFormat) {
+      return Collections.singletonList("default -> " + statement.getText());
+    }
+    else {
+      return Arrays.asList("default:", statement.getText());
     }
   }
 }
