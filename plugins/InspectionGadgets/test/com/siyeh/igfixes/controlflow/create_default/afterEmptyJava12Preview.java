@@ -3,8 +3,7 @@ class X {
   void test(int i) {
     switch(i) {
 
-        default -> {
-        }
+        default -> throw new IllegalStateException("Unexpected value: " + i);
     }
   }
 }

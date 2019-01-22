@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.newData
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -28,17 +29,7 @@ fun getProjectId(project: Project): String {
 }
 
 fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
-  if (project == null && context == null) return Collections.emptyMap()
-
-  val data = ContainerUtil.newHashMap<String, Any>()
-  if (context != null) {
-    data.putAll(context.data)
-  }
-
-  if (project != null) {
-    data["project"] = getProjectId(project)
-  }
-  return data
+  return newData(project, context)
 }
 
 fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value : Int): Map<String, Any> {
@@ -293,22 +284,6 @@ fun getPluginType(clazz: Class<*>): PluginType {
   // they are also considered bundled) would be reported
   val listed = !plugin.isBundled && isSafeToReport(pluginId.idString)
   return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
-}
-
-enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN;
-
-  fun isPlatformOrJBBundled() : Boolean {
-    return this == PLATFORM || this == JB_BUNDLED
-  }
-
-  fun isDevelopedByJetBrains() : Boolean {
-    return isPlatformOrJBBundled() || this == JB_NOT_BUNDLED
-  }
-
-  fun isSafeToReport() : Boolean {
-    return isDevelopedByJetBrains() || this == LISTED;
-  }
 }
 
 private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {

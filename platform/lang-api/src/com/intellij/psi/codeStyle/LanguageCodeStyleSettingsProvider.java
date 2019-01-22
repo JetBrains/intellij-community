@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
@@ -16,8 +17,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -60,6 +63,14 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @Nullable
   public String getLanguageName() {
     return null;
+  }
+
+  /**
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case 'a'..'z' characters.
+   */
+  @NotNull
+  public String getExternalLanguageId() {
+    return getLanguage().getID().toLowerCase(Locale.ENGLISH);
   }
 
   /**
@@ -360,7 +371,13 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @ApiStatus.Experimental
   @NotNull
-  public AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
-    return new LanguageCodeStylePropertyMapper(settings, getLanguage());
+  public final AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull CodeStyleSettings settings) {
+    return new LanguageCodeStylePropertyMapper(settings, getLanguage(), getExternalLanguageId());
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    return null;
   }
 }

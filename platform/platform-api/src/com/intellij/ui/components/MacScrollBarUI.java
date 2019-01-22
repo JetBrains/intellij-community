@@ -50,17 +50,12 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private boolean myTrackHovered;
 
   MacScrollBarUI() {
-    super(14, 15, 11);
+    super(14, 14, 11);
   }
 
   @Override
   boolean isAbsolutePositioning(MouseEvent event) {
     return Behavior.JumpToSpot == Behavior.CURRENT.get();
-  }
-
-  @Override
-  boolean isBorderNeeded(JComponent c) {
-    return !isOpaque(c) && myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0;
   }
 
   @Override
@@ -94,7 +89,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   void paintTrack(Graphics2D g, JComponent c) {
-    if (isBorderNeeded(c)) super.paintTrack(g, c);
+    if (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0 || isOpaque(c)) super.paintTrack(g, c);
   }
 
   @Override

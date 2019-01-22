@@ -28,6 +28,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class JavaTemplateUtil {
   public static final String TEMPLATE_CATCH_BODY = "Catch Statement Body.java";
   public static final String TEMPLATE_CATCH_DECLARATION = "Catch Statement Declaration.java";
+  public static final String TEMPLATE_SWITCH_DEFAULT_BRANCH = "Switch Default Branch.java";
   public static final String TEMPLATE_IMPLEMENTED_METHOD_BODY = "Implemented Method Body.java";
   public static final String TEMPLATE_OVERRIDDEN_METHOD_BODY = "Overridden Method Body.java";
   public static final String TEMPLATE_FROM_USAGE_METHOD_BODY = "New Method Body.java";

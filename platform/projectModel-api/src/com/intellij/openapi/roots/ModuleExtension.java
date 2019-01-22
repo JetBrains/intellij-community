@@ -51,6 +51,7 @@ public abstract class ModuleExtension implements Disposable {
    * @param writable  flag which identifies if resulting model is writable
    * @return          extension model
    */
+  @NotNull
   public abstract ModuleExtension getModifiableModel(final boolean writable);
 
   public abstract void commit();

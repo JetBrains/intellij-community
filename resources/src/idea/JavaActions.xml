@@ -250,6 +250,20 @@
                     relative-to-action="Debugger.ShowReferring"/>
     </action>
 
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize"
+            text="Calculate Retained Size">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.ShowGarbageCollectorRootsAction"
+            id="Memory.ShowGarbageCollectorRoots"
+            text="Find Garbage Collector Roots">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
+
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
             id="MemoryView.ShowAllocationStackTrace"
             text="Jump To Allocation Position">

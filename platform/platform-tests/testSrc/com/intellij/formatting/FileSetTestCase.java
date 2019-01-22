@@ -15,7 +15,7 @@ public abstract class FileSetTestCase extends PlatformTestCase {
   protected VirtualFile createFile(@NotNull String path) {
     String[] dirNames = path.split("/");
     VirtualFile baseDir = getProject().getBaseDir();
-    for (int i = 0; i < dirNames.length - 1; i ++) {
+    for (int i = 0; i < dirNames.length - 1; i++) {
       VirtualFile existing = VfsUtilCore.findRelativeFile(dirNames[i], baseDir);
       if (existing == null) {
         baseDir = createChildDirectory(baseDir, dirNames[i]);
@@ -30,8 +30,7 @@ public abstract class FileSetTestCase extends PlatformTestCase {
 
   protected VirtualFile createFile(@NotNull String path, @NotNull String content) throws IOException {
     VirtualFile file = createFile(path);
-    WriteAction.run(()->VfsUtil.saveText(file, content));
+    WriteAction.run(() -> VfsUtil.saveText(file, content));
     return file;
   }
-
 }

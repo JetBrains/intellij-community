@@ -8,15 +8,12 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -74,7 +71,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+  // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
   final ReadMostlyRWLock myLock;
@@ -311,6 +308,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
+        // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           action.run();
         }
@@ -318,7 +316,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // ignore
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -334,6 +332,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
+        // This is very special magic only needed by threads that need read actions and can be executed
+        // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
+        // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
+
+        // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           return action.call();
         }
@@ -341,7 +344,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           // ignore
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -414,7 +417,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
           }
           catch (Throwable e) {
-            PluginManager.processException(e);
+            LOG.error(e);
           }
         }
 
@@ -426,7 +429,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             listener.beforeComponentsCreated();
           }
           catch (Throwable e) {
-            PluginManager.processException(e);
+            LOG.error(e);
           }
         }
       });
@@ -452,14 +455,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           listener.componentsInitialized();
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
 
         try {
           initializedExtensionPoint.reset();
         }
         catch (Throwable e) {
-          PluginManager.processException(e);
+          LOG.error(e);
         }
       }
     };
@@ -809,13 +812,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       lifecycleListener.appWillBeClosed(restart);
-
-      FUSApplicationUsageTrigger usageTrigger = FUSApplicationUsageTrigger.getInstance();
-      usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
-      if (restart) {
-        usageTrigger.trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
-      }
-      FeatureUsageLogger.INSTANCE.log(AppLifecycleUsageTriggerCollector.LIFECYCLE, "app.closed", Collections.singletonMap("restart", restart));
+      LifecycleUsageTriggerCollector.onIdeClose(restart);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {

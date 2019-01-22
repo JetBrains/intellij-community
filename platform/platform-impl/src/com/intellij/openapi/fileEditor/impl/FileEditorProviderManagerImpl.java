@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,9 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
@@ -37,37 +34,13 @@ import java.util.*;
 public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
 
-  private final List<FileEditorProvider> myProviders = ContainerUtil.createConcurrentList();
-
-  public FileEditorProviderManagerImpl(@NotNull FileEditorProvider[] providers) {
-    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
-      new ExtensionPointListener<FileEditorProvider>() {
-        @Override
-        public void extensionAdded(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
-          registerProvider(extension);
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
-          unregisterProvider(extension);
-        }
-      });
-
-    for (FileEditorProvider provider : providers) {
-      registerProvider(provider);
-    }
-  }
-
-  public FileEditorProviderManagerImpl() {
-  }
-
   @Override
   @NotNull
   public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
     boolean doNotShowTextEditor = false;
-    for (final FileEditorProvider provider : myProviders) {
+    for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (ReadAction.compute(() -> {
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
           return false;
@@ -85,15 +58,14 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
 
     // Sort editors according policies
-    Collections.sort(sharedProviders, MyComparator.ourInstance);
-
+    sharedProviders.sort(MyComparator.ourInstance);
     return sharedProviders.toArray(new FileEditorProvider[0]);
   }
 
   @Override
   @Nullable
   public FileEditorProvider getProvider(@NotNull String editorTypeId) {
-    for (FileEditorProvider provider : myProviders) {
+    for (FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (provider.getEditorTypeId().equals(editorTypeId)) {
         return provider;
       }
@@ -101,20 +73,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return null;
   }
 
-  private void registerProvider(@NotNull FileEditorProvider provider) {
-    String editorTypeId = provider.getEditorTypeId();
-    if (getProvider(editorTypeId) != null) {
-      throw new IllegalArgumentException("attempt to register provider with non unique editorTypeId: " + editorTypeId);
-    }
-    myProviders.add(provider);
-  }
-
-  private void unregisterProvider(@NotNull FileEditorProvider provider) {
-    final boolean b = myProviders.remove(provider);
-    assert b;
-  }
-
-  @Nullable
+  @NotNull
   @Override
   public FileEditorProviderManagerImpl getState() {
     return this;

@@ -20,7 +20,7 @@ import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JavaSourceRootDetectionTest extends PlatformTestCase {
+public class JavaSourceRootDetectionTest extends LightPlatformTestCase {
   public void testSimple() {
     doTest("src", "");
   }

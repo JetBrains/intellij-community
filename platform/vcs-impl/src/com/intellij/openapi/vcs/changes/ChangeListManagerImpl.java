@@ -348,8 +348,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   void convertExcludedToIgnored() {
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
-      for (VirtualFile file : policy.getExcludeRootsForProject()) {
-        addDirectoryToIgnoreImplicitly(file.getPath());
+      for (String url : policy.getExcludeUrlsForProject()) {
+        addDirectoryToIgnoreImplicitly(VfsUtilCore.urlToPath(url));
       }
     }
 

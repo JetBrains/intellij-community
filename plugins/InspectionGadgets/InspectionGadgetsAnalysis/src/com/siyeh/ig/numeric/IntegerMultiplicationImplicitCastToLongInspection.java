@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -106,12 +107,15 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
-      if (context == null) {
+      if (context == null) return;
+      if (!PsiType.LONG.equals(context.getType()) && 
+          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
         return;
       }
-      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      if (!PsiType.LONG.equals(contextType)) {
-        return;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
+      if (parent instanceof PsiTypeCastExpression) {
+        PsiType castType = ((PsiTypeCastExpression)parent).getType();
+        if (isNonLongInteger(castType)) return;
       }
       if (ignoreNonOverflowingCompileTimeConstants) {
         try {
@@ -137,6 +141,11 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
           if (set == null) return false;
           long nextMin = set.min();
           long nextMax = set.max();
+          if (operand == operands[0]) {
+            min = nextMin;
+            max = nextMax;
+            continue;
+          }
           long r1, r2, r3, r4;
           if (shift) {
             nextMin &= 0x1F;
@@ -167,8 +176,13 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     private PsiExpression getContainingExpression(
       PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiBinaryExpression ||
-          parent instanceof PsiParenthesizedExpression ||
+      if (parent instanceof PsiPolyadicExpression && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (!tokenType.equals(JavaTokenType.LTLT) && !tokenType.equals(JavaTokenType.GTGT) && !tokenType.equals(JavaTokenType.GTGTGT)) {
+          return getContainingExpression((PsiExpression)parent);
+        }
+      }
+      if (parent instanceof PsiParenthesizedExpression ||
           parent instanceof PsiPrefixExpression ||
           parent instanceof PsiConditionalExpression) {
         return getContainingExpression((PsiExpression)parent);

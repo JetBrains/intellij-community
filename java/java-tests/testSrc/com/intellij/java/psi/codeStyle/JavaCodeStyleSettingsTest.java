@@ -147,8 +147,25 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "do_not_indent_top_level_class_members = false\n" +
       "do_not_wrap_after_single_annotation = false\n" +
       "do_while_brace_force = never\n" +
+      "doc_add_blank_line_after_description = true\n" +
+      "doc_add_blank_line_after_param_comments = false\n" +
+      "doc_add_blank_line_after_return = false\n" +
+      "doc_add_p_tag_on_empty_lines = true\n" +
+      "doc_align_exception_comments = true\n" +
+      "doc_align_param_comments = true\n" +
+      "doc_do_not_wrap_if_one_line = false\n" +
+      "doc_enable_formatting = true\n" +
+      "doc_enable_leading_asterisks = true\n" +
+      "doc_indent_on_continuation = false\n" +
+      "doc_keep_empty_lines = true\n" +
+      "doc_keep_empty_parameter_tag = true\n" +
+      "doc_keep_empty_return_tag = true\n" +
+      "doc_keep_empty_throws_tag = true\n" +
+      "doc_keep_invalid_tags = true\n" +
+      "doc_param_description_on_new_line = false\n" +
+      "doc_preserve_line_breaks = false\n" +
+      "doc_use_throws_not_exception_tag = true\n" +
       "else_on_new_line = false\n" +
-      "enable_javadoc_formatting = true\n" +
       "enum_constants_wrap = off\n" +
       "extends_keyword_wrap = off\n" +
       "extends_list_wrap = off\n" +
@@ -162,28 +179,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "generate_final_locals = false\n" +
       "generate_final_parameters = false\n" +
       "if_brace_force = never\n" +
+      "imports_layout = *,blank_line,javax.**,java.**,blank_line,static *\n" +
       "indent_case_from_switch = true\n" +
       "indent_size = 4\n" +
       "indent_style = space\n" +
       "insert_inner_class_imports = false\n" +
       "insert_override_annotation = true\n" +
-      "javadoc_add_blank_after_description = true\n" +
-      "javadoc_add_blank_after_param_comments = false\n" +
-      "javadoc_add_blank_after_return = false\n" +
-      "javadoc_align_exception_comments = true\n" +
-      "javadoc_align_param_comments = true\n" +
-      "javadoc_do_not_wrap_one_line_comments = false\n" +
-      "javadoc_indent_on_continuation = false\n" +
-      "javadoc_keep_empty_exception = true\n" +
-      "javadoc_keep_empty_lines = true\n" +
-      "javadoc_keep_empty_parameter = true\n" +
-      "javadoc_keep_empty_return = true\n" +
-      "javadoc_keep_invalid_tags = true\n" +
-      "javadoc_leading_asterisks_are_enabled = true\n" +
-      "javadoc_p_at_empty_lines = true\n" +
-      "javadoc_param_description_on_new_line = false\n" +
-      "javadoc_preserve_line_feeds = false\n" +
-      "javadoc_use_throws_not_exception = true\n" +
       "keep_blank_lines_before_right_brace = 2\n" +
       "keep_blank_lines_between_package_declaration_and_header = 2\n" +
       "keep_blank_lines_in_code = 2\n" +
@@ -209,6 +210,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "method_parameters_wrap = normal\n" +
       "modifier_list_wrap = false\n" +
       "names_count_to_use_import_on_demand = 3\n" +
+      "packages_to_use_import_on_demand = java.awt.*,javax.swing.*\n" +
       "parameter_annotation_wrap = off\n" +
       "parentheses_expression_new_line_after_left_paren = false\n" +
       "parentheses_expression_right_paren_on_new_line = false\n" +
@@ -216,7 +218,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "prefer_longer_names = true\n" +
       "prefer_parameters_wrap = false\n" +
       "repeat_synchronized = true\n" +
-      "replace_instance_of_and_cast = false\n" +
+      "replace_instanceof_and_cast = false\n" +
       "replace_null_check = true\n" +
       "resource_list_new_line_after_left_paren = false\n" +
       "resource_list_right_paren_on_new_line = false\n" +
@@ -328,6 +330,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     mapper.setProperty("brace_style", "next_line");
     mapper.setProperty("indent_size", "2");
     mapper.setProperty("javadoc_align_param_comments", "true");
+    mapper.setProperty("imports_layout", "com.jetbrains.*,blank_line, org.eclipse.bar , static  ** , static org.eclipse.foo.**");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     assertTrue(commonJavaSettings.ALIGN_GROUP_FIELD_DECLARATIONS);
@@ -335,6 +338,12 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(CommonCodeStyleSettings.NEXT_LINE, commonJavaSettings.BRACE_STYLE);
     assertEquals(2, commonJavaSettings.getIndentOptions().INDENT_SIZE);
     assertTrue(javaSettings.JD_ALIGN_PARAM_COMMENTS);
+    PackageEntryTable importsTable = javaSettings.getImportLayoutTable();
+    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(1));
+    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
+    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
   }
 
   private static boolean isPrimitiveOrString(Class type) {

@@ -44,20 +44,11 @@ internal fun report(context: Context, skipped: Int): String {
 }
 
 internal fun findCommitsToSync(context: Context) {
-  // TODO: refactor it
-  fun guessGitObject(repo: File, file: File) = GitObject(file.toRelativeString(repo), "-1", repo)
   if (context.doSyncDevRepo && context.devSyncRequired()) {
-    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners) {
-      context.devIcons[it] ?: {
-        val change = context.devRepoRoot.resolve(it)
-        guessGitObject(changesToReposMap(change), change)
-      }()
-    }
+    context.iconsCommitsToSync = findCommitsByRepo(context, UPSOURCE_DEV_PROJECT_ID, context.iconsRepoDir, context.byDesigners)
   }
   if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
-    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoRoot, context.byDev) {
-      context.icons[it] ?: guessGitObject(context.iconsRepo, context.iconsRepoDir.resolve(it))
-    }
+    context.devCommitsToSync = findCommitsByRepo(context, UPSOURCE_ICONS_PROJECT_ID, context.devRepoDir, context.byDev)
   }
 }
 
@@ -88,7 +79,7 @@ private fun withTmpBranch(repos: Collection<File>, master: String, action: (Stri
 private fun createReviewForDev(context: Context, user: String, email: String): Review? {
   if (context.iconsCommitsToSync.isEmpty()) return null
   val repos = context.iconsChanges().map {
-    changesToReposMap(context.devRepoRoot.resolve(it))
+    findRepo(context.devRepoRoot.resolve(it))
   }.distinct()
   verifyDevIcons(context, repos)
   if (repos.all { gitStage(it).isEmpty() }) {
@@ -217,8 +208,7 @@ internal fun assignInvestigation(context: Context): Investigator? =
     assignInvestigation(Investigator(investigator ?: DEFAULT_INVESTIGATOR, commits), context, reviews)
   }
 
-private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes,
-                              resolveGitObject: (String) -> GitObject
+private fun findCommitsByRepo(context: Context, projectId: String?, root: File, changes: Changes
 ): Map<File, Collection<CommitInfo>> {
   var changesAlreadyInReview = emptyList<String>()
   var commits = findCommits(context, root, changes)
@@ -240,8 +230,12 @@ private fun findCommitsByRepo(context: Context, projectId: String?, root: File, 
   }
   log("$projectId: ${before - commits.size} commits already in review")
   changesAlreadyInReview
-    .map { resolveGitObject(it) }
-    .groupBy({ it.repo }, { it.path })
+    .map(root::resolve)
+    .map {
+      val repo = findRepo(it)
+      repo to it.toRelativeString(repo)
+    }
+    .groupBy({ it.first }, { it.second })
     .forEach {
       val (repo, skipped) = it
       log("Already in review, skipping: $skipped")
@@ -252,21 +246,21 @@ private fun findCommitsByRepo(context: Context, projectId: String?, root: File, 
 }
 
 @Volatile
-private var changesToReposMap = emptyMap<File, File>()
-private val changesToReposMapGuard = Any()
-internal fun changesToReposMap(change: File): File {
-  if (!changesToReposMap.containsKey(change)) synchronized(changesToReposMapGuard) {
-    if (!changesToReposMap.containsKey(change)) {
-      changesToReposMap += change to findGitRepoRoot(change, silent = true)
+private var reposMap = emptyMap<File, File>()
+private val reposMapGuard = Any()
+internal fun findRepo(file: File): File {
+  if (!reposMap.containsKey(file)) synchronized(reposMapGuard) {
+    if (!reposMap.containsKey(file)) {
+      reposMap += file to findGitRepoRoot(file, silent = true)
     }
   }
-  return changesToReposMap[change]!!
+  return reposMap[file]!!
 }
 
 private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
   .mapNotNull { change ->
     val absoluteFile = root.resolve(change)
-    val repo = changesToReposMap(absoluteFile)
+    val repo = findRepo(absoluteFile)
     val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
     if (commit != null) commit to change else null
   }.onEach {

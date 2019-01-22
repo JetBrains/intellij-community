@@ -26,9 +26,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -416,5 +418,59 @@ public class RootsChangedTest extends ModuleTestCase {
 
     VirtualFile xxx2 = createChildData(newShelf, "shelf1.dat");
     assertTrue(ChangeListManager.getInstance(myProject).isPotentiallyIgnoredFile(xxx2));
+  }
+
+  public void testCreationDeletionOfRootDirectoriesMustLeadToRootsChanged() {
+    File root = new File(FileUtil.getTempDirectory());
+
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdirs());
+    VirtualFile contentRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
+    assertNotNull(contentRoot);
+
+    Module moduleA = createModule("a.iml");
+    ModuleRootModificationUtil.addContentRoot(moduleA, contentRoot.getPath());
+    String excludedUrl = contentRoot.getUrl() + "/excluded";
+    String sourceUrl = contentRoot.getUrl() + "/src";
+    String testSourceUrl = contentRoot.getUrl() + "/testSrc";
+    String outputUrl = contentRoot.getUrl() + "/out";
+    String testOutputUrl = contentRoot.getUrl() + "/testOut";
+    String resourceUrl = contentRoot.getUrl() + "/res";
+    String testResourceUrl = contentRoot.getUrl() + "/testRes";
+
+    ModuleRootModificationUtil.updateModel(moduleA, model -> {
+      ContentEntry entry = ContainerUtil.find(model.getContentEntries(), e-> contentRoot.equals(e.getFile()));
+
+      entry.addExcludeFolder(excludedUrl);
+      entry.addSourceFolder(sourceUrl, false);
+      entry.addSourceFolder(testSourceUrl, true);
+      entry.addSourceFolder(resourceUrl, JavaResourceRootType.RESOURCE);
+      entry.addSourceFolder(testResourceUrl, JavaResourceRootType.TEST_RESOURCE);
+
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(outputUrl);
+      model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOutputUrl);
+    });
+
+    checkRootChangedOnDirCreationDeletion(contentRoot, excludedUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, sourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testSourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, resourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testResourceUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, outputUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, testOutputUrl, 1);
+    checkRootChangedOnDirCreationDeletion(contentRoot, "xxx", 0);
+  }
+
+  private void checkRootChangedOnDirCreationDeletion(VirtualFile contentRoot, String dirUrl, int mustGenerateEvents) {
+    myModuleRootListener.reset();
+    UIUtil.dispatchAllInvocationEvents();
+
+    VirtualFile dir = createChildDirectory(contentRoot, new File(dirUrl).getName());
+    assertEventsCount(mustGenerateEvents);
+
+    myModuleRootListener.reset();
+    UIUtil.dispatchAllInvocationEvents();
+    delete(dir);
+    assertEventsCount(mustGenerateEvents);
   }
 }

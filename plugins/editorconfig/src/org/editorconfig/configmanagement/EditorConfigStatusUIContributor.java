@@ -156,6 +156,6 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.Editorconfig;
+    return null;
   }
 }

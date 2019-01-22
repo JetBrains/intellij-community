@@ -31,6 +31,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.PaintEvent;
@@ -85,8 +86,20 @@ class ActionUpdater {
 
   private void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
-      myFactory.getPresentation(entry.getKey()).copyFrom(entry.getValue());
+      Presentation original = myFactory.getPresentation(entry.getKey());
+      Presentation cloned = entry.getValue();
+      original.copyFrom(cloned);
+      reflectSubsequentChangesInOriginalPresentation(original, cloned);
     }
+  }
+
+  // some actions remember the presentation passed to "update" and modify it later, in hope that menu will change accordingly
+  private static void reflectSubsequentChangesInOriginalPresentation(Presentation original, Presentation cloned) {
+    cloned.addPropertyChangeListener(e -> {
+      if (SwingUtilities.isEventDispatchThread()) {
+        original.copyFrom(cloned);
+      }
+    });
   }
 
   private static <T> T callAction(AnAction action, String operation, Supplier<T> call) {

@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -260,7 +260,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     override fun createExecutor(): GithubApiRequestExecutor.WithBasicAuth {
       val modalityState = ModalityState.stateForComponent(passwordField)
       return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
-        invokeAndWaitIfNeed(modalityState) {
+        invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
                                    "Authentication Code",
                                    "Github Two-Factor Authentication",

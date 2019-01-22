@@ -383,9 +383,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     ScrollingUtil.ensureRangeIsVisible(myList, top, top + myList.getLastVisibleIndex() - firstVisibleIndex);
   }
 
-  boolean truncatePrefix(boolean preserveSelection) {
+  void truncatePrefix(boolean preserveSelection, int hideOffset) {
     if (!myOffsets.truncatePrefix()) {
-      return false;
+      myArranger.prefixTruncated(this, hideOffset);
+      return;
     }
     myPrefixChangeListeners.forEach((listener -> listener.beforeTruncate()));
 
@@ -404,7 +405,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     myPrefixChangeListeners.forEach((listener -> listener.afterTruncate()));
-    return true;
   }
 
   void moveToCaretPosition() {
@@ -1013,7 +1013,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public boolean isCompletion() {
-    return myArranger instanceof CompletionLookupArrangerImpl;
+    return myArranger.isCompletion();
   }
 
   @Override
@@ -1094,6 +1094,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public List<String> getAdvertisements() {
     return myAdComponent.getAdvertisements();
+  }
+
+  @Override
+  protected void onPopupCancel() {
+    hide();
   }
 
   @Override

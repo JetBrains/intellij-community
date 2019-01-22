@@ -121,7 +121,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER).byType(exceptionType)
       .byName("e", "ex", "exception").generate(false);
 
-    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, file);
+    PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {

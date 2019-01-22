@@ -264,7 +264,7 @@ idea.fatal.error.notification=disabled
                    productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
                    buildContext.productProperties.modulesToCompileTests)
 
-    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>();
+    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
       def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
       if (publishingSpec == null) {

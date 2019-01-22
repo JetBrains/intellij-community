@@ -26,7 +26,6 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.dataFlow.SpecialField.COLLECTION_SIZE;
-import static com.intellij.codeInspection.dataFlow.SpecialField.MAP_SIZE;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
@@ -35,24 +34,22 @@ public class CollectionFactoryInliner implements CallInliner {
   static final class FactoryInfo {
     final boolean myNotNull;
     final int mySize;
-    final SpecialField mySizeField;
 
-    FactoryInfo(int size, SpecialField sizeField) {
-      this(size, sizeField, false);
+    FactoryInfo(int size) {
+      this(size, false);
     }
 
-    FactoryInfo(int size, SpecialField sizeField, boolean notNull) {
+    FactoryInfo(int size, boolean notNull) {
       mySize = size;
-      mySizeField = sizeField;
       myNotNull = notNull;
     }
   }
 
   private static final CallMapper<FactoryInfo> STATIC_FACTORIES = new CallMapper<FactoryInfo>()
-    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet").parameterCount(0), new FactoryInfo(0, COLLECTION_SIZE))
-    .register(staticCall(JAVA_UTIL_COLLECTIONS, "singletonList", "singleton").parameterCount(1), new FactoryInfo(1, COLLECTION_SIZE))
-    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0), new FactoryInfo(0, MAP_SIZE))
-    .register(staticCall(JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2), new FactoryInfo(1, MAP_SIZE));
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet").parameterCount(0), new FactoryInfo(0))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "singletonList", "singleton").parameterCount(1), new FactoryInfo(1))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyMap").parameterCount(0), new FactoryInfo(0))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2), new FactoryInfo(1));
 
   private static final CallMatcher JDK9_MAP_FACTORIES =
     staticCall(JAVA_UTIL_MAP, "of", "ofEntries");
@@ -73,13 +70,13 @@ public class CollectionFactoryInliner implements CallInliner {
     if (JDK9_FACTORIES.test(call)) {
       int size =
         JDK9_ARRAY_FACTORIES.test(call) && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressionCount();
-      return new FactoryInfo(size, COLLECTION_SIZE, true);
+      return new FactoryInfo(size, true);
     }
     if (JDK9_MAP_FACTORIES.test(call)) {
       boolean ofEntries = "ofEntries".equals(call.getMethodExpression().getReferenceName());
       int size =
         ofEntries && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressionCount() / (ofEntries ? 1 : 2);
-      return new FactoryInfo(size, MAP_SIZE, true);
+      return new FactoryInfo(size, true);
     }
     return null;
   }
@@ -97,7 +94,7 @@ public class CollectionFactoryInliner implements CallInliner {
     }
     DfaValueFactory factory = builder.getFactory();
     SpecialFieldValue sizeConstraint =
-      factoryInfo.mySize == -1 ? null : factoryInfo.mySizeField.withValue(factory.getInt(factoryInfo.mySize));
+      factoryInfo.mySize == -1 ? null : COLLECTION_SIZE.withValue(factory.getInt(factoryInfo.mySize));
     DfaFactMap facts = DfaFactMap.EMPTY
       .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(callType).asConstraint())
       .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)

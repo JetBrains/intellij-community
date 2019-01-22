@@ -9,7 +9,7 @@ import java.util.stream.Stream
 private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
-    val gitVersion = execute(File(System.getProperty("user.dir")), it, "--version")
+    val gitVersion = execute(null, it, "--version")
     if (gitVersion.isBlank()) error(noGitFound)
     log(gitVersion)
   }
@@ -90,20 +90,18 @@ internal data class GitObject(val path: String, val hash: String, val repo: File
  * @param dir path in repo
  * @return root of repo
  */
-internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File {
-  return if (dir.isDirectory && dir.listFiles().find { file ->
-      file.isDirectory && file.name == ".git"
-    } != null) {
+internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
+  dir.isDirectory && dir.listFiles().find { file ->
+    file.isDirectory && file.name == ".git"
+  } != null -> {
     if (!silent) log("Git repo found in $dir")
     dir
   }
-  else if (dir.parentFile != null) {
+  dir.parentFile != null -> {
     if (!silent) log("No git repo found in $dir")
     findGitRepoRoot(dir.parentFile, silent)
   }
-  else {
-    error("No git repo found in $dir")
-  }
+  else -> error("No git repo found in $dir")
 }
 
 internal fun unStageFiles(files: List<String>, repo: File) {

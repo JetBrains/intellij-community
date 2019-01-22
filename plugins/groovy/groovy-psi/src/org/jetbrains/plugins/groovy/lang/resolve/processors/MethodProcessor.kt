@@ -95,11 +95,12 @@ class MethodProcessor(
     get() {
       val (applicableCandidates, canChooseOverload) = myApplicable ?: computeApplicableCandidates()
       if (applicableCandidates.isEmpty()) return null
+      val filteredBySignature = filterBySignature(applicableCandidates)
       if (canChooseOverload) {
-        return chooseOverloads(applicableCandidates, DefaultMethodComparatorContext(place, arguments))
+        return chooseOverloads(filteredBySignature)
       }
       else {
-        return filterBySignature(applicableCandidates)
+        return filteredBySignature
       }
     }
 

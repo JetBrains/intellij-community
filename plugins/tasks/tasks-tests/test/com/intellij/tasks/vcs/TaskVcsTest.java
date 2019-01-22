@@ -37,11 +37,13 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
 import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import icons.TasksIcons;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
@@ -516,19 +518,17 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      myTaskManager.setRepositories(Collections.emptyList());
-      AllVcses.getInstance(getProject()).unregisterManually(myVcs);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myTaskManager = null;
-      myVcs = null;
-      myChangeListManager = null;
-      super.tearDown();
-    }
+    new RunAll()
+      .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
+      .append(() -> myTaskManager.setRepositories(Collections.emptyList()))
+      .append(() -> AllVcses.getInstance(getProject()).unregisterManually(myVcs))
+      .append(() -> {
+        myTaskManager = null;
+        myVcs = null;
+        myChangeListManager = null;
+      })
+      .append(() -> super.tearDown())
+      .run();
   }
 
   @NotNull

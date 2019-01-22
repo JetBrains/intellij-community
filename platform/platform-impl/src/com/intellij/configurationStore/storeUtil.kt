@@ -2,10 +2,13 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.SaveAndSyncHandlerImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.async.coroutineDispatchingContext
@@ -20,7 +23,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -43,6 +45,9 @@ class StoreUtil private constructor() {
     @JvmStatic
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
+      if (componentManager is Application) {
+        cancelScheduledSave()
+      }
       runBlocking {
         com.intellij.configurationStore.saveSettings(componentManager, isForceSavingAllSettings)
       }
@@ -68,6 +73,8 @@ class StoreUtil private constructor() {
     @CalledInAwt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(isForceSavingAllSettings: Boolean) {
+      cancelScheduledSave()
+
       FileDocumentManager.getInstance().saveAllDocuments()
       runBlocking {
         saveProjectsAndApp(isForceSavingAllSettings)
@@ -76,10 +83,12 @@ class StoreUtil private constructor() {
   }
 }
 
+private fun cancelScheduledSave() {
+  (SaveAndSyncHandler.getInstance() as? SaveAndSyncHandlerImpl)?.cancelScheduledSave()
+}
+
 @CalledInAny
 private suspend fun saveSettings(componentManager: ComponentManager, isForceSavingAllSettings: Boolean = false) {
-  val currentThread = Thread.currentThread()
-  ShutDownTracker.getInstance().registerStopperThread(currentThread)
   try {
     componentManager.stateStore.save(isForceSavingAllSettings = isForceSavingAllSettings)
   }
@@ -109,9 +118,6 @@ private suspend fun saveSettings(componentManager: ComponentManager, isForceSavi
                    NotificationType.ERROR)
     }
     notification.notify(componentManager as? Project)
-  }
-  finally {
-    ShutDownTracker.getInstance().unregisterStopperThread(currentThread)
   }
 }
 
@@ -165,7 +171,7 @@ private suspend fun saveAllProjects(isForceSavingAllSettings: Boolean) {
 }
 
 @CalledInAny
-internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project?,
+internal suspend fun saveDocumentsAndProjectsAndApp(onlyProject: Project? = null,
                                                     isForceSavingAllSettings: Boolean = false,
                                                     isDocumentsSavingExplicit: Boolean = true) {
   coroutineScope {

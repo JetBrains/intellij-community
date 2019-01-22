@@ -46,7 +46,7 @@ public class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
     PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)factory.createStatementFromText(text, null);
     doWhileStatement = (PsiDoWhileStatement)codeStyleManager.reformat(doWhileStatement);
 
-    doWhileStatement = (PsiDoWhileStatement)container.addAfter(doWhileStatement, statements[statements.length - 1]);
+    doWhileStatement = (PsiDoWhileStatement)addAfter(doWhileStatement, container, statements);
 
     PsiStatement body = doWhileStatement.getBody();
     if (!(body instanceof PsiBlockStatement)) {
@@ -54,7 +54,7 @@ public class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiExpression condition = doWhileStatement.getCondition();

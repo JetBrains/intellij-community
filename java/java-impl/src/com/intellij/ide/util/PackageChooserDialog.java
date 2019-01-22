@@ -43,10 +43,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.Enumeration;
 import java.util.List;
@@ -225,6 +222,7 @@ public class PackageChooserDialog extends PackageChooser {
 
   @Override
   public PsiPackage getSelectedPackage(){
+    if (getExitCode() == CANCEL_EXIT_CODE) return null;
     return getTreeSelection();
   }
 
@@ -368,25 +366,17 @@ public class PackageChooserDialog extends PackageChooser {
           if (dir == null) return;
           final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(dir);
 
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent();
-          final DefaultMutableTreeNode newChild = new DefaultMutableTreeNode();
-          newChild.setUserObject(newPackage);
-          node.add(newChild);
+          if (newPackage != null) {
+            DefaultMutableTreeNode newChild = addPackage(newPackage);
 
-          final DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
-          model.nodeStructureChanged(node);
+            DefaultTreeModel model = (DefaultTreeModel)myTree.getModel();
+            model.nodeStructureChanged((TreeNode)model.getRoot());
 
-          final TreePath selectionPath = myTree.getSelectionPath();
-          TreePath path;
-          if (selectionPath == null) {
-            path = new TreePath(newChild.getPath());
-          } else {
-            path = selectionPath.pathByAddingChild(newChild);
-          }
+            TreePath path = new TreePath(newChild.getPath());
             myTree.setSelectionPath(path);
             myTree.scrollPathToVisible(path);
             myTree.expandPath(path);
-
+          }
         }
         catch (IncorrectOperationException e) {
           Messages.showMessageDialog(

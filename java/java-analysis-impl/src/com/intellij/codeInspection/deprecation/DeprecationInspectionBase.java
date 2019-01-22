@@ -20,12 +20,15 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   public boolean IGNORE_IN_SAME_OUTERMOST_CLASS;
@@ -104,6 +107,15 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
       }
     }
+    if (refElement instanceof PsiField) {
+      PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(elementToHighlight.getParent(), PsiReferenceExpression.class);
+      if (referenceExpression != null) {
+        PsiField replacement = findReplacementInJavaDoc((PsiField)refElement, referenceExpression);
+        if (replacement != null) {
+          return new ReplaceFieldReferenceFix(referenceExpression, replacement);
+        }
+      }
+    }
     return null;
   }
 
@@ -156,17 +168,33 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return description;
   }
 
+  private static PsiField findReplacementInJavaDoc(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+    return getReplacementCandidatesFromJavadoc(field, PsiField.class, field, getQualifierClass(referenceExpression))
+      .filter(tagField -> areReplaceable(tagField, referenceExpression))
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
+  }
+
   private static PsiMethod findReplacementInJavaDoc(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
     if (method instanceof PsiConstructorCall) return null;
     if (method instanceof ClsMethodImpl) {
       PsiMethod sourceMethod = ((ClsMethodImpl)method).getSourceMirrorMethod();
       return sourceMethod == null ? null : findReplacementInJavaDoc(sourceMethod, call);
     }
-    PsiDocComment doc = method.getDocComment();
-    if (doc == null) return null;
+
+    return getReplacementCandidatesFromJavadoc(method, PsiMethod.class, call, getQualifierClass(call.getMethodExpression()))
+      .filter(tagMethod -> areReplaceable(method, tagMethod, call))
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
+  }
+
+  @NotNull
+  private static <T extends PsiDocCommentOwner> Stream<? extends T> getReplacementCandidatesFromJavadoc(T member, Class<T> clazz, PsiElement context, PsiClass qualifierClass) {
+    PsiDocComment doc = member.getDocComment();
+    if (doc == null) return Stream.empty();
 
     Collection<PsiDocTag> docTags = PsiTreeUtil.findChildrenOfType(doc, PsiDocTag.class);
-    if (docTags.isEmpty()) return null;
+    if (docTags.isEmpty()) return Stream.empty();
     return docTags
       .stream()
       .filter(t -> {
@@ -179,32 +207,25 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .filter(Objects::nonNull)
       .map(reference -> reference.resolve())
       .distinct()
-      .map(resolved -> (PsiMethod)(resolved instanceof PsiMethod ? resolved : null))
+      .map(resolved -> ObjectUtils.tryCast(resolved, clazz))
       .filter(Objects::nonNull)
-      .filter(tagMethod -> !tagMethod.isDeprecated())
-      .filter(tagMethod -> !tagMethod.isEquivalentTo(method))
-      .filter(tagMethod -> areReplaceable(method, tagMethod, call))
-      .collect(MoreCollectors.onlyOne())
-      .orElse(null);
+      .filter(tagMethod -> !tagMethod.isDeprecated()) // not deprecated
+      .filter(tagMethod -> PsiResolveHelper.SERVICE.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
+      .filter(tagMethod -> !member.getManager().areElementsEquivalent(tagMethod, member)); // not the same
+  }
+
+  private static boolean areReplaceable(PsiField suggested, PsiReferenceExpression expression) {
+    if (ExpressionUtils.isVoidContext(expression)) return true;
+    PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
+    if (expectedType == null) return true;
+    PsiType suggestedType = suggested.getType();
+    return TypeConversionUtil.isAssignable(expectedType, suggestedType);
   }
 
   private static boolean areReplaceable(@NotNull PsiMethod initial,
                                         @NotNull PsiMethod suggestedReplacement,
                                         @NotNull PsiMethodCallExpression call) {
-    if (!PsiResolveHelper.SERVICE.getInstance(call.getProject()).isAccessible(suggestedReplacement, call, null)) {
-      return false;
-    }
-
     boolean isInitialStatic = initial.hasModifierProperty(PsiModifier.STATIC);
-    boolean isSuggestedStatic = suggestedReplacement.hasModifierProperty(PsiModifier.STATIC);
-    if (isInitialStatic && !isSuggestedStatic) {
-      return false;
-    }
-    if (!isInitialStatic &&
-        !isSuggestedStatic &&
-        !InheritanceUtil.isInheritorOrSelf(getQualifierClass(call), suggestedReplacement.getContainingClass(), true)) {
-      return false;
-    }
 
     String qualifierText;
     if (isInitialStatic) {
@@ -220,15 +241,23 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     PsiMethodCallExpression suggestedCall = (PsiMethodCallExpression)elementFactory
       .createExpressionFromText(qualifierText + suggestedReplacement.getName() + arguments.getText(), call);
 
+    PsiType type = ExpectedTypeUtils.findExpectedType(call, true);
+    if (type != null && !type.equals(PsiType.VOID)) {
+      PsiType suggestedCallType = suggestedCall.getType();
+      if (!ExpressionUtils.isVoidContext(call) && suggestedCallType != null && !TypeConversionUtil.isAssignable(type, suggestedCallType)) {
+        return false;
+      }
+    }
+
     MethodCandidateInfo result = ObjectUtils.tryCast(suggestedCall.resolveMethodGenerics(), MethodCandidateInfo.class);
     return result != null && result.isApplicable();
   }
 
   @Nullable
-  private static PsiClass getQualifierClass(@NotNull PsiMethodCallExpression call) {
-    PsiExpression expression = call.getMethodExpression().getQualifierExpression();
+  private static PsiClass getQualifierClass(@NotNull PsiReferenceExpression referenceExpression) {
+    PsiExpression expression = referenceExpression.getQualifierExpression();
     if (expression == null) {
-      return RefactoringChangeUtil.getThisClass(call);
+      return RefactoringChangeUtil.getThisClass(referenceExpression);
     }
     return PsiUtil.resolveClassInType(expression.getType());
   }

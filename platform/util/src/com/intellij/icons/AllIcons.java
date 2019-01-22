@@ -1416,6 +1416,10 @@ public class AllIcons {
      */
     public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.svg");
     /**
+     * 16x16
+     */
+    public static final Icon Lock = IconLoader.getIcon("/diff/lock.svg");
+    /**
      * 12x12
      */
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.svg");

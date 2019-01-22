@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyLValueUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets.POSTFIX_UNARY_OP_SET
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.UnknownArgument
@@ -27,28 +25,27 @@ fun GrExpression.isLValue(): Boolean {
   return when (parent) {
     is GrTuple -> true
     is GrAssignmentExpression -> this == parent.lValue
+    is GrUnaryExpression -> parent.operationTokenType in POSTFIX_UNARY_OP_SET
     else -> false
   }
 }
 
-class RValue(val argument: Argument)
-
 /**
  * @return non-null result iff this expression is an l-value
  */
-fun GrExpression.getRValue(): RValue? {
+fun GrExpression.getRValue(): Argument? {
   val parent = parent
   return when {
-    parent is GrTuple -> RValue(UnknownArgument)
+    parent is GrTuple -> UnknownArgument
     parent is GrAssignmentExpression && parent.lValue === this -> {
-      val argument = if (parent.isOperatorAssignment) {
+      if (parent.isOperatorAssignment) {
         ExpressionArgument(parent)
       }
       else {
         parent.rValue?.let(::ExpressionArgument) ?: UnknownArgument
       }
-      RValue(argument)
     }
+    parent is GrUnaryExpression && parent.operationTokenType in POSTFIX_UNARY_OP_SET -> ExpressionArgument(parent)
     else -> null
   }
 }

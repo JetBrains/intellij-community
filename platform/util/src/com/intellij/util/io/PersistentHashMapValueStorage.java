@@ -653,7 +653,7 @@ public class PersistentHashMapValueStorage {
       final BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream(result.buffer.length);
       DataOutputStream testStream = new DataOutputStream(stream);
       appender.append(testStream);
-      newValueOffset = appendBytes(stream.getInternalBuffer(), 0, stream.size(), 0);
+      newValueOffset = appendBytes(stream.toByteArraySequence(), 0);
       myChunksBytesAfterRemoval += stream.size();
     }
     else {

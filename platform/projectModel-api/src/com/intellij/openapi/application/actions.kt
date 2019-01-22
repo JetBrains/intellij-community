@@ -23,9 +23,9 @@ inline fun <T> runReadAction(crossinline runnable: () -> T): T {
 }
 
 /**
- * @exclude Internal use only
+ * @suppress Internal use only
  */
-fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -> T): T {
+fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: () -> T): T {
   val app = ApplicationManager.getApplication()
   if (app == null) {
     if (SwingUtilities.isEventDispatchThread()) {
@@ -47,6 +47,11 @@ fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -
   else {
     return computeDelegated { app.invokeAndWait({ it (runnable()) }, modalityState ?: ModalityState.defaultModalityState()) }
   }
+}
+
+@Deprecated(replaceWith = ReplaceWith("invokeAndWaitIfNeeded()"), message = "Use invokeAndWaitIfNeeded()")
+fun <T> invokeAndWaitIfNeed(modalityState: ModalityState? = null, runnable: () -> T): T {
+  return invokeAndWaitIfNeeded(modalityState, runnable)
 }
 
 @PublishedApi

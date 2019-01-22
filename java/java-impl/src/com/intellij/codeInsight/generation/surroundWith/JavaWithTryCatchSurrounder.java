@@ -72,11 +72,11 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
+    tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
+    addRangeWithinContainer(tryBlock, container, statements, true);
 
     PsiCatchSection[] catchSections = tryStatement.getCatchSections();
 

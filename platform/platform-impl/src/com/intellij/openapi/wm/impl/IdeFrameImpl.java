@@ -1,12 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
@@ -17,7 +14,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -25,8 +25,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -41,14 +39,12 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.PowerSupplyKit;
@@ -260,37 +256,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   private void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
     addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull final WindowEvent e) {
-        if (isTemporaryDisposed()) {
-          return;
+        if (!isTemporaryDisposed()) {
+          helper.windowClosing(myProject);
         }
-
-        int numberOfOpenedProjects = ProjectManager.getInstance().getOpenProjects().length;
-        // Exit on Linux and Windows if the only opened project frame is closed.
-        // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
-        // If welcome screen is disabled, behaviour on all OS is the same.
-        if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && !isQuitAppOnCloseTheOnlyProjectWindow())) {
-          if (myProject != null && myProject.isOpen()) {
-            ProjectManagerEx.getInstanceEx().closeAndDispose(myProject);
-          }
-          Application app = ApplicationManager.getApplication();
-          app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
-          StoreUtil.saveSettings(app, true);
-
-          WelcomeFrame.showIfNoProjectOpened();
-        }
-        else {
-          ApplicationManagerEx.getApplicationEx().exit();
-        }
-      }
-
-      private boolean isQuitAppOnCloseTheOnlyProjectWindow() {
-        if (SystemPropertyUtil.getBoolean("idea.show.welcome.screen", false)) {
-          return true;
-        }
-        return !SystemInfo.isMacSystemMenu || !GeneralSettings.getInstance().isShowWelcomeScreen();
       }
     });
   }

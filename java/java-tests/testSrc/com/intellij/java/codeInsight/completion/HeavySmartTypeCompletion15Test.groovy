@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -25,79 +11,79 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 @CompileStatic
-public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/smartType";
+class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
+  private static final String BASE_PATH = "/codeInsight/completion/smartType"
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return JavaTestUtil.getJavaTestDataPath()
   }
 
-  public void testGetInstance() throws Throwable {
+  void testGetInstance() throws Throwable {
     myFixture.configureFromExistingVirtualFile(
-            myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"));
-    myFixture.complete(CompletionType.SMART);
-    myFixture.type('\n');
-    myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java");
+      myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"))
+    myFixture.complete(CompletionType.SMART)
+    myFixture.type('\n')
+    myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java")
   }
 
-  public void testProtectedAnonymousConstructor() throws Throwable {
+  void testProtectedAnonymousConstructor() throws Throwable {
     myFixture.addClass("package pkg;" +
                        "public class Foo {" +
                        "  protected Foo(int a) {}" +
-                       "}");
+                       "}")
     myFixture.addClass("package pkg;" +
                        "public class Bar<T> {" +
                        "  protected Bar(java.util.List<T> list) {}" +
-                       "}");
-    doTest();
+                       "}")
+    doTest()
   }
 
-  public void testProtectedAnonymousConstructor2() throws Throwable {
+  void testProtectedAnonymousConstructor2() throws Throwable {
     myFixture.addClass("package pkg;" +
                        "public class Foo {" +
                        "  protected Foo(int a) {}" +
-                       "}");
+                       "}")
     myFixture.addClass("package pkg;" +
                        "public class Bar<T> {" +
                        "  protected Bar(java.util.List<T> list) {}" +
-                       "}");
-    doTest();
+                       "}")
+    doTest()
   }
 
-  public void testUnlockDocument() throws Throwable {
-    myFixture.addClass("package pkg; public class Bar {}");
+  void testUnlockDocument() throws Throwable {
+    myFixture.addClass("package pkg; public class Bar {}")
     myFixture.addClass("package pkg; public class Foo {" +
                        "  public static void foo(java.util.List<pkg.Bar> list) {}" +
-                       "}");
+                       "}")
 
-    doTest();
+    doTest()
   }
 
   private void doTest() throws Exception {
-    configure();
-    checkResult();
+    configure()
+    checkResult()
   }
 
   private void checkResult() {
-    myFixture.checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    myFixture.checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java")
   }
 
   private void configure() {
-    myFixture.configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    myFixture.complete(CompletionType.SMART);
+    myFixture.configureByFile(BASE_PATH + "/" + getTestName(false) + ".java")
+    myFixture.complete(CompletionType.SMART)
   }
 
-  public void testClassLiteralShouldInsertImport() throws Throwable {
-    myFixture.addClass("package bar; public class Intf {}");
-    myFixture.addClass("package foo; public class Bar extends bar.Intf {}");
+  void testClassLiteralShouldInsertImport() throws Throwable {
+    myFixture.addClass("package bar; public class Intf {}")
+    myFixture.addClass("package foo; public class Bar extends bar.Intf {}")
 
-    configure();
-    myFixture.type('\n');
-    checkResult();
+    configure()
+    myFixture.type('\n')
+    checkResult()
   }
 
-  public void testInaccessibleClassAfterNew() {
+  void testInaccessibleClassAfterNew() {
     Module moduleA = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'A', myFixture.tempDirFixture.findOrCreateDir("a"))
     Module moduleB = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'B', myFixture.tempDirFixture.findOrCreateDir("b"))
 

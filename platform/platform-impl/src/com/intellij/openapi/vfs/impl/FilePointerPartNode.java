@@ -142,13 +142,20 @@ class FilePointerPartNode {
   void addRelevantPointersFrom(@Nullable VirtualFile parent,
                                boolean separator,
                                @NotNull CharSequence childName,
-                               @NotNull List<? super FilePointerPartNode> out) {
+                               @NotNull List<? super FilePointerPartNode> out, boolean addSubdirectoryPointers) {
     CharSequence parentName = parent == null ? null : parent.getNameSequence();
     FilePointerPartNode[] outNode = new FilePointerPartNode[1];
     int position = position(parent, parentName, separator, childName, 0, outNode, out);
     if (position != -1) {
       FilePointerPartNode node = outNode[0];
-      addAllPointersUnder(node, out);
+      boolean matches = position == node.part.length() || addSubdirectoryPointers;
+      if (matches && node.leaves != null) {
+        out.add(node);
+      }
+      if (addSubdirectoryPointers) {
+        // when "a/b" changed, treat all "a/b/*" virtual file pointers as changed because that's what happens on directory rename "a"->"newA": "a" deleted and "newA" created
+        addAllPointersStrictlyUnder(node, out);
+      }
     }
   }
 
@@ -164,12 +171,12 @@ class FilePointerPartNode {
     return false;
   }
 
-  private static void addAllPointersUnder(@NotNull FilePointerPartNode node, @NotNull List<? super FilePointerPartNode> out) {
-    if (node.leaves != null) {
-      out.add(node);
-    }
+  private static void addAllPointersStrictlyUnder(@NotNull FilePointerPartNode node, @NotNull List<? super FilePointerPartNode> out) {
     for (FilePointerPartNode child : node.children) {
-      addAllPointersUnder(child, out);
+      if (child.leaves != null) {
+        out.add(child);
+      }
+      addAllPointersStrictlyUnder(child, out);
     }
   }
 

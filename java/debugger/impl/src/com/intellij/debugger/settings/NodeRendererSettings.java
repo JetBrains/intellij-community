@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -14,20 +14,27 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +48,8 @@ import java.util.List;
   @Storage(value = "debugger.renderers.xml", deprecated = true),
 })
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(NodeRendererSettings.class);
+
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
   @NonNls public static final String RENDERER_TAG = "Renderer";
   @NonNls private static final String RENDERER_ID = "ID";
@@ -218,7 +227,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     myDispatcher.getMulticaster().renderersChanged();
   }
 
-  public List<NodeRenderer> getAllRenderers() {
+  public List<NodeRenderer> getAllRenderers(Project project) {
     // the order is important as the renderers are applied according to it
     final List<NodeRenderer> allRenderers = new ArrayList<>();
 
@@ -227,6 +236,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       allRenderers.add(renderer);
       return true;
     });
+
+    if (Registry.is("debugger.renderers.annotations")) {
+      ReadAction.run(() -> addAnnotationRenderers(allRenderers, project));
+    }
 
     // plugins registered renderers come after that
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
@@ -239,6 +252,49 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     allRenderers.add(myArrayRenderer);
     allRenderers.add(myClassRenderer);
     return allRenderers;
+  }
+
+  private void addAnnotationRenderers(List<NodeRenderer> renderers, Project project) {
+    try {
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+      String annotationFqn = Debugger.Renderer.class.getName().replace("$", ".");
+      PsiClass annotationClass =
+        JavaPsiFacade.getInstance(project).findClass(annotationFqn, allScope);
+      if (annotationClass != null) {
+        AnnotatedElementsSearch.searchPsiClasses(annotationClass, allScope)
+          .forEach(e -> {
+            PsiAnnotation annotation = e.getAnnotation(annotationFqn);
+            if (annotation != null) {
+              String text = getAttributeValue(annotation, "text");
+              LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text, null);
+              String childrenArray = getAttributeValue(annotation, "childrenArray");
+              String isLeaf = getAttributeValue(annotation, "hasChildren");
+              ExpressionChildrenRenderer childrenRenderer =
+                StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+              CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+                e.getQualifiedName(), e.getQualifiedName(), labelRenderer, childrenRenderer);
+              renderer.setEnabled(true);
+              renderers.add(renderer);
+            }
+          });
+      }
+    }
+    catch (IndexNotReadyException | ProcessCanceledException ignore) {
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private static String getAttributeValue(PsiAnnotation annotation, String attribute) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attribute);
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof PsiLiteralValue) {
+      return String.valueOf(((PsiLiteralValue)value).getValue());
+    }
+    throw new IllegalStateException("String literal expected, but was " + value);
   }
 
   public Renderer readRenderer(Element root) throws InvalidDataException {
@@ -400,7 +456,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       descriptorUpdater.setKeyDescriptor(keyPair.second);
       descriptorUpdater.setValueDescriptor(valuePair.second);
 
-      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), valuePair.first.compute());
+      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), keyPair.second, valuePair.first.compute(), valuePair.second);
     }
 
     private Pair<Computable<String>, ValueDescriptorImpl> createValueComputable(final EvaluationContext evaluationContext,
@@ -501,17 +557,34 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     @Override
     public void labelChanged() {
-      myTargetDescriptor.setValueLabel(constructLabelText(getDescriptorLabel(myKeyDescriptor), getDescriptorLabel(myValueDescriptor)));
+      myTargetDescriptor.setValueLabel(
+        constructLabelText(getDescriptorLabel(myKeyDescriptor), myKeyDescriptor, getDescriptorLabel(myValueDescriptor), myValueDescriptor));
       myDelegate.labelChanged();
     }
 
-    static String constructLabelText(final String keylabel, final String valueLabel) {
+    static String constructLabelText(String keylabel,
+                                     @Nullable ValueDescriptorImpl keyDescriptor,
+                                     String valueLabel,
+                                     @Nullable ValueDescriptorImpl valueDescriptor) {
       StringBuilder sb = new StringBuilder();
-      sb.append('\"').append(keylabel).append("\" -> ");
+      sb.append(wrapIfNeeded(keylabel, keyDescriptor));
+      sb.append(" -> ");
       if (!StringUtil.isEmpty(valueLabel)) {
-        sb.append('\"').append(valueLabel).append('\"');
+        sb.append(wrapIfNeeded(valueLabel, valueDescriptor));
       }
       return sb.toString();
+    }
+
+    private static String wrapIfNeeded(String label, @Nullable ValueDescriptorImpl descriptor) {
+      if (descriptor != null) {
+        Renderer lastRenderer = descriptor.getLastRenderer();
+        if (descriptor.isString() ||
+            lastRenderer instanceof ToStringRenderer ||
+            (lastRenderer instanceof CompoundTypeRenderer && !(lastRenderer instanceof UnboxableTypeRenderer))) {
+          label = StringUtil.wrapWithDoubleQuote(label);
+        }
+      }
+      return label;
     }
 
     private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {

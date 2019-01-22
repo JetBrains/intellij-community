@@ -48,7 +48,9 @@ public class SimpleMethodInliner implements CallInliner {
     boolean allowed = PsiTreeUtil.processElements(value, e -> {
       if (!(e instanceof PsiExpression)) return true;
       if (e instanceof PsiInstanceOfExpression || e instanceof PsiParenthesizedExpression || e instanceof PsiLiteralExpression ||
-          e instanceof PsiPolyadicExpression || e instanceof PsiUnaryExpression || e instanceof PsiConditionalExpression) {
+          e instanceof PsiPolyadicExpression || e instanceof PsiUnaryExpression || e instanceof PsiConditionalExpression ||
+          e instanceof PsiTypeCastExpression || e instanceof PsiArrayAccessExpression || e instanceof PsiLambdaExpression ||
+          e instanceof PsiMethodReferenceExpression) {
         return true;
       }
       if (e instanceof PsiReferenceExpression) {

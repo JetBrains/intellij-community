@@ -10,7 +10,6 @@ import com.intellij.openapi.application.async.inWriteAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
-import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.mapSmart
@@ -46,10 +45,7 @@ internal class ProjectSaveSessionProducerManager(private val project: Project) :
       throw UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file })
     }
 
-    val status = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFilesList(readonlyFiles))
-    }
-
+    val status = ensureFilesWritable(project, getFilesList(readonlyFiles))
     if (status.hasReadonlyFiles()) {
       val unresolvedReadOnlyFiles = status.readonlyFiles.toList()
       dropUnableToSaveProjectNotification(project, unresolvedReadOnlyFiles)

@@ -779,7 +779,16 @@ public class PluginManagerConfigurableNew
         Map<String, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
         Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
-        initMainRepoGroups(groups, allRepositoriesMap);
+        try {
+          addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
+          addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
+          addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
+          addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
+        }
+        catch (UnknownHostException e) {
+          PluginManagerMain.LOG
+            .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
+        }
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
@@ -824,19 +833,6 @@ public class PluginManagerConfigurableNew
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
     return createScrollPane(myTrendingPanel, false);
-  }
-
-  private void initMainRepoGroups(List<PluginsGroup> groups, Map<String, IdeaPluginDescriptor> allRepositoriesMap) throws IOException {
-    try {
-      addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
-      addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
-      addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
-      addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
-    }
-    catch (UnknownHostException e) {
-      PluginManagerMain.LOG
-        .info(String.format("Main plugin repository '%s' is not available. Please check your network settings.", e.getMessage()));
-    }
   }
 
   @NotNull
@@ -1190,13 +1186,19 @@ public class PluginManagerConfigurableNew
             }
 
             if (parser.searchQuery != null) {
-              for (List<IdeaPluginDescriptor> descriptors : customRepositoriesMap.values()) {
-                for (IdeaPluginDescriptor descriptor : descriptors) {
+              String builtinUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
+              List<IdeaPluginDescriptor> builtinList = new ArrayList<>();
+
+              for (Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
+                List<IdeaPluginDescriptor> descriptors = entry.getKey().equals(builtinUrl) ? builtinList : result.descriptors;
+                for (IdeaPluginDescriptor descriptor : entry.getValue()) {
                   if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                    result.descriptors.add(descriptor);
+                    descriptors.add(descriptor);
                   }
                 }
               }
+
+              result.descriptors.addAll(0, builtinList);
             }
           }
           catch (IOException e) {
@@ -1378,14 +1380,12 @@ public class PluginManagerConfigurableNew
           }
         }
       }
+      catch (UnknownHostException e) {
+        PluginManagerMain.LOG.info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
+      }
       catch (IOException e) {
         if (host == null) {
-          if (e instanceof UnknownHostException) {
-            PluginManagerMain.LOG
-              .info(String.format("Main plugin repository '%s' is not available. Please check your network settings.", e.getMessage()));
-          } else {
-            exception = e;
-          }
+          exception = e;
         }
         else {
           PluginManagerMain.LOG.info(host, e);

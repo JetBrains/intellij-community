@@ -107,3 +107,11 @@ class KotlinCreateOtherProject
   , CreateMavenProjectAndConfigureKotlinGuiTest::class
 )
 class ConfigureKotlinReleaseTests
+
+@RunWith(Suite::class)
+@Suite.SuiteClasses(
+  PreparationSteps::class
+  , CreateGradleProjectWithKotlinGuiTest::class
+  , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
+)
+class DebugUIProblemGuiTestSuite : GuiTestSuite()

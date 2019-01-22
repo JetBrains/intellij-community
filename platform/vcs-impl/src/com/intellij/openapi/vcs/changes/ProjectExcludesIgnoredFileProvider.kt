@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
+import com.intellij.openapi.vfs.VirtualFileManager
 
 class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
@@ -24,8 +25,11 @@ class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
     val fileIndex = ProjectFileIndex.SERVICE.getInstance(project)
 
     for (policy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
-      for (file in policy.excludeRootsForProject) {
-        excludes.add(file)
+      for (url in policy.excludeUrlsForProject) {
+        val file = VirtualFileManager.getInstance().findFileByUrl(url)
+        if (file != null) {
+          excludes.add(file)
+        }
       }
     }
 

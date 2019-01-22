@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
@@ -38,6 +38,14 @@ class PositionalArgumentMapping(
     val map = argumentToParameter ?: return Applicability.inapplicable
     return mapApplicability(map, substitutor, erase, context)
   }
+
+  val distance: Long
+    get() {
+      val map = requireNotNull(argumentToParameter) {
+        "#distance should not be accessed on inapplicable mapping"
+      }
+      return positionalParametersDistance(map, context)
+    }
 }
 
 // foo(a?, b, c?, d?, e)

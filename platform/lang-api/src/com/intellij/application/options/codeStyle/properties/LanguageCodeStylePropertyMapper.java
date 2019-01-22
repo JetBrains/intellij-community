@@ -12,17 +12,35 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 @ApiStatus.Experimental
-public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
+public final class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private @NotNull final Language myLanguage;
+  private @NotNull final String myLanguageDomainId;
+  private @Nullable final LanguageCodeStyleSettingsProvider mySettingsProvider;
 
-  public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+  public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
+                                         @NotNull Language language,
+                                         @Nullable String languageDomainId) {
     super(settings);
     myLanguage = language;
-   }
+    myLanguageDomainId = languageDomainId == null ? myLanguage.getID().toLowerCase(Locale.ENGLISH) : languageDomainId;
+    mySettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+  }
+
+  @Nullable
+  @Override
+  protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    CodeStylePropertyAccessor accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
+    if (accessor != null) {
+      return accessor;
+    }
+    return super.getAccessor(codeStyleObject, field);
+  }
 
   @NotNull
   @Override
@@ -40,9 +58,14 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
   }
 
   @NotNull
+  public Language getLanguage() {
+    return myLanguage;
+  }
+
+  @NotNull
   @Override
   public String getLanguageDomainId() {
-    return myLanguage.getID().toLowerCase(Locale.ENGLISH);
+    return myLanguageDomainId;
   }
 
   private List<CustomCodeStyleSettings> getCustomSettings() {
@@ -85,8 +108,7 @@ public class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMa
   }
 
   private Set<String> getSupportedLanguageFields() {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
-    return provider == null ? Collections.emptySet() : provider.getSupportedFields();
+    return mySettingsProvider == null ? Collections.emptySet() : mySettingsProvider.getSupportedFields();
   }
 
 }

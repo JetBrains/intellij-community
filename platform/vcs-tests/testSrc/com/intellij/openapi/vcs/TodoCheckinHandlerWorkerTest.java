@@ -29,10 +29,7 @@ public class TodoCheckinHandlerWorkerTest extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    WriteAction.run(() -> {
-      myRootFile = createTestProjectStructure();
-    });
+    WriteAction.run(() -> myRootFile = createTestProjectStructure());
   }
 
   public void testInEditedSingle() {

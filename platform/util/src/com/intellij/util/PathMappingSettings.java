@@ -277,7 +277,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return !localPrefix.isEmpty() && normLocal(path).startsWith(localPrefix);
+      if (localPrefix.isEmpty()) {
+        return false;
+      }
+      final String localPath = normLocal(path);
+      final int prefixLength = localPrefix.length();
+      return localPath.startsWith(localPrefix) && (localPath.length() == prefixLength || localPath.charAt(prefixLength) == '/');
     }
 
     public String mapToRemote(@NotNull String path) {

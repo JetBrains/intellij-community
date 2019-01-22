@@ -393,22 +393,26 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public static void waitForAllEditorsFinallyLoaded(@NotNull Project project, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     long deadline = unit.toMillis(timeout) + System.currentTimeMillis();
-    W:
     while (true) {
-      UIUtil.dispatchAllInvocationEvents();
       if (System.currentTimeMillis() > deadline) throw new TimeoutException();
-      for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
-        if (editor instanceof TextEditorImpl) {
-          try {
-            ((TextEditorImpl)editor).waitForLoaded(1, TimeUnit.MILLISECONDS);
-          }
-          catch (TimeoutException ignored) {
-            continue W;
-          }
+      if (waitABitForEditorLoading(project)) break;
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  @TestOnly
+  private static boolean waitABitForEditorLoading(@NotNull Project project) {
+    for (FileEditor editor : FileEditorManager.getInstance(project).getAllEditors()) {
+      if (editor instanceof TextEditorImpl) {
+        try {
+          ((TextEditorImpl)editor).waitForLoaded(1, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+          return false;
         }
       }
-      break;
     }
+    return true;
   }
 
   @TestOnly

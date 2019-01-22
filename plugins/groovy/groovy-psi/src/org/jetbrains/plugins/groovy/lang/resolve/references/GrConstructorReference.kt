@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.psi.*
@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.DiamondResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
-import org.jetbrains.plugins.groovy.lang.resolve.impl.DefaultMethodComparatorContext
 import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getAllConstructors
 
@@ -74,7 +73,7 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
         BaseMethodResolveResult(it, element, state, arguments)
       }
     }
-    val applicable = chooseConstructors(allResults, arguments)
+    val applicable = chooseConstructors(allResults)
     return if (applicable != null) {
       Pair(true, applicable)
     }
@@ -83,12 +82,12 @@ abstract class GrConstructorReference<T : PsiElement>(element: T) : GroovyCachin
     }
   }
 
-  private fun chooseConstructors(candidates: List<GroovyMethodResult>, arguments: Arguments): List<GroovyMethodResult>? {
+  private fun chooseConstructors(candidates: List<GroovyMethodResult>): List<GroovyMethodResult>? {
     val applicable = candidates.filterTo(SmartList()) {
       it.isApplicable
     }
     if (applicable.isNotEmpty()) {
-      return chooseOverloads(applicable, DefaultMethodComparatorContext(element, arguments, true))
+      return chooseOverloads(applicable)
     }
     else {
       return null

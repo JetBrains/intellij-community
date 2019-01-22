@@ -13,7 +13,6 @@
          <p>Numerous plugins depend on the Git Integration plugin.</p>
       ]]>
    </description>
-  <version>8.1</version>
   <category>VCS Integration</category>
   <vendor>JetBrains</vendor>
 
@@ -186,7 +185,6 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
-    <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider

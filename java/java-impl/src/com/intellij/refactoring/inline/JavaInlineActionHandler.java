@@ -35,23 +35,4 @@ public abstract class JavaInlineActionHandler extends InlineActionHandler {
            l.equals(StdFileTypes.JSPX.getLanguage()) ||
            l.equals(StdFileTypes.JSP.getLanguage());
   }
-
-  protected static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
-    if (conflicts.isEmpty()) return true;
-
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-    return conflictsDialog.showAndGet();
-  }
-
-  @FunctionalInterface
-  public interface ConflictProcessor {
-    /**
-     * Processes conflicts (possibly shows UI).
-     *
-     * @param project   project
-     * @param conflicts map with conflict messages and locations
-     * @return true if refactoring could proceed or false if refactoring should be cancelled
-     */
-    boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts);
-  }
 }

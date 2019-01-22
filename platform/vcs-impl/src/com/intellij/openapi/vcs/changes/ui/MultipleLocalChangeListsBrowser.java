@@ -534,15 +534,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     @NotNull
     private State getUserObjectState(@NotNull Object change) {
       ExclusionState exclusionState = myStateHolder.getExclusionState(change);
-      if (exclusionState == ExclusionState.ALL_INCLUDED) {
-        return State.SELECTED;
-      }
-      else if (exclusionState == ExclusionState.ALL_EXCLUDED) {
-        return State.NOT_SELECTED;
-      }
-      else {
-        return State.DONT_CARE;
-      }
+      return PartialChangesUtil.convertExclusionState(exclusionState);
     }
 
     @NotNull

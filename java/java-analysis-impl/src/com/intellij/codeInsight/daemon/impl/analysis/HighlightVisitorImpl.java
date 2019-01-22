@@ -1415,9 +1415,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!myHolder.hasErrorResults() && method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) {
+    if (method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) {
+      if (!myHolder.hasErrorResults() && ((PsiMethod)method).hasTypeParameters()) {
+        myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(method, expression, result.getSubstitutor(), myJavaSdkVersion));
+      }
+
       PsiClass containingClass = ((PsiMethod)method).getContainingClass();
-      if (containingClass != null && containingClass.isInterface()) {
+      if (!myHolder.hasErrorResults() && containingClass != null && containingClass.isInterface()) {
         myHolder.add(HighlightMethodUtil.checkStaticInterfaceCallQualifier(expression, result, expression.getTextRange(), containingClass));
       }
     }

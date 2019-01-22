@@ -24,6 +24,12 @@ public class RuntimeExceptionWithAttachments extends RuntimeException implements
     myAttachments = attachments;
   }
 
+  public RuntimeExceptionWithAttachments(String message, @Nullable Throwable cause, Attachment... attachments) {
+    super(message, cause);
+    myUserMessage = null;
+    myAttachments = attachments;
+  }
+
   /**
    * Corresponds to {@link Logger#error(String, Throwable, Attachment...)}
    * ({@code LOG.error(userMessage, new RuntimeException(details), attachments)}).

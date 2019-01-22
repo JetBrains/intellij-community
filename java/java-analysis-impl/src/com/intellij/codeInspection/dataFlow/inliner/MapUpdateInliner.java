@@ -88,7 +88,7 @@ public class MapUpdateInliner implements CallInliner {
   private static void flushSize(PsiExpression qualifier, CFGBuilder builder) {
     DfaValueFactory factory = builder.getFactory();
     DfaValue value = factory.createValue(qualifier);
-    DfaValue size = SpecialField.MAP_SIZE.createValue(factory, value);
+    DfaValue size = SpecialField.COLLECTION_SIZE.createValue(factory, value);
     builder.assignAndPop(size, DfaUnknownValue.getInstance());
   }
 

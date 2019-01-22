@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.unwrap;
 
 import com.intellij.codeInsight.unwrap.UnwrapTestCase;
@@ -8,7 +8,7 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
  */
 public class UnwrapSwitchExpressionTest extends UnwrapTestCase {
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     assertUnwrapped("boolean b = switch(0) {\n" +
                     "            case 1 -> <caret>false;\n" +
                     "            default -> true;\n" +

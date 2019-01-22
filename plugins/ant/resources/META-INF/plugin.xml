@@ -1,7 +1,6 @@
 <idea-plugin>
   <name>Ant Support</name>
   <id>AntSupport</id>
-  <version>1.0</version>
   <idea-version since-build="6.0"/>
   <description>Editing, maintaining and running Ant build scripts inside IntelliJ IDEA.</description>
   <vendor>JetBrains</vendor>

@@ -6,7 +6,9 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
@@ -21,7 +23,6 @@ import java.util.*;
  * @author max
  */
 public abstract class InspectionTreeNode implements TreeNode {
-  static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
   private static final WeakInterner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
     @Override
     public int computeHashCode(LevelAndCount[] object) {
@@ -34,23 +35,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   });
 
-  final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
-    @NotNull
-    @Override
-    protected LevelAndCount[] compute() {
-      TObjectIntHashMap<HighlightDisplayLevel> counter = new TObjectIntHashMap<>();
-      visitProblemSeverities(counter);
-      LevelAndCount[] arr = new LevelAndCount[counter.size()];
-      final int[] i = {0};
-      counter.forEachEntry((l, c) -> {
-        arr[i[0]++] = new LevelAndCount(l, c);
-        return true;
-      });
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
-        .reversed());
-      return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
-    }
-  };
+  protected final ProblemLevels myProblemLevels = new ProblemLevels();
   @NotNull
   final Children myChildren = new Children();
   final InspectionTreeNode myParent;
@@ -157,7 +142,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   @NotNull
   public List<? extends InspectionTreeNode> getChildren() {
-    return Collections.unmodifiableList(Arrays.asList(myChildren.myChildren));
+    return ContainerUtil.immutableList(myChildren.myChildren);
   }
 
   @Override
@@ -208,6 +193,44 @@ public abstract class InspectionTreeNode implements TreeNode {
     void clear() {
       myChildren = EMPTY_ARRAY;
       myUserObject2Node.clear();
+    }
+  }
+
+  class ProblemLevels {
+    private volatile LevelAndCount[] myLevels;
+
+    @NotNull
+    private LevelAndCount[] compute() {
+      TObjectIntHashMap<HighlightDisplayLevel> counter = new TObjectIntHashMap<>();
+      visitProblemSeverities(counter);
+      LevelAndCount[] arr = new LevelAndCount[counter.size()];
+      final int[] i = {0};
+      counter.forEachEntry((l, c) -> {
+        arr[i[0]++] = new LevelAndCount(l, c);
+        return true;
+      });
+      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
+        .reversed());
+      return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
+    }
+
+    @NotNull
+    public LevelAndCount[] getValue() {
+      LevelAndCount[] result = myLevels;
+      if (result == null) {
+        //noinspection SynchronizeOnThis
+        synchronized (this) {
+          result = myLevels;
+          if (result == null) {
+            myLevels = result = compute();
+          }
+        }
+      }
+      return result;
+    }
+
+    public void drop() {
+      myLevels = null;
     }
   }
 }

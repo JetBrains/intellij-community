@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -134,7 +133,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
       File updateErrorsLog = new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME);
       try {
         if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
-          FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          IdeUpdateUsageTriggerCollector.trigger("update.failed");
           LOG.info("Previous update of the IDE failed");
         }
       }

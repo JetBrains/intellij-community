@@ -86,10 +86,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
     return SwingUtilities.isMiddleMouseButton(event);
   }
 
-  boolean isBorderNeeded(JComponent c) {
-    return false;
-  }
-
   boolean isTrackClickable() {
     return isOpaque(myScrollBar) || myTrack.animator.myValue > 0;
   }
@@ -189,7 +185,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
     ScrollBarPainter.setBackground(c);
-    ScrollBarPainter.setForeground(c);
     myScrollBar.setOpaque(false);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
@@ -253,7 +248,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public void paint(Graphics g, JComponent c) {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
-      Container parent = c.getParent();
       Color background = !isOpaque(c) ? null : c.getBackground();
       if (background != null) {
         g.setColor(background);
@@ -291,35 +285,24 @@ class DefaultScrollBarUI extends ScrollBarUI {
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
         }
       }
-      if (parent instanceof JScrollPane && isBorderNeeded(c)) {
-        Color foreground = c.getForeground();
-        if (foreground != null && !foreground.equals(background)) {
-          g.setColor(foreground);
-          switch (alignment) {
-            case TOP:
-              bounds.height--;
-              g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case LEFT:
-              bounds.width--;
-              g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case RIGHT:
-              g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
-              bounds.width--;
-              bounds.x++;
-              break;
-            case BOTTOM:
-              g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
-              bounds.height--;
-              bounds.y++;
-              break;
-          }
+      // do not set track size bigger that expected thickness
+      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+        int offset = bounds.width - getThickness();
+        if (offset > 0) {
+          bounds.width -= offset;
+          if (alignment == Alignment.RIGHT) bounds.x += offset;
+        }
+      }
+      else {
+        int offset = bounds.height - getThickness();
+        if (offset > 0) {
+          bounds.height -= offset;
+          if (alignment == Alignment.BOTTOM) bounds.y += offset;
         }
       }
       myTrack.bounds.setBounds(bounds);
       updateThumbBounds();
-      if (!isOpaque(c)) paintTrack((Graphics2D)g, c);
+      paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrack.bounds.width > 0 && myTrack.bounds.height > 0) {

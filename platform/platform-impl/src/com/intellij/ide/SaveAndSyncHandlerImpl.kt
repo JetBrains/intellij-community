@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.application.PooledScope
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.concurrency.JobScheduler
 import com.intellij.configurationStore.saveDocumentsAndProjectsAndApp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,48 +16,69 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.SingleAlarm
-import kotlinx.coroutines.launch
+import com.intellij.util.pooledThreadSingleAlarm
+import kotlinx.coroutines.runBlocking
 import java.beans.PropertyChangeListener
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = Logger.getInstance(SaveAndSyncHandler::class.java)
 
-class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable {
-  private val generalSettingsListener = PropertyChangeListener { e ->
-    if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
-      val eventQueue = IdeEventQueue.getInstance()
-      eventQueue.removeIdleListener(idleListener)
-      eventQueue.addIdleListener(idleListener, (e.newValue as Int) * 1000)
-    }
-  }
-
+class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyncHandler(), Disposable, BaseComponent {
   private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
   @Volatile
-  private var refreshSessionId: Long = 0
+  private var refreshSessionId = -1L
 
-  private val idleListener = Runnable {
-    if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-      submitTransaction {
-        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+  private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
+    val app = ApplicationManager.getApplication()
+    if (app != null && !app.isDisposed && !app.isDisposeInProgress && blockSaveOnFrameDeactivationCount.get() == 0) {
+      runBlocking {
+        saveDocumentsAndProjectsAndApp(isDocumentsSavingExplicit = false)
       }
     }
   }
 
-  private val isSaveAllowed: Boolean
-    get() = !ApplicationManager.getApplication().isDisposed && blockSaveOnFrameDeactivationCount.get() == 0
+  override fun initComponent() {
+    // add listeners after 10 seconds - doesn't make sense to listen earlier
+    JobScheduler.getScheduler().schedule(Runnable {
+      ApplicationManager.getApplication().invokeLater { addListeners() }
+    }, 30, TimeUnit.SECONDS)
+  }
 
-  init {
-    IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
+  private fun addListeners() {
+    val idleListener = Runnable {
+      if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
+        submitTransaction {
+          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+        }
+      }
+    }
+
+    var disposable: Disposable? = null
+
+    fun addIdleListener() {
+      IdeEventQueue.getInstance().addIdleListener(idleListener, settings.inactiveTimeout * 1000)
+      disposable = Disposable { IdeEventQueue.getInstance().removeIdleListener(idleListener) }
+      Disposer.register(this, disposable!!)
+    }
+
+    val generalSettingsListener = PropertyChangeListener { e ->
+      if (e.propertyName == GeneralSettings.PROP_INACTIVE_TIMEOUT) {
+        disposable?.let { Disposer.dispose(it) }
+        addIdleListener()
+      }
+    }
 
     settings.addPropertyChangeListener(generalSettingsListener)
+    Disposer.register(this, Disposable { settings.removePropertyChangeListener(generalSettingsListener) })
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(FrameStateListener.TOPIC, object : FrameStateListener {
@@ -69,14 +90,9 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
         }
 
         if (canSyncOrSave()) {
-          if (isSaveInPooledThread) {
-            PooledScope.launch {
-              doSaveDocumentsAndProjectsAndApp(onlyProject = null)
-            }
-          }
-          else {
-            doSaveDocumentsAndProjectsAndAppInEdt()
-          }
+          // do not cancel if there is already request - opposite to scheduleSaveDocumentsAndProjectsAndApp,
+          // on frame deactivation better to save as soon as possible
+          saveAlarm.request(delay = 100)
         }
 
         LOG.debug("save(): exit")
@@ -92,43 +108,22 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
 
   // well, currently it is not really scheduled - no alarm or something like that, but it will be addressed in turn
   override fun scheduleSaveDocumentsAndProjectsAndApp(project: Project?) {
-    if (isSaveInPooledThread) {
-      PooledScope.launch {
-        doSaveDocumentsAndProjectsAndApp(project)
-      }
-    }
-    else {
-      // to allow current activity to be finished without any noticeable delay
-      // even if `store.save.in.pooled.thread` will be set to `true` in one week, need to test if this behavior is ok for users,
-      // because obviously execution in pooled thread implies short delay before actual save
-      ApplicationManager.getApplication().invokeLater {
-        doSaveDocumentsAndProjectsAndAppInEdt()
-      }
-    }
+    // todo respect that only specified project can be saved
+    saveAlarm.cancelAndRequest()
+  }
+
+  fun cancelScheduledSave() {
+    saveAlarm.cancel()
   }
 
   override fun dispose() {
-    RefreshQueue.getInstance().cancelSession(refreshSessionId)
-    settings.removePropertyChangeListener(generalSettingsListener)
-    IdeEventQueue.getInstance().removeIdleListener(idleListener)
+    if (refreshSessionId != -1L) {
+      RefreshQueue.getInstance().cancelSession(refreshSessionId)
+    }
   }
 
   private fun canSyncOrSave(): Boolean {
     return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
-  }
-
-  // old implementation, used now if new implementation is not enabled by flag
-  private fun doSaveDocumentsAndProjectsAndAppInEdt() {
-    if (isSaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForceSavingAllSettings = false)
-    }
-  }
-
-  // new implementation, used only if enabled by flag
-  private suspend fun doSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
-    if (isSaveAllowed) {
-      saveDocumentsAndProjectsAndApp(onlyProject, isDocumentsSavingExplicit = false)
-    }
   }
 
   override fun scheduleRefresh() {
@@ -196,7 +191,3 @@ class SaveAndSyncHandlerImpl(private val settings: GeneralSettings) : SaveAndSyn
     TransactionGuard.submitTransaction(this, Runnable { handler() })
   }
 }
-
-private val isSaveInPooledThread: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("store.save.in.pooled.thread", false)
-

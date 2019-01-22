@@ -155,6 +155,11 @@ public class NanoXmlUtil {
 
   @Deprecated
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
+    // used externally
+    @Deprecated
+    protected static void stop() throws ParserStoppedXmlException {
+      throw ParserStoppedXmlException.INSTANCE;
+    }
   }
 
   public static class BaseXmlBuilder implements NanoXmlBuilder {

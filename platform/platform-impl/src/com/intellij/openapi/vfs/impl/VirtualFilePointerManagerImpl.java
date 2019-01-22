@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -33,6 +34,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -96,18 +102,19 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  synchronized VirtualFilePointer[] getPointersUnder(VirtualFile parent, String childName) {
+  @NotNull
+  synchronized VirtualFilePointer[] getPointersUnder(@NotNull VirtualFile parent, @NotNull String childName) {
     List<FilePointerPartNode> nodes = new ArrayList<>();
-    addRelevantPointers(parent, true, childName, nodes);
+    addRelevantPointers(parent, true, childName, nodes, true);
     return toPointers(nodes);
   }
 
   private void addRelevantPointers(VirtualFile parent,
                                    boolean separator,
                                    @NotNull CharSequence childName,
-                                   @NotNull List<? super FilePointerPartNode> out) {
+                                   @NotNull List<? super FilePointerPartNode> out, boolean addSubdirectoryPointers) {
     for (FilePointerPartNode root : myPointers.values()) {
-      root.addRelevantPointersFrom(parent, separator, childName, out);
+      root.addRelevantPointersFrom(parent, separator, childName, out, addSubdirectoryPointers);
     }
   }
 
@@ -273,7 +280,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private synchronized void assertAllPointersDisposed() {
     for (FilePointerPartNode root : myPointers.values()) {
       List<FilePointerPartNode> left = new ArrayList<>();
-      root.addRelevantPointersFrom(null, false, "", left);
+      root.addRelevantPointersFrom(null, false, "", left, true);
       List<VirtualFilePointerImpl> pointers = new ArrayList<>();
       for (FilePointerPartNode node : left) {
         node.addAllPointersTo(pointers);
@@ -302,9 +309,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @TestOnly
   synchronized void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
     List<FilePointerPartNode> out = new ArrayList<>();
-    for (FilePointerPartNode root : myPointers.values()) {
-      root.addRelevantPointersFrom(null, false, "", out);
-    }
+    addRelevantPointers(null, false, "", out, true);
     for (FilePointerPartNode node : out) {
       node.addAllPointersTo(pointers);
     }
@@ -352,6 +357,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private List<FilePointerPartNode> myNodesToUpdateUrl = Collections.emptyList();
   private List<FilePointerPartNode> myNodesToFire = Collections.emptyList();
 
+  private static boolean isEmptyDir(@NotNull String path) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(path))) {
+      return !stream.iterator().hasNext();
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
@@ -365,23 +378,24 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       for (VFileEvent event : events) {
         if (event instanceof VFileDeleteEvent) {
           final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
-          addRelevantPointers(deleteEvent.getFile(), false, "", toFireEvents);
+          addRelevantPointers(deleteEvent.getFile(), false, "", toFireEvents, true);
         }
         else if (event instanceof VFileCreateEvent) {
           final VFileCreateEvent createEvent = (VFileCreateEvent)event;
-          addRelevantPointers(createEvent.getParent(), true, createEvent.getChildName(), toFireEvents);
+          boolean fireSubdirectoryPointers = createEvent.isDirectory() && !isEmptyDir(createEvent.getPath());
+          addRelevantPointers(createEvent.getParent(), true, createEvent.getChildName(), toFireEvents, fireSubdirectoryPointers);
         }
         else if (event instanceof VFileCopyEvent) {
           final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getNewChildName(), toFireEvents);
+          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getNewChildName(), toFireEvents, true);
         }
         else if (event instanceof VFileMoveEvent) {
           final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
           VirtualFile eventFile = moveEvent.getFile();
-          addRelevantPointers(moveEvent.getNewParent(), true, eventFile.getName(), toFireEvents);
+          addRelevantPointers(moveEvent.getNewParent(), true, eventFile.getName(), toFireEvents, true);
 
           List<FilePointerPartNode> nodes = new ArrayList<>();
-          addRelevantPointers(eventFile, false, "", nodes);
+          addRelevantPointers(eventFile, false, "", nodes, true);
           toFireEvents.addAll(nodes); // files deleted from eventFile and created in moveEvent.getNewParent()
           collectNodes(nodes, toUpdateUrl);
         }
@@ -391,10 +405,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
               && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFile eventFile = change.getFile();
             VirtualFile parent = eventFile.getParent(); // e.g. for LightVirtualFiles
-            addRelevantPointers(parent, true, change.getNewValue().toString(), toFireEvents);
+            addRelevantPointers(parent, true, change.getNewValue().toString(), toFireEvents, true);
 
             List<FilePointerPartNode> nodes = new ArrayList<>();
-            addRelevantPointers(eventFile, false, "", nodes);
+            addRelevantPointers(eventFile, false, "", nodes, true);
             collectNodes(nodes, toUpdateUrl);
           }
         }
@@ -442,7 +456,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   synchronized void assertConsistency() {
-    if (IS_UNDER_UNIT_TEST) {
+    if (IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       for (FilePointerPartNode root : myPointers.values()) {
         root.checkConsistency();
       }

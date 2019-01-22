@@ -75,6 +75,13 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "sort(T[],Comparator)", "sort-T:A-Comparator-", "sort(T[], Comparator)");
   }
 
+  public void testConstructor() {
+    doTest("class Test {\n" +
+           "  Test<caret>() { }\n" +
+           "}",
+           "<init>()", "Test--", "Test()");
+  }
+
   protected void doTest(String text, String... expected) {
     myFixture.configureByText("Test.java", text);
     PsiElement elementAtCaret = myFixture.getElementAtCaret();

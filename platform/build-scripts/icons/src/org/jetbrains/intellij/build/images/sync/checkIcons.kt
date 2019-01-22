@@ -9,8 +9,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.io.IOException
-import java.io.OutputStream
-import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -19,6 +17,7 @@ import java.util.stream.Stream
 import kotlin.streams.toList
 
 fun main(args: Array<String>) = try {
+  if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   checkIcons()
 }
 catch (e: Throwable) {
@@ -28,15 +27,17 @@ catch (e: Throwable) {
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.icons = readIconsRepo(context)
   context.devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
-  context.devIcons = readDevRepo(context, devRepoVcsRoots)
   callWithTimer("Searching for changed icons..") {
     when {
       context.iconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDesigners(context)
       context.devIconsCommitHashesToSync.isNotEmpty() -> searchForChangedIconsByDev(context, devRepoVcsRoots)
-      else -> searchForAllChangedIcons(context, devRepoVcsRoots)
+      else -> {
+        context.icons = readIconsRepo(context)
+        context.devIcons = readDevRepo(context, devRepoVcsRoots)
+        searchForAllChangedIcons(context, devRepoVcsRoots)
+      }
     }
   }
   syncDevRepo(context)
@@ -57,15 +58,13 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   }
   syncIconsRepo(context)
   val report = report(context, skippedDirs.size)
-  when {
-    !isUnderTeamCity() -> log(report)
-    context.isFail() -> context.doFail(report)
-    // partial sync shouldn't make build successful
-    context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() -> context.doFail(report)
-    // reviews should be created
-    context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty() -> context.doFail(report)
-    else -> log(report)
-  }
+  if (isUnderTeamCity() &&
+      (context.isFail() ||
+       // partial sync shouldn't make build successful
+       context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() ||
+       // reviews should be created
+       context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty())) context.doFail(report)
+  else log(report)
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
@@ -139,15 +138,19 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
     .filter(context.devIconsFilter)
     .map { it.toRelativeString(context.devRepoRoot) }.toList()
   ArrayList(context.devIconsCommitHashesToSync).mapNotNull { commit ->
-    devRepoVcsRoots.asSequence()
-      .map { repo -> callSafely { commitInfo(repo, commit) } }
-      .filterNotNull().firstOrNull()
-      .apply {
-        if (this == null) {
-          log("No repo is found for $commit, skipping")
-          context.devIconsCommitHashesToSync.remove(commit)
-        }
+    devRepoVcsRoots.asSequence().map { repo ->
+      try {
+        commitInfo(repo, commit)
       }
+      catch (ignored: Exception) {
+        null
+      }
+    }.filterNotNull().firstOrNull().apply {
+      if (this == null) {
+        log("No repo is found for $commit, skipping")
+        context.devIconsCommitHashesToSync.remove(commit)
+      }
+    }
   }.sortedBy { it.timestamp }.forEach {
     val commit = it.hash
     val before = context.devChanges().size
@@ -174,17 +177,10 @@ private fun readIconsRepo(context: Context) = protectStdErr {
 }
 
 private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protectStdErr {
-  val testRoots = searchTestRoots(context.devRepoRoot.absolutePath)
-  log("Found ${testRoots.size} test roots")
   if (context.skipDirsPattern != null) {
     log("Using pattern ${context.skipDirsPattern} to skip dirs")
   }
-  val skipDirsRegex = context.skipDirsPattern?.toRegex()
-  context.devIconsFilter = { file: File ->
-    filterDevIcon(file, testRoots, skipDirsRegex, context)
-  }
-  val devIcons = if (devRepoVcsRoots.size == 1
-                     && devRepoVcsRoots.contains(context.devRepoRoot)) {
+  val devIcons = if (devRepoVcsRoots.size == 1 && devRepoVcsRoots.contains(context.devRepoRoot)) {
     // read icons from devRepoRoot
     listGitObjects(context.devRepoRoot, context.devRepoDir, context.devIconsFilter)
   }
@@ -196,7 +192,7 @@ private fun readDevRepo(context: Context, devRepoVcsRoots: List<File>) = protect
   devIcons.toMutableMap()
 }
 
-private fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
+internal fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex?, context: Context): Boolean {
   val path = file.toPath()
   if (doSkip(file, testRoots, skipDirsRegex)) return false
   return Files.exists(path) && isValidIcon(path) ||
@@ -205,38 +201,8 @@ private fun filterDevIcon(file: File, testRoots: Set<File>, skipDirsRegex: Regex
          IconRobotsDataReader.isSyncForced(file)
 }
 
-private fun searchTestRoots(devRepoDir: String) = try {
-  JpsSerializationManager.getInstance()
-    .loadModel(devRepoDir, null)
-    .project.modules.flatMap {
-    it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
-    it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
-  }.mapTo(mutableSetOf()) { it.file }
-}
-catch (e: IOException) {
-  e.printStackTrace()
-  emptySet<File>()
-}
-
-private inline fun <T> protectStdErr(block: () -> T): T {
-  val err = System.err
-  return try {
-    block()
-  }
-  finally {
-    System.setErr(err)
-  }
-}
-
-private val mutedStream = PrintStream(object : OutputStream() {
-  override fun write(b: ByteArray) {}
-  override fun write(b: ByteArray, off: Int, len: Int) {}
-  override fun write(b: Int) {}
-})
-
-private fun isValidIcon(file: Path) = protectStdErr {
+private fun isValidIcon(file: Path) = muteStdErr {
   try {
-    System.setErr(mutedStream)
     // image
     Files.exists(file) && isImage(file) && imageSize(file)?.let { size ->
       val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32

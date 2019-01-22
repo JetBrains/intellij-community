@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -29,6 +30,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
@@ -326,6 +329,14 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   }
 
+  @Nullable
+  @Override
+  public CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
+      return new JavaPackageEntryTableAccessor(codeStyleObject, field);
+    }
+    return super.getAccessor(codeStyleObject, field);
+  }
 
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +

@@ -70,3 +70,11 @@ class ForEachOverEmpty {
     }
   }
 }
+class MapSubCollections {
+  void testMap(Map<String, String> map) {
+    if(!map.isEmpty()) return;
+    for(String s : <warning descr="Collection 'map.keySet()' is always empty">map.keySet()</warning>) {}
+    for(String s : <warning descr="Collection 'map.values()' is always empty">map.values()</warning>) {}
+    for(Map.Entry s : <warning descr="Collection 'map.entrySet()' is always empty">map.entrySet()</warning>) {}
+  }
+}

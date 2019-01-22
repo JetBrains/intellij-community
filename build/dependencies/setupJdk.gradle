@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 import java.util.concurrent.TimeUnit
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
@@ -44,6 +46,7 @@ task setupJdk18(dependsOn: downloadJdk18) {
   doLast {
     logger.info("Setting up JDK 1.8 to compile")
     unpackJdk(downloadOutputs.singleFile, outputDir)
+    checkVendor(OperatingSystem.current().isMacOsX() ? "$outputDir/Contents/Home/bin" : "$outputDir/bin")
   }
 }
 
@@ -52,7 +55,7 @@ def unpackJdk(jdkArchive, outputDir) {
   if (file(outputDir).exists()) {
     delete(outputDir)
   }
-  def currentOs = org.gradle.internal.os.OperatingSystem.current()
+  def currentOs = OperatingSystem.current()
   if (currentOs.isWindows()) {
     copy {
       from tarTree(jdkArchive)
@@ -73,12 +76,12 @@ static def jdk18Arch() {
   def arch = System.getProperty("intellij.jdk18.arch", "")
   if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
-  def os = org.gradle.internal.os.OperatingSystem.current()
+  def os = OperatingSystem.current()
   return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
 }
 
 static def currentPlatformName() {
-  def os = org.gradle.internal.os.OperatingSystem.current()
+  def os = OperatingSystem.current()
   if (os.isWindows()) {
     "windows"
   }
@@ -125,7 +128,7 @@ task setupJdk16(dependsOn: configurations.jdk16) {
 
 // Gradle dies on trying to process broken links: https://issues.gradle.org/browse/GRADLE-1843
 private void deleteBrokenSymlink(String outputDir) {
-  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+  if (OperatingSystem.current().isMacOsX()) {
     def pluginJar = file("$outputDir/Contents/Home/lib/plugin.jar")
     if (!pluginJar.exists()) {
       if (!pluginJar.delete()) {
@@ -160,7 +163,7 @@ def intellijProjectDir() {
 }
 
 static def jdk16Version() {
-  def os = org.gradle.internal.os.OperatingSystem.current()
+  def os = OperatingSystem.current()
   if (os.isWindows()) {
     def suffix = System.getenv("ProgramFiles(x86)") != null ? "x64" : "i586"
     return "6.45:windows_$suffix"
@@ -169,4 +172,27 @@ static def jdk16Version() {
     return '6.65:macosx_x64'
   }
   return '6.45:linux_x64'
+}
+
+def checkVendor(path) {
+  def output = new ByteArrayOutputStream()
+  try {
+    exec {
+      standardOutput = output
+      errorOutput = output
+      commandLine file("$path/java"), '-XshowSettings:properties', '-version'
+    }
+    def vendor = output.toString().readLines().find {
+      it.contains('java.vendor') && it.contains('JetBrains')
+    }
+    if (vendor != null) {
+      logger.quiet(vendor)
+    }
+    else {
+      throw new IllegalStateException('java.vendor is not JetBrains')
+    }
+  }
+  finally {
+    output.close()
+  }
 }

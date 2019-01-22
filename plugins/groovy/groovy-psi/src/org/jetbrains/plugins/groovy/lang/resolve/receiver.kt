@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -16,8 +16,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.STATIC_CON
 
 fun PsiType?.processReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
   if (this == null) return true
-  if (!doProcessReceiverType(processor, state, place)) return false
-  return !state.processNonCodeMembers() || processNonCodeMembers(this, processor, place, state)
+  val newState = state.put(ClassHint.THIS_TYPE, this)
+  if (!doProcessReceiverType(processor, newState, place)) return false
+  return !state.processNonCodeMembers() || processNonCodeMembers(this, processor, place, newState)
 }
 
 private fun PsiType.doProcessReceiverType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

@@ -17,6 +17,8 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -24,8 +26,9 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.Processor;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,26 @@ public class ConflictsUtil {
       }
       parent = parent.getParent();
     }
+  }
+
+  /**
+   * Processes conflicts (possibly shows UI). In case we're running in unit test mode this method will
+   * throw {@link BaseRefactoringProcessor.ConflictsInTestsException} that can be handled inside a test.
+   * Thrown exception would contain conflicts' messages.
+   *
+   * @param project   project
+   * @param conflicts map with conflict messages and locations
+   * @return true if refactoring could proceed or false if refactoring should be cancelled
+   */
+  public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
+    if (conflicts.isEmpty()) return true;
+
+    if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+      throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+    }
+
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    return conflictsDialog.showAndGet();
   }
 
   public static void checkMethodConflicts(@Nullable PsiClass aClass,

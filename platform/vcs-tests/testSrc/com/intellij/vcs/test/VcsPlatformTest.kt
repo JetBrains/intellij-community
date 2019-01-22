@@ -27,6 +27,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -71,6 +72,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
       .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
       .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
       .append(ThrowableRunnable { waitForPendingTasks() })

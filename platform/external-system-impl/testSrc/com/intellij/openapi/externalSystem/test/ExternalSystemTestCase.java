@@ -15,6 +15,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -155,37 +156,18 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   @After
   @Override
   public void tearDown() throws Exception {
-    try {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        tearDownFixtures();
-      });
-      myProject = null;
-      if (!FileUtil.delete(myTestDir) && myTestDir.exists()) {
-        System.err.println("Cannot delete " + myTestDir);
-        //printDirectoryContent(myDir);
-        myTestDir.deleteOnExit();
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-      resetClassFields(getClass());
-    }
-  }
-
-  private static void printDirectoryContent(File dir) {
-    File[] files = dir.listFiles();
-    if (files == null) return;
-
-    for (File file : files) {
-      System.out.println(file.getAbsolutePath());
-
-      if (file.isDirectory()) {
-        printDirectoryContent(file);
-      }
-    }
+    new RunAll(
+      () -> {
+        if (myProject != null && !myProject.isDisposed()) {
+          PathKt.delete(ProjectUtil.getExternalConfigurationDir(myProject));
+        }
+      },
+      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
+      () -> myProject = null,
+      () -> PathKt.delete(myTestDir.toPath()),
+      () -> super.tearDown(),
+      () -> resetClassFields(getClass())
+    ).run();
   }
 
   protected void tearDownFixtures() {

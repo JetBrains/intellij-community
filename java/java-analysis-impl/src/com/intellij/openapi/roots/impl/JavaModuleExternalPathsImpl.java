@@ -37,6 +37,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     }
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(boolean writable) {
     return new JavaModuleExternalPathsImpl(this);

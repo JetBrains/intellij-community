@@ -256,7 +256,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           if (DebugAssertions.DEBUG) {
             try {
               Stub deserialized =
-                SerializationManagerEx.getInstanceEx().deserialize(new ByteArrayInputStream(bytes.getInternalBuffer(), 0, bytes.size()));
+                SerializationManagerEx.getInstanceEx().deserialize(bytes.toInputStream());
               check(deserialized, rootStub);
             }
             catch (ProcessCanceledException pce) {

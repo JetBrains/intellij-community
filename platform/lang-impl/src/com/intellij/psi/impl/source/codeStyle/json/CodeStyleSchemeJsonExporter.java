@@ -2,11 +2,17 @@
 package com.intellij.psi.impl.source.codeStyle.json;
 
 import com.google.gson.*;
+import com.google.gson.annotations.Expose;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.SchemeExporter;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,20 +66,47 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
     List<LanguagePropertyMapperDescriptor> descriptors = ContainerUtil.newArrayList();
     CodeStylePropertiesUtil.collectMappers(settings, mapper -> {
       if (languageDomainIds == null || languageDomainIds.contains(mapper.getLanguageDomainId())) {
-        descriptors.add(new LanguagePropertyMapperDescriptor(mapper.getLanguageDomainId(), mapper));
+        descriptors.add(new LanguagePropertyMapperDescriptor(mapper.getLanguageDomainId(), mapper, getPriority(mapper)));
       }
     });
-    Collections.sort(descriptors, Comparator.comparing(o -> o.language));
+    Collections.sort(descriptors);
     return descriptors;
   }
 
-  private static class LanguagePropertyMapperDescriptor {
+  private static DisplayPriority getPriority(@NotNull AbstractCodeStylePropertyMapper mapper) {
+    if (mapper instanceof GeneralCodeStylePropertyMapper) {
+      return DisplayPriority.GENERAL_SETTINGS;
+    }
+    else if (mapper instanceof LanguageCodeStylePropertyMapper) {
+      Language language = ((LanguageCodeStylePropertyMapper)mapper).getLanguage();
+      LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+      if (provider != null) {
+        return provider.getDisplayPriority();
+      }
+    }
+    return DisplayPriority.OTHER_SETTINGS;
+  }
+
+  private static class LanguagePropertyMapperDescriptor implements Comparable<LanguagePropertyMapperDescriptor> {
     final @NotNull String language;
     final @NotNull AbstractCodeStylePropertyMapper options;
+    private final transient @NotNull DisplayPriority priority;
 
-    private LanguagePropertyMapperDescriptor(@NotNull String language, @NotNull AbstractCodeStylePropertyMapper mapper) {
+    private LanguagePropertyMapperDescriptor(@NotNull String language,
+                                             @NotNull AbstractCodeStylePropertyMapper mapper,
+                                             @NotNull DisplayPriority priority) {
       this.language = language;
       this.options = mapper;
+      this.priority = priority;
+    }
+
+    @Override
+    public int compareTo(@NotNull LanguagePropertyMapperDescriptor d) {
+      int result = this.priority.compareTo(d.priority);
+      if (result == 0) {
+        result = this.language.compareTo(d.language);
+      }
+      return result;
     }
   }
 }

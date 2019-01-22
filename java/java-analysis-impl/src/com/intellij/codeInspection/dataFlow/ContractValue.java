@@ -219,7 +219,7 @@ public abstract class ContractValue {
 
     @Override
     public String toString() {
-      return myQualifier + "." + myField.getMethodName() + "()";
+      return myQualifier + "." + myField + "()";
     }
   }
 

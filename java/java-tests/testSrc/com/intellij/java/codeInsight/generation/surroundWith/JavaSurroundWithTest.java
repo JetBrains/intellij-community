@@ -92,6 +92,14 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     doTest(new JavaWithIfSurrounder());
   }
 
+  public void testSurroundSwitchCaseWithIf() {
+    doTestNotApplicable(new JavaWithIfSurrounder());
+  }
+
+  public void testSurroundSwitchBreakWithIf() {
+    doTest(getTestName(false), new JavaWithIfSurrounder());
+  }
+
   public void testSurroundNonExpressionWithParenthesis() {
     doTest(new JavaWithParenthesesSurrounder());
   }
@@ -223,6 +231,23 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
 
     checkResultByFile(BASE_PATH + fileName + "_after.java");
+  }
+
+  private void doTestNotApplicable(Surrounder surrounder) {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    List<SurroundDescriptor> descriptors = LanguageSurrounders.INSTANCE.allForLanguage(JavaLanguage.INSTANCE);
+
+    boolean atLeastOneFound = false;
+    for (SurroundDescriptor item : descriptors) {
+      PsiElement[] elements = item.getElementsToSurround(getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      if (elements.length != 0) {
+        assertFalse("applicable " + item, surrounder.isApplicable(elements));
+        atLeastOneFound = true;
+      }
+    }
+    assertTrue("atLeastOneFound", atLeastOneFound);
   }
 
   private void doTestWithTemplateFinish(@NotNull String fileName, Surrounder surrounder, @Nullable String textToType) {

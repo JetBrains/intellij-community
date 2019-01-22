@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -336,8 +335,8 @@ public class EditorWindow {
       // if the file being closed is not currently selected, keep the currently selected file open
       return currentlySelectedIndex;
     }
-    UISettingsState uiSettings = UISettings.getInstance().getState();
-    if (uiSettings.getActiveMruEditorOnClose()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getState().getActiveMruEditorOnClose()) {
       // try to open last visited file
       final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
       for (int idx = histFiles.size() - 1; idx >= 0; idx--) {

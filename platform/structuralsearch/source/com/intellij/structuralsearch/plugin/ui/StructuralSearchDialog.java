@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -188,7 +188,6 @@ public class StructuralSearchDialog extends DialogWrapper {
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
-        ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return editor;
       }
 
@@ -293,6 +292,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           setTextForEditor(text, myReplaceCriteriaEdit);
         }
         myScopePanel.setScope(null);
+        ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
     }
@@ -642,8 +642,6 @@ public class StructuralSearchDialog extends DialogWrapper {
         setSize(otherSize.width, getSize().height);
       }
     }
-
-    startTemplate();
   }
 
   private void startTemplate() {

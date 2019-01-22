@@ -302,17 +302,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // Check what is staged besides our changes
       Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
+      Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
+      processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
+        if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
+      });
 
-      // Reset staged changes which are not selected for commit
-      Collection<CommitChange> excludedStagedChanges = mapNotNull(stagedChanges, change -> {
-        FilePath before = getBeforePath(change);
-        FilePath after = getAfterPath(change);
-        if (removed.contains(before)) before = null;
-        if (added.contains(after)) after = null;
-        return before != null || after != null ? new CommitChange(before, after) : null;
+      // Find unstaged deletions, we might not be able to restore them after
+      Collection<Change> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      LOG.debug("Found unstaged changes: " + GitUtil.getLogString(rootPath, unstagedChanges));
+      Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
+      processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
+        if (before != null && after == null) excludedUnstagedDeletions.add(before);
       });
 
       if (!excludedStagedChanges.isEmpty()) {
+        // Reset staged changes which are not selected for commit
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
         resetExcluded(myProject, root, excludedStagedChanges);
       }
@@ -338,7 +342,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(myProject, root, excludedStagedChanges);
+          restoreExcluded(myProject, root, excludedStagedChanges, excludedUnstagedDeletions);
         }
       }
     }
@@ -506,7 +510,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return caseOnlyRenames;
   }
 
-  private static boolean isCaseOnlyRename(@NotNull CommitChange change) {
+  private static boolean isCaseOnlyRename(@NotNull ChangedPath change) {
     if (SystemInfo.isFileSystemCaseSensitive) return false;
     if (!change.isMove()) return false;
     FilePath afterPath = assertNotNull(change.afterPath);
@@ -529,8 +533,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return files;
   }
 
+  private static void processExcludedPaths(@NotNull Collection<Change> changes,
+                                           @NotNull Set<FilePath> added,
+                                           @NotNull Set<FilePath> removed,
+                                           @NotNull PairConsumer<FilePath, FilePath> function) {
+    for (Change change : changes) {
+      FilePath before = getBeforePath(change);
+      FilePath after = getAfterPath(change);
+      if (removed.contains(before)) before = null;
+      if (added.contains(after)) after = null;
+      function.consume(before, after);
+    }
+  }
+
   @NotNull
-  private static String getLogString(@NotNull String root, @NotNull Collection<? extends CommitChange> changes) {
+  private static String getLogString(@NotNull String root, @NotNull Collection<? extends ChangedPath> changes) {
     return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
   }
 
@@ -693,9 +710,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void resetExcluded(@NotNull Project project,
                                     @NotNull VirtualFile root,
-                                    @NotNull Collection<? extends CommitChange> changes) throws VcsException {
+                                    @NotNull Collection<? extends ChangedPath> changes) throws VcsException {
     Set<FilePath> allPaths = new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
-    for (CommitChange change : changes) {
+    for (ChangedPath change : changes) {
       addIfNotNull(allPaths, change.afterPath);
       addIfNotNull(allPaths, change.beforePath);
     }
@@ -710,14 +727,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<? extends CommitChange> changes) {
+                                      @NotNull Collection<? extends ChangedPath> changes,
+                                      @NotNull Set<FilePath> unstagedDeletions) {
     List<VcsException> restoreExceptions = new ArrayList<>();
 
     Set<FilePath> toAdd = new HashSet<>();
     Set<FilePath> toRemove = new HashSet<>();
 
-    for (CommitChange change : changes) {
+    for (ChangedPath change : changes) {
       if (addAsCaseOnlyRename(project, root, change, restoreExceptions)) continue;
+
+      if (change.beforePath == null && unstagedDeletions.contains(change.afterPath)) {
+        // we can't restore ADDED-DELETED files
+        LOG.info("Ignored added-deleted staged change in " + change.afterPath);
+        continue;
+      }
 
       addIfNotNull(toAdd, change.afterPath);
       addIfNotNull(toRemove, change.beforePath);
@@ -732,7 +756,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change,
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull ChangedPath change,
                                              @NotNull List<? super VcsException> exceptions) {
     try {
       if (!isCaseOnlyRename(change)) return false;
@@ -923,18 +947,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final Collection<? extends FilePath> removed,
                                      final List<? super VcsException> exceptions) {
     boolean rc = true;
-    if (!added.isEmpty()) {
+    if (!removed.isEmpty()) {
       try {
-        GitFileUtils.addPathsForce(project, root, added);
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached", "-r");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
         rc = false;
       }
     }
-    if (!removed.isEmpty()) {
+    if (!added.isEmpty()) {
       try {
-        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -1405,10 +1429,29 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitCommitRenamesSeparately = commitRenamesSeparately;
   }
 
-  private static class CommitChange {
+  private static class ChangedPath {
     @Nullable public final FilePath beforePath;
     @Nullable public final FilePath afterPath;
 
+    ChangedPath(@Nullable FilePath beforePath,
+                @Nullable FilePath afterPath) {
+      assert beforePath != null || afterPath != null;
+      this.beforePath = beforePath;
+      this.afterPath = afterPath;
+    }
+
+    public boolean isMove() {
+      if (beforePath == null || afterPath == null) return false;
+      return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s -> %s", beforePath, afterPath);
+    }
+  }
+
+  private static class CommitChange extends ChangedPath {
     @Nullable public final VcsRevisionNumber beforeRevision;
     @Nullable public final VcsRevisionNumber afterRevision;
 
@@ -1416,8 +1459,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable public final VirtualFile virtualFile;
 
     CommitChange(@NotNull Change change) {
-      this.beforePath = getBeforePath(change);
-      this.afterPath = getAfterPath(change);
+      super(getBeforePath(change), getAfterPath(change));
 
       ContentRevision bRev = change.getBeforeRevision();
       ContentRevision aRev = change.getAfterRevision();
@@ -1440,33 +1482,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     CommitChange(@Nullable FilePath beforePath,
-                        @Nullable FilePath afterPath) {
-      this(beforePath, afterPath, null, null, null, null);
-    }
-
-    CommitChange(@Nullable FilePath beforePath,
-                        @Nullable FilePath afterPath,
-                        @Nullable VcsRevisionNumber beforeRevision,
-                        @Nullable VcsRevisionNumber afterRevision,
-                        @Nullable String changelistId,
-                        @Nullable VirtualFile virtualFile) {
-      assert beforePath != null || afterPath != null;
-      this.beforePath = beforePath;
-      this.afterPath = afterPath;
+                 @Nullable FilePath afterPath,
+                 @Nullable VcsRevisionNumber beforeRevision,
+                 @Nullable VcsRevisionNumber afterRevision,
+                 @Nullable String changelistId,
+                 @Nullable VirtualFile virtualFile) {
+      super(beforePath, afterPath);
       this.beforeRevision = beforeRevision;
       this.afterRevision = afterRevision;
       this.changelistId = changelistId;
       this.virtualFile = virtualFile;
     }
 
-    public boolean isMove() {
-      if (beforePath == null || afterPath == null) return false;
-      return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
-    }
-
     @Override
     public String toString() {
-      return String.format("%s -> %s, changelist: %s", beforePath, afterPath, changelistId);
+      return super.toString() + ", changelist: " + changelistId;
     }
   }
 }

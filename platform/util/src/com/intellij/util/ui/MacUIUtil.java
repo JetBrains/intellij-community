@@ -128,6 +128,7 @@ public class MacUIUtil {
     }
   }
 
+  @NotNull
   public static Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();

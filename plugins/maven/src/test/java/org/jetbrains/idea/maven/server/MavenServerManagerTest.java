@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 
 import java.rmi.RemoteException;

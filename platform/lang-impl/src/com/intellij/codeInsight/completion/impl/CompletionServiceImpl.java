@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
@@ -37,7 +35,6 @@ public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static Throwable ourPhaseTrace;
-  private static List<CompletionPhaseListener> ourCompletionPhaseListeners = new CopyOnWriteArrayList<>();
 
   @Nullable private CompletionProcess myApiCompletionProcess;
 
@@ -253,10 +250,10 @@ public final class CompletionServiceImpl extends CompletionService {
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
       LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
-    boolean isCompletionRunning = phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
-                                  !(phase instanceof CompletionPhase.ItemsCalculated);
-    for (CompletionPhaseListener listener : ourCompletionPhaseListeners) {
-      listener.completionPhaseChanged(isCompletionRunning);
+    boolean wasCompletionRunning = isRunningPhase(oldPhase);
+    boolean isCompletionRunning = isRunningPhase(phase);
+    if (isCompletionRunning != wasCompletionRunning) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionPhaseListener.TOPIC).completionPhaseChanged(isCompletionRunning);
     }
 
     Disposer.dispose(oldPhase);
@@ -264,10 +261,11 @@ public final class CompletionServiceImpl extends CompletionService {
     ourPhaseTrace = new Throwable();
   }
 
-  public static void addCompletionPhaseListener(@NotNull CompletionPhaseListener listener, @NotNull Disposable parentDisposable) {
-    ourCompletionPhaseListeners.add(listener);
-    Disposer.register(parentDisposable, () -> ourCompletionPhaseListeners.remove(listener));
+  private static boolean isRunningPhase(@NotNull CompletionPhase phase) {
+    return phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
+           !(phase instanceof CompletionPhase.ItemsCalculated);
   }
+
 
   public static CompletionPhase getCompletionPhase() {
     return ourPhase;

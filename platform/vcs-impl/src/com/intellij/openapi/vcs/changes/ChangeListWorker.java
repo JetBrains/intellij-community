@@ -943,6 +943,10 @@ public class ChangeListWorker {
 
     @NotNull
     private List<Change> removeChangesUnderScope(@Nullable VcsModifiableDirtyScope scope) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Process scope: %s", scope));
+      }
+
       List<Change> removed = new ArrayList<>();
       for (Change change : myWorker.myIdx.getChanges()) {
         ContentRevision before = change.getBeforeRevision();
@@ -953,6 +957,9 @@ public class ChangeListWorker {
                                isIgnoredChange(before, after, getProject());
         if (isUnderScope) {
           removed.add(change);
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("under scope - %s, change - %s", isUnderScope, change));
         }
       }
 

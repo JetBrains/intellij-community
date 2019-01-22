@@ -13,6 +13,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -362,6 +363,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (canBeModified) {
         createStackCapturingBreakpoints();
         AsyncStacksUtils.setupAgent(this);
+      }
+
+      if (canBeModified) {
+        MemoryAgentUtil.loadAgentProxy(this, agent -> myMemoryAgent = agent);
       }
 
       // breakpoints should be initialized after all processAttached listeners work

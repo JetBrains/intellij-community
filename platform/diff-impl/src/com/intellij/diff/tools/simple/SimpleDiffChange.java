@@ -18,7 +18,6 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -340,9 +339,9 @@ public class SimpleDiffChange {
     if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(@NotNull AnActionEvent e) {
+      protected void handleMouseClick() {
         if (!myIsValid) return;
-        final Project project = e.getProject();
+        final Project project = myViewer.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
         DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
       }

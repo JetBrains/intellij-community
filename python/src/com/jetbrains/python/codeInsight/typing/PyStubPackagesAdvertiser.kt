@@ -40,12 +40,13 @@ class PyStubPackagesAdvertiser : PyInspection() {
     private val FORCED = mapOf("django" to "Django", "numpy" to "numpy") // top-level package to package on PyPI
 
     // notification will be shown for packages below
-    private val CHECKED = mapOf("pyspark" to "pyspark",
-                                "ordered_set" to "ordered-set",
+    private val CHECKED = mapOf("coincurve" to "coincurve",
                                 "docutils" to "docutils",
-                                "coincurve" to "coincurve",
+                                "ordered_set" to "ordered-set",
+                                "pydantic" to "pydantic",
+                                "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
-                                "gi" to "PyGObject") // top-level package to package on PyPI
+                                "pyspark" to "pyspark") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, false)

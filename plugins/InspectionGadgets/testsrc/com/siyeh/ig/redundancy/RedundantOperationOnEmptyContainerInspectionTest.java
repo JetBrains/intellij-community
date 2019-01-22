@@ -11,7 +11,7 @@ public class RedundantOperationOnEmptyContainerInspectionTest extends LightInspe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_8_ANNOTATED;
   }
 
   public void testIterationOverEmptyContainer() {

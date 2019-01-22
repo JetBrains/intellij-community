@@ -1861,12 +1861,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      SpecialField sizeField = InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP) ? SpecialField.MAP_SIZE : SpecialField.COLLECTION_SIZE;
       DfaFactMap facts = DfaFactMap.EMPTY
         .with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(myFactory.createDfaType(type)))
         .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
         .with(DfaFactType.LOCALITY, true)
-        .with(DfaFactType.SPECIAL_FIELD_VALUE, sizeField.withValue(myFactory.getInt(0)));
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.COLLECTION_SIZE.withValue(myFactory.getInt(0)));
       return myFactory.getFactFactory().createValue(facts);
     }
     return null;
@@ -2188,7 +2187,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   static final CallInliner[] INLINERS = {
     new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner()
+    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(), new CollectionMethodInliner()
   };
 }
 

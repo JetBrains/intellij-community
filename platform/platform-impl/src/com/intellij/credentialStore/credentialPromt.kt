@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
 import com.intellij.CommonBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AppIcon
 import com.intellij.ui.components.CheckBox
@@ -57,7 +57,7 @@ fun askCredentials(project: Project?,
     }
   }
 
-  return invokeAndWaitIfNeed(ModalityState.any()) {
+  return invokeAndWaitIfNeeded(ModalityState.any()) {
     val passwordField = JPasswordField()
     val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
@@ -69,7 +69,7 @@ fun askCredentials(project: Project?,
 
     AppIcon.getInstance().requestAttention(project, true)
     if (!dialog(dialogTitle, project = project, panel = panel, focusedComponent = passwordField, errorText = error).showAndGet()) {
-      return@invokeAndWaitIfNeed null
+      return@invokeAndWaitIfNeeded null
     }
 
     RememberCheckBoxState.update(rememberCheckBox)
@@ -81,7 +81,7 @@ fun askCredentials(project: Project?,
     }
 
     // for memory only store isRemember is true, because false doesn't matter
-    return@invokeAndWaitIfNeed CredentialRequestResult(credentials, isRemember = rememberCheckBox.isSelected)
+    return@invokeAndWaitIfNeeded CredentialRequestResult(credentials, isRemember = rememberCheckBox.isSelected)
   }
 }
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.idea.Bombed
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -414,8 +415,9 @@ class ResolveMethodTest extends GroovyResolveTestCase {
 
   void testUnboxBigDecimal() {
     myFixture.addClass("package java.math; public class BigDecimal {}")
-    PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
-    assertTrue(ref.resolve() instanceof PsiMethod)
+    def ref = (GroovyReference)configureByText('java.lang.Math.<caret>min(0, 0.0)')
+    def results = ref.resolve(false)
+    assert results.size() == 2
   }
 
   void testGrvy1157() {
@@ -1481,6 +1483,10 @@ myEnum = MyEnum.va<caret>lueOf('FOO')
     assertEquals(valueof.parameterList.parametersCount, 1)
   }
 
+  @Bombed(
+    year = 2020, month = 1, day = 1, user = "daniil",
+    description = "Groovy actually doesn't care about return type, TODO check this"
+  )
   void testResolveOverloadedReturnType() {
     myFixture.addClass('class PsiModifierList {}')
     myFixture.addClass('class GrModifierList extends PsiModifierList {}')
@@ -1496,8 +1502,6 @@ myEnum = MyEnum.va<caret>lueOf('FOO')
     final PsiMethod method = resolveByText('new GrTypeDefinition().ge<caret>t()', PsiMethod)
 
     assertTrue(method.getReturnType().getCanonicalText() == 'GrModifierList')
-
-
   }
 
   void testContradictingPropertyAccessor() {
@@ -1867,6 +1871,10 @@ f<caret>oo()
 ''', PsiMethod)
   }
 
+  @Bombed(
+    year = 2020, month = 1, day = 1, user = "daniil",
+    description = "Requires overhaul in static import resolution"
+  )
   void testImportStaticVSDGM() {
     def method = resolveByText('''
 import static Bar.is
@@ -1888,7 +1896,6 @@ class Bar {
     PsiClass clazz = method.containingClass
     assertNotNull(clazz)
     assertEquals('Bar', clazz.qualifiedName)
-
   }
 
   void testImportStaticPrint() {
@@ -2079,6 +2086,20 @@ class Fo {
     PsiClass clazz = method.containingClass
     assertNotNull(clazz)
     assertEquals('C', clazz.qualifiedName)
+  }
+
+  void 'test list equals null'() {
+    def method = resolveByText '''\
+void usage(List<String> l) { l.<caret>equals(null) }
+''', GrGdkMethod
+    assert method.staticMethod.parameterList.parameters.last().type.equalsToText("java.util.List")
+  }
+
+  void 'test list == null'() {
+    def method = resolveByText '''\
+void usage(List<String> l) { l <caret>== null }
+''', GrGdkMethod
+    assert method.staticMethod.parameterList.parameters.last().type.equalsToText("java.util.List")
   }
 
   void testSuperReferenceWithTraitQualifier() {
@@ -2287,14 +2308,75 @@ a.<caret>foo()
 ''', GrMethod
   }
 
-  void 'test vararg vs positional'() {
+  void 'test array vs single with simple argument'() {
     def method = resolveByText '''\
-static usage(String[] label) {
-  <caret>foo(label)
-}
-static <T> List<T> foo(T t) {}
-static <T> List<T> foo(T... values) {}
+static void foo(Object t) {}
+static void foo(Object[] values) {}
+static void usage(String label) { <caret>foo(label) }
 ''', GrMethod
-    assert method.parameterList.parameters.first().type instanceof PsiEllipsisType
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object')
+  }
+
+  void 'test array vs single with array argument'() {
+    def method = resolveByText '''\
+static void foo(Object t) {}
+static void foo(Object[] values) {}
+static void usage(String[] label) { <caret>foo(label) }
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object[]')
+  }
+
+  void 'test array vs single with null argument'() {
+    def method = resolveByText '''\
+static void foo(Object t) {}
+static void foo(Object[] values) {}
+<caret>foo(null)
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object')
+  }
+
+  void 'test vararg vs single with array argument'() {
+    def method = resolveByText '''\
+static void foo(Object t) {}
+static void foo(Object... values) {}
+static usage(String[] label) { <caret>foo(label) }
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object...')
+  }
+
+  void 'test vararg vs single with simple argument'() {
+    def method = resolveByText '''\
+static void foo(Object t) {}
+static void foo(Object... values) {}
+static void usage(String label) { <caret>foo(label) }
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object')
+  }
+
+  void 'test vararg vs single with null argument'() {
+    def method = resolveByText '''\
+static void foo(Object t) {}
+static void foo(Object... values) {}
+<caret>foo(null)
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.lang.Object')
+  }
+
+  void 'test vararg vs positional 2'() {
+    def method = resolveByText '''\
+static def foo(Object o) { "obj $o" }
+static def foo(Object[] oo) { "arr $oo" }
+static usage(Object a) { <caret>foo(a) }
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+  }
+
+  void 'test List vs Object array param with null argument'() {
+    def method = resolveByText '''\
+def foo(List l) {}
+def foo(Object[] o) {}
+<caret>foo(null)
+''', GrMethod
+    assert method.parameterList.parameters.first().type.equalsToText('java.util.List')
   }
 }
