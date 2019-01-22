@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -73,7 +74,12 @@ class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
-              (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory));
+              (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory))
+    .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
+              (args, memState, factory) -> calendarGet(args.myArguments, memState, factory))
+    .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
+                    instanceCall("java.io.Reader", "skip").parameterTypes("long")),
+              (args, memState, factory) -> skip(args.myArguments, memState, factory));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -214,6 +220,32 @@ class CustomMethodHandlers {
     LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
     if (range == null) return null;
     return factory.getFactValue(DfaFactType.RANGE, range.abs(isLong));
+  }
+
+  private static DfaValue calendarGet(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.length != 1) return null;
+    DfaConstValue arg = state.getConstantValue(arguments[0]);
+    if (arg == null || !(arg.getValue() instanceof Long)) return null;
+    LongRangeSet range = null;
+    switch (((Long)arg.getValue()).intValue()) {
+      case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
+      case Calendar.MONTH: range = LongRangeSet.range(0, 12); break;
+      case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
+      case Calendar.DAY_OF_YEAR: range = LongRangeSet.range(1, 366); break;
+      case Calendar.HOUR: range = LongRangeSet.range(0, 11); break;
+      case Calendar.HOUR_OF_DAY: range = LongRangeSet.range(0, 23); break;
+      case Calendar.MINUTE:
+      case Calendar.SECOND: range = LongRangeSet.range(0, 59); break;
+      case Calendar.MILLISECOND: range = LongRangeSet.range(0, 999); break;
+    }
+    return range == null ? null : factory.getFactValue(DfaFactType.RANGE, range);
+  }
+
+  private static DfaValue skip(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.length != 1) return null;
+    LongRangeSet range = state.getValueFact(arguments[0], DfaFactType.RANGE);
+    if (range == null || range.isEmpty()) return null;
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, range.max()));
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {

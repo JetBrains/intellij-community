@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -307,5 +308,16 @@ public class LongRangeKnownMethods {
     if(s1.startsWith(s2) || <warning descr="Condition 's2.isEmpty()' is always 'false' when reached">s2.isEmpty()</warning>) {
       System.out.println("Oops");
     }
+  }
+  
+  void testCalendar(Calendar c) {
+    int month = c.get(Calendar.MONTH);
+    if (<warning descr="Condition 'month < 0' is always 'false'">month < 0</warning>) {}
+  }
+  
+  void testSkip(InputStream is, int amount) throws IOException {
+    long skipped = is.skip(amount);
+    if (<warning descr="Condition 'skipped > Integer.MAX_VALUE' is always 'false'">skipped > Integer.MAX_VALUE</warning>) {}
+    if (<warning descr="Condition 'skipped < 0' is always 'false'">skipped < 0</warning>) {}
   }
 }
