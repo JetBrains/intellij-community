@@ -1516,7 +1516,8 @@ public final class UiDefaultsHardcodedKeys {
     "RadioButton.darcula.selectionEnabledColor",
     "RadioButton.darcula.selectionEnabledShadowColor",
     "Spinner.darcula.disabledButtonColor",
-    "Spinner.darcula.enabledButtonColor"
+    "Spinner.darcula.enabledButtonColor",
+    "ToolWindow.header.background" // deprecated lowercase variant
   );
 
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));
