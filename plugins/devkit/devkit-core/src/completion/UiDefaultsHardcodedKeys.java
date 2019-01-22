@@ -1509,5 +1509,15 @@ public final class UiDefaultsHardcodedKeys {
     "ToolTip.Actions.infoForeground"
   );
 
+  public static final Set<String> COMPATIBILITY_KEYS = ContainerUtil.immutableSet(
+    "Button.darcula.disabledText.shadow",
+    "RadioButton.darcula.selectionDisabledColor",
+    "RadioButton.darcula.selectionDisabledShadowColor",
+    "RadioButton.darcula.selectionEnabledColor",
+    "RadioButton.darcula.selectionEnabledShadowColor",
+    "Spinner.darcula.disabledButtonColor",
+    "Spinner.darcula.enabledButtonColor"
+  );
+
   public static final Set<String> ALL_KEYS = ContainerUtil.unmodifiableOrEmptySet(ContainerUtil.union(UI_DEFAULTS_KEYS, NAMED_COLORS));
 }
