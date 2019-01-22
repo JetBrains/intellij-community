@@ -31,6 +31,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -83,7 +84,7 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
@@ -113,10 +114,10 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private void refreshFile(NewVirtualFileSystem fs,
-                           PersistentFS persistence,
-                           TObjectHashingStrategy<String> strategy,
-                           NewVirtualFile file) {
+  private void refreshFile(@NotNull NewVirtualFileSystem fs,
+                           @NotNull PersistentFS persistence,
+                           @NotNull TObjectHashingStrategy<String> strategy,
+                           @NotNull NewVirtualFile file) {
     RefreshingFileVisitor refreshingFileVisitor = new RefreshingFileVisitor(file, persistence, fs,
                                                                             null,
                                                                             Collections.singletonList(file), strategy);
@@ -128,10 +129,10 @@ class LocalFileSystemRefreshWorker {
   private static final AtomicInteger myRequests = new AtomicInteger();
   private static final AtomicLong myTime = new AtomicLong();
 
-  private void fullDirRefresh(NewVirtualFileSystem fs,
-                              PersistentFS persistence,
-                              TObjectHashingStrategy<String> strategy,
-                              VirtualDirectoryImpl dir) {
+  private void fullDirRefresh(@NotNull NewVirtualFileSystem fs,
+                              @NotNull PersistentFS persistence,
+                              @NotNull TObjectHashingStrategy<String> strategy,
+                              @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
       Pair<String[], VirtualFile[]> result = getDirectorySnapshot(persistence, dir);
@@ -163,19 +164,19 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  static Pair<String[], VirtualFile[]> getDirectorySnapshot(PersistentFS persistence, VirtualDirectoryImpl dir) {
+  static Pair<String[], VirtualFile[]> getDirectorySnapshot(@NotNull PersistentFS persistence, @NotNull VirtualDirectoryImpl dir) {
     return ReadAction.compute(() -> {
-          if (ApplicationManager.getApplication().isDisposed()) {
-            return null;
-          }
-          return Pair.create(persistence.list(dir), dir.getChildren());
-        });
+      if (ApplicationManager.getApplication().isDisposed()) {
+        return null;
+      }
+      return Pair.create(persistence.list(dir), dir.getChildren());
+    });
   }
 
-  private void partialDirRefresh(NewVirtualFileSystem fs,
-                                 PersistentFS persistence,
-                                 TObjectHashingStrategy<String> strategy,
-                                 VirtualDirectoryImpl dir) {
+  private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
+                                 @NotNull PersistentFS persistence,
+                                 @NotNull TObjectHashingStrategy<String> strategy,
+                                 @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
@@ -219,7 +220,7 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static void forceMarkDirty(NewVirtualFile file) {
+  private static void forceMarkDirty(@NotNull NewVirtualFile file) {
     file.markClean();  // otherwise consequent markDirty() won't have any effect
     file.markDirty();
   }
@@ -241,12 +242,12 @@ class LocalFileSystemRefreshWorker {
     private final PersistentFS myPersistence;
     private final NewVirtualFileSystem myFs;
 
-    RefreshingFileVisitor(VirtualFile fileOrDir,
-                          PersistentFS persistence,
-                          NewVirtualFileSystem fs,
-                          Collection<String> childrenToRefresh,
-                          Collection<VirtualFile> existingPersistentChildren,
-                          TObjectHashingStrategy<String> strategy) {
+    RefreshingFileVisitor(@NotNull VirtualFile fileOrDir,
+                          @NotNull PersistentFS persistence,
+                          @NotNull NewVirtualFileSystem fs,
+                          @Nullable("null means all") Collection<String> childrenToRefresh,
+                          @NotNull Collection<VirtualFile> existingPersistentChildren,
+                          @NotNull TObjectHashingStrategy<String> strategy) {
       myFileOrDir = fileOrDir;
       myPersistence = persistence;
       myFs = fs;
@@ -261,7 +262,7 @@ class LocalFileSystemRefreshWorker {
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
       String name = file.getName(file.getNameCount() - 1).toString();
 
       if (acceptsFileName(name)) {
@@ -349,7 +350,7 @@ class LocalFileSystemRefreshWorker {
       return !VfsUtil.isBadName(name);
     }
 
-    public void visit(VirtualFile fileOrDir) {
+    public void visit(@NotNull VirtualFile fileOrDir) {
       long started = System.nanoTime();
 
       try {
@@ -357,18 +358,22 @@ class LocalFileSystemRefreshWorker {
         if (fileOrDir.isDirectory()) {
           if (myChildrenWeAreInterested == null) {
             Files.walkFileTree(path, EnumSet.noneOf(FileVisitOption.class), 1, this);
-          } else {
-            for(String child:myChildrenWeAreInterested) {
+          }
+          else {
+            for (String child : myChildrenWeAreInterested) {
               try {
-                Path subpath = path.resolve(child).toRealPath(LinkOption.NOFOLLOW_LINKS);
-                BasicFileAttributes attributes = Files.readAttributes(subpath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-                visitFile(subpath, attributes);
-              } catch (IOException ignore) {}
+                Path subPath = path.resolve(child).toRealPath(LinkOption.NOFOLLOW_LINKS);
+                BasicFileAttributes attributes = Files.readAttributes(subPath, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                visitFile(subPath, attributes);
+              }
+              catch (IOException ignore) {
+              }
             }
           }
         }
         else {
-          visitFile(path.toRealPath(LinkOption.NOFOLLOW_LINKS), Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
+          visitFile(path.toRealPath(LinkOption.NOFOLLOW_LINKS),
+                    Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS));
         }
       }
       catch (AccessDeniedException | NoSuchFileException ignore) {
@@ -381,7 +386,7 @@ class LocalFileSystemRefreshWorker {
       long l = myTime.addAndGet(System.nanoTime() - started);
 
       if (requests % 1000 == 0) {
-        System.out.println("refresh:" + myRequests + " for " + l / 1_000_000 + "ms");
+        System.out.println("refresh:" + myRequests + " for " + TimeUnit.NANOSECONDS.toMillis(l) + "ms");
       }
     }
 

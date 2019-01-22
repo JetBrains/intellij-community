@@ -71,11 +71,10 @@ public class JBColor extends Color {
 
   // Let's find if namedColor can be overridden by *.propertyName rule in ui theme and apply it
   // We need to cache calculated results. Cache and rules will be reset after LaF change
-  private static Color findPatternMatch(String name) {
+  private static Color findPatternMatch(@NotNull String name) {
     Object value = UIManager.get("*");
 
     if (value instanceof Map) {
-      Color color = null;
       Map<?,?> map = (Map<?, ?>)value;
       Object o = UIManager.get("*cache");
       if (! (o instanceof Map)) {
@@ -86,8 +85,9 @@ public class JBColor extends Color {
       if (cache.containsKey(name)) {
         return cache.get(name);
       }
+      Color color = null;
       for (Map.Entry<?, ?> entry : map.entrySet()) {
-        if (entry.getKey() instanceof String && name.endsWith(((String)entry.getKey()))) {
+        if (entry.getKey() instanceof String && name.endsWith((String)entry.getKey())) {
           Object result = map.get(entry.getKey());
           if (result instanceof Color) {
             color = (Color)result;
@@ -133,7 +133,7 @@ public class JBColor extends Color {
     return !Lazy.DARK;
   }
 
-  Color getDarkVariant() {
+  private Color getDarkVariant() {
     return darkColor;
   }
 

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -83,7 +84,7 @@ public class RefreshWorker {
     }
   }
 
-  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
     TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
 
     while (!myRefreshQueue.isEmpty()) {
@@ -106,7 +107,7 @@ public class RefreshWorker {
       if (parent != null && checkAndScheduleFileTypeChange(parent, file, attributes)) {
         // ignore everything else
         file.markClean();
-        continue ;
+        continue;
       }
 
       if (file.isDirectory()) {
@@ -139,7 +140,10 @@ public class RefreshWorker {
     }
   }
 
-  private void fullDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
+  private void fullDirRefresh(@NotNull NewVirtualFileSystem fs,
+                              @NotNull PersistentFS persistence,
+                              @NotNull TObjectHashingStrategy<String> strategy,
+                              @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
       Pair<String[], VirtualFile[]> result = LocalFileSystemRefreshWorker.getDirectorySnapshot(persistence, dir);
@@ -178,7 +182,10 @@ public class RefreshWorker {
         }
 
         for (String name : deletedNames) {
-          myHelper.scheduleDeletion(dir.findChild(name));
+          VirtualFileSystemEntry child = dir.findChild(name);
+          if (child != null) {
+            myHelper.scheduleDeletion(child);
+          }
         }
 
         for (Pair<String, FileAttributes> pair : addedMap) {
@@ -213,7 +220,9 @@ public class RefreshWorker {
     }
   }
 
-  private void partialDirRefresh(NewVirtualFileSystem fs, TObjectHashingStrategy<String> strategy, VirtualDirectoryImpl dir) {
+  private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
+                                 @NotNull TObjectHashingStrategy<String> strategy,
+                                 @NotNull VirtualDirectoryImpl dir) {
     while (true) {
       // obtaining directory snapshot
       Pair<List<VirtualFile>, List<String>> result =
@@ -279,7 +288,7 @@ public class RefreshWorker {
     }
   }
 
-  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, VirtualFile child) {
+  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, @NotNull VirtualFile child) {
     if (actualNames != null) {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);
@@ -289,7 +298,8 @@ public class RefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException { }
+  private static class RefreshCancelledException extends RuntimeException {
+  }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
@@ -303,7 +313,7 @@ public class RefreshWorker {
     }
   }
 
-  private static void forceMarkDirty(NewVirtualFile file) {
+  private static void forceMarkDirty(@NotNull NewVirtualFile file) {
     file.markClean();  // otherwise consequent markDirty() won't have any effect
     file.markDirty();
   }

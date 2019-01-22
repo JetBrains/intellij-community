@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,27 +49,25 @@ class VfsEventGenerationHelper {
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes, true));
   }
 
-  void scheduleDeletion(@Nullable VirtualFile file) {
-    if (file != null) {
-      if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
-      myEvents.add(new VFileDeleteEvent(null, file, true));
-    }
+  void scheduleDeletion(@NotNull VirtualFile file) {
+    if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
+    myEvents.add(new VFileDeleteEvent(null, file, true));
   }
 
-  void checkSymbolicLinkChange(VirtualFile child, String oldTarget, String currentTarget) {
+  void checkSymbolicLinkChange(@NotNull VirtualFile child, String oldTarget, String currentTarget) {
     String currentVfsTarget = currentTarget != null ? FileUtil.toSystemIndependentName(currentTarget) : null;
     if (!Comparing.equal(oldTarget, currentVfsTarget)) {
       scheduleAttributeChange(child, VirtualFile.PROP_SYMLINK_TARGET, oldTarget, currentVfsTarget);
     }
   }
 
-  void checkHiddenAttributeChange(VirtualFile child, boolean oldHidden, boolean newHidden) {
+  void checkHiddenAttributeChange(@NotNull VirtualFile child, boolean oldHidden, boolean newHidden) {
     if (oldHidden != newHidden) {
       scheduleAttributeChange(child, VirtualFile.PROP_HIDDEN, oldHidden, newHidden);
     }
   }
 
-  void checkWritableAttributeChange(VirtualFile file, boolean oldWritable, boolean newWritable) {
+  void checkWritableAttributeChange(@NotNull VirtualFile file, boolean oldWritable, boolean newWritable) {
     if (LOG_ATTRIBUTES.isTraceEnabled()) {
       LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + oldWritable + " real=" + newWritable);
     }
@@ -79,7 +76,7 @@ class VfsEventGenerationHelper {
     }
   }
 
-  void addAllEventsFrom(VfsEventGenerationHelper otherHelper) {
+  void addAllEventsFrom(@NotNull VfsEventGenerationHelper otherHelper) {
     myEvents.addAll(otherHelper.myEvents);
   }
 }
