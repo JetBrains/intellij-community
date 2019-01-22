@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -75,6 +76,8 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher STATE_FILTER = anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "distinct").parameterCount(0),
                                                         instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "skip", "limit").parameterCount(1));
   private static final CallMatcher BOXED = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "boxed").parameterCount(0);
+  private static final CallMatcher AS_STREAM =
+    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "asLongStream", "asDoubleStream").parameterCount(0);
   private static final CallMatcher MAP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "map", "mapToInt", "mapToLong", "mapToDouble", "mapToObj").parameterCount(1);
   private static final CallMatcher FLAT_MAP =
@@ -103,6 +106,7 @@ public class StreamChainInliner implements CallInliner {
     staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "of").parameterTypes("double[]"));
   private static final CallMatcher ARRAYS_STREAM = staticCall(JAVA_UTIL_ARRAYS, "stream").parameterCount(1);
   private static final CallMatcher COLLECTION_STREAM = instanceCall(JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher OPTIONAL_STREAM = instanceCall(JAVA_UTIL_OPTIONAL, "stream").parameterCount(0);
 
   private static final CallMapper<UnaryOperator<Step>> INTERMEDIATE_STEP_MAPPER = new CallMapper<UnaryOperator<Step>>()
     .register(FILTER, (PsiMethodCallExpression call) -> (Step next) -> new FilterStep(call, next))
@@ -235,12 +239,17 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class SumTerminalStep extends TerminalStep {
+    private @NotNull DfaValue myResultRange = DfaUnknownValue.getInstance();
+    
     SumTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, null);
     }
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
+      if ("count".equals(myCall.getMethodExpression().getReferenceName())) {
+        myResultRange = builder.getFactory().getFactValue(DfaFactType.RANGE, narrowCountResult(myCall));
+      }
       PsiType type = myCall.getType();
       if (!(type instanceof PsiPrimitiveType)) {
         type = PsiPrimitiveType.getUnboxedType(type);
@@ -249,9 +258,36 @@ public class StreamChainInliner implements CallInliner {
         .boxUnbox(myCall, type, myCall.getType());
     }
 
+    private static LongRangeSet narrowCountResult(PsiMethodCallExpression call) {
+      boolean exact = true;
+      while(true) {
+        call = MethodCallUtils.getQualifierMethodCall(call);
+        if (FILTER.matches(call) || STATE_FILTER.matches(call)) {
+          exact = false;
+        } else if (ARRAYS_STREAM.matches(call) || COLLECTION_STREAM.matches(call)){
+          return LongRangeSet.range(1, Integer.MAX_VALUE);
+        }
+        else if (STREAM_OF.matches(call) || OPTIONAL_STREAM.matches(call)) {
+          return LongRangeSet.point(1);
+        } else if (STREAM_OF_ARRAY.matches(call)) {
+          if (MethodCallUtils.isVarArgCall(call)) {
+            return exact
+                   ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
+                   : LongRangeSet.range(1, call.getArgumentList().getExpressionCount());
+          } else {
+            return LongRangeSet.indexRange();
+          }
+        }
+        else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&
+                 !SKIP_STEP.matches(call) && !AS_STREAM.matches(call)) {
+          return LongRangeSet.range(1, Long.MAX_VALUE);
+        }
+      }
+    }
+
     @Override
     void iteration(CFGBuilder builder) {
-      builder.pop().assignAndPop(myResult, DfaUnknownValue.getInstance());
+      builder.pop().assignAndPop(myResult, myResultRange);
     }
   }
 
