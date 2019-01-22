@@ -82,7 +82,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (lastParent == null) return true;
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
-    if (!processParameters(processor, state, place)) return false;
+    if (!processParameters(processor, state)) return false;
     if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
 
     return true;
@@ -150,21 +150,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
-                                    @NotNull ResolveState state,
-                                    @NotNull PsiElement place) {
+                                    @NotNull ResolveState state) {
     if (!shouldProcessLocals(processor)) return true;
 
-    if (hasParametersSection()) {
-      for (GrParameter parameter : getParameters()) {
-        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
-      }
+    for (GrParameter parameter : getAllParameters()) {
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
-    else if (!isItAlreadyDeclared(place)) {
-      GrParameter[] synth = getSyntheticItParameter();
-      if (synth.length > 0) {
-        if (!ResolveUtil.processElement(processor, synth[0], state.put(ClassHint.RESOLVE_CONTEXT, this))) return false;
-      }
-    }
+
     return true;
   }
 
@@ -177,18 +169,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (!ResolveUtil.processStaticImports(processor, getContainingFile(), state, place)) return false;
 
     return ResolveUtil.treeWalkUp(parent, place, processor, state);
-  }
-
-  private boolean isItAlreadyDeclared(@Nullable PsiElement place) {
-    while (place != this && place != null) {
-      if (place instanceof GrClosableBlock &&
-          !((GrClosableBlock)place).hasParametersSection() &&
-          !(place.getParent() instanceof GrStringInjection)) {
-        return true;
-      }
-      place = place.getParent();
-    }
-    return false;
   }
 
   @Override
@@ -209,7 +189,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Override
   public GrParameter[] getAllParameters() {
-    if (getParent() instanceof GrStringInjection) return GrParameter.EMPTY_ARRAY;
     if (hasParametersSection()) return getParameters();
     return getSyntheticItParameter();
   }
