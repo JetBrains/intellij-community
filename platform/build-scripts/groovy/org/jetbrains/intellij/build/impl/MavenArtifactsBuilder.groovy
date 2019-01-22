@@ -224,7 +224,7 @@ class MavenArtifactsBuilder {
         if (typed != null) {
           dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
         }
-        else {
+        else if (!isOptionalDependency(library)) {
           List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
           for (n in names) {
             buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
@@ -241,6 +241,12 @@ class MavenArtifactsBuilder {
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  static boolean isOptionalDependency(JpsLibrary library) {
+    //todo: this is a temporary workaround until 'microba' library is published to Maven repository (IDEA-200834)
+    // given that this library contains UI elements which are used in few places it's unlikely that absence of this dependency will cause real problems
+    library.name == "microba"
   }
 
   private static MavenArtifactDependency createArtifactDependencyByLibrary(JpsMavenRepositoryLibraryDescriptor descriptor, DependencyScope scope) {
