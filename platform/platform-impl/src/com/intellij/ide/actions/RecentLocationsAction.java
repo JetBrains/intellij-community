@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -150,6 +151,8 @@ public class RecentLocationsAction extends AnAction {
     initSearchActions(project, list, popup, navigationRef);
 
     popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
+
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
     showPopup(project, popup);
   }
