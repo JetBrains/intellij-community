@@ -171,7 +171,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         PlatformImpl.startup(()->ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
       } catch (Throwable e) {
         LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
-        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "GlobalMenuLinux loop");
         glibMain.start();
       }
     } else {

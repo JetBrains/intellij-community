@@ -260,7 +260,7 @@ public class GradleExecutionHelper {
         final File scriptFile = new File(wrapperFilesLocation, "gradlew");
         final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
         final String[] lines = {
           "",
           "gradle.projectsEvaluated { gr ->",
