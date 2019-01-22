@@ -137,7 +137,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertSameElements(vcsManager.allVersionedRoots, projectRoot)
 
     val mapping = vcsManager.getDirectoryMappingFor(getFilePath(projectRoot))
-    vcsManager.removeDirectoryMapping(mapping)
+    vcsManager.removeDirectoryMapping(mapping!!)
     VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(projectPath))
 
     notifier.rescanAndNotifyIfNeeded()
