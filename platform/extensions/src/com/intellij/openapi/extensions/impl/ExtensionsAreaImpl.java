@@ -32,7 +32,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
   private final AreaPicoContainer myPicoContainer;
-  private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart(); // guarded by myAvailabilityListeners
@@ -40,7 +39,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final String myAreaClass;
 
   public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer) {
-    myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
     myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
@@ -236,10 +234,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       new CachingConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
 
     return adapter.getComponentInstance(getPicoContainer());
-  }
-
-  public Throwable getCreationTrace() {
-    return myCreationTrace;
   }
 
   @Override
