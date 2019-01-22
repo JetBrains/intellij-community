@@ -12,6 +12,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -160,6 +161,7 @@ class InferenceCache {
     return PsiTreeUtil.findFirstParent(
       element,
       element1 -> !(element1.getParent() instanceof GrExpression)
+                  || element1 instanceof GrBinaryExpression
                   || element1 instanceof GrInstanceOfExpression
                   || isExpressionStatement(element1)
     );

@@ -571,6 +571,58 @@ def foo(a) {
 ''', 'A'
   }
 
+  void 'test null or instanceof'() {
+    doTest '''\
+def foo(a) {
+    if (a == null || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test null or instanceof 2'() {
+    doTest '''\
+def foo(a) {
+    if (null == a || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null'() {
+    doTest '''\
+def foo(a) {
+    if (a == null || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test instanceof or null 2'() {
+    doTest '''\
+def foo(a) {
+    if (null == a || a instanceof String) {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test null or instanceof else'() {
+    doTest '''\
+def foo(a) {
+    if (a != null && a !instanceof String) {
+    
+    } else {
+        <caret>a
+    }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test enum constant'() {
     doTest('''\
 import static MyEnum.*
