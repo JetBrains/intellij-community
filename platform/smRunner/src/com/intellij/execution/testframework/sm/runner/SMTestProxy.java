@@ -7,7 +7,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
-import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -44,10 +44,10 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
-  private final String myName;
   private boolean myIsSuite;
-  private final String myLocationUrl;
-  private final String myMetainfo;
+
+  @NotNull
+  private final StartNodeEventInfo myStartNodeEventInfo;
   private final boolean myPreservePresentableName;
 
   private List<SMTestProxy> myChildren;
@@ -73,20 +73,48 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myTreeBuildBeforeStart = false;
   private CachedValue<Map<GlobalSearchScope, Ref<Location>>> myLocationMapCachedValue;
 
+  public SMTestProxy(@NotNull final StartNodeEventInfo startedNodeEvent, final boolean isSuite) {
+    this(startedNodeEvent, isSuite, false);
+  }
+
+  public SMTestProxy(@NotNull final StartNodeEventInfo startedNodeEvent, final boolean isSuite, final boolean preservePresentableName) {
+    myStartNodeEventInfo = startedNodeEvent;
+    myPreservePresentableName = preservePresentableName;
+    myIsSuite = isSuite;
+  }
+
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #SMTestProxy(StartNodeEventInfo, boolean)}
+   */
+  @Deprecated
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
   }
 
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #SMTestProxy(StartNodeEventInfo, boolean)}
+   */
+  @Deprecated
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, boolean preservePresentableName) {
     this(testName, isSuite, locationUrl, null, preservePresentableName);
   }
 
-  public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String metainfo, boolean preservePresentableName) {
-    myName = testName;
-    myIsSuite = isSuite;
-    myLocationUrl = locationUrl;
-    myMetainfo = metainfo;
-    myPreservePresentableName = preservePresentableName;
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #SMTestProxy(StartNodeEventInfo, boolean)}
+   */
+  @Deprecated
+  public SMTestProxy(String testName,
+                     boolean isSuite,
+                     @Nullable String locationUrl,
+                     @Nullable String metainfo,
+                     boolean preservePresentableName) {
+    this(new StartNodeEventInfo(testName, null, null, locationUrl, metainfo),isSuite, preservePresentableName);
   }
 
   public boolean isPreservePresentableName() {
@@ -177,8 +205,8 @@ public class SMTestProxy extends AbstractTestProxy {
       myHasPassedTestsCached = true;
     }
     return hasPassedTests;
-
   }
+
   @Override
   public boolean isInterrupted() {
     return myState.wasTerminated();
@@ -250,7 +278,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Override
   public String getName() {
-    return myName;
+    return myStartNodeEventInfo.getName();
   }
 
   @Override
@@ -289,7 +317,7 @@ public class SMTestProxy extends AbstractTestProxy {
       String path = VirtualFileManager.extractPath(locationUrl);
       if (!DumbService.isDumb(project) || DumbService.isDumbAware(locator)) {
         return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
-          List<Location> locations = locator.getLocation(protocolId, path, myMetainfo, project, searchScope);
+          List<Location> locations = locator.getLocation(protocolId, path, myStartNodeEventInfo.getMetainfo(), project, searchScope);
           return ContainerUtil.getFirstItem(locations);
         });
       }
@@ -308,7 +336,7 @@ public class SMTestProxy extends AbstractTestProxy {
     if (stacktrace != null && properties instanceof SMStacktraceParser && isLeaf()) {
       Navigatable result = properties instanceof SMStacktraceParserEx ?
                            ((SMStacktraceParserEx)properties).getErrorNavigatable(location, stacktrace) :
-                             ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
+                           ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
       if (result != null) {
         return result;
       }
@@ -491,7 +519,8 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
     TestComparisionFailedState comparisionFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath());
+      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(),
+                              event.getActualFilePath());
     comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
@@ -504,7 +533,8 @@ public class SMTestProxy extends AbstractTestProxy {
                                                             @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
+    final TestComparisionFailedState comparisionFailedState =
+      new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
     if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
     }
@@ -699,7 +729,8 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myPresentableName == null) {
       if (myPreservePresentableName) {
         myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
-      } else {
+      }
+      else {
         myPresentableName = TestsPresentationUtil.getPresentableName(this);
       }
     }
@@ -756,13 +787,13 @@ public class SMTestProxy extends AbstractTestProxy {
   @Override
   @Nullable
   public String getLocationUrl() {
-    return myLocationUrl;
+    return myStartNodeEventInfo.getLocationUrl();
   }
 
   @Override
   @Nullable
   public String getMetainfo() {
-    return myMetainfo;
+    return myStartNodeEventInfo.getMetainfo();
   }
 
   /**
@@ -880,6 +911,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   /**
    * Recursively invalidates cached duration for container(parent) suites or updates their value
+   *
    * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
@@ -925,8 +957,8 @@ public class SMTestProxy extends AbstractTestProxy {
       this(false);
     }
 
-    public SMRootTestProxy(boolean preservePresentableName) {
-      super("[root]", true, null, preservePresentableName);
+    public SMRootTestProxy(final boolean preservePresentableName) {
+      super(new StartNodeEventInfo("[root]", null, null, null, null), true, preservePresentableName);
     }
 
     public void setTestsReporterAttached() {

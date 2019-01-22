@@ -21,6 +21,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
 
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestSuiteStartedEvent(TestSuiteStarted)}
+   * or {@link #TestSuiteStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
   public TestSuiteStartedEvent(@Nullable String name,
                                @Nullable String id,
                                @Nullable String parentId,
@@ -29,25 +35,45 @@ public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
                                @Nullable String nodeType,
                                @Nullable String nodeArgs,
                                boolean running) {
-    super(name, id, parentId, locationUrl, metainfo, nodeType, nodeArgs, running);
+    this(new StartNodeEventInfo(name, id, parentId, locationUrl, metainfo), nodeType, nodeArgs, running);
   }
 
+  public TestSuiteStartedEvent(@NotNull final StartNodeEventInfo info,
+                               @Nullable String nodeType,
+                               @Nullable String nodeArgs,
+                               boolean running) {
+    super(info, nodeType, nodeArgs, running);
+  }
+
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestSuiteStartedEvent(TestSuiteStarted)}
+   * or {@link #TestSuiteStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
+  @SuppressWarnings("unused") // Backward compatibility
+  @Deprecated
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,
                                @Nullable String locationUrl) {
-    this(suiteStarted, locationUrl, BaseStartedNodeEvent.getMetainfo(suiteStarted));
+    this(suiteStarted);
   }
 
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestSuiteStartedEvent(TestSuiteStarted)}
+   * or {@link #TestSuiteStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
+  @SuppressWarnings("unused") // Backward compatibility
+  @Deprecated
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,
                                @Nullable String locationUrl,
                                @Nullable String metainfo) {
-    super(suiteStarted.getSuiteName(),
-          TreeNodeEvent.getNodeId(suiteStarted),
-          getParentNodeId(suiteStarted),
-          locationUrl,
-          metainfo,
-          BaseStartedNodeEvent.getNodeType(suiteStarted),
-          BaseStartedNodeEvent.getNodeArgs(suiteStarted),
-          BaseStartedNodeEvent.isRunning(suiteStarted));
+    this(suiteStarted);
+  }
+
+  public TestSuiteStartedEvent(@NotNull final TestSuiteStarted suiteStarted) {
+    super(StartNodeEventInfoKt.getStartNodeInfo(suiteStarted, suiteStarted.getSuiteName()), suiteStarted);
   }
 
   public TestSuiteStartedEvent(@NotNull String name,
@@ -56,7 +82,6 @@ public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
   }
 
   public TestSuiteStartedEvent(@NotNull String name, @Nullable String locationUrl, @Nullable String metainfo) {
-    super(name, null, null, locationUrl, metainfo, null, null,true);
+    super(name, null, null, locationUrl, metainfo, null, null, true);
   }
-
 }

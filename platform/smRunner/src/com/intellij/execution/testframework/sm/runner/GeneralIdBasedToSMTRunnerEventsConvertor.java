@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +147,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
 
     String nodeName = startedNodeEvent.getName();
-    SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
+    SMTestProxy childProxy = new SMTestProxy(startedNodeEvent.getStartNodeEventInfo(), suite, true);
     childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
     childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
@@ -169,15 +168,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return node;
   }
 
+  @NotNull
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    Node node = createNode(new TestSuiteStartedEvent(suiteName, id, parentNodeId, locationHint, metaInfo, null, null, false), true);
+  protected SMTestProxy createSuite(@NotNull final StartNodeEventInfo info) {
+    Node node = createNode(new TestSuiteStartedEvent(info, null, null, false), true);
     return node.getProxy();
   }
 
+  @NotNull
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    Node node = createNode(new TestStartedEvent(testName, id, parentNodeId, locationHint, metaInfo, null, null, false), false);
+  protected SMTestProxy createProxy(@NotNull final StartNodeEventInfo info) {
+    Node node = createNode(new TestStartedEvent(info, null, null, false), false);
     return node.getProxy();
   }
 
@@ -417,7 +418,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (proxy.isSuite()) {
         myRunningSuiteNodes.add(node);
         fireOnSuiteStarted(proxy);
-      } else {
+      }
+      else {
         myRunningTestNodes.add(lowestNode);
         fireOnTestStarted(proxy);
       }
@@ -526,5 +528,4 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
              '}';
     }
   }
-
 }

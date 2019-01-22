@@ -61,7 +61,8 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myTestsRootNode = myResultsViewer.getTestsRootNode();
-    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myConsoleProperties.getProject(), myResultsViewer.getTestsRootNode(), "SMTestFramework");
+    myEventsProcessor =
+      new GeneralToSMTRunnerEventsConvertor(myConsoleProperties.getProject(), myResultsViewer.getTestsRootNode(), "SMTestFramework");
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();
     PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
@@ -263,16 +264,16 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   //with test tree build before start actual tests
   public void testPrependTreeAndSameTestsStartFinish() {
     //send tree
-    myEventsProcessor.onSuiteTreeStarted("suite1", null, null, "suite1", "0");
-    myEventsProcessor.onSuiteTreeNodeAdded("test1", null, null,"test1", "suite1");
+    myEventsProcessor.onSuiteTreeStarted(new StartNodeEventInfo("suite1", "suite1", "0", null, null));
+    myEventsProcessor.onSuiteTreeNodeAdded(new StartNodeEventInfo("test1", "test1", "suite1", "0", null));
     myEventsProcessor.onSuiteTreeEnded("suite1");
     myEventsProcessor.onBuildTreeEnded();
 
     //start testing
     myEventsProcessor.onStartTesting();
-    
+
     //invocation count for method set to 2
-    for(int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
       myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite1", null));
 
       myEventsProcessor.onTestStarted(new TestStartedEvent("test1", null));
@@ -295,14 +296,14 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   public void testBuildAsSuiteFailAsTest() {
     //send tree
     myEventsProcessor.onSuiteTreeStarted("suite1", null, null, "suite1", "0");
-    myEventsProcessor.onSuiteTreeStarted("test1", null, null,"test1", "suite1");
+    myEventsProcessor.onSuiteTreeStarted("test1", null, null, "test1", "suite1");
     myEventsProcessor.onSuiteTreeEnded("test1");
     myEventsProcessor.onSuiteTreeEnded("suite1");
     myEventsProcessor.onBuildTreeEnded();
 
     //start testing
     myEventsProcessor.onStartTesting();
-    
+
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite1", null));
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("test1", null));
 
@@ -378,7 +379,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myTestsRootNode.setFinished();
     myResultsViewer.onSuiteFinished(myTestsRootNode);
-    
+
     myResultsViewer.onTestingFinished(myTestsRootNode);
     assertEquals(0, myResultsViewer.getTotalTestCount());
   }

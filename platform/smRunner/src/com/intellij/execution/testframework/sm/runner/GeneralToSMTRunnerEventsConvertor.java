@@ -34,17 +34,19 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     mySuitesStack = new TestSuiteStack(testFrameworkName);
   }
 
+  @NotNull
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    SMTestProxy proxy = super.createProxy(testName, locationHint, metaInfo, id, parentNodeId);
+  protected SMTestProxy createProxy(@NotNull final StartNodeEventInfo info) {
+    SMTestProxy proxy = super.createProxy(info);
     SMTestProxy currentSuite = getCurrentSuite();
     currentSuite.addChild(proxy);
     return proxy;
   }
 
+  @NotNull
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
+  protected SMTestProxy createSuite(@NotNull final StartNodeEventInfo info) {
+    SMTestProxy newSuite = super.createSuite(info);
     final SMTestProxy parentSuite = getCurrentSuite();
 
     parentSuite.addChild(newSuite);
@@ -136,7 +138,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     SMTestProxy testProxy = findChild(parentSuite, locationUrl != null ? locationUrl : fullName, false);
     if (testProxy == null) {
       // creates test
-      testProxy = new SMTestProxy(testName, false, locationUrl, testStartedEvent.getMetainfo(), false);
+      testProxy = new SMTestProxy(testStartedEvent.getStartNodeEventInfo(), false, false);
       testProxy.setConfig(isConfig);
       if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
@@ -169,7 +171,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     SMTestProxy newSuite = findChild(parentSuite, locationUrl != null ? locationUrl : suiteName, true);
     if (newSuite == null) {
       //new suite
-      newSuite = new SMTestProxy(suiteName, true, locationUrl, suiteStartedEvent.getMetainfo(), parentSuite.isPreservePresentableName());
+      newSuite = new SMTestProxy(suiteStartedEvent.getStartNodeEventInfo(), true, parentSuite.isPreservePresentableName());
       if (myTreeBuildBeforeStart) {
         newSuite.setTreeBuildBeforeStart();
       }

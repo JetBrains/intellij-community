@@ -33,15 +33,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Processes events of test runner in general text-based form.
  * <p/>
  * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
- * 
+ * <p>
  * <p/>
  * Threading information:
  * <ul>
- *   <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
- *   <li>all other events should be processed in the same output reader thread</li>
- *   <li>{@link #dispose()} is called from EDT</li>
+ * <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
+ * <li>all other events should be processed in the same output reader thread</li>
+ * <li>{@link #dispose()} is called from EDT</li>
  * </ul>
- * 
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
@@ -53,7 +52,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   protected boolean myTreeBuildBeforeStart = false;
 
-  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName, @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
+  public GeneralTestEventsProcessor(Project project,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
     myTestsRootProxy = testsRootProxy;
@@ -69,20 +70,64 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     }
   }
 
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link  #createProxy(StartNodeEventInfo)}
+   */
+  @Deprecated
+  @NotNull
   protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    return new SMTestProxy(testName, false, locationHint, metaInfo, false);
+    return new SMTestProxy(new StartNodeEventInfo(testName, id, parentNodeId, locationHint, metaInfo), false);
   }
 
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
-    return new SMTestProxy(suiteName, true, locationHint, metaInfo, false);
+  @SuppressWarnings("deprecation") // Backward compatibility
+  @NotNull
+  protected SMTestProxy createProxy(@NotNull final StartNodeEventInfo info) {
+    return createProxy(info.getName(), info.getLocationUrl(), info.getMetainfo(), info.getId(), info.getParentId());
   }
+
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #createSuite(StartNodeEventInfo)}
+   */
+  @Deprecated
+  @NotNull
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    return new SMTestProxy(new StartNodeEventInfo(suiteName, id, parentNodeId, locationHint, metaInfo), true);
+
+  }
+
+  @SuppressWarnings("deprecation") // Backward compatibility
+  @NotNull
+  protected SMTestProxy createSuite(@NotNull final StartNodeEventInfo info) {
+    return createSuite(info.getName(), info.getLocationUrl(), info.getMetainfo(), info.getId(), info.getParentId());
+  }
+
 
   protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
 
-  public void onSuiteTreeNodeAdded(final String testName, final String locationHint, final String metaInfo, String id, String parentNodeId) {
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #onSuiteTreeNodeAdded(TestStartedEvent)}
+   */
+  @Deprecated
+  public void onSuiteTreeNodeAdded(final String testName,
+                                   final String locationHint,
+                                   final String metaInfo,
+                                   String id,
+                                   String parentNodeId) {
+    onSuiteTreeNodeAdded(new StartNodeEventInfo(testName, id, parentNodeId, locationHint, metaInfo));
+  }
+
+
+  public void onSuiteTreeNodeAdded(@NotNull final StartNodeEventInfo info) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy testProxy = createProxy(testName, locationHint, metaInfo, id, parentNodeId);
+      final SMTestProxy testProxy =
+        createProxy(info);
       testProxy.setTreeBuildBeforeStart();
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
@@ -96,10 +141,20 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     });
   }
 
+  /**
+   * Removing in 2020
+   *
+   * @deprecated use {@link #onSuiteTreeNodeAdded(TestStartedEvent)}
+   */
+  @Deprecated
   public void onSuiteTreeStarted(final String suiteName, final String locationHint, String metaInfo, String id, String parentNodeId) {
+    onSuiteTreeStarted(new StartNodeEventInfo(suiteName, id, parentNodeId, locationHint, metaInfo));
+  }
+
+  public void onSuiteTreeStarted(@NotNull final StartNodeEventInfo event) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
-      final SMTestProxy newSuite = createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
+      final SMTestProxy newSuite = createSuite(event);
       if (myLocator != null) {
         newSuite.setLocator(myLocator);
       }
@@ -135,6 +190,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   // progress events
 
   public abstract void onStartTesting();
+
   protected void fireOnTestingStarted(SMTestProxy.SMRootTestProxy node) {
     myEventPublisher.onTestingStarted(node);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -143,6 +199,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestsCountInSuite(final int count);
+
   protected void fireOnTestsCountInSuite(int count) {
     myEventPublisher.onTestsCountInSuite(count);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -151,6 +208,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
+
   protected void fireOnTestStarted(SMTestProxy testProxy) {
     myEventPublisher.onTestStarted(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -159,6 +217,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
+
   protected void fireOnTestFinished(SMTestProxy testProxy) {
     myEventPublisher.onTestFinished(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -167,6 +226,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
+
   protected void fireOnTestFailed(SMTestProxy testProxy) {
     myEventPublisher.onTestFailed(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -175,6 +235,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public abstract void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
+
   protected void fireOnTestIgnored(SMTestProxy testProxy) {
     myEventPublisher.onTestIgnored(testProxy);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -185,14 +246,16 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   public abstract void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
 
   public abstract void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
+
   protected void fireOnSuiteStarted(SMTestProxy newSuite) {
     myEventPublisher.onSuiteStarted(newSuite);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onSuiteStarted(newSuite);
     }
   }
-  
+
   public abstract void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
+
   protected void fireOnSuiteFinished(SMTestProxy mySuite) {
     myEventPublisher.onSuiteFinished(mySuite);
     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -219,7 +282,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   protected void fireOnBeforeTestingFinished(@NotNull SMTestProxy.SMRootTestProxy root) {
     myEventPublisher.onBeforeTestingFinished(root);
-     for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
       adapter.onBeforeTestingFinished(root);
     }
   }
@@ -299,7 +362,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected void logProblem(final String msg) {
     logProblem(LOG, msg, myTestFrameworkName);
   }
-  
+
   protected void logProblem(String msg, boolean throwError) {
     logProblem(LOG, msg, throwError, myTestFrameworkName);
   }

@@ -16,19 +16,32 @@
 package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
-import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
+  @NotNull
+  private final StartNodeEventInfo myStartNodeEventInfo;
 
-  private final String myParentId;
-  private final String myLocationUrl;
-  private final String myMetainfo;
   private final String myNodeType;
   private final String myNodeArgs;
   private final boolean myRunning;
+
+  protected BaseStartedNodeEvent(@NotNull final StartNodeEventInfo startNodeEventInfo, @NotNull final ServiceMessage message) {
+    this(startNodeEventInfo, getNodeType(message), getNodeArgs(message), isRunning(message));
+  }
+
+  protected BaseStartedNodeEvent(@NotNull final StartNodeEventInfo startNodeEventInfo,
+                                 @Nullable final String nodeType,
+                                 @Nullable final String nodeArgs,
+                                 final boolean running) {
+    super(startNodeEventInfo);
+    myStartNodeEventInfo = startNodeEventInfo;
+    myNodeType = nodeType;
+    myNodeArgs = nodeArgs;
+    myRunning = running;
+  }
 
   protected BaseStartedNodeEvent(@Nullable String name,
                                  @Nullable String id,
@@ -38,13 +51,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
                                  @Nullable String nodeType,
                                  @Nullable String nodeArgs,
                                  boolean running) {
-    super(name, id);
-    myParentId = parentId;
-    myLocationUrl = locationUrl;
-    myMetainfo =  metainfo;
-    myNodeType = nodeType;
-    myNodeArgs = nodeArgs;
-    myRunning = running;
+    this(new StartNodeEventInfo(name, id, parentId, locationUrl, metainfo), nodeType, nodeArgs, running);
   }
 
   /**
@@ -52,17 +59,17 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
    */
   @Nullable
   public String getParentId() {
-    return myParentId;
+    return myStartNodeEventInfo.getParentId();
   }
 
   @Nullable
   public String getLocationUrl() {
-    return myLocationUrl;
+    return myStartNodeEventInfo.getLocationUrl();
   }
 
   @Nullable
   public String getMetainfo() {
-    return myMetainfo;
+    return myStartNodeEventInfo.getMetainfo();
   }
 
   @Nullable
@@ -79,21 +86,36 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     return myRunning;
   }
 
+  @NotNull
+  public final StartNodeEventInfo getStartNodeEventInfo() {
+    return myStartNodeEventInfo;
+  }
+
   @Override
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
-    append(buf, "parentId", myParentId);
-    append(buf, "locationUrl", myLocationUrl);
-    append(buf, "metainfo", myMetainfo);
+    append(buf, "parentId", getParentId());
+    append(buf, "locationUrl", getLocationUrl());
+    append(buf, "metainfo", getMetainfo());
     append(buf, "running", myRunning);
   }
 
   @Nullable
-  public static String getParentNodeId(@NotNull MessageWithAttributes message) {
+  public static String getLocation(@NotNull ServiceMessage message) {
+    return message.getAttributes().get(ATTR_KEY_LOCATION_URL);
+  }
+
+  @Nullable
+  public static String getName(@NotNull ServiceMessage message) {
+    return message.getAttributes().get("name");
+  }
+
+  @Nullable
+  public static String getParentNodeId(@NotNull ServiceMessage message) {
     return TreeNodeEvent.getNodeId(message, "parentNodeId");
   }
 
   @Nullable
-  public static String getNodeType(@NotNull MessageWithAttributes message) {
+  public static String getNodeType(@NotNull ServiceMessage message) {
     return message.getAttributes().get("nodeType");
   }
 
@@ -103,11 +125,11 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   }
 
   @Nullable
-  public static String getNodeArgs(@NotNull MessageWithAttributes message) {
+  public static String getNodeArgs(@NotNull ServiceMessage message) {
     return message.getAttributes().get("nodeArgs");
   }
 
-  public static boolean isRunning(@NotNull MessageWithAttributes message) {
+  public static boolean isRunning(@NotNull ServiceMessage message) {
     String runningStr = message.getAttributes().get("running");
     if (StringUtil.isEmpty(runningStr)) {
       // old behavior preserved
@@ -115,5 +137,4 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     }
     return Boolean.parseBoolean(runningStr);
   }
-
 }

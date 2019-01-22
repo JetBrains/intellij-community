@@ -23,24 +23,43 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
 
   private boolean myConfig;
 
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestStartedEvent(TestStarted)}
+   * or {@link #TestStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
+  @SuppressWarnings("unused") //Backward compatibility
+  @Deprecated
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl) {
-    this(testStarted, locationUrl, BaseStartedNodeEvent.getMetainfo(testStarted));
+    this(testStarted);
   }
 
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestStartedEvent(TestStarted)}
+   * or {@link #TestStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
+  @SuppressWarnings("unused") //Backward compatibility
+  @Deprecated
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl,
                           @Nullable String metainfo) {
-    super(testStarted.getTestName(),
-          TreeNodeEvent.getNodeId(testStarted),
-          getParentNodeId(testStarted),
-          locationUrl,
-          metainfo,
-          BaseStartedNodeEvent.getNodeType(testStarted),
-          BaseStartedNodeEvent.getNodeArgs(testStarted),
-          BaseStartedNodeEvent.isRunning(testStarted));
+    this(testStarted);
   }
 
+  public TestStartedEvent(@NotNull final TestStarted testStarted) {
+    super(StartNodeEventInfoKt.getStartNodeInfo(testStarted, testStarted.getTestName()), testStarted);
+  }
+
+  /**
+   * Will be removed in 2020
+   *
+   * @deprecated use {@link #TestStartedEvent(TestStarted)}
+   * or {@link #TestStartedEvent(StartNodeEventInfo, String, String, boolean)}
+   */
   public TestStartedEvent(@Nullable String name,
                           @Nullable String id,
                           @Nullable String parentId,
@@ -49,11 +68,14 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
                           @Nullable String nodeType,
                           @Nullable String nodeArgs,
                           boolean running) {
-    super(name,
-          id,
-          parentId,
-          locationUrl,
-          metainfo,
+    this(new StartNodeEventInfo(name, id, parentId, locationUrl, metainfo), nodeType, nodeArgs, running);
+  }
+
+  public TestStartedEvent(@NotNull final StartNodeEventInfo info,
+                          @Nullable String nodeType,
+                          @Nullable String nodeArgs,
+                          boolean running) {
+    super(info,
           nodeType,
           nodeArgs,
           running);
@@ -67,7 +89,7 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
   public TestStartedEvent(@NotNull String name,
                           @Nullable String locationUrl,
                           @Nullable String metainfo) {
-    super(name, null, null, locationUrl, metainfo,null, null, true);
+    super(name, null, null, locationUrl, metainfo, null, null, true);
   }
 
   public void setConfig(boolean config) {
