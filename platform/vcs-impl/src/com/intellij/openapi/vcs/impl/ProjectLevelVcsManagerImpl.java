@@ -108,8 +108,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
   public ProjectLevelVcsManagerImpl(Project project,
-                                    final FileStatusManager manager,
-                                    final FileIndexFacade excludedFileIndex,
+                                    FileStatusManager manager,
+                                    FileIndexFacade excludedFileIndex,
                                     ProjectManager projectManager,
                                     DefaultVcsRootPolicy defaultVcsRootPolicy) {
     myProject = project;
