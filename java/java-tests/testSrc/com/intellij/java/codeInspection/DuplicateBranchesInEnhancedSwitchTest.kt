@@ -28,6 +28,11 @@ class DuplicateBranchesInEnhancedSwitchTest : LightCodeInsightFixtureTestCase() 
   fun testReturnInStatement() = doTest()
   fun testExpressionParentheses() = doTest()
   fun testStatementParentheses() = doTest()
+  fun testCaseLabelsExpression() = doTest()
+  fun testCaseLabelsExpressionDefaultFirst() = doTest()
+  fun testCaseLabelsExpressionDefaultLast() = doTest()
+  fun testCaseLabelsExpressionDifferentComments() = doTest()
+  fun testCaseLabelsExpressionSameComments() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")
