@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -87,6 +88,7 @@ class TypeDfaState {
     return myVarTypes.get(variableName);
   }
 
+  @Contract("_ -> new")
   @NotNull
   DFAType getOrCreateVariableType(String variableName) {
     DFAType result = getVariableType(variableName);

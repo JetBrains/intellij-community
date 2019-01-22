@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.util.Comparing;
@@ -6,6 +6,7 @@ import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -25,15 +26,15 @@ public class DFAType {
   private static class Mixin {
     private final int ID;
 
-    private final PsiType myType;
-    private final ConditionInstruction myCondition;
+    private final @NotNull PsiType myType;
+    private final @Nullable ConditionInstruction myCondition;
     private final boolean myNegated;
 
-    private Mixin(PsiType type, ConditionInstruction condition, boolean negated) {
+    private Mixin(@NotNull PsiType type, @Nullable ConditionInstruction condition, boolean negated) {
       this(-1, type, condition, negated);
     }
 
-    private Mixin(int ID, PsiType type, ConditionInstruction condition, boolean negated) {
+    private Mixin(int ID, @NotNull PsiType type, @Nullable ConditionInstruction condition, boolean negated) {
       if (ID == -1) ID = hashCode();
       this.ID = ID;
       myType = type;
@@ -96,6 +97,8 @@ public class DFAType {
     return true;
   }
 
+  @Contract("_ -> new")
+  @NotNull
   public DFAType negate(@NotNull Instruction instruction) {
     final DFAType type = new DFAType(primary);
 
@@ -131,6 +134,8 @@ public class DFAType {
     return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));
   }
 
+  @Contract("_ -> new")
+  @NotNull
   public static DFAType create(@Nullable PsiType type) {
     return new DFAType(type);
   }
