@@ -13,46 +13,56 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Max Medvedev
  */
 public class DFAType {
+
   private static class Mixin {
-    private final int ID;
 
     private final @NotNull PsiType myType;
     private final @Nullable ConditionInstruction myCondition;
     private final boolean myNegated;
 
     private Mixin(@NotNull PsiType type, @Nullable ConditionInstruction condition, boolean negated) {
-      this(-1, type, condition, negated);
-    }
-
-    private Mixin(int ID, @NotNull PsiType type, @Nullable ConditionInstruction condition, boolean negated) {
-      if (ID == -1) ID = hashCode();
-      this.ID = ID;
       myType = type;
       myCondition = condition;
       myNegated = negated;
     }
 
     private Mixin negate() {
-      return new Mixin(ID, myType, myCondition, !myNegated);
+      return new Mixin(myType, myCondition, !myNegated);
     }
 
     @Override
     public String toString() {
       return "Mixin{" +
-             "ID=" + ID +
-             ", myType=" + myType +
+             "myType=" + myType +
              ", myCondition=" + myCondition +
              ", myNegated=" + myNegated +
              '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Mixin mixin = (Mixin)o;
+
+      if (!myType.equals(mixin.myType)) return false;
+      if (!Objects.equals(myCondition, mixin.myCondition)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myType.hashCode();
+      result = 31 * result + (myCondition != null ? myCondition.hashCode() : 0);
+      return result;
     }
   }
 
@@ -85,7 +95,7 @@ public class DFAType {
     for (Mixin mixin1 : mixins) {
       boolean contains = false;
       for (Mixin mixin2 : other.mixins) {
-        if (mixin1.ID == mixin2.ID) {
+        if (mixin1.equals(mixin2)) {
           contains = mixin1.myNegated == mixin2.myNegated;
           break;
         }
@@ -154,7 +164,7 @@ public class DFAType {
 
     for (Mixin mixin1 : t1.mixins) {
       for (Mixin mixin2 : t2.mixins) {
-        if (mixin1.ID == mixin2.ID && mixin1.myNegated == mixin2.myNegated) {
+        if (mixin1.equals(mixin2) && mixin1.myNegated == mixin2.myNegated) {
           type.mixins.add(mixin1);
         }
       }
