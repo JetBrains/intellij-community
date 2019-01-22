@@ -3,10 +3,11 @@ import org.gradle.internal.os.OperatingSystem
 import java.util.concurrent.TimeUnit
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
+task setupJdks(dependsOn: ['setupJdk18', 'checkJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com'
+project.ext.jdkVersion = '1.8'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   def jdkDir = new File(it)
@@ -14,7 +15,7 @@ def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   jdkDir
 } ?: "${intellijProjectDir()}/build/jdk"
 
-project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/1.8"}"
+project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/$jdkVersion"}"
 
 task downloadJdk18 {
   def arch = jdk18Arch()
@@ -26,7 +27,7 @@ task downloadJdk18 {
   inputs.property('build', jdkBuild)
   outputs.file(outputFile)
   doLast {
-    logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
+    logger.info("Downloading up JDK $jdkVersion to compile (using $jdkRepo repo)")
     download {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
@@ -44,9 +45,8 @@ task setupJdk18(dependsOn: downloadJdk18) {
   inputs.property("jdk18OutputDir", outputDir)
   outputs.dir(outputDir)
   doLast {
-    logger.info("Setting up JDK 1.8 to compile")
+    logger.info("Setting up JDK $jdkVersion to compile")
     unpackJdk(downloadOutputs.singleFile, outputDir)
-    checkVendor(OperatingSystem.current().isMacOsX() ? "$outputDir/Contents/Home/bin" : "$outputDir/bin")
   }
 }
 
@@ -174,25 +174,30 @@ static def jdk16Version() {
   return '6.45:linux_x64'
 }
 
-def checkVendor(path) {
-  def output = new ByteArrayOutputStream()
-  try {
-    exec {
-      standardOutput = output
-      errorOutput = output
-      commandLine file("$path/java"), '-XshowSettings:properties', '-version'
+task checkJdk18(dependsOn: setupJdk18) {
+  doLast {
+    def path = OperatingSystem.current().isMacOsX() ? "$jdk18OutputDir/Contents/Home/bin" : "$jdk18OutputDir/bin"
+    def project = project
+    new ByteArrayOutputStream().withStream { output ->
+      project.exec {
+        standardOutput = output
+        errorOutput = output
+        commandLine file("$path/java"), '-XshowSettings:properties', '-version'
+      }
+      String vendor = null
+      String version = null
+      output.toString().readLines().each {
+        if (it.contains('java.vendor =')) {
+          vendor = it
+        }
+        else if (it.contains('java.version =')) {
+          version = it
+        }
+      }
+      println(vendor)
+      println(version)
+      if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
+      if (!version?.contains(jdkVersion)) throw new IllegalStateException("java.version is not $jdkVersion")
     }
-    def vendor = output.toString().readLines().find {
-      it.contains('java.vendor') && it.contains('JetBrains')
-    }
-    if (vendor != null) {
-      logger.quiet(vendor)
-    }
-    else {
-      throw new IllegalStateException('java.vendor is not JetBrains')
-    }
-  }
-  finally {
-    output.close()
   }
 }
