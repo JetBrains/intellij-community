@@ -762,7 +762,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void calcAnnotationsSize() {
     myTextAnnotationGuttersSize = 0;
     final int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
-    for (int j = 0; j < myTextAnnotationGutters.size(); j++) {
+    final int guttersCount = myTextAnnotationGutters.size();
+    for (int j = 0; j < guttersCount; j++) {
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       int gutterSize = 0;
       for (int i = 0; i < lineCount; i++) {
@@ -774,7 +775,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
-      if (gutterSize > 0) gutterSize += getGapBetweenAnnotations();
+      if (gutterSize > 0 && j < guttersCount - 1) gutterSize += getGapBetweenAnnotations();
       myTextAnnotationGutterSizes.set(j, gutterSize);
       myTextAnnotationGuttersSize += gutterSize;
     }
