@@ -23,7 +23,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 
 
 /**
- * Processes text from test framework streams and runs [onLineAvailable] when consistency is guaranteed.
+ * Processes text from test framework streams and runs [onTextAvailable] when consistency is guaranteed.
  * Class is not thread safe in that matter that you can't call [process] for same stream (i.e. stderr) from different threads,
  * but [flush] could be called from any thread.
  *
@@ -58,7 +58,7 @@ abstract class OutputLineSplitter() {
     }
     else {
       // Everything but stdout
-      onLineAvailable(text, outputType, false)
+      onTextAvailable(text, outputType, false)
     }
   }
 
@@ -84,7 +84,7 @@ abstract class OutputLineSplitter() {
       }
 
       val chunkText = builder.toString()
-      onLineAvailable(chunkText, chunk.key, true)
+      onTextAvailable(chunkText, chunk.key, true)
     }
   }
 
@@ -93,7 +93,17 @@ abstract class OutputLineSplitter() {
    * For stdout [text] is either TC message that starts from [ServiceMessage.SERVICE_MESSAGE_START] and ends with new line
    * or chunk of process output
    */
-  protected abstract fun onLineAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean)
+  protected open fun onTextAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean) {
+    @Suppress("DEPRECATION") //For backward compatibility
+    onLineAvailable(text, outputType, tcLikeFakeOutput)
+  }
+
+  @Deprecated(
+    message = "Use onTextAvailable instead, will be removed in 2020",
+    replaceWith = ReplaceWith("onTextAvailable(text, outputType, tcLikeFakeOutput)"))
+  protected open fun onLineAvailable(text: String, outputType: Key<*>, tcLikeFakeOutput: Boolean) {
+    throw NotImplementedError("Use onTextAvailable instead")
+  }
 }
 
 

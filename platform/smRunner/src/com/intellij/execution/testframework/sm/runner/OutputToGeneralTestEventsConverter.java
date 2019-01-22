@@ -52,7 +52,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     myServiceMessageVisitor = new MyServiceMessageVisitor();
     mySplitter = new OutputLineSplitter() {
       @Override
-      protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
+      protected void onTextAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
         processConsistentText(text, outputType, tcLikeFakeOutput);
       }
     };
