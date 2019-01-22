@@ -36,12 +36,11 @@ import java.util.stream.Collectors;
  */
 public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   private static final Logger LOG = Logger.getInstance(ModuleDefaultVcsRootPolicy.class);
-  private final Project myProject;
   private final VirtualFile myBaseDir;
   private final ModuleManager myModuleManager;
 
-  public ModuleDefaultVcsRootPolicy(final Project project) {
-    myProject = project;
+  public ModuleDefaultVcsRootPolicy(@NotNull Project project) {
+    super(project);
     myBaseDir = project.getBaseDir();
     myModuleManager = ModuleManager.getInstance(myProject);
   }
