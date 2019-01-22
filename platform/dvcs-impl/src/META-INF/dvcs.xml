@@ -53,6 +53,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
+      <headless-implementation-class/>
     </component>
   </project-components>
 
