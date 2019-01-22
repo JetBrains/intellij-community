@@ -685,6 +685,16 @@ public static void test(Object obj, int i) {
 }""")
     assert c == ['_, _ -> fail']
   }
+  
+  void "test ternary two notnull"() {
+    def c = inferContracts("""
+static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
+
+static String getFoo() { return "foo"; }
+static String getBar() { return "bar"; }
+""")
+    assert c == ['_, _, _ -> !null']
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))

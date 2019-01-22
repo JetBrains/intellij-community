@@ -116,6 +116,30 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   /**
+   * Try merge two contracts into one preserving their full meaning
+   * @param other other contract to merge into this
+   * @return merged contract or null if unable to merge
+   */
+  public StandardMethodContract tryCollapse(StandardMethodContract other) {
+    if(!other.getReturnValue().equals(getReturnValue())) return null;
+    ValueConstraint[] thisParameters = this.myParameters;
+    ValueConstraint[] thatParameters = other.myParameters;
+    if (thatParameters.length != thisParameters.length) return null;
+    ValueConstraint[] result = null;
+    for (int i = 0; i < thisParameters.length; i++) {
+      ValueConstraint thisConstraint = thisParameters[i];
+      ValueConstraint thatConstraint = thatParameters[i];
+      if (thisConstraint == thatConstraint) continue;
+      if (result != null) return null;
+      if (thisConstraint.canBeNegated() && thisConstraint.negate() == thatConstraint) {
+        result = thisParameters.clone();
+        result[i] = ValueConstraint.ANY_VALUE;
+      }
+    }
+    return result == null ? null : new StandardMethodContract(result, getReturnValue());
+  }
+
+  /**
    * Converts list of contracts which are equivalent to the passed list, but independent on the order
    * (e.g. {@code "null -> null, _ -> !null"} will be converted to {@code "null -> null, !null -> !null"}). Also removes unreachable
    * contracts if any.
