@@ -302,7 +302,7 @@
     <keyboard-shortcut first-keystroke="control shift E"/>
   </action>
   <action id="RecentLocations">
-    <keyboard-shortcut first-keystroke="control shift L"/>
+    <keyboard-shortcut first-keystroke="control shift S"/>
   </action>
   <action id="QuickChangeScheme">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
