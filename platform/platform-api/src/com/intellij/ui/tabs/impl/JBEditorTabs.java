@@ -30,7 +30,8 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
-import com.intellij.ui.tabs.impl.table.TableLayout;
+import com.intellij.ui.tabs.impl.tabPainters.JBDefaultTabPainter;
+import com.intellij.ui.tabs.impl.tabPainters.JBTabPainter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,8 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+  protected JBEditorTabsPainter myDefaultPainter = createEditorTabsPainter();
+  protected JBTabPainter tabPainter = createTabPainter();
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -57,6 +59,14 @@ public class JBEditorTabs extends JBTabsImpl {
         });
       }
     }, parent);
+  }
+
+  protected JBTabPainter createTabPainter() {
+    return new JBDefaultTabPainter();
+  }
+
+  protected JBEditorTabsPainter createEditorTabsPainter() {
+    return new DefaultEditorTabsPainter(this);
   }
 
   @Override
@@ -110,11 +120,6 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  public boolean hasUnderline() {
-    return isSingleRow() && !hasUnderlineSelection();
-  }
-
-  @Override
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -127,41 +132,9 @@ public class JBEditorTabs extends JBTabsImpl {
     int _width = effectiveBounds.width - insets.left - insets.right + (getTabsPosition() == JBTabsPosition.right ? 1 : 0);
     int _height = effectiveBounds.height - insets.top - insets.bottom;
 
-
-    if ((!isSingleRow() /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
-      if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
-        _y += getActiveTabUnderlineHeight();
-      } else {
-        if (isSingleRow()) {
-          _height -= getActiveTabUnderlineHeight();
-        } else {
-          TabInfo info = label.getInfo();
-          if (((TableLayout)getEffectiveLayout()).isLastRow(info)) {
-            _height -= getActiveTabUnderlineHeight();
-          }
-        }
-      }
-    }
-
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
     final Color tabColor = label.getInfo().getTabColor();
-    final Composite oldComposite = g2d.getComposite();
-    //if (label != getSelectedLabel()) {
-    //  g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
-    //}
     getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column, vertical);
-    //g2d.setComposite(oldComposite);
-  }
-
-
-
-  @Override
-  public int getActiveTabUnderlineHeight() {
-    return hasUnderline() ? super.getActiveTabUnderlineHeight() : hasUnderlineSelection() ? 0 : 1;
-  }
-
-  public boolean hasUnderlineSelection() {
-    return false;
   }
 
   protected JBEditorTabsPainter getPainter() {
@@ -210,9 +183,7 @@ public class JBEditorTabs extends JBTabsImpl {
       int width = maxLength - insets.left - insets.right;
 
       if (getTabsPosition() == JBTabsPosition.right) {
-        x = r2.width - width - insets.left + getActiveTabUnderlineHeight();
-      } else {
-        width -= getActiveTabUnderlineHeight();
+        x = r2.width - width - insets.left;
       }
 
       beforeTabs = new Rectangle(x, insets.top, width, minOffset - insets.top);
@@ -221,9 +192,7 @@ public class JBEditorTabs extends JBTabsImpl {
       int y = r2.y + insets.top;
       int height = maxLength - insets.top - insets.bottom;
       if (getTabsPosition() == JBTabsPosition.bottom) {
-        y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
-      } else {
-        height -= getActiveTabUnderlineHeight();
+        y = r2.height - height - insets.top;
       }
 
       beforeTabs = new Rectangle(insets.left, y, minOffset, height);
@@ -273,7 +242,7 @@ public class JBEditorTabs extends JBTabsImpl {
     shape.insets = shape.path.transformInsets(getLayoutInsets());
     shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
 
-    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
+    shape.labelBottomY = shape.labelPath.getMaxY();
     boolean isTop = getPosition() == JBTabsPosition.top;
     boolean isBottom = getPosition() == JBTabsPosition.bottom;
     shape.labelTopY =
@@ -292,8 +261,7 @@ public class JBEditorTabs extends JBTabsImpl {
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
+    shape.path.lineTo(leftX, shape.labelBottomY);
 
     shape.path.closePath();
     shape.fillPath = shape.path.copy();

@@ -59,8 +59,10 @@ public class GridCellImpl implements GridCell {
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
+
       {
         myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.selectedBackground", new JBColor(0xC6CFDF, 0x424D5F)));
+
       }
 
       @Override

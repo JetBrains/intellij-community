@@ -341,9 +341,6 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   protected int getNonSelectedOffset() {
-    if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
-      return -myTabs.getActiveTabUnderlineHeight() / 2 + 1;
-    }
     return 1;
   }
 
@@ -365,7 +362,7 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
+        size.height -= JBUI.scale(1); //TODO нафига это?
         break;
       case left:
       case right:

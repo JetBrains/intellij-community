@@ -39,8 +39,10 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.tabPainters.JBDefaultTabPainter;
+import com.intellij.ui.tabs.impl.tabPainters.JBTabPainter;
+import com.intellij.ui.tabs.impl.tabPainters.TabTheme;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -81,9 +83,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
       {
-        if (hasUnderlineSelection()) {
-          IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
-        }
+        IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
+      }
+
+      @Override
+      protected JBTabPainter createTabPainter() {
+        return new JBDefaultTabPainter(JBTabPainter.Companion.getEDITOR_TAB());
+      }
+
+      @Override
+      protected JBEditorTabsPainter createEditorTabsPainter() {
+        return new EditorTabsPainter(this);
       }
 
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
@@ -103,11 +113,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if (c == null) return false;
         if (c == this) return true;
         return isChild(c.getParent());
-      }
-
-      @Override
-      public boolean hasUnderlineSelection() {
-        return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
       }
 
       @Nullable
@@ -643,7 +648,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       myFile = null;
       mySession = null;
     }
-
   }
 
   public static class DockableEditor implements DockableContent<VirtualFile> {

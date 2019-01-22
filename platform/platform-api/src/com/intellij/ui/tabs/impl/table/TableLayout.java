@@ -131,7 +131,7 @@ public class TableLayout extends TabLayout {
     int eachY = insets.top;
     int eachX;
     int row = 0;
-    final int tabUnderlineFix = myTabs.isEditorTabs() ? myTabs.getActiveTabUnderlineHeight() : 0;
+    final int tabUnderlineFix = 0;
     
     for (TableRow eachRow : data.table) {
       eachX = insets.left;

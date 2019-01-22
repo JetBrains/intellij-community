@@ -1563,6 +1563,41 @@ public class JBUI {
       }
     }
 
+    public static class DefaultTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("DefaultTabs.underlineColor", 0x4083C9);
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", 0x4083C9);
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("DefaultTabs.backgroundColor", ToolWindow.headerBackground());
+      }
+    }
+
+    public static class EditorTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.backgroundColor());
+      }
+    }
+
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {

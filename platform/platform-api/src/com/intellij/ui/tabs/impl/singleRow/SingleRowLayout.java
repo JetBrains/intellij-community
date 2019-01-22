@@ -43,17 +43,6 @@ public class SingleRowLayout extends TabLayout {
     protected Rectangle getIconRec() {
       return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
     }
-
-    @Override
-    protected int getIconY(Rectangle iconRec) {
-      final int shift;
-      switch (myTabs.getTabsPosition()) {
-        case bottom: shift = myTabs.getActiveTabUnderlineHeight(); break;
-        case top: shift = -(myTabs.getActiveTabUnderlineHeight() / 2); break;
-        default: shift = 0;
-      }
-      return super.getIconY(iconRec) + shift;
-    }
   };
   public JPopupMenu myMorePopup;
 
