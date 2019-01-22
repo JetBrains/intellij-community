@@ -4,7 +4,10 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -24,6 +27,18 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private val additionalData = PseudoMap<Any, Any>()
   val additionalDataConsumer: PairConsumer<Any, Any> get() = additionalData
   val additionalDataHolder: NullableFunction<Any, Any> get() = additionalData
+
+  private val vcsConfiguration = VcsConfiguration.getInstance(project)
+
+  fun validateCommitMessage(commitMessage: String): Boolean {
+    if (vcsConfiguration.FORCE_NON_EMPTY_COMMENT && commitMessage.isEmpty()) {
+      val requestForCheckin = Messages.showYesNoDialog(VcsBundle.message("confirmation.text.check.in.with.empty.comment"),
+                                                       VcsBundle.message("confirmation.title.check.in.with.empty.comment"),
+                                                       Messages.getWarningIcon())
+      return requestForCheckin == Messages.YES
+    }
+    return true
+  }
 
   fun performBeforeCommitChecks(executor: CommitExecutor?,
                                 handlers: List<CheckinHandler>,

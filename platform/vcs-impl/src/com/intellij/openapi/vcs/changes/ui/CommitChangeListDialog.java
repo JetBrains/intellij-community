@@ -716,18 +716,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myCommitActionName;
   }
 
-  private boolean checkComment() {
-    if (myVcsConfiguration.FORCE_NON_EMPTY_COMMENT && getCommitMessage().isEmpty()) {
-      int requestForCheckin = Messages.showYesNoDialog(message("confirmation.text.check.in.with.empty.comment"),
-                                                       message("confirmation.title.check.in.with.empty.comment"),
-                                                       Messages.getWarningIcon());
-      return requestForCheckin == Messages.YES;
-    }
-    else {
-      return true;
-    }
-  }
-
   private void stopUpdate() {
     myUpdateDisabled = true;
   }
@@ -738,9 +726,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private boolean saveDialogState() {
-    if (!checkComment()) {
-      return false;
-    }
+    if (!myWorkflow.validateCommitMessage(getCommitMessage())) return false;
 
     saveCommentIntoChangeList();
     myVcsConfiguration.saveCommitMessage(getCommitMessage());
