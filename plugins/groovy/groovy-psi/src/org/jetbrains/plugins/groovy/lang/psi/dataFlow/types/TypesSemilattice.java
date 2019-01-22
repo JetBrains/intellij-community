@@ -113,7 +113,7 @@ class TypeDfaState {
 
   @Override
   public String toString() {
-    return "TypeDfaState{" + myVarTypes + '}';
+    return myVarTypes.toString();
   }
 
   public boolean containsVariable(@NotNull String variableName) {

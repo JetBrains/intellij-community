@@ -38,11 +38,7 @@ public class DFAType {
 
     @Override
     public String toString() {
-      return "Mixin{" +
-             "myType=" + myType +
-             ", myCondition=" + myCondition +
-             ", myNegated=" + myNegated +
-             '}';
+      return (myNegated ? "!" : "") + myType;
     }
 
     @Override
@@ -174,9 +170,6 @@ public class DFAType {
 
   @Override
   public String toString() {
-    return "DFAType{" +
-           "primary=" + primary +
-           ", mixins=" + mixins +
-           '}';
+    return "{" + primary + " : " + mixins + "}";
   }
 }
