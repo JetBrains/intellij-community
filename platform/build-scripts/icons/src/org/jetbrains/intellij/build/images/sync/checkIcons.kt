@@ -111,6 +111,7 @@ private fun searchForAllChangedIcons(context: Context, devRepoVcsRoots: Collecti
 }
 
 private fun searchForChangedIconsByDesigners(context: Context) {
+  if (!isUnderTeamCity()) gitPull(context.iconsRepo)
   fun asIcons(files: Collection<String>) = files
     .filter { ImageExtension.fromName(it) != null }
     .map { context.iconsRepo.resolve(it).toRelativeString(context.iconsRepoDir) }
