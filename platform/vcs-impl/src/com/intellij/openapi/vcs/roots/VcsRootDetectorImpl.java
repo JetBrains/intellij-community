@@ -87,7 +87,6 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> vcsRoots = new HashSet<>();
     if (myProject.isDisposed()) return vcsRoots;
 
-    // TODO: use DefaultVcsRootPolicy instead?
     for (VirtualFile contentRoot : myProjectManager.getContentRoots()) {
       if (myProject.getBaseDir() != null && VfsUtilCore.isAncestor(myProject.getBaseDir(), contentRoot, false)) {
         continue;
