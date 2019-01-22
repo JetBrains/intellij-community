@@ -1064,6 +1064,7 @@ public final class UiDefaultsHardcodedKeys {
     "com.apple.laf.AquaTabbedPaneUI",
     "com.apple.laf.AquaTableHeaderUI",
     "com.apple.laf.AquaTableUI",
+    "com.apple.laf.AquaTextAreaUI",
     "com.apple.laf.AquaTextFieldUI",
     "com.apple.laf.AquaTextPaneUI",
     "com.apple.laf.AquaTextPasswordFieldUI",
