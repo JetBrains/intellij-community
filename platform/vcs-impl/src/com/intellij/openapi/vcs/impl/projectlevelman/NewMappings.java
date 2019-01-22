@@ -112,7 +112,7 @@ public class NewMappings {
   }
 
   private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings, boolean forceUpdateRoots) {
-    List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(mappings, MAPPINGS_COMPARATOR));
+    List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
 
     boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
     if (!mappingsChanged && !forceUpdateRoots) return;
@@ -133,6 +133,19 @@ public class NewMappings {
     }
 
     mappingsChanged();
+  }
+
+  @NotNull
+  private static List<VcsDirectoryMapping> removeDuplicates(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
+    List<VcsDirectoryMapping> newMapping = new ArrayList<>(mappings);
+    Set<String> paths = new HashSet<>();
+
+    for (VcsDirectoryMapping mapping : reverse(newArrayList(mappings))) {
+      if (paths.add(mapping.systemIndependentPath())) {
+        newMapping.add(mapping);
+      }
+    }
+    return newMapping;
   }
 
   @NotNull
