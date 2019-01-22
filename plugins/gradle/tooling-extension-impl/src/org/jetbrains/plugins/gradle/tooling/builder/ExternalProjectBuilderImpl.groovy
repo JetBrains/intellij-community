@@ -175,13 +175,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs
-    def ideaSourceDirs
-    def ideaResourceDirs
-    def ideaTestSourceDirs
-    def ideaTestResourceDirs
+    def generatedSourceDirs = null
+    def ideaSourceDirs = null
+    def ideaResourceDirs = null
+    def ideaTestSourceDirs = null
+    def ideaTestResourceDirs = null
     def downloadJavadoc = false
     def downloadSources = true
+
     if (ideaPluginModule) {
       generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
@@ -190,12 +191,6 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
-    } else {
-      generatedSourceDirs = null
-      ideaSourceDirs = null
-      ideaResourceDirs = null
-      ideaTestSourceDirs = null
-      ideaTestResourceDirs = null
     }
 
     def projectSourceCompatibility
@@ -311,7 +306,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             files.add(file)
           }
         }
-        if(!files.isEmpty()) {
+
+        if (!files.isEmpty()) {
           javaDirectorySet.srcDirs.removeAll(files)
           generatedDirectorySet = new DefaultExternalSourceDirectorySet()
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
@@ -333,7 +329,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = testFilterReaders
         sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
-        if(generatedDirectorySet) {
+        if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
         }
       }
