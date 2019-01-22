@@ -36,7 +36,7 @@ public class MappingsToRoots {
   private final NewMappings myMappings;
   private final Project myProject;
 
-  public MappingsToRoots(final NewMappings mappings, final Project project) {
+  public MappingsToRoots(@NotNull NewMappings mappings, @NotNull Project project) {
     myMappings = mappings;
     myProject = project;
   }
@@ -72,8 +72,12 @@ public class MappingsToRoots {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  // not only set mappings, but include all modules inside: modules might have different settings
-  public List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs) {
+  /**
+   * @return mapped roots and all modules inside: modules might have different settings
+   * @see com.intellij.openapi.vcs.VcsRootSettings
+   */
+  @NotNull
+  public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
     // same as above, but no compression
     final List<VirtualFile> result = myMappings.getMappingsAsFilesUnderVcs(vcs);
 

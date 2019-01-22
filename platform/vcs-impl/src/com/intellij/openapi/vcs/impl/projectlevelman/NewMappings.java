@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Function;
@@ -31,7 +32,7 @@ import static java.util.function.Function.identity;
 
 public class NewMappings {
 
-  public static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
+  private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.NewMappings");
   private final Object myLock;
@@ -71,7 +72,7 @@ public class NewMappings {
     });
   }
 
-  // for tests
+  @TestOnly
   public void setFileWatchRequestsManager(FileWatchRequestsManager fileWatchRequestsManager) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileWatchRequestsManager = fileWatchRequestsManager;
@@ -104,7 +105,7 @@ public class NewMappings {
     mappingsChanged();
   }
 
-  public void setMapping(final String path, final String activeVcsName) {
+  public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
     LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName);
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
     // do not add duplicates
@@ -176,7 +177,7 @@ public class NewMappings {
     }
   }
 
-  public void setDirectoryMappings(final List<? extends VcsDirectoryMapping> items) {
+  public void setDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> items) {
     LOG.debug("setDirectoryMappings, size: " + items.size());
 
     updateVcsMappings(() -> {
@@ -311,11 +312,11 @@ public class NewMappings {
 
   public boolean isEmpty() {
     synchronized (myLock) {
-      return mySortedMappings.length == 0 || ContainerUtil.and(mySortedMappings, mapping -> mapping.getVcs().isEmpty());
+      return mySortedMappings.length == 0 || and(mySortedMappings, mapping -> mapping.getVcs().isEmpty());
     }
   }
 
-  public void removeDirectoryMapping(final VcsDirectoryMapping mapping) {
+  public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
     LOG.debug("remove mapping: " + mapping.getDirectory());
 
     updateVcsMappings(() -> {
