@@ -31,7 +31,12 @@ public class VcsDirectoryMapping {
   private String myVcs;
   private VcsRootSettings myRootSettings;
 
-  public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
+  /**
+   * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
+   * Such mapping will use {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} to
+   * find actual vcs roots for project-covered files.
+   */
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs) {
     this(directory, vcs, null);
   }
 

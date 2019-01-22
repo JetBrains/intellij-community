@@ -7,12 +7,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -77,7 +77,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
-        return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
+        return Comparing.compare(o1.mapping.getDirectory(), o2.mapping.getDirectory());
       }
       return o1.type.ordinal() - o2.type.ordinal();
     };
