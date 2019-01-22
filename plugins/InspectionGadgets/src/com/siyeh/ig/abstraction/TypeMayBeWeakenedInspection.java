@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 Bas Leijdekkers
+ * Copyright 2006-2019 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
@@ -243,7 +244,6 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @NotNull
   public JComponent createOptionsPanel() {
     VerticalBox verticalBox = new VerticalBox();
-    JBScrollPane scrollPane = new JBScrollPane(verticalBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option"),
                              "useRighthandTypeAsWeakestTypeInAssignments");
@@ -264,7 +264,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       UiUtils.createAddRemoveTreeClassChooserPanel(stopClassesTable, InspectionGadgetsBundle
         .message("inspection.type.may.be.weakened.add.stop.class.selection.table"), CommonClassNames.JAVA_LANG_OBJECT);
     verticalBox.add(stopClassesPanel);
-    return scrollPane;
+    return ScrollPaneFactory.createScrollPane(verticalBox, true);
   }
 
   private static class TypeMayBeWeakenedFix implements LocalQuickFix {
