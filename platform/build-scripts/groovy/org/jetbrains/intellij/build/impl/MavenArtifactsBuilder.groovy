@@ -206,17 +206,23 @@ class MavenArtifactsBuilder {
       if (dependency instanceof JpsModuleDependency) {
         def depModule = (dependency as JpsModuleDependency).module
         if (computationInProgress.contains(depModule)) {
-          buildContext.messages.debug(" module '$module.name' recursively depends on itself so it cannot be published")
-          mavenizable = false
-          return
+          /*
+           It's forbidden to have compile-time circular dependencies in IntelliJ project, but there are some cycles with runtime scope
+            (e.g. intellij.platform.ide.impl depends on (runtime scope) intellij.platform.configurationStore.impl which depends on intellij.platform.ide.impl).
+           It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
+           generating pom.xml files.
+          */
+          buildContext.messages.debug(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
-        def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
-        if (depArtifact == null) {
-          buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
-          mavenizable = false
-          return
+        else {
+          def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
+          if (depArtifact == null) {
+            buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+            mavenizable = false
+            return
+          }
+          dependencies << new MavenArtifactDependency(depArtifact.coordinates, true, [], scope)
         }
-        dependencies << new MavenArtifactDependency(depArtifact.coordinates, true, [], scope)
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
