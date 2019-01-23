@@ -110,11 +110,6 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  public boolean hasUnderline() {
-    return isSingleRow() && !hasUnderlineSelection();
-  }
-
-  @Override
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -157,7 +152,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public int getActiveTabUnderlineHeight() {
-    return hasUnderline() ? super.getActiveTabUnderlineHeight() : hasUnderlineSelection() ? 0 : 1;
+    return hasUnderlineSelection() ? 0 : 1;
   }
 
   public boolean hasUnderlineSelection() {

@@ -3032,10 +3032,6 @@ public class JBTabsImpl extends JComponent
     return false;
   }
 
-  public boolean hasUnderline() {
-    return false;
-  }
-
   public boolean isGhostsAlwaysVisible() {
     return myGhostsAlwaysVisible;
   }
