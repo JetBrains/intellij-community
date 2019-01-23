@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author max
  */
@@ -54,6 +56,18 @@ public abstract class JavaPsiFacade {
    */
   @Nullable
   public abstract PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
+
+  /**
+   * Searches the scope for a unique Java module with the given name.
+   */
+  @Nullable
+  public abstract PsiJavaModule findModule(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Searches the scope for a Java modules with the given name.
+   */
+  @NotNull
+  public abstract Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the element factory for the project, which can be used to
