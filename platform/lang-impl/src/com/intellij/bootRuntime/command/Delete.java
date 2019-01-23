@@ -2,12 +2,13 @@
 package com.intellij.bootRuntime.command;
 
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.project.Project;
 
 import java.awt.event.ActionEvent;
 
 public class Delete extends Command {
-  public Delete(Runtime runtime) {
-    super("Delete", runtime);
+  public Delete(Project project, Runtime runtime) {
+    super(project, "Delete", runtime);
   }
 
   @Override

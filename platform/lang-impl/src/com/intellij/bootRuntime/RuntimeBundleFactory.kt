@@ -4,6 +4,7 @@ package com.intellij.bootRuntime
 import com.intellij.bootRuntime.bundles.Local
 import com.intellij.bootRuntime.bundles.Remote
 import com.intellij.bootRuntime.bundles.Runtime
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 import java.net.URL
@@ -36,8 +37,8 @@ class RuntimeLocationsFactory {
     }
   }
 
-  fun bundlesFromLocations(locations: List<File>): List<Runtime> {
-      return locations.map { location -> Local(location) }.toList()
+  fun bundlesFromLocations(project: Project, locations: List<File>): List<Runtime> {
+      return locations.map { location -> Local(project, location) }.toList()
   }
 
   fun operationSystem() : OperationSystem {
@@ -49,11 +50,11 @@ class RuntimeLocationsFactory {
     }
   }
 
-  fun localBundles() : List<Runtime> {
-    return bundlesFromLocations(runtimesFrom(runtimeLocations(operationSystem())))
+  fun localBundles(project: Project) : List<Runtime> {
+    return bundlesFromLocations(project, runtimesFrom(runtimeLocations(operationSystem())))
   }
 
-  fun bintrayBundles(): List<Runtime> {
+  fun bintrayBundles(project: Project): List<Runtime> {
 
     val subject = "jetbrains"
     val repoName = "intellij-jdk"
@@ -79,7 +80,7 @@ class RuntimeLocationsFactory {
     val list = mutableListOf<Runtime>()
 
     while (m.find()) {
-      list.add(Remote(m.group(1)))
+      list.add(Remote(project, m.group(1)))
     }
 
     return list

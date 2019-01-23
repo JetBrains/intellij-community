@@ -5,25 +5,29 @@ import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.function.Consumer;
 
 public abstract class Command extends AbstractAction {
-  protected final Runtime runtime;
+  protected final Runtime myRuntime;
+  private final Project myProject;
 
-  Command(String name, Runtime runtime) {
+  Command(Project project, String name, Runtime runtime) {
     super(name);
-    this.runtime = runtime;
+    myRuntime = runtime;
+    myProject = project;
+
   }
 
   protected Runtime getRuntime() {
-    return runtime;
+    return myRuntime;
   }
 
   protected void runWithProgress(String title, final Consumer<ProgressIndicator> progressIndicatorConsumer) {
-    ProgressManager.getInstance().run(new Task.Modal(null, title, false) {
+    ProgressManager.getInstance().run(new Task.Modal(myProject, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
         progressIndicatorConsumer.accept(progressIndicator);

@@ -2,12 +2,13 @@
 package com.intellij.bootRuntime.command;
 
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.project.Project;
 
 import java.awt.event.ActionEvent;
 
 public class Copy extends Command {
-  public Copy(Runtime runtime) {
-    super("Copy", runtime);
+  public Copy(Project project, Runtime runtime) {
+    super(project, "Copy", runtime);
   }
 
   @Override

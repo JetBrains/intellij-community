@@ -7,26 +7,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
 import java.io.File
 
-enum class BundleSource {
-  STANDARD,
-  BINTRAY,
-  BUNDLED,
-  INSTALLED,
-  UNKNOWN;
-
-  fun getRepresentaton(): String {
-    return when {
-      this == STANDARD -> "St"
-      this == BINTRAY -> "Bt"
-      this == BUNDLED -> "Bd"
-      this == INSTALLED -> "Inst"
-      else -> "Unknown"
-    }
-  }
-}
-
 abstract class Runtime(initialLocation:File) {
-
 
   open val fileName: String by lazy {
     initialLocation.name

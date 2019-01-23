@@ -4,6 +4,7 @@ package com.intellij.bootRuntime.command;
 import com.intellij.bootRuntime.actions.BinTrayUtil;
 import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.project.Project;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -13,8 +14,8 @@ import java.io.IOException;
 import static org.jetbrains.io.TarKt.unpackTarGz;
 
 public class Extract extends Command {
-  public Extract(Runtime runtime) {
-    super("Extract", runtime);
+  public Extract(Project project, Runtime runtime) {
+    super(project, "Extract", runtime);
   }
 
   @Override

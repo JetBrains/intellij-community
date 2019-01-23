@@ -2,18 +2,16 @@
 package com.intellij.bootRuntime
 
 import com.intellij.bootRuntime.bundles.Runtime
+import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.ui.dialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
 import java.awt.GridLayout
-import java.io.File
-import java.net.URLDecoder
 import javax.swing.*
 
 /**
@@ -25,8 +23,10 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
 
-    val localBundles = RuntimeLocationsFactory().localBundles()
-    val bintrayBundles = RuntimeLocationsFactory().bintrayBundles()
+    val localBundles = RuntimeLocationsFactory().localBundles(e.project!!)
+    val bintrayBundles = RuntimeLocationsFactory().bintrayBundles(e.project!!)
+
+    CommandFactory.initialize(e.project)
 
     val repositoryUrlFieldSpinner = JLabel(AnimatedIcon.Default())
     repositoryUrlFieldSpinner.isVisible = false
@@ -57,7 +57,7 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     // todo change to dsl
     val southPanel = ActionPanel()
 
-    val controller = Controller(southPanel, Model(localBundles.get(0), localBundles + bintrayBundles))
+    val controller = Controller(e.project!!, southPanel, Model(localBundles.get(0), localBundles + bintrayBundles))
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
         localBundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
