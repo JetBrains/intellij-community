@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -72,7 +73,7 @@ class DeclarationMover extends LineMover {
       while (Character.isWhitespace(c2)) {
         c2 = cs.charAt(--end2);
       }
-      if (c1 == c2 || c1 != ',' && c2 != ',' || c1 == '{') {
+      if (c1 == c2 || !contains(info.range1, end1) || !contains(info.range2, end2)) {
         return;
       }
       if (c1 == ';' || c2 == ';') {
@@ -83,11 +84,15 @@ class DeclarationMover extends LineMover {
         document.deleteString(end1, end1 + 1);
         document.insertString(end2 + 1, ",");
       }
-      else {
+      else if (c2 == ','){
         document.deleteString(end2, end2 + 1);
         document.insertString(end1 + 1, ",");
       }
     }
+  }
+
+  private static boolean contains(RangeMarker rangeMarker, int index) {
+    return rangeMarker.getStartOffset() <= index && rangeMarker.getEndOffset() >= index;
   }
 
   @Override
