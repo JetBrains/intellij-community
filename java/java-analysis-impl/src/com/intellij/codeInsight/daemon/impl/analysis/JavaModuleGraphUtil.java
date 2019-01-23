@@ -218,7 +218,7 @@ public class JavaModuleGraphUtil {
         }
       }
       if (!explicitJavaBase) {
-        PsiJavaModule javaBase = PsiJavaModuleReference.resolve(module, PsiJavaModule.JAVA_BASE, false);
+        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(PsiJavaModule.JAVA_BASE, module.getResolveScope());
         if (javaBase != null) relations.putValue(module, javaBase);
       }
     }
