@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 
 public class JsonInterchangeTest extends CodeStyleTestCase {
 
@@ -16,7 +16,7 @@ public class JsonInterchangeTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    exporter.exportScheme(testScheme, outputStream, Collections.singletonList(GeneralCodeStylePropertyMapper.COMMON_DOMAIN_ID));
+    exporter.exportScheme(testScheme, outputStream, Arrays.asList(GeneralCodeStylePropertyMapper.COMMON_DOMAIN_ID, "html"));
     String expected = loadExpected("json");
     assertEquals(expected, outputStream.toString());
   }
