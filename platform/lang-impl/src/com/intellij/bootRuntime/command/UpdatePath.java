@@ -3,14 +3,15 @@ package com.intellij.bootRuntime.command;
 
 import com.intellij.bootRuntime.actions.BinTrayUtil;
 import com.intellij.bootRuntime.bundles.Runtime;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
 public class UpdatePath extends Command {
-  public UpdatePath(Runtime runtime) {
-    super("Set as Boot", runtime);
+  public UpdatePath(Project project, Runtime runtime) {
+    super(project, "Set as Boot", runtime);
   }
 
   @Override

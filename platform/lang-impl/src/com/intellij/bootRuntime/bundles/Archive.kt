@@ -1,18 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime.bundles
 
-import com.intellij.bootRuntime.command.Copy
-import com.intellij.bootRuntime.command.Extract
-import com.intellij.bootRuntime.command.Processor
-import com.intellij.bootRuntime.command.UpdatePath
+import com.intellij.bootRuntime.command.CommandFactory.Type.*
+import com.intellij.bootRuntime.command.CommandFactory.produce
+import com.intellij.bootRuntime.command.Processor.process
+import com.intellij.openapi.project.Project
 import java.io.File
 
-class Archive(initialLocation: File) : Runtime(initialLocation) {
+class Archive(val project: Project, initialLocation: File) : Runtime(initialLocation) {
 
   override fun install() {
-    Processor.process(
-      Extract(this),
-      Copy(this),
-      UpdatePath(this))
+    process(
+      produce(EXTRACT, this),
+      produce(COPY, this),
+      produce(UPDATE_PATH, this)
+    )
   }
 }
