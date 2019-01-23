@@ -38,8 +38,8 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
       synchronized (LOCK) {
         for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
           if (approvedGroups.contains(usagesCollector.getGroupId())) {
-            logUsagesAsStateEvents(project, usagesCollector.getGroupId(), usagesCollector.getContext(project),
-                                   usagesCollector.getUsages(project));
+            final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+            logUsagesAsStateEvents(project, group, usagesCollector.getContext(project), usagesCollector.getUsages(project));
           }
         }
       }
@@ -50,25 +50,24 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
         if (approvedGroups.contains(usagesCollector.getGroupId())) {
-          logUsagesAsStateEvents(null, usagesCollector.getGroupId(), usagesCollector.getContext(), usagesCollector.getUsages());
+          final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
+          logUsagesAsStateEvents(null, group, usagesCollector.getContext(), usagesCollector.getUsages());
         }
       }
     }
   }
 
   private static void logUsagesAsStateEvents(@Nullable Project project,
-                                             @NotNull String groupId,
+                                             @NotNull FeatureUsageGroup group,
                                              @Nullable FUSUsageContext context,
                                              @NotNull Set<UsageDescriptor> usages) {
-
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
-    final FeatureUsageGroup group = new FeatureUsageGroup(groupId, 1);
     usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
     if (!usages.isEmpty()) {
       final Map<String, ?> groupData = StatisticsUtilKt.createData(project, context);
       for (UsageDescriptor usage : usages) {
         final Map<String, Object> eventData = StatisticsUtilKt.mergeWithEventData(groupData, usage.getContext(), usage.getValue());
-        logger.logState(group, usage.getKey(), eventData); // todo !!!
+        logger.logState(group, usage.getKey(), eventData);
       }
     }
     logger.logState(group, INVOKED);
