@@ -154,8 +154,13 @@ public class RecentLocationManager implements ProjectComponent {
 
   @Nullable
   private static Editor findEditor(@NotNull Project project, @NotNull PlaceInfo changePlace) {
-    JComponent component = FileEditorManagerEx.getInstanceEx(project).getPreferredFocusedComponent();
-    if (component == null || !component.isShowing() || !(component instanceof EditorComponentImpl)) {
+    try {
+      JComponent component = FileEditorManagerEx.getInstanceEx(project).getPreferredFocusedComponent();
+      if (component == null || !component.isShowing() || !(component instanceof EditorComponentImpl)) {
+        return null;
+      }
+    }
+    catch (Exception e) {
       return null;
     }
 
