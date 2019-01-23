@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DarculaTitleButtons;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.HelpAction;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.ResizableDarculaTitleButtons;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
@@ -17,12 +18,11 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,6 +31,7 @@ public class DarculaTitlePane extends JPanel {
   private static final Icon mySystemIcon = AllIcons.Icon_small;
 
   private PropertyChangeListener myPropertyChangeListener;
+  private ComponentListener myComponentListener;
   private JMenuBar myMenuBar;
   private JMenuBar myIdeMenu;
   private Action myCloseAction;
@@ -82,6 +83,14 @@ public class DarculaTitlePane extends JPanel {
       myWindow.addWindowListener(myWindowListener);
       myPropertyChangeListener = createWindowPropertyChangeListener();
       myWindow.addPropertyChangeListener(myPropertyChangeListener);
+
+      myComponentListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          setCustomDecorationHitTestSpots();
+        }
+      };
+      addComponentListener(myComponentListener);
     }
   }
 
@@ -89,6 +98,7 @@ public class DarculaTitlePane extends JPanel {
     if (myWindow != null) {
       myWindow.removeWindowListener(myWindowListener);
       myWindow.removePropertyChangeListener(myPropertyChangeListener);
+      removeComponentListener(myComponentListener);
     }
   }
 
@@ -125,6 +135,15 @@ public class DarculaTitlePane extends JPanel {
       }
       installListeners();
     }
+    setCustomDecorationHitTestSpots();
+  }
+
+  private void setCustomDecorationHitTestSpots() {
+    List<Rectangle> hitTestSpots = new ArrayList<>();
+    for (Component comp : getComponents()) {
+      hitTestSpots.add(comp.getBounds());
+    }
+    JdkEx.setCustomDecorationHitTestSpots(myWindow, hitTestSpots);
   }
 
   @Override

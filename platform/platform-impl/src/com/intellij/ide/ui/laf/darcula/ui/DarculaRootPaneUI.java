@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -95,7 +96,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   private static boolean isCustomDecoration() {
-    return Registry.is("ide.win.frame.decoration");
+    return Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
   }
 
   public void installBorder(JRootPane root) {
@@ -456,12 +457,12 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         installClientDecorations(root);
       }
     }
-    if (propertyName.equals("ancestor")) {
-      uninstallWindowListeners(myRootPane);
-      if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
-        installWindowListeners(myRootPane, myRootPane.getParent());
-      }
-    }
+    //if (propertyName.equals("ancestor")) {
+    //  uninstallWindowListeners(myRootPane);
+    //  if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
+    //    installWindowListeners(myRootPane, myRootPane.getParent());
+    //  }
+    //}
   }
 
   protected static class DarculaRootLayout implements LayoutManager2 {
