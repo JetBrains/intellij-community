@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> implements CodeStyleChoiceList {
+class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer,String> implements CodeStyleChoiceList {
   private final static BidirectionalMap<Integer, String> BRACE_STYLE_MAP = new BidirectionalMap<>();
 
   public static final String VALUE_END_OF_LINE = "end_of_line";
@@ -33,14 +33,14 @@ class BraceStyleAccessor extends CodeStylePropertyAccessor<Integer> implements C
 
   @Nullable
   @Override
-  protected Integer parseString(@NotNull String str) {
+  protected Integer fromExternal(@NotNull String str) {
     List<Integer> keys = BRACE_STYLE_MAP.getKeysByValue(str);
     return keys != null && keys.size() > 0 ? keys.get(0) : null;
   }
 
   @NotNull
   @Override
-  protected String asString(@NotNull Integer value) {
+  protected String toExternal(@NotNull Integer value) {
     return BRACE_STYLE_MAP.get(value);
   }
 

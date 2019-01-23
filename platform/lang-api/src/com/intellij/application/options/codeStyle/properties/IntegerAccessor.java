@@ -5,13 +5,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
-public class IntegerAccessor extends CodeStylePropertyAccessor<Integer> {
+public class IntegerAccessor extends CodeStylePropertyAccessor<Integer,String> {
   IntegerAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
 
   @Override
-  protected Integer parseString(@NotNull String str) {
+  protected Integer fromExternal(@NotNull String str) {
     try {
       return Integer.parseInt(str);
     }
@@ -22,7 +22,7 @@ public class IntegerAccessor extends CodeStylePropertyAccessor<Integer> {
 
   @NotNull
   @Override
-  protected String asString(@NotNull Integer value) {
+  protected String toExternal(@NotNull Integer value) {
     return value.toString();
   }
 

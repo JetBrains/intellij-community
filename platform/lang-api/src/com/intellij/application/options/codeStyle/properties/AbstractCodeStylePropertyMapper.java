@@ -24,21 +24,6 @@ public abstract class AbstractCodeStylePropertyMapper {
     myAccessorMap = AtomicNotNullLazyValue.createValue(() -> createMap());
   }
 
-  public boolean setProperty(@NotNull String name, @NotNull String value) {
-    if (getAccessorMap().containsKey(name)) {
-      return myAccessorMap.getValue().get(name).set(value);
-    }
-    return false;
-  }
-
-  @Nullable
-  public String getProperty(@NotNull String name) {
-    if (getAccessorMap().containsKey(name)) {
-      return getAccessorMap().get(name).get();
-    }
-    return null;
-  }
-
   public List<String> enumProperties() {
     return getAccessorMap().keySet().stream().sorted().collect(Collectors.toList());
   }

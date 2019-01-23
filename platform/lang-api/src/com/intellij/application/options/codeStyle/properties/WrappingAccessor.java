@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class WrappingAccessor extends CodeStylePropertyAccessor<Integer> implements CodeStyleChoiceList {
+class WrappingAccessor extends CodeStylePropertyAccessor<Integer,String> implements CodeStyleChoiceList {
   private final static BidirectionalMap<Integer, String> WRAPPING_MAP = new BidirectionalMap<>();
 
   public static final String VALUE_OFF = "off";
@@ -34,14 +34,14 @@ class WrappingAccessor extends CodeStylePropertyAccessor<Integer> implements Cod
 
   @Nullable
   @Override
-  protected Integer parseString(@NotNull String str) {
+  protected Integer fromExternal(@NotNull String str) {
     List<Integer> keys = WRAPPING_MAP.getKeysByValue(str);
     return keys != null && keys.size() > 0 ? keys.get(0) : null;
   }
 
   @NotNull
   @Override
-  protected String asString(@NotNull Integer value) {
+  protected String toExternal(@NotNull Integer value) {
     return WRAPPING_MAP.get(value);
   }
 

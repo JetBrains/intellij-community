@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class EnumPropertyAccessor extends CodeStylePropertyAccessor<Enum> implements CodeStyleChoiceList{
+public class EnumPropertyAccessor extends CodeStylePropertyAccessor<Enum,String> implements CodeStyleChoiceList{
 
   private final Class myEnumClass;
   private final BidirectionalMap<String,Enum> myEnumMap = new BidirectionalMap<>();
@@ -38,13 +38,13 @@ public class EnumPropertyAccessor extends CodeStylePropertyAccessor<Enum> implem
 
   @Nullable
   @Override
-  protected Enum parseString(@NotNull String str) {
+  protected Enum fromExternal(@NotNull String str) {
     return myEnumMap.get(str);
   }
 
   @NotNull
   @Override
-  protected String asString(@NotNull Enum value) {
+  protected String toExternal(@NotNull Enum value) {
     List<String> names = myEnumMap.getKeysByValue(value);
     assert names != null && names.size() > 0 : "Unexpected value " + value.toString();
     return names.get(0);

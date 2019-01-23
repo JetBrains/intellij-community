@@ -16,11 +16,13 @@
 package com.intellij.java.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   public void testSettingsClone() {
@@ -65,6 +68,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CommonCodeStyleSettings commonSettings = imported.getCommonSettings(JavaLanguage.INSTANCE);
     assertEquals("testprefix", imported.getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX);
     assertTrue(commonSettings.WRAP_COMMENTS);
+    //noinspection deprecation
     assertFalse(imported.WRAP_COMMENTS);
   }
 
@@ -84,7 +88,8 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       CommonCodeStyleSettings.class,
       CommonCodeStyleSettings.IndentOptions.class)
     ) {
-      String value = mapper.getProperty(property);
+      CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
+      Object value = accessor.get();
       if (value != null) {
         builder.append(property).append(" = ").append(value).append('\n');
       }
@@ -179,7 +184,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "generate_final_locals = false\n" +
       "generate_final_parameters = false\n" +
       "if_brace_force = never\n" +
-      "imports_layout = *,blank_line,javax.**,java.**,blank_line,static *\n" +
+      "imports_layout = [*, blank_line, javax.**, java.**, blank_line, static *]\n" +
       "indent_case_from_switch = true\n" +
       "indent_size = 4\n" +
       "indent_style = space\n" +
@@ -210,7 +215,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "method_parameters_wrap = normal\n" +
       "modifier_list_wrap = false\n" +
       "names_count_to_use_import_on_demand = 3\n" +
-      "packages_to_use_import_on_demand = java.awt.*,javax.swing.*\n" +
+      "packages_to_use_import_on_demand = [java.awt.*, javax.swing.*]\n" +
       "parameter_annotation_wrap = off\n" +
       "parentheses_expression_new_line_after_left_paren = false\n" +
       "parentheses_expression_right_paren_on_new_line = false\n" +
@@ -325,12 +330,13 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     AbstractCodeStylePropertyMapper mapper =
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
-    mapper.setProperty("align_group_field_declarations", "true");
-    mapper.setProperty("blank_lines_after_class_header", "1");
-    mapper.setProperty("brace_style", "next_line");
-    mapper.setProperty("indent_size", "2");
-    mapper.setProperty("javadoc_align_param_comments", "true");
-    mapper.setProperty("imports_layout", "com.jetbrains.*,blank_line, org.eclipse.bar , static  ** , static org.eclipse.foo.**");
+    setSimple(mapper, "align_group_field_declarations", "true");
+    setSimple(mapper, "blank_lines_after_class_header", "1");
+    setSimple(mapper, "brace_style", "next_line");
+    setSimple(mapper, "indent_size", "2");
+    setSimple(mapper, "doc_align_param_comments", "true");
+    setList(mapper, "imports_layout",
+            Arrays.asList("com.jetbrains.*", "blank_line", "org.eclipse.bar", "static  **", "static org.eclipse.foo.**"));
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     assertTrue(commonJavaSettings.ALIGN_GROUP_FIELD_DECLARATIONS);
@@ -344,6 +350,20 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
     assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
     assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
+  }
+  
+  private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
+    CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
+    assertNotNull(name + " not found", accessor);
+    //noinspection unchecked
+    accessor.set(value);
+  }
+
+  private static void setList(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull List<String> value) {
+    CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
+    assertNotNull(name + " not found", accessor);
+    //noinspection unchecked
+    accessor.set(value);
   }
 
   private static boolean isPrimitiveOrString(Class type) {

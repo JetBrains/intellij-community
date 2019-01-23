@@ -9,6 +9,7 @@ import org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 import org.editorconfig.language.schema.descriptors.impl.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,8 +40,10 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
       for (String property : mapper.enumProperties()) {
         List<String> ecNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, property);
         final EditorConfigDescriptor descriptor = createValueDescriptor(property, mapper);
-        for (String ecName : ecNames) {
-          propertyMap.put(ecName, descriptor);
+        if (descriptor != null) {
+          for (String ecName : ecNames) {
+            propertyMap.put(ecName, descriptor);
+          }
         }
       }
     }
@@ -54,7 +57,7 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     return descriptors;
   }
 
-  @NotNull
+  @Nullable
   private static EditorConfigDescriptor createValueDescriptor(@NotNull String property, @NotNull AbstractCodeStylePropertyMapper mapper) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(property);
     if (accessor instanceof CodeStyleChoiceList) {
@@ -62,6 +65,9 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
     }
     else if (accessor instanceof IntegerAccessor) {
       return new EditorConfigNumberDescriptor(null,  null);
+    }
+    else if (accessor instanceof ValueListPropertyAccessor) {
+      return null; // No support yet
     }
     return new EditorConfigStringDescriptor(null, null);
   }

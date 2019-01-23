@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
-public class JavaPackageEntryTableAccessor extends CodeStylePropertyAccessor<PackageEntryTable> {
+public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<PackageEntryTable> {
 
   public static final String BLANK_LINE_ENTRY = "blank_line";
   public static final String STATIC_PREFIX = "static";
@@ -18,11 +20,10 @@ public class JavaPackageEntryTableAccessor extends CodeStylePropertyAccessor<Pac
 
   @Nullable
   @Override
-  protected PackageEntryTable parseString(@NotNull String str) {
+  protected PackageEntryTable fromExternal(@NotNull List<String> strList) {
     PackageEntryTable entryTable = new PackageEntryTable();
-    String[] parts = str.split(",");
-    for (String part : parts) {
-      String parseStr = part.trim();
+    for (String strValue : strList) {
+      String parseStr = strValue.trim();
       if (BLANK_LINE_ENTRY.equals(parseStr)) {
         entryTable.addEntry(PackageEntry.BLANK_LINE_ENTRY);
       }
@@ -51,28 +52,29 @@ public class JavaPackageEntryTableAccessor extends CodeStylePropertyAccessor<Pac
 
   @NotNull
   @Override
-  protected String asString(@NotNull PackageEntryTable value) {
-    StringBuilder sb = new StringBuilder();
+  protected List<String> toExternal(@NotNull PackageEntryTable value) {
+    List<String> externalList = ContainerUtil.newArrayList();
     for (PackageEntry entry : value.getEntries()) {
-      if (sb.length() > 0) sb.append(",");
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-        sb.append(BLANK_LINE_ENTRY);
+        externalList.add(BLANK_LINE_ENTRY);
       }
       else {
+        StringBuilder entryBuilder = new StringBuilder();
         if (entry.isStatic()) {
-          sb.append(STATIC_PREFIX + " ");
+          entryBuilder.append(STATIC_PREFIX + " ");
         }
         if (entry.isSpecial()) {
-          sb.append("*");
+          entryBuilder.append("*");
         }
         else {
-          sb.append(entry.getPackageName()).append(".*");
+          entryBuilder.append(entry.getPackageName()).append(".*");
           if (entry.isWithSubpackages()) {
-            sb.append("*");
+            entryBuilder.append("*");
           }
         }
+        externalList.add(entryBuilder.toString());
       }
     }
-    return sb.toString();
+    return externalList;
   }
 }

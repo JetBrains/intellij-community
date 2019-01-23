@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-class StringAccessor extends CodeStylePropertyAccessor<String> {
+class StringAccessor extends CodeStylePropertyAccessor<String,String> {
 
   StringAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
@@ -15,13 +15,13 @@ class StringAccessor extends CodeStylePropertyAccessor<String> {
 
   @Nullable
   @Override
-  protected String parseString(@NotNull String str) {
+  protected String fromExternal(@NotNull String str) {
     return str;
   }
 
   @NotNull
   @Override
-  protected String asString(@NotNull String value) {
+  protected String toExternal(@NotNull String value) {
     return value;
   }
 

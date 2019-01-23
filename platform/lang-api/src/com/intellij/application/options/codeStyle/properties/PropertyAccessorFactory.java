@@ -96,13 +96,13 @@ class PropertyAccessorFactory {
 
     @Nullable
     @Override
-    protected Boolean parseString(@NotNull String str) {
+    protected Boolean fromExternal(@NotNull String str) {
       return "tab".equalsIgnoreCase(str);
     }
 
     @NotNull
     @Override
-    protected String asString(@NotNull Boolean value) {
+    protected String toExternal(@NotNull Boolean value) {
       return value ? "tab" : "space";
     }
 

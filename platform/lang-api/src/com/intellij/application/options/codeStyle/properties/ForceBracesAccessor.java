@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class ForceBracesAccessor extends CodeStylePropertyAccessor<Integer> implements CodeStyleChoiceList {
+class ForceBracesAccessor extends CodeStylePropertyAccessor<Integer,String> implements CodeStyleChoiceList {
 
   private final static BidirectionalMap<Integer, String> FORCE_BRACES_MAP = new BidirectionalMap<>();
 
@@ -32,14 +32,14 @@ class ForceBracesAccessor extends CodeStylePropertyAccessor<Integer> implements 
 
   @Nullable
   @Override
-  protected Integer parseString(@NotNull String str) {
+  protected Integer fromExternal(@NotNull String str) {
     List<Integer> keys = FORCE_BRACES_MAP.getKeysByValue(str);
     return keys != null && keys.size() > 0 ? keys.get(0) : null;
   }
 
   @NotNull
   @Override
-  protected String asString(@NotNull Integer value) {
+  protected String toExternal(@NotNull Integer value) {
     return FORCE_BRACES_MAP.get(value);
   }
 
