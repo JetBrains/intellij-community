@@ -817,8 +817,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (psiCause == null) {
       beforeDocumentChangeOnUnlockedDocument(viewProvider);
     }
-
-    ((AbstractFileViewProvider)viewProvider).beforeDocumentChanged(psiCause);
   }
 
   protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
