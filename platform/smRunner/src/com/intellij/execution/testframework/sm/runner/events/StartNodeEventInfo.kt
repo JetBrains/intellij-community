@@ -9,12 +9,14 @@ fun ServiceMessage.getStartNodeInfo(
   id = TreeNodeEvent.getNodeId(this),
   locationUrl = BaseStartedNodeEvent.getLocation(this),
   parentId = BaseStartedNodeEvent.getParentNodeId(this),
-  metainfo = BaseStartedNodeEvent.getMetainfo(this))
+  metainfo = BaseStartedNodeEvent.getMetainfo(this),
+  durationStrategy = BaseStartedNodeEvent.getDurationStrategy(this))
 
 
-class StartNodeEventInfo constructor(
+class StartNodeEventInfo @JvmOverloads constructor(
   name: String?,
   id: String?,
   val parentId: String?,
   val locationUrl: String?,
-  val metainfo: String?) : NodeEventInfo(name, id)
+  val metainfo: String?,
+  @Volatile var durationStrategy: TestDurationStrategy = TestDurationStrategy.AUTOMATIC) : NodeEventInfo(name, id)

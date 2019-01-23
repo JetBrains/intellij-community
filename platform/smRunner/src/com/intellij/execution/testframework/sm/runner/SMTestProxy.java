@@ -7,7 +7,9 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.StartNodeEventInfo;
+import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -114,7 +116,16 @@ public class SMTestProxy extends AbstractTestProxy {
                      @Nullable String locationUrl,
                      @Nullable String metainfo,
                      boolean preservePresentableName) {
-    this(new StartNodeEventInfo(testName, null, null, locationUrl, metainfo),isSuite, preservePresentableName);
+    this(new StartNodeEventInfo(testName, null, null, locationUrl, metainfo), isSuite, preservePresentableName);
+  }
+
+  final void setDurationStrategy(@NotNull final TestDurationStrategy durationStrategy) {
+    myStartNodeEventInfo.setDurationStrategy(durationStrategy);
+  }
+
+  @NotNull
+  public final TestDurationStrategy getTestDurationStrategy() {
+    return myStartNodeEventInfo.getDurationStrategy();
   }
 
   public boolean isPreservePresentableName() {
@@ -441,13 +452,17 @@ public class SMTestProxy extends AbstractTestProxy {
     return true;
   }
 
+  private boolean durationShouldBeSetExplicitly() {
+    return !myIsSuite || myStartNodeEventInfo.getDurationStrategy() == TestDurationStrategy.MANUAL;
+  }
+
   /**
    * Sets duration of test
    *
    * @param duration In milliseconds
    */
   public void setDuration(final long duration) {
-    if (!isSuite()) {
+    if (durationShouldBeSetExplicitly()) {
       invalidateCachedDurationForContainerSuites(duration - (myDuration != null ? myDuration : 0));
       myDurationIsCached = true;
       myDuration = (duration >= 0) ? duration : null;
@@ -915,18 +930,21 @@ public class SMTestProxy extends AbstractTestProxy {
    * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
-    if (duration >= 0) {
-      if (myDuration == null) {
-        myDuration = duration;
+    // Manual duration does not need any automatic calculation
+    if (!durationShouldBeSetExplicitly()) {
+      if (duration >= 0) {
+        if (myDuration == null) {
+          myDuration = duration;
+        }
+        else {
+          myDuration += duration;
+        }
       }
       else {
-        myDuration += duration;
+        // Invalidates duration of this suite
+        myDuration = null;
+        myDurationIsCached = false;
       }
-    }
-    else {
-      // Invalidates duration of this suite
-      myDuration = null;
-      myDurationIsCached = false;
     }
 
     // Invalidates duration of container suite

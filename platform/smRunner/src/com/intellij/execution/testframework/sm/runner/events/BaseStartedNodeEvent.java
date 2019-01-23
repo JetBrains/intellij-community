@@ -124,6 +124,11 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     return message.getAttributes().get("metainfo");
   }
 
+  @NotNull
+  public static TestDurationStrategy getDurationStrategy(@NotNull final ServiceMessage message) {
+    return TestDurationStrategyKt.getDurationStrategy(message.getAttributes().get("durationStrategy"));
+  }
+
   @Nullable
   public static String getNodeArgs(@NotNull ServiceMessage message) {
     return message.getAttributes().get("nodeArgs");

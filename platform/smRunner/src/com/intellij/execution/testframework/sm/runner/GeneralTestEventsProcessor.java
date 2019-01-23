@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -71,6 +72,17 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   /**
+   * Dirty hack that checks if test duration differs from default.
+   * We can't eliminate {@link #createProxy(String, String, String, String, String)} from call chain because it is not
+   * final and could be overwritten.
+   *
+   * This function must be removed along with all deprecated functions in this file in 2020
+   */
+  private static boolean cannotBeUsedWithOldApi(@NotNull final StartNodeEventInfo info) {
+    return info.getDurationStrategy() == TestDurationStrategy.MANUAL;
+  }
+
+  /**
    * Removing in 2020
    *
    * @deprecated use {@link  #createProxy(StartNodeEventInfo)}
@@ -84,6 +96,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   @SuppressWarnings("deprecation") // Backward compatibility
   @NotNull
   protected SMTestProxy createProxy(@NotNull final StartNodeEventInfo info) {
+    if (cannotBeUsedWithOldApi(info)) {
+      return new SMTestProxy(info, false);
+    }
     return createProxy(info.getName(), info.getLocationUrl(), info.getMetainfo(), info.getId(), info.getParentId());
   }
 
@@ -96,12 +111,14 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   @NotNull
   protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
     return new SMTestProxy(new StartNodeEventInfo(suiteName, id, parentNodeId, locationHint, metaInfo), true);
-
   }
 
   @SuppressWarnings("deprecation") // Backward compatibility
   @NotNull
   protected SMTestProxy createSuite(@NotNull final StartNodeEventInfo info) {
+    if (cannotBeUsedWithOldApi(info)) {
+      return new SMTestProxy(info, true);
+    }
     return createSuite(info.getName(), info.getLocationUrl(), info.getMetainfo(), info.getId(), info.getParentId());
   }
 
@@ -144,7 +161,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   /**
    * Removing in 2020
    *
-   * @deprecated use {@link #onSuiteTreeNodeAdded(TestStartedEvent)}
+   * @deprecated use {@link #onSuiteTreeNodeAdded(StartNodeEventInfo)}
    */
   @Deprecated
   public void onSuiteTreeStarted(final String suiteName, final String locationHint, String metaInfo, String id, String parentNodeId) {
@@ -153,6 +170,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public void onSuiteTreeStarted(@NotNull final StartNodeEventInfo event) {
     myTreeBuildBeforeStart = true;
+    ApplicationManager.getApplication().invokeAndWait(() -> myTestsRootProxy.setDurationStrategy(event.getDurationStrategy()));
     myBuildTreeRunnables.add(() -> {
       final SMTestProxy newSuite = createSuite(event);
       if (myLocator != null) {
