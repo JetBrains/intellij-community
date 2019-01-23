@@ -179,7 +179,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public void checkCancelled() {
-    if (myCancellationTokenSource != null && myCancellationTokenSource.token().isCancellationRequested()) {
+    if (myCancellationTokenSource.token().isCancellationRequested()) {
       throw new ProcessCanceledException();
     }
   }

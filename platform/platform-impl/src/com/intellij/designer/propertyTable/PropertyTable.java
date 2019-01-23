@@ -404,7 +404,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (size > 0) {
       List<Property> rootProperties = new ArrayList<>();
-      for (Property each : (Iterable<? extends Property>)getProperties(myContainers.get(0))) {
+      for (Property each : getProperties(myContainers.get(0))) {
         addIfNeeded(getCurrentComponent(), each, rootProperties);
       }
       sortPropertiesAndCreateGroups(rootProperties);

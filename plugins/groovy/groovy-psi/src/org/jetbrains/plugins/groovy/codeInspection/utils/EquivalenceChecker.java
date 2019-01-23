@@ -269,8 +269,8 @@ public class EquivalenceChecker {
 
   private static boolean whileStatementsAreEquivalent(@NotNull GrWhileStatement statement1,
                                                       @NotNull GrWhileStatement statement2) {
-    final GrExpression condition1 = (GrExpression) statement1.getCondition();
-    final GrExpression condition2 = (GrExpression) statement2.getCondition();
+    final GrExpression condition1 = statement1.getCondition();
+    final GrExpression condition2 = statement2.getCondition();
     final GrStatement body1 = statement1.getBody();
     final GrStatement body2 = statement2.getBody();
     return expressionsAreEquivalent(condition1, condition2) &&

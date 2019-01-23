@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.ExecuteRunConfigurationTask;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +185,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
             ParametersList programParametersList = javaParameters.getProgramParametersList();
 
             String execArgsPrefix = "-Dexec.args=";
-            int execArgsIndex = indexOf(programParametersList.getList(), (Condition<String>)s -> s.startsWith(execArgsPrefix));
+            int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
             String execArgsStr = programParametersList.get(execArgsIndex);
 
             ParametersList execArgs = new ParametersList();

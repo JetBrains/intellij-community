@@ -164,7 +164,7 @@ public abstract class LocalHistoryTestCase extends Assert {
       }
     }
     facade.endChangeSet(changeSetName);
-    return (ChangeSet)facade.getChangeListInTests().getChangesInTests().get(0);
+    return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
   public static List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {

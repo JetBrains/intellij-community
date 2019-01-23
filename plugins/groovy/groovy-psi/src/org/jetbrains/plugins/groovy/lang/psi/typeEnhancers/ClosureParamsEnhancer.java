@@ -111,7 +111,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
       GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
         substitutor =
-          new GroovyInferenceSessionBuilder(call, candidate, ((GroovyMethodResult)variant).getContextSubstitutor())
+          new GroovyInferenceSessionBuilder(call, candidate, variant.getContextSubstitutor())
             .skipClosureIn(call)
             .resolveMode(false)
             .build().inferSubst();

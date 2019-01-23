@@ -53,7 +53,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
-    return Pair.create((JComponent)myDiffPanel.getComponent(), null);
+    return Pair.create(myDiffPanel.getComponent(), null);
   }
 
   @Override

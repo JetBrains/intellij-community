@@ -174,7 +174,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
+    final Set<PsiMember> methods = Collections.singleton(myMethod);
     //check that method to call would be still accessible from the call places
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
     //additionally check that body of method contains only accessible in the inheritors references

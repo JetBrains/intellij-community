@@ -301,7 +301,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   @Nullable
   @Override
   public <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
-    return (U)myUserData.getUserData(key);
+    return myUserData.getUserData(key);
   }
 
   @Override

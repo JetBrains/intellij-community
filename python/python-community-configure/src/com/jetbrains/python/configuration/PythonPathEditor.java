@@ -101,7 +101,7 @@ public class PythonPathEditor extends SdkPathEditor {
   protected void doRemoveItems(int[] idxs, JList list) {
     List<Pair<VirtualFile, Integer>> removed = Lists.newArrayList();
     for (int i : idxs) {
-      removed.add(Pair.create((VirtualFile)getListModel().get(i), i));
+      removed.add(Pair.create(getListModel().get(i), i));
     }
     ListUtil.removeIndices(list, myPathListModel.remove(removed));
     list.updateUI();

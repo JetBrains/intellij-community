@@ -57,12 +57,12 @@ public final class MapBasedTree<K, N> {
   }
 
   public void onRemove(@NotNull Consumer<? super N> consumer) {
-    Consumer old = (Consumer<N>)nodeRemoved;
+    Consumer old = nodeRemoved;
     nodeRemoved = old == null ? consumer : old.andThen(consumer);
   }
 
   public void onInsert(@NotNull Consumer<? super N> consumer) {
-    Consumer old = (Consumer<N>)nodeInserted;
+    Consumer old = nodeInserted;
     nodeInserted = old == null ? consumer : old.andThen(consumer);
   }
 

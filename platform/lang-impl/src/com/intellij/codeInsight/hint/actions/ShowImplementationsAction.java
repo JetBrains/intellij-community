@@ -126,7 +126,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     JBPopup popup = SoftReference.dereference(myPopupRef);
     if (popup != null && popup.isVisible() && popup instanceof AbstractPopup) {
       final ImplementationViewComponent component = (ImplementationViewComponent) ((AbstractPopup)popup).getComponent();
-      ((AbstractPopup)popup).setCaption(title);
+      popup.setCaption(title);
       component.update(impls, index);
       updateInBackground(session, component, title, (AbstractPopup)popup, usageView);
       if (invokedByShortcut) {

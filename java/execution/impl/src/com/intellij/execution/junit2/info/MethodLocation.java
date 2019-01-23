@@ -83,7 +83,7 @@ public class MethodLocation extends Location<PsiMethod> {
 
       @Override
       public Location<T> next() {
-        final Location<T> location = myFirstStep ? (Location<T>)(Location)MethodLocation.this : fromClass.next();
+        final Location<T> location = myFirstStep ? (Location<T>)MethodLocation.this : fromClass.next();
         myFirstStep = false;
         return location;
       }

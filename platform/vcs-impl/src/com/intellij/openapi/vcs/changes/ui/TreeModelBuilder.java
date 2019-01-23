@@ -411,7 +411,7 @@ public class TreeModelBuilder {
     }
 
     if (collapsedNode != node) {
-      ChangesBrowserNode parent = (ChangesBrowserNode)node.getParent();
+      ChangesBrowserNode parent = node.getParent();
       final int idx = parent.getIndex(node);
       model.removeNodeFromParent(node);
       model.insertNodeInto(collapsedNode, parent, idx);
