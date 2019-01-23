@@ -171,7 +171,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
-      return fragment.isClassesAccepted() ? Kind.CLASS_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
+      return fragment.isClassesAccepted() ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
     }
 
     diagnoseUnknownParent();
@@ -902,7 +902,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         filters.add(ElementClassFilter.PACKAGE);
-        if (isQualified()) {
+        if (isQualified() || isCodeFragmentType(getTreeParent().getElementType())) {
           filters.add(ElementClassFilter.CLASS);
         }
         break;
