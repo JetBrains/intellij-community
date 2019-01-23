@@ -48,6 +48,7 @@ open class DialogCommitWorkflow(
     val dialog = CommitChangeListDialog(this)
     initDialog(dialog)
     dialog.init()
+    DialogCommitWorkflowHandler(this, dialog)
     return dialog.showAndGet()
   }
 

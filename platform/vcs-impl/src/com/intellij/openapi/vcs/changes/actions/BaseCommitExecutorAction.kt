@@ -1,13 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitExecutorBase
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
-import com.intellij.openapi.vcs.ui.Refreshable
+import com.intellij.openapi.vcs.changes.ui.CommitWorkflowHandler
 
 abstract class BaseCommitExecutorAction : DumbAwareAction() {
   init {
@@ -15,26 +11,22 @@ abstract class BaseCommitExecutorAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val dialog = getCommitDialog(e)
-    val executor = getCommitExecutor(dialog)
+    val handler = getWorkflowHandler(e)
+    val executor = getExecutor(handler)
 
-    e.presentation.isVisible = dialog != null && executor != null
-    e.presentation.isEnabled = dialog != null && executor != null && isEnabled(dialog, executor)
+    e.presentation.isVisible = handler != null && executor != null
+    e.presentation.isEnabled = handler != null && executor != null && handler.isExecutorEnabled(executor)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = getCommitDialog(e)!!
-    val executor = getCommitExecutor(dialog)!!
+    val workflowHandler = getWorkflowHandler(e)!!
+    val executor = getExecutor(workflowHandler)!!
 
-    dialog.execute(executor)
+    workflowHandler.execute(executor)
   }
 
   protected abstract val executorId: String
 
-  protected fun getCommitDialog(e: AnActionEvent): CommitChangeListDialog? = Refreshable.PANEL_KEY.getData(e.dataContext) as? CommitChangeListDialog
-
-  protected fun getCommitExecutor(dialog: CommitChangeListDialog?): CommitExecutor? = dialog?.executors?.find { it.id == executorId }
-
-  protected fun isEnabled(dialog: CheckinProjectPanel, executor: CommitExecutor): Boolean =
-    dialog.hasDiffs() || (executor is CommitExecutorBase && !executor.areChangesRequired())
+  private fun getWorkflowHandler(e: AnActionEvent) = CommitWorkflowHandler.DATA_KEY.getData(e.dataContext)
+  private fun getExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
 }

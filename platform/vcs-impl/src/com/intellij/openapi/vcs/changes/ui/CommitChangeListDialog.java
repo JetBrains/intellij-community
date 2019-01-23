@@ -124,6 +124,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     updateLegend();
   };
 
+  private DataProvider myDataProvider;
+
   private boolean myDisposed = false;
   private boolean myUpdateDisabled = false;
 
@@ -563,7 +565,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
   }
 
-  public void execute(@NotNull CommitExecutor commitExecutor) {
+  void execute(@NotNull CommitExecutor commitExecutor) {
     CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
       executeDefaultCommitSession(commitExecutor);
@@ -784,7 +786,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  public List<? extends CommitExecutor> getExecutors() {
+  List<? extends CommitExecutor> getExecutors() {
     return myExecutors;
   }
 
@@ -940,7 +942,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (Refreshable.PANEL_KEY.is(dataId)) {
       return this;
     }
-    return myBrowser.getData(dataId);
+    Object data = myDataProvider != null ? myDataProvider.getData(dataId) : null;
+    return data != null ? data : myBrowser.getData(dataId);
+  }
+
+  public void setDataProvider(@Nullable DataProvider dataProvider) {
+    myDataProvider = dataProvider;
   }
 
   @NotNull
