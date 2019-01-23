@@ -32,6 +32,11 @@ public class PyRunLineMarkerTest extends PyTestCase {
     assertTrue(elementWithInfo.getParent().getText().startsWith("if"));
   }
 
+  public void testWithManyIfs() {
+    List<LineMarkerInfo> infos = getInfos("runnable_with_ifs.py");
+    assertEquals("There should be only one marker", 1, infos.size());
+  }
+
   public void testNotRunnable() {
     assertEquals(0, getInfos("not_runnable.py").size());
   }
