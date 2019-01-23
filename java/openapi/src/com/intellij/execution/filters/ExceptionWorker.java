@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -394,6 +395,7 @@ public class ExceptionWorker {
 
     @Override
     public int applyAsInt(PsiFile file) {
+      if (DumbService.isDumb(file.getProject())) return 0; // may need to resolve refs
       Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
       if (document == null || document.getLineCount() <= myLineNumber) return 0;
       if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return 0;
