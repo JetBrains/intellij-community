@@ -5,8 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.scientific.figure.Figure;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 public interface DisplayMessageHandler {
   String getApplicableMessageType();
 
-  Figure createFigure(@NotNull Object dataObject, @NotNull Project project);
+  Figure createFigure(@NotNull Map dataObject, @NotNull Project project);
 }
