@@ -717,8 +717,8 @@ public class PluginManagerCore {
     @Nullable
     private final LoadDescriptorsContext myParentContext;
 
-    boolean isBundled;
-    boolean isEssential;
+    final boolean isBundled;
+    final boolean isEssential;
 
     LoadingContext(@Nullable LoadDescriptorsContext parentContext, boolean isBundled, boolean isEssential) {
       myParentContext = parentContext;
