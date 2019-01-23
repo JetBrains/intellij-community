@@ -7,8 +7,10 @@ import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.util.containers.ContainerUtil
 import java.awt.event.KeyEvent
 import java.util.*
@@ -62,9 +64,22 @@ class FeatureUsageDataBuilder {
     return this
   }
 
-  fun addPlace(place: String): FeatureUsageDataBuilder {
-    data["place"] = place
+  fun addPlace(place: String?): FeatureUsageDataBuilder {
+    if (place == null) return this
+
+    var reported = ActionPlaces.UNKNOWN
+    if (isCommonPlace(place)) {
+      reported = place
+    }
+    else if (ActionPlaces.isPopupPlace(place)) {
+      reported = ActionPlaces.POPUP
+    }
+    data["place"] = reported
     return this
+  }
+
+  private fun isCommonPlace(place: String): Boolean {
+    return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
   }
 
   fun addData(key: String, value: Any): FeatureUsageDataBuilder {

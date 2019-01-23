@@ -30,7 +30,7 @@ import java.util.Map;
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolbar", 2);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolbar", 3);
 
   public final static class ClicksState {
     @Tag("counts")
@@ -51,11 +51,8 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
 
   public static void record(@NotNull AnAction action, String place) {
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().addPluginInfo(info);
-    if (info.isDevelopedByJetBrains()) {
-      builder.addPlace(place);
-    }
-    record(ActionsCollectorImpl.toReportedId(info, action), builder);
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addPluginInfo(info).addPlace(place);
+    record(ActionsCollectorImpl.toReportedId(info, action), data);
   }
 
   public static void record(String actionId) {

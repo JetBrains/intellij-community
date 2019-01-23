@@ -34,7 +34,7 @@ import java.util.Set;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions", 2);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions", 3);
   private static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
@@ -58,22 +58,15 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   public void record(@Nullable AnAction action, @Nullable AnActionEvent event) {
     if (action == null) return;
 
-    boolean isContextMenu = event != null && event.isFromContextMenu();
-    final String place = event != null ? event.getPlace() : "";
-
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
     final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
       addFeatureContext(FUSUsageContext.OS_CONTEXT).
-      addPluginInfo(info).
-      addData("context_menu", isContextMenu);
+      addPluginInfo(info);
 
     if (event != null) {
-      data.addInputEvent(event);
-    }
-
-    final boolean isDevelopedByJB = info.isDevelopedByJetBrains();
-    if (isContextMenu && isDevelopedByJB) {
-      data.addPlace(place);
+      data.addInputEvent(event).
+        addPlace(event.getPlace()).
+        addData("context_menu", event.isFromContextMenu());
     }
 
     FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action), data);
