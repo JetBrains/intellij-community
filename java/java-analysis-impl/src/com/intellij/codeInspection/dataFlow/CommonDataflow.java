@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public class CommonDataflow {
     DataflowPoint(DataflowPoint other) {
       myFacts = other.myFacts;
       myPossibleValues = other.myPossibleValues;
-      myNotValues = other.myNotValues == null || other.myNotValues.isEmpty() ? other.myNotValues : new THashSet<>(other.myNotValues);
+      myNotValues = other.myNotValues == null || other.myNotValues.isEmpty() ? other.myNotValues : new HashSet<>(other.myNotValues);
       myMayFailByContract = other.myMayFailByContract;
     }
 
@@ -70,7 +69,7 @@ public class CommonDataflow {
         myPossibleValues = Collections.singleton(newValue);
       }
       else {
-        myPossibleValues = new THashSet<>(myPossibleValues);
+        myPossibleValues = new HashSet<>(myPossibleValues);
         myPossibleValues.add(newValue);
       }
     }
