@@ -129,9 +129,8 @@ public final class StandardMethodContract extends MethodContract {
     for (int i = 0; i < thisParameters.length; i++) {
       ValueConstraint thisConstraint = thisParameters[i];
       ValueConstraint thatConstraint = thatParameters[i];
-      if (thisConstraint == thatConstraint) continue;
-      if (result != null) return null;
-      if (thisConstraint.canBeNegated() && thisConstraint.negate() == thatConstraint) {
+      if (thisConstraint != thatConstraint) {
+        if (result != null || !thisConstraint.canBeNegated() || thisConstraint.negate() != thatConstraint) return null;
         result = thisParameters.clone();
         result[i] = ValueConstraint.ANY_VALUE;
       }

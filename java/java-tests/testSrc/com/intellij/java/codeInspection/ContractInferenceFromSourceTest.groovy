@@ -696,6 +696,16 @@ static String getBar() { return "bar"; }
     assert c == ['_, _, _ -> !null']
   }
 
+  void "test not collapsed"() {
+    def c = inferContracts("""
+static String test(String a, String b) { 
+  if(b == null || a == null) return null;
+  return unknown(a+b);  
+}
+""")
+    assert c == ['_, null -> null', 'null, !null -> null']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
