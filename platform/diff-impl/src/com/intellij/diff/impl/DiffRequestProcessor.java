@@ -45,6 +45,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -228,6 +229,9 @@ public abstract class DiffRequestProcessor implements Disposable {
             }
           }
         }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -574,6 +578,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       try {
         ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable ex) {
         Messages.showErrorDialog(e.getProject(), ex.getMessage(), "Can't Show Diff In External Tool");
