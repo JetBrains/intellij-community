@@ -12,6 +12,7 @@
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
+  <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -163,7 +164,7 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="HighlightVisitorInternal"
+    <localInspection groupPath="Java" shortName="HighlightVisitorInternal"
                      displayName="Good code is red"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" isInternal="true"
@@ -276,6 +277,18 @@
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
   </extensions>
+
+  <extensions defaultExtensionNs="DevKit.lang">
+    <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+  </extensions>
+
+
+  <extensionPoints >
+    <extensionPoint name="lang.goodCodeRedVisitor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
+    </extensionPoint>
+  </extensionPoints>
 
   <project-components>
     <component>
