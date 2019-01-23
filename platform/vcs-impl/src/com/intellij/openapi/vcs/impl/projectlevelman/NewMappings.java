@@ -18,8 +18,11 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,6 +52,8 @@ public class NewMappings {
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
   private boolean myActivated = false;
 
+  @NotNull private final MergingUpdateQueue myRootUpdateQueue;
+
   public NewMappings(Project project,
                      ProjectLevelVcsManagerImpl vcsManager,
                      FileStatusManager fileStatusManager,
@@ -58,6 +63,8 @@ public class NewMappings {
     myFileStatusManager = fileStatusManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this, LocalFileSystem.getInstance());
     myDefaultVcsRootPolicy = defaultVcsRootPolicy;
+
+    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
       if (!myProject.isDisposed()) {
@@ -104,18 +111,30 @@ public class NewMappings {
 
   @TestOnly
   public void updateMappedRoots() {
-    updateVcsMappings(myMappings, true);
+    scheduleMappedRootsUpdate();
+    myRootUpdateQueue.flush();
   }
 
-  private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
-    updateVcsMappings(mappings, false);
+  public void scheduleMappedRootsUpdate() {
+    myRootUpdateQueue.queue(new Update("update") {
+      @Override
+      public void run() {
+        updateVcsMappings(null);
+      }
+    });
   }
 
-  private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings, boolean forceUpdateRoots) {
-    List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
+  /**
+   * @param mappings New mappings or null, if only mapped roots should be updated
+   */
+  private void updateVcsMappings(@Nullable Collection<? extends VcsDirectoryMapping> mappings) {
+    myRootUpdateQueue.cancelAllUpdates();
+
+    List<VcsDirectoryMapping> newMappings = mappings != null ? unmodifiableList(sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR))
+                                                             : myMappings;
 
     boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
-    if (!mappingsChanged && !forceUpdateRoots) return;
+    if (mappings != null && !mappingsChanged) return; // mappings are up-to-date
 
     List<MappedRoot> newMappedRoots = collectMappedRoots(newMappings);
 
