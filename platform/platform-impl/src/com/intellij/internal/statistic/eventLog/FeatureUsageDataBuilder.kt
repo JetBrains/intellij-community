@@ -6,9 +6,11 @@ import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
+import java.awt.event.KeyEvent
 import java.util.*
 
 class FeatureUsageDataBuilder {
@@ -40,6 +42,22 @@ class FeatureUsageDataBuilder {
     val type = getPluginType(language.javaClass)
     if (type.isSafeToReport()) {
       data["lang"] = language.id
+    }
+    return this
+  }
+
+  fun addInputEvent(event: AnActionEvent): FeatureUsageDataBuilder {
+    val inputEvent = ShortcutDataProvider.getActionEventText(event)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: KeyEvent): FeatureUsageDataBuilder {
+    val inputEvent = ShortcutDataProvider.getKeyEventText(event)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
     }
     return this
   }
