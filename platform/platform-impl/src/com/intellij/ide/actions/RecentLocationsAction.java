@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -502,6 +503,7 @@ public class RecentLocationsAction extends AnAction {
                                               @NotNull PlaceInfo placeInfo) {
     EditorHighlighter editorHighlighter =
       EditorHighlighterFactory.getInstance().createEditorHighlighter(placeInfo.getFile(), colorsScheme, project);
+    editorHighlighter.setEditor(new LightHighlighterClient(document, project));
     editorHighlighter.setText(document.getText(TextRange.create(0, textRange.getEndOffset())));
     int startOffset = textRange.getStartOffset();
     HighlighterIterator iterator = editorHighlighter.createIterator(startOffset);
