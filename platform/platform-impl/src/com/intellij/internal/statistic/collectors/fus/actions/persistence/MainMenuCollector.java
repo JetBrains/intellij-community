@@ -42,7 +42,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
   private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("main.menu", 1);
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
-  private State myState = new State();
+  private final State myState = new State();
 
   @Nullable
   @Override

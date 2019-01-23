@@ -53,7 +53,7 @@ import java.awt.event.KeyEvent;
  */
 public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");
-  private PsiElement myCurrentExpression;
+  private final PsiElement myCurrentExpression;
   private Value myValueToShow = null;
 
   private ValueHint(Project project, Editor editor, Point point, ValueHintType type, final PsiElement selectedExpression, final TextRange textRange) {

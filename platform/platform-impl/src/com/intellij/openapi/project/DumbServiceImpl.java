@@ -79,7 +79,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     ApplicationManager.getApplication().getMessageBus().connect(project)
                       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
-                        @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
+                        @SuppressWarnings("UnnecessaryFullyQualifiedName") final // synchronized, can be accessed from different threads
                         java.util.Stack<AccessToken> stack = new Stack<>();
 
                         @Override

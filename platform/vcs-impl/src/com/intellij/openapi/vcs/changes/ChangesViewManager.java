@@ -111,7 +111,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
-  private MyTreeExpander myTreeExpander;
+  private final MyTreeExpander myTreeExpander;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {

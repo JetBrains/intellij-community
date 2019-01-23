@@ -27,7 +27,7 @@ public class NST {
   private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
   private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
 
-  private static String MIN_OS_VERSION = "10.12.2";
+  private static final String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
   private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();

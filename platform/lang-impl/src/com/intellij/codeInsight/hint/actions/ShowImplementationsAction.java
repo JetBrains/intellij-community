@@ -206,7 +206,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   private static class ImplementationViewComponentUpdater implements ListComponentUpdater {
     private final ImplementationViewComponent myComponent;
-    private int myIncludeSelfIdx;
+    private final int myIncludeSelfIdx;
 
     ImplementationViewComponentUpdater(ImplementationViewComponent component, int includeSelfIdx) {
       myComponent = component;

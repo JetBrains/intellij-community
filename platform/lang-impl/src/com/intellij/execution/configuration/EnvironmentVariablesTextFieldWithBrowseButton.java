@@ -42,7 +42,7 @@ import java.util.*;
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
   private EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
-  private Map<String, String> myParentDefaults = new LinkedHashMap<>();
+  private final Map<String, String> myParentDefaults = new LinkedHashMap<>();
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EnvironmentVariablesTextFieldWithBrowseButton() {

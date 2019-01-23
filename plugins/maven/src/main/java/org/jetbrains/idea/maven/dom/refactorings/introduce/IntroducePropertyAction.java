@@ -248,7 +248,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       @Override
       public UsageSearcher create() {
         return new UsageSearcher() {
-          Set<UsageInfo> usages = new HashSet<>();
+          final Set<UsageInfo> usages = new HashSet<>();
 
           @Override
           public void generate(@NotNull final Processor<Usage> processor) {

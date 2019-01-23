@@ -35,7 +35,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 1);
   private static final String DEFAULT_ID = "third.party.intention";
 
-  private State myState = new State();
+  private final State myState = new State();
 
   @Nullable
   @Override

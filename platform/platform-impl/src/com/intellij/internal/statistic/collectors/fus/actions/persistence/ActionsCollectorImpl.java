@@ -99,7 +99,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     return action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
   }
 
-  private State myState = new State();
+  private final State myState = new State();
 
   @Nullable
   @Override

@@ -139,7 +139,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     return null;
   }
 
-  private State myState = new State();
+  private final State myState = new State();
 
   @Nullable
   @Override

@@ -261,8 +261,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       private void addNewValue() {
         ApplicationManager.getApplication().invokeLater(() -> new DialogWrapper(myTable, true) {
-          JBTextField name = new JBTextField(40);
-          JBTextField value = new JBTextField(40);
+          final JBTextField name = new JBTextField(40);
+          final JBTextField value = new JBTextField(40);
           {
             setTitle("Add New Value");
             init();

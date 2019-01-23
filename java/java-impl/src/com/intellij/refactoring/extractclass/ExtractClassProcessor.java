@@ -83,7 +83,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private boolean delegationRequired;
   private final ExtractEnumProcessor myExtractEnumProcessor;
   private final PsiClass myClass;
-  private boolean extractInnerClass;
+  private final boolean extractInnerClass;
 
   public ExtractClassProcessor(PsiClass sourceClass,
                                List<? extends PsiField> fields,

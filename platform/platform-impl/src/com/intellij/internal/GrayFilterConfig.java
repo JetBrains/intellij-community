@@ -68,7 +68,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     };
 
     table.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
-      JTextField component = new JTextField();
+      final JTextField component = new JTextField();
 
       @Override
       public Object getCellEditorValue() {

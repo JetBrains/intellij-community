@@ -137,7 +137,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private String myUsagesCount;
   private String myFilesCount;
   private UsageViewPresentation myUsageViewPresentation;
-  private ComponentValidator myComponentValidator;
+  private final ComponentValidator myComponentValidator;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
     myHelper = helper;

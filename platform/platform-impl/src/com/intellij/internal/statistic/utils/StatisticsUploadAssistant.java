@@ -26,7 +26,7 @@ import com.intellij.util.Time;
 public class StatisticsUploadAssistant {
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   public static final Object LOCK = new Object();
-  private static EventLogStatisticsService logStatisticsService = new EventLogStatisticsService();
+  private static final EventLogStatisticsService logStatisticsService = new EventLogStatisticsService();
 
   private StatisticsUploadAssistant(){}
 

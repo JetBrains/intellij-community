@@ -80,8 +80,8 @@ public class RenameWrongRefFix implements IntentionAction {
       }
     } else {
       class MyScopeProcessor implements PsiScopeProcessor {
-        ArrayList<PsiElement> myResult = new ArrayList<>();
-        boolean myFilterMethods;
+        final ArrayList<PsiElement> myResult = new ArrayList<>();
+        final boolean myFilterMethods;
         boolean myFilterStatics;
 
         MyScopeProcessor(PsiReferenceExpression refExpression) {

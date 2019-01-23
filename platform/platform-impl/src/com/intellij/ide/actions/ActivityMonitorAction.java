@@ -40,7 +40,7 @@ class ActivityMonitorAction extends DumbAwareAction {
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
       final TLongLongHashMap lastThreadTimes = new TLongLongHashMap();
-      TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
+      final TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
       long lastGcTime = totalGcTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
       long lastUiUpdate = System.currentTimeMillis();

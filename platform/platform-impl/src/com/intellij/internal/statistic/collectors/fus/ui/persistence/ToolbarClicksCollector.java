@@ -38,7 +38,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     public Map<String, Integer> myValues = new HashMap<>();
   }
 
-  private ClicksState myState = new ClicksState();
+  private final ClicksState myState = new ClicksState();
 
   @Override
   public ClicksState getState() {

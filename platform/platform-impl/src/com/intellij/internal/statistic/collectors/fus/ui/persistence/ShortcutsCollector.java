@@ -27,7 +27,7 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
     public final Map<String, Integer> myValues = new HashMap<>();
   }
 
-  private MyState myState = new MyState();
+  private final MyState myState = new MyState();
 
   @Override
   @NotNull

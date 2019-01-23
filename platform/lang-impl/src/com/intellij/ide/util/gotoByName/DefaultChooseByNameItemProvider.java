@@ -199,7 +199,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     ChooseByNameModel model = base.getModel();
     Comparator<Object> weightComparator = new Comparator<Object>() {
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
 

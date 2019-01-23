@@ -323,7 +323,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           };
 
           final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
-            Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
+            final Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
 
             @Override
             public boolean contains(@NotNull VirtualFile file) {

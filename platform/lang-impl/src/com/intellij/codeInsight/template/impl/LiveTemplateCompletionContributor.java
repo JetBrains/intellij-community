@@ -36,7 +36,7 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
  * @author peter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
-  private static Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
+  private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
   @TestOnly
   public static void setShowTemplatesInTests(boolean show, @NotNull Disposable parentDisposable) {
