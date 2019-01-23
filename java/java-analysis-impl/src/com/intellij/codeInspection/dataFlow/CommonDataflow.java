@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
+import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,83 +21,104 @@ import java.util.*;
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
 public class CommonDataflow {
+  private static class DataflowPoint {
+    // null = top; empty = bottom
+    @Nullable DfaFactMap myFacts = null;
+    // empty = top; null = bottom
+    @Nullable Set<Object> myPossibleValues = Collections.emptySet();
+    // null = top; empty = bottom
+    @Nullable Set<Object> myNotValues = null;
+
+    DataflowPoint() {}
+
+    DataflowPoint(DataflowPoint other) {
+      myFacts = other.myFacts;
+      myPossibleValues = other.myPossibleValues;
+      myNotValues = other.myNotValues == null || other.myNotValues.isEmpty() ? other.myNotValues : new THashSet<>(other.myNotValues);
+    }
+
+    void addNotValues(DfaMemoryStateImpl memState, DfaValue value) {
+      // We do not store not-values for integral numbers as this functionality is covered by range fact
+      if (value instanceof DfaVariableValue && !TypeConversionUtil.isIntegralNumberType(value.getType())) {
+        Set<Object> notValues = myNotValues;
+        if (notValues == null) {
+          Set<Object> constants = memState.getNonEqualConstants((DfaVariableValue)value);
+          myNotValues = constants.isEmpty() ? Collections.emptySet() : constants;
+        }
+        else if (!notValues.isEmpty()) {
+          notValues.retainAll(memState.getNonEqualConstants((DfaVariableValue)value));
+          if (notValues.isEmpty()) {
+            myNotValues = Collections.emptySet();
+          }
+        }
+      }
+    }
+
+    void addValue(DfaMemoryStateImpl memState, DfaValue value) {
+      if (myPossibleValues == null) return;
+      DfaConstValue constantValue = memState.getConstantValue(value);
+      if (constantValue == null) {
+        myPossibleValues = null;
+        return;
+      }
+      Object newValue = constantValue.getValue();
+      if (myPossibleValues.contains(newValue)) return;
+      myNotValues = null;
+      if (myPossibleValues.isEmpty()) {
+        myPossibleValues = Collections.singleton(newValue);
+      }
+      else {
+        myPossibleValues = new THashSet<>(myPossibleValues);
+        myPossibleValues.add(newValue);
+      }
+    }
+
+    void addFacts(DfaMemoryStateImpl memState, DfaValue value) {
+      if (myFacts == DfaFactMap.EMPTY) return;
+      DfaFactMap newMap = DataflowResult.getFactMap(memState, value);
+      if (value instanceof DfaVariableValue) {
+        SpecialField field = SpecialField.fromQualifierType(value.getType());
+        if (field != null) {
+          DfaValue specialField = field.createValue(value.getFactory(), value);
+          if (specialField instanceof DfaVariableValue) {
+            DfaConstValue constantValue = memState.getConstantValue(specialField);
+            specialField = constantValue != null
+                           ? constantValue
+                           : specialField.getFactory().getFactFactory().createValue(DataflowResult.getFactMap(memState, specialField));
+          }
+          if (specialField instanceof DfaConstValue || specialField instanceof DfaFactMapValue) {
+            newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(specialField));
+          }
+        }
+      }
+      myFacts = myFacts == null ? newMap : myFacts.unite(newMap);
+    }
+  }
+  
   /**
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
   public static class DataflowResult {
-    private final Object VALUE_NOT_KNOWN = ObjectUtils.sentinel("VALUE_NOT_KNOWN");
-
-    private final Map<PsiExpression, DfaFactMap> myFacts = new HashMap<>();
-    private final Map<PsiExpression, Object> myValues = new HashMap<>();
-    private final Map<PsiExpression, Set<Object>> myNotValues = new HashMap<>();
+    private final Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
 
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult();
-      copy.myFacts.putAll(myFacts);
+      myData.forEach((expression, point) -> copy.myData.put(expression, new DataflowPoint(point)));
       return copy;
     }
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
-      addFacts(expression, memState, value);
-      addValue(expression, memState, value);
-      addNotValues(expression, memState, value);
-    }
-
-    private void addNotValues(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
-      // We do not store not-values for integral numbers as this functionality is covered by range fact
-      if (value instanceof DfaVariableValue && !TypeConversionUtil.isIntegralNumberType(value.getType())) {
-        Set<Object> notValues = myNotValues.get(expression);
-        if (notValues == null) {
-          Set<Object> constants = memState.getNonEqualConstants((DfaVariableValue)value);
-          myNotValues.put(expression, constants.isEmpty() ? Collections.emptySet() : constants);
-        } else if (!notValues.isEmpty()) {
-          notValues.retainAll(memState.getNonEqualConstants((DfaVariableValue)value));
-          if (notValues.isEmpty()) {
-            myNotValues.put(expression, Collections.emptySet());
-          }
-        }
-      }
-    }
-
-    private void addValue(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
-      Object curValue = myValues.get(expression);
-      if (curValue != VALUE_NOT_KNOWN) {
-        DfaConstValue constantValue = memState.getConstantValue(value);
-        Object newValue = constantValue == null ? null : constantValue.getValue();
-        if (newValue == null || curValue != null && !Objects.equals(curValue, newValue)) {
-          newValue = VALUE_NOT_KNOWN;
-        }
-        myValues.put(expression, newValue);
-      }
-    }
-
-    private void addFacts(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
-      DfaFactMap existing = myFacts.get(expression);
-      if(existing != DfaFactMap.EMPTY) {
-        DfaFactMap newMap = getFactMap(memState, value);
-        if (value instanceof DfaVariableValue) {
-          SpecialField field = SpecialField.fromQualifierType(value.getType());
-          if (field != null) {
-            DfaValue specialField = field.createValue(value.getFactory(), value);
-            if (specialField instanceof DfaVariableValue) {
-              DfaConstValue constantValue = memState.getConstantValue(specialField);
-              specialField = constantValue != null
-                             ? constantValue
-                             : specialField.getFactory().getFactFactory().createValue(getFactMap(memState, specialField));
-            }
-            if (specialField instanceof DfaConstValue || specialField instanceof DfaFactMapValue) {
-              newMap = newMap.with(DfaFactType.SPECIAL_FIELD_VALUE, field.withValue(specialField));
-            }
-          }
-        }
-        myFacts.put(expression, existing == null ? newMap : existing.unite(newMap));
-
+      DataflowPoint point = myData.computeIfAbsent(expression, e -> new DataflowPoint());
+      if (point.myFacts != DfaFactMap.EMPTY) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiConditionalExpression &&
             !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
           add((PsiExpression)parent, memState, value);
         }
       }
+      point.addFacts(memState, value);
+      point.addValue(memState, value);
+      point.addNotValues(memState, value);
     }
 
     @NotNull
@@ -123,7 +144,7 @@ public class CommonDataflow {
       if (expression instanceof PsiParenthesizedExpression) {
         throw new IllegalArgumentException("Should not pass parenthesized expression");
       }
-      return myFacts.containsKey(expression);
+      return myData.containsKey(expression);
     }
 
     /**
@@ -136,20 +157,23 @@ public class CommonDataflow {
      */
     @Nullable
     public <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
-      DfaFactMap map = this.myFacts.get(expression);
-      return map == null ? null : map.get(type);
+      DataflowPoint point = myData.get(expression);
+      return point == null || point.myFacts == null ? null : point.myFacts.get(type);
     }
 
     /**
-     * Returns an expression value if known
+     * Returns a set of expression values if known. If non-empty set is returned, then given expression
+     * is guaranteed to have one of returned values.
      *
      * @param expression an expression to get its value
-     * @return a value or null if not known
+     * @return a set of possible values or empty set if not known
      */
-    @Nullable
-    @Contract("null -> null")
-    public Object getExpressionValue(@Nullable PsiExpression expression) {
-      return this.myValues.get(expression);
+    @NotNull
+    public Set<Object> getExpressionValues(@Nullable PsiExpression expression) {
+      DataflowPoint point = myData.get(expression);
+      if (point == null) return Collections.emptySet();
+      Set<Object> values = point.myPossibleValues;
+      return values == null ? Collections.emptySet() : Collections.unmodifiableSet(values);
     }
 
     /**
@@ -157,8 +181,8 @@ public class CommonDataflow {
      * An empty list is returned if nothing is known.
      *
      * <p>
-     * This method may return nothing if {@link #getExpressionValue(PsiExpression)}
-     * returns some value (if expression value is known, it's not equal to any other value),
+     * This method may return nothing if {@link #getExpressionValues(PsiExpression)}
+     * returns some values (if expression values are known, it's not equal to any other value),
      * or if expression type is an integral type (in this case use
      * {@code getExpressionFact(expression, DfaFactType.RANGE)} which would provide more information anyway).
      *
@@ -167,7 +191,10 @@ public class CommonDataflow {
      */
     @NotNull
     public Set<Object> getValuesNotEqualToExpression(@Nullable PsiExpression expression) {
-      return myNotValues.getOrDefault(expression, Collections.emptySet());
+      DataflowPoint point = myData.get(expression);
+      if (point == null) return Collections.emptySet();
+      Set<Object> values = point.myNotValues;
+      return values == null ? Collections.emptySet() : Collections.unmodifiableSet(values);
     }
 
     /**
@@ -179,7 +206,8 @@ public class CommonDataflow {
      */
     @Nullable
     public DfaFactMap getAllFacts(PsiExpression expression) {
-      return this.myFacts.get(expression);
+      DataflowPoint point = myData.get(expression);
+      return point == null ? null : point.myFacts;
     }
   }
 
