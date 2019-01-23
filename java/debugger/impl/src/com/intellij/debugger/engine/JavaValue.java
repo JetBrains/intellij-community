@@ -155,15 +155,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
-            XValuePresentation presentation = null;
-            Renderer lastLabelRenderer = myValueDescriptor.getLastLabelRenderer();
-            if (lastLabelRenderer instanceof ValueLabelRenderer) {
-              presentation = ((ValueLabelRenderer)lastLabelRenderer).getPresentation(myValueDescriptor);
-            }
-            if (presentation == null) {
-              presentation = new JavaValuePresentation(myValueDescriptor);
-            }
-
+            XValuePresentation presentation = createPresentation(myValueDescriptor);
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
             boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
             if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
@@ -199,6 +191,18 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     });
+  }
+
+  public static XValuePresentation createPresentation(ValueDescriptorImpl descriptor) {
+    XValuePresentation presentation = null;
+    Renderer lastLabelRenderer = descriptor.getLastLabelRenderer();
+    if (lastLabelRenderer instanceof ValueLabelRenderer) {
+      presentation = ((ValueLabelRenderer)lastLabelRenderer).getPresentation(descriptor);
+    }
+    if (presentation == null) {
+      presentation = new JavaValuePresentation(descriptor);
+    }
+    return presentation;
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {

@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
@@ -25,7 +26,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -34,6 +38,7 @@ import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.Debugger;
@@ -436,7 +441,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class MapEntryLabelRenderer extends ReferenceRenderer implements ValueLabelRenderer{
-    private static final Computable<String> NULL_LABEL_COMPUTABLE = () -> "null";
+    private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
+    private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");
 
     private final MyCachedEvaluator myKeyExpression = new MyCachedEvaluator();
     private final MyCachedEvaluator myValueExpression = new MyCachedEvaluator();
@@ -449,32 +455,30 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
     @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-      final DescriptorUpdater descriptorUpdater = new DescriptorUpdater(descriptor, listener);
-
-      final Value originalValue = descriptor.getValue();
-      final Pair<Computable<String>, ValueDescriptorImpl> keyPair = createValueComputable(evaluationContext, originalValue, myKeyExpression, descriptorUpdater);
-      final Pair<Computable<String>, ValueDescriptorImpl> valuePair = createValueComputable(evaluationContext, originalValue, myValueExpression, descriptorUpdater);
-
-      descriptorUpdater.setKeyDescriptor(keyPair.second);
-      descriptorUpdater.setValueDescriptor(valuePair.second);
-
-      return DescriptorUpdater.constructLabelText(keyPair.first.compute(), keyPair.second, valuePair.first.compute(), valuePair.second);
+      String keyText = calcExpression(evaluationContext, descriptor, myKeyExpression, listener, KEY_DESCRIPTOR);
+      String valueText = calcExpression(evaluationContext, descriptor, myValueExpression, listener, VALUE_DESCRIPTOR);
+      return keyText + " -> " + valueText;
     }
 
-    private Pair<Computable<String>, ValueDescriptorImpl> createValueComputable(final EvaluationContext evaluationContext,
-                                                                                Value originalValue,
-                                                                                final MyCachedEvaluator evaluator,
-                                                                                final DescriptorLabelListener listener) throws EvaluateException {
-      final Value eval = doEval(evaluationContext, originalValue, evaluator);
+    private String calcExpression(EvaluationContext evaluationContext,
+                                  ValueDescriptor descriptor,
+                                  MyCachedEvaluator evaluator,
+                                  DescriptorLabelListener listener,
+                                  Key<ValueDescriptorImpl> key) throws EvaluateException {
+      Value eval = doEval(evaluationContext, descriptor.getValue(), evaluator);
       if (eval != null) {
-        final WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(evaluationContext.getProject(), evaluator.getReferenceExpression(), eval);
-        evalDescriptor.setShowIdLabel(false);
-        return new Pair<>(() -> {
-          evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
-          return evalDescriptor.getValueLabel();
-        }, evalDescriptor);
+        WatchItemDescriptor evalDescriptor = new WatchItemDescriptor(
+          evaluationContext.getProject(), evaluator.getReferenceExpression(), eval, (EvaluationContextImpl)evaluationContext) {
+          @Override
+          public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
+            updateRepresentationNoNotify(context, labelListener);
+          }
+        };
+        evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
+        descriptor.putUserData(key, evalDescriptor);
+        return evalDescriptor.getValueLabel();
       }
-      return new Pair<>(NULL_LABEL_COMPUTABLE, null);
+      return "null";
     }
 
     @Override
@@ -516,22 +520,44 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     @Nullable
     @Override
     public XValuePresentation getPresentation(ValueDescriptorImpl descriptor) {
+      boolean inCollection = descriptor instanceof ArrayElementDescriptor;
       return new JavaValuePresentation(descriptor) {
+        @Override
+        public void renderValue(@NotNull XValueTextRenderer renderer, @Nullable XValueNodeImpl node) {
+          renderDescriptor(KEY_DESCRIPTOR, renderer, node);
+          renderer.renderComment(" -> ");
+          renderDescriptor(VALUE_DESCRIPTOR, renderer, node);
+        }
+
+        private void renderDescriptor(Key<ValueDescriptorImpl> key, @NotNull XValueTextRenderer renderer, @Nullable XValueNodeImpl node) {
+          ValueDescriptorImpl valueDescriptor = myValueDescriptor.getUserData(key);
+          if (valueDescriptor != null) {
+            String type = valueDescriptor.getIdLabel();
+            if (inCollection && type != null) {
+              renderer.renderComment("{" + type + "} ");
+            }
+            new JavaValuePresentation(valueDescriptor).renderValue(renderer, node);
+          }
+          else {
+            renderer.renderValue("null");
+          }
+        }
+
         @NotNull
         @Override
         public String getSeparator() {
-          return "";
+          return inCollection ? "" : super.getSeparator();
         }
 
         @Override
         public boolean isShowName() {
-          return false;
+          return !inCollection;
         }
 
         @Nullable
         @Override
         public String getType() {
-          return null;
+          return inCollection ? null : super.getType();
         }
       };
     }
@@ -556,64 +582,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         // fallback to original
         return super.getChildValueExpression(node, context);
       }
-    }
-  }
-
-  private static class DescriptorUpdater implements DescriptorLabelListener {
-    private final ValueDescriptor myTargetDescriptor;
-    @Nullable
-    private ValueDescriptorImpl myKeyDescriptor;
-    @Nullable
-    private ValueDescriptorImpl myValueDescriptor;
-    private final DescriptorLabelListener myDelegate;
-
-    private DescriptorUpdater(ValueDescriptor descriptor, DescriptorLabelListener delegate) {
-      myTargetDescriptor = descriptor;
-      myDelegate = delegate;
-    }
-
-    public void setKeyDescriptor(@Nullable ValueDescriptorImpl keyDescriptor) {
-      myKeyDescriptor = keyDescriptor;
-    }
-
-    public void setValueDescriptor(@Nullable ValueDescriptorImpl valueDescriptor) {
-      myValueDescriptor = valueDescriptor;
-    }
-
-    @Override
-    public void labelChanged() {
-      myTargetDescriptor.setValueLabel(
-        constructLabelText(getDescriptorLabel(myKeyDescriptor), myKeyDescriptor, getDescriptorLabel(myValueDescriptor), myValueDescriptor));
-      myDelegate.labelChanged();
-    }
-
-    static String constructLabelText(String keylabel,
-                                     @Nullable ValueDescriptorImpl keyDescriptor,
-                                     String valueLabel,
-                                     @Nullable ValueDescriptorImpl valueDescriptor) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(wrapIfNeeded(keylabel, keyDescriptor));
-      sb.append(" -> ");
-      if (!StringUtil.isEmpty(valueLabel)) {
-        sb.append(wrapIfNeeded(valueLabel, valueDescriptor));
-      }
-      return sb.toString();
-    }
-
-    private static String wrapIfNeeded(String label, @Nullable ValueDescriptorImpl descriptor) {
-      if (descriptor != null) {
-        Renderer lastRenderer = descriptor.getLastRenderer();
-        if (descriptor.isString() ||
-            lastRenderer instanceof ToStringRenderer ||
-            (lastRenderer instanceof CompoundTypeRenderer && !(lastRenderer instanceof UnboxableTypeRenderer))) {
-          label = StringUtil.wrapWithDoubleQuote(label);
-        }
-      }
-      return label;
-    }
-
-    private static String getDescriptorLabel(final ValueDescriptorImpl keyDescriptor) {
-      return keyDescriptor == null? "null" : keyDescriptor.getValueLabel();
     }
   }
 }

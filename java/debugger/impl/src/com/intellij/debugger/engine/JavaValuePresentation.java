@@ -29,7 +29,7 @@ import java.util.List;
  * @author egor
  */
 public class JavaValuePresentation extends XValueExtendedPresentation implements XValueCompactPresentation {
-  private final ValueDescriptorImpl myValueDescriptor;
+  protected final ValueDescriptorImpl myValueDescriptor;
 
   public JavaValuePresentation(ValueDescriptorImpl valueDescriptor) {
     myValueDescriptor = valueDescriptor;
