@@ -59,6 +59,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "(format, arg*)",
       "(message)",
       "(message, error)",
+      "(t)",
+      "(t, u)",
       
       "*Exception",
 
