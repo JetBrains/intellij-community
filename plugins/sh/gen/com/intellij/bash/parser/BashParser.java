@@ -578,7 +578,6 @@ public class BashParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // shell_command redirection_list?
   //           | include_command
-  // //          | assignment_command
   //           | simple_command
   public static boolean command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command")) return false;

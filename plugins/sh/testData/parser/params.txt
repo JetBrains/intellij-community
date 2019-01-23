@@ -351,6 +351,59 @@ BASH_FILE
             PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          PsiElement($)('$')
+          SHELL_PARAMETER_EXPANSION
+            PsiElement({)('{')
+            PsiElement(word)('3')
+            PsiElement(Parameter expansion operator ':+')(':+')
+            PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            PsiElement(})('}')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(assignment_word)('msg')
+          PsiElement(=)('=')
+          STRING
+            PsiElement(string_begin)('"')
+            PsiElement(string_content)('Entering ')
+            VARIABLE
+              PsiElement(var)('$funcname')
+            PsiElement(string_content)('(')
+            VARIABLE
+              PsiElement(var)('$args')
+            PsiElement(string_content)(')')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('envstr')
+              PsiElement(Parameter expansion operator ':+')(':+')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('with')
+              PsiWhiteSpace(' ')
+              PsiElement(word)('environment')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$envstr')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(word)('3')
+                PsiElement(Parameter expansion operator ':+')(':+')
+                PsiElement(;)(';')
+                PsiWhiteSpace(' ')
+                PsiElement(})('}')
+              PsiElement(})('}')
+            VARIABLE
+              PsiElement(var)('$3')
+            PsiElement(string_end)('"')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')

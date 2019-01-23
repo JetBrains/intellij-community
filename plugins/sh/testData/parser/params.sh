@@ -36,7 +36,9 @@ ${!name[*]}
 ${!prefix*}
 ${!prefix@}
 
+${3:+; }
 
+msg="Entering $funcname($args)${envstr:+ with environment $envstr${3:+; }}$3"
 
 
 NEW_USERNAME=${NEW_USERNAME:-builduser}
