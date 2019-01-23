@@ -1091,4 +1091,17 @@ while (condition) {
 <caret>prevParent
 ''', 'java.lang.String'
   }
+
+  void 'test String variable assigned with GString inside closure @CS'() {
+    doTest '''\
+@groovy.transform.CompileStatic
+def test() {
+    String key
+    return {
+        key = "hi ${"there"}"
+        <caret>key
+    }
+}
+''', JAVA_LANG_STRING
+  }
 }
