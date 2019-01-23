@@ -44,6 +44,7 @@ import java.util.List;
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+  protected final JBTabPainter tabPainter = createTabPainter();
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -57,6 +58,10 @@ public class JBEditorTabs extends JBTabsImpl {
         });
       }
     }, parent);
+  }
+
+  protected JBTabPainter createTabPainter() {
+    return new JBDefaultTabPainter();
   }
 
   @Override
@@ -111,10 +116,26 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void doPaintInactive(Graphics2D g2d,
-                                 boolean leftGhostExists,
                                  TabLabel label,
-                                 Rectangle effectiveBounds,
-                                 boolean rightGhostExists, int row, int column) {
+                                 Rectangle effectiveBounds) {
+    Rectangle rect = fixedBounds(label, effectiveBounds);
+    final Color tabColor = label.getInfo().getTabColor();
+
+    tabPainter.paintTab(g2d, rect, tabColor);
+  }
+
+
+  @Override
+  protected void doPaintSelected(Graphics2D g2d,
+                                 TabLabel label,
+                                 Rectangle effectiveBounds) {
+    Rectangle rect = fixedBounds(label, effectiveBounds);
+    final Color tabColor = label.getInfo().getTabColor();
+    tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), true);
+  }
+
+  @NotNull
+  private Rectangle fixedBounds(TabLabel label, Rectangle effectiveBounds) {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     int _x = effectiveBounds.x + insets.left;
@@ -123,7 +144,7 @@ public class JBEditorTabs extends JBTabsImpl {
     int _height = effectiveBounds.height - insets.top - insets.bottom;
 
 
-    if ((!isSingleRow() /* for multiline */) || (isSingleRow() && isHorizontalTabs()))  {
+    if ((!isSingleRow() /* for multiline */) || isHorizontalTabs())  {
       if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
         _y += getActiveTabUnderlineHeight();
       } else {
@@ -138,16 +159,8 @@ public class JBEditorTabs extends JBTabsImpl {
       }
     }
 
-    final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
-    final Color tabColor = label.getInfo().getTabColor();
-    final Composite oldComposite = g2d.getComposite();
-    //if (label != getSelectedLabel()) {
-    //  g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
-    //}
-    getPainter().doPaintInactive(g2d, effectiveBounds, _x, _y, _width, _height, tabColor, row, column, vertical);
-    //g2d.setComposite(oldComposite);
+    return new Rectangle(_x, _y, _width, _height);
   }
-
 
 
   @Override
@@ -236,22 +249,6 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  protected void paintSelectionAndBorder(Graphics2D g2d) {
-    if (getSelectedInfo() == null || isHideTabs()) return;
-
-    TabLabel label = getSelectedLabel();
-    Rectangle r = label.getBounds();
-
-    ShapeInfo selectedShape = _computeSelectedLabelShape();
-
-    Insets insets = getTabsBorder().getEffectiveBorder();
-
-    Color tabColor = label.getInfo().getTabColor();
-
-    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor);
-  }
-
-  @Override
   public Color getBackground() {
     return getPainter().getBackgroundColor();
   }
@@ -259,40 +256,5 @@ public class JBEditorTabs extends JBTabsImpl {
   @Override
   public Color getForeground() {
     return UIUtil.getLabelForeground();
-  }
-
-  protected ShapeInfo _computeSelectedLabelShape() {
-    final ShapeInfo shape = new ShapeInfo();
-
-    shape.path = getEffectiveLayout().createShapeTransform(getSize());
-    shape.insets = shape.path.transformInsets(getLayoutInsets());
-    shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
-
-    shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
-    boolean isTop = getPosition() == JBTabsPosition.top;
-    boolean isBottom = getPosition() == JBTabsPosition.bottom;
-    shape.labelTopY =
-      shape.labelPath.getY() + (isTop ? shape.labelPath.deltaY(1) : isBottom ? shape.labelPath.deltaY(-1) : 0) ;
-    shape.labelLeftX = shape.labelPath.getX() + (isTop || isBottom ? 0 : shape.labelPath.deltaX(1));
-    shape.labelRightX = shape.labelPath.getMaxX() /*- shape.labelPath.deltaX(1)*/;
-
-    int leftX = shape.insets.left + (isTop || isBottom ? 0 : shape.labelPath.deltaX(1));
-
-    shape.path.moveTo(leftX, shape.labelBottomY);
-    shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
-    shape.path.lineTo(shape.labelLeftX, shape.labelTopY);
-    shape.path.lineTo(shape.labelRightX, shape.labelTopY);
-    shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
-
-    int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
-
-    shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
-
-    shape.path.closePath();
-    shape.fillPath = shape.path.copy();
-
-    return shape;
   }
 }

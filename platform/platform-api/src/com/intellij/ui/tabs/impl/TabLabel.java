@@ -58,9 +58,6 @@ public class TabLabel extends JPanel implements Accessible {
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl myTabs;
 
-  private BufferedImage myInactiveStateImage;
-  private Rectangle myLastPaintedInactiveImageBounds;
-
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     super(false);
 
@@ -430,8 +427,6 @@ public class TabLabel extends JPanel implements Accessible {
       return;
     }
 
-    setInactiveStateImage(null);
-
     getLabelComponent().invalidate();
 
     if (myActionPanel != null) {
@@ -660,27 +655,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   public void setTabEnabled(boolean enabled) {
     getLabelComponent().setEnabled(enabled);
-  }
-
-
-  @Nullable
-  public BufferedImage getInactiveStateImage(Rectangle effectiveBounds) {
-    BufferedImage img = null;
-    if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
-      img = myInactiveStateImage;
-    }
-    else {
-      setInactiveStateImage(null);
-    }
-    myLastPaintedInactiveImageBounds = effectiveBounds;
-    return img;
-  }
-
-  public void setInactiveStateImage(@Nullable BufferedImage img) {
-    if (myInactiveStateImage != null && img != myInactiveStateImage) {
-      myInactiveStateImage.flush();
-    }
-    myInactiveStateImage = img;
   }
 
   public JComponent getLabelComponent() {

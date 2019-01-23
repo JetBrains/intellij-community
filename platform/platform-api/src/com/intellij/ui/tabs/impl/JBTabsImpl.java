@@ -314,7 +314,6 @@ public class JBTabsImpl extends JComponent
     myImage = null;
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
-      entry.getValue().setInactiveStateImage(null);
     }
     boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
@@ -1145,8 +1144,6 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateColor(final TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setInactiveStateImage(null);
-
     updateTab(() -> {
       repaint();
       return true;
@@ -1674,7 +1671,6 @@ public class JBTabsImpl extends JComponent
         paintLastGhost(g2d);
       }
 
-
       paintNonSelectedTabs(g2d, leftGhostExists, rightGhostExists);
 
       if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.firstGhostVisible) {
@@ -1707,84 +1703,6 @@ public class JBTabsImpl extends JComponent
 
     final Color tabColor = info.getTabColor();
     return tabColor == null ? c : tabColor;
-  }
-
-  protected void paintSelectionAndBorder(Graphics2D g2d) {
-    if (mySelectedInfo == null) return;
-
-    final ShapeInfo shapeInfo = computeSelectedLabelShape();
-    if (!isHideTabs()) {
-      g2d.setColor(getBackground());
-      g2d.fill(shapeInfo.fillPath.getShape());
-    }
-
-    final int alpha;
-    int paintTopY = shapeInfo.labelTopY;
-    int paintBottomY = shapeInfo.labelBottomY;
-    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null || myAlwaysPaintSelectedTab);
-    Color bgPreFill = null;
-    if (paintFocused) {
-      final Color bgColor = getActiveTabColor(getActiveTabFillIn());
-      if (bgColor == null) {
-        shapeInfo.from = getFocusedTopFillColor();
-        shapeInfo.to = getFocusedBottomFillColor();
-      }
-      else {
-        bgPreFill = bgColor;
-        alpha = 255;
-        paintBottomY = shapeInfo.labelTopY + shapeInfo.labelPath.deltaY(getArcSize() - 2);
-        shapeInfo.from = ColorUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
-        shapeInfo.to = ColorUtil.toAlpha(getActiveTabFillIn(), alpha);
-      }
-    }
-    else {
-      final Color bgColor = getActiveTabColor(getActiveTabFillIn());
-      if (isPaintFocus()) {
-        if (bgColor == null) {
-          alpha = 150;
-          shapeInfo.from = ColorUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
-          shapeInfo.to = ColorUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
-        }
-        else {
-          alpha = 255;
-          shapeInfo.from = ColorUtil.toAlpha(bgColor, alpha);
-          shapeInfo.to = ColorUtil.toAlpha(bgColor, alpha);
-        }
-      }
-      else {
-        alpha = 255;
-        final Color tabColor = getActiveTabColor(null);
-        final Color defaultBg = UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Color.white;
-        shapeInfo.from = tabColor == null ? defaultBg : tabColor;
-        shapeInfo.to = tabColor == null ? defaultBg : tabColor;
-      }
-    }
-
-    if (!isHideTabs()) {
-      if (bgPreFill != null) {
-        g2d.setColor(bgPreFill);
-        g2d.fill(shapeInfo.fillPath.getShape());
-      }
-
-      final Line2D.Float gradientLine =
-        shapeInfo.fillPath.transformLine(shapeInfo.fillPath.getX(), paintTopY, shapeInfo.fillPath.getX(), paintBottomY);
-
-
-      g2d.setPaint(UIUtil.getGradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
-                                     shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to), (float)gradientLine.getX2(),
-                                     (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
-      g2d.fill(shapeInfo.fillPath.getShape());
-    }
-
-    final Color tabColor = getActiveTabColor(null);
-    Color borderColor = tabColor == null ? UIUtil.getBoundsColor(paintFocused) : tabColor.darker();
-    g2d.setColor(borderColor);
-
-    if (!isHideTabs()) {
-      g2d.draw(shapeInfo.path.getShape());
-    }
-
-    paintBorder(g2d, shapeInfo, borderColor);
   }
 
   protected Color getFocusedTopFillColor() {
@@ -1983,12 +1901,6 @@ public class JBTabsImpl extends JComponent
 
   private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists, final boolean rightGhostExists) {
     TabInfo selected = getSelectedInfo();
-    if (myLastPaintedSelection == null || !myLastPaintedSelection.equals(selected)) {
-      List<TabInfo> tabs = getTabs();
-      for (TabInfo each : tabs) {
-        myInfo2Label.get(each).setInactiveStateImage(null);
-      }
-    }
 
     for (int eachRow = 0; eachRow < myLastLayoutPass.getRowCount(); eachRow++) {
       for (int eachColumn = myLastLayoutPass.getColumnCount(eachRow) - 1; eachColumn >= 0; eachColumn--) {
@@ -1996,58 +1908,13 @@ public class JBTabsImpl extends JComponent
         if (getSelectedInfo() == each) {
           continue;
         }
-        paintNonSelected(g2d, each, leftGhostExists, rightGhostExists, eachRow, eachColumn);
+        final TabLabel label = myInfo2Label.get(each);
+        if (label.getBounds().width == 0) continue;
+        doPaintInactive(g2d, label, label.getBounds());
       }
     }
 
     myLastPaintedSelection = selected;
-  }
-
-  private void paintNonSelected(final Graphics2D g2d,
-                                final TabInfo each,
-                                final boolean leftGhostExists,
-                                final boolean rightGhostExists,
-                                int row, int column) {
-    if (myDropInfo == each) return;
-
-    final TabLabel label = myInfo2Label.get(each);
-    if (label.getBounds().width == 0) return;
-
-    int imageInsets = getArcSize() + 1;
-
-    Rectangle bounds = label.getBounds();
-
-    int x = bounds.x - imageInsets;
-    int y = bounds.y;
-    int width = bounds.width + imageInsets * 2 + 1;
-    int height = bounds.height + getArcSize() + 1;
-
-    if (isToBufferPainting()) {
-      BufferedImage img = label.getInactiveStateImage(bounds);
-
-      if (img == null) {
-        img = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D imgG2d = img.createGraphics();
-        imgG2d.addRenderingHints(g2d.getRenderingHints());
-        doPaintInactive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()),
-                        rightGhostExists, row, column);
-        imgG2d.dispose();
-      }
-
-      UIUtil.drawImage(g2d, img,
-                       new Rectangle(x, y, width, height),
-                       new Rectangle(0, 0, width, height),null);
-
-      label.setInactiveStateImage(img);
-    }
-    else {
-      doPaintInactive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists, row, column);
-      label.setInactiveStateImage(null);
-    }
-  }
-
-  private boolean isToBufferPainting() {
-    return Registry.is("ide.tabbedPane.bufferedPaint") && myUseBufferedPaint;
   }
 
   protected List<TabInfo> getVisibleInfos() {
@@ -2070,130 +1937,12 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void doPaintInactive(Graphics2D g2d,
-                                 boolean leftGhostExists,
                                  TabLabel label,
-                                 Rectangle effectiveBounds,
-                                 boolean rightGhostExists, int row, int column) {
-    int tabIndex = myVisibleInfos.indexOf(label.getInfo());
+                                 Rectangle effectiveBounds) {}
 
-    final int arc = getArcSize();
-    Color topBlockColor = getTopBlockColor();
-    Color rightBlockColor = getRightBlockColor();
-    Color boundsColor = getBoundsColor();
-    Color backgroundColor = getBackground();
-
-    final Color tabColor = label.getInfo().getTabColor();
-    if (tabColor != null) {
-      backgroundColor = tabColor;
-      boundsColor = tabColor.darker();
-      topBlockColor = tabColor.brighter().brighter();
-      rightBlockColor = tabColor;
-    }
-
-    final TabInfo selected = getSelectedInfo();
-    final int selectionTabVShift = getSelectionTabVShift();
-
-
-    final TabInfo prev = myLastLayoutPass.getPreviousFor(myVisibleInfos.get(tabIndex));
-    final TabInfo next = myLastLayoutPass.getNextFor(myVisibleInfos.get(tabIndex));
-
-
-    boolean firstShowing = prev == null;
-    if (!firstShowing && !leftGhostExists) {
-      firstShowing = myInfo2Label.get(prev).getBounds().width == 0;
-    }
-
-    boolean lastShowing = next == null;
-    if (!lastShowing) {
-      lastShowing = myInfo2Label.get(next).getBounds().width == 0;
-    }
-
-    boolean leftFromSelection = selected != null && tabIndex == myVisibleInfos.indexOf(selected) - 1;
-
-    final ShapeTransform shape = getEffectiveLayout().createShapeTransform(effectiveBounds);
-
-    int leftX = firstShowing ? shape.getX() : shape.getX() - shape.deltaX(arc + 1);
-    int topY = shape.getY() + shape.deltaY(selectionTabVShift);
-    int rightX = !lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : shape.getMaxX();
-    int bottomY = shape.getMaxY() + shape.deltaY(1);
-
-    Insets border = myBorder.getEffectiveBorder();
-
-    if (border.left > 0 || leftGhostExists || !firstShowing) {
-      shape.moveTo(leftX, bottomY);
-      shape.lineTo(leftX, topY + shape.deltaY(arc));
-      shape.quadTo(leftX, topY, leftX + shape.deltaX(arc), topY);
-    }
-    else {
-      if (firstShowing) {
-        shape.moveTo(leftX, topY + shape.deltaY(getEdgeArcSize()));
-        shape.quadTo(leftX, topY, leftX + shape.deltaX(getEdgeArcSize()), topY);
-      }
-    }
-
-    boolean rightEdge = false;
-    if (border.right > 0 || rightGhostExists || !lastShowing || !Boolean.TRUE.equals(label.getClientProperty(STRETCHED_BY_WIDTH))) {
-      shape.lineTo(rightX - shape.deltaX(arc), topY);
-      shape.quadTo(rightX, topY, rightX, topY + shape.deltaY(arc));
-      shape.lineTo(rightX, bottomY);
-    }
-    else {
-      if (lastShowing) {
-        shape.lineTo(rightX - shape.deltaX(arc), topY);
-        shape.quadTo(rightX + 1, topY, rightX + 1, topY + shape.deltaY(arc));
-
-        shape.lineTo(rightX + 1, bottomY);
-        rightEdge = true;
-      }
-    }
-
-    if (!isSingleRow()) {
-      final TablePassInfo info = myTableLayout.myLastTableLayout;
-      if (!info.isInSelectionRow(label.getInfo())) {
-        shape.lineTo(rightX, bottomY + shape.deltaY(getArcSize()));
-        shape.lineTo(leftX, bottomY + shape.deltaY(getArcSize()));
-        shape.lineTo(leftX, bottomY);
-      }
-    }
-
-    if (!rightEdge) {
-      shape.lineTo(leftX, bottomY);
-    }
-
-    g2d.setColor(backgroundColor);
-    g2d.fill(shape.getShape());
-
-    // TODO
-
-    final Line2D.Float gradientLine =
-      shape.transformLine(0, topY, 0, topY + shape.deltaY((int)(shape.getHeight() / 1.5)));
-
-    final Paint gp = UIUtil.isUnderDarcula()
-                             ? UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
-                                                 shape.transformY1(backgroundColor, backgroundColor),
-                                                 gradientLine.x2, gradientLine.y2,
-                                                 shape.transformY1(backgroundColor, backgroundColor))
-                             : UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
-                                                 shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
-                                                 gradientLine.x2, gradientLine.y2,
-                                                 shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));
-
-    final Paint old = g2d.getPaint();
-    g2d.setPaint(gp);
-    g2d.fill(shape.getShape());
-    g2d.setPaint(old);
-
-    g2d.setColor(topBlockColor);
-    g2d.draw(
-      shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rightX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
-
-    if (!rightEdge) {
-      g2d.setColor(rightBlockColor);
-      g2d.draw(shape.transformLine(rightX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rightX - shape.deltaX(1), bottomY));
-    }
-
-    g2d.setColor(boundsColor);
-    g2d.draw(shape.getShape());
+  protected void doPaintSelected(Graphics2D g2d,
+                                 TabLabel label,
+                                 Rectangle effectiveBounds) {
   }
 
   public static int getSelectionTabVShift() {
@@ -2307,10 +2056,9 @@ public class JBTabsImpl extends JComponent
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
 
-    paintSelectionAndBorder((Graphics2D)g);
-
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {
+      doPaintSelected((Graphics2D)g, selected, selected.getBounds());
       selected.paintImage(g);
     }
 

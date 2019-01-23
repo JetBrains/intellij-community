@@ -1572,6 +1572,51 @@ public class JBUI {
       }
     }
 
+    public static class DefaultTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("DefaultTabs.underlineColor", 0x4083C9);
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", 0x4083C9);
+      }
+
+      @NotNull
+      public static Color defaultTabColor() {
+        return JBColor.namedColor("DefaultTabs.backgroundColor", UIUtil.getPanelBackground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("DefaultTabs.backgroundColor", UIUtil.CONTRAST_BORDER_COLOR);
+      }
+    }
+
+    public static class EditorTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.defaultTabColor());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
+      }
+
+    }
+
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
