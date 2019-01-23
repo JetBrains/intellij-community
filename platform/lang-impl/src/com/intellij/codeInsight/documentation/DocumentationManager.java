@@ -989,7 +989,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       if (!processed) {
-        cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, null, null) {
+        cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, null, provider) {
           @Override
           public String getDocumentation() {
             if (BrowserUtil.isAbsoluteURL(url)) {
