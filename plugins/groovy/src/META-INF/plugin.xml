@@ -82,6 +82,7 @@
     <extensionPoint name="gdslScriptProvider" interface="org.jetbrains.plugins.groovy.dsl.GdslScriptProvider"/>
     <extensionPoint name="expectedPackageNameProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
     <extensionPoint name="delegatesToProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider"/>
+    <extensionPoint name="expressionFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyExpressionFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
