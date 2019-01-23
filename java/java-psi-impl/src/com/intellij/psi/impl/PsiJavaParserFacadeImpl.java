@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -321,8 +321,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException {
-    DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, MODULE, LanguageLevel.JDK_1_9), null);
+  public PsiJavaModule createModuleFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
+    DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, MODULE, LanguageLevel.JDK_1_9), context);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaModule)) {
       throw newException("Incorrect module declaration '" + text + "'", holder);
@@ -332,12 +332,18 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException {
+  public PsiStatement createModuleStatementFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
     String template = "module M { " + text + "; }";
-    PsiJavaModule module = createModuleFromText(template);
+    PsiJavaModule module = createModuleFromText(template, context);
     PsiStatement statement = PsiTreeUtil.getChildOfType(module, PsiStatement.class);
     if (statement == null) throw new IncorrectOperationException("Incorrect module statement '" + text + "'");
     return statement;
+  }
+
+  @NotNull
+  @Override
+  public PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
+    return createModuleFromText("module " + text + " {}", context).getNameIdentifier();
   }
 
   public static PsiPrimitiveType getPrimitiveType(String text) {
