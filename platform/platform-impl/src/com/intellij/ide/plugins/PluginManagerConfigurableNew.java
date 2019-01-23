@@ -1298,12 +1298,16 @@ public class PluginManagerConfigurableNew
           }
         }
       }
-      catch (UnknownHostException e) {
-        PluginManagerMain.LOG.info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
-      }
       catch (IOException e) {
         if (host == null) {
-          exception = e;
+          //noinspection InstanceofCatchParameter
+          if (e instanceof UnknownHostException) {
+            PluginManagerMain.LOG
+              .info("Main plugin repository '" + e.getMessage() + "' is not available. Please check your network settings.");
+          }
+          else {
+            exception = e;
+          }
         }
         else {
           PluginManagerMain.LOG.info(host, e);
