@@ -18,9 +18,12 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,6 +53,9 @@ public class NewMappings {
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
   private boolean myActivated = false;
 
+  @NotNull private final MergingUpdateQueue myRootUpdateQueue;
+  @Nullable private volatile List<VcsDirectoryMapping> myMappingsToUpdate;
+
   public NewMappings(Project project,
                      ProjectLevelVcsManagerImpl vcsManager,
                      FileStatusManager fileStatusManager,
@@ -65,6 +71,8 @@ public class NewMappings {
         activateActiveVcses();
       }
     });
+
+    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   @TestOnly
@@ -103,23 +111,42 @@ public class NewMappings {
     updateVcsMappings(newMappings);
   }
 
-  public void refreshMappings() {
-    updateVcsMappings(myMappings, true);
+  @TestOnly
+  public void updateMappedRoots() {
+    scheduleMappedRootsUpdate();
+    myRootUpdateQueue.flush();
+  }
+
+  public void scheduleMappedRootsUpdate() {
+    myMappingsToUpdate = myMappings;
+    myRootUpdateQueue.queue(new Update("update") {
+      @Override
+      public void run() {
+        List<VcsDirectoryMapping> mappings = myMappingsToUpdate;
+        if (mappings != null) {
+          updateVcsMappings(mappings, true);
+        }
+      }
+    });
   }
 
   private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings) {
     updateVcsMappings(mappings, false);
   }
 
-  private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings, boolean forceUpdateRoots) {
+  private void updateVcsMappings(@NotNull Collection<? extends VcsDirectoryMapping> mappings, boolean updateRootsOnly) {
     List<VcsDirectoryMapping> newMappings = unmodifiableList(sorted(mappings, MAPPINGS_COMPARATOR));
 
     boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
-    if (!mappingsChanged && !forceUpdateRoots) return;
+    if (!updateRootsOnly && !mappingsChanged) return; // mappings are up-to-date
+    if (updateRootsOnly && mappingsChanged) return; // someone updated mappings, roots are already up-to-date
 
+    myMappingsToUpdate = null;
     List<MappedRoot> newMappedRoots = collectMappedRoots(newMappings);
 
     synchronized (myUpdateLock) {
+      if (updateRootsOnly && !Comparing.equal(myMappings, newMappings)) return;
+
       myMappings = newMappings;
       myMappedRoots = newMappedRoots;
 
@@ -181,7 +208,6 @@ public class NewMappings {
     List<VirtualFile> defaultRoots = new ArrayList<>(defaultVcsRootPolicy.getDefaultVcsRoots());
 
     /*
-     FIXME: refresh mappings on content roots change (add listener in specific DefaultVcsRootPolicy? can getBaseDir change?)
      FIXME: refresh mappings on VFS change (created VF for previously registered mapping)
             List of unmapped roots + "after vfs refresh" listener + MUQ "updateMappedRoots" + myMappings == expectedMappings
 

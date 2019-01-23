@@ -164,7 +164,7 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     };
     createFiles(children);
 
-    myMappings.refreshMappings();
+    myMappings.updateMappedRoots();
 
     final String[] awaitedVcsNames = {"CVS","CVS","CVS","mock"};
     final LocalFileSystem lfs = LocalFileSystem.getInstance();

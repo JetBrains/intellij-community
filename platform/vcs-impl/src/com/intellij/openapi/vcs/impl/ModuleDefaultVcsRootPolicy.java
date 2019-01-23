@@ -16,13 +16,18 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,6 +38,11 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
 public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public ModuleDefaultVcsRootPolicy(@NotNull Project project) {
     super(project);
+
+    MyModulesListener listener = new MyModulesListener();
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.MODULES, listener);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
   }
 
   @Override
@@ -65,5 +75,22 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
     return result;
+  }
+
+  private class MyModulesListener implements ModuleRootListener, ModuleListener {
+    @Override
+    public void rootsChanged(@NotNull ModuleRootEvent event) {
+      scheduleMappedRootsUpdate();
+    }
+
+    @Override
+    public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+      scheduleMappedRootsUpdate();
+    }
+
+    @Override
+    public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
+      scheduleMappedRootsUpdate();
+    }
   }
 }
