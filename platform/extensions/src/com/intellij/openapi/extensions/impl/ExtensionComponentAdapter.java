@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.*;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoException;
+import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.PicoVisitor;
 
 /**
  * @author Alexander Kireyev
@@ -17,9 +18,7 @@ import org.picocontainer.*;
 public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
-  private Object myComponentInstance;
-  @Nullable
-  private final Element myExtensionElement;
+  protected Object myComponentInstance;
   private final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
@@ -33,12 +32,10 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
                                    @Nullable PicoContainer container,
                                    @Nullable PluginDescriptor pluginDescriptor,
                                    @Nullable String orderId,
-                                   @NotNull LoadingOrder order,
-                                   @Nullable Element extensionElement) {
+                                   @NotNull LoadingOrder order) {
     myImplementationClassOrName = implementationClassName;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
-    myExtensionElement = extensionElement;
 
     myOrderId = orderId;
     myOrder = order;
@@ -67,16 +64,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
       ExtensionPointImpl.CHECK_CANCELED.run();
 
       instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
-
-      if (myExtensionElement != null) {
-        try {
-          XmlSerializer.deserializeInto(instance, myExtensionElement);
-        }
-        catch (Exception e) {
-          throw new PicoInitializationException(e);
-        }
-      }
-
+      initComponent(instance);
       myComponentInstance = instance;
     }
     catch (ProcessCanceledException | ExtensionNotApplicableException e) {
@@ -94,6 +82,9 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return instance;
   }
 
+  protected void initComponent(@NotNull Object instance) {
+  }
+
   @Override
   public void verify(PicoContainer container) throws PicoIntrospectionException {
     throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
@@ -109,7 +100,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public LoadingOrder getOrder() {
+  public final LoadingOrder getOrder() {
     return myOrder;
   }
 

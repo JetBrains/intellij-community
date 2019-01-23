@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -532,24 +532,11 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  private static class ObjectComponentAdapter extends ExtensionComponentAdapter {
-    private final Object myExtension;
-    private final LoadingOrder myLoadingOrder;
-
+  private static final class ObjectComponentAdapter extends ExtensionComponentAdapter {
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null, LoadingOrder.ANY, null);
-      myExtension = extension;
-      myLoadingOrder = loadingOrder;
-    }
+      super(extension.getClass().getName(), null, null, null, loadingOrder);
 
-    @Override
-    public Object getExtension() {
-      return myExtension;
-    }
-
-    @Override
-    public LoadingOrder getOrder() {
-      return myLoadingOrder;
+      myComponentInstance = extension;
     }
   }
 

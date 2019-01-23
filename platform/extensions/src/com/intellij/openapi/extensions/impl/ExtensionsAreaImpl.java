@@ -157,7 +157,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private ExtensionComponentAdapter createAdapter(@NotNull String implementationClassName, @NotNull Element extensionElement, boolean isNeedToDeserialize, @NotNull PluginDescriptor pluginDescriptor) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    return new ExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
+    return new XmlExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
