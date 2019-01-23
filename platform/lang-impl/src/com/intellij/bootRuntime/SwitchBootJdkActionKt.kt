@@ -26,7 +26,13 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     val localBundles = RuntimeLocationsFactory().localBundles(e.project!!)
     val bintrayBundles = RuntimeLocationsFactory().bintrayBundles(e.project!!)
 
-    CommandFactory.initialize(e.project)
+
+    // todo change to dsl
+    val southPanel = ActionPanel()
+
+    val controller = Controller(e.project!!, southPanel, Model(localBundles.get(0), localBundles + bintrayBundles))
+
+
 
     val repositoryUrlFieldSpinner = JLabel(AnimatedIcon.Default())
     repositoryUrlFieldSpinner.isVisible = false
@@ -54,10 +60,6 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     val centralPanel = JPanel(GridLayout(1,1))
     centralPanel.add(combobox)
 
-    // todo change to dsl
-    val southPanel = ActionPanel()
-
-    val controller = Controller(e.project!!, southPanel, Model(localBundles.get(0), localBundles + bintrayBundles))
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
         localBundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}

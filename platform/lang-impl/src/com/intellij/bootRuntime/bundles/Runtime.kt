@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime.bundles
 
+import com.intellij.bootRuntime.BinTrayUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
@@ -15,7 +16,7 @@ abstract class Runtime(initialLocation:File) {
 
   open val installationPath: File by lazy {
     //todo change the filename to a composite name from version
-    File(PathManager.getConfigPath() + File.separator + "jdks" + File.separator + fileName)
+    File(BinTrayUtil.getJdkStoragePathFile(), BinTrayUtil.archveToDirectoryName(fileName))
   }
 
   val transitionPath: File by lazy {

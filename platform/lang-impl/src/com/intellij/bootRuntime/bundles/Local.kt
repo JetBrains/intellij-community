@@ -20,7 +20,7 @@ class Local(val project: Project, location: File) : Runtime(location) {
     process(
       produce(EXTRACT, this),
       produce(COPY, this),
-      produce(UPDATE_PATH, this)
+      produce(INSTALL, this)
     )
   }
 
