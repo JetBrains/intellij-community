@@ -73,7 +73,19 @@ public class CallChunkBlockBuilder {
                        myFormattingMode);
         subBlocks.add(block);
         return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                      Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
+                                      Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap) {
+          @Override
+          public Spacing getSpacing(Block child1, @NotNull Block child2) {
+            // Only spacing can remove existing line break if KEEP_LINE_BREAKS is false
+            if (!myJavaSettings.PLACE_DOT_ON_NEXT_LINE && child2 instanceof LeafBlock) {
+              ASTNode node = ((LeafBlock)child2).getNode();
+              if (node != null && node.getElementType() == JavaTokenType.DOT) {
+                return Spacing.createSpacing(0, 0, 0, false, 0);
+              }
+            }
+            return super.getSpacing(child1, child2);
+          }
+        };
       }
     }
     List<Block> blocks = createJavaBlocks(subNodes);

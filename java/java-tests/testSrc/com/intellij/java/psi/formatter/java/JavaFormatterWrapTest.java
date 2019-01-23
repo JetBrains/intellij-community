@@ -986,4 +986,55 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
+
+
+  public void testDotPlacementConsistentWithoutKeep() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getJavaSettings().PLACE_DOT_ON_NEXT_LINE = false;
+
+
+    doTextTest(
+      "public class Chains {\n" +
+      "  static Chains get() {return null;}\n" +
+      "  Chains foo() {\n" +
+      "    return null;\n" +
+      "  }\n" +
+      "  Chains bar() {\n" +
+      "    return null;\n" +
+      "  }\n" +
+      "  public static void main(String[] args) {\n" +
+      "    get()\n" +
+      "      .\n" +
+      "        bar()\n" +
+      "      .foo()\n" +
+      "      .bar()\n" +
+      "      .bar()\n" +
+      "      .foo();\n" +
+      "  }\n" +
+      "}\n",
+
+      "public class Chains {\n" +
+      "    static Chains get() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "\n  " +
+      "  Chains foo() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "\n  " +
+      "  Chains bar() {\n" +
+      "        return null;\n" +
+      "    }\n" +
+      "\n  " +
+      "  public static void main(String[] args) {\n" +
+      "        get().\n" +
+      "                bar().\n" +
+      "                foo().\n" +
+      "                bar().\n" +
+      "                bar().\n" +
+      "                foo();\n" +
+      "    }\n" +
+      "}\n"
+    );
+  }
 }
