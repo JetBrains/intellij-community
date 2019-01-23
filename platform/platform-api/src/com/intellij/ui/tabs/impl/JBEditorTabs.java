@@ -156,7 +156,7 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   public boolean hasUnderlineSelection() {
-    return false;
+    return true;
   }
 
   protected JBEditorTabsPainter getPainter() {

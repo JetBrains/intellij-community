@@ -105,11 +105,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         return isChild(c.getParent());
       }
 
-      @Override
-      public boolean hasUnderlineSelection() {
-        return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
-      }
-
       @Nullable
       @Override
       public TabInfo getToSelectOnRemoveOf(TabInfo info) {
