@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -9,8 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLog
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -31,8 +30,7 @@ import java.util.Map;
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolbar", 1);
-  private static final String DEFAULT_ID = "third.party.action";
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolbar", 2);
 
   public final static class ClicksState {
     @Tag("counts")
@@ -53,27 +51,11 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
 
   public static void record(@NotNull AnAction action, String place) {
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-
-    final boolean isDevelopedByJB = info.isDevelopedByJetBrains();
-    final String key = isDevelopedByJB ? toReportedId(action) : DEFAULT_ID;
-
     final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().addPluginInfo(info);
-    if (isDevelopedByJB) {
+    if (info.isDevelopedByJetBrains()) {
       builder.addPlace(place);
     }
-    record(key, builder);
-  }
-
-  private static String toReportedId(@NotNull AnAction action) {
-    String id = ActionManager.getInstance().getId(action);
-    if (id == null) {
-      if (action instanceof ActionWithDelegate) {
-        id = ((ActionWithDelegate)action).getPresentableName();
-      } else {
-        id = action.getClass().getName();
-      }
-    }
-    return id;
+    record(ActionsCollectorImpl.toReportedId(info, action), builder);
   }
 
   public static void record(String actionId) {

@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -75,17 +76,34 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       data.addPlace(place);
     }
 
-    final String key = isDevelopedByJB ? toReportedId(action) : DEFAULT_ID;
-    FUSCounterUsageLogger.logEvent(GROUP, key, data);
+    FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action), data);
   }
 
   @NotNull
-  private static String toReportedId(@NotNull AnAction action) {
-    final String actionId = action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
-    if (StringUtil.isEmpty(actionId)) {
-      return action.getClass().getName();
+  public static String toReportedId(@NotNull PluginInfo info, @NotNull AnAction action) {
+    String actionId = getActionId(info, action);
+    if (actionId != null) {
+      return actionId;
+    }
+
+    if (action instanceof ActionWithDelegate) {
+      final Object delegate = ((ActionWithDelegate)action).getDelegate();
+      final PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
+      actionId = delegateInfo.isDevelopedByJetBrains() ? delegate.getClass().getName() : DEFAULT_ID;
+    }
+    else {
+      actionId = action.getClass().getName();
     }
     return ConvertUsagesUtil.escapeDescriptorName(actionId);
+  }
+
+  @Nullable
+  private static String getActionId(@NotNull PluginInfo info, @NotNull AnAction action) {
+    if (!info.isDevelopedByJetBrains()) {
+      return DEFAULT_ID;
+    }
+
+    return action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
   }
 
   private State myState = new State();
