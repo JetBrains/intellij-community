@@ -190,14 +190,14 @@ task checkJdk18(dependsOn: setupJdk18) {
         if (it.contains('java.vendor =')) {
           vendor = it
         }
-        else if (it.contains('java.version =')) {
+        else if (it.contains('java.runtime.version =')) {
           version = it
         }
       }
       println(vendor)
       println(version)
       if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
-      if (!version?.contains(jdkVersion)) throw new IllegalStateException("java.version is not $jdkVersion")
+      if (!version?.contains(jdkVersion)) throw new IllegalStateException("java.runtime.version is not $jdkVersion")
     }
   }
 }
