@@ -697,6 +697,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (!removed.isEmpty()) treeNodesRemoved(node, removed);
       if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
       if (!contained.isEmpty()) treeNodesChanged(node, contained);
+      if (removed.isEmpty() && inserted.isEmpty()) treeNodesChanged(node, null);
       LOG.debug("children changed: ", node.object);
 
       if (!reload.isEmpty()) {
