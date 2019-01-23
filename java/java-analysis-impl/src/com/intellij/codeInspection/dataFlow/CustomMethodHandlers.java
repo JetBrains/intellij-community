@@ -245,7 +245,7 @@ class CustomMethodHandlers {
     if (arguments.length != 1) return null;
     LongRangeSet range = state.getValueFact(arguments[0], DfaFactType.RANGE);
     if (range == null || range.isEmpty()) return null;
-    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, range.max()));
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, Math.max(0, range.max())));
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {

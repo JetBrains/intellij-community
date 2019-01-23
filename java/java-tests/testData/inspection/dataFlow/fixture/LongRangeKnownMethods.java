@@ -319,5 +319,6 @@ public class LongRangeKnownMethods {
     long skipped = is.skip(amount);
     if (<warning descr="Condition 'skipped > Integer.MAX_VALUE' is always 'false'">skipped > Integer.MAX_VALUE</warning>) {}
     if (<warning descr="Condition 'skipped < 0' is always 'false'">skipped < 0</warning>) {}
+    if (<warning descr="Condition 'is.skip(-1) == 0' is always 'true'">is.skip(-1) == 0</warning>) {}
   }
 }
