@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -74,8 +74,8 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
       }
 
       if (!StringUtil.isEmpty(path)) {
-        final Map<String, Object> data = new FeatureUsageDataBuilder().addFeatureContext(OS_CONTEXT).addPluginInfo(info).createData();
-        FeatureUsageLogger.INSTANCE.log(GROUP, ConvertUsagesUtil.escapeDescriptorName(path), data);
+        final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addFeatureContext(OS_CONTEXT).addPluginInfo(info);
+        FUSCounterUsageLogger.logEvent(GROUP, ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }
     catch (Exception ignore) {

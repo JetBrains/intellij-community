@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -83,8 +83,8 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   private static void record(@NotNull String actionId, @NotNull FeatureUsageDataBuilder builder) {
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
-      final Map<String, Object> data = builder.addFeatureContext(FUSUsageContext.OS_CONTEXT).createData();
-      FeatureUsageLogger.INSTANCE.log(GROUP, ConvertUsagesUtil.escapeDescriptorName(actionId), data);
+      final FeatureUsageDataBuilder data = builder.addFeatureContext(FUSUsageContext.OS_CONTEXT);
+      FUSCounterUsageLogger.logEvent(GROUP, ConvertUsagesUtil.escapeDescriptorName(actionId), data);
     }
   }
 

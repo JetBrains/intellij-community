@@ -7,8 +7,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -54,14 +54,13 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
 
-    final Map<String, Object> data = new FeatureUsageDataBuilder().
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
       addFeatureContext(FUSUsageContext.OS_CONTEXT).
       addPluginInfo(info).
-      addLanguage(language).
-      createData();
+      addLanguage(language);
 
     final String id = info.isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
-    FeatureUsageLogger.INSTANCE.log(GROUP, id, data);
+    FUSCounterUsageLogger.logEvent(GROUP, id, data);
   }
 
   @NotNull

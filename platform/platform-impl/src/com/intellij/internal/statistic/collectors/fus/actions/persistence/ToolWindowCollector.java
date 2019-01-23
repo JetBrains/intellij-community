@@ -5,8 +5,8 @@ import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -103,14 +103,14 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     final PluginInfo info = getPluginInfo(toolWindowId);
     final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
 
-    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
       addPluginInfo(info).
       addFeatureContext(FUSUsageContext.OS_CONTEXT);
 
     if (source != ACTIVATION) {
-      builder.addData("source", StringUtil.toLowerCase(source.name()));
+      data.addData("source", StringUtil.toLowerCase(source.name()));
     }
-    FeatureUsageLogger.INSTANCE.log(GROUP, key, builder.createData());
+    FUSCounterUsageLogger.logEvent(GROUP, key, data);
   }
 
   @NotNull

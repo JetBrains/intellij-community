@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -50,14 +50,14 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().addFeatureContext(FUSUsageContext.OS_CONTEXT);
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addFeatureContext(FUSUsageContext.OS_CONTEXT);
     if (event instanceof KeyEvent) {
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)event);
       if (keyStroke != null) {
-        builder.addData("input_event", getKeystrokeText(keyStroke));
+        data.addData("input_event", getKeystrokeText(keyStroke));
       }
     }
-    FeatureUsageLogger.INSTANCE.log(GROUP, recorded, builder.createData());
+    FUSCounterUsageLogger.logEvent(GROUP, recorded, data);
   }
 
   @Override
@@ -68,23 +68,23 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     final String place = event != null ? event.getPlace() : "";
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageDataBuilder builder = new FeatureUsageDataBuilder().
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
       addFeatureContext(FUSUsageContext.OS_CONTEXT).
       addPluginInfo(info).
       addData("context_menu", isContextMenu);
 
     final boolean isDevelopedByJB = info.isDevelopedByJetBrains();
     if (isContextMenu && isDevelopedByJB) {
-      builder.addPlace(place);
+      data.addPlace(place);
     }
 
     final String inputEvent = ShortcutsCollector.getInputEventText(event);
     if (StringUtil.isNotEmpty(inputEvent)) {
-      builder.addData("input_event", inputEvent);
+      data.addData("input_event", inputEvent);
     }
 
     final String key = isDevelopedByJB ? toReportedId(action) : DEFAULT_ID;
-    FeatureUsageLogger.INSTANCE.log(GROUP, key, builder.createData());
+    FUSCounterUsageLogger.logEvent(GROUP, key, data);
   }
 
   @NotNull
