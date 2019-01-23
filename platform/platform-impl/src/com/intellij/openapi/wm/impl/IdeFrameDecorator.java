@@ -105,9 +105,9 @@ public abstract class IdeFrameDecorator implements Disposable {
           myFrame.getRootPane().putClientProperty("oldBounds", myFrame.getBounds());
         }
         myFrame.dispose();
-        if (! (Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()))) {
-          myFrame.setUndecorated(state);
-        }
+        //if (! (Registry.is("ide.win.frame.decoration") && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()))) {
+        //  myFrame.setUndecorated(state);
+        //}
       }
       finally {
         if (state) {

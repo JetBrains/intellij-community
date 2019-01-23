@@ -456,12 +456,12 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
         installClientDecorations(root);
       }
     }
-    if (propertyName.equals("ancestor")) {
-      uninstallWindowListeners(myRootPane);
-      if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
-        installWindowListeners(myRootPane, myRootPane.getParent());
-      }
-    }
+    //if (propertyName.equals("ancestor")) {
+    //  uninstallWindowListeners(myRootPane);
+    //  if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
+    //    installWindowListeners(myRootPane, myRootPane.getParent());
+    //  }
+    //}
   }
 
   protected static class DarculaRootLayout implements LayoutManager2 {
