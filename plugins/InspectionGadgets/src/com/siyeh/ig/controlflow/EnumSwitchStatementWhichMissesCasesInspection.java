@@ -120,11 +120,16 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         if (constants.isEmpty()) return;
         CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
         if (dataflow != null) {
-          Set<Object> values = dataflow.getValuesNotEqualToExpression(expression);
-          for (Object value : values) {
+          Set<Object> notValues = dataflow.getValuesNotEqualToExpression(expression);
+          for (Object value : notValues) {
             if (value instanceof PsiEnumConstant) {
               constants.remove(((PsiEnumConstant)value).getName());
             }
+          }
+          Set<String> values = StreamEx.of(dataflow.getExpressionValues(expression)).select(PsiEnumConstant.class)
+            .map(PsiEnumConstant::getName).toSet();
+          if (!values.isEmpty()) {
+            constants.retainAll(values);
           }
         }
         if (constants.isEmpty()) return;
