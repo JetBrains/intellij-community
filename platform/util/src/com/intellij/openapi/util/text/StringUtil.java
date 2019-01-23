@@ -695,6 +695,9 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.isQuotedString(s);
   }
 
+  /**
+   * @return string with paired quotaion marks (quote (") or apostrophe (')) removed
+   */
   @NotNull
   @Contract(pure = true)
   public static String unquoteString(@NotNull String s) {

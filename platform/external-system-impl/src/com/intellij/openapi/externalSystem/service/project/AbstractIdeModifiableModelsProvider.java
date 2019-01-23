@@ -69,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath;
@@ -579,10 +578,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     ModifiableWorkspace workspace = getModifiableWorkspace();
     if (workspace == null) return;
 
-    final List<String> oldModules = Arrays.stream(ModuleManager.getInstance(myProject).getModules())
-                                          .map(module -> module.getName()).collect(Collectors.toList());
-    final List<String> newModules = Arrays.stream(myModifiableModuleModel.getModules())
-                                          .map(module -> module.getName()).collect(Collectors.toList());
+    final List<String> oldModules = ContainerUtil.map(ModuleManager.getInstance(myProject).getModules(), module -> module.getName());
+    final List<String> newModules = ContainerUtil.map(myModifiableModuleModel.getModules(), module -> module.getName());
 
     final Collection<String> removedModules = new THashSet<>(oldModules);
     removedModules.removeAll(newModules);

@@ -319,9 +319,7 @@ public class ChangesUtil {
 
   @NotNull
   public static List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
-    return filePaths.stream()
-      .map(FilePath::getIOFile)
-      .collect(toList());
+    return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }
 
   public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {

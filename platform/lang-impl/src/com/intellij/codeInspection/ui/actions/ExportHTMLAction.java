@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -44,7 +45,6 @@ import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportHTMLAction.class);
@@ -198,7 +198,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
     Tools tools = context.getTools().get(shortName);
     if (tools != null) {
-      return tools.getTools().stream().map(ScopeToolState::getTool).collect(Collectors.toList());
+      return ContainerUtil.map(tools.getTools(), ScopeToolState::getTool);
     } else {
       //dummy entry points tool
       return Collections.emptyList();

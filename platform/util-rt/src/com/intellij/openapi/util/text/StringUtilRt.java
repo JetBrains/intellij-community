@@ -346,6 +346,9 @@ public class StringUtilRt {
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
   }
 
+  /**
+   * @return true if the string starts and ends with quote (") or apostrophe (')
+   */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
     return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);

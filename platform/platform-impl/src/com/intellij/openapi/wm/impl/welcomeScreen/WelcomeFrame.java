@@ -133,7 +133,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   public static void resetInstance() {
     ourInstance = null;
     if (ourTouchbar != null) {
-      ourTouchbar.dispose();
+      Disposer.dispose(ourTouchbar);
       ourTouchbar = null;
     }
   }

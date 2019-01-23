@@ -261,7 +261,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
     List<SchedulingWrapper.MyScheduledFutureTask> queuedTasks = new ArrayList<>(service.delayQueue);
     if (!queuedTasks.isEmpty()) {
-      String s = queuedTasks.stream().map(BoundedTaskExecutor::info).collect(Collectors.toList()).toString();
+      String s = ContainerUtil.map(queuedTasks, BoundedTaskExecutor::info).toString();
       fail("Queued tasks left: "+s + ";\n"+queuedTasks);
     }
     service.shutdownAppScheduledExecutorService();

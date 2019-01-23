@@ -41,7 +41,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
@@ -81,9 +80,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myContentManager.addContentManagerListener(myContentManagerListener);
     myReuseCondition = this::canReuseContent;
 
-    myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .map(RunDashboardGrouper::new)
-      .collect(Collectors.toList());
+    myGroupers = ContainerUtil.map(RunDashboardGroupingRule.EP_NAME.getExtensions(), RunDashboardGrouper::new);
   }
 
   private void initToolWindowContentListeners() {
@@ -242,8 +239,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     // It is possible that run configuration was deleted or moved out from dashboard,
     // but there is a content descriptor for such run configuration.
     // It should be shown in the dashboard tree.
-    List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
-      .collect(Collectors.toList());
+    List<RunConfiguration> storedConfigurations = ContainerUtil.map(configurations, RunnerAndConfigurationSettings::getConfiguration);
     List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getDescriptors(settings ->
       !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {

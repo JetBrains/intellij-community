@@ -31,7 +31,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -164,9 +163,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         result = ContainerUtil.list(((FilePath)userObject));
       }
       else if (userObject instanceof Module) {
-        result = Arrays.stream(ModuleRootManager.getInstance((Module)userObject).getContentRoots())
-          .map(VcsUtil::getFilePath)
-          .collect(Collectors.toList());
+        result = ContainerUtil.map(ModuleRootManager.getInstance((Module)userObject).getContentRoots(), VcsUtil::getFilePath);
       }
 
       return result;
