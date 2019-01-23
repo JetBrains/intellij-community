@@ -4,6 +4,7 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
@@ -212,6 +213,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     Project project = getProject();
     if (DumbService.isDumb(project)) return false;
     VirtualFile file = getVirtualFile();
-    return file != null && ProjectFileIndex.getInstance(project).isInContent(file);
+    return file != null && ProjectFileIndex.getInstance(project).isInContent(file) && !InjectedLanguageManager.getInstance(project).isInjectedFragment(getContainingFile());
   }
 }
