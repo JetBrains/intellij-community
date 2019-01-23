@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -115,15 +101,12 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   private void buildRequiresReferences(PsiJavaModule javaModule) {
     for (PsiRequiresStatement statement : javaModule.getRequires()) {
-      PsiJavaModuleReferenceElement referenceElement = statement.getReferenceElement();
-      if (referenceElement != null) {
-        PsiElement element = addReference(referenceElement.getReference());
-        if (element instanceof PsiJavaModule) {
-          PsiJavaModule requiredModule = (PsiJavaModule)element;
-          Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
-          if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
-          myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.hasModifierProperty(PsiModifier.TRANSITIVE)));
-        }
+      PsiElement element = addReference(statement.getModuleReference());
+      if (element instanceof PsiJavaModule) {
+        PsiJavaModule requiredModule = (PsiJavaModule)element;
+        Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
+        if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
+        myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.hasModifierProperty(PsiModifier.TRANSITIVE)));
       }
     }
   }
@@ -256,10 +239,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Nullable
   public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
-    PsiJavaModule javaModule = ContainerUtil.getFirstItem(JavaModuleNameIndex.getInstance().get(fqName,
-                                                                                                manager.getProject(),
-                                                                                                GlobalSearchScope.projectScope(manager.getProject())));
-
+    Project project = manager.getProject();
+    PsiJavaModule javaModule = JavaPsiFacade.getInstance(project).findModule(fqName, GlobalSearchScope.projectScope(project));
     return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
   }
 

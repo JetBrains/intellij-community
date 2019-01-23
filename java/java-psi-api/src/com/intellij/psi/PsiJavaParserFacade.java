@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -227,23 +227,27 @@ public interface PsiJavaParserFacade {
   @NotNull
   PsiType createPrimitiveTypeFromText(@NotNull String text) throws IncorrectOperationException;
 
+  /** @deprecated use {@link #createModuleFromText(String, PsiElement)} */
+  @Deprecated
+  default PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException {
+    return createModuleFromText(text, null);
+  }
+
   /**
    * Creates a Java module declaration from the specified text.
    */
   @NotNull
-  PsiJavaModule createModuleFromText(@NotNull String text) throws IncorrectOperationException;
+  PsiJavaModule createModuleFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java module statement from the specified text.
    */
   @NotNull
-  PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException;
+  PsiStatement createModuleStatementFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates a Java module reference from the specified text.
+   * Creates a Java module reference element from the specified text.
    */
   @NotNull
-  default PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text) throws IncorrectOperationException {
-    return createModuleFromText("module " + text + " {}").getNameIdentifier();
-  }
+  PsiJavaModuleReferenceElement createModuleReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 }

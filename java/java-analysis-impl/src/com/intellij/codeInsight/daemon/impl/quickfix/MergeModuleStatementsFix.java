@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -45,7 +45,7 @@ public abstract class MergeModuleStatementsFix<T extends PsiStatement> extends L
       LOG.assertTrue(!statementsToMerge.isEmpty());
 
       final String text = getReplacementText(statementsToMerge);
-      final PsiStatement replacement = JavaPsiFacade.getElementFactory(project).createModuleStatementFromText(text);
+      final PsiStatement replacement = JavaPsiFacade.getElementFactory(project).createModuleStatementFromText(text, null);
 
       final T firstStatement = statementsToMerge.get(0);
       final CommentTracker commentTracker = new CommentTracker();
