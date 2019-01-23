@@ -418,4 +418,9 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   public Icon getDelegateIcon() {
     return myDelegateIcon;
   }
+
+  @SuppressWarnings("unused")
+  public boolean getNeedReadAction() {
+    return myNeedReadAction;
+  }
 }
