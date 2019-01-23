@@ -54,7 +54,6 @@ public class RecentLocationManager implements ProjectComponent {
   public void projectOpened() {
     MessageBusConnection connection = myProject.getMessageBus().connect();
 
-    subscribeChangedPlaces(connection);
     subscribeRecentPlaces(connection);
     subscribeOnExternalChange(connection);
   }
@@ -96,29 +95,20 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   private void subscribeRecentPlaces(@NotNull MessageBusConnection connection) {
-    connection.subscribe(IdeDocumentHistoryImpl.RecentlyVisitedPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentlyVisitedPlacesListener() {
+    connection.subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentPlacesListener() {
       @Override
-      public void recentPlaceAdded(@NotNull PlaceInfo changePlace) {
-        update(changePlace, myProject, myRecentItems);
+      public void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged) {
+        update(changePlace, myProject, getItems(isChanged));
       }
 
       @Override
-      public void recentPlaceRemoved(@NotNull PlaceInfo changePlace) {
-        removePlace(changePlace, myRecentItems);
-      }
-    });
-  }
-
-  private void subscribeChangedPlaces(@NotNull MessageBusConnection connection) {
-    connection.subscribe(IdeDocumentHistoryImpl.RecentlyChangedPlacesListener.TOPIC, new IdeDocumentHistoryImpl.RecentlyChangedPlacesListener() {
-      @Override
-      public void changedPlaceAdded(@NotNull PlaceInfo changePlace) {
-        update(changePlace, myProject, myChangedItems);
+      public void recentPlaceRemoved(@NotNull PlaceInfo changePlace, boolean isChanged) {
+        removePlace(changePlace, getItems(isChanged));
       }
 
-      @Override
-      public void changedPlaceRemoved(@NotNull PlaceInfo changePlace) {
-        removePlace(changePlace, myChangedItems);
+      @NotNull
+      public Map<PlaceInfo, PlaceInfoPersistentItem> getItems(boolean isChanged) {
+        return isChanged ? myChangedItems : myRecentItems;
       }
     });
   }

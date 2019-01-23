@@ -226,7 +226,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       if (!myBackInProgress) {
         if (!myRegisteredBackPlaceInLastGroup) {
           myRegisteredBackPlaceInLastGroup = true;
-          putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
+          putLastOrMerge(myCommandStartPlace, BACK_QUEUE_LIMIT, false);
         }
         if (!myForwardInProgress) {
           myForwardPlaces.clear();
@@ -270,7 +270,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     myRecentlyChangedFiles.register(placeInfo.getFile());
 
-    putLastOrMerge(myChangePlaces, placeInfo, CHANGE_QUEUE_LIMIT);
+    putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true);
     myCurrentIndex = myChangePlaces.size();
   }
 
@@ -478,19 +478,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
   }
 
-  private void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limit) {
+  private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged) {
+    LinkedList<PlaceInfo> list = isChanged ? myChangePlaces : myBackPlaces;
     MessageBus messageBus = myProject.getMessageBus();
-    RecentlyVisitedPlacesListener listener = messageBus.syncPublisher(RecentlyVisitedPlacesListener.TOPIC);
+    RecentPlacesListener listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC);
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
         PlaceInfo removed = list.removeLast();
-        listener.recentPlaceRemoved(removed);
+        listener.recentPlaceRemoved(removed, isChanged);
       }
     }
 
     list.add(next);
-    listener.recentPlaceAdded(next);
+    listener.recentPlaceAdded(next, isChanged);
     if (list.size() > limit) {
       list.removeFirst();
     }
@@ -570,24 +571,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   /**
-   * {@link RecentlyChangedPlacesListener} listens recently changed place adding and removing events.
+   * {@link RecentPlacesListener} listens recently viewed or changed place adding and removing events.
    */
-  public interface RecentlyChangedPlacesListener {
-    Topic<RecentlyChangedPlacesListener> TOPIC = Topic.create("RecentlyChangedPlacesListener", RecentlyChangedPlacesListener.class);
+  public interface RecentPlacesListener {
+    Topic<RecentPlacesListener> TOPIC = Topic.create("RecentPlacesListener", RecentPlacesListener.class);
 
-    void changedPlaceAdded(@NotNull PlaceInfo changePlace);
+    void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged);
 
-    void changedPlaceRemoved(@NotNull PlaceInfo changePlace);
-  }
-
-  /**
-   * {@link RecentlyVisitedPlacesListener} listens recently viewed place adding and removing events.
-   */
-  public interface RecentlyVisitedPlacesListener {
-    Topic<RecentlyVisitedPlacesListener> TOPIC = Topic.create("RecentlyVisitedPlacesListener", RecentlyVisitedPlacesListener.class);
-
-    void recentPlaceAdded(@NotNull PlaceInfo changePlace);
-
-    void recentPlaceRemoved(@NotNull PlaceInfo changePlace);
+    void recentPlaceRemoved(@NotNull PlaceInfo changePlace, boolean isChanged);
   }
 }
