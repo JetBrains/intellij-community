@@ -3540,19 +3540,7 @@ public class AllIcons {
     /**
      * 16x16
      */
-    public static final Icon DataSchema = IconLoader.getIcon("/nodes/dataSchema.svg");
-    /**
-     * 16x16
-     */
-    public static final Icon DataSource = IconLoader.getIcon("/nodes/DataSource.svg");
-    /**
-     * 16x16
-     */
     public static final Icon DataTables = IconLoader.getIcon("/nodes/DataTables.svg");
-    /**
-     * 16x16
-     */
-    public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg");
     /**
      * 16x16
      */
@@ -4041,6 +4029,21 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon CollapseNode = AllIcons.General.ArrowDown;
+
+    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.View */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataSchema = IconLoader.getIcon("/nodes/dataSchema.svg");
+
+    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.DatabaseGroup */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataSource = IconLoader.getIcon("/nodes/DataSource.svg");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
