@@ -423,7 +423,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void initComment(@Nullable String comment) {
-    LocalChangeList list = myBrowser.getSelectedChangeList();
+    LocalChangeList list = getChangeList();
     myLastSelectedListName = list.getName();
 
     if (comment == null) {
@@ -453,9 +453,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
       updateComment();
     }
-    myCommitMessageArea.setChangeList(myBrowser.getSelectedChangeList());
-    myCommitOptions.onChangeListSelected(myBrowser.getSelectedChangeList(),
-                                         ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
+    myCommitMessageArea.setChangeList(getChangeList());
+    myCommitOptions.onChangeListSelected(getChangeList(), ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles());
   }
 
   private void updateWarning() {
@@ -541,19 +540,19 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       try {
         DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
         stopUpdate();
-        CheckinHandler.ReturnResult result = myWorkflow.performBeforeCommitChecks(executor, myHandlers, myBrowser.getSelectedChangeList());
+        CheckinHandler.ReturnResult result = myWorkflow.performBeforeCommitChecks(executor, myHandlers, getChangeList());
         if (result == CheckinHandler.ReturnResult.CANCEL) {
           restartUpdate();
         }
         else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-          ChangeList changeList = myBrowser.getSelectedChangeList();
+          ChangeList changeList = getChangeList();
           moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
                            message("commit.dialog.rejected.commit.template", changeList.getName()));
           doCancelAction();
         }
         else if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
-          myWorkflow.doCommit(myBrowser.getSelectedChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers);
+          myWorkflow.doCommit(getChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers);
 
           defaultListCleaner.clean();
         }
@@ -593,13 +592,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       stopUpdate();
-      CheckinHandler.ReturnResult result =
-        myWorkflow.performBeforeCommitChecks(commitExecutor, myHandlers, myBrowser.getSelectedChangeList());
+      CheckinHandler.ReturnResult result = myWorkflow.performBeforeCommitChecks(commitExecutor, myHandlers, getChangeList());
       if (result == CheckinHandler.ReturnResult.CANCEL) {
         restartUpdate();
       }
       else if (result == CheckinHandler.ReturnResult.CLOSE_WINDOW) {
-        ChangeList changeList = myBrowser.getSelectedChangeList();
+        ChangeList changeList = getChangeList();
         moveToFailedList(myProject, changeList, getCommitMessage(), getIncludedChanges(),
                          message("commit.dialog.rejected.commit.template", changeList.getName()));
         doCancelAction();
@@ -665,7 +663,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateComment() {
-    LocalChangeList list = myBrowser.getSelectedChangeList();
+    LocalChangeList list = getChangeList();
     if (!list.getName().equals(myLastSelectedListName)) {
       saveCommentIntoChangeList();
 
@@ -740,7 +738,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     private DefaultListCleaner() {
       int selectedSize = getIncludedChanges().size();
-      LocalChangeList selectedList = myBrowser.getSelectedChangeList();
+      LocalChangeList selectedList = getChangeList();
       int totalSize = selectedList.getChanges().size();
       myToClean = totalSize == selectedSize && selectedList.hasDefaultName();
     }
@@ -755,7 +753,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void saveComments(boolean isOk) {
     if (isOk) {
       int selectedSize = getIncludedChanges().size();
-      int totalSize = myBrowser.getSelectedChangeList().getChanges().size();
+      int totalSize = getChangeList().getChanges().size();
       if (totalSize > selectedSize) {
         myListComments.remove(myLastSelectedListName);
       }
@@ -948,6 +946,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   public CommitDialogChangesBrowser getBrowser() {
     return myBrowser;
+  }
+
+  @NotNull
+  public LocalChangeList getChangeList() {
+    return myBrowser.getSelectedChangeList();
   }
 
   @NotNull
