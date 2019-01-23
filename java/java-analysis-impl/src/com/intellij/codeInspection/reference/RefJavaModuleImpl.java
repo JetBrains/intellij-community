@@ -4,8 +4,8 @@ package com.intellij.codeInspection.reference;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -239,10 +239,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Nullable
   public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
-    PsiJavaModule javaModule = ContainerUtil.getFirstItem(JavaModuleNameIndex.getInstance().get(fqName,
-                                                                                                manager.getProject(),
-                                                                                                GlobalSearchScope.projectScope(manager.getProject())));
-
+    Project project = manager.getProject();
+    PsiJavaModule javaModule = JavaPsiFacade.getInstance(project).findModule(fqName, GlobalSearchScope.projectScope(project));
     return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
   }
 
