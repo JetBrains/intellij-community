@@ -12,46 +12,46 @@ import gnu.trove.TObjectLongHashMap;
 public class BashParserUtil extends GeneratedParserUtilBase {
   private static final Key<TObjectLongHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
 
-  private static TObjectLongHashMap<String> getParsingModes(PsiBuilder builder_) {
-    TObjectLongHashMap<String> flags = builder_.getUserData(MODES_KEY);
-    if (flags == null) builder_.putUserData(MODES_KEY, flags = new TObjectLongHashMap<>());
+  private static TObjectLongHashMap<String> getParsingModes(PsiBuilder b) {
+    TObjectLongHashMap<String> flags = b.getUserData(MODES_KEY);
+    if (flags == null) b.putUserData(MODES_KEY, flags = new TObjectLongHashMap<>());
     return flags;
   }
 
-  public static boolean isModeOn(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, String mode) {
-    return getParsingModes(builder_).get(mode) > 0;
+  static boolean isModeOn(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, String mode) {
+    return getParsingModes(b).get(mode) > 0;
   }
 
-  public static boolean isModeOff(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, String mode) {
-    return getParsingModes(builder_).get(mode) == 0;
+  public static boolean isModeOff(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, String mode) {
+    return getParsingModes(b).get(mode) == 0;
   }
 
-  public static boolean withOn(PsiBuilder builder_, int level_, String mode, Parser parser) {
-    return withImpl(builder_, level_, mode, true, parser, parser);
+  static boolean withOn(PsiBuilder b, int level_, String mode, Parser parser) {
+    return withImpl(b, level_, mode, true, parser, parser);
   }
 
-  public static boolean withCleared(PsiBuilder builder_, int level_, String mode, Parser whenOn, Parser whenOff) {
-    return withImpl(builder_, level_, mode, false, whenOn, whenOff);
+  public static boolean withCleared(PsiBuilder b, int level_, String mode, Parser whenOn, Parser whenOff) {
+    return withImpl(b, level_, mode, false, whenOn, whenOff);
   }
 
-  private static boolean withImpl(PsiBuilder builder_, int level_, String mode, boolean onOff, Parser whenOn, Parser whenOff) {
-    TObjectLongHashMap<String> map = getParsingModes(builder_);
+  private static boolean withImpl(PsiBuilder b, int level_, String mode, boolean onOff, Parser whenOn, Parser whenOff) {
+    TObjectLongHashMap<String> map = getParsingModes(b);
     long prev = map.get(mode);
     boolean change = ((prev & 1) == 0) == onOff;
     if (change) map.put(mode, prev << 1 | (onOff ? 1 : 0));
-    boolean result = (change ? whenOn : whenOff).parse(builder_, level_);
+    boolean result = (change ? whenOn : whenOff).parse(b, level_);
     if (change) map.put(mode, prev);
     return result;
   }
 
-  public static boolean enterMode(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, String mode) {
-    TObjectLongHashMap<String> flags = getParsingModes(builder_);
+  public static boolean enterMode(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, String mode) {
+    TObjectLongHashMap<String> flags = getParsingModes(b);
     if (!flags.increment(mode)) flags.put(mode, 1);
     return true;
   }
 
-  public static boolean exitMode(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, String mode) {
-    TObjectLongHashMap<String> flags = getParsingModes(builder_);
+  public static boolean exitMode(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, String mode) {
+    TObjectLongHashMap<String> flags = getParsingModes(b);
     long count = flags.get(mode);
     if (count == 1) {
       flags.remove(mode);
@@ -60,39 +60,39 @@ public class BashParserUtil extends GeneratedParserUtilBase {
       flags.put(mode, count - 1);
     }
     else {
-      builder_.error("Could not exit inactive '" + mode + "' mode at offset " + builder_.getCurrentOffset());
+      b.error("Could not exit inactive '" + mode + "' mode at offset " + b.getCurrentOffset());
     }
     return true;
   }
 
-  public static boolean condOp(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
-    return consumeTokenFast(builder_, BashTokenTypes.conditionalOperators);
+  static boolean condOp(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    return consumeTokenFast(b, BashTokenTypes.conditionalOperators);
   }
 
-  public static boolean paramExpansionOp(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
-    return consumeTokenFast(builder_, BashTokenTypes.paramExpansionOperators);
+  static boolean paramExpansionOp(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    return consumeTokenFast(b, BashTokenTypes.paramExpansionOperators);
   }
 
-  public static boolean backslash(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
-    return consumeTokenFast(builder_, "\\\n");
+  static boolean backslash(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    return consumeTokenFast(b, "\\\n");
   }
 
-  public static boolean parseUntilSpace(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
-    PsiBuilder.Marker mark = builder_.mark();
+  static boolean parseUntilSpace(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level, Parser parser) {
+    PsiBuilder.Marker mark = b.mark();
     while (true) {
-      if (!parser.parse(builder_, level) || BashLexer.whitespaceTokens.contains(builder_.rawLookup(0)) || builder_.eof()) {
+      if (!parser.parse(b, level) || BashLexer.whitespaceTokens.contains(b.rawLookup(0)) || b.eof()) {
         mark.drop();
         return true;
       }
     }
   }
 
-  public static boolean keywordsRemapped(PsiBuilder builder_, @SuppressWarnings("UnusedParameters") int level) {
-    IElementType type = builder_.getTokenType();
+  static boolean keywordsRemapped(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    IElementType type = b.getTokenType();
     if (BashTokenTypes.identifierKeywords.contains(type)) {
-      PsiBuilder.Marker mark = builder_.mark();
-      builder_.remapCurrentToken(BashTypes.WORD);
-      builder_.advanceLexer();
+      PsiBuilder.Marker mark = b.mark();
+      b.remapCurrentToken(BashTypes.WORD);
+      b.advanceLexer();
       mark.done(BashTypes.SIMPLE_COMMAND_ELEMENT);
       return true;
     }
