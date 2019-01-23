@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.PathUtilRt;
@@ -58,5 +59,12 @@ public abstract class DefaultVcsRootPolicy {
       sb.append(" directory contents");
     }
     return sb.toString();
+  }
+
+  protected void scheduleMappedRootsUpdate() {
+    ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
+    if (vcsManager.haveDefaultMapping() != null) {
+      vcsManager.scheduleMappedRootsUpdate();
+    }
   }
 }
