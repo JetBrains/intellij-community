@@ -117,7 +117,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     for (String key : keys) {
       final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(key));
       final AbstractVcs newVcs = (vf == null) ? null : myVcsManager.getVcsFor(vf);
-      vFiles.put(key, vf == null ? Pair.create((VirtualFile) null, (AbstractVcs)null) : Pair.create(vf, newVcs));
+      vFiles.put(key, vf == null ? Pair.create(null, null) : Pair.create(vf, newVcs));
     }
     synchronized (myLock) {
       keys = new HashSet<>(myData.keySet());

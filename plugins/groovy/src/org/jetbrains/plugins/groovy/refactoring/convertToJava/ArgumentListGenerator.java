@@ -84,7 +84,7 @@ class ArgumentListGenerator {
       LOG.assertTrue(actual instanceof GrExpression);
       final PsiType type = param.getType();
       final PsiType declaredType = GenerationUtil.getDeclaredType((GrExpression)actual, myExpressionGenerator.getContext());
-      if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType,(GrExpression)actual
+      if (type != null && declaredType != null && !TypesUtil.isAssignableByMethodCallConversion(type, declaredType, actual
       )) {
         myBuilder.append('(');
         TypeWriter.writeType(myBuilder, type, actual);

@@ -7,19 +7,25 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.assertIterableEquals
+import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
+import org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl
 
 class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/completion/"
 
-  init {
-    // calling this from setUp() turns out to be too late
+  override fun setUp() {
+    super.setUp()
     Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(true)
+    val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
+    descriptorManager.loadDescriptors()
   }
 
   override fun tearDown() {
     try {
       Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).resetToDefault()
+      val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
+      descriptorManager.loadDescriptors()
     }
     finally {
       super.tearDown()

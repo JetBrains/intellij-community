@@ -11,9 +11,7 @@
   <depends>com.intellij.modules.lang</depends>
 
   <actions>
-    <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
-    </action>
+    <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

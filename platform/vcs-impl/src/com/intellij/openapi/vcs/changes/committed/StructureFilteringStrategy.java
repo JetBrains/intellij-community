@@ -202,7 +202,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
 
       myStructureTree
         .setModel(TreeModelBuilder.buildFromFilePaths(myProject, new DirectoryChangesGroupingPolicy.Factory(myProject), myFilePaths));
-      localState.applyTo(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
+      localState.applyTo(myStructureTree, myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();
       initRenderer();

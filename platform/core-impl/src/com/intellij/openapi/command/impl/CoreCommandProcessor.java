@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
@@ -259,6 +260,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
+  }
+
+  @Override
+  public boolean isCurrentCommandTyping() {
+    return EditorBundle.message("typing.in.editor.command.name").equals(getCurrentCommandName());
   }
 
   protected void fireCommandFinished() {

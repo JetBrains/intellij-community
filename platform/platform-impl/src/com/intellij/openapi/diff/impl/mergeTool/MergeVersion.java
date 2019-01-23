@@ -120,7 +120,7 @@ public interface MergeVersion {
           }
         }
       }
-      return vfs.isEmpty() ? null : (Runnable)() -> {
+      return vfs.isEmpty() ? null : () -> {
         ProjectManagerEx ex = ProjectManagerEx.getInstanceEx();
         for (VirtualFile vf : vfs) {
           ex.saveChangedProjectFile(vf, project);

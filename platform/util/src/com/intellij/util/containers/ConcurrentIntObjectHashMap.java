@@ -156,7 +156,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
     @Override
     public final int hashCode() {
-      return (int)(key ^ val.hashCode());
+      return (key ^ val.hashCode());
     }
 
     @Override

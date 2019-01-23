@@ -121,6 +121,6 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new HtmlFileTreeElement(TreeStructureUtil.isInStructureViewPopup(this), (XmlFile)getPsiFile());
+    return new HtmlFileTreeElement(TreeStructureUtil.isInStructureViewPopup(this), getPsiFile());
   }
 }

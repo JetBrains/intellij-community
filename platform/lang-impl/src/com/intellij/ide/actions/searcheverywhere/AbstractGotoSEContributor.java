@@ -75,8 +75,6 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
-    String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
-    String searchString = filterControlSymbols(pattern) + suffix;
     FilteringGotoByModel<F> model = createModel(myProject);
     if (filter != null) {
       model.setFilterItems(filter.getSelectedElements());
@@ -89,7 +87,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
       PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
       ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
       try {
-        popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
+        popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
             LOG.error("Null returned from " + model + " in " + this);

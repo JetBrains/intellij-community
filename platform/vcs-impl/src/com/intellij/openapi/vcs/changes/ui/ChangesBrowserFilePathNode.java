@@ -53,7 +53,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @NotNull
   protected String getRelativePath(FilePath path) {
-    return getRelativePath(safeCastToFilePath((ChangesBrowserNode)getParent()), path);
+    return getRelativePath(safeCastToFilePath(getParent()), path);
   }
 
   @Override

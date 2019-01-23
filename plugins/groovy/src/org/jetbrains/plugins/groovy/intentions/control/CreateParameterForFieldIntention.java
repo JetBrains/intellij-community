@@ -86,7 +86,7 @@ public class CreateParameterForFieldIntention extends Intention {
       setMovable(true).
                     setItemsChosenCallback((values) -> {
         ArrayList<GrMethod> selectedValues = Lists.newArrayList(values);
-        selectedValues.sort((o1, o2) -> ((GrMethod)o2).getParameterList().getParametersCount() - ((GrMethod)o1).getParameterList().getParametersCount());
+        selectedValues.sort((o1, o2) -> o2.getParameterList().getParametersCount() - o1.getParameterList().getParametersCount());
         CommandProcessor.getInstance().executeCommand(project, () -> {
           for (GrMethod selectedValue : selectedValues) {
             LOG.assertTrue(selectedValue.isValid());
@@ -111,14 +111,12 @@ public class CreateParameterForFieldIntention extends Intention {
       .setRenderer(new DefaultPsiElementCellRenderer())
       .setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
-                    setItemsChosenCallback((selectedValues) -> {
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (GrField selectedValue : selectedValues) {
-            LOG.assertTrue(((GrField)selectedValue).isValid());
-            addParameter(((GrField)selectedValue), constructor, project);
-          }
-        }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
-      }).createPopup().showInBestPositionFor(editor);
+                    setItemsChosenCallback((selectedValues) -> CommandProcessor.getInstance().executeCommand(project, () -> {
+                      for (GrField selectedValue : selectedValues) {
+                        LOG.assertTrue(selectedValue.isValid());
+                        addParameter(selectedValue, constructor, project);
+                      }
+                    }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null)).createPopup().showInBestPositionFor(editor);
   }
 
   private static void addParameter(final GrField selectedValue, final GrMethod constructor, final Project project) {

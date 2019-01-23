@@ -176,7 +176,7 @@ public class DesignerActionPanel implements DataProvider {
     boolean newVisible = isVisible(myActionGroup);
     myToolbar.setVisible(newVisible);
     if (oldVisible && newVisible) {
-      ((JComponent)myToolbar.getParent()).revalidate();
+      myToolbar.getParent().revalidate();
     }
   }
 

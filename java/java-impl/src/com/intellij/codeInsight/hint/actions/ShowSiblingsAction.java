@@ -4,7 +4,6 @@ package com.intellij.codeInsight.hint.actions;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.hint.PsiImplementationViewSession;
-import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -55,7 +54,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     final String findUsagesTitle = "Super " + (isMethod ? "methods" : "classes/interfaces");
     final ListCellRenderer listRenderer = isMethod ? new MethodCellRenderer(false) : new PsiClassListCellRenderer();
     final JBPopup popup = PsiElementListNavigator
-      .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null,
+      .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, null,
                              objects -> showSiblings(invokedByShortcut, project, editor, file, editor != null, (PsiElement)objects[0]));
     if (popup != null) {
       if (editor != null) {

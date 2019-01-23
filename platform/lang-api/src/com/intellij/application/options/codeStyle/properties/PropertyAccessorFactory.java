@@ -67,6 +67,10 @@ class PropertyAccessorFactory {
         case INT:
           return new IntegerAccessor(codeStyleObject, myField);
         case STRING:
+          CommaSeparatedValues annotation = myField.getAnnotation(CommaSeparatedValues.class);
+          if (annotation != null) {
+            return new CommaSeparatedValuesAccessor(codeStyleObject, myField);
+          }
           return new StringAccessor(codeStyleObject, myField);
         case WRAP:
           return new WrappingAccessor(codeStyleObject, myField);

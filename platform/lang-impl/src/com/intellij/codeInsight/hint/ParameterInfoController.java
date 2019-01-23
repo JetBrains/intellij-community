@@ -475,7 +475,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
           final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
           // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
-          final E e = (E) ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
         }
       }

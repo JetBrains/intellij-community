@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -25,7 +24,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext.OS_CONTEXT;
@@ -80,45 +78,6 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
     }
     catch (Exception ignore) {
     }
-  }
-
-
-  private static Pair<Double, Double> findBucket(double value, double... ranges) {
-    if (ranges.length == 0) throw new IllegalArgumentException("Constrains are empty");
-    if (value < ranges[0]) return Pair.create(null, ranges[0]);
-    for (int i = 1; i < ranges.length; i++) {
-      if (ranges[i] <= ranges[i - 1]) {
-        throw new IllegalArgumentException("Constrains are unsorted");
-      }
-
-      if (value < ranges[i]) {
-        return Pair.create(ranges[i - 1], ranges[i]);
-      }
-    }
-
-    return Pair.create(ranges[ranges.length - 1], null);
-  }
-
-
-  protected static String findBucket(long value, Function<? super Long, String> valueConverter, long... ranges) {
-    double[] dRanges = new double[ranges.length];
-    for (int i = 0; i < dRanges.length; i++) {
-      dRanges[i] = ranges[i];
-    }
-    return findBucket((double)value, (d) -> valueConverter.apply(d.longValue()), dRanges);
-  }
-
-  protected static String findBucket(double value, Function<? super Double, String> valueConverter, double... ranges) {
-    for (double range : ranges) {
-      if (range == value) {
-        return valueConverter.apply(value);
-      }
-    }
-
-    Pair<Double, Double> bucket = findBucket(value, ranges);
-    if (bucket.first == null) return "(*, " + valueConverter.apply(bucket.second) + ")";
-    if (bucket.second == null) return "(" + valueConverter.apply(bucket.first) + ", *)";
-    return "(" + valueConverter.apply(bucket.first) + ", " + valueConverter.apply(bucket.second) + ")";
   }
 
   protected String getPathFromMenuSelectionManager(@NotNull AnAction action) {
