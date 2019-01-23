@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -51,11 +52,12 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                            boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
     if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
-      //noinspection unchecked
-      CachedValueBase.Data<T> data = ((CachedValueBase<T>)value).getUpToDateOrNull();
+      Getter<T> data = value.getUpToDateOrNull();
       if (data != null) {
-        return data.getValue();
+        return data.get();
       }
+
+      CachedValueStabilityChecker.checkProvidersEquivalent(provider, value.getValueProvider(), key);
     }
     while (isOutdated(value)) {
       if (dataHolder.replace(key, value, null)) {
