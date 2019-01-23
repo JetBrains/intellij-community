@@ -291,7 +291,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll([
         "-Xmx750m",
         "-Xms750m",
-        "-Dsun.io.useCanonCaches=false"
+        "-Dsun.io.useCanonPrefixCache=false"
       ])
     }
 
