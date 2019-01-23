@@ -3,12 +3,14 @@ package com.intellij.bootRuntime
 
 import com.intellij.bootRuntime.bundles.Remote
 import com.intellij.bootRuntime.bundles.Runtime
+import com.intellij.openapi.util.io.FileUtil
 
 enum class BundleState {
   REMOTE,
   DOWNLOADED,
   EXTRACTED,
-  INSTALLED;
+  INSTALLED,
+  UNINSTALLED;
 
   fun getRepresentaton(): String {
     return when {
@@ -16,6 +18,7 @@ enum class BundleState {
       this == DOWNLOADED -> "Downloaded"
       this == EXTRACTED -> "Extracted"
       this == INSTALLED -> "Inst"
+      this == UNINSTALLED -> "Uninst"
       else -> "Unknown"
     }
   }
@@ -33,11 +36,13 @@ class Model(var selectedBundle: Runtime, val bundles:List<Runtime>) {
        isExtracted(selectedBundle) -> BundleState.EXTRACTED
        isDownloaded(selectedBundle) -> BundleState.DOWNLOADED
        isRemote(selectedBundle) -> BundleState.REMOTE
-       else -> throw IllegalStateException()
+       else -> BundleState.UNINSTALLED
      }
   }
 
-  fun isInstalled(bundle:Runtime):Boolean = bundle.installationPath.exists()
+  fun isInstalled(bundle:Runtime):Boolean = bundle.installationPath.exists() &&
+                                            BinTrayUtil.getJdkConfigFilePath().exists() &&
+                                            FileUtil.loadFile(BinTrayUtil.getJdkConfigFilePath()).startsWith(bundle.installationPath.absolutePath)
 
   fun isExtracted(bundle:Runtime):Boolean = bundle.transitionPath.exists()
 

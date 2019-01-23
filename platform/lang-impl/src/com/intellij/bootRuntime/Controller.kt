@@ -3,16 +3,18 @@ package com.intellij.bootRuntime
 
 import com.intellij.bootRuntime.BundleState.*
 import com.intellij.bootRuntime.bundles.Runtime
+import com.intellij.bootRuntime.command.Command
+import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.openapi.project.Project
-import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.SwingUtilities
 
 class Controller(val project: Project, val actionPanel:ActionPanel, val model: Model) {
 
   init {
+    CommandFactory.initialize(project, this)
     runtimeSelected(model.selectedBundle)
   }
 
@@ -27,12 +29,13 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
     SwingUtilities.getWindowAncestor(actionPanel)?.pack()
   }
 
-  private fun runtimeStateToActions(runtime:Runtime, currentState: BundleState) : List<AbstractAction> {
+  private fun runtimeStateToActions(runtime:Runtime, currentState: BundleState) : List<Command> {
     return when (currentState) {
-      REMOTE -> listOf(produce(DOWNLOAD, runtime))
-      DOWNLOADED -> listOf(produce(EXTRACT, runtime), produce(DELETE, runtime))
-      EXTRACTED -> listOf(produce(COPY, runtime), produce(DELETE, runtime))
-      INSTALLED -> listOf(produce(UPDATE_PATH, runtime), produce(DELETE, runtime))
+      REMOTE -> listOf(produce(REMOTE_INSTALL, runtime))
+      DOWNLOADED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
+      EXTRACTED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
+      UNINSTALLED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
+      INSTALLED -> listOf(produce(UNINSTALL, runtime), produce(DELETE, runtime))
     }
   }
 }

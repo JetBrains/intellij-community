@@ -13,7 +13,7 @@ class Archive(val project: Project, initialLocation: File) : Runtime(initialLoca
     process(
       produce(EXTRACT, this),
       produce(COPY, this),
-      produce(UPDATE_PATH, this)
+      produce(INSTALL, this)
     )
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime.command;
 
+import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.project.Project;
 
@@ -10,20 +11,24 @@ public class CommandFactory {
     DOWNLOAD,
     EXTRACT,
     COPY,
-    UPDATE_PATH,
-    DELETE
+    INSTALL,
+    UNINSTALL,
+    DELETE,
+    REMOTE_INSTALL
   }
 
   private final Project myProject;
+  private final Controller myController;
 
-  private CommandFactory(Project project) {
+  private CommandFactory(Project project, Controller controller) {
     myProject = project;
+    myController = controller;
   }
 
   private static CommandFactory instance;
 
-  public static void initialize(Project project) {
-    instance = new CommandFactory(project);
+  public static void initialize(Project project, Controller controller) {
+    instance = new CommandFactory(project, controller);
   }
 
   public static CommandFactory getInstance() {
@@ -33,16 +38,20 @@ public class CommandFactory {
 
   public static Command produce(Type commandType, Runtime runtime) {
     switch (commandType) {
+      case REMOTE_INSTALL:
+        return new RemoteInstall(getInstance().myProject, getInstance().myController, runtime);
       case DOWNLOAD:
-        return new Download(getInstance().myProject, runtime);
+        return new Download(getInstance().myProject, getInstance().myController, runtime);
       case EXTRACT:
-        return new Extract(getInstance().myProject, runtime);
+        return new Extract(getInstance().myProject, getInstance().myController, runtime);
       case COPY:
-        return new Copy(getInstance().myProject, runtime);
-      case UPDATE_PATH:
-        return new UpdatePath(getInstance().myProject, runtime);
+        return new Copy(getInstance().myProject, getInstance().myController, runtime);
+      case INSTALL:
+        return new Install(getInstance().myProject, getInstance().myController, runtime);
+      case UNINSTALL:
+        return new Uninstall(getInstance().myProject, getInstance().myController, runtime);
       case DELETE:
-        return new Delete(getInstance().myProject, runtime);
+        return new Delete(getInstance().myProject, getInstance().myController, runtime);
     }
     throw new IllegalStateException("Unknown Command Type");
   }

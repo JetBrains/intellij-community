@@ -17,7 +17,7 @@ class Remote(val project: Project, remoteFileName: String) : Runtime(File(remote
       produce(DOWNLOAD, this),
       produce(EXTRACT, this),
       produce(COPY, this),
-      produce(UPDATE_PATH, this)
+      produce(INSTALL, this)
     )
   }
 }
