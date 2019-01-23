@@ -173,10 +173,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       nameIds.add(nameId);
     }
     for (String newName : toAdd) {
-      FakeVirtualFile child = new FakeVirtualFile(file, newName);
-      FileAttributes attributes = fs.getAttributes(child);
-      if (attributes != null) {
-        int childId = createAndFillRecord(fs, child, id, attributes);
+      int childId = makeChildRecord(file, id, newName, null, fs);
+      if (childId != -1) {
         childrenIds.add(childId);
         nameIds.add(new FSRecords.NameId(childId, FileNameCache.storeName(newName), newName));
       }
@@ -379,12 +377,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
 
-    final VirtualFile fake = new FakeVirtualFile(parent, childName);
-    final FileAttributes attributes = fs.getAttributes(fake);
-    if (attributes != null) {
-      final int child = createAndFillRecord(fs, fake, parentId, attributes);
-      FSRecords.updateList(parentId, ArrayUtil.append(children, child));
-      return child;
+    int childId = makeChildRecord(parent, parentId, childName, null, fs);
+    if (childId != -1) {
+      FSRecords.updateList(parentId, ArrayUtil.append(children, childId));
+      return childId;
     }
 
     return 0;
@@ -944,11 +940,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       for (VFileCreateEvent createEvent : createEvents) {
         createEvent.resetCache();
         String name = createEvent.getChildName();
-        final VirtualFile fake = new FakeVirtualFile(parent, name);
-        final FileAttributes attributes = delegate.getAttributes(fake);
-
-        if (attributes != null) {
-          final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
+        int childId = makeChildRecord(parent, parentId, name, createEvent.getAttributes(), delegate);
+        if (childId != -1) {
           childrenAdded.add(new FSRecords.NameId(childId, -1, name));
           parentChildrenIds.add(childId);
         }
@@ -1171,28 +1164,28 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   }
 
   private void executeCreateChild(@NotNull VirtualFile parent, @NotNull String name, @Nullable FileAttributes attributes) {
-    final NewVirtualFileSystem delegate = getDelegate(parent);
-    final VirtualFile fake = new FakeVirtualFile(parent, name);
-    if (attributes == null) attributes = delegate.getAttributes(fake);
-    if (attributes != null) {
-      final int parentId = getFileId(parent);
-      final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
+    NewVirtualFileSystem delegate = getDelegate(parent);
+    int parentId = getFileId(parent);
+    int childId = makeChildRecord(parent, parentId, name, attributes, delegate);
+    if (childId != -1) {
       appendIdToParentList(parentId, childId);
       assert parent instanceof VirtualDirectoryImpl : parent;
-      final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
+      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
       dir.addChild(child);
       incStructuralModificationCount();
     }
   }
 
-  private static int createAndFillRecord(@NotNull NewVirtualFileSystem delegateSystem,
-                                         @NotNull VirtualFile delegateFile,
-                                         int parentId,
-                                         @NotNull FileAttributes attributes) {
-    final int childId = FSRecords.createRecord();
-    writeAttributesToRecord(childId, parentId, delegateFile, delegateSystem, attributes);
-    return childId;
+  private static int makeChildRecord(VirtualFile parent, int parentId, String name, FileAttributes attributes, NewVirtualFileSystem fs) {
+    VirtualFile fake = new FakeVirtualFile(parent, name);
+    if (attributes == null) attributes = fs.getAttributes(fake);
+    if (attributes != null) {
+      int childId = FSRecords.createRecord();
+      writeAttributesToRecord(childId, parentId, fake, fs, attributes);
+      return childId;
+    }
+    return -1;
   }
 
   private static void appendIdToParentList(int parentId, int childId) {
