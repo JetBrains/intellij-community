@@ -262,7 +262,7 @@ class LocalFileSystemRefreshWorker {
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
       String name = file.getName(file.getNameCount() - 1).toString();
 
       if (acceptsFileName(name)) {
@@ -271,6 +271,7 @@ class LocalFileSystemRefreshWorker {
 
         if (child == null) { // new file is created
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
+
           myHelper.scheduleCreation(parent, name, file, convert(file, attrs));
           return FileVisitResult.CONTINUE;
         }

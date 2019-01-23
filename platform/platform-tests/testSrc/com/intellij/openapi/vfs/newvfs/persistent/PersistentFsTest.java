@@ -21,6 +21,7 @@ import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.apache.log4j.Logger;
@@ -33,7 +34,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 public class PersistentFsTest extends PlatformTestCase {
   private PersistentFS myFs;
@@ -341,7 +341,7 @@ public class PersistentFsTest extends PlatformTestCase {
       }
 
       private void log(String msg, @NotNull List<? extends VFileEvent> events) {
-        List<String> names = events.stream().map(e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath())).collect(Collectors.toList());
+        List<String> names = ContainerUtil.map(events, e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath()));
         log.append(msg).append(names).append("\n");
       }
 
@@ -360,7 +360,7 @@ public class PersistentFsTest extends PlatformTestCase {
     checkEvents("Before:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n" +
                 "After:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, false, false),
                 new VFileDeleteEvent(this, vFile, false));
   }
   
@@ -377,8 +377,8 @@ public class PersistentFsTest extends PlatformTestCase {
                 "Before:[VFileDeleteEvent->c]\n" +
                 "After:[VFileDeleteEvent->c]\n",
                 new VFileDeleteEvent(this, vFile, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false, false),
-                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, null, false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, null, false, false),
                 new VFileDeleteEvent(this, vFile.getParent(), false));
   }
 

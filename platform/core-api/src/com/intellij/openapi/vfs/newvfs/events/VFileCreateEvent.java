@@ -23,26 +23,14 @@ public class VFileCreateEvent extends VFileEvent {
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
-                          final boolean isDirectory,
-                          final boolean isFromRefresh,
+                          boolean isDirectory,
+                          @Nullable("null means read from the created file") FileAttributes attributes,
+                          boolean isFromRefresh,
                           boolean isEmptyDirectory) {
     super(requestor, isFromRefresh);
     myChildName = childName;
     myParent = parent;
     myDirectory = isDirectory;
-    myAttributes = null;
-    myEmptyDirectory = isEmptyDirectory;
-  }
-
-  public VFileCreateEvent(Object requestor,
-                          @NotNull VirtualFile parent,
-                          @NotNull String childName,
-                          @NotNull FileAttributes attributes,
-                          boolean fromRefresh) {
-    super(requestor, fromRefresh);
-    myChildName = childName;
-    myParent = parent;
-    myDirectory = attributes.isDirectory();
     myAttributes = attributes;
     myEmptyDirectory = isEmptyDirectory;
   }
@@ -76,8 +64,7 @@ public class VFileCreateEvent extends VFileEvent {
   @NonNls
   @Override
   public String toString() {
-    return "VfsEvent[create " + (myDirectory ? "dir " : "file ") +
-           myChildName +  " in " + myParent.getUrl() + "]";
+    return "VfsEvent[create " + (myDirectory ? "dir " : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
   }
 
   @NotNull

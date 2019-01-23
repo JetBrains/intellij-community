@@ -415,7 +415,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
-    processEvent(new VFileCreateEvent(requestor, parent, dir, true, false, true));
+    processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, false, true));
 
     final VirtualFile child = parent.findChild(dir);
     if (child == null) {
@@ -428,7 +428,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
-    processEvent(new VFileCreateEvent(requestor, parent, file, false, false, false));
+    processEvent(new VFileCreateEvent(requestor, parent, file, false, null, false, false));
 
     final VirtualFile child = parent.findChild(file);
     if (child == null) {

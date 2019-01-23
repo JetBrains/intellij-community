@@ -254,7 +254,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean isDirectory = attributes.isDirectory();
     boolean isEmptyDirectory = isDirectory && !hasChildren(Paths.get(fake.getPath()));
 
-    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, attributes, true, isEmptyDirectory);
+    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, true, isEmptyDirectory);
     RefreshQueue.getInstance().processSingleEvent(event);
     return findChild(realName);
   }

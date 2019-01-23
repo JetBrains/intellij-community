@@ -40,6 +40,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.junit.Rule;
@@ -53,7 +54,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @RunFirst
@@ -333,14 +333,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, false, false))
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, false, false))
       .peek(event -> {
         if (fs.findModelChild(temp, event.getChildName()) == null) {
           fs.createChildFile(this, temp, event.getChildName());
         }
       })
       .forEach(events::add);
-    List<CharSequence> names = events.stream().map(e -> ((VFileCreateEvent)e).getChildName()).collect(Collectors.toList());
+    List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(new TIntHashSet(), names);
   }
 
