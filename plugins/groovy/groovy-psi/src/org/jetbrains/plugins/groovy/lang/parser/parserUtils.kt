@@ -9,6 +9,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilder.Marker
 import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
 import com.intellij.lang.parser.GeneratedParserUtilBase.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil.contains
@@ -16,7 +17,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
-import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.*
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
+import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.parenthesized_lambda_expression_head
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.*
 import org.jetbrains.plugins.groovy.util.get
@@ -475,6 +477,7 @@ fun isBlockParseable(text: CharSequence): Boolean {
   }
 
   while (true) {
+    ProgressManager.checkCanceled()
     val type = lexer.tokenType ?: return leftStack.isEmpty()
     if (leftStack.isEmpty()) {
       return false
