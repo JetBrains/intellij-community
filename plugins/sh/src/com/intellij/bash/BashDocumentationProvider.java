@@ -94,7 +94,7 @@ public class BashDocumentationProvider extends AbstractDocumentationProvider {
 
     StringBuffer sb = new StringBuffer("<html><body><pre>");
     try {
-      Matcher m = URLUtil.URL_PATTERN.matcher(s);
+      Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXml(s));
       while (m.find()) {
         if (m.groupCount() > 0) {
           String url = m.group(0);
