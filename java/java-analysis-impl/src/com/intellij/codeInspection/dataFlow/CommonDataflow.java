@@ -28,6 +28,7 @@ public class CommonDataflow {
     @Nullable Set<Object> myPossibleValues = Collections.emptySet();
     // null = top; empty = bottom
     @Nullable Set<Object> myNotValues = null;
+    boolean myMayFailByContract = false;
 
     DataflowPoint() {}
 
@@ -35,6 +36,7 @@ public class CommonDataflow {
       myFacts = other.myFacts;
       myPossibleValues = other.myPossibleValues;
       myNotValues = other.myNotValues == null || other.myNotValues.isEmpty() ? other.myNotValues : new THashSet<>(other.myNotValues);
+      myMayFailByContract = other.myMayFailByContract;
     }
 
     void addNotValues(DfaMemoryStateImpl memState, DfaValue value) {
@@ -109,6 +111,10 @@ public class CommonDataflow {
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
       DataflowPoint point = myData.computeIfAbsent(expression, e -> new DataflowPoint());
+      if (DfaConstValue.isContractFail(value)) {
+        point.myMayFailByContract = true;
+        return;
+      }
       if (point.myFacts != DfaFactMap.EMPTY) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiConditionalExpression &&
@@ -147,6 +153,18 @@ public class CommonDataflow {
       return myData.containsKey(expression);
     }
 
+    /**
+     * Returns true if given call cannot fail according to its contracts 
+     * (e.g. {@code Optional.get()} executed under {@code Optional.isPresent()}).
+     * 
+     * @param call call to check
+     * @return true if it cannot fail by contract; false if unknown or can fail
+     */
+    public boolean cannotFailByContract(PsiCallExpression call) {
+      DataflowPoint point = myData.get(call);
+      return point != null && !point.myMayFailByContract;
+    }
+    
     /**
      * Returns a fact of specific type which is known for given expression or null if fact is not known
      *
@@ -289,7 +307,7 @@ public class CommonDataflow {
                                      @NotNull PsiExpression expression,
                                      @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {
-      if (range == null && !DfaConstValue.isContractFail(value)) {
+      if (range == null) {
         // Do not track instructions which cover part of expression
         myResult.add(expression, (DfaMemoryStateImpl)state, value);
       }
