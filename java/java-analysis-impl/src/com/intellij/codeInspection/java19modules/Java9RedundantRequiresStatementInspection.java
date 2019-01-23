@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -104,10 +103,6 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     return new RedundantRequiresStatementAnnotator();
   }
 
-  private static PsiJavaModule resolveRequiredModule(PsiRequiresStatement requiresStatement) {
-    return PsiJavaModuleReference.resolve(requiresStatement, requiresStatement.getModuleName(), false);
-  }
-
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
     private final String myRequiredModuleName;
     private final Set<String> myImportedPackages;
@@ -153,7 +148,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         .of(dependencyModule.getRequires().iterator())
         .filter(statement -> statement.hasModifierProperty(PsiModifier.TRANSITIVE))
         .filter(requiresStatement -> !directDependencies.contains(requiresStatement.getModuleName()))
-        .map(Java9RedundantRequiresStatementInspection::resolveRequiredModule)
+        .map(PsiRequiresStatement::resolve)
         .nonNull()
         .toList();
 
@@ -177,7 +172,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       if (parent instanceof PsiJavaModule) {
         PsiJavaModule currentModule = (PsiJavaModule)parent;
         Optional.of(statementToDelete)
-          .map(Java9RedundantRequiresStatementInspection::resolveRequiredModule)
+          .map(PsiRequiresStatement::resolve)
           .map(dependencyModule -> getReexportedDependencies(currentModule, dependencyModule))
           .ifPresent(reexportedDependencies -> addReexportedDependencies(reexportedDependencies, currentModule, statementToDelete));
       }
