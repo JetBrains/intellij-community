@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -193,7 +195,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, Paths.get(dir.getPath(), name), childAttributes);
+            myHelper.scheduleCreation(dir, name, appendPath(dir.getPath(), name), childAttributes);
           }
           else {
             if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
@@ -220,6 +222,12 @@ public class RefreshWorker {
       }
     }
   }
+
+  @NotNull
+  private static Path appendPath(@NotNull String parent, @NotNull String name) {
+    return StringUtil.endsWith(parent, "/") ? Paths.get(parent + name) : Paths.get(parent + "/" + name);
+  }
+
 
   private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
                                  @NotNull TObjectHashingStrategy<String> strategy,
@@ -277,7 +285,7 @@ public class RefreshWorker {
           String name = pair.first;
           FileAttributes childAttributes = pair.second;
           if (childAttributes != null) {
-            myHelper.scheduleCreation(dir, name, Paths.get(dir.getPath(), name), childAttributes);
+            myHelper.scheduleCreation(dir, name, appendPath(dir.getPath(), name), childAttributes);
           }
         }
 
@@ -342,7 +350,7 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      myHelper.scheduleCreation(parent, child.getName(), Paths.get(parent.getPath(), child.getName()), childAttributes);
+      myHelper.scheduleCreation(parent, child.getName(), appendPath(parent.getPath(), child.getName()), childAttributes);
       return true;
     }
 
