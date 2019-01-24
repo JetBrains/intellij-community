@@ -20,7 +20,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                   "SearchEverywhere.SelectItem"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
-    { "F5",                       "UML.ApplyCurrentLayout", "CopyElement"},
+    { "F5",                       "Graph.ApplyCurrentLayout", "CopyElement"},
     { "F7",                       "NextDiff", "StepInto"},
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
@@ -40,7 +40,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
-    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
+    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize", "Graph.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown", "MethodOverloadSwitchDown", "SearchEverywhere.NavigateToNextGroup"},
     { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource", "PyExecuteCellAction"},
     { "control EQUALS",           "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
@@ -52,7 +52,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "ParameterInfo", "TodoViewGroupByShowPackages"},
     { "control R",                "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
-    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
+    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize", "Graph.ActualSize"},
     { "control SPACE",            "CodeCompletion", "ChangesView.SetDefault"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
     { "control UP",               "EditorScrollUp", "EditorLookupUp", "MethodOverloadSwitchUp", "SearchEverywhere.NavigateToPrevGroup"},
@@ -168,7 +168,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control F",                "EditorRight", "TodoViewGroupByFlattenPackage"},
     { "control P",                "ChangesView.GroupBy.Directory", "EditorUp", "FileChooser.TogglePathShowing","TodoViewGroupByShowPackages"},
     { "control R",                "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
-    { "control SLASH",            "$Undo", "Images.Editor.ActualSize", "UML.ActualSize"},
+    { "control SLASH",            "$Undo", "Images.Editor.ActualSize", "Graph.ActualSize"},
     { "control SPACE",            "EditorToggleStickySelection", "ChangesView.SetDefault"},
     { "control X,N",              "Diff.NextChange", "NextTab"},
     { "control X,P",              "Diff.PrevChange", "PreviousTab"},
@@ -186,7 +186,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl UP",            "EditorBackwardParagraphWithSelection", "ResizeToolWindowUp"},
     });
     put("Visual Studio", new String[][] {
-    { "F5",                       "Resume", "UML.ApplyCurrentLayout"},
+    { "F5",                       "Resume", "Graph.ApplyCurrentLayout"},
     { "F7",                       "NextDiff", "CompileDirty"},
     { "alt F2",                   "ShowBookmarks", "WebOpenInAction"},
     { "alt F8",                   "ReformatCode", "ForceStepInto", "EvaluateExpression"},
@@ -225,7 +225,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Eclipse", new String[][] {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Arrangement.Rule.Edit"},
-    { "F5",                       "UML.ApplyCurrentLayout", "StepInto"},
+    { "F5",                       "Graph.ApplyCurrentLayout", "StepInto"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down", "ShowSearchHistory"},
     { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
@@ -264,14 +264,14 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("NetBeans 6.5", new String[][] {
     { "F4",                       "RunToCursor", "EditSource"},
-    { "F5",                       "Debugger.ResumeThread", "Resume", "UML.ApplyCurrentLayout"},
+    { "F5",                       "Debugger.ResumeThread", "Resume", "Graph.ApplyCurrentLayout"},
     { "alt DOWN",                 "GotoNextElementUnderCaretUsage", "ShowContent", "Arrangement.Rule.Match.Condition.Move.Down", "ShowSearchHistory"},
     { "alt UP",                   "GotoPrevElementUnderCaretUsage", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
     { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
-    { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize", "UML.ActualSize"},
+    { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize", "Graph.ActualSize"},
     { "control M",                "Vcs.ShowMessageHistory", "Move", "TodoViewGroupByShowModules"},
     { "control N",                "NewElement", "FileChooser.NewFolder"},
     { "control R",                "RenameElement", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
@@ -293,7 +293,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("JBuilder", new String[][] {
     { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
-    { "F5",                       "ToggleBreakpointEnabled", "UML.ApplyCurrentLayout"},
+    { "F5",                       "ToggleBreakpointEnabled", "Graph.ApplyCurrentLayout"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                   "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut",
                                   "SearchEverywhere.CompleteCommand", "SearchEverywhere.NextTab"},
@@ -312,7 +312,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "F3",                       "GotoDeclaration", "EditSource"},
-    { "F5",                       "StepInto", "UML.ApplyCurrentLayout"},
+    { "F5",                       "StepInto", "Graph.ApplyCurrentLayout"},
     { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown", "ShowSearchHistory"},
     { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
