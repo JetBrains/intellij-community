@@ -8,7 +8,6 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.internal.performance.LatenciometerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -28,6 +27,7 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -324,6 +324,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myErrorStripeNeedsRepaint;
 
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
+  @NotNull
+  private EditorPopupHandler myPopupHandler = new DefaultPopupHandler();
 
   private boolean myUseEditorAntialiasing = true;
 
@@ -785,6 +787,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public String getContextMenuGroupId() {
     return myContextMenuGroupId;
+  }
+
+  @Override
+  public void setPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myPopupHandler = popupHandler;
+  }
+
+  @NotNull
+  @Override
+  public EditorPopupHandler getPopupHandler() {
+    return myPopupHandler;
   }
 
   @Nullable
@@ -3725,14 +3738,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragStarted = false;
       clearDnDContext();
 
-
+      boolean forceProcessing = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
       myExpectedCaretOffset = logicalPositionToOffset(myLastMousePressedLocation);
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
+          boolean wasConsumed = event.isConsumed();
           mouseListener.mousePressed(event);
+          if (!wasConsumed && event.isConsumed() && mouseListener instanceof com.intellij.util.EditorPopupHandler) {
+            // compatibility with legacy code, this logic should be removed along with EditorPopupHandler
+            forceProcessing = true;
+          }
           if (isReleased) return;
         }
       }
@@ -3745,7 +3763,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
-      if (event.isConsumed()) return;
+      if (event.isConsumed() && !forceProcessing) return;
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> {
@@ -4677,44 +4695,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void invokePopupIfNeeded(EditorMouseEvent event) {
-    if (myContextMenuGroupId != null &&
-        event.getArea() == EditorMouseEventArea.EDITING_AREA &&
-        event.getMouseEvent().isPopupTrigger() &&
-        !event.isConsumed()) {
-      String contextMenuGroupId = myContextMenuGroupId;
-      Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
-      if (inlay != null) {
-        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
-        if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
-      }
-      AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(contextMenuGroupId);
-      if (action instanceof ActionGroup) {
-        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
-        MouseEvent e = event.getMouseEvent();
-        final Component c = e.getComponent();
-        if (c != null && c.isShowing()) {
-          JPopupMenu popupComponent = popupMenu.getComponent();
-          disableHoverPopupsWhileShowing(popupComponent);
-          popupComponent.show(c, e.getX(), e.getY());
-        }
-        e.consume();
-      }
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA && event.getMouseEvent().isPopupTrigger() && !event.isConsumed()) {
+      myPopupHandler.handlePopup(event);
     }
-  }
-
-  private void disableHoverPopupsWhileShowing(Component popupComponent) {
-    new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
-      @Override
-      public void showNotify() {
-        EditorMouseHoverPopupControl.disablePopups(EditorImpl.this);
-        new UiNotifyConnector.Once(popupComponent, new Adapter() {
-          @Override
-          public void hideNotify() {
-            EditorMouseHoverPopupControl.enablePopups(EditorImpl.this);
-          }
-        });
-      }
-    });
   }
 
   @Override
@@ -4735,6 +4718,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.validateState();
     myCaretModel.validateState();
     myInlayModel.validateState();
+  }
+
+  private class DefaultPopupHandler extends ContextMenuPopupHandler.ById {
+    @Nullable
+    @Override
+    public String getActionGroupId(@NotNull EditorMouseEvent event) {
+      String contextMenuGroupId = myContextMenuGroupId;
+      Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
+      if (inlay != null) {
+        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
+        if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
+      }
+      return contextMenuGroupId;
+    }
   }
 
   private class MyScrollPane extends JBScrollPane {

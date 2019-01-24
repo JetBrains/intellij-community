@@ -20,10 +20,9 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
@@ -292,22 +291,44 @@ public interface EditorEx extends Editor {
   int getExpectedCaretOffset();
 
   /**
-   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to 
+   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to
    * {@code null} disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
-   * event listener).
+   * event listener). This method might have no effect if default editor's popup handler was overridden
+   * using {@link #setPopupHandler(EditorPopupHandler)}.
    * 
-   * @see #getContextMenuGroupId() 
+   * @see #getContextMenuGroupId()
+   * @see #setPopupHandler(EditorPopupHandler)
    */
   void setContextMenuGroupId(@Nullable String groupId);
 
   /**
    * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. {@code null}
-   * value means built-in logic for showing context menu is disabled.
+   * value means built-in logic for showing context menu is disabled. Returned value might be meaningless if default editor's popup handler
+   * was overridden using {@link #setPopupHandler(EditorPopupHandler)}.
    * 
    * @see #setContextMenuGroupId(String)
+   * @see #getPopupHandler()
    */
   @Nullable
   String getContextMenuGroupId();
+
+  /**
+   * Allows to override default editor's context popup logic. Default logic shows a context menu corresponding to a certain action group
+   * registered in {@link ActionManager}. Group's id can be changed using {@link #setContextMenuGroupId(String)}. For inline custom visual
+   * elements (inlays) action group id is obtained from {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)}.
+   *
+   * @see #getPopupHandler()
+   * @since 2019.1
+   */
+  void setPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  /**
+   * Returns current editor's popup handler (see {@link #setPopupHandler(EditorPopupHandler)}).
+   *
+   * @since 2019.1
+   */
+  @NotNull
+  EditorPopupHandler getPopupHandler();
 
   /**
    * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},

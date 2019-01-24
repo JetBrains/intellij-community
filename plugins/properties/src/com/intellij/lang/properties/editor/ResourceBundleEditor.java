@@ -30,14 +30,13 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -59,7 +58,6 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -851,49 +849,44 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     settings.setVirtualSpace(false);
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
-    editor.setContextMenuGroupId(null); // disabling default context menu
-    editor.addEditorMouseListener(new EditorPopupHandler() {
+    editor.setPopupHandler(new ContextMenuPopupHandler() {
+      @Override
+      public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+        DefaultActionGroup group = new DefaultActionGroup();
+        group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
+        group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
+        group.addSeparator();
+        group.add(new AnAction("Propagate Value Across of Resource Bundle") {
           @Override
-          public void invokePopup(EditorMouseEvent event) {
-            if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-              DefaultActionGroup group = new DefaultActionGroup();
-              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
-              group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
-              group.addSeparator();
-              group.add(new AnAction("Propagate Value Across of Resource Bundle") {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                  final String valueToPropagate = editor.getDocument().getText();
-                  final String currentSelectedProperty = getSelectedPropertyName();
-                  if (currentSelectedProperty == null) {
-                    return;
-                  }
-                  ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
-                    try {
-                      final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
-                        final IProperty property = f.findPropertyByKey(currentSelectedProperty);
-                        return property == null || !valueToPropagate.equals(property.getValue());
-                      }).toArray(PropertiesFile[]::new);
-                      final PsiFile[] filesToPrepare = Arrays.stream(propertiesFiles).map(PropertiesFile::getContainingFile).toArray(PsiFile[]::new);
-                      if (FileModificationService.getInstance().preparePsiElementsForWrite(filesToPrepare)) {
-                        for (PropertiesFile file : propertiesFiles) {
-                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, file);
-                        }
-                        recreateEditorsPanel();
-                      }
-                    }
-                    catch (final IncorrectOperationException e1) {
-                      LOG.error(e1);
-                    }
-                  }));
-                }
-              });
-              EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
-              handler.invokePopup(event);
-              event.consume();
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            final String valueToPropagate = editor.getDocument().getText();
+            final String currentSelectedProperty = getSelectedPropertyName();
+            if (currentSelectedProperty == null) {
+              return;
             }
+            ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+              try {
+                final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
+                  final IProperty property = f.findPropertyByKey(currentSelectedProperty);
+                  return property == null || !valueToPropagate.equals(property.getValue());
+                }).toArray(PropertiesFile[]::new);
+                final PsiFile[] filesToPrepare = Arrays.stream(propertiesFiles).map(PropertiesFile::getContainingFile).toArray(PsiFile[]::new);
+                if (FileModificationService.getInstance().preparePsiElementsForWrite(filesToPrepare)) {
+                  for (PropertiesFile file : propertiesFiles) {
+                    myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, file);
+                  }
+                  recreateEditorsPanel();
+                }
+              }
+              catch (final IncorrectOperationException e1) {
+                LOG.error(e1);
+              }
+            }));
           }
-      });
+        });
+        return group;
+      }
+    });
   }
 
   private class DataProviderPanel extends JPanel implements DataProvider {

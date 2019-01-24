@@ -32,14 +32,13 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorPopupHandler;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -509,7 +508,7 @@ public class TextDiffViewerUtil {
     }
   }
 
-  public static class EditorActionsPopup extends EditorPopupHandler {
+  public static class EditorActionsPopup {
     @NotNull private final List<? extends AnAction> myEditorPopupActions;
 
     public EditorActionsPopup(@NotNull List<? extends AnAction> editorPopupActions) {
@@ -517,18 +516,12 @@ public class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors) {
+      EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
+        myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
+      );
       for (EditorEx editor : editors) {
-        editor.addEditorMouseListener(this);
-        editor.setContextMenuGroupId(null); // disabling default context menu
+        editor.setPopupHandler(handler);
       }
-    }
-
-    @Override
-    public void invokePopup(final EditorMouseEvent event) {
-      if (myEditorPopupActions.isEmpty()) return;
-      ActionGroup group = new DefaultActionGroup(myEditorPopupActions);
-      EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
-      handler.invokePopup(event);
     }
   }
 }

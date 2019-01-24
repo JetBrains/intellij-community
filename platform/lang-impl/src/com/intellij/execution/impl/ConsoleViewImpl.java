@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
@@ -927,11 +928,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return ReadAction.compute(() -> {
       EditorEx editor = doCreateConsoleEditor();
       LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()));
-      editor.setContextMenuGroupId(null); // disabling default context menu
-      editor.addEditorMouseListener(new EditorPopupHandler() {
+      editor.setPopupHandler(new ContextMenuPopupHandler() {
         @Override
-        public void invokePopup(final EditorMouseEvent event) {
-          popupInvoked(event.getMouseEvent());
+        public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+          return getPopupGroup(event.getMouseEvent());
         }
       });
 
@@ -979,7 +979,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     action.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), editor.getContentComponent());
   }
 
-  private void popupInvoked(@NotNull MouseEvent mouseEvent) {
+  private ActionGroup getPopupGroup(@NotNull MouseEvent mouseEvent) {
     final ActionManager actionManager = ActionManager.getInstance();
     final HyperlinkInfo info = myHyperlinks != null ? myHyperlinks.getHyperlinkInfoByPoint(mouseEvent.getPoint()) : null;
     ActionGroup group = null;
@@ -995,9 +995,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
       result = postProcessor.postProcessPopupActions(this, result);
     }
-    final DefaultActionGroup processedGroup = new DefaultActionGroup(result);
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, processedGroup);
-    menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+    return new DefaultActionGroup(result);
   }
 
   private void highlightHyperlinksAndFoldings(int startLine) {
