@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractFunctionContext implements FunctionContext {
-  private static final Map<ContextType, FunctionContext> ourInstances = new HashMap<>();
+  private static final Map<ContextType, FunctionContext> ourInstances = ContainerUtil.newConcurrentMap();
 
   private final Map<Pair<QName, Integer>, Function> myFunctions;
   private final Map<QName, Function> myDefaultMap = new HashMap<>();
@@ -38,7 +38,6 @@ public abstract class AbstractFunctionContext implements FunctionContext {
         myDefaultMap.put(entry.getKey().first, function);
       }
     }
-    ourInstances.put(contextType, this);
   }
 
   protected abstract Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
@@ -52,7 +51,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     return Collections.unmodifiableMap(map);
   }
 
-  protected static synchronized FunctionContext getInstance(ContextType contextType, Factory<? extends FunctionContext> factory) {
+  protected static FunctionContext getInstance(ContextType contextType, Factory<? extends FunctionContext> factory) {
     return ourInstances.computeIfAbsent(contextType, k -> factory.create());
   }
 
