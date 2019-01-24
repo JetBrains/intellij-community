@@ -6,6 +6,7 @@ import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,7 +41,7 @@ public class ConfigImportHelper {
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
   private static final String CONFIG = "config";
-  private static final String OPTIONS_XML = "options/options.xml";
+  private static final String[] OPTIONS = {"options/" + Storage.NOT_ROAMABLE_FILE, "options/ide.general.xml", "options/options.xml"};
   private static final String BIN = "bin";
   private static final String CONTENTS = "Contents";
   private static final String PLIST = "Info.plist";
@@ -103,6 +104,13 @@ public class ConfigImportHelper {
     return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
   }
 
+  public static boolean isConfigDirectory(@NotNull File candidate) {
+    for (String name : OPTIONS) {
+      if (new File(candidate, name).exists()) return true;
+    }
+    return false;
+  }
+
   private static ConfigImportSettings getConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
@@ -141,10 +149,12 @@ public class ConfigImportHelper {
       long lastModified = 0;
       for (File child : candidates) {
         File candidate = SystemInfo.isMac ? child : new File(child, CONFIG);
-        long modified = new File(candidate, OPTIONS_XML).lastModified();
-        if (modified > lastModified) {
-          lastModified = modified;
-          result = candidate;
+        for (String name : OPTIONS) {
+          long modified = new File(candidate, name).lastModified();
+          if (modified > lastModified) {
+            lastModified = modified;
+            result = candidate;
+          }
         }
       }
     }
@@ -163,27 +173,23 @@ public class ConfigImportHelper {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 
-    if (isValidConfigDir(selectedDir)) {
+    if (isConfigDirectory(selectedDir)) {
       return pair(selectedDir, null);
     }
 
     File config = new File(selectedDir, CONFIG);
-    if (isValidConfigDir(config)) {
+    if (isConfigDirectory(config)) {
       return pair(config, null);
     }
 
     if (new File(selectedDir, SystemInfo.isMac ? CONTENTS : BIN).isDirectory()) {
       File configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
-      if (isValidConfigDir(configDir)) {
+      if (isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
       }
     }
 
     return null;
-  }
-
-  private static boolean isValidConfigDir(File candidate) {
-    return new File(candidate, OPTIONS_XML).isFile() || new File(candidate, "options/ide.general.xml").isFile();
   }
 
   @Nullable
