@@ -288,7 +288,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
     { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
-    { "shift control alt P",      "Print", "Graph.Print"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
     });
