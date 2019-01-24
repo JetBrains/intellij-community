@@ -538,7 +538,16 @@ public class MadTestingUtil {
       Arrays.sort(children, Comparator.comparing(File::getName));
       while (true) {
         int[] weights = Arrays.stream(children).mapToInt(child -> estimateWeight(child, exhausted)).toArray();
-        int index = spin(data, weights);
+        int index = 0;
+        try {
+          index = spin(data, weights);
+        }
+        catch (RuntimeException e) {
+          if ("org.jetbrains.jetCheck.CannotRestoreValue".equals(e.getClass().getName())) {
+            throw new RuntimeException("Directory structure changed in " + file + " or its direct children?", e);
+          }
+          throw e;
+        }
         if (index == -1) return null;
         File chosen = children[index];
         File generated = generateRandomFile(data, chosen, exhausted);
