@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
@@ -14,13 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -29,8 +28,7 @@ import java.util.PropertyResourceBundle;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -90,21 +88,12 @@ public class ConfigImportHelper {
   }
 
   public static boolean isValidSettingsFile(@NotNull File file) {
-    try (ZipInputStream zipStream = new ZipInputStream(new FileInputStream(file))) {
-      while (true) {
-        ZipEntry entry = zipStream.getNextEntry();
-        if (entry == null) {
-          break;
-        }
-
-        if (entry.getName().equals(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
-          return true;
-        }
-      }
+    try (ZipFile zip = new ZipFile(file)) {
+      return zip.getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER) != null;
     }
-    catch (IOException ignore) {
+    catch (IOException ignored) {
+      return false;
     }
-    return false;
   }
 
   /**
@@ -321,7 +310,7 @@ public class ConfigImportHelper {
 
     try {
       if (oldConfigDir.isFile()) {
-        ZipUtil.extract(oldConfigDir, newConfigDir, null);
+        new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
         return;
       }
 
