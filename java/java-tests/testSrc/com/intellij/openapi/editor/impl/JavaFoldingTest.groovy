@@ -42,6 +42,10 @@ class JavaFoldingTest extends JavaFoldingTestCase {
 
   public void testEndOfLineComments() { doTest() }
 
+  public void testMultilineComments() { doTest() }
+
+  public void testJavadocComments() { doTest() }
+
   public void testEditingImports() {
     configure """\
 import java.util.List;
@@ -494,8 +498,8 @@ class A {
 // 1
 // 2 next empty line is significant
 
-// 3 non-folded
-// 4 non-folded
+// 3
+// 4
   int t = 1;
 // 5
 // 6
@@ -506,12 +510,10 @@ class A {
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
     assertFolding "// 0"
-    assertNoFoldingStartsAt "// 3"
-    assertNoFoldingCovers "// 3"
-    assertNoFoldingCovers "// 4"
+    assertFolding "// 3"
     assertFolding "// 5"
 
-    assertEquals 2, foldRegionsCount
+    assertEquals 3, foldRegionsCount
   }
 
   public void "test custom folding collapsed by default"() {
