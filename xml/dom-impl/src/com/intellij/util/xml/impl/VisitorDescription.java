@@ -52,6 +52,7 @@ public class VisitorDescription {
   }
 
   public void acceptElement(DomElementVisitor visitor, DomElement element) {
+    if (!element.isValid()) return;
     final Method method = myMethods.get(element.getClass());
     assert method != null : myVisitorClass + " can't accept element of type " + element.getClass();
     DomReflectionUtil.invokeMethod(method, visitor, element);
