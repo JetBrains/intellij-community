@@ -56,7 +56,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
           if (!andChain) {
             set = constraint.getFullRange().subtract(set);
           }
-          if (set.min() == set.max()) {
+          if (!set.isEmpty() && set.min() == set.max()) {
             String text = constraint.myExpression.getText() + constraint.getExpressionSuffix();
             String replacement = text + ' ' + (andChain ? "==" : "!=") + ' ' + set.min();
             String message = InspectionGadgetsBundle.message("inspection.excessive.range.check.message", replacement);
