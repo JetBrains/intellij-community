@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
@@ -46,7 +46,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS();
+    final FeatureUsageData data = new FeatureUsageData().addOS();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
@@ -58,7 +58,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().addPluginInfo(info);
+    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).
@@ -72,7 +72,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   @NotNull
   public static String toReportedId(@NotNull PluginInfo info,
                                     @NotNull AnAction action,
-                                    @NotNull FeatureUsageDataBuilder data) {
+                                    @NotNull FeatureUsageData data) {
     if (action instanceof ActionWithDelegate) {
       final String parent = getActionId(info, action, true);
       data.addData("parent", parent);

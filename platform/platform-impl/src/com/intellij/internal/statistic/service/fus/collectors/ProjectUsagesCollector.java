@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +25,17 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   @NotNull
   public abstract Set<UsageDescriptor> getUsages(@NotNull Project project);
 
+  /**
+   * @deprecated use {@link ProjectUsagesCollector#getData(Project)}
+   */
   @Nullable
   public FUSUsageContext getContext(@NotNull Project project) {
     return null;
+  }
+
+  @Nullable
+  public FeatureUsageData getData(@NotNull Project project) {
+    final FUSUsageContext context = getContext(project);
+    return context != null ? new FeatureUsageData().addFeatureContext(context) : null;
   }
 }

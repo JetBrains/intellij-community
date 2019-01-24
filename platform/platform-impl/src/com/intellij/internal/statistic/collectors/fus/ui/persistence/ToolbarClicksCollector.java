@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
@@ -52,7 +52,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-      final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addPluginInfo(info).addOS().addPlace(place);
+      final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info).addOS().addPlace(place);
       FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action, data), data);
     }
   }

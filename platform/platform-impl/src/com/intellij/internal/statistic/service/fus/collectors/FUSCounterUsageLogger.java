@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ public class FUSCounterUsageLogger {
   public static void logEvent(@NotNull Project project,
                               @NotNull FeatureUsageGroup group,
                               @NotNull String event) {
-    final Map<String, Object> data = new FeatureUsageDataBuilder().addProject(project).createData();
+    final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
     FeatureUsageLogger.INSTANCE.log(group, event, data);
   }
 
@@ -28,8 +28,8 @@ public class FUSCounterUsageLogger {
   public static void logEvent(@NotNull Project project,
                               @NotNull FeatureUsageGroup group,
                               @NotNull String event,
-                              @NotNull FeatureUsageDataBuilder data) {
-    FeatureUsageLogger.INSTANCE.log(group, event, data.addProject(project).createData());
+                              @NotNull FeatureUsageData data) {
+    FeatureUsageLogger.INSTANCE.log(group, event, data.addProject(project).build());
   }
 
   /**
@@ -46,7 +46,7 @@ public class FUSCounterUsageLogger {
    */
   public static void logEvent(@NotNull FeatureUsageGroup group,
                               @NotNull String event,
-                              @NotNull FeatureUsageDataBuilder data) {
-    FeatureUsageLogger.INSTANCE.log(group, event, data.createData());
+                              @NotNull FeatureUsageData data) {
+    FeatureUsageLogger.INSTANCE.log(group, event, data.build());
   }
 }

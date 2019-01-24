@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
@@ -102,7 +102,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     final PluginInfo info = getPluginInfo(toolWindowId);
     final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
 
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().addPluginInfo(info);
+    final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
 
     if (source != ACTIVATION) {
       data.addData("source", StringUtil.toLowerCase(source.name()));

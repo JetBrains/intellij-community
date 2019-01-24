@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,41 +21,41 @@ public class LifecycleUsageTriggerCollector {
   }
 
   public static void onIdeClose(boolean restart) {
-    final Map<String, Object> data = new FeatureUsageDataBuilder().addData("restart", restart).createData();
+    final Map<String, Object> data = new FeatureUsageData().addData("restart", restart).build();
     FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "ide.close", data);
   }
 
   public static void onProjectOpenFinished(@NotNull Project project, long time) {
-    final Map<String, Object> data = new FeatureUsageDataBuilder().
+    final Map<String, Object> data = new FeatureUsageData().
       addProject(project).
-      addData("time_ms", time).createData();
+      addData("time_ms", time).build();
     FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "project.opening.finished", data);
   }
 
   public static void onProjectOpened(@NotNull Project project) {
-    final Map<String, Object> data = new FeatureUsageDataBuilder().addProject(project).createData();
+    final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
     FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "project.opened", data);
   }
 
   public static void onProjectClosed(@NotNull Project project) {
-    final Map<String, Object> data = new FeatureUsageDataBuilder().addProject(project).createData();
+    final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
     FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "project.closed", data);
   }
 
   public static void onFreeze(int lengthInSeconds) {
-    final FeatureUsageDataBuilder builder =
-      new FeatureUsageDataBuilder().addData("duration_s", lengthInSeconds).addData("duration_grouped", toLengthGroup(lengthInSeconds));
-    FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "ide.freeze", builder.createData());
+    final FeatureUsageData builder =
+      new FeatureUsageData().addData("duration_s", lengthInSeconds).addData("duration_grouped", toLengthGroup(lengthInSeconds));
+    FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "ide.freeze", builder.build());
   }
 
   public static void onError(boolean isOOM, boolean isMappingFailed, @Nullable String pluginId) {
     try {
-      final FeatureUsageDataBuilder builder =
-        new FeatureUsageDataBuilder().
+      final FeatureUsageData builder =
+        new FeatureUsageData().
           addData("oom", isOOM).
           addData("mapping_failed", isMappingFailed).
           addData("plugin", StringUtil.notNullize(pluginId, "unknown"));
-      FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "ide.error", builder.createData());
+      FeatureUsageLogger.INSTANCE.log(LIFECYCLE, "ide.error", builder.build());
     }
     catch (Exception e) {
       LOG.warn(e);

@@ -32,24 +32,6 @@ fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
   return newData(project, context)
 }
 
-fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value : Int): Map<String, Any> {
-  if (context == null && value == 1) return data
-
-  val newData = ContainerUtil.newHashMap<String, Any>()
-  newData.putAll(data)
-
-  if (value != 1) {
-    newData["value"] = value
-  }
-
-  context?.let {
-    for (datum in it.data) {
-      newData["event_" + datum.key] = datum.value
-    }
-  }
-  return newData
-}
-
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)
   return plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)

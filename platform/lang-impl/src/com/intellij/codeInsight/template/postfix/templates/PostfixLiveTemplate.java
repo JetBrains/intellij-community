@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -240,7 +240,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       if (pluginInfo.getType().isSafeToReport()) {
         String templateId = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
         String id = pluginInfo.getType().isDevelopedByJetBrains() ? templateId : THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID;
-        Map<String, Object> data = new FeatureUsageDataBuilder().addProject(context.getProject()).addPluginInfo(pluginInfo).createData();
+        Map<String, Object> data = new FeatureUsageData().addProject(context.getProject()).addPluginInfo(pluginInfo).build();
         FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, id, data);
       }
     }

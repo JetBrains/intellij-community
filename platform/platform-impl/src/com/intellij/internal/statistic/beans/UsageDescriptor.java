@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.beans;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   private final String myKey;
   private final int myValue;
-  private final @Nullable FUSUsageContext myContext;
+  private final @Nullable FeatureUsageData myData;
 
   public UsageDescriptor(@NotNull String key) {
     this(key, 1);
@@ -25,7 +26,13 @@ public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;
-    myContext = context;
+    myData = new FeatureUsageData().addFeatureContext(context);
+  }
+
+  public UsageDescriptor(@NotNull String key, int value, @Nullable FeatureUsageData data) {
+    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myValue = value;
+    myData = data;
   }
 
   public String getKey() {
@@ -37,8 +44,8 @@ public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   }
 
   @Nullable
-  public FUSUsageContext getContext() {
-    return myContext;
+  public FeatureUsageData getData() {
+    return myData;
   }
 
   @Override

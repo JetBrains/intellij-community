@@ -27,9 +27,9 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
   }
 
   private fun logSystemEvent() {
-    FUStateUsagesLogger.logStateEvent(OS_GROUP, getOSName(), FeatureUsageDataBuilder().addData("version", getOSVersion()))
+    FUStateUsagesLogger.logStateEvent(OS_GROUP, getOSName(), FeatureUsageData().addData("version", getOSVersion()))
 
-    val data = FeatureUsageDataBuilder().addData("version", "1." + JavaVersion.current().feature)
+    val data = FeatureUsageData().addData("version", "1." + JavaVersion.current().feature)
     FUStateUsagesLogger.logStateEvent(JAVA_GROUP, System.getProperty("java.vendor", "Unknown"), data)
   }
 
