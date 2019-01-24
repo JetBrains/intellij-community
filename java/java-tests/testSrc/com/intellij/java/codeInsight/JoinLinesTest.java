@@ -38,6 +38,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testNormal() { doTest(); }
 
   public void testStringLiteral() { doTest(); }
+  public void testStringLiteralTrim() { doTest(); }
   public void testLiteralSCR4989() { doTest(); }
 
   public void testCallChain() { doTest(); }
