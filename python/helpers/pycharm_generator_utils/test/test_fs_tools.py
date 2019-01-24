@@ -1,11 +1,20 @@
 import errno
 import os
+import re
 import shutil
 import tempfile
+import textwrap
 from contextlib import contextmanager
 from unittest import TestCase
 
-from pycharm_generator_utils.util_methods import copy_merging_packages, delete, mkdir, copy_skeletons, copy
+import generator3
+from pycharm_generator_utils.util_methods import (
+    copy_merging_packages,
+    delete,
+    mkdir,
+    copy_skeletons,
+    copy,
+)
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
@@ -35,12 +44,14 @@ class GeneratorTestCase(TestCase):
         actual_dir_children = sorted(os.listdir(actual_dir))
         expected_dir_children = sorted(os.listdir(expected_dir))
         self.assertEquals(expected_dir_children, actual_dir_children)
-        for actual_child, expected_child in zip(actual_dir_children, expected_dir_children):
+        for actual_child, expected_child in zip(actual_dir_children,
+                                                expected_dir_children):
             actual_child = os.path.join(actual_dir, actual_child)
             expected_child = os.path.join(expected_dir, expected_child)
             if os.path.isdir(actual_child) and os.path.isdir(expected_child):
                 self.assertDirsEqual(actual_child, expected_child)
-            elif os.path.isfile(actual_child) and os.path.isfile(expected_child):
+            elif os.path.isfile(actual_child) and os.path.isfile(
+                    expected_child):
                 with open(actual_child) as f:
                     actual_child_content = f.read()
                 with open(expected_child) as f:
@@ -48,7 +59,8 @@ class GeneratorTestCase(TestCase):
                 self.assertEquals(expected_child_content, actual_child_content,
                                   'Different content at %r' % actual_child)
             else:
-                raise AssertionError('%r != %r' % (actual_child, expected_child))
+                raise AssertionError(
+                    '%r != %r' % (actual_child, expected_child))
 
     @contextmanager
     def comparing_dirs(self, subdir=''):
@@ -123,3 +135,45 @@ class FileSystemUtilTest(GeneratorTestCase):
 
     def test_copy_several_skeletons(self):
         self.check_copy_skeletons()
+
+
+class SkeletonCachingTest(GeneratorTestCase):
+    SDK_SKELETONS_DIR = 'sdk_skeletons'
+    _sha256_regex = re.compile(r'[0-9a-f]{64}')
+
+    def run_generator(self, mod_qname, mod_path=None, builtins=False):
+        sdk_dir = os.path.join(self.temp_dir, self.SDK_SKELETONS_DIR)
+        generator3.process_one(mod_qname, mod_path, builtins,
+                               sdk_skeletons_dir=sdk_dir)
+
+    def test_basic_layout_for_builtin_module(self):
+        self.run_generator(mod_qname='sys')
+        self.assertDirLayoutEquals(self.temp_dir, """
+        cache/
+            {hash}/
+                sys.py
+        sdk_skeletons/
+            sys.py
+        """.format(hash=generator3.module_hash('sys', None)))
+
+    def test_basic_layout_for_physical_binary_module(self):
+        self.fail()
+
+    def assertDirLayoutEquals(self, dir_path, expected_layout):
+        def format_dir(dir_path, indent=''):
+            for child_name in os.listdir(dir_path):
+                child_path = os.path.join(dir_path, child_name)
+                if os.path.isdir(child_path):
+                    yield indent + child_name + '/'
+                    for line in format_dir(child_path, indent + '    '):
+                        yield line
+                else:
+                    yield indent + child_name
+
+        formatted_dir_tree = '\n'.join(format_dir(dir_path))
+        expected = textwrap.dedent(expected_layout).strip()
+        actual = formatted_dir_tree.strip()
+        try:
+            self.assertMultiLineEqual(expected, actual)
+        except AttributeError:
+            self.assertEquals(expected, actual)
