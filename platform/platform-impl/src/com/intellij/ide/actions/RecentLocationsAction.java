@@ -166,7 +166,9 @@ public class RecentLocationsAction extends AnAction {
     list.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        popup.cancel();
+        if (!(e.getOppositeComponent() instanceof JCheckBox)) {
+          popup.cancel();
+        }
       }
     });
 
