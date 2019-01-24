@@ -192,10 +192,11 @@ public class RecentLocationManager implements ProjectComponent {
     if (collector != null) {
       CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
       collector.updateCrumbs(changePlace.getFile(),
-                             editor,
+                             editor.getDocument(),
                              editor.logicalPositionToOffset(logicalPosition),
                              new ProgressIndicatorBase(),
-                             consumer);
+                             consumer,
+                             true);
       result = consumer.getResult();
     }
     return result;
