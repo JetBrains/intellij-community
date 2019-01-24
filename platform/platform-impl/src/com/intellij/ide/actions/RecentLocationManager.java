@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -18,13 +17,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -58,16 +54,10 @@ public class RecentLocationManager implements ProjectComponent {
     subscribeOnExternalChange(connection);
   }
 
-  @NotNull
-  Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? ContainerUtil.emptyList() : item.getCrumbs();
-  }
-
   @Nullable
   RangeMarker getPositionOffset(@NotNull PlaceInfo placeInfo, boolean showChanged) {
     PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getPositionOffset();
+    return item == null ? null : item.getPositionOffsetMarker();
   }
 
   @Nullable
@@ -131,9 +121,7 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     int offset = editor.logicalPositionToOffset(logicalPosition);
-    items.put(changePlace, new PlaceInfoPersistentItem(getBreadcrumbs(project, editor, changePlace, logicalPosition),
-                                                       editor.getDocument().createRangeMarker(offset, offset),
-                                                       editor.getColorsScheme()));
+    items.put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset), editor.getColorsScheme()));
   }
 
   @Nullable
@@ -183,40 +171,16 @@ public class RecentLocationManager implements ProjectComponent {
   }
 
   @NotNull
-  private static Collection<Iterable<? extends Crumb>> getBreadcrumbs(@NotNull Project project,
-                                                                      @NotNull Editor editor,
-                                                                      @NotNull PlaceInfo changePlace,
-                                                                      @NotNull LogicalPosition logicalPosition) {
-    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, changePlace.getFile());
-    Collection<Iterable<? extends Crumb>> result = ContainerUtil.emptyList();
-    if (collector != null) {
-      CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
-      collector.updateCrumbs(changePlace.getFile(),
-                             editor.getDocument(),
-                             editor.logicalPositionToOffset(logicalPosition),
-                             new ProgressIndicatorBase(),
-                             consumer,
-                             true);
-      result = consumer.getResult();
-    }
-    return result;
-  }
-
-  @NotNull
   private Map<PlaceInfo, PlaceInfoPersistentItem> getMap(boolean showChanged) {
     return showChanged ? myChangedItems : myRecentItems;
   }
 
   private static class PlaceInfoPersistentItem {
-    @NotNull private final Collection<Iterable<? extends Crumb>> myCrumbs;
-    @NotNull private final RangeMarker myPositionOffset;
+    @NotNull private final RangeMarker myPositionOffsetMarker;
     @NotNull private final EditorColorsScheme myScheme;
 
-    PlaceInfoPersistentItem(@NotNull Collection<Iterable<? extends Crumb>> crumbs,
-                            @NotNull RangeMarker positionOffset,
-                            @NotNull EditorColorsScheme scheme) {
-      myCrumbs = crumbs;
-      myPositionOffset = positionOffset;
+    PlaceInfoPersistentItem(@NotNull RangeMarker positionOffsetMarker, @NotNull EditorColorsScheme scheme) {
+      myPositionOffsetMarker = positionOffsetMarker;
       myScheme = scheme;
     }
 
@@ -226,13 +190,8 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     @NotNull
-    private Collection<Iterable<? extends Crumb>> getCrumbs() {
-      return myCrumbs;
-    }
-
-    @NotNull
-    private RangeMarker getPositionOffset() {
-      return myPositionOffset;
+    private RangeMarker getPositionOffsetMarker() {
+      return myPositionOffsetMarker;
     }
   }
 
