@@ -170,7 +170,7 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals(classText, editor.getDocument().getText());
     List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
       Trinity.create("Exception in thread \"main\" java.lang.RuntimeException: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
-      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 9),
+      Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 15),
       Trinity.create("\tat SomeClass$1X$1.run(SomeClass.java:27)\n", 27, 19),
       Trinity.create("\tat SomeClass$1X.run(SomeClass.java:29)\n", 29, 11),
       Trinity.create("\tat SomeClass.main(SomeClass.java:32)\n", 32, 13),

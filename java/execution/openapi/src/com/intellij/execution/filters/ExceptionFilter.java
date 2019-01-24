@@ -18,7 +18,6 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -47,22 +46,35 @@ public class ExceptionFilter implements Filter, DumbAware {
     String exceptionName = getExceptionFromMessage(line);
     if (exceptionName == null) return null;
     PsiElementFilter throwFilter = e -> {
-      if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.THROW))) return false;
-      PsiThrowStatement parent = ObjectUtils.tryCast(e.getParent(), PsiThrowStatement.class);
-      if (parent == null) return false;
-      PsiExpression exception = PsiUtil.skipParenthesizedExprDown(parent.getException());
-      if (exception == null) return false;
-      PsiType type = exception.getType();
-      if (type == null) return false;
-      return exception instanceof PsiNewExpression ? type.equalsToText(exceptionName) : InheritanceUtil.isInheritor(type, exceptionName);
+      if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.NEW))) return false;
+      PsiNewExpression newExpression = ObjectUtils.tryCast(e.getParent(), PsiNewExpression.class);
+      if (newExpression == null) return false;
+      PsiType type = newExpression.getType();
+      return type != null && type.equalsToText(exceptionName);
     };
-    if ("java.lang.ArrayIndexOutOfBoundsException".equals(exceptionName)) {
-      return element -> throwFilter.isAccepted(element) ||
-                        (element instanceof PsiJavaToken &&
-                         element.textMatches("[") &&
-                         element.getParent() instanceof PsiArrayAccessExpression);
+    PsiElementFilter specificFilter = getExceptionSpecificFilter(exceptionName);
+    if (specificFilter == null) return throwFilter;
+    return element -> throwFilter.isAccepted(element) || specificFilter.isAccepted(element);
+  }
+
+  @Nullable
+  private static PsiElementFilter getExceptionSpecificFilter(String exceptionName) {
+    switch (exceptionName) {
+      case "java.lang.ArrayIndexOutOfBoundsException":
+        return e -> e instanceof PsiJavaToken &&
+                    e.textMatches("[") &&
+                    e.getParent() instanceof PsiArrayAccessExpression;
+      case "java.lang.ArrayStoreException":
+        return e -> {
+          if (e instanceof PsiJavaToken && e.textMatches("=") && e.getParent() instanceof PsiAssignmentExpression) {
+            PsiExpression lExpression = ((PsiAssignmentExpression)e.getParent()).getLExpression();
+            return PsiUtil.skipParenthesizedExprDown(lExpression) instanceof PsiArrayAccessExpression;
+          }
+          return false;
+        };
+      default:
+        return null;
     }
-    return throwFilter;
   }
 
   @Nullable
