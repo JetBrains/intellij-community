@@ -71,24 +71,6 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun filter(filter: (T) -> Boolean): Self = filterWithContext { t, processingContext -> filter(t) }
 
-  open fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
-    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
-
-  open fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
-    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
-
-  open fun constructorParameter(parameterIndex: Int, classFQN: String): Self = throw UnsupportedOperationException(
-    "implemented only for UExpressionPatterns")
-
-  open fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = throw UnsupportedOperationException(
-    "implemented only for UExpressionPatterns")
-
-  open fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
-    throw UnsupportedOperationException("implemented only for UExpressionPatterns")
-
-  open fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = throw UnsupportedOperationException(
-    "implemented only for UExpressionPatterns")
-
   fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
@@ -176,16 +158,16 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
   fun annotationParams(@NonNls annotationQualifiedName: String, @NonNls parameterNames: ElementPattern<String>): Self =
     annotationParams(qualifiedNamePattern(StandardPatterns.string().equalTo(annotationQualifiedName)), parameterNames)
 
-  override fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
+  fun inCall(callPattern: ElementPattern<UCallExpression>): Self =
     filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
 
-  override fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
+  fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
     filter { isCallExpressionParameter(it, parameterIndex, callPattern) }
 
-  override fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex,
-                                                                                                 callExpression().constructor(classFQN))
+  fun constructorParameter(parameterIndex: Int, classFQN: String): Self =
+    callParameter(parameterIndex, callExpression().constructor(classFQN))
 
-  override fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = filter {
+  fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = filter {
     isPropertyAssignCall(it, methodPattern) ||
     isCallExpressionParameter(it, 0, callExpression().withAnyResolvedMethod(methodPattern))
   }
@@ -194,7 +176,7 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>, multiResolve: Boolean = true): Self =
     callParameter(parameterIndex, callExpression().withResolvedMethod(methodPattern, multiResolve))
 
-  override fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
+  fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
     val aae: UArrayAccessExpression = unwrapPolyadic(self).uastParent as? UArrayAccessExpression ?: return@filter false
     val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
     receiverClassPattern.accepts(receiverClass)
