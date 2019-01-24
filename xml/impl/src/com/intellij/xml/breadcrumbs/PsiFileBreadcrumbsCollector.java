@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -249,7 +248,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   @Nullable
   private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider, boolean checkSettings) {
     Language language = element.getLanguage();
-    if (checkSettings && !EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
+    if (checkSettings && !BreadcrumbsUtilEx.isBreadcrumbsShownFor(language)) return defaultProvider;
     BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
     return provider == null ? defaultProvider : provider;
   }

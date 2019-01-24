@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -76,6 +76,6 @@ abstract class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware
     if (psiFile == null) return null;
 
     Language baseLanguage = psiFile.getViewProvider().getBaseLanguage();
-    return baseLanguage.getID();
+    return BreadcrumbsUtilEx.findLanguageWithBreadcrumbSettings(baseLanguage);
   }
 }
