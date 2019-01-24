@@ -2906,8 +2906,12 @@ public class JBTabsImpl extends JComponent
     return myVisibleInfos.isEmpty();
   }
 
-  public int getInterTabSpaceLength() {
-    return 1;
+  public int getTabHGap() {
+    return 0;
+  }
+
+  public int getTabVGap() {
+    return JBUI.scale(1);
   }
 
   @Override

@@ -93,9 +93,9 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       else {
         length = Math.max(lengthIncrement, actualGridSize);
       }
-      spentLength += length + myTabs.getInterTabSpaceLength();
+      spentLength += length + myTabs.getTabHGap();
       applyTabLayout(data, label, length, 0);
-      data.position = (int)label.getBounds().getMaxX() + myTabs.getInterTabSpaceLength();
+      data.position = (int)label.getBounds().getMaxX() + myTabs.getTabHGap();
     }
 
     for (TabInfo eachInfo : data.toDrop) {

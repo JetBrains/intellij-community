@@ -30,8 +30,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
-import com.intellij.ui.tabs.impl.table.TableLayout;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +117,7 @@ public class JBEditorTabs extends JBTabsImpl {
     final TabLabel label = myInfo2Label.get(info);
     if (label == null) return;
 
-    Rectangle rect = fixedBounds(label, label.getBounds());
+    Rectangle rect = fixedBounds(label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
 
     tabPainter.paintTab(g2d, rect, tabColor);
@@ -132,15 +130,16 @@ public class JBEditorTabs extends JBTabsImpl {
     final TabLabel label = myInfo2Label.get(info);
     if (label == null) return;
 
-    Rectangle rect = fixedBounds(label, label.getBounds());
+    Rectangle rect = fixedBounds(label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
     tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), isActiveTab(info));
   }
 
   @NotNull
-  private Rectangle fixedBounds(TabLabel label, Rectangle effectiveBounds) {
-    Insets insets = getTabsBorder().getEffectiveBorder();
-
+  private Rectangle fixedBounds(Rectangle effectiveBounds) {
+    return fixedBounds(effectiveBounds, getTabsBorder().getEffectiveBorder());
+  }
+  private Rectangle fixedBounds(Rectangle effectiveBounds, Insets insets) {
     int _x = effectiveBounds.x + insets.left;
     int _y = effectiveBounds.y + insets.top;
     int _width = effectiveBounds.width - insets.left - insets.right + (getTabsPosition() == JBTabsPosition.right ? 1 : 0);
@@ -228,4 +227,17 @@ public class JBEditorTabs extends JBTabsImpl {
     tabPainter.fillBackground(g2d, backgroundRect);
     tabPainter.fillBeforeAfterTabs(g2d, beforeTabs, afterTabs);
   }
+
+/*  @Override
+  protected void doPaintBackground(Graphics2D g2d, Rectangle rect) {
+   // Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
+    Insets insets = new JBInsets(3, 3, 3, 3);
+
+    Rectangle bkg = fixedBounds(rect, insets);
+
+    g2d.setColor(JBColor.RED);
+    g2d.fillRect(rect.x, rect.y, rect.width, rect.height);*//*
+
+    tabPainter.fillBackground(g2d, new Rectangle(0, 0, getWidth(), getHeight()));
+  }*/
 }

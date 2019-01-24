@@ -9,7 +9,7 @@ import java.awt.Rectangle
 
 interface JBTabPainter {
   companion object {
-    val EDITOR_TAB = TabTheme(thickness = 3)
+    val EDITOR_TAB = TabTheme(thickness = JBUI.scale(3))
   }
 
   fun fillBackground(g : Graphics2D, rect : Rectangle)
@@ -21,15 +21,15 @@ interface JBTabPainter {
 class TabTheme(
   val background: Color = JBUI.CurrentTheme.EditorTabs.backgroundColor(),
   val defaultTabColor: Color = JBUI.CurrentTheme.EditorTabs.defaultTabColor(),
-  val underline: Color = JBUI.CurrentTheme.DefaultTabs.underlineColor(),
-  val inactiveUnderline: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
-  val thickness : Int = 2
+  val underline: Color = JBUI.CurrentTheme.EditorTabs.underlineColor(),
+  val inactiveUnderline: Color = JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
+  val thickness : Int = JBUI.scale(2)
 )
 
 class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     g.color = theme.background
-    g.fill(rect)
+    g.fillRect(rect.x, rect.y, rect.width, rect.height)
   }
 
   override fun fillBeforeAfterTabs(g: Graphics2D, before: Rectangle, after: Rectangle) {
