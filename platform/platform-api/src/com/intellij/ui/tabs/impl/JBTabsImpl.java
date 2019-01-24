@@ -1694,107 +1694,6 @@ public class JBTabsImpl extends JComponent
     config.restore();
   }
 
-  @Nullable
-  protected Color getActiveTabColor(@Nullable final Color c) {
-    final TabInfo info = getSelectedInfo();
-    if (info == null) {
-      return c;
-    }
-
-    final Color tabColor = info.getTabColor();
-    return tabColor == null ? c : tabColor;
-  }
-
-  protected Color getFocusedTopFillColor() {
-    return UIUtil.getFocusedFillColor();
-  }
-
-  protected Color getFocusedBottomFillColor() {
-    return UIUtil.getFocusedFillColor();
-  }
-
-  protected ShapeInfo computeSelectedLabelShape() {
-    final ShapeInfo shape = new ShapeInfo();
-
-    shape.path = getEffectiveLayout().createShapeTransform(getSize());
-    shape.insets = shape.path.transformInsets(getLayoutInsets());
-    shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
-
-    shape.labelBottomY = shape.labelPath.getMaxY() + shape.labelPath.deltaY(1);
-    shape.labelTopY = shape.labelPath.getY();
-    shape.labelLeftX = shape.labelPath.getX();
-    shape.labelRightX = shape.labelPath.getX() + shape.labelPath.deltaX(shape.labelPath.getWidth());
-
-    Insets border = myBorder.getEffectiveBorder();
-    TabInfo selected = getSelectedInfo();
-    boolean first = myLastLayoutPass.getPreviousFor(selected) == null;
-    boolean last = myLastLayoutPass.getNextFor(selected) == null;
-
-    boolean leftEdge = !isSingleRow() && first && border.left == 0;
-    boolean rightEdge =
-      !isSingleRow() && last && Boolean.TRUE.equals(myInfo2Label.get(selected).getClientProperty(STRETCHED_BY_WIDTH)) && border.right == 0;
-
-    boolean isDraggedNow = selected != null && myDragHelper != null && selected.equals(myDragHelper.getDragSource());
-
-    if (leftEdge && !isDraggedNow) {
-      shape.path.moveTo(shape.insets.left, shape.labelTopY + shape.labelPath.deltaY(getEdgeArcSize()));
-      shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getEdgeArcSize()), shape.labelTopY);
-      shape.path.lineTo(shape.labelRightX - shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
-    }
-    else {
-      shape.path.moveTo(shape.insets.left, shape.labelBottomY);
-      shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
-      shape.path.lineTo(shape.labelLeftX, shape.labelTopY + shape.labelPath.deltaY(getArcSize()));
-      shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
-    }
-
-    int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right + 1);
-
-    if (isStealthModeEffective()) {
-      shape.path.lineTo(lastX - shape.path.deltaX(getArcSize()), shape.labelTopY);
-      shape.path.quadTo(lastX, shape.labelTopY, lastX, shape.labelTopY + shape.path.deltaY(getArcSize()));
-      shape.path.lineTo(lastX, shape.labelBottomY);
-    }
-    else {
-      if (rightEdge) {
-        shape.path.lineTo(shape.labelRightX + 1 - shape.path.deltaX(getArcSize()), shape.labelTopY);
-        shape.path.quadTo(shape.labelRightX + 1, shape.labelTopY, shape.labelRightX + 1, shape.labelTopY + shape.path.deltaY(getArcSize()));
-      }
-      else {
-        shape.path.lineTo(shape.labelRightX - shape.path.deltaX(getArcSize()), shape.labelTopY);
-        shape.path.quadTo(shape.labelRightX, shape.labelTopY, shape.labelRightX, shape.labelTopY + shape.path.deltaY(getArcSize()));
-      }
-      if (myLastLayoutPass.hasCurveSpaceFor(selected)) {
-        shape.path.lineTo(shape.labelRightX, shape.labelBottomY - shape.path.deltaY(getArcSize()));
-        shape.path.quadTo(shape.labelRightX, shape.labelBottomY, shape.labelRightX + shape.path.deltaX(getArcSize()), shape.labelBottomY);
-      }
-      else {
-        if (rightEdge) {
-          shape.path.lineTo(shape.labelRightX + 1, shape.labelBottomY);
-        }
-        else {
-          shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
-        }
-      }
-    }
-
-    if (!rightEdge) {
-      shape.path.lineTo(lastX, shape.labelBottomY);
-    }
-
-    if (isStealthModeEffective()) {
-      shape.path.closePath();
-    }
-
-    shape.fillPath = shape.path.copy();
-    if (!isHideTabs()) {
-      shape.fillPath.lineTo(lastX, shape.labelBottomY + shape.fillPath.deltaY(1));
-      shape.fillPath.lineTo(shape.labelLeftX, shape.labelBottomY + shape.fillPath.deltaY(1));
-      shape.fillPath.closePath();
-    }
-    return shape;
-  }
-
   protected TabLabel getSelectedLabel() {
     return myInfo2Label.get(getSelectedInfo());
   }
@@ -1812,7 +1711,6 @@ public class JBTabsImpl extends JComponent
     public Color from;
     public Color to;
   }
-
 
   protected void paintFirstGhost(Graphics2D g2d) {
     final ShapeTransform path = getEffectiveLayout().createShapeTransform(mySingleRowLayout.myLastSingRowLayout.firstGhost);
@@ -1931,11 +1829,6 @@ public class JBTabsImpl extends JComponent
     return myLastLayoutPass;
   }
 
-  @Override
-  public Color getBackground() {
-    return UIUtil.getBgFillColor(getParent());
-  }
-
   protected void doPaintInactive(Graphics2D g2d,
                                  TabLabel label,
                                  Rectangle effectiveBounds) {}
@@ -1947,75 +1840,6 @@ public class JBTabsImpl extends JComponent
 
   public static int getSelectionTabVShift() {
     return 2;
-  }
-
-  protected void paintBorder(Graphics2D g2d, ShapeInfo shape, final Color borderColor) {
-    final ShapeTransform shaper = shape.path.copy().reset();
-
-    final Insets paintBorder = shape.path.transformInsets(myBorder.getEffectiveBorder());
-
-    int topY = shape.labelPath.getMaxY() + shape.labelPath.deltaY(1);
-
-    int bottomY = topY + paintBorder.top - 2;
-    int middleY = topY + (bottomY - topY) / 2;
-
-
-    final int boundsX = shape.path.getX() + shape.path.deltaX(shape.insets.left);
-
-    final int boundsY =
-      isHideTabs() ? shape.path.getY() + shape.path.deltaY(shape.insets.top) : shape.labelPath.getMaxY() + shape.path.deltaY(1);
-
-    final int boundsHeight = Math.abs(shape.path.getMaxY() - boundsY) - shape.insets.bottom - paintBorder.bottom;
-    final int boundsWidth = Math.abs(shape.path.getMaxX() - (shape.insets.left + shape.insets.right));
-
-    if (paintBorder.top > 0) {
-      if (isHideTabs()) {
-        if (isToDrawBorderIfTabsHidden()) {
-          g2d.setColor(borderColor);
-          g2d.fill(shaper.reset().doRect(boundsX, boundsY, boundsWidth, 1).getShape());
-        }
-      }
-      else {
-        Color tabFillColor = getActiveTabColor(null);
-        if (tabFillColor == null) {
-          tabFillColor = shape.path.transformY1(shape.to, shape.from);
-        }
-
-        g2d.setColor(tabFillColor);
-        g2d.fill(shaper.reset().doRect(boundsX, topY + shape.path.deltaY(1), boundsWidth, paintBorder.top - 1).getShape());
-
-        g2d.setColor(borderColor);
-        if (paintBorder.top == 2) {
-          final Line2D.Float line = shape.path.transformLine(boundsX, topY, boundsX + shape.path.deltaX(boundsWidth - 1), topY);
-
-          g2d.drawLine((int)line.x1, (int)line.y1, (int)line.x2, (int)line.y2);
-        }
-        else if (paintBorder.top > 2) {
-//todo kirillk
-//start hack
-          int deltaY = 0;
-          if (myPosition == JBTabsPosition.bottom || myPosition == JBTabsPosition.right) {
-            deltaY = 1;
-          }
-//end hack
-          final int topLine = topY + shape.path.deltaY(paintBorder.top - 1);
-          g2d.fill(shaper.reset().doRect(boundsX, topLine + deltaY, boundsWidth - 1, 1).getShape());
-        }
-      }
-    }
-
-    g2d.setColor(borderColor);
-
-    //bottom
-    g2d.fill(shaper.reset().doRect(boundsX, Math.abs(shape.path.getMaxY() - shape.insets.bottom - paintBorder.bottom), boundsWidth,
-                                   paintBorder.bottom).getShape());
-
-    //left
-    g2d.fill(shaper.reset().doRect(boundsX, boundsY, paintBorder.left, boundsHeight).getShape());
-
-    //right
-    g2d.fill(shaper.reset()
-               .doRect(shape.path.getMaxX() - shape.insets.right - paintBorder.right, boundsY, paintBorder.right, boundsHeight).getShape());
   }
 
   protected boolean isStealthModeEffective() {

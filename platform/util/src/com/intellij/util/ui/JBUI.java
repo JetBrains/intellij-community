@@ -1585,13 +1585,14 @@ public class JBUI {
 
       @NotNull
       public static Color defaultTabColor() {
-        return JBColor.namedColor("DefaultTabs.backgroundColor", UIUtil.getPanelBackground());
+        return JBColor.namedColor("DefaultTabs.defaultTabColor", ToolWindow.headerBackground());
       }
 
       @NotNull
-      public static Color borderColor() {
+      public static Color backgroundColor() {
         return JBColor.namedColor("DefaultTabs.backgroundColor", UIUtil.CONTRAST_BORDER_COLOR);
       }
+
     }
 
     public static class EditorTabs {
@@ -1606,13 +1607,13 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color backgroundColor() {
-        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.defaultTabColor());
+      public static Color defaultTabColor() {
+        return JBColor.namedColor("EditorTabs.defaultTabColor", DefaultTabs.defaultTabColor());
       }
 
       @NotNull
-      public static Color borderColor() {
-        return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
+      public static Color backgroundColor() {
+        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.backgroundColor());
       }
 
     }

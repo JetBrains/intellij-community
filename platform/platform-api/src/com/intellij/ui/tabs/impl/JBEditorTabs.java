@@ -43,7 +43,6 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
   protected final JBTabPainter tabPainter = createTabPainter();
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
@@ -172,10 +171,6 @@ public class JBEditorTabs extends JBTabsImpl {
     return true;
   }
 
-  protected JBEditorTabsPainter getPainter() {
-    return myDefaultPainter;
-  }
-
   @Override
   public boolean isAlphabeticalMode() {
     return Registry.is(TABS_ALPHABETICAL_KEY);
@@ -186,7 +181,7 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
+  protected void doPaintBackground(Graphics2D g2d, Rectangle backgroundRect) {
     List<TabInfo> visibleInfos = getVisibleInfos();
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
 
@@ -238,23 +233,7 @@ public class JBEditorTabs extends JBTabsImpl {
       afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
     }
 
-    getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);
-    g2d.setPaint(getEmptySpaceColor());
-    g2d.fill(beforeTabs);
-    g2d.fill(afterTabs);
-  }
-
-  protected Color getEmptySpaceColor() {
-    return getPainter().getEmptySpaceColor();
-  }
-
-  @Override
-  public Color getBackground() {
-    return getPainter().getBackgroundColor();
-  }
-
-  @Override
-  public Color getForeground() {
-    return UIUtil.getLabelForeground();
+    tabPainter.fillBackground(g2d, backgroundRect);
+    tabPainter.fillBeforeAfterTabs(g2d, beforeTabs, afterTabs);
   }
 }
