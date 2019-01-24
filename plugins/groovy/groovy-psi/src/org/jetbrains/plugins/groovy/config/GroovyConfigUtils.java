@@ -43,9 +43,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
 
-  private GroovyConfigUtils() {
-    STARTER_SCRIPT_FILE_NAME = "groovy";
-  }
+  private GroovyConfigUtils() {}
 
   public static GroovyConfigUtils getInstance() {
     return ourGroovyConfigUtils;
