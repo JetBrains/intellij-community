@@ -87,6 +87,10 @@ public class InlayModelImpl implements InlayModel, Disposable {
         if (((CommandProcessorEx)CommandProcessor.getInstance()).isCurrentCommandTyping()) {
           return true;
         }
+        UndoManager globalUndoManager = UndoManager.getGlobalInstance();
+        if (globalUndoManager.isUndoInProgress() || globalUndoManager.isRedoInProgress()) {
+          return true;
+        }
         if (myEditor.getProject() != null) {
           UndoManager undoManager = UndoManager.getInstance(myEditor.getProject());
           return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
