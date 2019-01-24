@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -20,18 +21,21 @@ import java.util.Set;
 
 public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtureTestCase {
   private static final Set<String> ENABLED_TOOLS = ContainerUtil.set("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement", "GroovyUnusedAssignment");
+  private boolean myDefaultShowStructure;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     GlobalInspectionContextImpl.TESTING_VIEW = true;
     InspectionProfileImpl.INIT_INSPECTIONS = true;
+    myDefaultShowStructure = AnalysisUIOptions.getInstance(getProject()).SHOW_STRUCTURE;
   }
 
   @Override
   public void tearDown() {
     GlobalInspectionContextImpl.TESTING_VIEW = false;
     InspectionProfileImpl.INIT_INSPECTIONS = false;
+    AnalysisUIOptions.getInstance(getProject()).SHOW_STRUCTURE = myDefaultShowStructure;
     super.tearDown();
   }
 
