@@ -1,8 +1,7 @@
 import base64
 import matplotlib
 import os
-
-from typing import Dict, Tuple
+import sys
 
 from matplotlib._pylab_helpers import Gcf
 from matplotlib.backend_bases import FigureManagerBase, ShowBase
@@ -10,6 +9,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
 from datalore.display import display
+
+PY3 = sys.version_info[0] >= 3
 
 index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
@@ -104,11 +105,13 @@ class DisplayDataObject:
         self.image_width = width
         self.image_bytes = image_bytes
 
-    def _repr_display_(self) -> Tuple[str, Dict]:
+    def _repr_display_(self):
         image_bytes_base64 = base64.b64encode(self.image_bytes)
+        if PY3:
+            image_bytes_base64 = image_bytes_base64.decode()
         body = {
             'plot_index': self.plot_index,
             'image_width': self.image_width,
-            'image_base64': image_bytes_base64.decode()
+            'image_base64': image_bytes_base64
         }
         return ('pycharm-plot-image', body)
