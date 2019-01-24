@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.spock
 
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Ignore
@@ -167,21 +165,6 @@ class FooSpec extends spock.lang.Specification {
   }
 }
 """)
-  }
-
-  @Ignore("unignore when IDEA-205861 is fixed")
-  @Test
-  void testVariable_resolved() {
-    highlightingTest '''\
-class FooSpec extends spock.lang.Specification {
-  def "foo test"() {
-    String subscriber = Mock()
-    then: (0.._) * subscriber.concat<weak_warning descr="Cannot infer argument types">(_)</weak_warning>
-      subscriber.concat<weak_warning descr="Cannot infer argument types">(<warning descr="Cannot resolve symbol 'asdasdasd'">asdasdasd</warning>)</weak_warning>
-      subscriber.concat<warning descr="'concat' in 'java.lang.String' cannot be applied to '(java.lang.Integer)'">(23)</warning>
-  }
-}
-''', GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection
   }
 
   @Test

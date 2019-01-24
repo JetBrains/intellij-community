@@ -64,6 +64,7 @@ import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
 import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -319,6 +320,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitMethodCall(@NotNull GrMethodCall call) {
     super.visitMethodCall(call);
+    if (isFake(call)) return;
     checkMethodCall(new GrMethodCallInfo(call));
   }
 
@@ -781,6 +783,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression binary) {
     super.visitBinaryExpression(binary);
+    if (isFake(binary)) return;
     checkOperator(new GrBinaryExprInfo(binary));
   }
 

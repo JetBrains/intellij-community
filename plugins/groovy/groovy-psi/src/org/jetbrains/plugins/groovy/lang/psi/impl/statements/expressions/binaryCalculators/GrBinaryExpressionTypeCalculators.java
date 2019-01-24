@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -15,6 +15,7 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
 public class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
@@ -56,6 +57,7 @@ public class GrBinaryExpressionTypeCalculators {
 
   @Nullable
   public static PsiType computeType(@NotNull GrOperatorExpression e) {
+    if (isFake(e)) return null;
     final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperator());
     assert function != null : e.getOperator();
     return function.fun(e);
