@@ -19,10 +19,9 @@ class TestFilesystemUtils(TestCase):
         shutil.rmtree(self.temp_dir)
 
     @contextmanager
-    def comparing_dirs(self):
-        test_name = self._testMethodName[len('test_'):]
-        before_dir = os.path.join(_test_data_dir, test_name, 'before')
-        after_dir = os.path.join(_test_data_dir, test_name, 'after')
+    def comparing_dirs(self, subdir=''):
+        before_dir = os.path.join(self.test_data_dir, subdir, 'before')
+        after_dir = os.path.join(self.test_data_dir, subdir, 'after')
         for child_name in os.listdir(before_dir):
             child_path = os.path.join(before_dir, child_name)
             child_dst_path = os.path.join(self.temp_dir, child_name)
@@ -33,10 +32,18 @@ class TestFilesystemUtils(TestCase):
         yield
         self.assertDirsEqual(self.temp_dir, after_dir)
 
+    @property
+    def test_name(self):
+        return self._testMethodName[len('test_'):]
+
+    @property
+    def test_data_dir(self):
+        return os.path.join(_test_data_dir, self.test_name)
+
     def check_copy_merging_packages(self):
-        with self.comparing_dirs():
-            src_dir = os.path.join(self.temp_dir, 'src')
-            dst_dir = os.path.join(self.temp_dir, 'dst')
+        with self.comparing_dirs('dst'):
+            src_dir = os.path.join(self.test_data_dir, 'src')
+            dst_dir = self.temp_dir
             copy_merging_packages(src_dir, dst_dir)
 
     def check_copy(self, src, dst, **kwargs):
@@ -53,9 +60,9 @@ class TestFilesystemUtils(TestCase):
             mkdir(os.path.join(self.temp_dir, rel_name))
 
     def check_copy_skeletons(self):
-        with self.comparing_dirs():
-            src_dir = os.path.join(self.temp_dir, 'src')
-            dst_dir = os.path.join(self.temp_dir, 'dst')
+        with self.comparing_dirs('dst'):
+            src_dir = os.path.join(self.test_data_dir, 'src')
+            dst_dir = self.temp_dir
             copy_skeletons(src_dir, dst_dir)
 
     def assertDirsEqual(self, actual_dir, expected_dir):
