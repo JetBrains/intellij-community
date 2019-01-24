@@ -333,7 +333,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-      setupBJre()
+      setupJBre()
       setupBundledMaven()
       layoutShared()
 
@@ -399,7 +399,7 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after building distributions")
   }
 
-  private void setupBJre() {
+  private void setupJBre() {
     logFreeDiskSpace("before downloading JREs")
     String[] args = [
       'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",

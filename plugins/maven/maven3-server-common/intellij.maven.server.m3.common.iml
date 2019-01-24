@@ -78,6 +78,8 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="org.apache.maven.shared:maven-dependency-tree:3.0.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.apache.maven.archetype" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.apache.maven.shared:maven-dependency-tree:1.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.sonatype.nexus:nexus-indexer" level="project" />
   </component>
 </module>
