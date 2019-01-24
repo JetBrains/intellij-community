@@ -18,6 +18,8 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Functions;
@@ -51,6 +53,7 @@ public class NewMappings {
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
+  private volatile List<String> myInvalidMappedPaths = Collections.emptyList();
   private boolean myActivated = false;
 
   @NotNull private final MergingUpdateQueue myRootUpdateQueue;
@@ -73,6 +76,20 @@ public class NewMappings {
         activateActiveVcses();
       }
     });
+
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
+      @Override
+      public void afterRefreshFinish(boolean asynchronous) {
+        boolean mappedFilesChanged = exists(myMappedRoots, it -> !it.root.isValid()) ||
+                                     exists(myInvalidMappedPaths, it -> {
+                                       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(it);
+                                       return file != null && file.isDirectory();
+                                     });
+        if (mappedFilesChanged) {
+          scheduleMappedRootsUpdate();
+        }
+      }
+    }, myProject);
   }
 
   @TestOnly
@@ -112,8 +129,7 @@ public class NewMappings {
   }
 
   @TestOnly
-  public void updateMappedRoots() {
-    scheduleMappedRootsUpdate();
+  public void waitMappedRootsUpdate() {
     myRootUpdateQueue.flush();
   }
 
@@ -142,13 +158,14 @@ public class NewMappings {
     if (updateRootsOnly && mappingsChanged) return; // someone updated mappings, roots are already up-to-date
 
     myMappingsToUpdate = null;
-    List<MappedRoot> newMappedRoots = collectMappedRoots(newMappings);
+    Mappings newMappedRoots = collectMappedRoots(newMappings);
 
     synchronized (myUpdateLock) {
       if (updateRootsOnly && !Comparing.equal(myMappings, newMappings)) return;
 
       myMappings = newMappings;
-      myMappedRoots = newMappedRoots;
+      myMappedRoots = newMappedRoots.mappedRoots;
+      myInvalidMappedPaths = newMappedRoots.invalidMappedPaths;
 
       if (myActivated) {
         updateActiveVcses();
@@ -163,10 +180,11 @@ public class NewMappings {
   }
 
   @NotNull
-  private List<MappedRoot> collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
+  private Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings) {
     AllVcsesI allVcsesI = AllVcses.getInstance(myProject);
 
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
+    List<String> invalidMappings = new ArrayList<>();
 
     // direct mappings have priority over <Project> mappings
     for (VcsDirectoryMapping mapping : mappings) {
@@ -177,6 +195,9 @@ public class NewMappings {
 
       if (vcsRoot != null && vcsRoot.isDirectory()) {
         mappedRoots.putIfAbsent(vcsRoot, new MappedRoot(vcs, mapping, vcsRoot));
+      }
+      else {
+        invalidMappings.add(mapping.getDirectory());
       }
     }
 
@@ -193,7 +214,8 @@ public class NewMappings {
       }
     }
 
-    return unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR));
+    return new Mappings(unmodifiableList(sorted(mappedRoots.values(), ROOT_COMPARATOR)),
+                        unmodifiableList(invalidMappings));
   }
 
   @Nullable
@@ -269,6 +291,7 @@ public class NewMappings {
     synchronized (myUpdateLock) {
       myMappings = Collections.emptyList();
       myMappedRoots = Collections.emptyList();
+      myInvalidMappedPaths = Collections.emptyList();
       updateActiveVcses();
     }
     myFileWatchRequestsManager.ping();
@@ -389,6 +412,16 @@ public class NewMappings {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;
+    }
+  }
+
+  private static class Mappings {
+    @NotNull public final List<MappedRoot> mappedRoots;
+    @NotNull public final List<String> invalidMappedPaths;
+
+    private Mappings(@NotNull List<MappedRoot> mappedRoots, @NotNull List<String> invalidMappedPaths) {
+      this.mappedRoots = mappedRoots;
+      this.invalidMappedPaths = invalidMappedPaths;
     }
   }
 }
