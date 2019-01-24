@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -47,7 +46,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addFeatureContext(FUSUsageContext.OS_CONTEXT);
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS();
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
@@ -67,34 +66,35 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
-    FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action), data);
+    FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action, data), data);
   }
 
   @NotNull
-  public static String toReportedId(@NotNull PluginInfo info, @NotNull AnAction action) {
-    String actionId = getActionId(info, action);
-    if (actionId != null) {
-      return actionId;
-    }
-
+  public static String toReportedId(@NotNull PluginInfo info,
+                                    @NotNull AnAction action,
+                                    @NotNull FeatureUsageDataBuilder data) {
     if (action instanceof ActionWithDelegate) {
+      final String parent = getActionId(info, action, true);
+      data.addData("parent", parent);
+
       final Object delegate = ((ActionWithDelegate)action).getDelegate();
       final PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
-      actionId = delegateInfo.isDevelopedByJetBrains() ? delegate.getClass().getName() : DEFAULT_ID;
+      return delegateInfo.isDevelopedByJetBrains() ? delegate.getClass().getName() : DEFAULT_ID;
     }
-    else {
-      actionId = action.getClass().getName();
-    }
-    return ConvertUsagesUtil.escapeDescriptorName(actionId);
+    return getActionId(info, action, false);
   }
 
-  @Nullable
-  private static String getActionId(@NotNull PluginInfo info, @NotNull AnAction action) {
+  @NotNull
+  private static String getActionId(@NotNull PluginInfo info, @NotNull AnAction action, boolean simpleName) {
     if (!info.isDevelopedByJetBrains()) {
       return DEFAULT_ID;
     }
 
-    return action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
+    final String actionId = action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
+    if (actionId != null) {
+      return ConvertUsagesUtil.escapeDescriptorName(actionId);
+    }
+    return simpleName ? action.getClass().getSimpleName() : action.getClass().getName();
   }
 
   private final State myState = new State();
