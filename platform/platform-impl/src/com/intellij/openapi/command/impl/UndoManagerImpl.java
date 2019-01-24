@@ -205,7 +205,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
       if (recordOriginalReference && myProject != null) {
         Editor editor = null;
         final Application application = ApplicationManager.getApplication();
-        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+        if (application.isUnitTestMode() || (!application.isOnAir() && application.isHeadlessEnvironment())) {
           editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
         }
         else {
