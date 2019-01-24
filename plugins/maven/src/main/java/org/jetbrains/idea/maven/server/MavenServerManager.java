@@ -309,8 +309,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     else {
       classpath.add(new File(root, "intellij.maven.server.m3.common"));
       addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
-      File artifactDir = new File(new File(root).getParentFile(), "artifacts");
-      addDir(classpath, new File(artifactDir, "mavenDependencies"));
 
       if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
         classpath.add(new File(root, "intellij.maven.server.m30.impl"));

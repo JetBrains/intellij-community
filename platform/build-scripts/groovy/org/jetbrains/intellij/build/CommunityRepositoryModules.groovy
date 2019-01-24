@@ -159,8 +159,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
-      //withResource("maven36-server-impl/lib/maven3", "lib/maven36")
-      //withResource("maven3-server-common/lib", "lib/maven3-server-lib")
+      withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
       [
         "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
@@ -170,7 +169,9 @@ class CommunityRepositoryModules {
         "nexus-indexer-1.2.3.jar"
       ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
       doNotCopyModuleLibrariesAutomatically([
-        "intellij.maven.artifactResolver.m2", "intellij.maven.server.m2.impl"
+        "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m2", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
       ])
     },
     plugin("intellij.gradle") {
