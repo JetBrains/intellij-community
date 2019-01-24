@@ -303,6 +303,7 @@ idea.fatal.error.notification=disabled
   void buildDistributions() {
     checkProductProperties()
     copyDependenciesFile()
+    setupBundledMaven()
 
     def patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
