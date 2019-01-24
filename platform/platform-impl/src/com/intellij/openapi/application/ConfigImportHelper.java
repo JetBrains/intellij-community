@@ -31,6 +31,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
+import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
@@ -41,7 +43,10 @@ public class ConfigImportHelper {
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
   private static final String CONFIG = "config";
-  private static final String[] OPTIONS = {"options/" + Storage.NOT_ROAMABLE_FILE, "options/ide.general.xml", "options/options.xml"};
+  private static final String[] OPTIONS = {
+    OPTIONS_DIRECTORY + '/' + Storage.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
+    OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
   private static final String CONTENTS = "Contents";
   private static final String PLIST = "Info.plist";

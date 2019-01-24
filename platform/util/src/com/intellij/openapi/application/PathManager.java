@@ -39,7 +39,10 @@ public class PathManager {
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_GUI_TEST_LOG_FILE = "idea.gui.tests.log.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
-  public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+
+  public static final String OPTIONS_DIRECTORY = "options";
+  public static final String DEFAULT_EXT = ".xml";
+  public static final String DEFAULT_OPTIONS_FILE = "other" + DEFAULT_EXT;
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
@@ -48,7 +51,6 @@ public class PathManager {
   private static final String BIN_FOLDER = "bin";
   private static final String LOG_DIRECTORY = "log";
   private static final String CONFIG_FOLDER = "config";
-  private static final String OPTIONS_FOLDER = "options";
   private static final String SYSTEM_FOLDER = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
@@ -242,7 +244,7 @@ public class PathManager {
 
   @NotNull
   public static String getOptionsPath() {
-    return getConfigPath() + File.separator + OPTIONS_FOLDER;
+    return getConfigPath() + File.separator + OPTIONS_DIRECTORY;
   }
 
   @NotNull
