@@ -43,7 +43,7 @@ task unpackMavenDistribution(dependsOn: downloadMavenDistribution, type: Copy) {
 
 task setupCommonLibs(type: Copy) {
   from configurations.mavenServer3CommonLibs
-  into "$communityPluginsDir/maven/maven3-server-common/libs"
+  into "$communityPluginsDir/maven/maven3-server-common/lib"
 }
 
 //there is no frienly way to unpack gradle zip without parent dir
