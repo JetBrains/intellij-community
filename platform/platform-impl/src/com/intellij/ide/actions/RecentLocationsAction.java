@@ -99,7 +99,7 @@ public class RecentLocationsAction extends AnAction {
     Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
 
     List<RecentLocationItem> items = cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease);
-    Map<PlaceInfo, String> breadcrumbsMap = collectBreadcrumbs(project, items);
+    Ref<Map<PlaceInfo, String>> breadcrumbsMap = Ref.create(collectBreadcrumbs(project, items));
 
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(items));
     final JScrollPane scrollPane = ScrollPaneFactory
@@ -197,7 +197,7 @@ public class RecentLocationsAction extends AnAction {
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
       @Override
       public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces);
+        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
 
         updateTitleText(title, state);
 
@@ -321,11 +321,13 @@ public class RecentLocationsAction extends AnAction {
                                   @NotNull Collection<Editor> editorsToRelease,
                                   boolean changed,
                                   @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces) {
+                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                  @NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     NameFilteringListModel<RecentLocationItem> model = (NameFilteringListModel<RecentLocationItem>)listWithFilter.getList().getModel();
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
 
     List<RecentLocationItem> items = cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease);
+    breadcrumbsMap.set(collectBreadcrumbs(project, items));
 
     originalModel.removeAllElements();
     items.forEach(item -> originalModel.addElement(item));
@@ -395,9 +397,9 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static Function<RecentLocationItem, String> getNamer(@NotNull Map<PlaceInfo, String> breadcrumbsMap) {
+  private static Function<RecentLocationItem, String> getNamer(@NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     return value -> {
-      String breadcrumb = breadcrumbsMap.get(value.getInfo());
+      String breadcrumb = breadcrumbsMap.get().get(value.getInfo());
       EditorEx editor = value.getEditor();
 
       return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();

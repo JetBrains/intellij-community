@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -34,11 +35,11 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
-  @NotNull private final Map<IdeDocumentHistoryImpl.PlaceInfo, String> myBreadcrumbsMap;
+  @NotNull private final Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> myBreadcrumbsMap;
 
   RecentLocationsRenderer(@NotNull Project project,
                           @NotNull SpeedSearch speedSearch,
-                          @NotNull Map<IdeDocumentHistoryImpl.PlaceInfo, String> breadcrumbsMap) {
+                          @NotNull Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> breadcrumbsMap) {
     myProject = project;
     mySpeedSearch = speedSearch;
     myBreadcrumbsMap = breadcrumbsMap;
@@ -56,7 +57,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     Color defaultBackground = editor.getColorsScheme().getDefaultBackground();
-    String breadcrumbs = myBreadcrumbsMap.get(value.getInfo());
+    String breadcrumbs = myBreadcrumbsMap.get().get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     panel.add(createTitleComponent(list, mySpeedSearch, breadcrumbs, value.getInfo(), defaultBackground, selected));
 
