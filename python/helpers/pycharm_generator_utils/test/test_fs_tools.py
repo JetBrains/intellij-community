@@ -2,6 +2,7 @@ import errno
 import os
 import re
 import shutil
+import sys
 import tempfile
 import textwrap
 from contextlib import contextmanager
@@ -141,6 +142,13 @@ class SkeletonCachingTest(GeneratorTestCase):
     SDK_SKELETONS_DIR = 'sdk_skeletons'
     _sha256_regex = re.compile(r'[0-9a-f]{64}')
 
+    def setUp(self):
+        super().setUp()
+        sys.path.insert(0, self.test_data_dir)
+
+    def tearDown(self):
+        sys.path.pop(0)
+
     def run_generator(self, mod_qname, mod_path=None, builtins=False):
         sdk_dir = os.path.join(self.temp_dir, self.SDK_SKELETONS_DIR)
         generator3.process_one(mod_qname, mod_path, builtins,
@@ -157,7 +165,16 @@ class SkeletonCachingTest(GeneratorTestCase):
         """.format(hash=generator3.module_hash('sys', None)))
 
     def test_basic_layout_for_physical_binary_module(self):
-        self.fail()
+        # XXX OS/interpreter version-agnostic binary file name
+        mod_path = __import__('mod').__file__
+        self.run_generator(mod_qname='mod', mod_path=mod_path)
+        self.assertDirLayoutEquals(self.temp_dir, """
+        cache/
+            {hash}/
+                mod.py
+        sdk_skeletons/
+            mod.py
+        """.format(hash=generator3.module_hash('mod', mod_path)))
 
     def assertDirLayoutEquals(self, dir_path, expected_layout):
         def format_dir(dir_path, indent=''):
