@@ -1949,37 +1949,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw e;
     }
 
-    // writing to volatile field ensures the other threads will see the right values in non-volatile fields
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return executionResult;
-    }
-
-    /*
-    final Alarm debugPortTimeout = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
-    myExecutionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
-      public void processTerminated(ProcessEvent event) {
-        debugPortTimeout.cancelAllRequests();
-      }
-
-      public void startNotified(ProcessEvent event) {
-        debugPortTimeout.addRequest(new Runnable() {
-          public void run() {
-            if(isInInitialState()) {
-              ApplicationManager.getApplication().schedule(new Runnable() {
-                public void run() {
-                  String message = DebuggerBundle.message("status.connect.failed", DebuggerBundle.getAddressDisplayName(remoteConnection), DebuggerBundle.getTransportName(remoteConnection));
-                  Messages.showErrorDialog(myProject, message, DebuggerBundle.message("title.generic.debug.dialog"));
-                }
-              });
-            }
-          }
-        }, LOCAL_START_TIMEOUT);
-      }
-    });
-    */
-
     return executionResult;
   }
 
