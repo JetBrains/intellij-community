@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.sdk.PySdkUtil
@@ -121,8 +122,8 @@ class PyAddExistingSdkPanel(project: Project?,
       val defaultRemotePath = synchronizer.getDefaultRemotePath()
       synchronizer.getAutoMappings()?.let {
         when (it) {
-          is com.jetbrains.python.Result.Success -> defaultMappings = it.result
-          is com.jetbrains.python.Result.Failure -> {
+          is Result.Success -> defaultMappings = it.result
+          is Result.Failure -> {
             remotePathField.textField.text = it.error
             remotePathField.setReadOnly(true)
             return
