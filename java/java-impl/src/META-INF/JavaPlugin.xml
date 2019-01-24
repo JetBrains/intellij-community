@@ -765,6 +765,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
                      displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="StringRepeatCanBeUsed"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StringRepeatCanBeUsedInspection"
+                     displayName="String.repeat() can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
