@@ -4,6 +4,7 @@ package com.intellij.dvcs.ignore
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,6 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+
+private val LOG = logger<VcsRepositoryIgnoredFilesHolderBase<*>>()
 
 abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   @JvmField
@@ -139,6 +142,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   private fun doCheckIgnored(paths: Collection<FilePath>): Set<FilePath> {
     val ignored = requestIgnored(paths).filterByRepository(repository)
+    LOG.debug("Check ignored for paths: ", paths)
+    LOG.debug("Ignored found for paths: ", ignored)
     addNotContainedIgnores(ignored)
     return ignored.map(VcsUtil::getFilePath).toSet()
   }
@@ -154,6 +159,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   private fun doRescan(): Set<FilePath> {
     val ignored = requestIgnored().filterByRepository(repository)
+    LOG.debug("Full ignore rescan executed. Found ignores: ", ignored)
     SET_LOCK.write {
       ignoredSet.clear()
       ignoredSet.addAll(ignored)
