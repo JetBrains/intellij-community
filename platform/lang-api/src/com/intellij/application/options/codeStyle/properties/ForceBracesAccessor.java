@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class ForceBracesAccessor extends CodeStylePropertyAccessor<Integer,String> implements CodeStyleChoiceList {
+class ForceBracesAccessor extends ScalarPropertyAccessor<Integer> implements CodeStyleChoiceList {
 
   private final static BidirectionalMap<Integer, String> FORCE_BRACES_MAP = new BidirectionalMap<>();
 

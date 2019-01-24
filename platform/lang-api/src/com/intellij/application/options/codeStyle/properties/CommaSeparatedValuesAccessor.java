@@ -21,7 +21,7 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
       if (valueBuilder.length() > 0) {
         valueBuilder.append(",");
       }
-      valueBuilder.append(extVal);
+      valueBuilder.append(value);
     }
     return valueBuilder.toString();
   }
@@ -29,11 +29,6 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
   @NotNull
   @Override
   protected List<String> toExternal(@NotNull String value) {
-    List<String> valueList = ContainerUtil.newArrayList();
-    String[] parts = value.split(",");
-    for (String part : parts) {
-      valueList.add(part.trim());
-    }
-    return valueList;
+    return getValueList(value);
   }
 }

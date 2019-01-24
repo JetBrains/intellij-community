@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class WrappingAccessor extends CodeStylePropertyAccessor<Integer,String> implements CodeStyleChoiceList {
+class WrappingAccessor extends ScalarPropertyAccessor<Integer> implements CodeStyleChoiceList {
   private final static BidirectionalMap<Integer, String> WRAPPING_MAP = new BidirectionalMap<>();
 
   public static final String VALUE_OFF = "off";

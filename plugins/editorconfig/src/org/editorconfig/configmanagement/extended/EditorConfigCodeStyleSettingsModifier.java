@@ -1,16 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
-import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
@@ -82,11 +81,8 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         String intellijName = EditorConfigIntellijNameUtil.toIntellijName(mapper, option.getKey());
         if (intellijName != null) {
           CodeStylePropertyAccessor accessor = mapper.getAccessor(intellijName);
-          if (!(accessor instanceof ValueListPropertyAccessor)) {
-            //noinspection unchecked
-            if (accessor != null && accessor.set(option.getVal())) {
-              isModified = true;
-            }
+          if (accessor != null) {
+            isModified |= accessor.setFromString(option.getVal());
           }
         }
       }

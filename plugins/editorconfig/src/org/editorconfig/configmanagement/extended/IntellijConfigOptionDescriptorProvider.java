@@ -67,9 +67,12 @@ public class IntellijConfigOptionDescriptorProvider implements EditorConfigOptio
       return new EditorConfigNumberDescriptor(null,  null);
     }
     else if (accessor instanceof ValueListPropertyAccessor) {
-      return null; // No support yet
+      return new EditorConfigListDescriptor(0, true, Collections.singletonList(new EditorConfigStringDescriptor(null, null)), null,  null);
     }
-    return new EditorConfigStringDescriptor(null, null);
+    else if (accessor instanceof ScalarPropertyAccessor) {
+      return new EditorConfigStringDescriptor(null, null);
+    }
+    return null;
   }
 
   private static List<EditorConfigDescriptor> choicesToDescriptorList(@NotNull CodeStyleChoiceList list) {

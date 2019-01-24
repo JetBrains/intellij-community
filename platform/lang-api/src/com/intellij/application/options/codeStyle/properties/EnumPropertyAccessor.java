@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class EnumPropertyAccessor extends CodeStylePropertyAccessor<Enum,String> implements CodeStyleChoiceList{
+public class EnumPropertyAccessor extends ScalarPropertyAccessor<Enum> implements CodeStyleChoiceList{
 
   private final Class myEnumClass;
   private final BidirectionalMap<String,Enum> myEnumMap = new BidirectionalMap<>();

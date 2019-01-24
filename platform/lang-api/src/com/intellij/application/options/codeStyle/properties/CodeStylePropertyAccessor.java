@@ -47,6 +47,17 @@ public abstract class CodeStylePropertyAccessor<T,V> {
     return null;
   }
 
+  public final boolean setFromString(@NotNull String valueString) {
+    V extValue = parseString(valueString);
+    if (extValue != null) {
+      return set(extValue);
+    }
+    return false;
+  }
+
+  @Nullable
+  protected abstract V parseString(@NotNull String string);
+
   @NotNull
   public Class getObjectClass() {
     return myObject.getClass();
