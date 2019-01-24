@@ -73,9 +73,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) {
-      return;
-    }
+    String varName = myReferenceExpression.getReferenceName();
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
 
     final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -90,7 +89,6 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), targetClass.getResolveScope());
     }
 
-    String varName = myReferenceExpression.getReferenceName();
     PsiExpression initializer = null;
     boolean isInline = false;
     PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
@@ -166,13 +164,13 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  private static PsiStatement getAnchor(PsiExpression... expressionOccurences) {
-    PsiElement parent = expressionOccurences[0];
-    int minOffset = expressionOccurences[0].getTextRange().getStartOffset();
-    for (int i = 1; i < expressionOccurences.length; i++) {
-      parent = PsiTreeUtil.findCommonParent(parent, expressionOccurences[i]);
+  private static PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
+    PsiElement parent = expressionOccurrences[0];
+    int minOffset = expressionOccurrences[0].getTextRange().getStartOffset();
+    for (int i = 1; i < expressionOccurrences.length; i++) {
+      parent = PsiTreeUtil.findCommonParent(parent, expressionOccurrences[i]);
       LOG.assertTrue(parent != null);
-      minOffset = Math.min(minOffset, expressionOccurences[i].getTextRange().getStartOffset());
+      minOffset = Math.min(minOffset, expressionOccurrences[i].getTextRange().getStartOffset());
     }
 
     PsiCodeBlock block = null;
