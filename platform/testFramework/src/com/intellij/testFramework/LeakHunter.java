@@ -134,7 +134,7 @@ public class LeakHunter {
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");
-      result.put(ThreadTracker.getThreads(), "all live threads");
+      result.put(ThreadTracker.getThreads().values(), "all live threads");
       result.put(allLoadedClasses, "all loaded classes statics");
       return result;
     };

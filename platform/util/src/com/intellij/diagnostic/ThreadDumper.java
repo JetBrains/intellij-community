@@ -152,6 +152,21 @@ public class ThreadDumper {
     }
   }
 
+  public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
+    try {
+      @NonNls StringBuilder sb = new StringBuilder("\"").append(thread.getName()).append("\"");
+      sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(thread.getState())).append("\n");
+      sb.append("     java.lang.Thread.State: ").append(thread.getState()).append("\n");
+
+      f.write(sb + "\n");
+      printStackTrace(f, stackTraceElements);
+      f.write("\n");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
     try {
       for (StackTraceElement element : stackTraceElements) {
