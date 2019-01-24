@@ -56,7 +56,7 @@ fun UElement.isFalseLiteral(): Boolean = this is ULiteralExpression && this.isBo
  *
  * @return true if the receiver is a [String] literal, false otherwise.
  */
-@Deprecated("doesn't support UInjectionHost, most probably it is not what you want", ReplaceWith("isInjectionHost()"))
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("isInjectionHost()"))
 fun UElement.isStringLiteral(): Boolean = this is ULiteralExpression && this.isString
 
 /**
@@ -71,7 +71,7 @@ fun UElement?.isInjectionHost(): Boolean = this is UInjectionHost || (this is UE
  *
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
-@Deprecated("doesn't support UInjectionHost, most probably it is not what you want", ReplaceWith("UExpression.evaluateString()"))
+@Deprecated("doesn't support UInjectionHost, most likely it is not what you want", ReplaceWith("UExpression.evaluateString()"))
 fun UElement.getValueIfStringLiteral(): String? =
   if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
