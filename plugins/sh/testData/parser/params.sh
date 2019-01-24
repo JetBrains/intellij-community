@@ -88,3 +88,39 @@ declare -A SHA256MAP=( \
         ["10"]="c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435")
 
 echo "${SHA256MAP[$VERSION]} /tmp/$FILE" | sha256sum -c -
+
+${entry%%[[]]*}
+${entry%%[[::]]*}
+${entry%%[[:space:]]*}
+
+function addConf {
+    reportDebugFuncEntry "$*" "type name"
+
+    typeset entryFound
+    typeset addConfEntry
+
+    entry="$*"
+    addConfEntry="$entry"
+    type="${entry%%[[:space:]]*}"
+
+    # Check for name collision
+    entryFound="$(grep -v '^#' "$usrcff" | grep " $name(")"
+    if [ "$entryFound" ]; then
+        reportError "An entry with name $name is already present in $usrcff"
+        return 1
+    fi
+
+    # Check for addr collision, excluding services.
+    if [ "$type" = "host" -o "$type" = "guest" ]; then
+        entryFound="$(grep -v '^#' "$usrcff" | grep -v '^service' | grep -v '^group' | grep "$addr")"
+        if [ "$entryFound" ]; then
+            reportError "An entry with addr $addr is already present in $usrcff"
+            return 1
+        fi
+    fi
+
+    # Add new entry.
+    printf "$addConfEntry\n" >> "$usrcff"
+    reportInfo "Successfully added entry $*"
+    return 0
+}

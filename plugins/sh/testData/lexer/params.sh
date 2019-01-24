@@ -80,3 +80,5 @@ declare -A SHA256MAP=( \
         ["11"]="3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e" \
         ["9.0.4"]="39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec" \
         ["10"]="c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435")
+
+type="${entry[[:space:]]*}"

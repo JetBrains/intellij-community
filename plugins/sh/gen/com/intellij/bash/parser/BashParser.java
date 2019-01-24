@@ -1560,13 +1560,168 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // literal | <<paramExpansionOp>>
+  // literal | <<paramExpansionOp>> | '[' param_body* ']'
   static boolean param_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "param_body")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = literal(b, l + 1);
     if (!r) r = paramExpansionOp(b, l + 1);
+    if (!r) r = param_body_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '[' param_body* ']'
+  private static boolean param_body_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "param_body_2")) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, LEFT_SQUARE);
+    p = r; // pin = 1
+    r = r && report_error_(b, param_body_2_1(b, l + 1));
+    r = p && consumeToken(b, RIGHT_SQUARE) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // param_body*
+  private static boolean param_body_2_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "param_body_2_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!param_body(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "param_body_2_1", c)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // param_body*
+  static boolean parameter_expansion_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_expansion_body")) return false;
+    Marker m = enter_section_(b, l, _NONE_);
+    while (true) {
+      int c = current_position_(b);
+      if (!param_body(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "parameter_expansion_body", c)) break;
+    }
+    exit_section_(b, l, m, true, false, parameter_expansion_body_recover_parser_);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'file descriptor' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | done | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+  static boolean parameter_expansion_body_recover(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_expansion_body_recover")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !parameter_expansion_body_recover_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'file descriptor' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | done | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word
+  private static boolean parameter_expansion_body_recover_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parameter_expansion_body_recover_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, BANG);
+    if (!r) r = consumeToken(b, "!=");
+    if (!r) r = consumeToken(b, DOLLAR);
+    if (!r) r = consumeToken(b, MOD);
+    if (!r) r = consumeToken(b, "%=");
+    if (!r) r = consumeToken(b, AND_AND);
+    if (!r) r = consumeToken(b, AMP);
+    if (!r) r = consumeToken(b, "&=");
+    if (!r) r = consumeToken(b, "&>");
+    if (!r) r = consumeToken(b, LEFT_PAREN);
+    if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
+    if (!r) r = consumeToken(b, RIGHT_PAREN);
+    if (!r) r = consumeToken(b, RIGHT_DOUBLE_PAREN);
+    if (!r) r = consumeToken(b, MULT);
+    if (!r) r = consumeToken(b, EXPONENT);
+    if (!r) r = consumeToken(b, "*=");
+    if (!r) r = consumeToken(b, ARITH_PLUS);
+    if (!r) r = consumeToken(b, ARITH_PLUS_PLUS);
+    if (!r) r = consumeToken(b, ADD_EQ);
+    if (!r) r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, ARITH_MINUS);
+    if (!r) r = consumeToken(b, ARITH_MINUS_MINUS);
+    if (!r) r = consumeToken(b, "-=");
+    if (!r) r = consumeToken(b, DIV);
+    if (!r) r = consumeToken(b, "/=");
+    if (!r) r = consumeToken(b, COLON);
+    if (!r) r = consumeToken(b, SEMI);
+    if (!r) r = consumeToken(b, CASE_END);
+    if (!r) r = consumeToken(b, REDIRECT_LESS_AMP);
+    if (!r) r = consumeToken(b, LT);
+    if (!r) r = consumeToken(b, SHIFT_LEFT);
+    if (!r) r = consumeToken(b, "<<-");
+    if (!r) r = consumeToken(b, REDIRECT_HERE_STRING);
+    if (!r) r = consumeToken(b, "<<=");
+    if (!r) r = consumeToken(b, LE);
+    if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
+    if (!r) r = consumeToken(b, EQ);
+    if (!r) r = consumeToken(b, "==");
+    if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
+    if (!r) r = consumeToken(b, GT);
+    if (!r) r = consumeToken(b, GE);
+    if (!r) r = consumeToken(b, SHIFT_RIGHT);
+    if (!r) r = consumeToken(b, ">>=");
+    if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
+    if (!r) r = consumeToken(b, "?");
+    if (!r) r = consumeToken(b, AT);
+    if (!r) r = consumeToken(b, LEFT_SQUARE);
+    if (!r) r = consumeToken(b, LEFT_DOUBLE_BRACKET);
+    if (!r) r = consumeToken(b, LINEFEED);
+    if (!r) r = consumeToken(b, RIGHT_SQUARE);
+    if (!r) r = consumeToken(b, RIGHT_DOUBLE_BRACKET);
+    if (!r) r = consumeToken(b, "^");
+    if (!r) r = consumeToken(b, "^=");
+    if (!r) r = consumeToken(b, BACKQUOTE);
+    if (!r) r = consumeToken(b, FILEDESCRIPTOR);
+    if (!r) r = consumeToken(b, "in");
+    if (!r) r = consumeToken(b, LEFT_CURLY);
+    if (!r) r = consumeToken(b, PIPE);
+    if (!r) r = consumeToken(b, "|=");
+    if (!r) r = consumeToken(b, OR_OR);
+    if (!r) r = consumeToken(b, RIGHT_CURLY);
+    if (!r) r = consumeToken(b, "~");
+    if (!r) r = consumeToken(b, ARITH_SQUARE_RIGHT);
+    if (!r) r = consumeToken(b, EXPR_CONDITIONAL_LEFT);
+    if (!r) r = consumeToken(b, EXPR_CONDITIONAL_RIGHT);
+    if (!r) r = consumeToken(b, HEREDOC_CONTENT);
+    if (!r) r = consumeToken(b, HEREDOC_MARKER_END);
+    if (!r) r = consumeToken(b, HEREDOC_MARKER_IGNORING_TABS_END);
+    if (!r) r = consumeToken(b, HEREDOC_MARKER_TAG);
+    if (!r) r = consumeToken(b, STRING2);
+    if (!r) r = consumeToken(b, ASSIGNMENT_WORD);
+    if (!r) r = consumeToken(b, CASE);
+    if (!r) r = consumeToken(b, DO);
+    if (!r) r = consumeToken(b, DONE);
+    if (!r) r = consumeToken(b, ELIF);
+    if (!r) r = consumeToken(b, ELSE);
+    if (!r) r = consumeToken(b, ESAC);
+    if (!r) r = consumeToken(b, FI);
+    if (!r) r = consumeToken(b, FOR);
+    if (!r) r = consumeToken(b, FUNCTION);
+    if (!r) r = consumeToken(b, HEX);
+    if (!r) r = consumeToken(b, IF);
+    if (!r) r = consumeToken(b, INT);
+    if (!r) r = consumeToken(b, NUMBER);
+    if (!r) r = consumeToken(b, OCTAL);
+    if (!r) r = consumeToken(b, SELECT);
+    if (!r) r = consumeToken(b, STRING_BEGIN);
+    if (!r) r = consumeToken(b, STRING_CONTENT);
+    if (!r) r = consumeToken(b, STRING_END);
+    if (!r) r = consumeToken(b, THEN);
+    if (!r) r = consumeToken(b, TIME);
+    if (!r) r = consumeToken(b, TRAP);
+    if (!r) r = consumeToken(b, UNTIL);
+    if (!r) r = consumeToken(b, VAR);
+    if (!r) r = consumeToken(b, WHILE);
+    if (!r) r = consumeToken(b, WORD);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2018,7 +2173,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '{' (param_body | '[' param_body ']')*'}'
+  // '{' parameter_expansion_body '}'
   public static boolean shell_parameter_expansion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shell_parameter_expansion")) return false;
     if (!nextTokenIs(b, LEFT_CURLY)) return false;
@@ -2026,44 +2181,10 @@ public class BashParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, SHELL_PARAMETER_EXPANSION, null);
     r = consumeToken(b, LEFT_CURLY);
     p = r; // pin = 1
-    r = r && report_error_(b, shell_parameter_expansion_1(b, l + 1));
+    r = r && report_error_(b, parameter_expansion_body(b, l + 1));
     r = p && consumeToken(b, RIGHT_CURLY) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // (param_body | '[' param_body ']')*
-  private static boolean shell_parameter_expansion_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_parameter_expansion_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!shell_parameter_expansion_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "shell_parameter_expansion_1", c)) break;
-    }
-    return true;
-  }
-
-  // param_body | '[' param_body ']'
-  private static boolean shell_parameter_expansion_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_parameter_expansion_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = param_body(b, l + 1);
-    if (!r) r = shell_parameter_expansion_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '[' param_body ']'
-  private static boolean shell_parameter_expansion_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "shell_parameter_expansion_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LEFT_SQUARE);
-    r = r && param_body(b, l + 1);
-    r = r && consumeToken(b, RIGHT_SQUARE);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -2736,6 +2857,11 @@ public class BashParser implements PsiParser, LightPsiParser {
   static final Parser command_substitution_command_2_1_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return command_substitution_command_2_1(b, l + 1);
+    }
+  };
+  static final Parser parameter_expansion_body_recover_parser_ = new Parser() {
+    public boolean parse(PsiBuilder b, int l) {
+      return parameter_expansion_body_recover(b, l + 1);
     }
   };
 }

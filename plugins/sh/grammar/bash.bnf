@@ -109,8 +109,10 @@ variable ::= var
 private vars ::= variable | composed_var | command_substitution_command
 private composed_var ::= '$' (arithmetic_expansion | old_arithmetic_expansion | command_substitution | shell_parameter_expansion) {pin=1}
 private command_substitution ::= subshell_command // todo: rethink naming with command_substitution_command
-shell_parameter_expansion ::= '{' (param_body | '[' param_body ']')*'}' {pin=1} // todo: simplify lexer for parameters
-private param_body ::= literal | <<paramExpansionOp>>
+shell_parameter_expansion ::= '{' parameter_expansion_body '}' {pin=1}
+private parameter_expansion_body ::= param_body* {recoverWhile=parameter_expansion_body_recover}// todo: simplify lexer for parameters
+private parameter_expansion_body_recover ::= !('!' | '!=' | '$' | '%' | '%=' | '&&' | '&' | '&=' | '&>' | '(' | '((' | ')' | '))' | '*' | '**' | '*=' | '+' | '++' | '+=' | ',' | '-' | '--' | '-=' | '/' | '/=' | ':' | ';' | ';;' | '<&' | '<' | '<<' | '<<-' | '<<<' | '<<=' | '<=' | '<>' | '=' | '==' | '>&' | '>' | '>=' | '>>' | '>>=' | '>|' | '?' | '@' | '[' | '[[' | '\n' | ']' | ']]' | '^' | '^=' | '`' | 'file descriptor' | 'in' | '{' | '|' | '|=' | '||' | '}' | '~' | ARITH_SQUARE_RIGHT | EXPR_CONDITIONAL_LEFT | EXPR_CONDITIONAL_RIGHT | HEREDOC_CONTENT | HEREDOC_MARKER_END | HEREDOC_MARKER_IGNORING_TABS_END | HEREDOC_MARKER_TAG | STRING2 | assignment_word | case | do | done | elif | else | esac | fi | for | function | hex | if | int | number | octal | select | string_begin | string_content | string_end | then | time | trap | until | var | while | word)
+private param_body ::= literal | <<paramExpansionOp>> | '[' param_body* ']' {pin(".*")=1}
 bash_expansion ::= '{' (word | bash_expansion)* '}'
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> '`' <<withOn "BACKQUOTE" list?>> '`' {pin=2}
