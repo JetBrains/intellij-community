@@ -892,6 +892,17 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   }
 
   @Override
+  public void setPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myDelegate.setPopupHandler(popupHandler);
+  }
+
+  @NotNull
+  @Override
+  public EditorPopupHandler getPopupHandler() {
+    return myDelegate.getPopupHandler();
+  }
+
+  @Override
   public void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor) {
     myDelegate.setCustomCursor(requestor, cursor);
   }
