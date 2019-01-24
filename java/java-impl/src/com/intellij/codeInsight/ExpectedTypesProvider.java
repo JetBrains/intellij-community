@@ -342,10 +342,7 @@ public class ExpectedTypesProvider {
     public void visitBreakStatement(PsiBreakStatement statement) {
       PsiElement exitedElement = statement.findExitedElement();
       if (exitedElement instanceof PsiSwitchExpression) {
-        if (myForCompletion) {
-          myExpr = (PsiExpression)exitedElement;
-        }
-        exitedElement.getParent().accept(this);
+        Collections.addAll(myResult, getExpectedTypes((PsiSwitchExpression)exitedElement, myForCompletion));
       }
     }
 

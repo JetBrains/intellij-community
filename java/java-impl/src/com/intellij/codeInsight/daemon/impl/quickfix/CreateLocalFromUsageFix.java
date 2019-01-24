@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -55,20 +56,18 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
-    if (PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null) {
-      PsiStatement anchor = getAnchor(myReferenceExpression);
-      if (anchor instanceof PsiExpressionStatement) {
-        PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-          if (method != null && method.isConstructor()) { //this or super call
-            return false;
-          }
+    PsiStatement anchor = getAnchor(myReferenceExpression);
+    if (anchor == null) return false;
+    if (anchor instanceof PsiExpressionStatement) {
+      PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+        if (method != null && method.isConstructor()) { //this or super call
+          return false;
         }
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
   @Override
@@ -93,6 +92,11 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     boolean isInline = false;
     PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
     PsiStatement anchor = getAnchor(expressions);
+    if (anchor == null) {
+      expressions = new PsiExpression[]{myReferenceExpression};
+      anchor = getAnchor(expressions);
+      if (anchor == null) return;
+    }
     if (anchor instanceof PsiExpressionStatement &&
         ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
@@ -164,6 +168,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
+  @Nullable
   private static PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
     PsiElement parent = expressionOccurrences[0];
     int minOffset = expressionOccurrences[0].getTextRange().getStartOffset();
@@ -184,7 +189,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
         parent = parent.getParent();
       }
     }
-    LOG.assertTrue(block != null && !block.isEmpty(), "block: " + block +"; parent: " + parent);
+    if (block == null) return null;
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
       if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];
