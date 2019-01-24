@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -285,7 +285,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control DOWN",       "EditorDuplicate", "ResizeToolWindowDown", },
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
     { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
-    { "shift control alt P",      "Print", "Graph.Print"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
     });

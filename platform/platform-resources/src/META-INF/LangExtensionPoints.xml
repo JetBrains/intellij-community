@@ -450,6 +450,7 @@
 
     <extensionPoint name="macro" interface="com.intellij.ide.macro.Macro"/>
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
+    <extensionPoint name="printHandler" interface="com.intellij.ide.actions.PrintActionHandler"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
     <extensionPoint name="commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">

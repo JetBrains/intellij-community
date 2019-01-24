@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.ide.actions.PrintActionHandler;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -36,8 +37,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class PrintManager {
+public class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
+
+  @Override
+  public boolean canPrint(@NotNull DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return false;
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (file != null && file.isDirectory()) return true;
+    return CommonDataKeys.EDITOR.getData(dataContext) != null ||
+           !getSelectedPsiFiles(dataContext).isEmpty();
+  }
+
+  @Override
+  public void print(@NotNull DataContext dataContext) {
+    executePrint(dataContext);
+  }
 
   public static void executePrint(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -115,7 +131,10 @@ class PrintManager {
       }
       painter = textPainter;
     }
+    executePrintInner(project, pageFormat, painter);
+  }
 
+  private static void executePrintInner(Project project, PageFormat pageFormat, BasePainter painter) {
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
     try {
       printerJob.setPrintable(painter, pageFormat);
@@ -187,7 +206,7 @@ class PrintManager {
     for (VirtualFile virtualFile : virtualFiles) {
       if (virtualFile.isDirectory()) return Collections.emptyList();
       PsiFile psiFile = psiManager.findFile(virtualFile);
-      if (psiFile == null) return Collections.emptyList();
+      if (psiFile == null || psiFile instanceof PsiBinaryFile) return Collections.emptyList();
       psiFiles.add(psiFile);
     }
     return psiFiles;

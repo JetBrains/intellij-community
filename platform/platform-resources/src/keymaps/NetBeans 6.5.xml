@@ -211,9 +211,6 @@
   <action id="GotoSymbol">
     <keyboard-shortcut first-keystroke="shift control alt O"/>
   </action>
-  <action id="Graph.Print">
-    <keyboard-shortcut first-keystroke="shift control alt P"/>
-  </action>
   <action id="GuiDesigner.ReloadCustomComponents">
     <keyboard-shortcut first-keystroke="shift control R"/>
   </action>
