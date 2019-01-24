@@ -2577,10 +2577,6 @@ public class AllIcons {
     /**
      * 16x16
      */
-    public static final Icon Print = IconLoader.getIcon("/graph/print.svg");
-    /**
-     * 16x16
-     */
     public static final Icon SnapToGrid = IconLoader.getIcon("/graph/snapToGrid.svg");
     /**
      * 16x16
@@ -2595,6 +2591,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Export = AllIcons.ToolbarDecorator.Export;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Print */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Print = AllIcons.General.Print;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Preview */
     @SuppressWarnings("unused")
