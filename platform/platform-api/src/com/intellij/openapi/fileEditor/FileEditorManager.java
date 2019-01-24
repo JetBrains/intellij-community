@@ -207,7 +207,6 @@ public abstract class FileEditorManager {
    * Returns the project with which the file editor manager is associated.
    *
    * @return the project instance.
-   * @since 5.0.1
    */
   @NotNull
   public abstract Project getProject();

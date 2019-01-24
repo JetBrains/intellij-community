@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * @see GlobalInspectionTool#runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
  * @see GlobalInspectionTool#queryExternalUsagesRequests(InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)
- * @since 6.0
  */
 public interface GlobalInspectionContext extends UserDataHolder {
   /**

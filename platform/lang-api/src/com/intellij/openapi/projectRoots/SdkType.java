@@ -231,7 +231,6 @@ public abstract class SdkType implements SdkTypeId {
    * the {@link #showCustomCreateUI} method is called.
    *
    * @return true if the custom create UI is supported, false otherwise.
-   * @since 12.0
    */
   public boolean supportsCustomCreateUI() {
     return false;
@@ -245,7 +244,6 @@ public abstract class SdkType implements SdkTypeId {
    * @param parentComponent    the parent component for showing the dialog.
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @since 2017.1
    * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
@@ -268,7 +266,6 @@ public abstract class SdkType implements SdkTypeId {
    *
    * @param sdk the SDK to validate the path for.
    * @return true if the home path is valid, false otherwise.
-   * @since 12.1
    */
   public boolean sdkHasValidPath(@NotNull Sdk sdk) {
     VirtualFile homeDir = sdk.getHomeDirectory();

@@ -8,8 +8,6 @@ import java.util.List;
 
 /**
  * Represents a package access control directive ({@code exports} or {@code opens}) of a Java module declaration.
- *
- * @since 2017.1
  */
 public interface PsiPackageAccessibilityStatement extends PsiStatement {
   PsiPackageAccessibilityStatement[] EMPTY_ARRAY = new PsiPackageAccessibilityStatement[0];

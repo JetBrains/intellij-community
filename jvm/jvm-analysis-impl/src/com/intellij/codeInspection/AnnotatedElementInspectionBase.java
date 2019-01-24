@@ -19,8 +19,6 @@ import java.util.List;
 
 /**
  * This class can be extended by inspections that should report usage of elements annotated with some particular annotation(s).
- *
- * @since 2018.3
  */
 public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool {
   public boolean myIgnoreInsideImports = true;

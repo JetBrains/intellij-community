@@ -20,8 +20,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class FileUtilRt {

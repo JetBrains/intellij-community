@@ -42,7 +42,6 @@ import java.awt.event.KeyEvent;
  * A helper class for registering Keymap aware navigation actions for lists and trees
  *
  * @author Konstantin Bulenkov
- * @since 15.0
  */
 public class ScrollingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ScrollingUtil");

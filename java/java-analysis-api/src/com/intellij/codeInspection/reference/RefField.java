@@ -24,7 +24,6 @@ import org.jetbrains.uast.UField;
  * A node in the reference graph corresponding to a Java field.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefField extends RefJavaElement {
    Key<Boolean> ENUM_CONSTANT = Key.create("ENUM_CONSTANT");

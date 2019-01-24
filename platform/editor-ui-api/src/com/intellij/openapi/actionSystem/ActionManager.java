@@ -112,7 +112,6 @@ public abstract class ActionManager {
    * Returns the list of all registered action IDs with the specified prefix.
    *
    * @return all action {@code id}s which have the specified prefix.
-   * @since 5.1
    */
   @NotNull
   public abstract String[] getActionIds(@NotNull String idPrefix);
@@ -124,7 +123,6 @@ public abstract class ActionManager {
    *
    * @param actionId the ID to check.
    * @return true if the ID represents an action group, false otherwise.
-   * @since 5.1
    */
   public abstract boolean isGroup(@NotNull String actionId);
 
@@ -134,7 +132,6 @@ public abstract class ActionManager {
    * @param actionPlace        the place where the panel will be used (see {@link ActionPlaces}).
    * @param messageActionGroup the action group from which the toolbar is created.
    * @return the created panel.
-   * @since 5.1
    */
   @NotNull
   public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);

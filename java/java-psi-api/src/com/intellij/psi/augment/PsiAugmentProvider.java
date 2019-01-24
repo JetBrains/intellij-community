@@ -45,8 +45,6 @@ public abstract class PsiAugmentProvider {
   /**
    * Extends {@link PsiTypeElement#getType()} so that a type could be retrieved from external place
    * (e.g. inferred from a variable initializer).
-   *
-   * @since 14.1
    */
   @Nullable
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
@@ -55,8 +53,6 @@ public abstract class PsiAugmentProvider {
 
   /**
    * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
-   *
-   * @since 2016.2
    */
   @NotNull
   protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {

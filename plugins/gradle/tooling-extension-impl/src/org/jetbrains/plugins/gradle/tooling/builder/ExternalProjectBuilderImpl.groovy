@@ -30,7 +30,6 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 class ExternalProjectBuilderImpl implements ModelBuilderService {
 

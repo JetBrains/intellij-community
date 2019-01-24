@@ -21,7 +21,6 @@ import com.intellij.testFramework.TestFileType
 import groovy.transform.CompileStatic
 /**
  * @author Denis Zhdanov
- * @since 7/14/11 2:15 PM 
  */
 @CompileStatic
 class SelectionQuotingTest extends AbstractEditorTest {

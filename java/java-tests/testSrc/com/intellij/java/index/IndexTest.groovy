@@ -70,7 +70,6 @@ import java.util.concurrent.CountDownLatch
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 12, 2007
  */
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {

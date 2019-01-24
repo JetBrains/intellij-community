@@ -104,7 +104,6 @@ public interface ContentManager extends Disposable, BusyObject {
    * Returns the localized name of the "Close All but This" action.
    *
    * @return the action name.
-   * @since 5.1
    */
   @NotNull
   String getCloseAllButThisActionName();

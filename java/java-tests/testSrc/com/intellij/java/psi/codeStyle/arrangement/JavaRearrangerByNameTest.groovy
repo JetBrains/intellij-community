@@ -13,7 +13,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 11/14/12 1:29 PM
  */
 @CompileStatic
 class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {

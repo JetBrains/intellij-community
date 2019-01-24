@@ -238,8 +238,6 @@ public class RunContentDescriptor implements Disposable {
    * Returns the runner layout UI interface that can be used to manage the sub-tabs in this run/debug tab, if available.
    * (The runner layout UI is used, for example, by debugger tabs which have multiple sub-tabs, but is not used by other tabs
    * which only display a single piece of content.
-   *
-   * @since 14.1
    * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
    */
   @Nullable
@@ -252,7 +250,6 @@ public class RunContentDescriptor implements Disposable {
    *
    * @param runnerLayoutUi the RunnerLayoutUi instance used for managing tab contents.
    * @see #getRunnerLayoutUi()
-   * @since 17.2
    */
   public void setRunnerLayoutUi(@Nullable RunnerLayoutUi runnerLayoutUi) {
     myRunnerLayoutUi = runnerLayoutUi;

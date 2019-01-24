@@ -37,9 +37,6 @@ public interface JvmMethod extends JvmTypeParametersOwner {
   @Nullable
   JvmType getReturnType();
 
-  /**
-   * @since 2018.2
-   */
   default boolean hasParameters() {
     return getParameters().length > 0;
   }

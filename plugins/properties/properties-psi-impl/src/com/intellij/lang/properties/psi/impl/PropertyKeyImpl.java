@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
- * @since 14.1
  */
 public class PropertyKeyImpl extends LeafPsiElement {
   public PropertyKeyImpl(@NotNull IElementType type, CharSequence text) {

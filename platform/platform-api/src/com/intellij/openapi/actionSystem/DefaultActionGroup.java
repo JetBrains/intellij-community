@@ -51,7 +51,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 9.0
    */
   public DefaultActionGroup(@NotNull AnAction... actions) {
     this(Arrays.asList(actions));
@@ -61,7 +60,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 13.0
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, actions);

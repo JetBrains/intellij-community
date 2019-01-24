@@ -16,8 +16,6 @@ import java.util.List;
  * Such elements are not reflected in document contents.
  * <p>
  * WARNING! This is an experimental API, it can change at any time.
- *
- * @since 2016.3
  * @see Editor#getInlayModel()
  */
 @ApiStatus.Experimental
@@ -37,8 +35,6 @@ public interface InlayModel {
    * 
    * @param relatesToPrecedingText whether element is associated with preceding or following text 
    *                               (see {@link Inlay#isRelatedToPrecedingText()})
-   *
-   * @since 2017.3
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
@@ -48,8 +44,6 @@ public interface InlayModel {
    * will be displayed between lines of text. With respect to document changes, created element behaves in a similar way to a zero-range
    * {@link RangeMarker}. This method returns {@code null} if requested element cannot be created, e.g. if corresponding functionality
    * is not supported by current editor instance.
-   *
-   * @since 2018.3
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
@@ -67,8 +61,6 @@ public interface InlayModel {
 
   /**
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
-   *
-   * @since 2018.3
    */
   default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
@@ -78,16 +70,12 @@ public interface InlayModel {
   /**
    * Returns a list of block elements for a given offset range (both limits are inclusive) in priority order
    * (higher priority ones appear first). Both visible and invisible (due to folding) elements are returned.
-   *
-   * @since 2018.3
    */
   @NotNull
   List<Inlay> getBlockElementsInRange(int startOffset, int endOffset);
 
   /**
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
-   *
-   * @since 2018.3
    */
   default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
     //noinspection unchecked
@@ -97,16 +85,12 @@ public interface InlayModel {
   /**
    * Returns a list of block elements displayed for a given visual line in appearance order (top to bottom).
    * Only visible (not folded) elements are returned.
-   *
-   * @since 2018.3
    */
   @NotNull
   List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above);
 
   /**
    * Tells whether there exists at least one block element currently.
-   *
-   * @since 2018.3
    */
   default boolean hasBlockElements() {
     return !getBlockElementsInRange(0, Integer.MAX_VALUE).isEmpty();
@@ -114,8 +98,6 @@ public interface InlayModel {
 
   /**
    * Tells whether given range of offsets (both sides inclusive) contains at least one inline element.
-   *
-   * @since 2018.2
    */
   default boolean hasInlineElementsInRange(int startOffset, int endOffset) {
     return !getInlineElementsInRange(startOffset, endOffset).isEmpty();
@@ -123,8 +105,6 @@ public interface InlayModel {
 
   /**
    * Tells whether there exists at least one inline element currently.
-   *
-   * @since 2018.2
    */
   default boolean hasInlineElements() {
     return hasInlineElementsInRange(0, Integer.MAX_VALUE);
@@ -145,8 +125,6 @@ public interface InlayModel {
 
   /**
    * Return a custom visual element at at a given visual position. Only visual position to the left of the element is recognized.
-   *
-   * @since 2018.2
    */
   @Nullable
   Inlay getInlineElementAt(@NotNull VisualPosition visualPosition);

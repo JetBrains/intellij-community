@@ -234,7 +234,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * </ul>
    * @param action the code to execute under read action
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
-   * @since 171.*
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 

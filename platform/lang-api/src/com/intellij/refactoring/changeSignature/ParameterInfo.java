@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a parameter of a method affected by the "Change Signature" refactoring.
  *
  * @author yole
- * @since 8.1
  */
 public interface ParameterInfo {
   /**

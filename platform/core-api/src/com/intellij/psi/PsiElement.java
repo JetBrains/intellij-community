@@ -130,7 +130,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * @return text range of this element relative to its parent
-   * @since 2018.3
    */
   @Contract(pure = true)
   @NotNull

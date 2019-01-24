@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile;
  * A node in the reference graph corresponding to a file.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefFile extends RefElement {
   /**

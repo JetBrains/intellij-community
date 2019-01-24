@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull
 
 /**
  * @author Denis Zhdanov
- * @since 17.01.2011
  */
 @SuppressWarnings("ALL") // too many warnings in injections
 class JavaFoldingTest extends JavaFoldingTestCase {

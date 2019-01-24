@@ -35,8 +35,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 /**
  * @author Vladislav.Soroka
- *
- * @since 11/25/2016
  */
 class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,

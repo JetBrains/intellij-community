@@ -43,7 +43,6 @@ public interface PsiAnnotationOwner {
    *
    * @param qualifiedName the fully qualified name of the annotation to find
    * @return {@code true} is such annotation is found, otherwise {@code false}
-   * @since 2018.2
    */
   default boolean hasAnnotation(@NotNull @NonNls String qualifiedName) {
     //noinspection SSBasedInspection

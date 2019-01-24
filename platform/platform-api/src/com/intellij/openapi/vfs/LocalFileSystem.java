@@ -35,7 +35,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * Performs a non-recursive synchronous refresh of specified files.
    *
    * @param files files to refresh.
-   * @since 6.0
    */
   public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files);
 
@@ -45,7 +44,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * Performs a non-recursive synchronous refresh of specified files.
    *
    * @param files files to refresh.
-   * @since 6.0
    */
   public abstract void refreshFiles(@NotNull Iterable<? extends VirtualFile> files);
 

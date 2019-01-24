@@ -20,7 +20,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  *
  * @see FileIndex#isInTestSourceContent(VirtualFile)
  * @see JpsModuleSourceRootType#isForTests()
- * @since 2016.3
  * @author zolotov
  */
 public abstract class TestSourcesFilter {

@@ -28,7 +28,6 @@ public interface QuickFixActionRegistrar {
   /**
    * Allows to replace some of the built-in quickfixes.
    * @param condition condition for quickfixes to remove
-   * @since 9.0
    */
   void unregister(@NotNull Condition<IntentionAction> condition);
 }

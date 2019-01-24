@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 class GradleExtensionsContributor : GradleMethodContextContributor {
 

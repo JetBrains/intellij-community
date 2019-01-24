@@ -26,7 +26,6 @@ import javax.swing.*;
  * Allows user to configure visible gutter icons.
  *
  * @author Dmitry Avdeev
- * @since 144
  */
 public abstract class GutterIconDescriptor {
 

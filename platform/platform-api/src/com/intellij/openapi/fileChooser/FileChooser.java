@@ -82,7 +82,6 @@ public class FileChooser {
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
    * @see FileChooserConsumer
-   * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
@@ -101,7 +100,6 @@ public class FileChooser {
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
    * @see FileChooserConsumer
-   * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
                                  @Nullable final Project project,
@@ -122,7 +120,6 @@ public class FileChooser {
    * @param project    project
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
-   * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
                                 @Nullable final Project project,
@@ -140,7 +137,6 @@ public class FileChooser {
    * @param parent     parent component
    * @param toSelect   file to preselect
    * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
-   * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
                                 @Nullable final Project project,

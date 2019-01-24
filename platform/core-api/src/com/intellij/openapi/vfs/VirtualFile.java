@@ -232,7 +232,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Checks whether this file has a specific property.
    *
    * @return {@code true} if the file has a specific property, {@code false} otherwise
-   * @since 13.0
    */
   public boolean is(@NotNull VFileProperty property) {
     return false;
@@ -247,7 +246,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code getPath()} if there are no symbolic links in a file's path;
    *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
    *         {@code null} otherwise
-   * @since 11.1
    */
   @Nullable
   public String getCanonicalPath() {
@@ -263,7 +261,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code this} if there are no symbolic links in a file's path;
    *         instance of {@code VirtualFile} if the link was successfully resolved;
    *         {@code null} otherwise
-   * @since 11.1
    */
   @Nullable
   public VirtualFile getCanonicalFile() {

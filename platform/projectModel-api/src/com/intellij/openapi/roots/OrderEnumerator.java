@@ -37,7 +37,6 @@ import java.util.List;
  * <p>Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.</p>
  *
  * @author nik
- * @since 10.0
  */
 public abstract class OrderEnumerator {
   /**

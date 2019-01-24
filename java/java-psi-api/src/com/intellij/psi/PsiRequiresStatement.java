@@ -5,8 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a {@code requires} directive of a Java module declaration.
- *
- * @since 2016.3
  */
 public interface PsiRequiresStatement extends PsiModifierListOwner, PsiStatement {
   PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];

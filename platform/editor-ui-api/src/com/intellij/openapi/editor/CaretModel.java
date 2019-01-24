@@ -284,8 +284,6 @@ public interface CaretModel {
   /**
    * Adds a listener which will be notified before and after all-caret operations are performed by {@link #runForEachCaret(CaretAction)} and
    * {@link #runForEachCaret(CaretAction, boolean)}.
-   *
-   * @since 2019.1
    */
   void addCaretActionListener(@NotNull CaretActionListener listener, @NotNull Disposable disposable);
 

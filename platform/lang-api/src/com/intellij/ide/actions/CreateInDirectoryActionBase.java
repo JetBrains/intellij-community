@@ -26,8 +26,6 @@ import javax.swing.*;
 
 /**
  * The base abstract class for actions which create new file elements in IDE view
- *
- * @since 15.1
  */
 public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {

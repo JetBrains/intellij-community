@@ -179,7 +179,6 @@ public abstract class ProjectLevelVcsManager {
    *
    * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   * @since 6.0
    */
   @Deprecated
   public abstract void addVcsListener(VcsListener listener);
@@ -189,22 +188,17 @@ public abstract class ProjectLevelVcsManager {
    *
    * @param listener the listener instance.
    * @deprecated use {@link #VCS_CONFIGURATION_CHANGED} instead
-   * @since 6.0
    */
   @Deprecated
   public abstract void removeVcsListener(VcsListener listener);
 
   /**
    * Marks the beginning of a background VCS operation (commit or update).
-   *
-   * @since 6.0
    */
   public abstract void startBackgroundVcsOperation();
 
   /**
    * Marks the end of a background VCS operation (commit or update).
-   *
-   * @since 6.0
    */
   public abstract void stopBackgroundVcsOperation();
 
@@ -212,7 +206,6 @@ public abstract class ProjectLevelVcsManager {
    * Checks if a background VCS operation (commit or update) is currently in progress.
    *
    * @return true if a background operation is in progress, false otherwise.
-   * @since 6.0
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 

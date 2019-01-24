@@ -24,7 +24,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 7/20/12 2:45 PM
  */
 @CompileStatic
 class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {

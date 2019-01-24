@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Marks occurrence of element for querying via {@link DomElementClassIndex}.
- *
- * @since 13
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = ElementType.TYPE)

@@ -40,8 +40,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
- *
- * @since 2016.3
  */
 public class MetaAnnotationUtil {
   private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {

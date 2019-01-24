@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a reference to some module inside a Java module declaration.
- *
- * @since 2016.3
  */
 public interface PsiJavaModuleReferenceElement extends PsiElement {
   @NotNull String getReferenceText();

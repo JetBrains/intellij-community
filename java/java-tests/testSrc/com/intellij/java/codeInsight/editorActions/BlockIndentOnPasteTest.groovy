@@ -24,7 +24,6 @@ import groovy.transform.CompileStatic
 
 /**
  * @author Denis Zhdanov
- * @since 7/6/11 6:52 PM 
  */
 @CompileStatic
 class BlockIndentOnPasteTest extends LightCodeInsightFixtureTestCase {

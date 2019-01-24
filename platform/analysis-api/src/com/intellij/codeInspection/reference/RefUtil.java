@@ -14,7 +14,6 @@ import java.util.Collection;
  * graph.
  *
  * @author anna
- * @since 6.0
  */
 public class RefUtil {
   private RefUtil() {}

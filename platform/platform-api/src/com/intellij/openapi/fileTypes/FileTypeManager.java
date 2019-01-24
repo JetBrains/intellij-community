@@ -166,7 +166,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type      the file type to associate the extension with.
    * @param extension the extension to associate.
-   * @since 5.0.2
    */
   public final void associateExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     associate(type, new ExtensionFileNameMatcher(extension));
@@ -183,7 +182,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type      the file type to remove the extension from.
    * @param extension the extension to remove.
-   * @since 5.0.2
    */
   public final void removeAssociatedExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     removeAssociation(type, new ExtensionFileNameMatcher(extension));

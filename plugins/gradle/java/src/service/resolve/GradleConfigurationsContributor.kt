@@ -12,9 +12,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * @author Vladislav.Soroka
- * *
- * @since 8/29/13
- */
+ * */
 class GradleConfigurationsContributor : GradleMethodContextContributor {
 
   companion object {

@@ -144,7 +144,6 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    *
    * @param includeTests whether test-only dependencies should be included
    * @return the module dependency graph.
-   * @since 11.0
    */
   @NotNull
   public abstract Graph<Module> moduleGraph(boolean includeTests);

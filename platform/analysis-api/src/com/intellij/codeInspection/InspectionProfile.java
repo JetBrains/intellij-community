@@ -60,7 +60,6 @@ public interface InspectionProfile extends Comparable {
    * @param shortNameKey the ID of the tool to change.
    * @param psiElement the element for which the settings should be changed.
    * @param toolConsumer the callback that receives the tool.
-   * @since 12.1
    */
   <T extends InspectionProfileEntry>
   void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<T> toolConsumer);

@@ -20,7 +20,6 @@ public interface PsiExpressionList extends PsiElement {
 
   /**
    * @return number of expressions in the expression list
-   * @since 2018.1
    */
   default int getExpressionCount() {
     return getExpressions().length;
@@ -28,7 +27,6 @@ public interface PsiExpressionList extends PsiElement {
 
   /**
    * @return {@code }true} if expression list contains no expressions
-   * @since 2018.1
    */
   default boolean isEmpty() {
     return getExpressionCount() == 0;

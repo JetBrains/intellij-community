@@ -496,7 +496,6 @@ public class PsiTreeUtil {
    * @param element the element to get the child for.
    * @param classes the array of classes.
    * @return the element, or null if none was found.
-   * @since 5.1
    */
   @SafeVarargs
   @Nullable

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A external changes provider to update a parameter info state.
- * @since 2017.1
  */
 public interface ExternalParameterInfoChangesProvider {
   Topic<ExternalParameterInfoChangesProvider> TOPIC =

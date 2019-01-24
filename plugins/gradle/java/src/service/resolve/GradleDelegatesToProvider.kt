@@ -9,7 +9,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvid
 
 /**
  * @author Vladislav.Soroka
- * @since 11/8/2016
  */
 class GradleDelegatesToProvider : GrDelegatesToProvider {
 

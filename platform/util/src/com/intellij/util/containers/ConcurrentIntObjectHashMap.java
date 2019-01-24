@@ -376,7 +376,6 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                        establishing the initial table size
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative or the load factor is nonpositive
-   * @since 1.6
    */
   ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
@@ -990,7 +989,6 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * there are concurrent insertions or removals.
    *
    * @return the number of mappings
-   * @since 1.8
    */
   public long mappingCount() {
     long n = sumCount();

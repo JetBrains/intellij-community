@@ -17,8 +17,6 @@ import java.util.*;
 /**
  * Stripped-down version of {@code com.intellij.util.containers.ContainerUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
 public class ContainerUtilRt {
   @NotNull

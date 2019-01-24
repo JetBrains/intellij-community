@@ -27,7 +27,6 @@ import javax.swing.*;
  *
  * @author alex
  * @author Konstantin Bulenkov
- * @since 5.1
  */
 public class DialogUtil{
 
@@ -82,7 +81,6 @@ public class DialogUtil{
    * @param label label
    * @param target target component
    * @param mn mnemonic char
-   * @since 11.0
    */
   public static void registerMnemonic(JLabel label, @Nullable JComponent target, char mn) {
     String text = label.getText();

@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A thread pool for long-running workers needed for handling child processes, to avoid occupying workers in the main application pool
  * and constantly creating new threads there.
- *
- * @since 2016.2
  * @author peter
  */
 public class ProcessIOExecutorService extends ThreadPoolExecutor {

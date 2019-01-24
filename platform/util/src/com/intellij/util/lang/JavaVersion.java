@@ -15,7 +15,6 @@ import java.util.List;
  * "New Version-String Scheme" (Java 9), as well as earlier version's formats.
  *
  * @see #parse(String) for examples of supported version strings
- * @since 2018.1
  */
 public final class JavaVersion implements Comparable<JavaVersion> {
   /**

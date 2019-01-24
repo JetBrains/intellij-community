@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Instances of NamesValidator are obtained from {@link com.intellij.lang.Language} instance.
  * An instance encapsulates knowledge of identifier rules and keyword set of the language.
- *
- * @since 5.0.1
  */
 public interface NamesValidator {
   /**
