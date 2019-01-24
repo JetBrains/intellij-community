@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
@@ -71,5 +72,10 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
       }
     }
     logger.logState(group, INVOKED);
+  }
+
+  public static void logStateEvent(@NotNull FeatureUsageGroup group, @NotNull String event, @NotNull FeatureUsageDataBuilder data) {
+    FeatureUsageLogger.INSTANCE.logState(group, event, data.createData());
+    FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
   }
 }
