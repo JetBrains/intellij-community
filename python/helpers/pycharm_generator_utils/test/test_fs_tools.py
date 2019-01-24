@@ -10,7 +10,7 @@ from pycharm_generator_utils.util_methods import copy_merging_packages, delete, 
 _test_dir = os.path.dirname(__file__)
 
 
-class TestFilesystemUtils(TestCase):
+class GeneratorTestCase(TestCase):
     class_test_data_dir_name = 'fs_utils'
 
     def setUp(self):
@@ -18,6 +18,35 @@ class TestFilesystemUtils(TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
+
+    @property
+    def test_name(self):
+        return self._testMethodName[len('test_'):]
+
+    @property
+    def test_data_dir(self):
+        return os.path.join(_test_dir, 'data',
+                            self.class_test_data_dir_name,
+                            self.test_name)
+
+    def assertDirsEqual(self, actual_dir, expected_dir):
+        actual_dir_children = sorted(os.listdir(actual_dir))
+        expected_dir_children = sorted(os.listdir(expected_dir))
+        self.assertEquals(expected_dir_children, actual_dir_children)
+        for actual_child, expected_child in zip(actual_dir_children, expected_dir_children):
+            actual_child = os.path.join(actual_dir, actual_child)
+            expected_child = os.path.join(expected_dir, expected_child)
+            if os.path.isdir(actual_child) and os.path.isdir(expected_child):
+                self.assertDirsEqual(actual_child, expected_child)
+            elif os.path.isfile(actual_child) and os.path.isfile(expected_child):
+                with open(actual_child) as f:
+                    actual_child_content = f.read()
+                with open(expected_child) as f:
+                    expected_child_content = f.read()
+                self.assertEquals(expected_child_content, actual_child_content,
+                                  'Different content at %r' % actual_child)
+            else:
+                raise AssertionError('%r != %r' % (actual_child, expected_child))
 
     @contextmanager
     def comparing_dirs(self, subdir=''):
@@ -33,15 +62,8 @@ class TestFilesystemUtils(TestCase):
         yield
         self.assertDirsEqual(self.temp_dir, after_dir)
 
-    @property
-    def test_name(self):
-        return self._testMethodName[len('test_'):]
 
-    @property
-    def test_data_dir(self):
-        return os.path.join(_test_dir, 'data',
-                            self.class_test_data_dir_name,
-                            self.test_name)
+class TestFilesystemUtils(GeneratorTestCase):
 
     def check_copy_merging_packages(self):
         with self.comparing_dirs('dst'):
@@ -67,25 +89,6 @@ class TestFilesystemUtils(TestCase):
             src_dir = os.path.join(self.test_data_dir, 'src')
             dst_dir = self.temp_dir
             copy_skeletons(src_dir, dst_dir)
-
-    def assertDirsEqual(self, actual_dir, expected_dir):
-        actual_dir_children = sorted(os.listdir(actual_dir))
-        expected_dir_children = sorted(os.listdir(expected_dir))
-        self.assertEquals(expected_dir_children, actual_dir_children)
-        for actual_child, expected_child in zip(actual_dir_children, expected_dir_children):
-            actual_child = os.path.join(actual_dir, actual_child)
-            expected_child = os.path.join(expected_dir, expected_child)
-            if os.path.isdir(actual_child) and os.path.isdir(expected_child):
-                self.assertDirsEqual(actual_child, expected_child)
-            elif os.path.isfile(actual_child) and os.path.isfile(expected_child):
-                with open(actual_child) as f:
-                    actual_child_content = f.read()
-                with open(expected_child) as f:
-                    expected_child_content = f.read()
-                self.assertEquals(expected_child_content, actual_child_content,
-                                  'Different content at %r' % actual_child)
-            else:
-                raise AssertionError('%r != %r' % (actual_child, expected_child))
 
     def test_copy_merging_packages_simple(self):
         self.check_copy_merging_packages()
