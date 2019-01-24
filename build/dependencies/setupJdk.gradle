@@ -3,33 +3,34 @@ import org.gradle.internal.os.OperatingSystem
 import java.util.concurrent.TimeUnit
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-task setupJdks(dependsOn: ['setupJdk18', 'checkJdk18', 'setupJdk16'])
-cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
+task setupJdks(dependsOn: ['setupJdk', 'checkJdk', 'setupJdk16'])
+cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 
-def jdkRepo = 'https://cache-redirector.jetbrains.com'
-project.ext.jdkVersion = '1.8'
+project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
+project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
+project.ext.jdkArtifactPrefix = "jbsdk$jdkVersion"
 
-def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
-  def jdkDir = new File(it)
-  jdkDir.mkdirs()
-  jdkDir
-} ?: "${intellijProjectDir()}/build/jdk"
+def jdkDir = System.getProperty('intellij.build.jdks.target.dir') ?: "${intellijProjectDir()}/build/jdk"
+new File(jdkDir).mkdirs()
 
-project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "") ?: "$jdkDir/$jdkVersion"}"
+project.ext.jdkOutputDir = System.getProperty("intellij.jdk.output.dir", "$jdkDir/${jdkVersion < 9 ? "1.$jdkVersion" : jdkVersion}")
 
-task downloadJdk18 {
-  def arch = jdk18Arch()
+task downloadJdk {
+  def arch = jdkArch()
   def platform = currentPlatformName()
+  def jdkUrl = jdkUrl()
 
-  def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
+  def artifactName = "${jdkArtifactPrefix}${jdkBuild}_${platform}_${arch}.tar.gz"
   def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
+  inputs.property('version', jdkVersion)
   inputs.property('build', jdkBuild)
+  inputs.property('url', jdkUrl)
   outputs.file(outputFile)
   doLast {
-    logger.info("Downloading up JDK $jdkVersion to compile (using $jdkRepo repo)")
+    logger.info("Downloading up JDK $jdkVersion to compile (using $jdkUrl)")
     download {
-      src "$jdkRepo/intellij-jdk/${artifactName}"
+      src jdkUrl
       dest outputFile
       tempAndMove true
       timeout TimeUnit.MINUTES.toMillis(30).toInteger()
@@ -37,12 +38,12 @@ task downloadJdk18 {
   }
 }
 
-task setupJdk18(dependsOn: downloadJdk18) {
-  def outputDir = jdk18OutputDir
-  def downloadOutputs = downloadJdk18.outputs.files
+task setupJdk(dependsOn: downloadJdk) {
+  def outputDir = jdkOutputDir
+  def downloadOutputs = downloadJdk.outputs.files
 
   inputs.files(downloadOutputs)
-  inputs.property("jdk18OutputDir", outputDir)
+  inputs.property("jdkOutputDir", outputDir)
   outputs.dir(outputDir)
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")
@@ -72,12 +73,27 @@ def unpackJdk(jdkArchive, outputDir) {
   }
 }
 
-static def jdk18Arch() {
-  def arch = System.getProperty("intellij.jdk18.arch", "")
+static def jdkArch() {
+  def arch = System.getProperty("intellij.jdk.arch", "")
   if (arch == '32') return 'x86'
   if (arch == '64') return 'x64'
   def os = OperatingSystem.current()
   return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
+}
+
+def jdkUrl() {
+  def arch = jdkArch()
+  def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build')
+  if (teamCityBuild != null) {
+    def platform = OperatingSystem.current().with { os ->
+      os.isWindows() ? 'win' : os.isMacOsX() ? 'mac' : 'linux'
+    }
+    "${teamCityBuild}/${platform}/${jdkArtifactPrefix}${jdkBuild}_${arch}.tar.gz"
+  }
+  else {
+    def platform = currentPlatformName()
+    "${jdkRepo}/${jdkArtifactPrefix}${jdkBuild}_${platform}_${arch}.tar.gz"
+  }
 }
 
 static def currentPlatformName() {
@@ -174,9 +190,9 @@ static def jdk16Version() {
   return '6.45:linux_x64'
 }
 
-task checkJdk18(dependsOn: setupJdk18) {
+task checkJdk(dependsOn: setupJdk) {
   doLast {
-    def path = OperatingSystem.current().isMacOsX() ? "$jdk18OutputDir/Contents/Home/bin" : "$jdk18OutputDir/bin"
+    def path = OperatingSystem.current().isMacOsX() ? "$jdkOutputDir/Contents/Home/bin" : "$jdkOutputDir/bin"
     def project = project
     new ByteArrayOutputStream().withStream { output ->
       project.exec {
@@ -197,7 +213,7 @@ task checkJdk18(dependsOn: setupJdk18) {
       println(vendor)
       println(version)
       if (!vendor?.contains('JetBrains')) throw new IllegalStateException('java.vendor is not JetBrains')
-      if (!version?.contains(jdkVersion)) throw new IllegalStateException("java.runtime.version is not $jdkVersion")
+      if (!version?.contains("$jdkVersion")) throw new IllegalStateException("java.runtime.version is not $jdkVersion")
     }
   }
 }
