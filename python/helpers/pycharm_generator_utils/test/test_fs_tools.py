@@ -8,10 +8,11 @@ from unittest import TestCase
 from pycharm_generator_utils.util_methods import copy_merging_packages, delete, mkdir, copy_skeletons, copy
 
 _test_dir = os.path.dirname(__file__)
-_test_data_dir = os.path.join(_test_dir, 'fs_utils')
 
 
 class TestFilesystemUtils(TestCase):
+    class_test_data_dir_name = 'fs_utils'
+
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
@@ -38,7 +39,9 @@ class TestFilesystemUtils(TestCase):
 
     @property
     def test_data_dir(self):
-        return os.path.join(_test_data_dir, self.test_name)
+        return os.path.join(_test_dir, 'data',
+                            self.class_test_data_dir_name,
+                            self.test_name)
 
     def check_copy_merging_packages(self):
         with self.comparing_dirs('dst'):
