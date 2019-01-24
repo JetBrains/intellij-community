@@ -62,13 +62,13 @@ class GroovyInferenceSessionBuilder constructor(
 fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
   val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, emptyList(), false)
   val expression = findExpression(place) ?: return session
-  val startConstraint = if (expression !is GrBinaryExpression) {
+  val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
+    OperatorExpressionConstraint(expression as GrOperatorExpression)
+  }
+  else {
     val mostTopLevelExpression = getMostTopLevelExpression(expression)
     val left = getExpectedType(mostTopLevelExpression)
     ExpressionConstraint(left, mostTopLevelExpression)
-  }
-  else {
-    BinaryExpressionConstraint(expression)
   }
   session.addConstraint(startConstraint)
   return session
