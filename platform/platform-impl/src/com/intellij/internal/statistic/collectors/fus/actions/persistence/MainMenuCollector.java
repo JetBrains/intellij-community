@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext.OS_CONTEXT;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -39,7 +37,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.FUSUsageCon
   }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("main.menu", 1);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("main.menu", 2);
   private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private final State myState = new State();
@@ -72,7 +70,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
       }
 
       if (!StringUtil.isEmpty(path)) {
-        final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addFeatureContext(OS_CONTEXT).addPluginInfo(info);
+        final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().addPluginInfo(info);
         FUSCounterUsageLogger.logEvent(GROUP, ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }

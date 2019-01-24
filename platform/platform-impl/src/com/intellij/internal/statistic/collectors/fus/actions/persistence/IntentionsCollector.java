@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -29,7 +28,7 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 2);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 3);
   private static final String DEFAULT_ID = "third.party.intention";
 
   private final State myState = new State();
@@ -48,8 +47,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
 
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
-      addFeatureContext(FUSUsageContext.OS_CONTEXT).
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().
       addPluginInfo(info).
       addLanguage(language);
 

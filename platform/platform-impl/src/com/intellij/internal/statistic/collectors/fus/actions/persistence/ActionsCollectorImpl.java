@@ -34,7 +34,7 @@ import java.util.Set;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions", 3);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions", 4);
   private static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
@@ -59,9 +59,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
-      addFeatureContext(FUSUsageContext.OS_CONTEXT).
-      addPluginInfo(info);
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().addPluginInfo(info);
 
     if (event != null) {
       data.addInputEvent(event).

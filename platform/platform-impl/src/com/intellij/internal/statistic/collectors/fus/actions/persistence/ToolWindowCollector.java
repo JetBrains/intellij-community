@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageDataBuilder;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.*;
@@ -40,7 +39,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
   }
 )
 public class ToolWindowCollector implements PersistentStateComponent<ToolWindowCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow", 1);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolwindow", 2);
   private static final String UNKNOWN = "unknown";
 
   public static ToolWindowCollector getInstance() {
@@ -103,9 +102,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     final PluginInfo info = getPluginInfo(toolWindowId);
     final String key = escapeDescriptorName(info.isDevelopedByJetBrains() ? toolWindowId: UNKNOWN);
 
-    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().
-      addPluginInfo(info).
-      addFeatureContext(FUSUsageContext.OS_CONTEXT);
+    final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addOS().addPluginInfo(info);
 
     if (source != ACTIVATION) {
       data.addData("source", StringUtil.toLowerCase(source.name()));

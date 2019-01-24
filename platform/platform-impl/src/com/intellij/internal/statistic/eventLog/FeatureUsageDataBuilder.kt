@@ -9,6 +9,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.util.containers.ContainerUtil
@@ -30,6 +31,17 @@ class FeatureUsageDataBuilder {
       data["project"] = getProjectId(project)
     }
     return this
+  }
+
+  fun addOS(): FeatureUsageDataBuilder {
+    data["os"] = getOSNameContextData()
+    return this
+  }
+
+  fun getOSNameContextData(): String {
+    if (SystemInfo.isWindows) return "Windows"
+    if (SystemInfo.isMac) return "Mac"
+    return if (SystemInfo.isLinux) "Linux" else "Other"
   }
 
   fun addPluginInfo(info: PluginInfo): FeatureUsageDataBuilder {
