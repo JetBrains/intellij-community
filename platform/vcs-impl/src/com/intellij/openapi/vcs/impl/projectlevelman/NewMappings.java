@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -272,6 +273,22 @@ public class NewMappings {
     // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
     for (MappedRoot mapping : mappings) {
       if (mapping.root.isValid() && VfsUtilCore.isAncestor(mapping.root, file, false)) {
+        return mapping;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public MappedRoot getMappedRootFor(@Nullable FilePath filePath) {
+    if (filePath == null || filePath.isNonLocal()) return null;
+    if (myVcsManager.isIgnored(filePath)) return null;
+
+    final List<MappedRoot> mappings = new ArrayList<>(myMappedRoots);
+
+    // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
+    for (MappedRoot mapping : mappings) {
+      if (mapping.root.isValid() && FileUtil.startsWith(filePath.getPath(), mapping.root.getPath())) {
         return mapping;
       }
     }
