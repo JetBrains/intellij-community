@@ -353,3 +353,11 @@ internal fun changesFromCommit(repo: File, hash: String) =
         else -> return@map null
       } to path
     }.filterNotNull().groupBy({ it.first }, { it.second })
+
+internal fun gitClone(uri: String, dir: File): File {
+  val filesBeforeClone = dir.listFiles().toList()
+  execute(dir, GIT, "clone", uri)
+  return (dir.listFiles().toList() - filesBeforeClone).first {
+    uri.contains(it.name)
+  }
+}
