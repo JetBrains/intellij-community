@@ -115,9 +115,11 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void doPaintInactive(Graphics2D g2d,
-                                 TabLabel label,
-                                 Rectangle effectiveBounds) {
-    Rectangle rect = fixedBounds(label, effectiveBounds);
+                                 TabInfo info) {
+    final TabLabel label = myInfo2Label.get(info);
+    if (label == null) return;
+
+    Rectangle rect = fixedBounds(label, label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
 
     tabPainter.paintTab(g2d, rect, tabColor);
@@ -126,11 +128,13 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void doPaintSelected(Graphics2D g2d,
-                                 TabLabel label,
-                                 Rectangle effectiveBounds) {
-    Rectangle rect = fixedBounds(label, effectiveBounds);
+                                 TabInfo info) {
+    final TabLabel label = myInfo2Label.get(info);
+    if (label == null) return;
+
+    Rectangle rect = fixedBounds(label, label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
-    tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), true);
+    tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), isActiveTab(info));
   }
 
   @NotNull
@@ -142,33 +146,25 @@ public class JBEditorTabs extends JBTabsImpl {
     int _width = effectiveBounds.width - insets.left - insets.right + (getTabsPosition() == JBTabsPosition.right ? 1 : 0);
     int _height = effectiveBounds.height - insets.top - insets.bottom;
 
-
-    if ((!isSingleRow() /* for multiline */) || isHorizontalTabs())  {
-      if (isSingleRow() && getPosition() == JBTabsPosition.bottom) {
-        _y += getActiveTabUnderlineHeight();
-      } else {
-        if (isSingleRow()) {
-          _height -= getActiveTabUnderlineHeight();
-        } else {
-          TabInfo info = label.getInfo();
-          if (((TableLayout)getEffectiveLayout()).isLastRow(info)) {
-            _height -= getActiveTabUnderlineHeight();
-          }
-        }
-      }
-    }
-
     return new Rectangle(_x, _y, _width, _height);
   }
 
-
-  @Override
-  public int getActiveTabUnderlineHeight() {
-    return hasUnderlineSelection() ? 0 : 1;
+  protected boolean isActiveTab(TabInfo info) {
+    return isFocusOwner(this);
   }
 
-  public boolean hasUnderlineSelection() {
-    return true;
+  private static boolean isFocusOwner(Component c) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+    // verify focusOwner is a descendant of c
+    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent())
+    {
+      if (temp == c) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
@@ -213,9 +209,7 @@ public class JBEditorTabs extends JBTabsImpl {
       int width = maxLength - insets.left - insets.right;
 
       if (getTabsPosition() == JBTabsPosition.right) {
-        x = r2.width - width - insets.left + getActiveTabUnderlineHeight();
-      } else {
-        width -= getActiveTabUnderlineHeight();
+        x = r2.width - width - insets.left;
       }
 
       beforeTabs = new Rectangle(x, insets.top, width, minOffset - insets.top);
@@ -224,9 +218,7 @@ public class JBEditorTabs extends JBTabsImpl {
       int y = r2.y + insets.top;
       int height = maxLength - insets.top - insets.bottom;
       if (getTabsPosition() == JBTabsPosition.bottom) {
-        y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
-      } else {
-        height -= getActiveTabUnderlineHeight();
+        y = r2.height - height - insets.top;
       }
 
       beforeTabs = new Rectangle(insets.left, y, minOffset, height);

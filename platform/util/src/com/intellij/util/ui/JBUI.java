@@ -1575,12 +1575,12 @@ public class JBUI {
     public static class DefaultTabs {
       @NotNull
       public static Color underlineColor() {
-        return JBColor.namedColor("DefaultTabs.underlineColor", 0x4083C9);
+        return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
       }
 
       @NotNull
       public static Color inactiveUnderlineColor() {
-        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", 0x4083C9);
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
       }
 
       @NotNull

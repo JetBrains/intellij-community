@@ -39,7 +39,9 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.JBTabPainter;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -81,9 +83,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
       {
-        if (hasUnderlineSelection()) {
           IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
-        }
+      }
+
+      @Override
+      protected boolean isActiveTab(TabInfo info) {
+        return true;
+      }
+
+      @Override
+      protected JBTabPainter createTabPainter() {
+        return new JBDefaultTabPainter(JBTabPainter.Companion.getEDITOR_TAB());
       }
 
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {

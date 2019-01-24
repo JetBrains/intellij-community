@@ -60,7 +60,6 @@ public class JBTabsImpl extends JComponent
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
-  private static final JBValue ACTIVE_TAB_UNDERLINE_HEIGHT = new JBValue.Float(4);
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
@@ -348,10 +347,6 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
-  }
-
-  public int getActiveTabUnderlineHeight() {
-    return ACTIVE_TAB_UNDERLINE_HEIGHT.get();
   }
 
   public boolean isEditorTabs() {
@@ -1806,9 +1801,7 @@ public class JBTabsImpl extends JComponent
         if (getSelectedInfo() == each) {
           continue;
         }
-        final TabLabel label = myInfo2Label.get(each);
-        if (label.getBounds().width == 0) continue;
-        doPaintInactive(g2d, label, label.getBounds());
+        doPaintInactive(g2d, each);
       }
     }
 
@@ -1830,12 +1823,10 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void doPaintInactive(Graphics2D g2d,
-                                 TabLabel label,
-                                 Rectangle effectiveBounds) {}
+                                 TabInfo info) {}
 
   protected void doPaintSelected(Graphics2D g2d,
-                                 TabLabel label,
-                                 Rectangle effectiveBounds) {
+                                 TabInfo info) {
   }
 
   public static int getSelectionTabVShift() {
@@ -1882,7 +1873,7 @@ public class JBTabsImpl extends JComponent
 
     final TabLabel selected = getSelectedLabel();
     if (selected != null) {
-      doPaintSelected((Graphics2D)g, selected, selected.getBounds());
+      doPaintSelected((Graphics2D)g, getSelectedInfo());
       selected.paintImage(g);
     }
 

@@ -338,9 +338,6 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   protected int getNonSelectedOffset() {
-    if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
-      return -myTabs.getActiveTabUnderlineHeight() / 2 + 1;
-    }
     return 1;
   }
 
