@@ -1138,10 +1138,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  public void restorePrefix() {
-    myOffsets.restorePrefix();
-  }
-
   private static Throwable staticDisposeTrace = null;
   private Throwable disposeTrace = null;
 
