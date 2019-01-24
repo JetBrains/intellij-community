@@ -34,6 +34,9 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
 
   override fun fillBeforeAfterTabs(g: Graphics2D, before: Rectangle, after: Rectangle) {
     g.color = theme.defaultTabColor
+/*    val rect = Rectangle(before.x, before.y, after.x+after.width, after.y+after.height)
+    g.fillRect(rect.x, rect.y, rect.width, rect.height)*/
+
     g.fillRect(before.x, before.y, before.width, before.height)
     g.fillRect(after.x, after.y, after.width, after.height)
   }

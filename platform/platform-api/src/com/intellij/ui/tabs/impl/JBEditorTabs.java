@@ -177,6 +177,8 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected void doPaintBackground(Graphics2D g2d, Rectangle backgroundRect) {
+    //TODO add border instead of background
+
     List<TabInfo> visibleInfos = getVisibleInfos();
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
 
@@ -195,9 +197,6 @@ public class JBEditorTabs extends JBTabsImpl {
       maxOffset = Math.max(vertical ? r.y + r.height : r.x + r.width, maxOffset);
       maxLength = vertical ? r.width : r.height;
     }
-
-    minOffset--;
-    maxOffset++;
 
     Rectangle r2 = new Rectangle(0, 0, getWidth(), getHeight());
 
