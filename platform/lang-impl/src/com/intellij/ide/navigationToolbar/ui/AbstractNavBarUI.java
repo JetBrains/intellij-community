@@ -217,10 +217,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
-    g.setColor(getBackgroundColor());
-    if (mainToolbarVisible) {
-      g.fillRect(0, 0, r.width, r.height);
-    }
   }
 
   @Override
