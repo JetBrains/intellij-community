@@ -875,7 +875,7 @@
                      level="WARNING" implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="JavaStylePropertiesInvocation"
                      displayName="Java-style property access"
-                     groupKey="inspection.style" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.style" enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary 'def'" cleanupTool="true" enabledByDefault="true"
@@ -1509,11 +1509,6 @@
     </intentionAction>
 
     <!-- groovy style -->
-    <intentionAction>
-      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
-      <categoryKey>intention.category.groovy.style</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.style.JavaStylePropertiesInvocationIntention</className>
-    </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy.style</categoryKey>
