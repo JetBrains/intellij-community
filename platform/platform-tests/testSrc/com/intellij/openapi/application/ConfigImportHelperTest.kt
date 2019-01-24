@@ -16,7 +16,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     runInEdtAndWait { StoreUtil.saveSettings(ApplicationManager.getApplication(), true) }
     val config = File(PathManager.getConfigPath())
     assertThat(ConfigImportHelper.isConfigDirectory(config))
-      .`as`(description { "${config} exists:${config.exists()} options=${File(config, "options").list().asList()}" })
+      .`as`(description { "${config} exists=${config.exists()} options=${File(config, "options").list().asList()}" })
       .isTrue()
   }
 
