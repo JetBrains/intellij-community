@@ -270,6 +270,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
 
     addMavenLibs(classpath, mavenHome);
+    MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
   }
 
