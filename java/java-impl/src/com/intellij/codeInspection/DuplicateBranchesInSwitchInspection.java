@@ -216,7 +216,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     if (statementList == null || statementList.isEmpty()) {
       return previousBranch;
     }
-    Branch branch = new Branch(statementList, hasImplicitBreak, comments.fetchTexts());
+    PsiSwitchLabelStatement[] labels = Branch.collectLabels(statementList.get(0));
+    if (labels.length == 0) {
+      return previousBranch; // the code without a label is not allowed in 'switch', just ignore it
+    }
+    Branch branch = new Branch(labels, statementList, hasImplicitBreak, comments.fetchTexts());
     if (previousBranch == null || !previousBranch.canFallThrough()) {
       int hash = branch.hash();
       List<Branch> branches = branchesByHash.get(hash);
@@ -651,8 +655,9 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private final boolean myIsSimpleExit;
     private final boolean myCanFallThrough;
 
-    Branch(@NotNull List<PsiStatement> statementList, boolean hasImplicitBreak, @NotNull String[] commentTexts) {
-      super(collectLabels(statementList.get(0)),
+    Branch(@NotNull PsiSwitchLabelStatement[] labels, @NotNull List<PsiStatement> statementList,
+           boolean hasImplicitBreak, @NotNull String[] commentTexts) {
+      super(labels,
             statementsWithoutTrailingBreak(statementList),
             commentTexts);
 
