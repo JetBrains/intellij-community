@@ -189,7 +189,7 @@ public class ConfigImportHelper {
 
     if (new File(selectedDir, SystemInfo.isMac ? CONTENTS : BIN).isDirectory()) {
       File configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
-      if (isConfigDirectory(configDir)) {
+      if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
       }
     }

@@ -223,8 +223,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   @Deprecated
-  public void setConfirmExtractFiles(boolean value) {
-  }
+  public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
 
   public boolean isConfirmExit() {
     return myConfirmExit;

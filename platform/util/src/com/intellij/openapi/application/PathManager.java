@@ -72,8 +72,7 @@ public class PathManager {
   }
 
   /**
-   * @param insideIde {@code true} if the calling code is working inside IDE and {@code false} if it isn't (e.g. if it's running in a build
-   *                              process or a script)
+   * @param insideIde {@code true} if the calling code works inside IDE; {@code false} otherwise (e.g. in a build process or a script)
    */
   @Contract("true -> !null")
   public static String getHomePath(boolean insideIde) {
