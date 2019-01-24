@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -9,9 +10,9 @@ import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
@@ -586,7 +587,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   private static GlobalMenuLib _loadLibrary() {
     try {
-      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable") || PlatformUtils.isCLion())
+      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable") || isCLionSwiftPluginInstalled())
         return null;
       if (!Experiments.isFeatureEnabled("linux.native.menu"))
         return null;
@@ -614,6 +615,11 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
 
     return null;
+  }
+
+  private static boolean isCLionSwiftPluginInstalled() {
+    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
+    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
   }
 
   private static class MenuItemInternal {
