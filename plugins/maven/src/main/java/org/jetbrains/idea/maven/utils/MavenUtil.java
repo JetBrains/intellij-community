@@ -612,17 +612,22 @@ public class MavenUtil {
     if(mavenHome == null) return null;
     String[] libs = new File(mavenHome, "lib").list();
 
+
     if (libs != null) {
       for (String lib : libs) {
         File mavenLibFile = new File(mavenHome, "lib/" + lib);
+
         if (lib.equals("maven-core.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.xxx.jar");
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-xxx-uber.jar");
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
         }
       }

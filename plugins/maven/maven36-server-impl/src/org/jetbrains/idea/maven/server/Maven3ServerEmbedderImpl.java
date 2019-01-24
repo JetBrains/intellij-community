@@ -37,8 +37,8 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.*;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
@@ -76,8 +76,8 @@ import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
+import org.jetbrains.idea.maven.server.embedder.*;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -380,7 +380,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               break;
             }
           }
-          catch (Exception e) {
+          catch (ProfileActivationException e) {
             Maven3ServerGlobals.getLogger().warn(e);
           }
         }
@@ -1229,23 +1229,15 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         request.addRemoteRepository(artifactRepository);
       }
 
+      Maven3Sl4jLoggerWrapper.setCurrentWrapper(myConsoleWrapper);
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
 
-      final org.eclipse.aether.impl.ArtifactResolver artifactResolver = getComponent(org.eclipse.aether.impl.ArtifactResolver.class);
       final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
 
       // Don't try calling setLoggerFactory() removed by MRESOLVER-36 when Maven 3.6.0+ is used.
       // For more information and link to the MRESOLVER-36 see IDEA-201282.
-      final Maven3WrapperAetherLoggerFactory loggerFactory = new Maven3WrapperAetherLoggerFactory(myConsoleWrapper);
 
-      if (artifactResolver instanceof DefaultArtifactResolver) {
-          ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
-      }
-
-      if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
-      }
 
       // do not use request.getRemoteRepositories() here,
       // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
@@ -1258,8 +1250,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       return RepositoryUtils.toArtifact(artifactResult.getArtifact());
     }
   }
-
-  @Override
+    @Override
   @NotNull
   protected List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
