@@ -51,17 +51,11 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
   public static void record(@NotNull AnAction action, String place) {
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
     final FeatureUsageDataBuilder data = new FeatureUsageDataBuilder().addPluginInfo(info).addPlace(place);
-    record(ActionsCollectorImpl.toReportedId(info, action), data);
-  }
 
-  public static void record(String actionId) {
-    record(actionId, new FeatureUsageDataBuilder());
-  }
-
-  private static void record(@NotNull String actionId, @NotNull FeatureUsageDataBuilder data) {
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
-      FUSCounterUsageLogger.logEvent(GROUP, ConvertUsagesUtil.escapeDescriptorName(actionId), data.addOS());
+      final String actionId = ConvertUsagesUtil.escapeDescriptorName(ActionsCollectorImpl.toReportedId(info, action));
+      FUSCounterUsageLogger.logEvent(GROUP, actionId, data.addOS());
     }
   }
 
