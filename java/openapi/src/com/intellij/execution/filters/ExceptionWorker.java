@@ -35,6 +35,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,6 +133,8 @@ public class ExceptionWorker {
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     if (myMethod.startsWith("access$")) {
       myLocationRefiner = elementMatcher;
+    } else if (myMethod.startsWith("lambda$")) {
+      myLocationRefiner = new FunctionCallMatcher();
     } else {
       myLocationRefiner = new StackFrameMatcher(line, myInfo);
     }
@@ -414,6 +417,20 @@ public class ExceptionWorker {
         return candidates.get(0).getTextRange().getStartOffset() - startOffset;
       }
       return 0;
+    }
+  }
+
+  private static class FunctionCallMatcher implements PsiElementFilter {
+    @Override
+    public boolean isAccepted(PsiElement element) {
+      if (!(element instanceof PsiIdentifier)) return false;
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) return false;
+      PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+      if (call == null) return false;
+      PsiMethod target = call.resolveMethod();
+      if (target == null) return false;
+      return LambdaUtil.getFunctionalInterfaceMethod(target.getContainingClass()) == target;
     }
   }
 }

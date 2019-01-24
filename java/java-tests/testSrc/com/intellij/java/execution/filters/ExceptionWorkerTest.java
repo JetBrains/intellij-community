@@ -162,7 +162,8 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
       "        }.run();\n" +
       "      }\n" +
       "    }\n" +
-      "    new X().run();\n" +
+      "    Runnable r = () -> new X().run();\n" +
+      "    r.run();\n" +
       "  }\n" +
       "}";
     myFixture.configureByText("SomeClass.java", classText);
@@ -173,11 +174,13 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
       Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:12)\n", 12, 15),
       Trinity.create("\tat SomeClass$1X$1.run(SomeClass.java:27)\n", 27, 19),
       Trinity.create("\tat SomeClass$1X.run(SomeClass.java:29)\n", 29, 11),
-      Trinity.create("\tat SomeClass.main(SomeClass.java:32)\n", 32, 13),
+      Trinity.create("\tat SomeClass.lambda$main$0(SomeClass.java:32)\n", 32, 32),
+      Trinity.create("\tat SomeClass.main(SomeClass.java:33)\n", 33, 7),
       Trinity.create("Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 0\n", null, null),
       Trinity.create("\tat SomeClass.<init>(SomeClass.java:4)\n", 4, 36),
       Trinity.create("\tat SomeClass$1.<init>(SomeClass.java:18)\n", 18, 9),
       Trinity.create("\tat SomeClass.test(SomeClass.java:18)\n", 18, 9),
+      Trinity.create("\tat SomeClass.access$000(SomeClass.java:2)\n", 2, 1),
       Trinity.create("\tat SomeClass$Inner.run(SomeClass.java:10)\n", 10, 54));
     ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
     for (Trinity<String, Integer, Integer> line : traceAndPositions) {
