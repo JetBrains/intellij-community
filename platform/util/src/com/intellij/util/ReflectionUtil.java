@@ -227,21 +227,35 @@ public class ReflectionUtil {
   public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
     for (final Method method : methods) {
       if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) {
-        method.setAccessible(true);
-        return method;
+        return makeAccessible(method);
       }
     }
     return null;
   }
 
-  @Nullable
-  public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    return findMethod(getClassPublicMethods(aClass, false), name, parameters);
+  private static Method makeAccessible(Method method) {
+    method.setAccessible(true);
+    return method;
   }
 
   @Nullable
-  public static Method getDeclaredMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
-    return findMethod(getClassDeclaredMethods(aClass, false), name, parameters);
+  public static Method getMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
+    try {
+      return makeAccessible(aClass.getMethod(name, parameters));
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static Method getDeclaredMethod(@NotNull Class<?> aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
+    try {
+      return makeAccessible(aClass.getDeclaredMethod(name, parameters));
+    }
+    catch (NoSuchMethodException e) {
+      return null;
+    }
   }
 
   @Nullable
