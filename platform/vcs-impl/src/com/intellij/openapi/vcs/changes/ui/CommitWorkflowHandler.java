@@ -10,6 +10,9 @@ public interface CommitWorkflowHandler {
   //TODO move to VcsDataKeys
   DataKey<CommitWorkflowHandler> DATA_KEY = DataKey.create("Vcs.CommitWorkflowHandler");
 
+
+  //void activate(some data);
+
   @Nullable
   CommitExecutor getExecutor(@NotNull String executorId);
 
