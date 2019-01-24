@@ -14,15 +14,12 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +29,7 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 1);
+  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 2);
   private static final String DEFAULT_ID = "third.party.intention";
 
   private final State myState = new State();
@@ -46,9 +43,6 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   @Override
   public void loadState(@NotNull State state) {
   }
-
-  private static final List<String> PREFIXES_TO_STRIP = Arrays.asList("com.intellij.codeInsight.",
-                                                                      "com.intellij.");
 
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
     final Class<?> clazz = getOriginalHandlerClass(action);
@@ -83,11 +77,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
 
   @NotNull
   private static String toReportedId(Class<?> clazz) {
-    String fqn = clazz.getName();
-    for (String prefix : PREFIXES_TO_STRIP) {
-      fqn = StringUtil.trimStart(fqn, prefix);
-    }
-    return fqn;
+    return clazz.getName();
   }
 
   public static IntentionsCollector getInstance() {
