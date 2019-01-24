@@ -8,11 +8,10 @@ from unittest import TestCase
 from pycharm_generator_utils.util_methods import copy_merging_packages, delete, mkdir, copy_skeletons, copy
 
 _test_dir = os.path.dirname(__file__)
+_test_data_root_dir = os.path.join(_test_dir, 'data')
 
 
 class GeneratorTestCase(TestCase):
-    class_test_data_dir_name = 'fs_utils'
-
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
@@ -24,10 +23,13 @@ class GeneratorTestCase(TestCase):
         return self._testMethodName[len('test_'):]
 
     @property
+    def test_class_name(self):
+        return self.__class__.__name__[:-len('Test')]
+
+    @property
     def test_data_dir(self):
-        return os.path.join(_test_dir, 'data',
-                            self.class_test_data_dir_name,
-                            self.test_name)
+        return os.path.join(_test_data_root_dir,
+                            self.test_class_name, self.test_name)
 
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
@@ -63,7 +65,7 @@ class GeneratorTestCase(TestCase):
         self.assertDirsEqual(self.temp_dir, after_dir)
 
 
-class TestFilesystemUtils(GeneratorTestCase):
+class FileSystemUtilTest(GeneratorTestCase):
 
     def check_copy_merging_packages(self):
         with self.comparing_dirs('dst'):
