@@ -54,7 +54,7 @@ private fun listGitTree(
         .let { it[0].splitWithSpace() + it[1] }
         .also { if (it.size != 4) error(line) }
     }
-    .filter { fileFilter(repo.resolve(it[3])) }
+    .filter { fileFilter(repo.resolve(it[3].removeSuffix("\"").removePrefix("\""))) }
     // <file>, <object>, repo
     .map { GitObject(it[3], it[2], repo) }
     .map { it.path.removePrefix("$relativeDirToList/") to it }
