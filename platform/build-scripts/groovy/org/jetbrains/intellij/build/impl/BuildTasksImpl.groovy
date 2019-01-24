@@ -333,16 +333,8 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-      logFreeDiskSpace("before downloading JREs")
-      String[] args = [
-        'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
-      ]
-      if (buildContext.options.bundledJreBuild != null) {
-        args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
-      }
-      buildContext.gradle.run('Setting up JetBrains JREs', args)
-      logFreeDiskSpace("after downloading JREs")
+      setupJBre()
+      setupBundledMaven()
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -405,6 +397,25 @@ idea.fatal.error.notification=disabled
       }
     }
     logFreeDiskSpace("after building distributions")
+  }
+
+  private void setupJBre() {
+    logFreeDiskSpace("before downloading JREs")
+    String[] args = [
+      'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
+      "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+    ]
+    if (buildContext.options.bundledJreBuild != null) {
+      args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    buildContext.gradle.run('Setting up JetBrains JREs', args)
+    logFreeDiskSpace("after downloading JREs")
+  }
+
+  private void setupBundledMaven() {
+    logFreeDiskSpace("before downloading Maven")
+    buildContext.gradle.run('Setting up Bundled Maven', 'setupBundledMaven')
+    logFreeDiskSpace("after downloading Maven")
   }
 
   static def unpackPty4jNative(BuildContext buildContext, String distDir, String pty4jOsSubpackageName) {

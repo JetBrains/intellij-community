@@ -29,6 +29,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
@@ -62,6 +63,7 @@ import org.slf4j.impl.Log4jLoggerFactory;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -102,7 +104,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       if (pluginFileOrDir.isDirectory()) {
         File parentFile = getMavenPluginParentFile();
         myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-        myBundledMaven3Home = new File(parentFile, "maven3-server-impl/lib/maven3");
+        myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
       }
       else {
         myBundledMaven2Home = new File(root, "maven2");
@@ -261,50 +263,64 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     final String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(root, "intellij.maven.server"));
-      File parentFile = getMavenPluginParentFile();
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-        classpath.add(new File(root, "intellij.maven.server.m2.impl"));
-        addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
-        // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
-        if (StringUtil.compareVersionNumbers(mavenVersion, "2.1.0") < 0) {
-          mavenHome = BundledMavenPathHolder.myBundledMaven2Home;
-        }
-      }
-      else {
-        classpath.add(new File(root, "intellij.maven.server.m3.common"));
-        addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
-
-        if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "intellij.maven.server.m30.impl"));
-        }
-        else {
-          classpath.add(new File(root, "intellij.maven.server.m3.impl"));
-        }
-      }
+      prepareClassPathForLocalRunAndUnitTests(mavenVersion, classpath, root);
     }
     else {
-      classpath.add(new File(root, "maven-server-api.jar"));
-
-      if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-        classpath.add(new File(root, "maven2-server-impl.jar"));
-        addDir(classpath, new File(root, "maven2-server-lib"));
-      }
-      else {
-        classpath.add(new File(root, "maven3-server-common.jar"));
-        addDir(classpath, new File(root, "maven3-server-lib"));
-
-        if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "maven30-server-impl.jar"));
-        }
-        else {
-          classpath.add(new File(root, "maven3-server-impl.jar"));
-        }
-      }
+      prepareClassPathForProduction(mavenVersion, classpath, root);
     }
 
     addMavenLibs(classpath, mavenHome);
+    MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
+  }
+
+  private static void prepareClassPathForProduction(@NotNull String mavenVersion,
+                                                    List<File> classpath,
+                                                    String root) {
+    classpath.add(new File(root, "maven-server-api.jar"));
+
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
+      classpath.add(new File(root, "maven2-server-impl.jar"));
+      addDir(classpath, new File(root, "maven2-server-lib"));
+    }
+    else {
+      classpath.add(new File(root, "maven3-server-common.jar"));
+      addDir(classpath, new File(root, "maven3-server-lib"));
+
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+        classpath.add(new File(root, "maven30-server-impl.jar"));
+      }
+      else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
+        classpath.add(new File(root, "maven3-server-impl.jar"));
+      }
+      else {
+        classpath.add(new File(root, "maven36-server-impl.jar"));
+      }
+    }
+  }
+
+  @NotNull
+  private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
+    classpath.add(new File(root, "intellij.maven.server"));
+    File parentFile = getMavenPluginParentFile();
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
+      classpath.add(new File(root, "intellij.maven.server.m2.impl"));
+      addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
+    }
+    else {
+      classpath.add(new File(root, "intellij.maven.server.m3.common"));
+      addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
+
+      if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
+        classpath.add(new File(root, "intellij.maven.server.m30.impl"));
+      }
+      else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") < 0) {
+        classpath.add(new File(root, "intellij.maven.server.m3.impl"));
+      }
+      else {
+        classpath.add(new File(root, "intellij.maven.server.m36.impl"));
+      }
+    }
   }
 
   private static File getMavenPluginParentFile() {
