@@ -80,6 +80,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         display(DisplayDataObject(plot_index, width, buffer))
 
     def draw(self):
+        FigureCanvasAgg.draw(self)
         is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
         if is_interactive and matplotlib.is_interactive():
             self.show()
