@@ -19,7 +19,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import java.util.Set;
 
 public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtureTestCase {
-  private static final Set<String> ENABLED_TOOLS = ContainerUtil.set("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement");
+  private static final Set<String> ENABLED_TOOLS = ContainerUtil.set("UNUSED_IMPORT", "MarkedForRemoval", "Java9RedundantRequiresStatement", "GroovyUnusedAssignment");
 
   @Override
   public void setUp() throws Exception {
@@ -71,6 +71,31 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
                                                      "    -light_idea_test_case\n" +
                                                      "     -some.module\n" +
                                                      "      Redundant directive 'requires M2'\n");
+  }
+
+  public void testNonJavaDirectoryModuleGrouping() throws Exception {
+    addFile("xxx/yyy/ZZZ.groovy", "class ZZZ {void mmm() { int iii = 0; }}", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2);
+    addFile("foo/bar/Baz.groovy", "class Baz {void mmm() { int iii = 0; }}", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3);
+    InspectionResultsView view = runInspections();
+    view.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
+    view.update();
+    updateTree(view);
+    TreeUtil.expandAll(view.getTree());
+    updateTree(view);
+
+    PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
+                                                     " -Groovy\n" +
+                                                     "  -Data flow\n" +
+                                                     "   -Unused Assignment\n" +
+                                                     "    -light_idea_test_case_m2\n" +
+                                                     "     -src_m2/xxx/yyy\n" +
+                                                     "      -ZZZ.groovy\n" +
+                                                     "       Assignment is not used\n" +
+                                                     "    -light_idea_test_case_m3\n" +
+                                                     "     -src_m3/foo/bar\n" +
+                                                     "      -Baz.groovy\n" +
+                                                     "       Assignment is not used");
+
   }
 
   private InspectionResultsView runInspections() {
