@@ -24,6 +24,7 @@ import com.siyeh.ipp.IPPTestCase;
 public class PostfixPrefixIntentionTest extends IPPTestCase {
   public void testSimple() { doTest(); }
   public void testPrefixExpression() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
+  public void testPrefixExpressionInSwitchExprJava12() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
   public void testIncomplete() { assertIntentionNotAvailable(); }
   public void testUnaryExpression() { assertIntentionNotAvailable(); }
 
