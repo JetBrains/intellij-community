@@ -10,6 +10,7 @@ from pycharm_generator_utils.util_methods import *
 # TODO: Move all CLR-specific functions to clr_tools
 
 debug_mode = True
+quiet = False
 
 _helpers_dir = os.path.dirname(__file__)
 
