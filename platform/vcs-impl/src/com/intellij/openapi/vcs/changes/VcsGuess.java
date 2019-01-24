@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -37,38 +36,11 @@ public class VcsGuess {
 
   @Nullable
   public AbstractVcs getVcsForDirty(@NotNull VirtualFile file) {
-    if (file.isInLocalFileSystem() && isFileInIndex(null, file)) {
-      return myVcsManager.getVcsFor(file);
-    }
-    return null;
+    return myVcsManager.getVcsFor(file);
   }
 
   @Nullable
   public AbstractVcs getVcsForDirty(@NotNull FilePath filePath) {
-    if (filePath.isNonLocal()) {
-      return null;
-    }
-    VirtualFile validParent = ChangesUtil.findValidParentAccurately(filePath);
-    if (validParent != null && isFileInIndex(filePath, validParent)) {
-      return myVcsManager.getVcsFor(validParent);
-    }
-    return null;
-  }
-
-  private boolean isFileInIndex(@Nullable final FilePath filePath, @NotNull final VirtualFile validParent) {
-    return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
-      boolean inContent = myVcsManager.isFileInContent(validParent);
-      if (inContent) return true;
-      if (filePath != null) {
-        return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnored(validParent);
-      }
-      return false;
-    });
-  }
-
-  private static boolean isFileInBaseDir(@NotNull  FilePath filePath, @Nullable VirtualFile baseDir) {
-    VirtualFile parent = filePath.getVirtualFileParent();
-    return !filePath.isDirectory() && parent != null && parent.equals(baseDir);
+    return myVcsManager.getVcsFor(filePath);
   }
 }
