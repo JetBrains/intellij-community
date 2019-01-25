@@ -43,12 +43,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase implements DumbAware {
+public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
   private boolean myInstallFramework;
   @Nullable private PyAddSdkGroupPanel myInterpreterPanel;
 
-  public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator projectGenerator,
-                                     @NotNull final AbstractNewProjectStep.AbstractCallback callback) {
+  public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
+                                     @NotNull final AbstractNewProjectStep.AbstractCallback<T> callback) {
     super(projectGenerator, callback);
   }
 
