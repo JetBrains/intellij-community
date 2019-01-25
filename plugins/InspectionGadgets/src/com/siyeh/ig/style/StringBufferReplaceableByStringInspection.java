@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -104,7 +105,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length == 3) {
-      return arguments[0].getType() instanceof PsiArrayType &&
+      return (arguments[0].getType() instanceof PsiArrayType || TypeUtils.isJavaLangString(arguments[0].getType())) &&
              PsiType.INT.equals(arguments[1].getType()) && PsiType.INT.equals(arguments[2].getType());
     }
     return arguments.length == 1;
@@ -322,9 +323,16 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           if (arguments.length == 0) {
             return null;
           }
-          if (arguments.length > 1) {
+          if (arguments.length == 3) {
+            PsiExpression firstArg = arguments[0];
             addNewlineIfNeeded(argumentList, true, result, commentsBefore);
-            result.append("String.valueOf").append(tracker.textWithComments(argumentList));
+            if (TypeUtils.isJavaLangString(firstArg.getType())) {
+              result.append(tracker.textWithComments(firstArg, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE))
+                .append(".substring(")
+                .append(tracker.textWithComments(arguments[1])).append(",").append(tracker.textWithComments(arguments[2])).append(")");
+            } else {
+              result.append("String.valueOf").append(tracker.textWithComments(argumentList));
+            }
             return result;
           }
           final PsiExpression argument = arguments[0];
@@ -335,7 +343,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
             if (nextCall != null && "append".equals(nextCall.getMethodExpression().getReferenceName())) {
               PsiExpression[] args = nextCall.getArgumentList().getExpressions();
-              needConvertToString = args.length != 1 || !TypeUtils.isJavaLangString(args[0].getType());
+              needConvertToString = args.length == 0 || !TypeUtils.isJavaLangString(args[0].getType());
             }
           }
           addNewlineIfNeeded(argument, result.length() > 0, result, commentsBefore);

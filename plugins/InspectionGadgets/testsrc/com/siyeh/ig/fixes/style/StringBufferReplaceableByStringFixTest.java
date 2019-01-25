@@ -30,6 +30,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
 
   public void testSimpleStringBuffer() { doTestFor("StringBuffer"); }
   public void testStringBuilderAppend() { doTestFor("StringBuilder"); }
+  public void testStringBuilderAppendSubString() { doTestFor("StringBuilder"); }
   public void testStringBufferVariable() { doTestFor("StringBuffer"); }
   public void testStringBufferVariable2() { doTestFor("StringBuffer"); }
   public void testStartsWithPrimitive() { doTestFor("StringBuffer"); }
