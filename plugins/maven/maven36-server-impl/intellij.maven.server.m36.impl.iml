@@ -11,7 +11,7 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-compat:3.6.0" type="repository">
         <properties maven-id="org.apache.maven:maven-compat:3.6.0" />
         <CLASSES>
@@ -59,7 +59,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-core:3.6.0" type="repository">
         <properties maven-id="org.apache.maven:maven-core:3.6.0" />
         <CLASSES>
@@ -105,7 +105,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-embedder:3.6.0" type="repository">
         <properties maven-id="org.apache.maven:maven-embedder:3.6.0" />
         <CLASSES>
@@ -153,7 +153,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
         <properties maven-id="org.apache.maven.shared:maven-dependency-tree:1.2" />
         <CLASSES>
