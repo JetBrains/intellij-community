@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -278,7 +278,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         if (argumentList == null) {
           return null;
         }
-        addNewlineIfNeeded(argumentList, false, result, "");
+        appendFormattedPlusIfNeeded(argumentList, result, "");
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 1 && !TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           final PsiExpression argument = arguments[0];
@@ -325,11 +325,14 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           }
           if (arguments.length == 3) {
             PsiExpression firstArg = arguments[0];
-            addNewlineIfNeeded(argumentList, true, result, commentsBefore);
+            appendFormattedPlusIfNeeded(argumentList, result, commentsBefore);
             if (TypeUtils.isJavaLangString(firstArg.getType())) {
               result.append(tracker.textWithComments(firstArg, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE))
                 .append(".substring(")
-                .append(tracker.textWithComments(arguments[1])).append(",").append(tracker.textWithComments(arguments[2])).append(")");
+                .append(tracker.textWithComments(arguments[1]))
+                .append(",")
+                .append(tracker.textWithComments(arguments[2]))
+                .append(")");
             } else {
               result.append("String.valueOf").append(tracker.textWithComments(argumentList));
             }
@@ -346,7 +349,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
               needConvertToString = args.length == 0 || !TypeUtils.isJavaLangString(args[0].getType());
             }
           }
-          addNewlineIfNeeded(argument, result.length() > 0, result, commentsBefore);
+          appendFormattedPlusIfNeeded(argument, result, commentsBefore);
           if (!needConvertToString) {
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
@@ -397,24 +400,24 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       return result;
     }
 
-    private void addNewlineIfNeeded(PsiElement anchor, boolean insertPlus, StringBuilder out, String commentsBefore) {
+    private void appendFormattedPlusIfNeeded(PsiElement anchor, StringBuilder out, String commentsBefore) {
       final boolean operationSignOnNextLine =
         CodeStyle.getLanguageSettings(anchor.getContainingFile(), JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
       final int lineNumber = getLineNumber(anchor);
       final boolean insertNewLine = currentLine != lineNumber;
-      currentLine = lineNumber;
-      boolean needNewLine = insertNewLine && out.length() > 0;
-      if (insertPlus && !operationSignOnNextLine) {
-        out.append(needNewLine ? '+' + commentsBefore : commentsBefore + '+');
+      final boolean notEmpty = out.length() > 0;
+      if (notEmpty && !operationSignOnNextLine) {
+        out.append(insertNewLine ? '+' + commentsBefore : commentsBefore + '+');
       } else {
         out.append(commentsBefore);
       }
-      if (needNewLine && !hasTrailingLineBreak(out)) {
+      if (insertNewLine && notEmpty && !hasTrailingLineBreak(out)) {
         out.append("\n "); // space is added to force line reformatting if the next line starts with comment
       }
-      if (insertPlus && operationSignOnNextLine) {
+      if (notEmpty && operationSignOnNextLine) {
         out.append('+');
       }
+      currentLine = lineNumber;
     }
 
     private static boolean hasTrailingLineBreak(StringBuilder sb) {

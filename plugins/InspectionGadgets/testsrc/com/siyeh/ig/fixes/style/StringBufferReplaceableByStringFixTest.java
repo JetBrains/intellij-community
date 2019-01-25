@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -46,6 +47,7 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testMarathon() { doTestFor("StringBuilder"); }
   public void testArray() { doTestFor("StringBuilder"); }
   public void testArray2() { doTestFor("StringBuilder"); }
+  public void testArray3() { doTestFor("StringBuilder"); }
   public void testConstructorArgument() { doTestFor("StringBuilder"); }
   public void testConstructorArgument2() { doTestFor("StringBuilder"); }
   public void testNoConstructorArgument() { doTestFor("StringBuilder"); }
