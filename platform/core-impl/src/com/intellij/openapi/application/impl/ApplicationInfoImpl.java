@@ -56,6 +56,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Icon myProgressTailIcon;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
+  private int myLicenseOffsetX = 115;
   private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
@@ -132,6 +133,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_X = "licenseOffsetX";
   private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
@@ -331,6 +333,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   public int getProgressY() {
     return myProgressY;
+  }
+
+  public int getLicenseOffsetX() {
+    return myLicenseOffsetX;
   }
 
   public int getLicenseOffsetY() {
@@ -676,6 +682,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_X);
+      if (v != null) {
+        myLicenseOffsetX = Integer.parseInt(v);
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);

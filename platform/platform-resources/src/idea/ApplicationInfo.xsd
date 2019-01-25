@@ -218,10 +218,17 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:int" name="licenseOffsetX">
+      <xs:annotation>
+        <xs:documentation>
+          The X coordinate of a position on the splash screen where information about licensee will be shown.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:int" name="licenseOffsetY">
       <xs:annotation>
         <xs:documentation>
-          The Y coordinate of a position on the splash screen where information about licensee will be shown. The X coordinate is 15.
+          The Y coordinate of a position on the splash screen where information about licensee will be shown.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
