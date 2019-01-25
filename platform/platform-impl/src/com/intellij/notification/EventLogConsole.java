@@ -97,7 +97,7 @@ class EventLogConsole {
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
                                        editor.getContentComponent());
 
-    editor.setPopupHandler(new ContextMenuPopupHandler() {
+    editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();

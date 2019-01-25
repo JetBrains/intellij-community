@@ -849,7 +849,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     settings.setVirtualSpace(false);
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
-    editor.setPopupHandler(new ContextMenuPopupHandler() {
+    editor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
         DefaultActionGroup group = new DefaultActionGroup();

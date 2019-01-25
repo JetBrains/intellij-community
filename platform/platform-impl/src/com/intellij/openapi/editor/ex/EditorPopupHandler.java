@@ -8,16 +8,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handler of popup trigger mouse events in editor
  *
- * @see EditorEx#setPopupHandler(EditorPopupHandler)
+ * @see EditorEx#installPopupHandler(EditorPopupHandler)
  * @see ContextMenuPopupHandler default implementation
- *
- * @since 2019.1
  */
 public interface EditorPopupHandler {
-  EditorPopupHandler NONE = event -> {};
+  EditorPopupHandler NONE = event -> true;
 
   /**
    * This method is called when a popup trigger mouse event is received by editor's main area.
+   *
+   * @return {@code true} if this handler has processed the event, {@code false} if previously installed (or the default one if there are
+   * none) handler should be invoked.
    */
-  void handlePopup(@NotNull EditorMouseEvent event);
+  boolean handlePopup(@NotNull EditorMouseEvent event);
 }

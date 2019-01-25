@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
- * {@link EditorEx#setPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+ * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated

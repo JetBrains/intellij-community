@@ -26,7 +26,7 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
   public abstract ActionGroup getActionGroup(@NotNull EditorMouseEvent event);
 
   @Override
-  public void handlePopup(@NotNull EditorMouseEvent event) {
+  public boolean handlePopup(@NotNull EditorMouseEvent event) {
     ActionGroup group = getActionGroup(event);
     if (group != null) {
       ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
@@ -39,6 +39,7 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
         event.consume();
       }
     }
+    return true;
   }
 
   private static void disableHoverPopupsWhileShowing(Editor editor, Component popupComponent) {

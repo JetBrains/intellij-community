@@ -292,44 +292,44 @@ public interface EditorEx extends Editor {
   int getExpectedCaretOffset();
 
   /**
-   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to
-   * {@code null} disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
-   * event listener). This method might have no effect if default editor's popup handler was overridden
-   * using {@link #setPopupHandler(EditorPopupHandler)}.
+   * Sets id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right button's
+   * click (with {@code null} value disabling context menu). This method might have no effect if default editor's popup handler was
+   * overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
    * @see #getContextMenuGroupId()
-   * @see #setPopupHandler(EditorPopupHandler)
    */
   void setContextMenuGroupId(@Nullable String groupId);
 
   /**
-   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. {@code null}
-   * value means built-in logic for showing context menu is disabled. Returned value might be meaningless if default editor's popup handler
-   * was overridden using {@link #setPopupHandler(EditorPopupHandler)}.
+   * Returns id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right
+   * button's click ({@code null} value meaning no context menu). Returned value might be meaningless if default editor's popup handler
+   * was overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
    * @see #setContextMenuGroupId(String)
-   * @see #getPopupHandler()
    */
   @Nullable
   String getContextMenuGroupId();
 
   /**
-   * Allows to override default editor's context popup logic. Default logic shows a context menu corresponding to a certain action group
+   * Allows to override default editor's context popup logic.
+   * <p>
+   * Default handler shows a context menu corresponding to a certain action group
    * registered in {@link ActionManager}. Group's id can be changed using {@link #setContextMenuGroupId(String)}. For inline custom visual
    * elements (inlays) action group id is obtained from {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)}.
+   * <p>
+   * If multiple handlers are installed, they are processed in order, starting from the most recently installed one. Processing stops when
+   * some handler returns {@code true} from {@link EditorPopupHandler#handlePopup(EditorMouseEvent)} method.
    *
-   * @see #getPopupHandler()
-   * @since 2019.1
+   * @see #uninstallPopupHandler(EditorPopupHandler)
    */
-  void setPopupHandler(@NotNull EditorPopupHandler popupHandler);
+  void installPopupHandler(@NotNull EditorPopupHandler popupHandler);
 
   /**
-   * Returns current editor's popup handler (see {@link #setPopupHandler(EditorPopupHandler)}).
+   * Removes previously installed {@link EditorPopupHandler}.
    *
-   * @since 2019.1
+   * @see #installPopupHandler(EditorPopupHandler)
    */
-  @NotNull
-  EditorPopupHandler getPopupHandler();
+  void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler);
 
   /**
    * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},

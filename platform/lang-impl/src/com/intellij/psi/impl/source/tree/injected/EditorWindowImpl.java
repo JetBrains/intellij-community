@@ -892,14 +892,13 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   }
 
   @Override
-  public void setPopupHandler(@NotNull EditorPopupHandler popupHandler) {
-    myDelegate.setPopupHandler(popupHandler);
+  public void installPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myDelegate.installPopupHandler(popupHandler);
   }
 
-  @NotNull
   @Override
-  public EditorPopupHandler getPopupHandler() {
-    return myDelegate.getPopupHandler();
+  public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myDelegate.installPopupHandler(popupHandler);
   }
 
   @Override

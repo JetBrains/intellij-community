@@ -796,7 +796,7 @@ public class EditorActionUtil {
 
   /**
    * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#setPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
@@ -813,7 +813,7 @@ public class EditorActionUtil {
 
   /**
    * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#setPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {

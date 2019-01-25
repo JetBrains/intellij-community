@@ -324,8 +324,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myErrorStripeNeedsRepaint;
 
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
-  @NotNull
-  private EditorPopupHandler myPopupHandler = new DefaultPopupHandler();
+  private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
 
   private boolean myUseEditorAntialiasing = true;
 
@@ -551,6 +550,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
 
     myFocusModeModel = new FocusModeModel(this);
+    myPopupHandlers.add(new DefaultPopupHandler());
   }
 
   public void applyFocusMode() {
@@ -790,14 +790,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setPopupHandler(@NotNull EditorPopupHandler popupHandler) {
-    myPopupHandler = popupHandler;
+  public void installPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myPopupHandlers.add(popupHandler);
   }
 
-  @NotNull
   @Override
-  public EditorPopupHandler getPopupHandler() {
-    return myPopupHandler;
+  public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
+    myPopupHandlers.remove(popupHandler);
   }
 
   @Nullable
@@ -3747,6 +3746,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         for (EditorMouseListener mouseListener : myMouseListeners) {
           boolean wasConsumed = event.isConsumed();
           mouseListener.mousePressed(event);
+          //noinspection deprecation
           if (!wasConsumed && event.isConsumed() && mouseListener instanceof com.intellij.util.EditorPopupHandler) {
             // compatibility with legacy code, this logic should be removed along with EditorPopupHandler
             forceProcessing = true;
@@ -4696,7 +4696,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void invokePopupIfNeeded(EditorMouseEvent event) {
     if (event.getArea() == EditorMouseEventArea.EDITING_AREA && event.getMouseEvent().isPopupTrigger() && !event.isConsumed()) {
-      myPopupHandler.handlePopup(event);
+      for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
+        if (myPopupHandlers.get(i).handlePopup(event)) break;
+      }
     }
   }
 

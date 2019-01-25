@@ -520,7 +520,7 @@ public class TextDiffViewerUtil {
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
       );
       for (EditorEx editor : editors) {
-        editor.setPopupHandler(handler);
+        editor.installPopupHandler(handler);
       }
     }
   }
