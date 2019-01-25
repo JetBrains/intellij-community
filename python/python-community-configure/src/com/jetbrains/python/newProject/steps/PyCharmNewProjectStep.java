@@ -29,13 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PyCharmNewProjectStep extends AbstractNewProjectStep {
-
   public PyCharmNewProjectStep() {
     super(new Customization());
-  }
-
-  public PyCharmNewProjectStep(@NotNull AbstractNewProjectStep.Customization customization) {
-    super(customization);
   }
 
   protected static class Customization extends AbstractNewProjectStep.Customization {
@@ -57,7 +52,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     @Override
     protected ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
                                                                         @NotNull AbstractCallback callback) {
-      return new ProjectSpecificSettingsStep<>(projectGenerator, callback);
+      return new ProjectSpecificSettingsStep(projectGenerator, callback);
     }
 
     @NotNull
@@ -85,7 +80,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull AbstractCallback callback) {
       if (generator instanceof PythonProjectGenerator) {
         ProjectSpecificAction group =
-          new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep<>(generator, new PythonGenerateProjectCallback()));
+          new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, new PythonGenerateProjectCallback()));
         return group.getChildren(null);
       }
       else {
