@@ -3,7 +3,11 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
+import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
+import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -18,6 +22,16 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest(private val testParameters: 
     val gradleModuleGroup: NewProjectDialogModel.GradleGroupModules,
     val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
+  }
+
+  @Before
+  fun beforeTest(){
+    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_before_${testMethod.methodName}")
+  }
+
+  @After
+  fun afterTest(){
+    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_after_${testMethod.methodName}")
   }
 
   @Test
