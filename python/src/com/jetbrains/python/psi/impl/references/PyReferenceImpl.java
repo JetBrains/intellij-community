@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -10,6 +11,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -691,6 +693,30 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (file != null && !file.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
             return false;
           }
+        }
+      } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
+        String name = null;
+        ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(e);
+        if (e instanceof PsiNamedElement) {
+          name = ((PsiNamedElement) e).getName();
+        } else if (e instanceof PyImportElement) {
+          name = ((PyImportElement) e).getName();
+        } else if (e instanceof PyImportedNameDefiner && scopeOwner != null) {
+          Ref<Boolean> importFound = Ref.create(false);
+          Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
+          int completionIndex = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
+          ControlFlowUtil.iteratePrev(completionIndex, instructions, instruction -> {
+            if (instruction.getElement() == e) {
+              importFound.set(true);
+              return ControlFlowUtil.Operation.BREAK;
+            }
+            return ControlFlowUtil.Operation.NEXT;
+          });
+          return importFound.get();
+        }
+        if (name != null && scopeOwner != null) {
+          List<Instruction> defs = getLatestDefinitions(name, scopeOwner, element);
+          return !defs.isEmpty();
         }
       }
       return true;
