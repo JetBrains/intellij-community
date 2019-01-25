@@ -27,7 +27,6 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
@@ -42,7 +41,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel implements Accessible {
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)

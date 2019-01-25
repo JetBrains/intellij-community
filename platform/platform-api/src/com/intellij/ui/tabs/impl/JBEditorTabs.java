@@ -89,14 +89,6 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   @Override
-  protected void paintFirstGhost(Graphics2D g2d) {
-  }
-
-  @Override
-  protected void paintLastGhost(Graphics2D g2d) {
-  }
-
-  @Override
   public boolean isGhostsAlwaysVisible() {
     return false;
   }
@@ -149,24 +141,10 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected boolean isActiveTab(TabInfo info) {
-    return isFocusOwner(this);
+    return Utils.Companion.isFocusOwner(this);
   }
 
   protected boolean isHoveredTab(TabInfo info) {
-    return false;
-  }
-
-  private static boolean isFocusOwner(Component c) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
-    // verify focusOwner is a descendant of c
-    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent())
-    {
-      if (temp == c) {
-        return true;
-      }
-    }
-
     return false;
   }
 

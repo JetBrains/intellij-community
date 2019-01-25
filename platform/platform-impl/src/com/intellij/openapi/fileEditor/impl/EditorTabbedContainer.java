@@ -39,10 +39,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabPainter;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -90,7 +87,16 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
       @Override
       protected boolean isActiveTab(TabInfo info) {
-        return true;
+        if (Utils.Companion.isFocusOwner(this)) return true;
+
+        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        if (editorManager == null) return false;
+
+        final EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
+        VirtualFile file = window.getSelectedFile();
+        if(file == null) return false;
+
+        return file.equals(info.getObject()) && window.equals(myWindow);
       }
 
       @Override
@@ -98,17 +104,17 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if (myHoveredInfo == info) return;
 
         myHoveredInfo = info;
-        revalidate();
+
         repaint();
       }
 
       @Override
       protected void onMouseExitedHandler(TabInfo info) {
-        if (myHoveredInfo == info) {
-          myHoveredInfo = null;
-          revalidate();
-          repaint();
-        }
+        if (myHoveredInfo != info) return;
+
+        myHoveredInfo = null;
+
+        repaint();
       }
 
       @Override
@@ -121,23 +127,21 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         return new JBDefaultTabPainter(JBTabPainter.Companion.getEDITOR_TAB());
       }
 
+      boolean isOwner = false;
+
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
         return e -> {
           if (e instanceof FocusEvent) {
-            Component from = ((FocusEvent)e).getOppositeComponent();
-            Component to = ((FocusEvent)e).getComponent();
-            if (isChild(from) || isChild(to)) {
+            //TODO optimize the redrawing
+
+/*            boolean newIsOwner = Utils.Companion.isFocusOwner(myTabs);
+            if(isOwner != newIsOwner) {
+              isOwner = newIsOwner;*/
               myTabs.repaint();
-            }
+           // }
           }
           return false;
         };
-      }
-
-      private boolean isChild(@Nullable Component c) {
-        if (c == null) return false;
-        if (c == this) return true;
-        return isChild(c.getParent());
       }
 
       @Nullable
