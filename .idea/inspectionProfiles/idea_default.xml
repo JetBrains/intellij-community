@@ -562,6 +562,9 @@
       <option name="ignoreRequiredObsoleteCollectionTypes" value="false" />
     </inspection_tool>
     <inspection_tool class="OctalIntegerJS" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PackageName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="namePattern" value="[a-z_][a-z\d_]*(\.[a-z_][a-zA-Z\d_]*)*" />
+    </inspection_tool>
     <inspection_tool class="PageflowModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PagesModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
