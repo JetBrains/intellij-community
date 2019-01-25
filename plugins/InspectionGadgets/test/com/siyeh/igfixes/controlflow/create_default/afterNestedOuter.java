@@ -7,6 +7,7 @@ class X {
         switch (j) {
           default: break;
         }
+          break;
         default:
             throw new IllegalStateException("Unexpected value: " + i);
     }

@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class CreateDefaultBranchFix extends BaseSwitchFix {
 
@@ -112,6 +109,10 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
       return Collections.singletonList("default -> " + statement.getText());
     }
     else {
+      PsiStatement lastStatement = ArrayUtil.getLastElement(Objects.requireNonNull(switchBlock.getBody()).getStatements());
+      if (lastStatement != null && ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
+        return Arrays.asList("break;", "default:", statement.getText());
+      }
       return Arrays.asList("default:", statement.getText());
     }
   }
