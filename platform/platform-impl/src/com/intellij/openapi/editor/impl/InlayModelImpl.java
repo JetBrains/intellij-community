@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -66,7 +63,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset() && isTypingOrUndo()) {
+        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
           List<Inlay> inlays = getInlineElementsInRange(offset, offset);
           int inlayCount = inlays.size();
           if (inlayCount > 0) {
@@ -81,21 +78,6 @@ public class InlayModelImpl implements InlayModel, Disposable {
             }
           }
         }
-      }
-
-      private boolean isTypingOrUndo() {
-        if (((CommandProcessorEx)CommandProcessor.getInstance()).isCurrentCommandTyping()) {
-          return true;
-        }
-        UndoManager globalUndoManager = UndoManager.getGlobalInstance();
-        if (globalUndoManager.isUndoInProgress() || globalUndoManager.isRedoInProgress()) {
-          return true;
-        }
-        if (myEditor.getProject() != null) {
-          UndoManager undoManager = UndoManager.getInstance(myEditor.getProject());
-          return undoManager.isUndoInProgress() || undoManager.isRedoInProgress();
-        }
-        return false;
       }
 
       @Override
