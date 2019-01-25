@@ -43,7 +43,6 @@ class PyStubPackagesAdvertiser : PyInspection() {
     private val CHECKED = mapOf("coincurve" to "coincurve",
                                 "docutils" to "docutils",
                                 "ordered_set" to "ordered-set",
-                                "pydantic" to "pydantic",
                                 "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
                                 "pyspark" to "pyspark") // top-level package to package on PyPI, sorted by the latter
