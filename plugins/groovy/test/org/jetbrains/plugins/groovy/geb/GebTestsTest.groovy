@@ -1,13 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb
 
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
+import org.jetbrains.plugins.groovy.RepositoryTestLibrary
+import org.jetbrains.plugins.groovy.TestLibrary
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_1_6
 
 /**
  * @author Sergey Evdokimov
  */
-class GebTestsTest extends AbstractGebLightTestCase {
+class GebTestsTest extends LightCodeInsightFixtureTestCase {
+
+  private static final TestLibrary LIB_GEB = new RepositoryTestLibrary(
+    'org.codehaus.geb:geb-core:0.7.2',
+    'org.codehaus.geb:geb-junit4:0.7.2',
+    'org.codehaus.geb:geb-spock:0.7.2',
+    'org.codehaus.geb:geb-testng:0.7.2'
+  )
+
+  public static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_1_6 + LIB_GEB)
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return DESCRIPTOR
+  }
 
   void testSpockTestMemberCompletion() {
     myFixture.configureByText("FooTest.groovy", """
@@ -33,7 +56,7 @@ class FooTest extends geb.junit4.GebReportingTest {
 
     TestUtils.checkCompletionContains(myFixture, "\$()", "to()", "go()", "currentWindow", "verifyAt()", "title")
   }
-  
+
   void testTestNGTestMemberCompletion() {
     myFixture.configureByText("FooTest.groovy", """
 class FooTest extends geb.testng.GebReportingTest {
@@ -263,5 +286,4 @@ class A extends geb.Page {
 }
 """)
   }
-
 }
