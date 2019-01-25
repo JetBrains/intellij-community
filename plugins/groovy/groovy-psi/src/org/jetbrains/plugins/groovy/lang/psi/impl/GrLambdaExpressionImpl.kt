@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveState
+import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -33,6 +35,16 @@ class GrLambdaExpressionImpl(node: ASTNode): GrExpressionImpl(node), GrLambdaExp
   override fun getBody(): PsiElement? {
     val body = lastChild
     return if (body is GrExpression || body is GrCodeBlock) body else null
+  }
+
+  override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
+    if (!processParameters(processor, state)) return false
+    return processClosureClassMembers(processor, state, lastParent, place)
+
+  }
+
+  override fun getAllParameters(): Array<GrParameter> {
+    return parameters
   }
 
   override fun toString(): String {

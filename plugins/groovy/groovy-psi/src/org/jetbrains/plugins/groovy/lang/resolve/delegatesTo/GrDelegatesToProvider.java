@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 public interface GrDelegatesToProvider {
@@ -26,4 +27,11 @@ public interface GrDelegatesToProvider {
 
   @Nullable
   DelegatesToInfo getDelegatesToInfo(@NotNull GrClosableBlock closure);
+
+  default DelegatesToInfo getDelegatesToInfo(@NotNull GrFunctionalExpression expression) {
+    if (expression instanceof GrClosableBlock) {
+      return getDelegatesToInfo((GrClosableBlock)expression);
+    }
+    return null;
+  }
 }

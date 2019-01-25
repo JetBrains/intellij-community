@@ -6,6 +6,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
 import groovy.lang.Closure.*
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature
@@ -27,7 +28,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
 class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
   override fun getDelegatesToInfo(closableBlock: GrClosableBlock): DelegatesToInfo? {
-    val call = getContainingCall(closableBlock) ?: return null
+    return getDelegatesToInfo(closableBlock as GrFunctionalExpression)
+  }
+
+  override fun getDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
+    val call = getContainingCall(expression) ?: return null
     val result = call.advancedResolve()
     val method = result.element as? PsiMethod ?: return null
 
@@ -37,16 +42,16 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     }
 
     val signature = createSignature(method, PsiSubstitutor.EMPTY)
-    val map = mapArgs(closableBlock, call, signature) ?: return null
+    val map = mapArgs(expression, call, signature) ?: return null
 
     val parameterList = method.parameterList
-    val parameter = findParameter(parameterList, closableBlock, map) ?: return null
+    val parameter = findParameter(parameterList, expression, map) ?: return null
 
     val delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY)
     val strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY)
     if (delegateFqnData != null) {
       return DelegatesToInfo(
-        TypesUtil.createType(delegateFqnData, closableBlock),
+        TypesUtil.createType(delegateFqnData, expression),
         strategyData ?: OWNER_FIRST
       )
     }
@@ -73,12 +78,12 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
   }
 
   private fun findParameter(parameterList: PsiParameterList,
-                            closableBlock: GrClosableBlock,
+                            expression: GrFunctionalExpression,
                             map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiParameter? {
     val parameters = parameterList.parameters
 
     for (i in map.indices) {
-      if (map[i].args.contains(closableBlock)) return parameters[i]
+      if (map[i].args.contains(expression)) return parameters[i]
     }
 
     return null
