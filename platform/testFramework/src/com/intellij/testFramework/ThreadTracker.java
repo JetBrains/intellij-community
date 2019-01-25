@@ -145,30 +145,23 @@ public class ThreadTracker {
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
         if (!thread.isAlive()) continue;
-        StackTraceElement[] stackTrace = stackTraces.get(thread);
-        if (shouldIgnore(thread, stackTrace)) continue;
 
-        if (stackTrace.length == 0
-            // give thread a chance to run up to the completion
-            || thread.getState() == Thread.State.RUNNABLE || thread.getState() == Thread.State.BLOCKED) {
-          thread.interrupt();
-          long start = System.currentTimeMillis();
-          //if (thread.isAlive()) {
-          //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
-          //}
-          while (System.currentTimeMillis() < start + 10_000) {
-            UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
-            // afters some time the submitted task can finish and the thread become idle pool
-            if (shouldIgnore(thread, thread.getStackTrace())) break;
-          }
-          //long elapsed = System.currentTimeMillis() - start;
-          //if (elapsed > 1_000) {
-          //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
-          //}
+        thread.interrupt();
+        long start = System.currentTimeMillis();
+        //if (thread.isAlive()) {
+        //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
+        //}
+        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + 10_000) {
+          UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+          // afters some time the submitted task can finish and the thread become idle pool
         }
+        //long elapsed = System.currentTimeMillis() - start;
+        //if (elapsed > 1_000) {
+        //  System.err.println("waited for " + thread + " for " + elapsed+"ms");
+        //}
 
         // check once more because the thread name may be set via race
-        stackTrace = thread.getStackTrace();
+        StackTraceElement[] stackTrace = thread.getStackTrace();
         stackTraces.put(thread, stackTrace);
 
         if (shouldIgnore(thread, stackTrace)) continue;
