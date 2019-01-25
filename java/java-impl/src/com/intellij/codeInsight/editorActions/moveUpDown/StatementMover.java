@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -168,8 +168,8 @@ class StatementMover extends LineMover {
       // we can place statement inside scriptlet only
       return neighbour != null && !(neighbour instanceof JspTemplateStatement);
     }
-    if (element instanceof PsiBlockStatement) return false;
     PsiElement parent = element.getParent();
+    if (element instanceof PsiBlockStatement && !(parent instanceof PsiCodeBlock)) return false;
     if (parent instanceof JspClassLevelDeclarationStatement) return false;
     if (statementsCanBeMovedWithin(parent)) return true;
     if (parent instanceof PsiIfStatement &&
