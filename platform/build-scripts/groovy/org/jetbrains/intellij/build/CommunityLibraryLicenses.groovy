@@ -408,9 +408,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml"),
     new LibraryLicense(name: "SnuggleTeX", version: "1.3 (with patches by JetBrains)", license: "BSD",
                        url: "http://snuggletex.sourceforge.net/", licenseUrl: "http://snuggletex.sourceforge.net/maven/license.html"),
-    /*new LibraryLicense(name: "Sonatype Nexus Indexer Artifact", libraryName: "nexus-indexer-artifact-1.0.1.jar", version: "1.0.1",
-                       license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/",
-                       licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),*/
     new LibraryLicense(name: "Sonatype Nexus: Indexer", libraryName: "nexus-indexer-1.2.3.jar", version: "1.2.3",
                        license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/",
                        licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
