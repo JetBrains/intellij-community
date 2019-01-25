@@ -7,6 +7,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -157,6 +160,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return mySyntheticItParameter.updateAndGet(
       value -> value == null ? new GrParameter[]{new ClosureSyntheticParameter(this, true)} : value
     );
+  }
+
+  @Nullable
+  @Override
+  public PsiType getOwnerType() {
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

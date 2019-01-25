@@ -5,16 +5,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.doGetOwnerType;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processOwnerAndDelegate;
 
 public interface GrFunctionalExpression extends GrExpression, GrParameterListOwner {
@@ -32,8 +28,5 @@ public interface GrFunctionalExpression extends GrExpression, GrParameterListOwn
   }
 
   @Nullable
-  default PsiType getOwnerType() {
-    return CachedValuesManager
-      .getCachedValue(this, () -> CachedValueProvider.Result.create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
-  }
+  PsiType getOwnerType();
 }

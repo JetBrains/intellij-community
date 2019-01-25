@@ -3,8 +3,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -45,6 +49,12 @@ class GrLambdaExpressionImpl(node: ASTNode): GrExpressionImpl(node), GrLambdaExp
 
   override fun getAllParameters(): Array<GrParameter> {
     return parameters
+  }
+
+  override fun getOwnerType(): PsiType? {
+    return CachedValuesManager.getCachedValue(this) {
+      CachedValueProvider.Result.create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT)
+    }
   }
 
   override fun toString(): String {
