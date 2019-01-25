@@ -61,5 +61,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module]",
         "//tools/idea/.idea/libraries:http-client-3.1",
+        "//prebuilts/tools/common/m2/repository/commons-discovery/commons-discovery/0.4:jar",
     ],
 )
