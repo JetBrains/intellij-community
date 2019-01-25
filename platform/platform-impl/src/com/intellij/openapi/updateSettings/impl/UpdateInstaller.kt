@@ -40,13 +40,14 @@ object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+    val jdk = getJdkSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      System.out.println( "  patchName: $patchName" )
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
@@ -183,4 +184,15 @@ object UpdateInstaller {
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+
+  private fun getJdkSuffix() : String {
+    if (isJdk11Bundled()) return "-jdk11-bundled"
+    return if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+  }
+
+  private fun isJdk11Bundled() : Boolean {
+    var releaseFile = if (SystemInfo.isMac) File(PathManager.getHomePath() + "/Contents/jdk/Contents/Home/release")
+                      else File(PathManager.getHomePath() + "/jre64/release")
+    return if (releaseFile.isFile) !FileUtil.loadFile(releaseFile).contains("JAVA_VERSION=\"1.8") else false
+  }
 }
