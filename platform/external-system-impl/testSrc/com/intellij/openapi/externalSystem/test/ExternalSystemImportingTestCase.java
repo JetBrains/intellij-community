@@ -130,13 +130,27 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   private void assertGeneratedSources(String moduleName, JavaSourceRootType type, String... expectedSources) {
     final ContentEntry[] contentRoots = getContentRoots(moduleName);
-    final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
-    List<SourceFolder> folders = doAssertContentFolders(rootUrl, contentRoots, type, expectedSources);
-    for (SourceFolder folder : folders) {
-      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(type);
-      assertNotNull(properties);
-      assertTrue("Not a generated folder: " + folder, properties.isForGeneratedSources());
+    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
+    List<String> actual = new ArrayList<>();
+
+    for (ContentEntry contentRoot : contentRoots) {
+      rootUrl = VirtualFileManager.extractPath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
+      for (SourceFolder f : contentRoot.getSourceFolders(type)) {
+        String folderUrl = VirtualFileManager.extractPath(f.getUrl());
+
+        if (folderUrl.startsWith(rootUrl)) {
+          int length = rootUrl.length() + 1;
+          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+        }
+
+        JavaSourceRootProperties properties = f.getJpsElement().getProperties(type);
+        if (properties != null && properties.isForGeneratedSources()) {
+          actual.add(folderUrl);
+        }
+      }
     }
+
+    assertOrderedElementsAreEqual(actual, Arrays.asList(expectedSources));
   }
 
   protected void assertResources(String moduleName, String... expectedSources) {
