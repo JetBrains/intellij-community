@@ -27,9 +27,6 @@ public interface BashTokenTypes extends BashTypes {
 
   IElementType IN = new BashTokenType("in");
 
-  // something new, bash 4?
-  IElementType LET = new BashTokenType("let");
-
   //conditional expressions
 
   TokenSet HUMAN_READABLE_KEYWORDS = TokenSet.create(

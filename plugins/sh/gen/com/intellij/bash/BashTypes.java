@@ -47,6 +47,7 @@ public interface BashTypes {
   IElementType INCLUDE_COMMAND = new BashCompositeElementType("INCLUDE_COMMAND");
   IElementType INCLUDE_DIRECTIVE = new BashCompositeElementType("INCLUDE_DIRECTIVE");
   IElementType INDEX_EXPRESSION = new BashCompositeElementType("INDEX_EXPRESSION");
+  IElementType LET_COMMAND = new BashCompositeElementType("LET_COMMAND");
   IElementType LIST_TERMINATOR = new BashCompositeElementType("LIST_TERMINATOR");
   IElementType LITERAL_EXPRESSION = new BashCompositeElementType("LITERAL_EXPRESSION");
   IElementType LOGICAL_AND_EXPRESSION = new BashCompositeElementType("LOGICAL_AND_EXPRESSION");
@@ -128,6 +129,7 @@ public interface BashTypes {
   IElementType LEFT_DOUBLE_PAREN = new BashTokenType("((");
   IElementType LEFT_PAREN = new BashTokenType("(");
   IElementType LEFT_SQUARE = new BashTokenType("[");
+  IElementType LET = new BashTokenType("let");
   IElementType LINEFEED = new BashTokenType("\\n");
   IElementType LT = new BashTokenType("<");
   IElementType MOD = new BashTokenType("%");
@@ -274,6 +276,9 @@ public interface BashTypes {
       }
       else if (type == INDEX_EXPRESSION) {
         return new BashIndexExpressionImpl(node);
+      }
+      else if (type == LET_COMMAND) {
+        return new BashLetCommandImpl(node);
       }
       else if (type == LIST_TERMINATOR) {
         return new BashListTerminatorImpl(node);

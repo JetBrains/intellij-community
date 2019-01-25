@@ -1043,9 +1043,24 @@ BASH_FILE
             PsiElement(string_content)('current_line.txt')
             PsiElement(string_end)('"')
   PsiElement(\n)('\n')
-  PsiErrorElement:<pipeline command> expected, got 'let'
-    PsiElement(let)('let')
-  PsiWhiteSpace(' ')
-  PsiElement(assignment_word)('count')
-  PsiElement(=)('=')
-  PsiElement(int)('0')
+  COMMANDS_LIST
+    LET_COMMAND
+      PsiElement(let)('let')
+      PsiWhiteSpace(' ')
+      ASSIGNMENT_EXPRESSION
+        LITERAL_EXPRESSION
+          PsiElement(assignment_word)('count')
+        PsiElement(=)('=')
+        LITERAL_EXPRESSION
+          PsiElement(int)('0')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    LET_COMMAND
+      PsiElement(let)('let')
+      PsiWhiteSpace(' ')
+      ASSIGNMENT_EXPRESSION
+        LITERAL_EXPRESSION
+          PsiElement(assignment_word)('indx')
+        PsiElement(+=)('+=')
+        LITERAL_EXPRESSION
+          PsiElement(int)('1')

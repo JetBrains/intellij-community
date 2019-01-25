@@ -95,6 +95,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     else if (t == INCLUDE_DIRECTIVE) {
       r = include_directive(b, 0);
     }
+    else if (t == LET_COMMAND) {
+      r = let_command(b, 0);
+    }
     else if (t == LIST_TERMINATOR) {
       r = list_terminator(b, 0);
     }
@@ -176,9 +179,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     create_token_set_(ASSIGNMENT_COMMAND, BLOCK, CASE_COMMAND, COMMAND,
       COMMAND_SUBSTITUTION_COMMAND, CONDITIONAL_COMMAND, DO_BLOCK, FOR_COMMAND,
       FUNCTION_DEF, GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND,
-      INCLUDE_DIRECTIVE, PIPELINE_COMMAND, SELECT_COMMAND, SHELL_COMMAND,
-      SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND, UNTIL_COMMAND,
-      WHILE_COMMAND),
+      INCLUDE_DIRECTIVE, LET_COMMAND, PIPELINE_COMMAND, SELECT_COMMAND,
+      SHELL_COMMAND, SIMPLE_COMMAND, SUBSHELL_COMMAND, TRAP_COMMAND,
+      UNTIL_COMMAND, WHILE_COMMAND),
     create_token_set_(ADD_EXPRESSION, ARRAY_EXPRESSION, ASSIGNMENT_EXPRESSION, BITWISE_AND_EXPRESSION,
       BITWISE_EXCLUSIVE_OR_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_SHIFT_EXPRESSION, COMMA_EXPRESSION,
       COMPARISON_EXPRESSION, CONDITIONAL_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
@@ -1411,6 +1414,20 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // let expression
+  public static boolean let_command(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "let_command")) return false;
+    if (!nextTokenIs(b, LET)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, LET_COMMAND, null);
+    r = consumeToken(b, LET);
+    p = r; // pin = 1
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines
   public static boolean list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list")) return false;
@@ -1834,6 +1851,7 @@ public class BashParser implements PsiParser, LightPsiParser {
   //                     | timespec '!'? pipeline
   //                     | '!' timespec pipeline
   //                     | trap_command
+  //                     | let_command
   public static boolean pipeline_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command")) return false;
     boolean r;
@@ -1842,6 +1860,7 @@ public class BashParser implements PsiParser, LightPsiParser {
     if (!r) r = pipeline_command_1(b, l + 1);
     if (!r) r = pipeline_command_2(b, l + 1);
     if (!r) r = trap_command(b, l + 1);
+    if (!r) r = let_command(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

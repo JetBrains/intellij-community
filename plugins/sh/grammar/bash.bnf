@@ -234,6 +234,9 @@ pipeline_command ::=  '!'? pipeline
                     | timespec '!'? pipeline
                     | '!' timespec pipeline
                     | trap_command
+                    | let_command
+
+let_command ::= let expression
 
 pipeline ::= command ('|' newlines command)* {pin(".*")=1}
 
