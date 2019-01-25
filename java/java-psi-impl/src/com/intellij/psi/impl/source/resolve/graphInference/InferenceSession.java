@@ -365,7 +365,7 @@ public class InferenceSession {
         }
       }
       //proceed to B3 constraints
-      else if (parameters != null && args != null && !isOverloadCheck() && parameters.length > 0) {
+      else if (parameters != null && parameters.length > 0 && args != null && !isOverloadCheck()) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<>();
         final HashSet<ConstraintFormula> ignoredConstraints = new HashSet<>();
         collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints,
