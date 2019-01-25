@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -486,7 +487,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
     Computable<PsiSubstitutor> computeSubstitutor =
       () -> candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-            ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE, true)
+            ? ((MethodCandidateInfo)candidate).inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE 
+                                                                                : CompletionParameterTypeInferencePolicy.INSTANCE, true)
             : candidate.getSubstitutor();
     if (resolveResult && candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()) {
       return computeSubstitutor.compute();
