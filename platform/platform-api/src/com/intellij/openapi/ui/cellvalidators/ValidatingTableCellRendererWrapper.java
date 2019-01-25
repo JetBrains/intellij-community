@@ -1,0 +1,72 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.ui.cellvalidators;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+public class ValidatingTableCellRendererWrapper extends CellRendererPanel implements TableCellRenderer {
+  public static final String CELL_VALIDATION_PROPERTY = "CellRenderer.validationInfo";
+
+  private final TableCellRenderer delegate;
+  private final JLabel iconLabel = new JLabel();
+
+  private Supplier<? extends Dimension> editorSizeSupplier = () -> JBUI.emptySize();
+  private Function<Object, ValidationInfo> cellValidator;
+
+  public ValidatingTableCellRendererWrapper(TableCellRenderer delegate) {
+    this.delegate = delegate;
+    setLayout(new BorderLayout(0, 0));
+    add(iconLabel, BorderLayout.EAST);
+
+    iconLabel.setOpaque(false);
+    iconLabel.setBorder(JBUI.Borders.emptyRight(6));
+    setOpaque(true);
+    setName("Table.cellRenderer");
+  }
+
+  public ValidatingTableCellRendererWrapper bindToEditorSize(@NotNull Supplier<? extends Dimension> editorSizeSupplier) {
+    this.editorSizeSupplier = editorSizeSupplier;
+    return this;
+  }
+
+  public ValidatingTableCellRendererWrapper withCellValidator(@NotNull Function<Object, ValidationInfo> cellValidator) {
+    this.cellValidator = cellValidator;
+    return this;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    size.height = Math.max(size.height, editorSizeSupplier.get().height);
+    return size;
+  }
+
+  @Override
+  public final Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    JComponent delegateRenderer = (JComponent)delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+    if (cellValidator != null) {
+      ValidationInfo result = cellValidator.apply(value);
+      iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
+      putClientProperty(CELL_VALIDATION_PROPERTY, result);
+    }
+
+    add(delegateRenderer, BorderLayout.CENTER);
+    setBorder(delegateRenderer.getBorder());
+    delegateRenderer.setBorder(null);
+
+    setBackground(delegateRenderer.getBackground());
+
+    setSelected(isSelected);
+    return this;
+  }
+}

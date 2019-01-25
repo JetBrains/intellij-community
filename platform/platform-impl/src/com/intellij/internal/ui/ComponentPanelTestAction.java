@@ -10,6 +10,9 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
+import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
+import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
 import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +39,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.net.MalformedURLException;
@@ -86,6 +88,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
     private static final SimpleTextAttributes WARNING_CELL_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null);
+
+    private static final ValidationInfo NULL_VALUE_ERROR = new ValidationInfo("Null value");
+    private static final ValidationInfo NAN_VALUE_ERROR = new ValidationInfo("Not a number");
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -249,6 +254,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
         withComment("Combobox comment").createPanel(), gc);
 
+      JBScrollPane pane = new JBScrollPane(createTable());
+      pane.setPreferredSize(JBUI.size(400, 300));
+      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+
+      BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
+        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
+      mainPanel.addToTop(topPanel);
+
+      return mainPanel;
+    }
+
+    private JComponent createTable() {
       String[] columns = { "First column", "Second column" };
       String[][] data = {{"one", "1"}, {"two", "2"}, {"three", "3"}, {"four", "4"}, {"five", "5"},
         {"six", "6"}, {"seven", "7"}, {"eight", "8"}, {"nine", "9"}, {"ten", "10"}, {"eleven", "11"},
@@ -274,6 +291,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
+      // Install custom tooltip manager for displaying error/warning tooltips
+      new CellTooltipManager(getDisposable()).
+        withCellComponentProvider(new CellComponentProvider.TableProvider(table)).
+        withHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            System.out.println("Table cell tooltip link clicked. Desc = " + e.getDescription());
+          }
+        }).installOn(table);
+
+      // Configure left column
       ExtendableTextField cellEditor = new ExtendableTextField();
       ExtendableTextComponent.Extension browseExtension =
         ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
@@ -300,12 +327,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       TableColumn col = table.getColumnModel().getColumn(0);
       col.setCellEditor(new DefaultCellEditor(cellEditor));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
-        bindToEditor(cellEditor).
-        withCellValidator((value, row, column) -> value == null ? ValidationResult.ERROR :
-            ALLOWED_VALUES.contains(value.toString()) ?
-              ValidationResult.OK :
-              ValidationResult.asError("Illegal value: " + value.toString())));
+        bindToEditorSize(cellEditor::getPreferredSize).
+        withCellValidator(value ->
+                            value == null ? new ValidationInfo("Null value") :
+                            ALLOWED_VALUES.contains(value.toString()) ? null :
+                            new ValidationInfo("Illegal value: " + value.toString() + "<br/>Please <a href=\"#check.cell.rules\">check rules.</a>")));
 
+      // Configure right column
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
       col = table.getColumnModel().getColumn(1);
 
@@ -330,51 +358,21 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }
         }
-      }).bindToEditor(rightEditor).
-        withCellValidator((value, row, column) -> {
-          if (value == null) return ValidationResult.ERROR;
+      }).
+        bindToEditorSize(rightEditor::getPreferredSize).
+        withCellValidator(value -> {
+          if (value == null) return NULL_VALUE_ERROR;
           else {
             try {
               int iv = Integer.parseInt(value.toString());
-              return iv <= 8 ? ValidationResult.OK : ValidationResult.asWarning("Value " + value.toString() + " is not preferred");
+              return iv <= 8 ? null : new ValidationInfo("Value " + value.toString() + " is not preferred").asWarning();
             } catch (NumberFormatException nfe) {
-              return ValidationResult.ERROR;
+              return NAN_VALUE_ERROR;
             }
           }
         }));
 
-      //col.setCellRenderer(new ColoredTableCellRenderer() {
-      //  {
-      //    setIpad(JBUI.emptyInsets());
-      //  }
-      //
-      //  @Override
-      //  protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
-      //                                       boolean hasFocus, int row, int column) {
-      //    if (value == null) {
-      //      append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);
-      //    }
-      //    else {
-      //      try {
-      //        int iv = Integer.parseInt(value.toString());
-      //        append("value ", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
-      //        append(value.toString(), iv % 2 == 1 ? SimpleTextAttributes.REGULAR_ATTRIBUTES : WARNING_CELL_ATTRIBUTES);
-      //      } catch (NumberFormatException nfe) {
-      //        append(value.toString(), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      //      }
-      //    }
-      //  }
-      //});
-
-      JBScrollPane pane = new JBScrollPane(table);
-      pane.setPreferredSize(JBUI.size(400, 300));
-      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
-
-      BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
-        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
-      mainPanel.addToTop(topPanel);
-
-      return mainPanel;
+      return table;
     }
 
     private JComponent createComponentGridPanel() {
@@ -668,116 +666,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         createPanel());
 
       return JBUI.Panels.simplePanel().addToTop(panel);
-    }
-
-    public static class ValidationResult {
-      public static final ValidationResult OK = new ValidationResult(State.Ok, null);
-      public static final ValidationResult ERROR = new ValidationResult(State.Error, null);
-      public static final ValidationResult WARNING = new ValidationResult(State.Warning, null);
-
-      public static ValidationResult asError(@NotNull String tooltip) {
-        return new ValidationResult(State.Error, tooltip);
-      }
-
-      public static ValidationResult asWarning(@NotNull String tooltip) {
-        return new ValidationResult(State.Warning, tooltip);
-      }
-
-      public enum State {
-        Ok, Warning, Error
-      }
-
-      @NotNull private final State  state;
-      @Nullable private final String tooltip;
-
-      private ValidationResult(@NotNull State state, @Nullable String tooltip) {
-        this.state = state;
-        this.tooltip = tooltip;
-      }
-
-      @NotNull
-      public State getState() {
-        return state;
-      }
-
-      @Nullable
-      public String getTooltipText() {
-        return tooltip;
-      }
-    }
-
-    public interface CellValidator {
-      ValidationResult apply(@Nullable Object value, int row, int col);
-    }
-
-    public static class ValidatingTableCellRendererWrapper extends CellRendererPanel implements TableCellRenderer {
-      private final TableCellRenderer delegate;
-      private final JLabel            iconLabel = new JLabel();
-
-      private JComponent    cellEditor;
-      private CellValidator cellValidator;
-
-      public ValidatingTableCellRendererWrapper(TableCellRenderer delegate) {
-        this.delegate = delegate;
-        setLayout(new BorderLayout(0, 0));
-        add(iconLabel, BorderLayout.EAST);
-
-        iconLabel.setOpaque(false);
-        iconLabel.setBorder(JBUI.Borders.emptyRight(6));
-        setOpaque(true);
-        setName("Table.cellRenderer");
-      }
-
-      public ValidatingTableCellRendererWrapper bindToEditor(@NotNull JComponent cellEditor) {
-        this.cellEditor = cellEditor;
-        return this;
-      }
-
-      public ValidatingTableCellRendererWrapper withCellValidator(CellValidator cellValidator) {
-        this.cellValidator = cellValidator;
-        return this;
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        if (cellEditor != null) {
-          Dimension editorSize = cellEditor.getPreferredSize();
-          size.height = Math.max(size.height, editorSize.height);
-        }
-
-        return size;
-      }
-
-      @Override
-      public final Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (cellValidator != null) {
-          ValidationResult result = cellValidator.apply(value, row, column);
-          switch (result.getState()) {
-            case Ok:
-              iconLabel.setIcon(null);
-              break;
-            case Error:
-              iconLabel.setIcon(AllIcons.General.BalloonError);
-              break;
-            case Warning:
-              iconLabel.setIcon(AllIcons.General.BalloonWarning);
-              break;
-          }
-          setToolTipText(result.getTooltipText());
-        }
-
-        JComponent delegateRenderer = (JComponent)delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-        add(delegateRenderer, BorderLayout.CENTER);
-        setBorder(delegateRenderer.getBorder());
-        delegateRenderer.setBorder(null);
-
-        setBackground(delegateRenderer.getBackground());
-
-        setSelected(isSelected);
-        return this;
-      }
     }
   }
 }
