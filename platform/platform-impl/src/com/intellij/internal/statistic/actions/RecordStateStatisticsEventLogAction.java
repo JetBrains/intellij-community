@@ -42,8 +42,8 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
           return;
         }
 
-        myStatesLogger.logApplicationStates(approvedGroups);
-        myStatesLogger.logProjectStates(project, approvedGroups);
+        myStatesLogger.logApplicationStates(approvedGroups, true);
+        myStatesLogger.logProjectStates(project, approvedGroups, true);
 
         ApplicationManager.getApplication().invokeLater(
           () -> showNotification(project, e, "Collecting and recording events was finished")

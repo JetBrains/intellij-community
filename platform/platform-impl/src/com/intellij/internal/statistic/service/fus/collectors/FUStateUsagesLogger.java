@@ -27,18 +27,18 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
   public void logProjectStates(@NotNull Project project) {
-    logProjectStates(project, EventLogExternalSettingsService.getInstance().getApprovedGroups());
+    logProjectStates(project, EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
   }
 
   public void logApplicationStates() {
-    logApplicationStates(EventLogExternalSettingsService.getInstance().getApprovedGroups());
+    logApplicationStates(EventLogExternalSettingsService.getInstance().getApprovedGroups(), false);
   }
 
-  public void logProjectStates(@NotNull Project project, @NotNull Set<String> approvedGroups) {
+  public void logProjectStates(@NotNull Project project, @NotNull Set<String> approvedGroups, boolean recordAll) {
     if (!approvedGroups.isEmpty() || ApplicationManagerEx.getApplicationEx().isInternal()) {
       synchronized (LOCK) {
         for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
-          if (approvedGroups.contains(usagesCollector.getGroupId())) {
+          if (recordAll || approvedGroups.contains(usagesCollector.getGroupId())) {
             final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
             logUsagesAsStateEvents(project, group, usagesCollector.getData(project), usagesCollector.getUsages(project));
           }
@@ -47,10 +47,10 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     }
   }
 
-  public void logApplicationStates(@NotNull Set<String> approvedGroups) {
+  public void logApplicationStates(@NotNull Set<String> approvedGroups, boolean recordAll) {
     synchronized (LOCK) {
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
-        if (approvedGroups.contains(usagesCollector.getGroupId())) {
+        if (recordAll || approvedGroups.contains(usagesCollector.getGroupId())) {
           final FeatureUsageGroup group = new FeatureUsageGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
           logUsagesAsStateEvents(null, group, usagesCollector.getData(), usagesCollector.getUsages());
         }
