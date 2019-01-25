@@ -50,9 +50,7 @@ jrePlatformsToDownload(targetOs).each { platform ->
       task("untarJbre_${platform}_$arch", type: Copy, dependsOn: "downloadJbre_${platform}_$arch") {
         def downloadOutputs = tasks["downloadJbre_${platform}_$arch"].outputs.files
         if (isBundledJreModular) {
-          from tarTree(downloadOutputs.singleFile), {
-            exclude modularJdkSpecificFiles(platform)
-          }
+          from tarTree(downloadOutputs.singleFile)
         }
         else {
           from tarTree(downloadOutputs.singleFile), {
@@ -75,14 +73,7 @@ jrePlatformsToDownload(targetOs).each { platform ->
         outputs.dir(outputDir)
         doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
         commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
-        if (isBundledJreModular) {
-          doLast {
-            delete fileTree(outputDir) {
-              include modularJdkSpecificFiles(platform)
-            }
-          }
-        }
-        else if (platform != 'osx') {
+        if (!isBundledJreModular && platform != 'osx') {
           doLast {
             if (file("$outputDir/lib/tools.jar").exists()) {
               exec {
@@ -167,12 +158,4 @@ static def jrePlatformsToDownload(targetOs) {
 
 static def archToDownload(platform, is32BitArchSupported) {
   is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
-}
-
-/**
- * @link https://docs.oracle.com/javase/9/install/installed-directory-structure-jdk-and-jre.htm
- */
-static def modularJdkSpecificFiles(platform) {
-  def prefix = platform == 'osx' ? 'jdk/Contents/Home/' : ''
-  ["${prefix}jmods/**", "${prefix}include/**", '**/src.zip', "${prefix}lib/src.zip"]
 }
