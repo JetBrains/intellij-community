@@ -6,6 +6,7 @@
   <vendor>JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
