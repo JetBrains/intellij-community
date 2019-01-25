@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.Alarm
@@ -89,7 +90,17 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
     }
 
+  @Throws(VcsException::class)
   protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile>
+
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile> =
+    try {
+      requestIgnored(paths)
+    }
+    catch (e: VcsException) {
+      LOG.warn("Cannot request ignored: ", e)
+      emptySet()
+    }
 
   protected abstract fun scanTurnedOff(): Boolean
 
@@ -141,7 +152,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   private fun doCheckIgnored(paths: Collection<FilePath>): Set<FilePath> {
-    val ignored = requestIgnored(paths).filterByRepository(repository)
+    val ignored = tryRequestIgnored(paths).filterByRepository(repository)
     LOG.debug("Check ignored for paths: ", paths)
     LOG.debug("Ignored found for paths: ", ignored)
     addNotContainedIgnores(ignored)
@@ -158,7 +169,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
 
   private fun doRescan(): Set<FilePath> {
-    val ignored = requestIgnored().filterByRepository(repository)
+    val ignored = tryRequestIgnored().filterByRepository(repository)
     LOG.debug("Full ignore rescan executed. Found ignores: ", ignored)
     SET_LOCK.write {
       ignoredSet.clear()
