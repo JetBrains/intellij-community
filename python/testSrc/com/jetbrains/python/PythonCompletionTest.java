@@ -1425,6 +1425,80 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
+  // PY-8302
+  public void testUndeclaredFunction() {
+    List<String> suggested = doTestByText("f<caret>\n" +
+                                        "\n" +
+                                        "def foo(yyy):\n" +
+                                        "  y = 1");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarBefore() {
+    List<String> suggested = doTestByText("f<caret>\n" +
+                                        "\n" +
+                                        "foo = \"something\"\n");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarOnSameLine() {
+    List<String> suggested = doTestByText("foo = f<caret>");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUninitializedVarOnMultiLine() {
+    List<String> suggested = doTestByText("foo = \"this is a string\"\\\n" +
+                                          "      \"on several lines\" + f<caret>");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "foo");
+  }
+
+  // PY-8302
+  public void testUndeclaredClass() {
+    List<String> suggested = doTestByText("class AClass(A<caret>)");
+    assertNotNull(suggested);
+    assertDoesntContain(suggested, "AClass");
+  }
+
+  // PY-8302
+  public void testDeclaredClass() {
+    List<String> suggested = doTestByText("class AClass:\n" +
+                                          "    pass\n\n" +
+                                          "class BClass(A<caret>)");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "AClass");
+  }
+
+  // PY-8302
+  public void testBeforeImport() {
+    myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_foo", "my_bar");
+  }
+
+  // PY-8302
+  public void testBeforeImportAs() {
+    myFixture.configureByFiles("beforeImport/beforeImportAs.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_renamed_foo");
+  }
+
+  // PY-8302
+  public void testBeforeStarImport() {
+    myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertDoesntContain(suggested, "my_foo", "my_bar");
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
