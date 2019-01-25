@@ -78,7 +78,6 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   public void testJsonExport() throws IOException {
     CodeStyleScheme testScheme = createTestScheme();
-
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -90,8 +89,18 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    String expected = loadExpected("json");
+    String expected = loadExpected(j2eeProviderExists() ? "j2ee.json" : "json");
     assertEquals(expected, outputStream.toString());
+  }
+
+  private static boolean j2eeProviderExists() {
+    List<CodeStyleSettingsProvider> providers = CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList();
+    for (CodeStyleSettingsProvider provider : providers) {
+      if (provider.getClass().getName().equals("com.intellij.javaee.JavaeeCodeStyleSettingsProvider")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void testSetProperties() {
