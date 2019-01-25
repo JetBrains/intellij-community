@@ -1727,19 +1727,34 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // w ('|' w)*
+  // w+ ('|' w+)*
   public static boolean pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PATTERN, "<pattern>");
-    r = w(b, l + 1);
+    r = pattern_0(b, l + 1);
     p = r; // pin = 1
     r = r && pattern_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // ('|' w)*
+  // w+
+  private static boolean pattern_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = w(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!w(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pattern_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ('|' w+)*
   private static boolean pattern_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_1")) return false;
     while (true) {
@@ -1750,16 +1765,31 @@ public class BashParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // '|' w
+  // '|' w+
   private static boolean pattern_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern_1_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, PIPE);
     p = r; // pin = 1
-    r = r && w(b, l + 1);
+    r = r && pattern_1_0_1(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // w+
+  private static boolean pattern_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_1_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = w(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!w(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pattern_1_0_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

@@ -208,7 +208,7 @@ then_clause ::= then compound_list
 private case_clause_list ::= case_clause (';;' (case_clause | &(esac|newlines)))+ {pin(".*")=1}
 case_clause ::= newlines '('? pattern ')' (list|newlines) {pin=3}
 
-pattern ::= w ('|' w)* {pin('.*')=1}
+pattern ::= w+ ('|' w+)* {pin('.*')=1}
 
 compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list  newlines {pin(".*")=1}
 list ::=          (nl pipeline_command_list | pipeline_command_list) end_of_list? newlines {pin(".*")=1 elementType=compound_list}
