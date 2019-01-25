@@ -120,7 +120,7 @@ public class JBEditorTabs extends JBTabsImpl {
     Rectangle rect = fixedBounds(label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
 
-    tabPainter.paintTab(g2d, rect, tabColor);
+    tabPainter.paintTab(g2d, rect, tabColor, isHoveredTab(info));
   }
 
 
@@ -132,7 +132,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
     Rectangle rect = fixedBounds(label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
-    tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), isActiveTab(info));
+    tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), isActiveTab(info), isHoveredTab(info));
   }
 
   @NotNull
@@ -150,6 +150,10 @@ public class JBEditorTabs extends JBTabsImpl {
 
   protected boolean isActiveTab(TabInfo info) {
     return isFocusOwner(this);
+  }
+
+  protected boolean isHoveredTab(TabInfo info) {
+    return false;
   }
 
   private static boolean isFocusOwner(Component c) {

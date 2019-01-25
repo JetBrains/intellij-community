@@ -107,6 +107,16 @@ public class TabLabel extends JPanel implements Accessible {
         myInfo.setPreviousSelection(null);
         handlePopup(e);
       }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myTabs.onMouseEnteredHandler(info);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myTabs.onMouseExitedHandler(info);
+      }
     });
 
     if (isFocusable()) {
@@ -254,8 +264,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     myCentered = toCenter;
   }
-  
-  
+
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {

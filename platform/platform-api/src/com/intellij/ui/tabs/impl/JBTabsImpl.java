@@ -2914,6 +2914,16 @@ public class JBTabsImpl extends JComponent
     return JBUI.scale(1);
   }
 
+  protected void onMouseEnteredHandler(TabInfo info) {
+
+  }
+
+  protected void onMouseExitedHandler(TabInfo info) {
+
+  }
+
+
+
   @Override
   public String toString() {
     return "JBTabs visible=" + myVisibleInfos + " selected=" + mySelectedInfo;

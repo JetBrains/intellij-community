@@ -86,9 +86,34 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       }
 
+      private TabInfo myHoveredInfo;
+
       @Override
       protected boolean isActiveTab(TabInfo info) {
         return true;
+      }
+
+      @Override
+      protected void onMouseEnteredHandler(TabInfo info) {
+        if (myHoveredInfo == info) return;
+
+        myHoveredInfo = info;
+        revalidate();
+        repaint();
+      }
+
+      @Override
+      protected void onMouseExitedHandler(TabInfo info) {
+        if (myHoveredInfo == info) {
+          myHoveredInfo = null;
+          revalidate();
+          repaint();
+        }
+      }
+
+      @Override
+      protected boolean isHoveredTab(TabInfo info) {
+        return info == myHoveredInfo;
       }
 
       @Override

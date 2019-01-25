@@ -14,8 +14,8 @@ interface JBTabPainter {
 
   fun fillBackground(g : Graphics2D, rect : Rectangle)
   fun fillBeforeAfterTabs(g : Graphics2D, before : Rectangle, after : Rectangle)
-  fun paintTab(g : Graphics2D, rect: Rectangle, tabColor: Color?)
-  fun paintSelectedTab(g : Graphics2D, rect: Rectangle, tabColor: Color?, position : JBTabsPosition, active: Boolean)
+  fun paintTab(g : Graphics2D, rect: Rectangle, tabColor: Color?, hovered: Boolean)
+  fun paintSelectedTab(g : Graphics2D, rect: Rectangle, tabColor: Color?, position : JBTabsPosition, active: Boolean, hovered: Boolean)
 }
 
 class TabTheme(
@@ -23,13 +23,15 @@ class TabTheme(
   val defaultTabColor: Color = JBUI.CurrentTheme.EditorTabs.defaultTabColor(),
   val underline: Color = JBUI.CurrentTheme.EditorTabs.underlineColor(),
   val inactiveUnderline: Color = JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
+  val hoverOverlayColor: Color = JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
+  val unselectedOverlayColor: Color = JBUI.CurrentTheme.EditorTabs.unselectedOverlayColor(),
   val thickness : Int = JBUI.scale(2)
 )
 
 class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     g.color = theme.background
-    g.fillRect(rect.x, rect.y, rect.width, rect.height)
+    g.fillRect(rect)
   }
 
   override fun fillBeforeAfterTabs(g: Graphics2D, before: Rectangle, after: Rectangle) {
@@ -37,17 +39,33 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
 /*    val rect = Rectangle(before.x, before.y, after.x+after.width, after.y+after.height)
     g.fillRect(rect.x, rect.y, rect.width, rect.height)*/
 
-    g.fillRect(before.x, before.y, before.width, before.height)
-    g.fillRect(after.x, after.y, after.width, after.height)
+    g.fillRect(before)
+    g.fillRect(after)
   }
 
-  override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?) {
+  override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, hovered: Boolean) {
     g.color = tabColor ?: theme.defaultTabColor
-    g.fillRect(rect.x, rect.y, rect.width, rect.height)
+    g.fillRect(rect)
+
+    if(hovered) {
+      g.color = theme.hoverOverlayColor
+      g.fillRect(rect)
+      return
+    }
+
+    tabColor ?: return
+    g.color = theme.unselectedOverlayColor
+    g.fillRect(rect)
   }
 
-  override fun paintSelectedTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, position: JBTabsPosition, active: Boolean) {
-    paintTab(g, rect, tabColor)
+  override fun paintSelectedTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, position: JBTabsPosition, active: Boolean, hovered: Boolean) {
+    g.color = tabColor ?: theme.defaultTabColor
+    g.fillRect(rect)
+
+    if(hovered) {
+      g.color = theme.hoverOverlayColor
+      g.fillRect(rect)
+    }
 
     val thickness = theme.thickness
 
@@ -59,7 +77,9 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
     }
 
     g.color = if(active) theme.underline else theme.inactiveUnderline
-    g.fillRect(underline.x, underline.y, underline.width, underline.height)
+    g.fillRect(underline)
   }
 
+
+  fun Graphics2D.fillRect(rect: Rectangle) = this@fillRect.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
