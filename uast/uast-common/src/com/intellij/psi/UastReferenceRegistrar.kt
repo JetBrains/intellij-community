@@ -19,6 +19,7 @@ package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
@@ -96,6 +97,9 @@ private fun getOrCreateCachedElement(element: PsiElement,
     element.toUElement(it)
   }.firstOrNull()?.also { context?.put(cachedUElement, it) }
 
+//resolving uast-elements during pattern evaluation could bring us here again
+private val PATTERN_ADAPTER_RECURSION_GUARD = RecursionManager.createGuard("add.uast.reference.provider")
+
 private class UastPatternAdapter(
   val predicate: (UElement, ProcessingContext) -> Boolean,
   val supportedUElementTypes: List<Class<out UElement>>
@@ -104,10 +108,11 @@ private class UastPatternAdapter(
   override fun accepts(o: Any?): Boolean = accepts(o, null)
 
   override fun accepts(o: Any?, context: ProcessingContext?): Boolean = when (o) {
-    is PsiElement ->
+    is PsiElement -> PATTERN_ADAPTER_RECURSION_GUARD.doPreventingRecursion(this, false) {
       getOrCreateCachedElement(o, context, supportedUElementTypes)
         ?.let { predicate(it, (context ?: ProcessingContext()).apply { put(REQUESTED_PSI_ELEMENT, o) }) }
       ?: false
+    } ?: false
     else -> false
   }
 
