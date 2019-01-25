@@ -46,7 +46,13 @@ class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_STRING, "contains", "indexOf", "startsWith", "endsWith", "lastIndexOf", "length", "trim",
                  "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
-    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max")
+    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max"),
+    staticCall(JAVA_LANG_INTEGER, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("int"),
+    staticCall(JAVA_LANG_LONG, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("long"),
+    staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
+    staticCall(JAVA_LANG_FLOAT, "toString", "toHexString").parameterTypes("float"),
+    staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
+    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short")
   );
   private static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 1024;
 
@@ -79,7 +85,19 @@ class CustomMethodHandlers {
               (args, memState, factory) -> calendarGet(args.myArguments, memState, factory))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
-              (args, memState, factory) -> skip(args.myArguments, memState, factory));
+              (args, memState, factory) -> skip(args.myArguments, memState, factory))
+    .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_INTEGER, "toBinaryString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toHexString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Long.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toOctalString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Long.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Long.SIZE));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -246,6 +264,21 @@ class CustomMethodHandlers {
     LongRangeSet range = state.getValueFact(arguments[0], DfaFactType.RANGE);
     if (range == null || range.isEmpty()) return null;
     return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, Math.max(0, range.max())));
+  }
+
+
+  private static DfaValue numberAsString(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, int bitsPerChar,
+                                         int maxBits) {
+    DfaValue arg = args.myArguments[0];
+    if (arg == null) return null;
+    LongRangeSet range = state.getValueFact(arg, DfaFactType.RANGE);
+    if (range == null || range.isEmpty()) return null;
+    int usedBits = range.min() >= 0 ? Long.SIZE - Long.numberOfLeadingZeros(range.max()) : maxBits;
+    int max = Math.max(1, (usedBits - 1) / bitsPerChar + 1);
+    DfaValue lengthRange = factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(1, max));
+    DfaFactMap map = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.STRING_LENGTH.withValue(lengthRange));
+    return factory.getFactFactory().createValue(map);
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
