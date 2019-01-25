@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -283,10 +285,9 @@ public interface EditorEx extends Editor {
   void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 
   /**
-   * @return the offset that the caret is expected to be but maybe not yet.
-   * E.g. when user right-clicks the mouse the caret is not immediately jumps there but the click-handler wants to know that location already.
-   *
-   * When no mouse-clicks happened return the regular caret offset.
+   * @return the offset that the caret is expected to be but maybe not yet. This can be used in
+   * {@link EditorMouseListener#mousePressed(EditorMouseEvent)} implementation, as at the time this method is invoked caret wasn't yet moved
+   * to the press position. In other circumstances it's just equal to primary caret's offset.
    */
   int getExpectedCaretOffset();
 
