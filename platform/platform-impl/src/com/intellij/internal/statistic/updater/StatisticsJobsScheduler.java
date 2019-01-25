@@ -36,9 +36,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class StatisticsJobsScheduler implements BaseComponent {
-  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
-  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 2 * 60 * 60 * 1000;
-  private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
+  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 20 * 60 * 1000;
+  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 60 * 60 * 1000;
+  private static final int SEND_STATISTICS_DELAY_IN_MIN = 5;
 
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
@@ -75,7 +75,7 @@ public class StatisticsJobsScheduler implements BaseComponent {
       if (FeatureUsageLogger.INSTANCE.isEnabled()) {
         runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
       }
-    }, 2 * SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
+    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private static void runStatesLogging() {
