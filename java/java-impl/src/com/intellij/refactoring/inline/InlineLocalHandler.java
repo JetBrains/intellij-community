@@ -41,12 +41,12 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -170,9 +170,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }
 
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    InlineUtil.getChangedBeforeLastAccessConflicts(conflicts, defToInline, local);
+    InlineUtil.checkChangedBeforeLastAccessConflicts(conflicts, defToInline, local);
 
-    if (!ConflictsUtil.processConflicts(project, conflicts)) return;
+    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
 
     final Ref<Boolean> inlineAll = new Ref<>(true);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {

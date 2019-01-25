@@ -29,10 +29,10 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -107,9 +107,9 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     if ((!(element instanceof PsiCompiledElement) || reference == null) && !CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
 
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    InlineUtil.getChangedBeforeLastAccessConflicts(conflicts, initializer, field);
+    InlineUtil.checkChangedBeforeLastAccessConflicts(conflicts, initializer, field);
 
-    if (!ConflictsUtil.processConflicts(project, conflicts)) return;
+    if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
 
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);

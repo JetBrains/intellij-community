@@ -491,9 +491,9 @@ public class InlineUtil {
    * @param initializer variable initializer
    * @return found changes and errors
    */
-  public static void getChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
-                                                         @NotNull PsiExpression initializer,
-                                                         @NotNull PsiVariable variable) {
+  public static void checkChangedBeforeLastAccessConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                                           @NotNull PsiExpression initializer,
+                                                           @NotNull PsiVariable variable) {
 
     Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
     if (referencedVars.isEmpty()) return;
