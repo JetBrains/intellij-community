@@ -1477,14 +1477,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void navigateToSelectedUsage(@Nullable AnActionEvent e) {
     Navigatable[] navigatables = e != null ? e.getData(CommonDataKeys.NAVIGATABLE_ARRAY) : null;
     if (navigatables != null) {
-      myDialog.doCancelAction();
+      if (canBeClosed()) {
+        myDialog.doCancelAction();
+      }
       OpenSourceUtil.navigate(navigatables);
       return;
     }
 
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
-      myDialog.doCancelAction();
+      if (canBeClosed()) {
+        myDialog.doCancelAction();
+      }
       boolean first = true;
       for (Usage usage : usages.values()) {
         if (first) {
