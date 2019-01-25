@@ -8,10 +8,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
-import com.intellij.internal.statistic.utils.PluginType;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,9 +23,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static java.lang.String.valueOf;
-
 public abstract class AbstractRunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
+  private static final String DEFAULT_ID = "third.party";
+
   protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
@@ -44,9 +44,10 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
             continue;
           }
 
-          final String key = toReportedId(configurationFactory);
+          final FeatureUsageData data = new FeatureUsageData();
+          final String key = toReportedId(configurationFactory, data);
           if (StringUtil.isNotEmpty(key)) {
-            final Template template = new Template(key, createContext(settings, runConfiguration));
+            final Template template = new Template(key, addContext(data, settings, runConfiguration));
             if (templates.containsKey(template)) {
               templates.increment(template);
             }
@@ -64,15 +65,17 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
   }
 
   @Nullable
-  public static String toReportedId(@NotNull ConfigurationFactory factory) {
+  public static String toReportedId(@NotNull ConfigurationFactory factory, @NotNull FeatureUsageData data) {
     final ConfigurationType configurationType = factory.getType();
     if (configurationType instanceof UnknownConfigurationType) {
       return null;
     }
 
-    final PluginType type = StatisticsUtilKt.getPluginType(configurationType.getClass());
-    if (!type.isSafeToReport()) {
-      return null;
+    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(configurationType.getClass());
+    data.addPluginInfo(info);
+
+    if (!info.isDevelopedByJetBrains()) {
+      return DEFAULT_ID;
     }
     final StringBuilder keyBuilder = new StringBuilder();
     keyBuilder.append(configurationType.getId());
@@ -82,27 +85,27 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
     return keyBuilder.toString();
   }
 
-  private static FUSUsageContext createContext(@NotNull RunnerAndConfigurationSettings settings,
-                                               @NotNull RunConfiguration runConfiguration) {
-    return FUSUsageContext.create(
-      valueOf(settings.isShared()),
-      valueOf(settings.isEditBeforeRun()),
-      valueOf(settings.isActivateToolWindowBeforeRun()),
-      valueOf(runConfiguration.isAllowRunningInParallel())
-    );
+  private static FeatureUsageData addContext(@NotNull FeatureUsageData data,
+                                             @NotNull RunnerAndConfigurationSettings settings,
+                                             @NotNull RunConfiguration runConfiguration) {
+    return data.
+      addData("shared", settings.isShared()).
+      addData("edit_before_run", settings.isEditBeforeRun()).
+      addData("activate_before_run", settings.isActivateToolWindowBeforeRun()).
+      addData("parallel", runConfiguration.isAllowRunningInParallel());
   }
 
   private static class Template {
     private final String myKey;
-    private final FUSUsageContext myContext;
+    private final FeatureUsageData myData;
 
-    private Template(String key, FUSUsageContext context) {
+    private Template(String key, FeatureUsageData data) {
       myKey = key;
-      myContext = context;
+      myData = data;
     }
 
     private UsageDescriptor createUsageDescriptor(int count) {
-      return new UsageDescriptor(myKey, count, myContext);
+      return new UsageDescriptor(myKey, count, myData);
     }
 
     @Override
@@ -111,12 +114,12 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
       if (o == null || getClass() != o.getClass()) return false;
       Template template = (Template)o;
       return Objects.equals(myKey, template.myKey) &&
-             Objects.equals(myContext, template.myContext);
+             Objects.equals(myData, template.myData);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKey, myContext);
+      return Objects.hash(myKey, myData);
     }
   }
 }
