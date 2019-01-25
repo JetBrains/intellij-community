@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
+import java.io.File;
 import java.util.Set;
 
 public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtureTestCase {
@@ -88,17 +89,17 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     updateTree(view);
 
     PlatformTestUtil.assertTreeEqual(view.getTree(), "-InspectionViewTree\n" +
-                                                     " -Groovy\n" +
-                                                     "  -Data flow\n" +
-                                                     "   -Unused Assignment\n" +
-                                                     "    -light_idea_test_case_m2\n" +
-                                                     "     -src_m2/xxx/yyy\n" +
-                                                     "      -ZZZ.groovy\n" +
-                                                     "       Assignment is not used\n" +
-                                                     "    -light_idea_test_case_m3\n" +
-                                                     "     -src_m3/foo/bar\n" +
-                                                     "      -Baz.groovy\n" +
-                                                     "       Assignment is not used");
+                                                             " -Groovy\n" +
+                                                             "  -Data flow\n" +
+                                                             "   -Unused Assignment\n" +
+                                                             "    -light_idea_test_case_m2\n" +
+                                                             "     -src_m2/xxx/yyy\n" +
+                                                             "      -ZZZ.groovy\n" +
+                                                             "       Assignment is not used\n" +
+                                                             "    -light_idea_test_case_m3\n" +
+                                                             "     -src_m3/foo/bar\n" +
+                                                             "      -Baz.groovy\n" +
+                                                             "       Assignment is not used".replace('/', File.separatorChar));
 
   }
 
