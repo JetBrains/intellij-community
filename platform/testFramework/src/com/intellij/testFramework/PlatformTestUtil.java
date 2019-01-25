@@ -309,6 +309,7 @@ public class PlatformTestUtil {
     long startTimeMillis = System.currentTimeMillis();
     while (isBusy(tree)) {
       assertMaxWaitTimeSince(startTimeMillis);
+      TimeoutUtil.sleep(5);
     }
   }
 
