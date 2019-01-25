@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.sonatype.aether:aether-api:1.13.1" type="repository">
         <properties maven-id="org.sonatype.aether:aether-api:1.13.1" />
         <CLASSES>
@@ -17,7 +17,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-core:3.0.5" type="repository">
         <properties maven-id="org.apache.maven:maven-core:3.0.5" />
         <CLASSES>
@@ -49,7 +49,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-artifact:3.0.5" type="repository">
         <properties maven-id="org.apache.maven:maven-artifact:3.0.5" />
         <CLASSES>
@@ -60,7 +60,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.codehaus.plexus:plexus-component-annotations:1.5.5" type="repository">
         <properties maven-id="org.codehaus.plexus:plexus-component-annotations:1.5.5" />
         <CLASSES>

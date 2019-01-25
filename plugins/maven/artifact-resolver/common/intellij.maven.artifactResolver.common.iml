@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-artifact:3.0.5" type="repository">
         <properties maven-id="org.apache.maven:maven-artifact:3.0.5" />
         <CLASSES>

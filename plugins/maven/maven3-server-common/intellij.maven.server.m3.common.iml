@@ -44,7 +44,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-compat:3.0.5" type="repository">
         <properties maven-id="org.apache.maven:maven-compat:3.0.5" />
         <CLASSES>
@@ -78,8 +78,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.apache.maven.archetype" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.apache.maven.shared:maven-dependency-tree:1.2" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="MavenServerRuntime-org.sonatype.nexus:nexus-indexer" level="project" />
   </component>
 </module>
