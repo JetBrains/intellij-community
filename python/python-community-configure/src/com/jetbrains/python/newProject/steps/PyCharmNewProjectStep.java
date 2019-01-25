@@ -68,13 +68,6 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
       return generators;
     }
 
-    @Override
-    public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
-      if (generators.length == 0) {
-        projectSpecificAction.setPopup(false);
-      }
-    }
-
     @NotNull
     @Override
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull AbstractCallback callback) {
