@@ -24,6 +24,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -108,6 +109,7 @@ public class PyToJavaResolveTest extends ResolveTestCase {
     assertInstanceOf(targets.get(1), PsiPackage.class);
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PythonHelpersLocator.getPythonCommunityPath() + "/testData/resolve/pyToJava/";

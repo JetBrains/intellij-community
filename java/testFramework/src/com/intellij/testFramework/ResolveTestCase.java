@@ -94,6 +94,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
     return ref;
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/psi/resolve/";

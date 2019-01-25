@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
 
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   public String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting";

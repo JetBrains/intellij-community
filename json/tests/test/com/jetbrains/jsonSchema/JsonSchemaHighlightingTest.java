@@ -11,6 +11,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
  * @author Irina.Chernushina on 9/21/2015.
  */
 public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";

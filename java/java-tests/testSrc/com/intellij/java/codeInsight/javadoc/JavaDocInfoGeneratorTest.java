@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   private int myJdkVersion = 7;
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

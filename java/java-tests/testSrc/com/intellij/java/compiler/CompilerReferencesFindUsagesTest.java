@@ -59,6 +59,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/compiler/compilerReferenceFindUsages/";

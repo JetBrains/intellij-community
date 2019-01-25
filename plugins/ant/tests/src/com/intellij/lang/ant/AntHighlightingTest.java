@@ -38,6 +38,7 @@ import java.util.List;
 @SuppressWarnings({"HardCodedStringLiteral"})
 @HardwareAgentRequired
 public class AntHighlightingTest extends DaemonAnalyzerTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/highlighting/";

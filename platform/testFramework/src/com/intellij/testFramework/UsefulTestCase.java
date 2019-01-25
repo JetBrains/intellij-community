@@ -450,6 +450,7 @@ public abstract class UsefulTestCase extends TestCase {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
+  @NotNull
   public static String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
@@ -475,7 +476,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
-    assertOrderedEquals(null, actual, expected);
+    assertOrderedEquals("", actual, expected);
   }
 
   public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
@@ -499,22 +500,22 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
   public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
-    assertOrderedEquals(null, actual, expected);
+    assertOrderedEquals("", actual, expected);
   }
 
-  public static <T> void assertOrderedEquals(String errorMsg,
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected) {
     //noinspection unchecked
     assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
   }
 
-  public static <T> void assertOrderedEquals(String errorMsg,
+  public static <T> void assertOrderedEquals(@NotNull String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Iterable<? extends T> expected,
                                              @NotNull Equality<? super T> comparator) {
@@ -563,13 +564,13 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
-    assertSameElements(null, actual, expected);
+    assertSameElements("", actual, expected);
   }
 
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
       Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
     }
@@ -757,14 +758,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
     if (collection == null) return;
-    assertEmpty(null, collection);
+    assertEmpty("", collection);
   }
 
   public static void assertEmpty(final String s) {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<? extends T> collection) {
+  public static <T> void assertEmpty(@NotNull String errorMsg, @NotNull Collection<? extends T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
