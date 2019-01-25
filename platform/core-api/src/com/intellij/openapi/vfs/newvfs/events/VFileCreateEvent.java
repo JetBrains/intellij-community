@@ -64,7 +64,8 @@ public class VFileCreateEvent extends VFileEvent {
   @NonNls
   @Override
   public String toString() {
-    return "VfsEvent[create " + (myDirectory ? "dir " : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
+    return "VfsEvent[create " + (myDirectory ? (isEmptyDirectory() ? "(empty) " :"") + "dir "
+                                             : "file ") + myChildName +  " in " + myParent.getUrl() + "]";
   }
 
   @NotNull
