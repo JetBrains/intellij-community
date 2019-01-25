@@ -47,6 +47,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   boolean myMoveInProgress;
   boolean myPutMergedIntervalsAtBeginning;
+  private boolean myConsiderCaretPositionOnDocumentUpdates = true;
   private List<Inlay> myInlaysAtCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
@@ -63,7 +64,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+        if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
           List<Inlay> inlays = getInlineElementsInRange(offset, offset);
           int inlayCount = inlays.size();
           if (inlayCount > 0) {
@@ -326,6 +327,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
     }
     return null;
+  }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {
+    myConsiderCaretPositionOnDocumentUpdates = enabled;
   }
 
   @Override

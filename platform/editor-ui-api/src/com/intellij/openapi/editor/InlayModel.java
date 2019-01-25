@@ -137,6 +137,14 @@ public interface InlayModel {
   Inlay getElementAt(@NotNull Point point);
 
   /**
+   * When text is inserted at inline element's offset, resulting element's position is determined by its
+   * {@link Inlay#isRelatedToPrecedingText()} property. But to enable natural editing experience around inline elements (so that typed text
+   * appears at caret visual position), caret position is also taken into account at document insertion. This method allows to disable
+   * accounting for caret position, and can be useful for document modifications which don't originate directly from user actions.
+   */
+  void setConsiderCaretPositionOnDocumentUpdates(boolean enabled);
+
+  /**
    * Adds a listener that will be notified after adding, updating and removal of custom visual elements.
    */
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
