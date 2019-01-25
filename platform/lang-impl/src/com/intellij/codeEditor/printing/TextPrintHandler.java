@@ -16,8 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -250,7 +249,7 @@ public class TextPrintHandler extends PrintActionHandler {
     if (virtualFile == null) return null;
     DocumentEx doc = (DocumentEx)PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (doc == null) return null;
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, getColorSchemeForPrinting(), psiFile.getProject());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(virtualFile, EditorColorsUtil.getColorSchemeForPrinting(), psiFile.getProject());
     highlighter.setText(doc.getCharsSequence());
     return new TextPainter(doc, highlighter, virtualFile.getPresentableUrl(), virtualFile.getPresentableName(), 
                            psiFile, psiFile.getFileType());
@@ -268,14 +267,8 @@ public class TextPrintHandler extends PrintActionHandler {
   }
 
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getColorSchemeForPrinting(), "unknown", project);
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(EditorColorsUtil.getColorSchemeForPrinting(), "unknown", project);
     highlighter.setText(doc.getCharsSequence());
     return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
-  }
-
-  private static EditorColorsScheme getColorSchemeForPrinting() {
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
-                                        : colorsManager.getGlobalScheme();
   }
 }
