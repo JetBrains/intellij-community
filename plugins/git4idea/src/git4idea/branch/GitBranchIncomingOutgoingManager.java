@@ -217,6 +217,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
         myErrorMap.remove(repository, remote);
+        myAuthSuccessMap.putValue(repository, remote);
       }
       else {
         myErrorMap.putValue(repository, remote);

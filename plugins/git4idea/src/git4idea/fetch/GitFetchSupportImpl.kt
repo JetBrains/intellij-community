@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsNotifier
@@ -31,6 +32,7 @@ import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationGate
+import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
 import git4idea.commands.GitRestrictingAuthenticationGate
 import git4idea.config.GitConfigUtil
@@ -198,6 +200,7 @@ internal class GitFetchSupportImpl(git: Git,
     val result = git.fetch(repository, remote, emptyList(), authenticationGate)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
+      BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
       repository.update()
     }
     val error = if (result.success()) null else result.errorOutputAsJoinedString
