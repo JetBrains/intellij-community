@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Debugger.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiValuesMap<K, V>{
   private final Map<K, Collection<V>> myBaseMap;
   private final boolean myOrdered;
