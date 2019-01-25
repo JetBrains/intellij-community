@@ -3,6 +3,7 @@ package com.intellij.xml.util.documentation;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,9 @@ public class HtmlCompatibilityData {
   @Nullable
   public static Map getTagData(@Nullable XmlTag tag) {
     if (tag == null) return null;
-    String key = tag.getName().toLowerCase(Locale.US);
+    String key = tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
+                 tag.getName() :
+                 tag.getName().toLowerCase(Locale.US);
     if ("input".equals(key)) {
       String type = tag.getAttributeValue("type");
       if (type != null) {
