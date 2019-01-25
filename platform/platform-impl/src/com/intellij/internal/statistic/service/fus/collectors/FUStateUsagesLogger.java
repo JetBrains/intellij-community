@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -64,28 +65,36 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
     usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
     if (!usages.isEmpty()) {
-      final FeatureUsageData groupData = context != null ? context.addProject(project) : new FeatureUsageData().addProject(project);
+      final FeatureUsageData groupData = addProject(project, context);
       for (UsageDescriptor usage : usages) {
         final FeatureUsageData data = mergeWithEventData(groupData, usage.getData(), usage.getValue());
-        logger.logState(group, usage.getKey(), data.build());
+        final Map<String, Object> eventData = data != null ? data.build() : Collections.emptyMap();
+        logger.logState(group, usage.getKey(), eventData);
       }
     }
     logger.logState(group, INVOKED);
   }
 
-  @NotNull
-  private static FeatureUsageData mergeWithEventData(@NotNull FeatureUsageData groupData, @Nullable FeatureUsageData data, int value) {
+  @Nullable
+  private static FeatureUsageData addProject(@Nullable Project project,
+                                             @Nullable FeatureUsageData context) {
+    if (project == null && context == null) {
+      return null;
+    }
+    return context != null ? context.addProject(project) : new FeatureUsageData().addProject(project);
+  }
+
+  @Nullable
+  public static FeatureUsageData mergeWithEventData(@Nullable FeatureUsageData groupData, @Nullable FeatureUsageData data, int value) {
     if (data == null && value == 1) return groupData;
 
-    final FeatureUsageData newData = groupData.copy();
+    final FeatureUsageData newData = groupData == null ? new FeatureUsageData() : groupData.copy();
     if (value != 1) {
       newData.addData("value", value);
     }
 
     if (data != null) {
-      for (Map.Entry<String, Object> entry : data.build().entrySet()) {
-        newData.addData("event_" + entry.getKey(), entry.getValue());
-      }
+      newData.merge(data, "event_");
     }
     return newData;
   }

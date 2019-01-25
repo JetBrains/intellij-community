@@ -26,7 +26,7 @@ public final class UsageDescriptor implements Comparable<UsageDescriptor> {
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
     myKey = ConvertUsagesUtil.ensureProperKey(key);
     myValue = value;
-    myData = new FeatureUsageData().addFeatureContext(context);
+    myData = context != null ? new FeatureUsageData().addFeatureContext(context) : null;
   }
 
   public UsageDescriptor(@NotNull String key, int value, @Nullable FeatureUsageData data) {

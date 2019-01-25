@@ -94,7 +94,23 @@ class FeatureUsageData {
     return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
   }
 
-  fun addData(key: String, value: Any): FeatureUsageData {
+  fun addData(key: String, value: Boolean): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Int): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Long): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: String): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  private fun addDataInternal(key: String, value: Any): FeatureUsageData {
     data[key] = value
     return this
   }
@@ -103,10 +119,18 @@ class FeatureUsageData {
     return data
   }
 
+  fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
+    for ((key, value) in next.build()) {
+      val newKey = if (key.startsWith("data_")) "$prefix$key" else key
+      addDataInternal(newKey, value)
+    }
+    return this
+  }
+
   fun copy(): FeatureUsageData {
     val result = FeatureUsageData()
     for ((key, value) in data) {
-      result.addData(key, value)
+      result.addDataInternal(key, value)
     }
     return result
   }
