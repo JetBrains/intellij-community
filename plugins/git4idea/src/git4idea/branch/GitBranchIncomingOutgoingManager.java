@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.concurrency.JobScheduler;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -146,7 +147,11 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @CalledInBackground
   private void updateBranchesToPull() {
-    myRepositoryManager.getRepositories().forEach(r -> myLocalBranchesToPull.put(r, calculateBranchesToPull(r, false)));
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      for (GitRepository repo : myRepositoryManager.getRepositories()) {
+        myLocalBranchesToPull.put(repo, calculateBranchesToPull(repo, false));
+      }
+    });
   }
 
   @NotNull
