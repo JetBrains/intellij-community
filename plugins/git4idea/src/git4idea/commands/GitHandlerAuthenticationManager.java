@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -65,9 +66,20 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   @Override
   public void close() {
-    cleanupHttpAuth();
-    cleanupSshAuth();
-    cleanupNativeSshAuth();
+    try {
+      cleanupHttpAuth();
+      cleanupSshAuth();
+      cleanupNativeSshAuth();
+    }
+    catch (IllegalStateException ise) {
+      if (myProject.isDisposed()) {
+        LOG.warn(ise);
+        throw new ProcessCanceledException(ise);
+      }
+      else {
+        throw ise;
+      }
+    }
   }
 
   private void prepareHttpAuth() throws IOException {
