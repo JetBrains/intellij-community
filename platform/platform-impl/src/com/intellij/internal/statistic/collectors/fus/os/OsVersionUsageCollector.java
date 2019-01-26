@@ -32,7 +32,8 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
     UsageDescriptor descriptor;
 
     if (SystemInfo.isLinux) {
-      final String version = getLinuxOSVersion();
+      final LinuxRelease release = getLinuxRelease();
+      final String version = parseName(release.getRelease()) + " " + parseVersion(release.getVersion());
       descriptor = new UsageDescriptor("Linux/" + version, 1);
     }
     else {
@@ -43,7 +44,7 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
   }
 
   @NotNull
-  public static String getLinuxOSVersion() {
+  public static LinuxRelease getLinuxRelease() {
     String releaseId = null, releaseVersion = null;
 
     try (Stream<String> lines = Files.lines(Paths.get("/etc/os-release"))) {
@@ -58,15 +59,20 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
     catch (IOException ignored) {
     }
 
-    return parseName(releaseId) + " " + parseVersion(releaseVersion != null ? releaseVersion : SystemInfo.OS_VERSION);
+    return new LinuxRelease(parseName(releaseId), releaseVersion != null ? releaseVersion : SystemInfo.OS_VERSION);
   }
 
   @NotNull
-  public static String parseVersion(@Nullable String releaseVersion) {
+  private static String parseVersion(@Nullable String releaseVersion) {
     if (releaseVersion == null) return "undefined";
 
     final Version version = Version.parseVersion(releaseVersion.trim());
     return version != null ? version.toCompactString() : "unknown-format";
+  }
+
+  @Nullable
+  public static Version parse(@Nullable String releaseVersion) {
+    return releaseVersion != null ? Version.parseVersion(releaseVersion.trim()) : null;
   }
 
   @NotNull
@@ -94,4 +100,26 @@ public class OsVersionUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() { return "statistics.os.version"; }
+
+  public static class LinuxRelease {
+    @NotNull
+    private final String myRelease;
+    @Nullable
+    private final String myVersion;
+
+    public LinuxRelease(@NotNull String release, @Nullable String version) {
+      myRelease = release;
+      myVersion = version;
+    }
+
+    @NotNull
+    public String getRelease() {
+      return myRelease;
+    }
+
+    @Nullable
+    public String getVersion() {
+      return myVersion;
+    }
+  }
 }

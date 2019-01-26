@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.util.containers.ContainerUtil
@@ -30,6 +31,21 @@ class FeatureUsageData {
     if (project != null) {
       data["project"] = getProjectId(project)
     }
+    return this
+  }
+
+  fun addVersionByString(version: String?): FeatureUsageData {
+    if (version == null) {
+      data["version"] = "unknown"
+    }
+    else {
+      addVersion(Version.parseVersion(version))
+    }
+    return this
+  }
+
+  fun addVersion(version: Version?): FeatureUsageData {
+    data["version"] = if (version != null) "${version.major}.${version.minor}" else "unknown.format"
     return this
   }
 

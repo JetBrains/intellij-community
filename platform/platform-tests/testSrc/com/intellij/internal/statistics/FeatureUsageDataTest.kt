@@ -4,6 +4,7 @@ package com.intellij.internal.statistics
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.util.Version
 import org.junit.Assert
 import org.junit.Test
 
@@ -95,6 +96,94 @@ class FeatureUsageDataTest {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
     Assert.assertTrue(build["place"] == ActionPlaces.UNKNOWN)
+  }
+
+  @Test
+  fun `test put null obj version`() {
+    val build = FeatureUsageData().addVersion(null).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "unknown.format")
+  }
+
+  @Test
+  fun `test put null version`() {
+    val build = FeatureUsageData().addVersionByString(null).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "unknown")
+  }
+
+  @Test
+  fun `test put obj version`() {
+    val build = FeatureUsageData().addVersion(Version(3, 5, 0)).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "3.5")
+  }
+
+  @Test
+  fun `test put version`() {
+    val build = FeatureUsageData().addVersionByString("5.11.0").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "5.11")
+  }
+
+  @Test
+  fun `test put obj version with bugfix`() {
+    val build = FeatureUsageData().addVersion(Version(3, 5, 9)).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "3.5")
+  }
+
+  @Test
+  fun `test put version with bugfix`() {
+    val build = FeatureUsageData().addVersionByString("5.11.98").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "5.11")
+  }
+
+  @Test
+  fun `test put invalid version`() {
+    val build = FeatureUsageData().addVersionByString("2018-11").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "2018.0")
+  }
+
+  @Test
+  fun `test put empty version`() {
+    val build = FeatureUsageData().addVersionByString("").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "unknown.format")
+  }
+
+  @Test
+  fun `test put version with snapshot`() {
+    val build = FeatureUsageData().addVersionByString("1.4-SNAPSHOT").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "1.4")
+  }
+
+  @Test
+  fun `test put version with suffix`() {
+    val build = FeatureUsageData().addVersionByString("2.5.0.BUILD-2017091412345").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "2.5")
+  }
+
+  @Test
+  fun `test put version with letters`() {
+    val build = FeatureUsageData().addVersionByString("abcd").build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("version"))
+    Assert.assertTrue(build["version"] == "unknown.format")
   }
 
   @Test
