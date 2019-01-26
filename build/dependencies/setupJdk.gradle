@@ -47,6 +47,9 @@ task setupJdk(dependsOn: downloadJdk) {
   inputs.files(downloadOutputs)
   inputs.property("jdkOutputDir", outputDir)
   outputs.dir(outputDir)
+  outputs.file(OperatingSystem.current().with { os ->
+    os.isWindows() ? "$jdkOutputDir/bin/java.exe" : os.isMacOsX() ? "$jdkOutputDir/Contents/Home/bin/java" : "$jdkOutputDir/bin/java"
+  })
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")
     unpackJdk(downloadOutputs.singleFile, outputDir)
