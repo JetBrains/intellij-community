@@ -258,7 +258,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static boolean isMultiline(PsiElement element) {
     String text = element.getText();
-    return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
+    return text.contains("\n") || text.contains("\r");
   }
 
   @Nullable
