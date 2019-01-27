@@ -37,6 +37,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -121,8 +123,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   private static boolean isCollapseBlock(@NotNull ASTNode node) {
     IElementType type = node.getElementType();
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    if ((type == GroovyElementTypes.OPEN_BLOCK || type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() ==
-                                                                                                                                    GroovyElementTypes.METHOD) {
+    if ((type == GroovyElementTypes.OPEN_BLOCK ||
+         type == GroovyElementTypes.CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() == GroovyStubElementTypes.METHOD) {
       return settings.isCollapseMethods();
     }
 
@@ -130,7 +132,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return settings.isCollapseAnonymousClasses();
     }
 
-    if (type == GroovyElementTypes.CLASS_BODY) {
+    if (type == GroovyEmptyStubElementTypes.CLASS_BODY) {
       final PsiElement parent = node.getPsi().getParent();
       if (parent instanceof PsiClass) {
         if (parent instanceof PsiAnonymousClass) {
@@ -256,7 +258,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return  element.getText().endsWith("*/");
   }
 
-  private static boolean isMultiline(PsiElement element) {
+  private static boolean isMultiline(@NotNull PsiElement element) {
     String text = element.getText();
     return text.contains("\n") || text.contains("\r");
   }
@@ -309,6 +311,6 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   @Override
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     IElementType nodeType = node.getElementType();
-    return nodeType == GroovyElementTypes.CLASS_TYPE_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
+    return nodeType == GroovyStubElementTypes.CLASS_TYPE_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }
 }
