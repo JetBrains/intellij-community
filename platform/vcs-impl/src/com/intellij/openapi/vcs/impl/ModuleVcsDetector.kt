@@ -75,7 +75,7 @@ class ModuleVcsDetector(private val myProject: Project,
         val rootPaths = roots.map { it.path }.toSet()
         val additionalMappings = myVcsManager.directoryMappings.filter { it.directory !in rootPaths }
 
-        myVcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping("", vcs.name))
+        myVcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(vcs.name))
       }
     }
     else if (tryMapPieces) {

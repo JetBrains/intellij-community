@@ -56,7 +56,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myVcs.setDiffProvider(myDiffProvider);
 
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping("", myVcs.getName())));
+    myVcsManager.setDirectoryMappings(singletonList(VcsDirectoryMapping.createDefault(myVcs.getName())));
     myVcsManager.waitForInitialized();
     assertTrue(myVcsManager.hasActiveVcss());
 

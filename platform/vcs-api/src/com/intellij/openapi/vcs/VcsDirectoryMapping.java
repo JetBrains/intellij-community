@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class VcsDirectoryMapping {
+  public static final String DEFAULT_MAPPING_DIR = "";
+
   public static final String PROJECT_CONSTANT = "<Project>";
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
@@ -44,6 +46,11 @@ public class VcsDirectoryMapping {
     myDirectory = directory;
     myVcs = vcs;
     myRootSettings = rootSettings;
+  }
+
+  @NotNull
+  public static VcsDirectoryMapping createDefault(@NotNull String vcs) {
+    return new VcsDirectoryMapping(DEFAULT_MAPPING_DIR, vcs);
   }
 
   @NotNull

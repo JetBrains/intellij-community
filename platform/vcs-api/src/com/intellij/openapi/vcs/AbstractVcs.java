@@ -253,7 +253,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void enableIntegration() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
-      vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", getName())));
+      vcsManager.setDirectoryMappings(Arrays.asList(VcsDirectoryMapping.createDefault(getName())));
     }
   }
 

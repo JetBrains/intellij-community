@@ -147,7 +147,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
           if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
             final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-            vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
+            vcsManager.setDirectoryMappings(Arrays.asList(VcsDirectoryMapping.createDefault(SvnVcs.VCS_NAME)));
           }
         }, ModalityState.NON_MODAL, project.getDisposed()));
       }
