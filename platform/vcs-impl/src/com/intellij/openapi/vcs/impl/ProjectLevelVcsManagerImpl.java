@@ -640,11 +640,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
     boolean haveNonEmptyMappings = false;
     for (Element child : element.getChildren(ELEMENT_MAPPING)) {
-      final String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
+      String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
+      String directory = child.getAttributeValue(ATTRIBUTE_DIRECTORY);
+      if (directory == null) continue;
       if (vcs != null && !vcs.isEmpty()) {
         haveNonEmptyMappings = true;
       }
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY), vcs);
+      VcsDirectoryMapping mapping = new VcsDirectoryMapping(directory, vcs);
       mappingsList.add(mapping);
 
       Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
