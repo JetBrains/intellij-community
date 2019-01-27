@@ -30,7 +30,7 @@ public class VcsDirectoryMapping {
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
   @NotNull private final String myDirectory;
-  private String myVcs;
+  private final String myVcs;
   private VcsRootSettings myRootSettings;
 
   /**
@@ -62,10 +62,6 @@ public class VcsDirectoryMapping {
     return myVcs;
   }
 
-  public void setVcs(final String vcs) {
-    myVcs = vcs;
-  }
-
   /**
    * Returns the VCS-specific settings for the given mapping.
    *
@@ -80,8 +76,10 @@ public class VcsDirectoryMapping {
   /**
    * Sets the VCS-specific settings for the given mapping.
    *
-   * @param rootSettings the VCS-specific settings.
+   * @param rootSettings the VCS-specific settings
+   * @deprecated Use constructor parameter
    */
+  @Deprecated
   public void setRootSettings(final VcsRootSettings rootSettings) {
     myRootSettings = rootSettings;
   }
