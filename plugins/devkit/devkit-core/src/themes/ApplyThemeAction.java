@@ -9,8 +9,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ui.UIUtil;
@@ -19,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,7 +49,7 @@ public class ApplyThemeAction extends DumbAwareAction {
     }
 
     if (file != null && UITheme.isThemeFile(file)) {
-      applyTempTheme(file);
+      applyTempTheme(file, project);
     }
   }
 
@@ -57,11 +63,24 @@ public class ApplyThemeAction extends DumbAwareAction {
 return null;
   }
 
-  private static void applyTempTheme(@NotNull VirtualFile json) {
+  private static void applyTempTheme(@NotNull VirtualFile json, Project project) {
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
       UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null);
-      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme));
+      String pathToScheme = theme.getEditorScheme();
+      VirtualFile editorScheme = null;
+      if (pathToScheme != null) {
+        Module module = ModuleUtilCore.findModuleForFile(json, project);
+        if (module != null) {
+          for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+            Path path = Paths.get(root.getPath(), pathToScheme);
+            if (path.toFile().exists()) {
+              editorScheme = VfsUtil.findFile(path, true);
+            }
+          }
+        }
+      }
+      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, editorScheme));
       LafManager.getInstance().updateUI();
     }
     catch (IOException ignore) {}
