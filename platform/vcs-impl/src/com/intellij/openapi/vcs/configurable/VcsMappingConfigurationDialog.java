@@ -57,7 +57,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     myDirectoryTextField.addActionListener(
       new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS", myDirectoryTextField, project,
                                  createSingleFolderDescriptor()));
-    myMappingCopy = new VcsDirectoryMapping("", "");
+    myMappingCopy = VcsDirectoryMapping.createDefault("");
     setTitle(title);
     init();
     myVCSComboBox.addActionListener(e -> updateVcsConfigurable());
