@@ -30,8 +30,8 @@ public class VcsDirectoryMapping {
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
   @NotNull private final String myDirectory;
-  private String myVcs;
-  private VcsRootSettings myRootSettings;
+  private final String myVcs;
+  private final VcsRootSettings myRootSettings;
 
   /**
    * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
@@ -67,10 +67,6 @@ public class VcsDirectoryMapping {
     return myVcs;
   }
 
-  public void setVcs(final String vcs) {
-    myVcs = vcs;
-  }
-
   /**
    * Returns the VCS-specific settings for the given mapping.
    *
@@ -80,15 +76,6 @@ public class VcsDirectoryMapping {
   @Nullable
   public VcsRootSettings getRootSettings() {
     return myRootSettings;
-  }
-
-  /**
-   * Sets the VCS-specific settings for the given mapping.
-   *
-   * @param rootSettings the VCS-specific settings.
-   */
-  public void setRootSettings(final VcsRootSettings rootSettings) {
-    myRootSettings = rootSettings;
   }
 
   public boolean isDefaultMapping() {
