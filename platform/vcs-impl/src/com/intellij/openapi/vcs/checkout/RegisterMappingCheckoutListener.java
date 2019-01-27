@@ -30,7 +30,7 @@ public class RegisterMappingCheckoutListener implements VcsAwareCheckoutListener
     if (project != null) {
       ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
       if (!vcsManager.hasAnyMappings()) {
-        vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcsKey.getName())));
+        vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(vcsKey.getName())));
       }
       return true;
     }
