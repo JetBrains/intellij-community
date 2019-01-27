@@ -42,7 +42,10 @@ public class MappingsToRoots {
 
   @NotNull
   public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
-    final List<VirtualFile> result = new ArrayList<>(myMappings.getMappingsAsFilesUnderVcs(vcs));
+    List<VirtualFile> mappings = new ArrayList<>(myMappings.getMappingsAsFilesUnderVcs(vcs));
+
+    final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();
+    final List<VirtualFile> result = convertor != null ? convertor.convertRoots(mappings) : mappings;
 
     Collections.sort(result, FilePathComparator.getInstance());
     if (!vcs.allowsNestedRoots()) {

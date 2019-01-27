@@ -226,14 +226,12 @@ public class NewMappings {
   }
 
   @NotNull
-  private static List<VirtualFile> getActualDefaultRootsFor(@Nullable AbstractVcs vcs,
+  private static List<VirtualFile> getActualDefaultRootsFor(@Nullable AbstractVcs<?> vcs,
                                                             @NotNull DefaultVcsRootPolicy defaultVcsRootPolicy) {
     List<VirtualFile> defaultRoots = new ArrayList<>(defaultVcsRootPolicy.getDefaultVcsRoots());
+    if (vcs == null) return AbstractVcs.filterUniqueRootsDefault(defaultRoots, Function.identity());
 
-    AbstractVcs.RootsConvertor convertor = vcs != null ? vcs.getCustomConvertor() : null;
-    if (convertor == null) return defaultRoots;
-
-    return convertor.convertRoots(defaultRoots);
+    return vcs.filterUniqueRoots(defaultRoots, Function.identity());
   }
 
   public void mappingsChanged() {
