@@ -102,7 +102,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
 
     private final Type type;
-    private final VcsDirectoryMapping mapping;
+    private VcsDirectoryMapping mapping;
 
     private MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
       this.mapping = mapping;
@@ -200,7 +200,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       @Override
       public void setValue(final MapInfo o, final String aValue) {
         Collection<AbstractVcs> activeVcses = getActiveVcses();
-        o.mapping.setVcs(aValue);
+        o.mapping = new VcsDirectoryMapping(o.mapping.getDirectory(), aValue, o.mapping.getRootSettings());
         checkNotifyListeners(activeVcses);
       }
 

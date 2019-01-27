@@ -636,23 +636,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
     boolean haveNonEmptyMappings = false;
     for (Element child : element.getChildren(ELEMENT_MAPPING)) {
-      final String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
-      if (vcs != null && !vcs.isEmpty()) {
-        haveNonEmptyMappings = true;
-      }
-      VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY), vcs);
-      mappingsList.add(mapping);
+      String vcs = child.getAttributeValue(ATTRIBUTE_VCS);
+      String directory = child.getAttributeValue(ATTRIBUTE_DIRECTORY);
+      if (directory == null) continue;
 
+      VcsRootSettings rootSettings = null;
       Element rootSettingsElement = child.getChild(ELEMENT_ROOT_SETTINGS);
       if (rootSettingsElement != null) {
         String className = rootSettingsElement.getAttributeValue(ATTRIBUTE_CLASS);
-        AbstractVcs vcsInstance = findVcsByName(mapping.getVcs());
+        AbstractVcs vcsInstance = findVcsByName(vcs);
         if (vcsInstance != null && className != null) {
-          final VcsRootSettings rootSettings = vcsInstance.createEmptyVcsRootSettings();
+          rootSettings = vcsInstance.createEmptyVcsRootSettings();
           if (rootSettings != null) {
             try {
               rootSettings.readExternal(rootSettingsElement);
-              mapping.setRootSettings(rootSettings);
             }
             catch (InvalidDataException e) {
               LOG.error("Failed to load VCS root settings class " + className + " for VCS " + vcsInstance.getClass().getName(), e);
@@ -660,6 +657,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           }
         }
       }
+
+      VcsDirectoryMapping mapping = new VcsDirectoryMapping(directory, vcs, rootSettings);
+      mappingsList.add(mapping);
+
+      haveNonEmptyMappings |= !mapping.isDefaultMapping();
     }
     boolean defaultProject = Boolean.TRUE.toString().equals(element.getAttributeValue(ATTRIBUTE_DEFAULT_PROJECT));
     // run autodetection if there's no VCS in default project and
