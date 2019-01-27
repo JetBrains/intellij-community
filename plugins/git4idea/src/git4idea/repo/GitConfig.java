@@ -1,44 +1,31 @@
-  /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
   import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.branch.GitBranchUtil;
-import org.ini4j.Ini;
-import org.ini4j.Profile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+  import com.intellij.openapi.util.Pair;
+  import com.intellij.openapi.util.text.StringUtil;
+  import com.intellij.util.ArrayUtil;
+  import com.intellij.util.containers.ContainerUtil;
+  import git4idea.GitLocalBranch;
+  import git4idea.GitRemoteBranch;
+  import git4idea.branch.GitBranchUtil;
+  import one.util.streamex.StreamEx;
+  import org.ini4j.Ini;
+  import org.ini4j.Profile;
+  import org.jetbrains.annotations.NotNull;
+  import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+  import java.io.File;
+  import java.io.IOException;
+  import java.util.ArrayList;
+  import java.util.Collection;
+  import java.util.List;
+  import java.util.Map;
+  import java.util.regex.Matcher;
+  import java.util.regex.Pattern;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
+  import static java.util.Arrays.asList;
+  import static java.util.Collections.emptyList;
 
   /**
  * Reads information from the {@code .git/config} file, and parses it to actual objects.
@@ -82,7 +69,10 @@ public class GitConfig {
   @NotNull
   Collection<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
-    return ContainerUtil.map(myRemotes, remote -> convertRemoteToGitRemote(myUrls, remote));
+    return StreamEx.of(myRemotes)
+          .map(remote -> convertRemoteToGitRemote(myUrls, remote))
+          .filter(remote -> !remote.getUrls().isEmpty())
+          .toList();
   }
 
   @NotNull
