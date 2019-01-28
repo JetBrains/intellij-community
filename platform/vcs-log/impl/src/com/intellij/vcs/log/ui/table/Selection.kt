@@ -13,76 +13,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.table;
+package com.intellij.vcs.log.ui.table
 
-import com.google.common.primitives.Ints;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.VisibleGraph;
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.primitives.Ints
+import com.intellij.openapi.util.Pair
+import com.intellij.ui.ScrollingUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.graph.VisibleGraph
+import gnu.trove.TIntHashSet
 
-import java.awt.*;
-import java.util.List;
+import java.awt.*
 
-class Selection {
-  @NotNull private final VcsLogGraphTable myTable;
-  @NotNull private final TIntHashSet mySelectedCommits;
-  @Nullable private final Integer myVisibleSelectedCommit;
-  @Nullable private final Integer myDelta;
-  private final boolean myIsOnTop;
+internal class Selection(private val table: VcsLogGraphTable) {
+  private val selectedCommits: TIntHashSet
+  private val visibleSelectedCommit: Int?
+  private val delta: Int?
+  private val isOnTop: Boolean
 
-  Selection(@NotNull VcsLogGraphTable table) {
-    myTable = table;
-    List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
-    Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
-    myIsOnTop = visibleRows.first - 1 == 0;
+  init {
+    val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
+    val visibleRows = ScrollingUtil.getVisibleRows(table)
+    isOnTop = visibleRows.first - 1 == 0
 
-    VisibleGraph<Integer> graph = myTable.getVisibleGraph();
+    val graph = table.visibleGraph
 
-    mySelectedCommits = new TIntHashSet();
+    selectedCommits = TIntHashSet()
 
-    Integer visibleSelectedCommit = null;
-    Integer delta = null;
-    for (int row : selectedRows) {
-      if (row < graph.getVisibleCommitCount()) {
-        Integer commit = graph.getRowInfo(row).getCommit();
-        mySelectedCommits.add(commit);
+    var visibleSelectedCommit: Int? = null
+    var delta: Int? = null
+    for (row in selectedRows) {
+      if (row < graph.visibleCommitCount) {
+        val commit = graph.getRowInfo(row).commit
+        selectedCommits.add(commit)
         if (visibleRows.first - 1 <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
-          visibleSelectedCommit = commit;
-          delta = myTable.getCellRect(row, 0, false).y - myTable.getVisibleRect().y;
+          visibleSelectedCommit = commit
+          delta = table.getCellRect(row, 0, false).y - table.visibleRect.y
         }
       }
     }
     if (visibleSelectedCommit == null && visibleRows.first - 1 >= 0) {
-      visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).getCommit();
-      delta = myTable.getCellRect(visibleRows.first - 1, 0, false).y - myTable.getVisibleRect().y;
+      visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).commit
+      delta = table.getCellRect(visibleRows.first - 1, 0, false).y - table.visibleRect.y
     }
 
-    myVisibleSelectedCommit = visibleSelectedCommit;
-    myDelta = delta;
+    this.visibleSelectedCommit = visibleSelectedCommit
+    this.delta = delta
   }
 
-  public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection, boolean permGraphChanged) {
-    Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
-    if (!toSelectAndScroll.first.isEmpty()) {
-      myTable.getSelectionModel().setValueIsAdjusting(true);
-      toSelectAndScroll.first.forEach(row -> {
-        myTable.addRowSelectionInterval(row, row);
-        return true;
-      });
-      myTable.getSelectionModel().setValueIsAdjusting(false);
+  fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
+    val toSelectAndScroll = findRowsToSelectAndScroll(table.model, newVisibleGraph)
+    if (!toSelectAndScroll.first.isEmpty) {
+      table.selectionModel.valueIsAdjusting = true
+      toSelectAndScroll.first.forEach { row ->
+        table.addRowSelectionInterval(row, row)
+        true
+      }
+      table.selectionModel.valueIsAdjusting = false
     }
     if (scrollToSelection) {
-      if (myIsOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
-        scrollToRow(0, 0);
+      if (isOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
+        scrollToRow(0, 0)
       }
       else if (toSelectAndScroll.second != null) {
-        assert myDelta != null;
-        scrollToRow(toSelectAndScroll.second, myDelta);
+        assert(delta != null)
+        scrollToRow(toSelectAndScroll.second, delta)
       }
     }
     // sometimes commits that were selected are now collapsed
@@ -91,36 +85,35 @@ class Selection {
     // or answer from collapse action could return a map that gives us some information about what commits were collapsed and where
   }
 
-  private void scrollToRow(Integer row, Integer delta) {
-    Rectangle startRect = myTable.getCellRect(row, 0, true);
-    myTable.scrollRectToVisible(new Rectangle(startRect.x, Math.max(startRect.y - delta, 0),
-                                              startRect.width, myTable.getVisibleRect().height));
+  private fun scrollToRow(row: Int?, delta: Int?) {
+    val startRect = table.getCellRect(row!!, 0, true)
+    table.scrollRectToVisible(Rectangle(startRect.x, Math.max(startRect.y - delta!!, 0),
+                                        startRect.width, table.visibleRect.height))
   }
 
-  @NotNull
-  private Pair<TIntHashSet, Integer> findRowsToSelectAndScroll(@NotNull GraphTableModel model,
-                                                               @NotNull VisibleGraph<Integer> visibleGraph) {
-    TIntHashSet rowsToSelect = new TIntHashSet();
+  private fun findRowsToSelectAndScroll(model: GraphTableModel,
+                                        visibleGraph: VisibleGraph<Int>): Pair<TIntHashSet, Int> {
+    val rowsToSelect = TIntHashSet()
 
-    if (model.getRowCount() == 0) {
+    if (model.rowCount == 0) {
       // this should have been covered by facade.getVisibleCommitCount,
       // but if the table is empty (no commits match the filter), the GraphFacade is not updated, because it can't handle it
       // => it has previous values set.
-      return Pair.create(rowsToSelect, null);
+      return Pair.create(rowsToSelect, null)
     }
 
-    Integer rowToScroll = null;
-    for (int row = 0;
-         row < visibleGraph.getVisibleCommitCount() && (rowsToSelect.size() < mySelectedCommits.size() || rowToScroll == null);
-         row++) { //stop iterating if found all hashes
-      int commit = visibleGraph.getRowInfo(row).getCommit();
-      if (mySelectedCommits.contains(commit)) {
-        rowsToSelect.add(row);
+    var rowToScroll: Int? = null
+    var row = 0
+    while (row < visibleGraph.visibleCommitCount && (rowsToSelect.size() < selectedCommits.size() || rowToScroll == null)) { //stop iterating if found all hashes
+      val commit = visibleGraph.getRowInfo(row).commit
+      if (selectedCommits.contains(commit)) {
+        rowsToSelect.add(row)
       }
-      if (myVisibleSelectedCommit != null && myVisibleSelectedCommit == commit) {
-        rowToScroll = row;
+      if (visibleSelectedCommit != null && visibleSelectedCommit == commit) {
+        rowToScroll = row
       }
+      row++
     }
-    return Pair.create(rowsToSelect, rowToScroll);
+    return Pair.create(rowsToSelect, rowToScroll)
   }
 }
