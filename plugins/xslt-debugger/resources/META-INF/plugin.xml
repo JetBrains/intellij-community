@@ -7,7 +7,6 @@
   ]]></description>
 
   <vendor>JetBrains</vendor>
-  <idea-version since-build="96.1"/>
 
   <depends>XPathView</depends>
   <depends>com.intellij.modules.xml</depends>
