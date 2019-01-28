@@ -80,6 +80,8 @@ public class RecentLocationsAction extends AnAction {
                                                                  SHORTCUT_FOREGROUND_COLOR.getGreen(),
                                                                  SHORTCUT_FOREGROUND_COLOR.getBlue());
 
+  static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.locations");
@@ -222,10 +224,10 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
-                                      @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
-                                      @NotNull JPanel topPanel,
-                                      @NotNull JComponent content) {
+  private static Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
+                                              @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                              @NotNull JPanel topPanel,
+                                              @NotNull JComponent content) {
     Dimension contentSize = content.getSize();
     int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
     return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
@@ -420,12 +422,13 @@ public class RecentLocationsAction extends AnAction {
     Document fileDocument = positionOffset.getDocument();
     int lineNumber = fileDocument.getLineNumber(positionOffset.getStartOffset());
     TextRange actualTextRange = getTrimmedRange(fileDocument, lineNumber);
+    String documentText = fileDocument.getText(actualTextRange);
     if (actualTextRange.isEmpty()) {
-      return null;
+      documentText = EMPTY_FILE_TEXT;
     }
 
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument(fileDocument.getText(actualTextRange));
+    Document editorDocument = editorFactory.createDocument(documentText);
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
 
     EditorGutterComponentEx gutterComponentEx = editor.getGutterComponentEx();
