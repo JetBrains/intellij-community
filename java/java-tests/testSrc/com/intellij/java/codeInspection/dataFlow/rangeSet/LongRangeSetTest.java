@@ -433,6 +433,8 @@ public class LongRangeSetTest {
     assertEquals("{Long.MIN_VALUE..9223372036854775804}: <0> mod 4", all().bitwiseAnd(point(-4)).toString());
     assertEquals(range(0, 15), all().bitwiseAnd(range(10, 15)));
     assertEquals(range(0, 31), all().bitwiseAnd(range(16, 24)));
+    assertEquals("{Long.MIN_VALUE..9223372036854775804}: <0> mod 4", all().bitwiseAnd(point(~1)).bitwiseAnd(point(~2)).toString());
+    assertEquals("{Long.MIN_VALUE..9223372036854775802}: <0, 2> mod 8", all().mul(point(6), true).bitwiseAnd(point(~4)).toString());
 
     checkBitwiseAnd(range(0, 3), range(4, 7), "{0..3}");
     checkBitwiseAnd(range(3, 4), range(3, 4), "{0..7}"); // 0,3,4,7 actually
@@ -440,6 +442,8 @@ public class LongRangeSetTest {
     checkBitwiseAnd(point(3).unite(point(5)), point(3).unite(point(5)), "{1, 3, 5}");
     checkBitwiseAnd(range(-10, 10), range(-20, 5), "{-32..15}");
     checkBitwiseAnd(range(-30, -20).unite(range(20, 33)), point(-10).unite(point(10)), "{-32..-26, 0..54}");
+    checkBitwiseAnd(range(0, 100).mul(point(6), true), point(~4), "{0..1018}: <0, 2> mod 8");
+    checkBitwiseAnd(range(0, 50).mul(point(6), true), range(0, 50).mul(point(20), true).plus(point(1), true), "{0..508}: <0> mod 4");
   }
 
   @Test
