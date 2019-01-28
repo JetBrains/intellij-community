@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,20 +7,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.sun.awt.AWTUtilities;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public interface PopupComponent {
   Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupComponent");
@@ -171,12 +165,7 @@ public interface PopupComponent {
     public AwtPopupWrapper(Popup popup, JBPopup jbPopup) {
       myPopup = popup;
       myJBPopup = jbPopup;
-
-      if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
-        final Component c = ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
-        c.setBackground(UIUtil.getPanelBackground());
-      }
-      // TODO: should we call A11YFix.invokeFocusGained(getWindow()) on window closing?
+      //TODO[tav]: should we call A11YFix.invokeFocusGained(getWindow()) on window closing?
     }
 
     @Override
