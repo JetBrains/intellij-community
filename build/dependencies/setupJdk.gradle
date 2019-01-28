@@ -50,6 +50,10 @@ task setupJdk(dependsOn: downloadJdk) {
   fileTree(outputDir).each {
     outputs.file(it)
   }
+  onlyIf {
+    // gradle is not running on it
+    !System.getProperty('java.home').contains(outputDir)
+  }
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")
     unpackJdk(downloadOutputs.singleFile, outputDir)
