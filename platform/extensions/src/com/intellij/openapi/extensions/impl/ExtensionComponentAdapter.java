@@ -109,11 +109,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myOrderId;
   }
 
-  public PluginId getPluginName() {
-    return myPluginDescriptor.getPluginId();
-  }
-
-  public PluginDescriptor getPluginDescriptor() {
+  @Nullable
+  public final PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 

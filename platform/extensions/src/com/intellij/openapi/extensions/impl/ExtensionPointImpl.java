@@ -158,7 +158,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  private void notifyListenersOnAdd(@NotNull T extension, final PluginDescriptor pluginDescriptor) {
+  private void notifyListenersOnAdd(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor) {
     for (ExtensionPointListener<T> listener : myEPListeners) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);

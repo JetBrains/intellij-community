@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoInitializationException;
 
-public final class XmlExtensionComponentAdapter extends ExtensionComponentAdapter {
+final class XmlExtensionComponentAdapter extends ExtensionComponentAdapter {
   @Nullable
   private final Element myExtensionElement;
 
-  public XmlExtensionComponentAdapter(@NotNull String implementationClassName,
+  XmlExtensionComponentAdapter(@NotNull String implementationClassName,
                                       @Nullable PicoContainer container,
                                       @Nullable PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
