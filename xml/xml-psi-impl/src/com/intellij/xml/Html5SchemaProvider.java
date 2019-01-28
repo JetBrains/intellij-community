@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -8,6 +9,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -43,19 +45,19 @@ public abstract class Html5SchemaProvider {
     if (ourInitialized) return;
     ourInitialized = true;
 
-    final Html5SchemaProvider[] providers = EP_NAME.getExtensions();
+    final List<Html5SchemaProvider> providers = EP_NAME.getExtensionList();
     final URL htmlSchemaLocationURL;
     final URL xhtmlSchemaLocationURL;
     final URL dtdCharsLocationURL;
 
-    if (providers.length > 1) {
+    if (providers.size() > 1) {
       LOG.error("More than one HTML5 schema providers found: " + getClassesListString(providers));
     }
 
-    if (providers.length > 0) {
-      htmlSchemaLocationURL = providers[0].getHtmlSchemaLocation();
-      xhtmlSchemaLocationURL = providers[0].getXhtmlSchemaLocation();
-      dtdCharsLocationURL = providers[0].getCharsLocation();
+    if (providers.size() > 0) {
+      htmlSchemaLocationURL = providers.get(0).getHtmlSchemaLocation();
+      xhtmlSchemaLocationURL = providers.get(0).getXhtmlSchemaLocation();
+      dtdCharsLocationURL = providers.get(0).getCharsLocation();
     }
     else {
       LOG.info("RelaxNG based schema for HTML5 is not supported. Old XSD schema will be used");
@@ -89,10 +91,11 @@ public abstract class Html5SchemaProvider {
   static {
   }
 
-  private static <T> String getClassesListString(T[] a) {
+  @NotNull
+  private static <T> String getClassesListString(@NotNull List<T> a) {
     final StringBuilder builder = new StringBuilder();
-    for (int i = 0, n = a.length; i < n; i++) {
-      T element = a[i];
+    for (int i = 0, n = a.size(); i < n; i++) {
+      T element = a.get(i);
       builder.append(element != null ? element.getClass().getName() : "NULL");
       if (i < n - 1) {
         builder.append(", ");

@@ -27,8 +27,11 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Map;
 
+import static com.intellij.ui.JBColor.namedColor;
+
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
-  private static final JBColor CURRENT_BRANCH_BG = new JBColor(new Color(228, 250, 255), new Color(63, 71, 73));
+  private static final JBColor CURRENT_BRANCH_BG = namedColor("VersionControl.Log.Commit.currentBranchBackground",
+                                                              new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));
   private static final String HEAD = "HEAD";
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;

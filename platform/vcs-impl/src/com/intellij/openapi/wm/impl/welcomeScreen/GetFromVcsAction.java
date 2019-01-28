@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.checkout.CheckoutActionGroup;
 import com.intellij.ui.UIBundle;
@@ -33,6 +32,6 @@ public class GetFromVcsAction extends WelcomePopupAction{
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME).length > 0);
+    e.getPresentation().setEnabled(CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions());
   }
 }

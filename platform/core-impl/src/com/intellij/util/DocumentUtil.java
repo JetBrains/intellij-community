@@ -143,4 +143,21 @@ public final class DocumentUtil {
     }
     return true;
   }
+
+  /**
+   * Calculates indent of the line containing {@code offset}
+   * @return Whitespaces at the beginning of the line
+   */
+  public static CharSequence getIndent(@NotNull Document document, int offset) {
+    int lineOffset = getLineStartOffset(offset, document);
+    int result = 0;
+    while (lineOffset + result < document.getTextLength() &&
+           Character.isWhitespace(document.getCharsSequence().charAt(lineOffset + result))) {
+      result++;
+    }
+    if (result + lineOffset > document.getTextLength()) {
+      result--;
+    }
+    return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
+  }
 }

@@ -1,18 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
@@ -21,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -35,29 +37,39 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     assertNotNull(virtualFile);
 
     useRealFileEditorManager();
-    allowComponentStateSaving();
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(editor);
       EditorTestUtil.addFoldRegion(editor, 15, 16, ".", true);
       FileEditorManager.getInstance(project).closeFile(virtualFile);
     });
 
-    GCUtil.tryForceGC();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(virtualFile));
+    String threadDumpBefore = ThreadDumper.dumpThreadsToString();
+
+    GCUtil.tryGcSoftlyReachableObjects();
+
+    WeakReference<Object> weakReference = new WeakReference<>(new Object());
+    do {
+      //noinspection CallToSystemGC
+      System.gc();
+    }
+    while (weakReference.get() != null);
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    if (document != null) {
+      fail("Document wasn't collected, see heap dump at " + publishHeapDump(EditorHistoryManagerTest.class.getName()));
+      System.err.println("Keeping a reference to the document: " + document);
+      System.err.println(threadDumpBefore);
+    }
 
     openProjectPerformTaskCloseProject(dir, project -> {});
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor newEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(newEditor);
       assertEquals("[FoldRegion +(15:16), placeholder='.']", Arrays.toString(newEditor.getFoldingModel().getAllFoldRegions()));
     });
-  }
-
-  private void allowComponentStateSaving() {
-    boolean saveAllowedBefore = ApplicationManagerEx.getApplicationEx().isSaveAllowed();
-    ApplicationManagerEx.getApplicationEx().setSaveAllowed(true);
-    Disposer.register(getTestRootDisposable(), () -> ApplicationManagerEx.getApplicationEx().setSaveAllowed(saveAllowedBefore));
   }
 
   private void useRealFileEditorManager() {
@@ -77,9 +89,10 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     try {
       assertTrue(myProjectManager.openProject(project));
       task.accept(project);
+      ProjectKt.getStateStore(project).saveComponent(EditorHistoryManager.getInstance(project));
     }
     finally {
-      myProjectManager.closeAndDispose(project);
+      myProjectManager.forceCloseProject(project, true);
     }
     UIUtil.dispatchAllInvocationEvents();
   }

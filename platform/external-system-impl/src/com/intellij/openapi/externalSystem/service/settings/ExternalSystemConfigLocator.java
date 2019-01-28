@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 7/16/13 3:36 PM
  */
 public interface ExternalSystemConfigLocator {
 

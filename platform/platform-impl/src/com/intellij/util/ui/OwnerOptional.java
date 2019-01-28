@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +65,7 @@ public class OwnerOptional {
 
     if (owner instanceof Dialog) {
       Dialog ownerDialog = (Dialog)owner;
-      if (ownerDialog.isModal()) {
+      if (ownerDialog.isModal() || UIUtil.isPossibleOwner(ownerDialog)) {
         owner = ownerDialog;
       }
       else {

@@ -31,6 +31,9 @@ public class SameParameterValueSlashesTest extends LightCodeInsightFixtureTestCa
     try {
       myFixture.disableInspections(myInspection);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myInspection = null;
       super.tearDown();

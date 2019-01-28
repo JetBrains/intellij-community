@@ -186,7 +186,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean addSubtreeToUpdateByElement(Object element) {
+    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
       if (element instanceof PsiDirectory && !myProject.isDisposed()) {
         final PsiDirectory dir = (PsiDirectory)element;
         final ProjectTreeStructure treeStructure = (ProjectTreeStructure)myTreeStructure;
@@ -220,7 +220,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+    protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
       return new ProjectViewProjectNode(project, settings);
     }
 
@@ -279,8 +279,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
            index.getContentRootForFile(file, false) != null ||
-           index.isInLibraryClasses(file) ||
-           index.isInLibrarySource(file) ||
+           index.isInLibrary(file) ||
            Comparing.equal(file.getParent(), project.getBaseDir()) ||
            ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(file);
   }

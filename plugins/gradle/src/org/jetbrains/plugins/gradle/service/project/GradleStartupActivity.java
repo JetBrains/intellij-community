@@ -23,7 +23,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/10/13
  */
 public class GradleStartupActivity implements StartupActivity {
 

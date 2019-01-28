@@ -17,15 +17,16 @@ public class Digester {
   // CRC32 will only use the lower 32bits of long, never returning negative values.
   public static final long INVALID    = 0x8000_0000_0000_0000L;
   public static final long DIRECTORY  = 0x4000_0000_0000_0000L;
-  private static final long LINK_MASK = 0x2000_0000_0000_0000L;
-  private static final long FLAG_MASK = 0xFFFF_FFFF_0000_0000L;
+  public static final long SYM_LINK   = 0x2000_0000_0000_0000L;
+  public static final long EXECUTABLE = 0x1000_0000_0000_0000L;
+  public static final long FLAG_MASK  = 0xFFFF_FFFF_0000_0000L;
 
   public static boolean isFile(long digest) {
     return (digest & FLAG_MASK) == 0;
   }
 
   public static boolean isSymlink(long digest) {
-    return (digest & LINK_MASK) == LINK_MASK;
+    return (digest & SYM_LINK) == SYM_LINK;
   }
 
   public static long digestRegularFile(File file, boolean normalize) throws IOException {
@@ -35,13 +36,14 @@ public class Digester {
     if (attrs.isSymbolicLink()) {
       Path target = Files.readSymbolicLink(path);
       if (target.isAbsolute()) throw new IOException("Absolute link: " + file + " -> " + target);
-      return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | LINK_MASK;
+      return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | SYM_LINK;
     }
 
     if (attrs.isDirectory()) return DIRECTORY;
 
+    long executable = !Utils.IS_WINDOWS && file.canExecute() ? EXECUTABLE : 0;
     try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize))) {
-      return digestStream(in);
+      return digestStream(in) | executable;
     }
   }
 

@@ -237,7 +237,7 @@ public abstract class VcsTreeModelData {
 
 
   @NotNull
-  public static ListSelection<Object> getListSelection(@NotNull JTree tree) {
+  public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     Object selection = ContainerUtil.getFirstItem(entries);
 
@@ -265,7 +265,7 @@ public abstract class VcsTreeModelData {
       return mapToChange(selected(tree)).toArray(Change[]::new);
     }
     else if (VcsDataKeys.CHANGES_SELECTION.is(dataId)) {
-      return getListSelection(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
+      return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).limit(1).toArray(Change[]::new);

@@ -29,7 +29,6 @@ import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +40,6 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleEditorPreview implements PreviewPanel {
-  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
-  static {
-    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
-    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
-    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
-  }
-
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;
@@ -67,7 +59,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS,
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(),
+                                                    page.getAdditionalInlineElementToDescriptorMap(),
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
@@ -117,7 +110,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       type = selectItem(myEditor.getHighlighter().createIterator(offset), highlighter);
     }
 
-    setCursor(type == null ? Cursor.TEXT_CURSOR : Cursor.HAND_CURSOR);
+    setCursor(type != null);
 
     if (select && type != null) {
       myDispatcher.getMulticaster().selectionInPreviewChanged(type);
@@ -315,10 +308,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     stopBlinking();
   }
 
-  private void setCursor(@JdkConstants.CursorType int type) {
-    final Cursor cursor = type == Cursor.TEXT_CURSOR ? UIUtil.getTextCursor(myEditor.getBackgroundColor())
-                                                     : Cursor.getPredefinedCursor(type);
-    myEditor.getContentComponent().setCursor(cursor);
+  private void setCursor(boolean hand) {
+    myEditor.setCustomCursor(SimpleEditorPreview.class, hand ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
   }
 
   void setupRainbow(@NotNull EditorColorsScheme colorsScheme, @NotNull RainbowColorSettingsPage page) {

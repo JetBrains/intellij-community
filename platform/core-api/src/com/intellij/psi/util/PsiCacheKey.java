@@ -118,7 +118,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    * @param <H>      key type
    * @return instance
    */
-  public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name, @NotNull Function<H, T> function) {
+  public static <T, H extends PsiElement> PsiCacheKey<T, H> create(@NonNls @NotNull String name, @NotNull Function<? super H, ? extends T> function) {
     return create(name, function, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
   }
 }

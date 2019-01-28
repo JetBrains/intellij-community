@@ -30,13 +30,14 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
   public static final String TITLE = "Select a Scope to Change Its Settings";
 
   private final List<Descriptor> myDefaultDescriptors;
+  @NotNull
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final Set<String> myExcludedScopeNames;
 
   public ScopesChooser(final List<Descriptor> defaultDescriptors,
-                       final InspectionProfileImpl inspectionProfile,
-                       final Project project,
+                       @NotNull InspectionProfileImpl inspectionProfile,
+                       @NotNull Project project,
                        final String[] excludedScopeNames) {
     myDefaultDescriptors = defaultDescriptors;
     myInspectionProfile = inspectionProfile;

@@ -269,4 +269,18 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.checkHighlighting(true, false, true);
   }
+
+  // PY-32364
+  public void testAddEncodingInDisabledPy3() {
+    final PyMandatoryEncodingInspection inspection = new PyMandatoryEncodingInspection();
+    inspection.myAllPythons = false;
+    doHighlightingTest(inspection, LanguageLevel.PYTHON34);
+  }
+
+  // PY-32364
+  public void testAddEncodingInEnabledPy3() {
+    final PyMandatoryEncodingInspection inspection = new PyMandatoryEncodingInspection();
+    inspection.myAllPythons = true;
+    doHighlightingTest(inspection, LanguageLevel.PYTHON34);
+  }
 }

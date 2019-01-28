@@ -66,13 +66,19 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
       }
     }
     if (callExpression != null) {
-      JavaMethodCallElement.showParameterHints(context, myConstructor, callExpression);
+      JavaMethodCallElement.showParameterHints(this, context, myConstructor, callExpression);
     }
   }
 
   @NotNull
   @Override
   public PsiMethod getObject() {
+    return myConstructor;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
     return myConstructor;
   }
 
@@ -136,7 +142,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     return !constructor.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  private static boolean isConstructorCallPlace(@NotNull PsiElement position) {
+  static boolean isConstructorCallPlace(@NotNull PsiElement position) {
     return CachedValuesManager.getCachedValue(position, () -> {
       boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
                        !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));

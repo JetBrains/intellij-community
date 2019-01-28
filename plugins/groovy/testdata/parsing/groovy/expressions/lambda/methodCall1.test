@@ -1,0 +1,18 @@
+m(a -> a)
+-----
+Groovy script
+  Method call
+    Reference expression
+      PsiElement(identifier)('m')
+    Arguments
+      PsiElement(()('(')
+      Lambda expression
+        Parameter list
+          Parameter
+            PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(->)('->')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('a')
+      PsiElement())(')')

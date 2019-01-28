@@ -31,6 +31,7 @@ public class PsiPlainTextImpl extends OwnBufferLeafPsiElement implements PsiPlai
     visitor.visitPlainText(this);
   }
 
+  @Override
   public String toString(){
     return "PsiPlainText";
   }

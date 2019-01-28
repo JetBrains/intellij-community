@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
@@ -67,6 +53,10 @@ class TypeDfaState {
     myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
   }
 
+  Map<String, DFAType> getVarTypes() {
+    return myVarTypes;
+  }
+
   TypeDfaState mergeWith(TypeDfaState another) {
     if (another.myVarTypes.isEmpty()) {
       return this;
@@ -101,11 +91,18 @@ class TypeDfaState {
     return myVarTypes.get(variableName);
   }
 
-  Map<String, PsiType> getBindings(Instruction instruction) {
-    HashMap<String,PsiType> map = ContainerUtil.newHashMap();
+  @Contract("_ -> new")
+  @NotNull
+  DFAType getOrCreateVariableType(String variableName) {
+    DFAType result = getVariableType(variableName);
+    return result == null ? DFAType.create(null) : result.copy();
+  }
+
+  Map<String, PsiType> getBindings() {
+    HashMap<String, PsiType> map = ContainerUtil.newHashMap();
     for (Map.Entry<String, DFAType> entry : myVarTypes.entrySet()) {
       DFAType value = entry.getValue();
-      map.put(entry.getKey(), value == null ? null : value.negate(instruction).getResultType());
+      map.put(entry.getKey(), value == null ? null : value.getResultType());
     }
     return map;
   }
@@ -116,7 +113,7 @@ class TypeDfaState {
 
   @Override
   public String toString() {
-    return "TypeDfaState{" + myVarTypes + '}';
+    return myVarTypes.toString();
   }
 
   public boolean containsVariable(@NotNull String variableName) {

@@ -3,7 +3,6 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -145,7 +144,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   @Nullable
   private SafeDeleteProcessorDelegate getDelegate() {
     if (myElements.length == 1) {
-      for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(myElements[0])) {
           return delegate;
         }
@@ -195,7 +194,7 @@ public class SafeDeleteDialog extends DialogWrapper {
         }
       } else {
         myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
-  
+
         if (myCbSearchTextOccurrences != null) {
           myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
         }

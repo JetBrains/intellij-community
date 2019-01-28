@@ -26,13 +26,14 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
     UastReferenceRegistrar
       .registerUastReferenceProvider(
         registrar,
-        UastPatterns.stringLiteralExpression().inCall(UastPatterns.callExpression()),
-        new UastLiteralReferenceProvider() {
+        UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
+        new UastInjectionHostReferenceProvider() {
+
           @NotNull
           @Override
-          public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression expression,
-                                                        @NotNull PsiLanguageInjectionHost host,
-                                                        @NotNull ProcessingContext context) {
+          public PsiReference[] getReferencesForInjectionHost(@NotNull UExpression expression,
+                                                              @NotNull PsiLanguageInjectionHost host,
+                                                              @NotNull ProcessingContext context) {
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
@@ -74,9 +75,9 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
   }
 
   @Nullable
-  private static String getTestDataDirectory(@NotNull ULiteralExpression expression,
+  private static String getTestDataDirectory(@NotNull UExpression expression,
                                              @NotNull UCallExpression methodCallExpression) {
-    Object value = expression.getValue();
+    Object value = expression.evaluate();
     if (!(value instanceof String)) {
       return null;
     }

@@ -4,20 +4,25 @@ package com.intellij.codeInspection.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class InspectionGroupNode extends InspectionTreeNode {
-  InspectionGroupNode(@NotNull String subGroup) {
-    super(subGroup);
+  private final String myGroup;
+
+  InspectionGroupNode(@NotNull String group, @NotNull InspectionTreeNode parent) {
+    super(parent);
+    myGroup = group;
   }
 
   String getSubGroup() {
-    return (String) getUserObject();
+    return myGroup;
   }
 
   @Override
   public boolean appearsBold() {
     return true;
+  }
+
+  @Override
+  public String getPresentableText() {
+    return myGroup;
   }
 }

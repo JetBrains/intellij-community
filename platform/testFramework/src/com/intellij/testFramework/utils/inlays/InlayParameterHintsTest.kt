@@ -45,12 +45,12 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   val manager = ParameterHintsPresentationManager.getInstance()
-  val inlayPresenter: (Inlay) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
-  val inlayFilter: (Inlay) -> Boolean = { manager.isParameterHint(it) }
+  val inlayPresenter: (Inlay<*>) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
+  val inlayFilter: (Inlay<*>) -> Boolean = { manager.isParameterHint(it) }
 
   fun checkParameterHints() = checkInlays(inlayPresenter, inlayFilter)
 
-  fun checkInlays(inlayPresenter: (Inlay) -> String, inlayFilter: (Inlay) -> Boolean) {
+  fun checkInlays(inlayPresenter: (Inlay<*>) -> String, inlayFilter: (Inlay<*>) -> Boolean) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val originalText = document.text
@@ -65,8 +65,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
   private fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
                                        originalText: String,
-                                       inlayPresenter: (Inlay) -> String,
-                                       inlayFilter: (Inlay) -> Boolean) {
+                                       inlayPresenter: (Inlay<*>) -> String,
+                                       inlayFilter: (Inlay<*>) -> Boolean) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val actual: List<InlayInfo> = getActualInlays(inlayPresenter, inlayFilter)
@@ -114,8 +114,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     }
   }
 
-  private fun getActualInlays(inlayPresenter: (Inlay) -> String,
-                              inlayFilter: (Inlay) -> Boolean): List<InlayInfo> {
+  private fun getActualInlays(inlayPresenter: (Inlay<*>) -> String,
+                              inlayFilter: (Inlay<*>) -> Boolean): List<InlayInfo> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
 

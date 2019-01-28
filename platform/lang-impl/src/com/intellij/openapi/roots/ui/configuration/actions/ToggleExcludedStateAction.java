@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;

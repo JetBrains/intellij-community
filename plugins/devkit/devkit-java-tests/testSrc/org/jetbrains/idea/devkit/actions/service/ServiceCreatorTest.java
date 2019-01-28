@@ -23,7 +23,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
@@ -34,12 +34,12 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/actions/newService/")
-public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
+public class ServiceCreatorTest extends LightCodeInsightFixtureTestCase {
+
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "actions/newService";
   }
-
 
   public void testCreateApplicationServiceInterfaceAndImplementation() {
     doTestCreateInterfaceAndImplementation("my.plugin.ApplicationServiceInterface", "my.plugin.impl.ApplicationServiceImpl",
@@ -71,7 +71,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void doTestCreateInterfaceAndImplementation(String interfaceFqName, String implementationFqName,
-                                                     String interfaceTemplate, String implementationTemplate, String tagName) {
+                                                      String interfaceTemplate, String implementationTemplate, String tagName) {
     VirtualFile copied = myFixture.copyDirectoryToProject("", "");
     PsiDirectory dir = myFixture.getPsiManager().findDirectory(copied);
     XmlFile pluginXml = PluginModuleType.getPluginXml(myFixture.getModule());
@@ -103,7 +103,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
     IdeaPlugin ideaPlugin = fileElement.getRootElement();
     List<Extensions> extensionsList = ideaPlugin.getExtensions();
     assertNotNull(extensionsList);
-    assertEquals(1, extensionsList.size());
+    assertSize(1, extensionsList);
 
     XmlTag extensions = extensionsList.get(0).getXmlTag();
     assertNotNull(extensions);
@@ -138,7 +138,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
     IdeaPlugin ideaPlugin = fileElement.getRootElement();
     List<Extensions> extensionsList = ideaPlugin.getExtensions();
     assertNotNull(extensionsList);
-    assertEquals(1, extensionsList.size());
+    assertSize(1, extensionsList);
 
     XmlTag extensions = extensionsList.get(0).getXmlTag();
     assertNotNull(extensions);

@@ -18,21 +18,16 @@ package com.intellij.ide.actions.exclusion;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.MutableTreeNode;
-
-/**
- * @author Dmitry Batkovich
- */
-public interface ExclusionHandler<T extends MutableTreeNode> {
+public interface ExclusionHandler<Node> {
   DataKey<ExclusionHandler> EXCLUSION_HANDLER = DataKey.create("tree.exclusion.handler");
 
-  boolean isNodeExclusionAvailable(@NotNull T node);
+  boolean isNodeExclusionAvailable(@NotNull Node node);
 
-  boolean isNodeExcluded(@NotNull T node);
+  boolean isNodeExcluded(@NotNull Node node);
 
-  void excludeNode(@NotNull T node);
+  void excludeNode(@NotNull Node node);
 
-  void includeNode(@NotNull T node);
+  void includeNode(@NotNull Node node);
 
   boolean isActionEnabled(boolean isExcludeAction);
 

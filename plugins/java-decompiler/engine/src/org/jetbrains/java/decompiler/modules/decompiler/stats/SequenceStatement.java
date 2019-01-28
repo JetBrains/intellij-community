@@ -22,7 +22,7 @@ public class SequenceStatement extends Statement {
     type = Statement.TYPE_SEQUENCE;
   }
 
-  public SequenceStatement(List<Statement> lst) {
+  public SequenceStatement(List<? extends Statement> lst) {
 
     this();
 

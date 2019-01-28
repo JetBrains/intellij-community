@@ -1,13 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
@@ -15,6 +12,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -27,6 +25,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -43,10 +42,8 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
@@ -56,6 +53,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myMethodUsagesRequests;
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myFieldUsagesRequests;
   private Map<SmartPsiElementPointer, List<UsagesProcessor>> myClassUsagesRequests;
+  private Map<SmartPsiElementPointer, List<Runnable>> myQNameUsagesRequests;
 
 
   @Override
@@ -87,6 +85,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
     if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
+  }
+
+  @Override
+  public void enqueueQualifiedNameOccurrencesProcessor(RefClass refClass, Runnable c) {
+    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new THashMap<>();
+    enqueueRequestImpl(refClass, myQNameUsagesRequests, c);
   }
 
   @Override
@@ -136,9 +140,20 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           else if (entry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
-            if (library == null || library.getFiles(OrderRootType.CLASSES).length < library.getUrls(OrderRootType.CLASSES).length) {
+            if (library == null) {
               System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
+            }
+            else {
+              Set<String> detectedUrls =
+                Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
+              HashSet<String> declaredUrls = new HashSet<>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+              declaredUrls.removeAll(detectedUrls);
+              if (!declaredUrls.isEmpty()) {
+                System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
+                                                             StringUtil.join(declaredUrls, ", "),
+                                                             libraryOrderEntry.getPresentableName(), module.getName()));
+              }
             }
           }
         }
@@ -162,7 +177,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return anyModuleUsesProjectSdk && !anyModuleAcceptsSdk;
   }
 
-  private static <T extends Processor> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
+  private static <T> void enqueueRequestImpl(RefElement refElement, Map<SmartPsiElementPointer, List<T>> requestMap, T processor) {
     List<T> requests = requestMap.computeIfAbsent(refElement.getPointer(), __ -> new ArrayList<>());
     requests.add(processor);
   }
@@ -289,6 +304,40 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
       myMethodUsagesRequests = null;
     }
+
+    if (myQNameUsagesRequests != null) {
+      PsiSearchHelper helper = PsiSearchHelper.getInstance(refManager.getProject());
+      RefJavaManager javaManager = refManager.getExtension(RefJavaManager.MANAGER);
+      List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myQNameUsagesRequests);
+      for (SmartPsiElementPointer id : sortedIDs) {
+        final UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(id), UClass.class));
+        String qualifiedName = uClass != null ? ReadAction.compute(() -> uClass.getQualifiedName()) : null;
+        if (qualifiedName != null) {
+          List<Runnable> callbacks = myQNameUsagesRequests.get(id);
+          final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(context.getProject());
+          final PsiNonJavaFileReferenceProcessor processor = (file, startOffset, endOffset) -> {
+            for (Runnable callback : callbacks) {
+              callback.run();
+            }
+            return false;
+          };
+
+          final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
+            final Set<FileType> fileTypes = javaManager.getLanguages().stream().map(l -> l.getAssociatedFileType()).collect(Collectors.toSet());
+
+            @Override
+            public boolean contains(@NotNull VirtualFile file) {
+              return !fileTypes.contains(file.getFileType()) && super.contains(file);
+            }
+          };
+
+          helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
+        }
+      }
+
+
+      myQNameUsagesRequests = null;
+    }
   }
 
   private static String getClassPresentableName(@NotNull UClass uClass) {
@@ -379,7 +428,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void performPreRunActivities(@NotNull final List<Tools> globalTools,
                                       @NotNull final List<Tools> localTools,
                                       @NotNull final GlobalInspectionContext context) {
-    getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    if (globalTools.stream().anyMatch(tools -> {
+      InspectionProfileEntry tool = tools.getTool().getTool();
+      return tool instanceof GlobalInspectionTool && ((GlobalInspectionTool)tool).isGraphNeeded();
+    })) {
+      getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
+    }
     // UnusedDeclarationInspection should run first
     for (int i = 0; i < globalTools.size(); i++) {
       InspectionToolWrapper toolWrapper = globalTools.get(i).getTool();

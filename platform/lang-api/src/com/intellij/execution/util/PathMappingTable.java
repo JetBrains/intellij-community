@@ -80,7 +80,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
       }
     };
 
-    return new ListTableModel((new ColumnInfo[]{local, remote}));
+    return new ListTableModel(local, remote);
   }
 
 

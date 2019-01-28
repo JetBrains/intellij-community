@@ -24,7 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author max
- * @since Sep 5, 2003
  */
 public class ParameterListFixer implements Fixer {
   @Override

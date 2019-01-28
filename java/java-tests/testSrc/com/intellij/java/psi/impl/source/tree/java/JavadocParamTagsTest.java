@@ -192,7 +192,7 @@ public class JavadocParamTagsTest extends LightIdeaTestCase {
 
   private static PsiElementFactory getFactory() {
     final PsiManager manager = getPsiManager();
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(manager.getProject());
   }
 
   private static void createAndTestTag(String expectedText, String parameterName, String description) throws IncorrectOperationException {

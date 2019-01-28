@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -12,15 +11,20 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class TagComponent extends LinkComponent {
+  private static final Color BACKGROUND = JBColor.namedColor("Plugins.tagBackground", new JBColor(0xEAEAEC, 0x4D4D4D));
+  private static final Color EAP_BACKGROUND = JBColor.namedColor("Plugins.eapTagBackground", new JBColor(0xF2D2CF, 0xF2D2CF));
+  private static final Color FOREGROUND = JBColor.namedColor("Plugins.tagForeground", new JBColor(0x787878, 0x999999));
+
   private final Color myColor;
 
-  public TagComponent(@NotNull String name, @Nullable String tooltip, @NotNull Color color) {
-    myColor = color;
+  public TagComponent(@NotNull String name) {
+    boolean eap = "EAP".equals(name);
+    myColor = eap ? EAP_BACKGROUND : BACKGROUND;
     setText(name);
-    if (tooltip != null) {
-      setToolTipText(tooltip);
+    if (eap) {
+      setToolTipText("The EAP version does not guarantee the stability\nand availability of the plugin.");
     }
-    setForeground(new JBColor(0x787878, 0x999999));
+    setForeground(FOREGROUND);
     setPaintUnderline(false);
     setOpaque(false);
     setBorder(JBUI.Borders.empty(1, 8));

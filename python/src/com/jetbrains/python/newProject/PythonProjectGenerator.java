@@ -87,7 +87,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
   private static final Logger LOGGER = Logger.getInstance(PythonProjectGenerator.class);
 
-  private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
+  private final List<SettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final boolean myAllowRemoteProjectCreation;
   @Nullable private MouseListener myErrorLabelMouseListener;
 

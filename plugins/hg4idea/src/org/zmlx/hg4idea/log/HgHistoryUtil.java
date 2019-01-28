@@ -64,7 +64,7 @@ public class HgHistoryUtil {
       @Override
       protected VcsCommitMetadata convertDetails(@NotNull String rev,
                                                  @NotNull String changeset,
-                                                 @NotNull SmartList<HgRevisionNumber> parents,
+                                                 @NotNull SmartList<? extends HgRevisionNumber> parents,
                                                  @NotNull Date revisionDate,
                                                  @NotNull String author,
                                                  @NotNull String email,
@@ -147,7 +147,7 @@ public class HgHistoryUtil {
                                        @NotNull VcsLogObjectsFactory factory,
                                        @NotNull HgFileRevision revision) {
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
-    List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
+    List<? extends HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     List<Hash> parentsHashes = new SmartList<>();
     for (HgRevisionNumber parent : parents) {
       parentsHashes.add(factory.createHash(parent.getChangeset()));
@@ -270,7 +270,7 @@ public class HgHistoryUtil {
   }
 
   public static void readLog(@NotNull Project project, @NotNull VirtualFile root, @NotNull HgVersion version, int limit,
-                             @NotNull List<String> hashes, @NotNull String template, @NotNull Consumer<StringBuilder> consumer)
+                             @NotNull List<String> hashes, @NotNull String template, @NotNull Consumer<? super StringBuilder> consumer)
     throws VcsException {
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
@@ -306,14 +306,14 @@ public class HgHistoryUtil {
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter) {
     return getCommitRecords(project, result, converter, false);
   }
 
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter, boolean silent) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter, boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
@@ -363,7 +363,7 @@ public class HgHistoryUtil {
                                         @Override
                                         protected VcsCommitMetadata convertDetails(@NotNull String rev,
                                                                                    @NotNull String changeset,
-                                                                                   @NotNull SmartList<HgRevisionNumber> parents,
+                                                                                   @NotNull SmartList<? extends HgRevisionNumber> parents,
                                                                                    @NotNull Date revisionDate,
                                                                                    @NotNull String author,
                                                                                    @NotNull String email,
@@ -384,7 +384,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params) {
+                                                   @NotNull final Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -400,7 +400,7 @@ public class HgHistoryUtil {
       @Override
       protected TimedVcsCommit convertDetails(@NotNull String rev,
                                               @NotNull String changeset,
-                                              @NotNull SmartList<HgRevisionNumber> parents,
+                                              @NotNull SmartList<? extends HgRevisionNumber> parents,
                                               @NotNull Date revisionDate,
                                               @NotNull String author,
                                               @NotNull String email,
@@ -492,9 +492,9 @@ public class HgHistoryUtil {
 
   private static class HgLogOutputSplitter extends HgLineProcessListener {
     @NotNull private final StringBuilder myOutput;
-    private final Consumer<StringBuilder> myConsumer;
+    private final Consumer<? super StringBuilder> myConsumer;
 
-    HgLogOutputSplitter(Consumer<StringBuilder> consumer) {
+    HgLogOutputSplitter(Consumer<? super StringBuilder> consumer) {
       myConsumer = consumer;
       myOutput = new StringBuilder();
     }

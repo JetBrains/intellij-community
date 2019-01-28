@@ -5,6 +5,6 @@ import java.lang.Integer;
 class A{
   void test(){
     Integer integer = null;
-    int i = integer != null ? integer.toString().length() : <caret><selection>0</selection>;
+    int i = integer != null ? integer.toString().length() : 0<caret>;
   }
 }

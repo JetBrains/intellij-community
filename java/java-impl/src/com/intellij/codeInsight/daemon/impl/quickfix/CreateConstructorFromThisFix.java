@@ -48,7 +48,7 @@ public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSup
     do {
       e = PsiTreeUtil.getParentOfType(e, PsiClass.class);
     } while (e instanceof PsiTypeParameter);
-    if (e != null && e.isValid() && e.getManager().isInProject(e)) {
+    if (e != null && e.isValid() && canModify(e)) {
       return Collections.singletonList((PsiClass)e);
     }
     else {

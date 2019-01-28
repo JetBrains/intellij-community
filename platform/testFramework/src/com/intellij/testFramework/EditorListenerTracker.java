@@ -17,8 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.TestOnly;
@@ -40,13 +39,13 @@ public class EditorListenerTracker {
   public EditorListenerTracker() {
     EncodingManager.getInstance(); //adds listeners
     before = ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).getListeners();
-    myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
+    myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
   public void checkListenersLeak() throws AssertionError {
     try {
       // listeners may hang on default project
-      if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
+      if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
 
       EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
       Map<Class<? extends EventListener>, List<? extends EventListener>> after = multicaster.getListeners();

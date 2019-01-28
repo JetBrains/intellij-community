@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author nik
  */
 public class BuildTargetTypeState {
+  private static final int VERSION = 1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetTypeState");
   private final Map<BuildTarget<?>, Integer> myTargetIds;
   private final List<Pair<String, Integer>> myStaleTargetIds;
@@ -42,6 +43,7 @@ public class BuildTargetTypeState {
   private final BuildTargetType<?> myTargetType;
   private final BuildTargetsState myTargetsState;
   private final File myTargetsFile;
+  private volatile long myAverageTargetBuildTimeMs = -1;
 
   public BuildTargetTypeState(BuildTargetType<?> targetType, BuildTargetsState state) {
     myTargetType = targetType;
@@ -59,7 +61,7 @@ public class BuildTargetTypeState {
     }
 
     try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)))) {
-      input.readInt();//reserved for version
+      int version = input.readInt();
       int size = input.readInt();
       BuildTargetLoader<?> loader = myTargetType.createLoader(myTargetsState.getModel());
       while (size-- > 0) {
@@ -74,6 +76,9 @@ public class BuildTargetTypeState {
           myStaleTargetIds.add(Pair.create(stringId, intId));
         }
       }
+      if (version >= 1) {
+        myAverageTargetBuildTimeMs = input.readLong();
+      }
       return true;
     }
     catch (IOException e) {
@@ -83,24 +88,19 @@ public class BuildTargetTypeState {
   }
 
   public synchronized void save() {
-    try {
-      FileUtil.createParentDirs(myTargetsFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)));
-      try {
-        output.writeInt(0);
-        output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
-        for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
-          IOUtil.writeString(entry.getKey().getId(), output);
-          output.writeInt(entry.getValue());
-        }
-        for (Pair<String, Integer> pair : myStaleTargetIds) {
-          IOUtil.writeString(pair.first, output);
-          output.writeInt(pair.second);
-        }
+    FileUtil.createParentDirs(myTargetsFile);
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)))) {
+      output.writeInt(VERSION);
+      output.writeInt(myTargetIds.size() + myStaleTargetIds.size());
+      for (Map.Entry<BuildTarget<?>, Integer> entry : myTargetIds.entrySet()) {
+        IOUtil.writeString(entry.getKey().getId(), output);
+        output.writeInt(entry.getValue());
       }
-      finally {
-        output.close();
+      for (Pair<String, Integer> pair : myStaleTargetIds) {
+        IOUtil.writeString(pair.first, output);
+        output.writeInt(pair.second);
       }
+      output.writeLong(myAverageTargetBuildTimeMs);
     }
     catch (IOException e) {
       LOG.info("Cannot save " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
@@ -120,6 +120,17 @@ public class BuildTargetTypeState {
       myTargetIds.put(target, myTargetsState.getFreeId());
     }
     return myTargetIds.get(target);
+  }
+
+  public void setAverageTargetBuildTime(long timeInMs) {
+    myAverageTargetBuildTimeMs = timeInMs;
+  }
+
+  /**
+   * Returns average time required to rebuild a target of this type from scratch or {@code -1} if such information isn't available.
+   */
+  public long getAverageTargetBuildTime() {
+    return myAverageTargetBuildTimeMs;
   }
 
   public BuildTargetConfiguration getConfiguration(BuildTarget<?> target) {

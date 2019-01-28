@@ -195,7 +195,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         add(myName, nameCell);
         add(myPath, pathCell);
       }
-      JComponent spacer = new NonOpaquePanel() {
+      final JComponent spacer = new NonOpaquePanel() {
         @Override
         public Dimension getPreferredSize() {
           return new Dimension(JBUI.scale(22), super.getPreferredSize().height);
@@ -257,11 +257,12 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               p.setBorder(JBUI.Borders.emptyRight(30));
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
-              Icon icon = RecentProjectsManagerBase.getProjectIcon(projectPath, UIUtil.isUnderDarcula());
+              RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, UIUtil.isUnderDarcula());
               if (icon == null) {
                 if (UIUtil.isUnderDarcula()) {
                   //No dark icon for this project
-                  icon = RecentProjectsManagerBase.getProjectIcon(projectPath, false);
+                  icon = recentProjectsManage.getProjectIcon(projectPath, false);
                 }
               }
               if (icon == null) {

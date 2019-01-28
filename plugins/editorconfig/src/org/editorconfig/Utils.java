@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -25,6 +27,7 @@ import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -33,7 +36,11 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
-  public static String configValueForKey(List<OutPair> outPairs, String key) {
+
+  public static final String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
+  private static boolean ourIsFullSettingsSupportEnabledInTest;
+
+  public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
         String val = outPair.getVal();
@@ -47,10 +54,28 @@ public class Utils {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
+  public static boolean isFullIntellijSettingsSupport() {
+    return
+      ourIsFullSettingsSupportEnabledInTest ||
+      Registry.is(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportCSharp();
+  }
+
+  @TestOnly
+  public static void setFullIntellijSettingsSupportEnabledInTest(boolean enabled) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourIsFullSettingsSupportEnabledInTest = enabled;
+    }
+  }
+
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
     final String message = configValue != null ?
-                            "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath :
-                            "Failed to read .editorconfig file";
+                           "\"" +
+                           configValue +
+                           "\" is not a valid value" +
+                           (!configKey.isEmpty() ? " for " + configKey : "") +
+                           " for file " +
+                           filePath :
+                           "Failed to read .editorconfig file";
     configValue = configValue != null ? configValue : "ioError";
     EditorConfigNotifier.getInstance().error(project, configValue, message);
   }
@@ -62,14 +87,14 @@ public class Utils {
     return file.getCanonicalPath();
   }
 
-  public static void export(Project project) {
+  public static String exportToString(Project project) {
     final CodeStyleSettings settings = CodeStyle.getSettings(project);
     final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.getIndentOptions();
     StringBuilder result = new StringBuilder();
     addIndentOptions(result, "*", commonIndentOptions, getEncoding(project) +
-                                                       getLineEndings(project) +
-                                                       getTrailingSpaces() +
-                                                       getEndOfFile());
+      getLineEndings(project) +
+      getTrailingSpaces() +
+      getEndOfFile());
     for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (!FileTypeIndex.containsFileOfType(fileType, GlobalSearchScope.allScope(project))) continue;
 
@@ -78,6 +103,11 @@ public class Utils {
         addIndentOptions(result, buildPattern(fileType), options, "");
       }
     }
+
+    return result.toString();
+  }
+
+  public static void export(Project project) {
     final VirtualFile baseDir = project.getBaseDir();
     final VirtualFile child = baseDir.findChild(".editorconfig");
     if (child != null) {
@@ -87,7 +117,7 @@ public class Utils {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         final VirtualFile editorConfig = baseDir.findOrCreateChildData(Utils.class, ".editorconfig");
-        VfsUtil.saveText(editorConfig, result.toString());
+        VfsUtil.saveText(editorConfig, exportToString(project));
       } catch (IOException e) {
         Logger.getInstance(Utils.class).error(e);
       }

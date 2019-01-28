@@ -9,7 +9,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Feb 13, 2005
  */
 public class CycleFinder<Node> {
   private final Graph<Node> myGraph;

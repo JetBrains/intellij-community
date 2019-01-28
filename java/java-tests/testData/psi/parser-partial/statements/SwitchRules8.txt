@@ -1,0 +1,13 @@
+PsiJavaFile:SwitchRules8.java
+  PsiSwitchLabeledRule
+    PsiKeyword:case('case')
+    PsiWhiteSpace(' ')
+    PsiExpressionList
+      PsiLiteralExpression:1
+        PsiJavaToken:INTEGER_LITERAL('1')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiErrorElement:Expression, block or throw statement expected
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:SEMICOLON(';')

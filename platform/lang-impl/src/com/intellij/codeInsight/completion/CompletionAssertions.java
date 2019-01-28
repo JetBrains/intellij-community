@@ -98,9 +98,12 @@ class CompletionAssertions {
   static void assertInjectedOffsets(int hostStartOffset, PsiFile injected, DocumentWindow documentWindow) {
     assert documentWindow != null : "no DocumentWindow for an injected fragment";
 
-    TextRange host = InjectedLanguageManager.getInstance(injected.getProject()).injectedToHost(injected, injected.getTextRange());
-    assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
-    assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(injected.getProject());
+    TextRange injectedRange = injected.getTextRange();
+    int hostMinOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getStartOffset(), true);
+    int hostMaxOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getEndOffset(), false);
+    assert hostStartOffset >= hostMinOffset : "startOffset before injected";
+    assert hostStartOffset <= hostMaxOffset : "startOffset after injected";
   }
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {

@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A helper class for working with file gists: associating persistent data with current VFS or PSI file contents.
- *
- * @since 171.*
  * @author peter
  */
 public abstract class GistManager {
@@ -63,5 +61,10 @@ public abstract class GistManager {
                                                           int version,
                                                           @NotNull DataExternalizer<Data> externalizer,
                                                           @NotNull NullableFunction<PsiFile, Data> calcData);
+
+  /**
+   * Force all gists to be recalculated on the next request.
+   */
+  public abstract void invalidateData();
 
 }

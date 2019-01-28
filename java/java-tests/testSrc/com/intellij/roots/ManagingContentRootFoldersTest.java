@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,19 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myModel != null && myModel.isWritable()) {
-      myModel.dispose();
+    try {
+      if (myModel != null && myModel.isWritable()) {
+        myModel.dispose();
+      }
     }
-    myModel = null;
-    entry = null;
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      myModel = null;
+      entry = null;
+      super.tearDown();
+    }
   }
 
   private void initContentRoot() {

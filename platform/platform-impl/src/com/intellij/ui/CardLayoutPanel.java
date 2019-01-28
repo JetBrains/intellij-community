@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.JBInsets;
 
 import javax.accessibility.Accessible;
@@ -123,16 +122,16 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
   }
 
   private void selectLater(final ActionCallback callback, final K key) {
+    ModalityState modality = ModalityState.stateForComponent(this);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!myDisposed) {
         final UI ui1 = prepare(key);
         ApplicationManager.getApplication().invokeLater(() -> {
-          HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
           if (!myDisposed) {
             select(callback, key, ui1);
           }
           else callback.setRejected();
-        }, ModalityState.stateForComponent(this));
+        }, modality);
       }
       else callback.setRejected();
     });

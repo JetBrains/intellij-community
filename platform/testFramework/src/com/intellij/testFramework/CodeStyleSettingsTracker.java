@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,10 +12,10 @@ import java.util.function.Supplier;
  * Usage: {@code setUp() { tracker = new CodeStyleSettingsTracker(...); } tearDown() { tracker.checkForSettingsDamage(); } }
 */
 public class CodeStyleSettingsTracker {
-  private final Supplier<CodeStyleSettings> myCurrentSettingsSupplier;
+  private final Supplier<? extends CodeStyleSettings> myCurrentSettingsSupplier;
   private CodeStyleSettings myOldSettings;
 
-  public CodeStyleSettingsTracker(@NotNull Supplier<CodeStyleSettings> currentSettingsSupplier) {
+  public CodeStyleSettingsTracker(@NotNull Supplier<? extends CodeStyleSettings> currentSettingsSupplier) {
     myCurrentSettingsSupplier = currentSettingsSupplier;
     CodeStyleSettings settings = currentSettingsSupplier.get();
     if (settings != null) {
@@ -23,6 +23,7 @@ public class CodeStyleSettingsTracker {
       myOldSettings = settings.clone();
     }
   }
+
   public void checkForSettingsDamage() {
     CodeStyleSettings oldSettings = myOldSettings;
     if (oldSettings == null) {

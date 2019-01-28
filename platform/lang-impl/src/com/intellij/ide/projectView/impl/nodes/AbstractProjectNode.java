@@ -35,12 +35,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
-  protected AbstractProjectNode(Project project, Project value, ViewSettings viewSettings) {
+  protected AbstractProjectNode(Project project, @NotNull Project value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @NotNull
-  Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
+  protected Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {
         try {

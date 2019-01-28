@@ -3,11 +3,13 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.util.TypingTest
 
 /**
  * Created by Max Medvedev on 10/02/14
  */
-class TypeInference2_3Test extends TypeInferenceTestBase {
+class TypeInference2_3Test extends TypeInferenceTestBase implements TypingTest {
 
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
 
@@ -276,5 +278,15 @@ class Thing {
        
       }
     }""", "java.lang.String")
+  }
+
+  void 'test type of method returning null in @CompileStatic'() {
+    typingTest '''\
+@groovy.transform.CompileStatic
+class B {
+    void m() { <caret>method() }
+    private List method() { return null }
+}
+''', GrMethodCall, 'java.util.List'
   }
 }

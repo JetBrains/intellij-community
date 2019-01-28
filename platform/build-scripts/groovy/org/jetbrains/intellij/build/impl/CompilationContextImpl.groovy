@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
@@ -25,6 +26,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -62,26 +64,32 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", null, "JDK_18_x64"))
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
-      setupCompilationDependencies(gradle)
+      setupCompilationDependencies(gradle, options)
     }
     else {
       gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
     }
 
     projectHome = toCanonicalPath(projectHome)
-    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
+    def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "${jdkDir(projectHome, options)}/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
-    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
+    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, options, ant)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
     return context
+  }
+
+  private static String jdkDir(String projectHome, BuildOptions options) {
+    options.jdksTargetDir?.with {
+      new File(it).exists() ? it : null
+    } ?: "$projectHome/build/jdk"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -122,16 +130,15 @@ class CompilationContextImpl implements CompilationContext {
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, AntBuilder ant) {
+  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
     //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
     ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
 
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
-    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
+    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))
     JdkUtils.defineJdk(model.global, "1.8", jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
@@ -141,10 +148,12 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   static boolean dependenciesInstalled
-  static void setupCompilationDependencies(GradleRunner gradle) {
+  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      gradle.run('Setting up compilation dependencies', 'setupJdks', 'setupKotlinPlugin')
+      String[] args = ['setupJdks', 'setupKotlinPlugin']
+      if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
+      gradle.run('Setting up compilation dependencies', args)
     }
   }
 
@@ -181,7 +190,11 @@ class CompilationContextImpl implements CompilationContext {
     def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchive != null) {
+    if (options.pathToCompiledClassesArchivesMetadata != null) {
+      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
+      outputDirectoriesToKeep.add(classesDirName)
+    }
+    else if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
@@ -249,13 +262,17 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
-
   @CompileDynamic
   private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     messages.block("Unpack compiled classes archive") {
       FileUtil.delete(new File(classesOutput))
       ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
     }
+  }
+
+  @CompileStatic
+  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -270,6 +287,14 @@ class CompilationContextImpl implements CompilationContext {
     if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with compiled project output won't be used")
       options.pathToCompiledClassesArchive = null
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
+      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with the compiled project output metadata won't be used to fetch compile output")
+      options.pathToCompiledClassesArchivesMetadata = null
     }
     if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
       messages.warning("Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
@@ -381,6 +406,11 @@ class CompilationContextImpl implements CompilationContext {
     messages.artifactBuilt(pathToReport)
   }
 
+  @Override
+  boolean isBundledJreModular() {
+    return options.bundledJreVersion >= 9
+  }
+
   private static String toCanonicalPath(String path) {
     FileUtil.toSystemIndependentName(new File(path).canonicalPath)
   }
@@ -391,6 +421,7 @@ class CompilationContextImpl implements CompilationContext {
   }
 }
 
+@CompileStatic
 class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
     this.communityHome = communityHome

@@ -40,7 +40,7 @@ class ProjectData {
   private final Map<Editor, EditorData> myEditors = new HashMap<>();
   private final Map<ToolWindow, ToolWindowData> myToolWindows = new HashMap<>();
 
-  private AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
+  private final AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
 
   ProjectData(@NotNull Project project) {
     myProject = project;

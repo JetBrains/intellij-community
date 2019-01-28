@@ -31,7 +31,6 @@ import java.util.*;
 
 /**
  * @author Jeka
- * @since Sep 17, 2001
  */
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
@@ -100,7 +99,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
                             @NotNull Set<PsiMethod> propagateParametersMethods,
                             @NotNull Set<PsiMethod> propagateExceptionsMethods,
                             String oldName) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
 
     this.newVisibility = newVisibility;
     this.method = method;
@@ -187,9 +186,10 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     else {
       final ParameterInfoImpl lastNewParm = this.newParms[this.newParms.length - 1];
-      obtainsVarags = lastNewParm.isVarargType();
-      retainsVarargs = lastNewParm.oldParameterIndex >= 0 && obtainsVarags;
-      arrayToVarargs = retainsVarargs && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("[]");
+      boolean isVarargs = lastNewParm.isVarargType();
+      obtainsVarags = isVarargs && lastNewParm.oldParameterIndex < 0;
+      retainsVarargs = lastNewParm.oldParameterIndex >= 0 && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("...") && isVarargs;
+      arrayToVarargs = lastNewParm.oldParameterIndex >= 0 && oldParameterTypes[lastNewParm.oldParameterIndex].endsWith("[]") && isVarargs;
     }
 
     if (isNameChanged) {
@@ -211,7 +211,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     oldParameterNames = new String[parameters.length];
     oldParameterTypes = new String[parameters.length];
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       oldParameterNames[i] = parameter.getName();

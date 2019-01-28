@@ -217,20 +217,22 @@ public class CodeInsightUtil {
   }
 
   public static <T extends PsiMember & PsiDocCommentOwner> Comparator<T> createSortIdenticalNamedMembersComparator(PsiElement place) {
-    final PsiProximityComparator proximityComparator = new PsiProximityComparator(place);
-    return (o1, o2) -> {
-      boolean deprecated1 = JavaCompletionUtil.isEffectivelyDeprecated(o1);
-      boolean deprecated2 = JavaCompletionUtil.isEffectivelyDeprecated(o2);
-      if (deprecated1 && !deprecated2) return 1;
-      if (!deprecated1 && deprecated2) return -1;
-      int compare = proximityComparator.compare(o1, o2);
-      if (compare != 0) return compare;
+    return Comparator
+      .<T, Boolean>comparing(JavaCompletionUtil::isEffectivelyDeprecated)
+      .thenComparing(CodeInsightUtil::isInnerClass)
+      .thenComparing(new PsiProximityComparator(place))
+      .thenComparing(CodeInsightUtil::compareQualifiedNames);
+  }
 
-      String qname1 = o1 instanceof PsiClass ? ((PsiClass)o1).getQualifiedName() : null;
-      String qname2 = o2 instanceof PsiClass ? ((PsiClass)o2).getQualifiedName() : null;
-      if (qname1 == null || qname2 == null) return 0;
-      return qname1.compareToIgnoreCase(qname2);
-    };
+  private static boolean isInnerClass(PsiMember o) {
+    return o instanceof PsiClass && o.getContainingClass() != null;
+  }
+
+  private static int compareQualifiedNames(PsiMember o1, PsiMember o2) {
+    String qname1 = o1 instanceof PsiClass ? ((PsiClass)o1).getQualifiedName() : null;
+    String qname2 = o2 instanceof PsiClass ? ((PsiClass)o2).getQualifiedName() : null;
+    if (qname1 == null || qname2 == null) return 0;
+    return qname1.compareToIgnoreCase(qname2);
   }
 
   @NotNull
@@ -306,7 +308,7 @@ public class CodeInsightUtil {
                                      final PsiElement context,
                                      boolean getRawSubtypes,
                                      @NotNull final PrefixMatcher matcher,
-                                     Consumer<PsiType> consumer) {
+                                     Consumer<? super PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
@@ -383,7 +385,7 @@ public class CodeInsightUtil {
                                                               PsiClassType baseType,
                                                               int arrayDim,
                                                               boolean getRawSubtypes,
-                                                              Consumer<PsiType> result,
+                                                              Consumer<? super PsiType> result,
                                                               @NotNull PsiClass baseClass,
                                                               PsiSubstitutor baseSubstitutor) {
     PsiManager manager = context.getManager();
@@ -393,6 +395,10 @@ public class CodeInsightUtil {
 
     return inheritor -> {
       ProgressManager.checkCanceled();
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processing inheritor " + inheritor.getQualifiedName());
+      }
 
       if (!resolveHelper.isAccessible(inheritor, context, null)) {
         return true;
@@ -414,6 +420,9 @@ public class CodeInsightUtil {
                                    : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
       PsiType toAdd = PsiTypesUtil.createArrayType(inheritorType, arrayDim);
       if (baseType.isAssignableFrom(toAdd)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Inheritor type " + toAdd.getCanonicalText());
+        }
         result.consume(toAdd);
       }
 

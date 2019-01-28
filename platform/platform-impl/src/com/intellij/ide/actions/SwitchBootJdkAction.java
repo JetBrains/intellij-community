@@ -27,10 +27,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +65,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e != null ? e.getProject() : null;
-    perform(project);
+    perform(e.getProject());
   }
 
   public void perform(Project project) {
@@ -261,9 +264,20 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         }
       });
     }
-
+    @Nullable
     @Override
     protected JComponent createNorthPanel() {
+      if (!ApplicationManager.getApplication().isInternal()) {
+        JLabel warningLabel = new JLabel(XmlStringUtil.wrapInHtml("<b>Changing these values may cause unwanted behavior of " +
+                                                                  ApplicationNamesInfo.getInstance().getFullProductName() + ".<br>Please do not change these unless you have been asked.</b>"));
+        warningLabel.setIcon(UIUtil.getWarningIcon());
+        warningLabel.setForeground(JBColor.RED);
+
+        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(20)));
+        panel.add(warningLabel, BorderLayout.NORTH);
+        panel.add(new JBLabel("Select Boot JDK"), BorderLayout.CENTER);
+        return panel;
+      }
       return new JBLabel("Select Boot JDK");
     }
 

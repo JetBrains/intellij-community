@@ -61,21 +61,26 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
     // initializes the data structures for the control flow analysis
     Frame<V> current = new Frame<>(m.maxLocals, m.maxStack);
     Frame<V> handler = new Frame<>(m.maxLocals, m.maxStack);
-    current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
+    current.setReturn(interpreter.newReturnTypeValue(Type.getReturnType(m.desc)));
     Type[] args = Type.getArgumentTypes(m.desc);
     int local = 0;
-    if ((m.access & ACC_STATIC) == 0) {
+    boolean isInstanceMethod = (m.access & ACC_STATIC) == 0;
+    if (isInstanceMethod) {
       Type ctype = Type.getObjectType(owner);
-      current.setLocal(local++, interpreter.newValue(ctype));
+      current.setLocal(local, interpreter.newParameterValue(true, local, ctype));
+      local++;
     }
     for (Type arg : args) {
-      current.setLocal(local++, interpreter.newValue(arg));
+      current.setLocal(local, interpreter.newParameterValue(isInstanceMethod, local, arg));
+      local++;
       if (arg.getSize() == 2) {
-        current.setLocal(local++, interpreter.newValue(null));
+        current.setLocal(local, interpreter.newEmptyValue(local));
+        local++;
       }
     }
     while (local < m.maxLocals) {
-      current.setLocal(local++, interpreter.newValue(null));
+      current.setLocal(local, interpreter.newEmptyValue(local));
+      local++;
     }
     merge(0, current);
 
@@ -136,7 +141,7 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
             int jump = insns.indexOf(tcb.handler);
             handler.init(f);
             handler.clearStack();
-            handler.push(interpreter.newValue(ASMUtils.THROWABLE_TYPE));
+            handler.push(interpreter.newExceptionValue(tcb, handler, ASMUtils.THROWABLE_TYPE));
             merge(jump, handler);
           }
         }

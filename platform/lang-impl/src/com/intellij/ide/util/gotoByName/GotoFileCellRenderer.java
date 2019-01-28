@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,24 +110,27 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
                                                        int index,
                                                        boolean selected,
                                                        boolean hasFocus) {
+    return doCustomizeNonPsiElementLeftRenderer(renderer, list, value, getNavigationItemAttributes(value));
+  }
+
+  public static boolean doCustomizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
+                                                             JList list,
+                                                             Object value,
+                                                             TextAttributes attributes) {
     if (!(value instanceof NavigationItem)) return false;
 
     NavigationItem item = (NavigationItem)value;
-
-    TextAttributes attributes = getNavigationItemAttributes(item);
 
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
     Color color = list.getForeground();
     if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
-    String name = item.getName();
-    renderer.append(name + " ", nameAttributes);
-    ItemPresentation itemPresentation = item.getPresentation();
-    assert itemPresentation != null;
-    renderer.setIcon(itemPresentation.getIcon(true));
+    ItemPresentation presentation = ObjectUtils.notNull(item.getPresentation());
+    renderer.append(presentation.getPresentableText() + " ", nameAttributes);
+    renderer.setIcon(presentation.getIcon(true));
 
-    String locationString = itemPresentation.getLocationString();
+    String locationString = presentation.getLocationString();
     if (!StringUtil.isEmpty(locationString)) {
       renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -8,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 /**
  * @author ven
@@ -101,7 +100,7 @@ public class GrClassReferenceType extends PsiClassType {
       return factory.createType(clazz, factory.createRawSubstitutor(clazz), getLanguageLevel());
     }
     else {
-      String qName = notNullize(myReferenceElement.getQualifiedReferenceName(), "");
+      String qName = StringUtil.notNullize(myReferenceElement.getQualifiedReferenceName());
       return factory.createTypeByFQClassName(qName, myReferenceElement.getResolveScope());
     }
   }

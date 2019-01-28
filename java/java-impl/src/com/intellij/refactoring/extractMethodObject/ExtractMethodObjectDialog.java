@@ -117,6 +117,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return null;
   }
 
+  @NotNull
   @Override
   public String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();

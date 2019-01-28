@@ -31,7 +31,6 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010
  */
 public class JavaChildWrapArranger {
   /**
@@ -52,7 +51,6 @@ public class JavaChildWrapArranger {
    * @return                        wrap to use for the given {@code 'child'} node if it's possible to define the one;
    *                                {@code null} otherwise
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Wrap arrange(ASTNode child,
                       ASTNode parent,

@@ -72,7 +72,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
   protected void invokeImpl(PsiClass targetClass) {
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = myMethodCall.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -140,7 +140,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 }

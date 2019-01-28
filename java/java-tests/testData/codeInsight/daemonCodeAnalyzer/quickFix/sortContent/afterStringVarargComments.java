@@ -16,7 +16,6 @@ public class Main {
             "foo" /*3*/ // 2
             // 5
 
-
     );
   }
 }

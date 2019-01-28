@@ -26,4 +26,8 @@ public abstract class DataFlowInspectionTestCase extends LightCodeInsightFixture
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
+
+  public void assertIntentionAvailable(String intentionName) {
+    assertTrue(myFixture.getAvailableIntentions().stream().anyMatch(action -> action.getText().equals(intentionName)));
+  }
 }

@@ -33,12 +33,8 @@ import java.util.List;
 
 public class ModuleListNode extends ProjectViewNode<Module> {
 
-  public ModuleListNode(Project project, Module value, ViewSettings viewSettings) {
+  public ModuleListNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public ModuleListNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (Module)value, viewSettings);
   }
 
   @Override

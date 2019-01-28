@@ -27,9 +27,9 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -55,6 +55,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     super(node);
   }
 
+  @Override
   public String toString() {
     return "PsiEnumConstant:" + getName();
   }
@@ -123,7 +124,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   @NotNull
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass());
+    return JavaPsiFacade.getElementFactory(getProject()).createType(getContainingClass());
   }
 
   @Override
@@ -195,7 +196,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public boolean isDeprecated() {
-    return PsiFieldImpl.isFieldDeprecated(this, getGreenStub());
+    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
   }
 
   @Override
@@ -257,12 +258,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      PsiClass containingClass = getContainingClass();
-      if (containingClass.getConstructors().length == 0) {
-        return new JavaResolveResult[] {new ClassCandidateInfo(containingClass, PsiSubstitutor.EMPTY)};
-      }
-      
-      PsiClassType type = facade.getElementFactory().createType(containingClass);
+      PsiClassType type = facade.getElementFactory().createType(getContainingClass());
       return facade.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
@@ -287,9 +283,6 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
-      if (element instanceof PsiClass && element == getContainingClass() && ((PsiClass)element).getConstructors().length == 0) {
-        return true;
-      }
       return element instanceof PsiMethod
              && ((PsiMethod)element).isConstructor()
              && ((PsiMethod)element).getContainingClass() == getContainingClass()

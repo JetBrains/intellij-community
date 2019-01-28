@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -13,23 +14,30 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @author Konstantin Bulenkov
+ * @author Mikhail Sokolov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
+  private final GotoFileModel myModelForRenderer;
 
-  public FileSearchEverywhereContributor(Project project) {
-    super(project);
+  public FileSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
+    myModelForRenderer = project == null ? null : new GotoFileModel(project);
   }
 
   @NotNull
@@ -49,11 +57,29 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   }
 
   @Override
-  protected FilteringGotoByModel<FileType> createModel(Project project) {
-    return new GotoFileModel(project){
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 2;
+  }
+
+  @NotNull
+  @Override
+  protected FilteringGotoByModel<FileType> createModel(@NotNull Project project) {
+    return new GotoFileModel(project);
+  }
+
+  @NotNull
+  @Override
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+    return new SERenderer(list){
+      @NotNull
       @Override
-      public boolean isSlashlessMatchingEnabled() {
-        return false;
+      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+        ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
+        if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
+          return defaultMatchers;
+        }
+
+        return GotoFileModel.convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, myModelForRenderer);
       }
     };
   }
@@ -62,7 +88,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
-      if (file != null) {
+      if (file != null && myProject != null) {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
@@ -82,6 +108,18 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
       return element;
     }
 
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiFile) {
+      String path = ((PsiFile)element).getVirtualFile().getPath();
+      path = FileUtil.toSystemIndependentName(path);
+      if (myProject != null) {
+        String basePath = myProject.getBasePath();
+        if (basePath != null) {
+          path = FileUtil.getRelativePath(basePath, path, '/');
+        }
+      }
+      return path;
+    }
+
     return super.getDataForItem(element, dataId);
   }
 
@@ -89,7 +127,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     @NotNull
     @Override
     public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent.getProject());
+      return new FileSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable

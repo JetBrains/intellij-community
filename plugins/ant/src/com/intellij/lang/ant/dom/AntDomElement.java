@@ -32,9 +32,8 @@ import java.util.NoSuchElementException;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
-  public static enum Role {
+  public enum Role {
     TASK, DATA_TYPE
   }
   public static final Key<Role> ROLE = Key.create("element_role");
@@ -89,8 +88,8 @@ public abstract class AntDomElement implements DomElement {
 
   public final Iterator<AntDomElement> getAntChildrenIterator() {
     final List<DomElement> children = DomUtil.getDefinedChildren(this, true, false);
-    if (children.size() == 0) {
-      return Collections.<AntDomElement>emptyList().iterator();
+    if (children.isEmpty()) {
+      return Collections.emptyIterator();
     }
     final Iterator<DomElement> it = children.iterator();
     return new Iterator<AntDomElement>() {
@@ -133,11 +132,11 @@ public abstract class AntDomElement implements DomElement {
   }
 
   public final boolean isTask() {
-    return Role.TASK.equals(getChildDescription().getUserData(ROLE));
+    return Role.TASK == getChildDescription().getUserData(ROLE);
   }
 
   public final boolean isDataType() {
-    return Role.DATA_TYPE.equals(getChildDescription().getUserData(ROLE));
+    return Role.DATA_TYPE == getChildDescription().getUserData(ROLE);
   }
 
   public String toString() {
@@ -146,7 +145,7 @@ public abstract class AntDomElement implements DomElement {
       return super.toString();
     }
     final String name = tag.getName();
-    if ("".equals(name)) {
+    if (name.isEmpty()) {
       return super.toString();
     }
     return name;

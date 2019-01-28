@@ -78,9 +78,9 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
         return super.isFileVisible(file, showHiddenFiles) && !index.isExcluded(file);
       }
     };
-    descriptor.setRoots(ContainerUtil.concat(
-      ContainerUtil.map(ModuleManager.getInstance(project).getModules(),
-                        (Function<Module, List<VirtualFile>>)module -> ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES))));
+    descriptor.setRoots(ContainerUtil.concat(ContainerUtil.<Module, List<VirtualFile>>map(ModuleManager.getInstance(project).getModules(),
+                                                    module -> ModuleRootManager.getInstance(module)
+                                                      .getSourceRoots(JavaModuleSourceRootTypes.SOURCES))));
     return new ExcludedEntriesConfigurable(project, descriptor, configuration);
   }
 

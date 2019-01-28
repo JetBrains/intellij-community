@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.*
@@ -73,7 +59,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """
     }
-    return iprAssociation + associations + customizer.additionalDocTypes;
+    return iprAssociation + associations + customizer.additionalDocTypes
   }
 
   @Override
@@ -87,6 +73,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
+    BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
 
     if (customizer.helpId != null) {
       def helpZip = customizer.getPathToHelpZip(buildContext)
@@ -282,7 +269,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = getZipRoot(buildContext, customizer)
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      String suffix = buildContext.bundledJreManager.jreSuffix()
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
@@ -328,7 +316,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipRoot)
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
       return targetPath
     }
   }
@@ -339,7 +327,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson(productJsonDir, null, "MacOS/${executable}", javaExecutablePath, "bin/${executable}.vmoptions", OsFamily.MACOS)
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", "../bin", null,
+                                                               "../MacOS/${executable}", javaExecutablePath,
+                                                               "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
 
 

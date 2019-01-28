@@ -558,7 +558,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    final PsiElement identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    final PsiElement identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -902,7 +902,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
         filters.add(ElementClassFilter.PACKAGE);
-        if (isQualified()) {
+        if (isQualified() || isCodeFragmentType(getTreeParent().getElementType())) {
           filters.add(ElementClassFilter.CLASS);
         }
         break;

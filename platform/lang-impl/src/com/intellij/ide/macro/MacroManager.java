@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.macro;
 
@@ -22,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -101,7 +86,7 @@ public final class MacroManager {
       registerMacro(new FileRelativeDirMacro2());
       registerMacro(new FileRelativePathMacro2());
     }
-    for (Macro macro : Extensions.getExtensions(Macro.EP_NAME)) {
+    for (Macro macro : Macro.EP_NAME.getExtensionList()) {
       registerMacro(macro);
     }
   }
@@ -113,7 +98,7 @@ public final class MacroManager {
   public Collection<Macro> getMacros() {
     return myMacrosMap.values();
   }
-  
+
   @NotNull
   public Set<String> getMacroNames() {
     return myMacrosMap.keySet();
@@ -200,17 +185,22 @@ public final class MacroManager {
       String name = "$" + macro.getName() + "$";
       String macroNameWithParamStart = "$" + macro.getName() + "(";
       if (str.contains(name)) {
-        String expanded = macro.expand(dataContext);
-        //if (dataContext instanceof DataManagerImpl.MyDataContext) {
-        //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
-        //  // since we know exactly that context is valid, we need to update its event count
-        //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
-        //}
-        expanded = expanded == null ? defaultExpandValue : expanded;
-        if (expanded == null) {
-          return null;
+        for (int index = str.indexOf(name);
+             index != -1 && index <= str.length() - name.length();
+             index = str.indexOf(name, index)) {
+          String expanded = macro.expand(dataContext);
+          //if (dataContext instanceof DataManagerImpl.MyDataContext) {
+          //  // hack: macro.expand() can cause UI events such as showing dialogs ('Prompt' macro) which may 'invalidate' the datacontext
+          //  // since we know exactly that context is valid, we need to update its event count
+          //  ((DataManagerImpl.MyDataContext)dataContext).setEventCount(IdeEventQueue.getInstance().getEventCount());
+          //}
+          expanded = expanded == null ? defaultExpandValue : expanded;
+          if (expanded == null) {
+            return null;
+          }
+          str = str.substring(0, index) + expanded + str.substring(index + name.length());
+          index += expanded.length();
         }
-        str = StringUtil.replace(str, name, expanded);
       }
       else if(str.contains(macroNameWithParamStart)) {
         String macroNameWithParamEnd = ")$";

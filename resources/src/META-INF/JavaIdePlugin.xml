@@ -113,6 +113,9 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.asyncStackTraceProvider"
+                    interface="com.intellij.debugger.engine.AsyncStackTraceProvider"/>
+
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
 
@@ -141,8 +144,6 @@
     </extensionPoint>
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
-
-    <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
@@ -220,8 +221,9 @@
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
     <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
 
-    <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
-    <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="java.lang.reflect.Method.invoke("/>
+    <stacktrace.fold substring="java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="at java.base/jdk.internal"/>
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
@@ -285,6 +287,7 @@
     <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"/>
 
     <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
+    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
@@ -298,6 +301,7 @@
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
+    <debugger.asyncStackTraceProvider implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
@@ -412,6 +416,9 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
+
+    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
+            text="Find Unused Test Data" internal="true"/>
 
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction"

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
@@ -20,9 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -106,7 +105,7 @@ public class ImageLoader implements Serializable {
       }
       Image image = loadImpl(url, stream, scale);
       if (image != null && cacheKey != null &&
-          image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
+          4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
       {
         ourCache.put(cacheKey, image);
       }
@@ -387,6 +386,28 @@ public class ImageLoader implements Serializable {
     return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
   }
 
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetSize) {
+    return scaleImage(image, targetSize, targetSize);
+  }
+
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetWidth, int targetHeight) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).scale(targetWidth, targetHeight);
+    }
+    int w = image.getWidth(null);
+    int h = image.getHeight(null);
+
+    if (w <= 0 || h <= 0 || w == targetWidth && h == targetHeight) {
+      return image;
+    }
+
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT,
+                        targetWidth, targetHeight,
+                        (BufferedImageOp[])null);
+  }
+
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String s) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
@@ -401,6 +422,10 @@ public class ImageLoader implements Serializable {
       load(ImageConverterChain.create().withHiDPI(ctx));
   }
 
+  public static Image loadFromBytes(@NotNull final byte[] bytes) {
+    return loadFromStream(new ByteArrayInputStream(bytes));
+  }
+
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
     return loadFromStream(inputStream, 1);
   }
@@ -413,6 +438,34 @@ public class ImageLoader implements Serializable {
     Image image = load(inputStream, scale);
     ImageDesc desc = new ImageDesc("", null, scale, IMG);
     return ImageConverterChain.create().withFilter(filter).withHiDPI(ScaleContext.create()).convert(image, desc);
+  }
+
+  public static @Nullable Image loadCustomIcon(@NotNull File f) throws IOException {
+    final Image icon = _loadImageFromFile(f);
+    if (icon == null)
+      return null;
+
+    final int w = icon.getWidth(null);
+    final int h = icon.getHeight(null);
+
+    if (w <= 0 || h <= 0) {
+      LOG.error("negative image size: w=" + w + ", h=" + h + ", path=" + f.getPath());
+      return null;
+    }
+
+    if (w > EmptyIcon.ICON_18.getIconWidth() || h > EmptyIcon.ICON_18.getIconHeight()) {
+      final double s = EmptyIcon.ICON_18.getIconWidth()/(double)Math.max(w, h);
+      return scaleImage(icon, s);
+    }
+
+    return icon;
+  }
+
+  private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
+    final ScaleContext ctx = ScaleContext.create();
+    final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
+    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null,  scale, StringUtil.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
+    return ImageUtil.ensureHiDPI(desc.load(), ctx);
   }
 
   private static Image load(@NotNull final InputStream inputStream, double scale) {

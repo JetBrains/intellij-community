@@ -10,15 +10,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.diff.impl.external.FrameDiffTool;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collection;
 
 public class MigrateDiffTool implements DiffTool {
   public static final MigrateDiffTool INSTANCE = new MigrateDiffTool();
@@ -42,8 +43,7 @@ public class MigrateDiffTool implements DiffTool {
 
       Runnable onOkRunnable = request.getOnOkRunnable();
       if (onOkRunnable == null) {
-        WindowWrapper.Mode mode = FrameDiffTool.shouldOpenDialog(request.getHints()) ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
-        DiffManager.getInstance().showDiff(request.getProject(), newRequest, new DiffDialogHints(mode));
+        DiffManager.getInstance().showDiff(request.getProject(), newRequest, new DiffDialogHints(getWindowMode(request.getHints())));
       }
       else {
         DialogBuilder builder = new DialogBuilder(request.getProject());
@@ -77,6 +77,14 @@ public class MigrateDiffTool implements DiffTool {
 
   @Override
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
+    return null;
+  }
+
+  @Nullable
+  private static WindowWrapper.Mode getWindowMode(Collection hints) {
+    if (hints.contains(DiffTool.HINT_SHOW_MODAL_DIALOG)) return WindowWrapper.Mode.MODAL;
+    if (hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG)) return WindowWrapper.Mode.NON_MODAL;
+    if (hints.contains(DiffTool.HINT_SHOW_FRAME)) return WindowWrapper.Mode.FRAME;
     return null;
   }
 }

@@ -17,21 +17,28 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class WrongPropertyKeyValueDelimiterInspectionTest extends InspectionTestCase {
+public class WrongPropertyKeyValueDelimiterInspectionTest extends LightCodeInsightFixtureTestCase {
 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+    return PluginPathManager.getPluginHomePath("properties") + "/testData/wrongPropertyKeyDelimiter";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new WrongPropertyKeyValueDelimiterInspection());
   }
 
   public void testSimple() {
-    doTest("wrongPropertyKeyDelimiter/", new WrongPropertyKeyValueDelimiterInspection());
+    myFixture.configureByFile("Test1.properties");
+    myFixture.checkHighlighting();
   }
 }

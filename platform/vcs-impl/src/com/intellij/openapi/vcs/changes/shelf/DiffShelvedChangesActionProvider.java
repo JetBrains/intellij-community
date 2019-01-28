@@ -142,8 +142,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
   }
 
   private static void processBinaryFiles(@NotNull Project project,
-                                         @NotNull List<ShelvedBinaryFile> files,
-                                         @NotNull List<ShelveDiffRequestProducer> diffRequestProducers) {
+                                         @NotNull List<? extends ShelvedBinaryFile> files,
+                                         @NotNull List<? super ShelveDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBasePath();
     for (final ShelvedBinaryFile shelvedChange : files) {
       final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
@@ -153,8 +153,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
   }
 
   private static void processTextChanges(@NotNull final Project project,
-                                         @NotNull List<ShelvedChange> changesFromFirstList,
-                                         @NotNull List<ShelveDiffRequestProducer> diffRequestProducers,
+                                         @NotNull List<? extends ShelvedChange> changesFromFirstList,
+                                         @NotNull List<? super ShelveDiffRequestProducer> diffRequestProducers,
                                          boolean withLocal) {
     final String base = project.getBasePath();
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
@@ -164,16 +164,14 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
       final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
-      final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
       try {
-        if (isNewFile) {
+        if (FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
           diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath,
                                                                             preloader, commitContext, withLocal));
         }
         else {
-          // isNewFile -> parent directory, !isNewFile -> file
-          VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
+          VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath);
           if (file == null || !file.exists()) throw new FileNotFoundException(beforePath);
 
           diffRequestProducers.add(new TextShelveDiffRequestProducer(project, shelvedChange, filePath, file,

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -197,7 +198,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     return myType != null &&
            myWrapper != null &&
            myType.isValid() &&
-           startElement.getManager().isInProject(startElement);
+           BaseIntentionAction.canModify(startElement);
   }
 
   @Override

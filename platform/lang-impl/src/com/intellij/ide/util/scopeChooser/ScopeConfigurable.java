@@ -77,7 +77,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   @NotNull
   private NamedScopesHolder getHolder(boolean local) {
-    return (NamedScopesHolder)(local
+    return (local
             ? DependencyValidationManager.getInstance(myProject)
             : NamedScopeManager.getInstance(myProject));
   }

@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -46,7 +47,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static com.intellij.xdebugger.memory.ui.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
 import static com.intellij.xdebugger.memory.ui.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
@@ -85,7 +85,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           managerThread.schedule(new DebuggerCommandImpl() {
             @Override
             protected void action() {
-              trackClass(debugSession, ref, type, activated);
+              trackClass(debugSession, debugProcess, ref, type, activated);
             }
           });
         }
@@ -121,6 +121,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           protected void action() {
             final boolean activated = myIsTrackersActivated.get();
             final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+            if (!proxy.canBeModified()) {
+              return;
+            }
             tracker.getTrackedClasses().forEach((className, type) -> {
               List<ReferenceType> classes = proxy.classesByName(className);
               if (classes.isEmpty()) {
@@ -128,7 +131,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
               }
               else {
                 for (ReferenceType ref : classes) {
-                  trackClass(debugSession, ref, type, activated);
+                  trackClass(debugSession, debugProcess, ref, type, activated);
                 }
               }
             });
@@ -146,7 +149,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           @Override
           public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
             process.getRequestsManager().deleteRequest(this);
-            trackClass(session, referenceType, type, myIsTrackersActivated.get());
+            trackClass(session, process, referenceType, type, myIsTrackersActivated.get());
           }
         };
 
@@ -178,10 +181,14 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     new MyDoubleClickListener().installOn(table);
   }
   private void trackClass(@NotNull XDebugSession session,
+                          @NotNull DebugProcessImpl debugProcess,
                           @NotNull ReferenceType ref,
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
+    if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
+      return;
+    }
     if (type == TrackingType.CREATION) {
       final ConstructorInstancesTracker old = myConstructorTrackedClasses.getOrDefault(ref, null);
       if (old != null) {
@@ -244,7 +251,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         TrackerForNewInstances strategy = getStrategy(selectedClass);
         if (strategy != null && strategy.isReady()) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider) limit -> newInstances.stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
+          return (InstancesProvider)limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new);
         }
       }
     }
@@ -315,7 +322,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (data != null) {
           final List<ObjectReference> newInstances = strategy.getNewInstances();
           data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(debugSession, limit -> newInstances.stream().map(JavaReferenceInfo::new).collect(Collectors.toList()), ref.name());
+          final InstancesWindow instancesWindow = new InstancesWindow(debugSession,
+                                                                      limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new), ref.name());
           Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
           instancesWindow.show();
         }

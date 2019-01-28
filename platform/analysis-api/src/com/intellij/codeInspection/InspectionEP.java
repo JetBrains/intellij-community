@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author Dmitry Avdeev
- * @since 27.09.2011
  * @see LocalInspectionEP
  */
 public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
@@ -125,7 +125,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
-      LOG.error("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; and short name: " + shortName);
+      LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; and short name: " + shortName, getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;

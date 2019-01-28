@@ -137,7 +137,6 @@ public class StringLiteralLexer extends LexerBase {
       case '6':
       case '7':
         if (!myAllowOctal) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
-        //noinspection fallthrough
       case 'n':
       case 'r':
       case 'b':

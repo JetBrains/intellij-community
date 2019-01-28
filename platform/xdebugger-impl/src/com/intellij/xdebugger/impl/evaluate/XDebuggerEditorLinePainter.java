@@ -13,7 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
@@ -29,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -74,27 +78,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
       ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
-        SimpleColoredText text = new SimpleColoredText();
-        XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
-        final XValuePresentation presentation = value.getValuePresentation();
-        if (presentation == null) continue;
-        try {
-          if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
-            ((XValueCompactPresentation)presentation).renderValue(renderer, value);
-          }
-          else {
-            presentation.renderValue(renderer);
-          }
-          if (StringUtil.isEmpty(text.toString())) {
-            final String type = value.getValuePresentation().getType();
-            if (!StringUtil.isEmpty(type)) {
-              text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            }
-          }
-        }
-        catch (Exception ignored) {
-          continue;
-        }
+        SimpleColoredText text = createPresentation(value);
+        if (text == null) continue;
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
@@ -125,9 +110,35 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       for (VariableText text : result) {
         infos.addAll(text.infos);
       }
-      return infos.size() > LINE_EXTENSIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENSIONS_MAX_COUNT) : infos;
+      return ContainerUtil.getFirstItems(infos, LINE_EXTENSIONS_MAX_COUNT);
     }
     return null;
+  }
+
+  @Nullable
+  public static SimpleColoredText createPresentation(@NotNull XValueNodeImpl value) {
+    SimpleColoredText text = new SimpleColoredText();
+    XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
+    final XValuePresentation presentation = value.getValuePresentation();
+    if (presentation == null) return null;
+    try {
+      if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
+        ((XValueCompactPresentation)presentation).renderValue(renderer, value);
+      }
+      else {
+        presentation.renderValue(renderer);
+      }
+      if (StringUtil.isEmpty(text.toString())) {
+        final String type = value.getValuePresentation().getType();
+        if (!StringUtil.isEmpty(type)) {
+          text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    }
+    catch (Exception e) {
+      return null;
+    }
+    return text;
   }
 
   private static int getCurrentBreakPointLineInFile(@Nullable XDebugSession session, VirtualFile file) {

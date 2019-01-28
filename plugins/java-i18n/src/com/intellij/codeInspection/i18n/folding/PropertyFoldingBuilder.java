@@ -28,6 +28,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -65,6 +66,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     file.accept(hasJsp ? new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
+        ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expression, ULiteralExpression.class);
         if (uLiteralExpression != null) {
           checkLiteral(uLiteralExpression, result);
@@ -74,6 +76,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
       @Override
       public void visitElement(PsiElement element) {
+        ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
         if (uLiteralExpression != null) {
           checkLiteral(uLiteralExpression, result);
@@ -251,7 +254,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, null);
     if (!isI18n) {
       sourcePsi.putUserData(CACHE, NULL);
     }

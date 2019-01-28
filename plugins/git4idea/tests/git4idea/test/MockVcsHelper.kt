@@ -38,7 +38,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   @Volatile private var myMergeDelegate: () -> Unit = { throw IllegalStateException() }
   @Volatile private var myCommitDelegate: (String) -> Boolean = { throw IllegalStateException() }
 
-  override fun runTransactionRunnable(vcs: AbstractVcs<*>?, runnable: TransactionRunnable?, vcsParameters: Any?): MutableList<VcsException>? {
+  override fun runTransactionRunnable(vcs: AbstractVcs<*>?, runnable: TransactionRunnable?, vcsParameters: Any?): List<VcsException>? {
     throw UnsupportedOperationException()
   }
 
@@ -110,7 +110,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun selectFilePathsToProcess(files: MutableList<FilePath>, title: String?, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption, okActionName: String?, cancelActionName: String?): MutableCollection<FilePath> {
+  override fun selectFilePathsToProcess(files: List<FilePath>, title: String?, prompt: String?, singleFileTitle: String?, singleFilePromptTemplate: String?, confirmationOption: VcsShowConfirmationOption, okActionName: String?, cancelActionName: String?): Collection<FilePath> {
     throw UnsupportedOperationException()
   }
 

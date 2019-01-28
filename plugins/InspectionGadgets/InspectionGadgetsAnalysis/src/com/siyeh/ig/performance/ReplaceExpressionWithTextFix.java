@@ -2,11 +2,11 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -30,7 +30,7 @@ public class ReplaceExpressionWithTextFix extends InspectionGadgetsFix {
     PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiNewExpression.class);
     if (newExpression == null) return;
     PsiElement result = new CommentTracker().replaceAndRestoreComments(newExpression, myReplacementText);
-    PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+    RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
   }
 

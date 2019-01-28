@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 4/18/11 2:47 PM
  */
 public class CutLineEndActionsTest extends LightPlatformCodeInsightTestCase {
   

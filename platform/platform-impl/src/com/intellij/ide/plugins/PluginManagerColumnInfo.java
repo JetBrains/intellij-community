@@ -20,7 +20,6 @@ import java.util.Comparator;
 
 /**
  * @author stathik
- * @since Dec 11, 2003
  */
 public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_NAME = 0;
@@ -36,9 +35,6 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     IdeBundle.message("column.plugins.date"),
     IdeBundle.message("column.plugins.category")
   };
-
-  private static final float MB = 1024.0f * 1024.0f;
-  private static final float KB = 1024.0f;
 
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
@@ -188,13 +184,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     if (size.equals("-1")) {
       return IdeBundle.message("plugin.info.unknown");
     }
-    if (size.length() >= 7) {
-      size = String.format("%.1f", (float)Integer.parseInt(size) / MB) + " M";
-    }
-    else if (size.length() >= 4) {
-      size = String.format("%.1f", (float)Integer.parseInt(size) / KB) + " K";
-    }
-    return size;
+    return StringUtil.formatFileSize(Long.parseLong(size));
   }
 
   @Override

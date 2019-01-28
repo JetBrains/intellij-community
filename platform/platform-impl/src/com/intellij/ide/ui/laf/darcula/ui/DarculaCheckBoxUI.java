@@ -10,12 +10,17 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalCheckBoxUI;
 import javax.swing.text.View;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(18)).asUIResource();
+
+  private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -30,17 +35,36 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     }
   }
 
-  @Override public void installDefaults(AbstractButton b) {
+  @Override
+  public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
     b.setIconTextGap(textIconGap());
+    updateTextPosition(b);
+  }
+
+  private static void updateTextPosition(AbstractButton b) {
+    b.setVerticalTextPosition(isMultiLineHTML(b.getText()) ? SwingConstants.TOP : SwingConstants.CENTER);
+  }
+
+  @Override
+  protected void installListeners(AbstractButton b) {
+    super.installListeners(b);
+    b.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
+  }
+
+  @Override
+  protected void uninstallListeners(AbstractButton button) {
+    super.uninstallListeners(button);
+    button.removePropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
   }
 
   protected int textIconGap() {
     return JBUI.scale(5);
   }
 
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
   @Override
-  public synchronized void paint(Graphics g2d, JComponent c) {
+  public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     Dimension size = c.getSize();
 
@@ -59,7 +83,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
       viewRect, iconRect, textRect, b.getIconTextGap());
 
-    //background
     if (c.isOpaque()) {
       g.setColor(b.getBackground());
       g.fillRect(0, 0, size.width, size.height);
@@ -102,6 +125,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     return updatePreferredSize(c, super.getPreferredSize(c));
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    return getPreferredSize(c);
   }
 
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {

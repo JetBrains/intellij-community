@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
+class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl> implements IntSupplier {
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
@@ -20,7 +20,7 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
                  boolean relatesToPrecedingText,
                  boolean showAbove,
                  int priority,
-                 @NotNull EditorCustomElementRenderer renderer) {
+                 @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     myShowAbove = showAbove;
     myPriority = priority;
@@ -31,13 +31,14 @@ class BlockInlayImpl extends InlayImpl<BlockInlayImpl> implements IntSupplier {
     return myEditor.getInlayModel().myBlockElementsTree;
   }
 
+  @Override
   void doUpdateSize() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
+    myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
       throw new IllegalArgumentException("Non-negative width should be defined for a block element");
     }
     int oldHeightInPixels = myHeightInPixels;
-    myHeightInPixels = myRenderer.calcHeightInPixels(myEditor);
+    myHeightInPixels = myRenderer.calcHeightInPixels(this);
     if (oldHeightInPixels != myHeightInPixels) getTree().valueUpdated(this);
     if (myHeightInPixels < 0) {
       throw new IllegalArgumentException("Non-negative height should be defined for a block element");

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.binding.FormClassIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,14 +17,15 @@ public class Form implements Navigatable {
   public static final DataKey<Form[]> DATA_KEY = DataKey.create("form.array");
 
   private final Collection<PsiFile> myFormFiles;
+  @NotNull
   private final PsiClass myClassToBind;
 
-  public Form(PsiClass classToBind) {
+  public Form(@NotNull PsiClass classToBind) {
     myClassToBind = classToBind;
     myFormFiles = FormClassIndex.findFormsBoundToClass(classToBind.getProject(), classToBind);
   }
 
-  public Form(PsiClass classToBind, Collection<? extends PsiFile> formFiles) {
+  public Form(@NotNull PsiClass classToBind, Collection<? extends PsiFile> formFiles) {
     myClassToBind = classToBind;
     myFormFiles = new HashSet<>(formFiles);
   }
@@ -45,6 +47,7 @@ public class Form implements Navigatable {
     return myClassToBind.getName();
   }
 
+  @NotNull
   public PsiClass getClassToBind() {
     return myClassToBind;
   }

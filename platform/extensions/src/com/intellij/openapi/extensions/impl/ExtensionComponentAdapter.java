@@ -1,18 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.*;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoException;
+import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.PicoVisitor;
 
 /**
  * @author Alexander Kireyev
@@ -20,9 +18,7 @@ import org.picocontainer.*;
 public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
-  private Object myComponentInstance;
-  @Nullable
-  private final Element myExtensionElement;
+  protected Object myComponentInstance;
   private final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
@@ -36,22 +32,13 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
                                    @Nullable PicoContainer container,
                                    @Nullable PluginDescriptor pluginDescriptor,
                                    @Nullable String orderId,
-                                   @NotNull LoadingOrder order,
-                                   @Nullable Element extensionElement) {
+                                   @NotNull LoadingOrder order) {
     myImplementationClassOrName = implementationClassName;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
-    myExtensionElement = extensionElement;
 
     myOrderId = orderId;
     myOrder = order;
-  }
-
-  public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable Element extensionElement,
-                                   PicoContainer container,
-                                   PluginDescriptor pluginDescriptor) {
-    this(implementationClassName, container, pluginDescriptor, null, LoadingOrder.ANY, extensionElement);
   }
 
   @Override
@@ -66,37 +53,36 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
-    if (myComponentInstance == null) {
-      try {
-        Class impl = loadImplementationClass();
-        Object componentInstance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
-
-        if (myExtensionElement != null) {
-          try {
-            XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
-          }
-          catch (Exception e) {
-            throw new PicoInitializationException(e);
-          }
-        }
-
-        myComponentInstance = componentInstance;
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable t) {
-        PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
-        throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
-      }
-
-      if (myComponentInstance instanceof PluginAware) {
-        PluginAware pluginAware = (PluginAware)myComponentInstance;
-        pluginAware.setPluginDescriptor(myPluginDescriptor);
-      }
+    Object instance = myComponentInstance;
+    if (instance != null) {
+      return instance;
     }
 
-    return myComponentInstance;
+    try {
+      Class impl = loadImplementationClass();
+
+      ExtensionPointImpl.CHECK_CANCELED.run();
+
+      instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
+      initComponent(instance);
+      myComponentInstance = instance;
+    }
+    catch (ProcessCanceledException | ExtensionNotApplicableException e) {
+      throw e;
+    }
+    catch (Throwable t) {
+      PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
+      throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
+    }
+
+    if (instance instanceof PluginAware) {
+      PluginAware pluginAware = (PluginAware)instance;
+      pluginAware.setPluginDescriptor(myPluginDescriptor);
+    }
+    return instance;
+  }
+
+  protected void initComponent(@NotNull Object instance) {
   }
 
   @Override
@@ -114,7 +100,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public LoadingOrder getOrder() {
+  public final LoadingOrder getOrder() {
     return myOrder;
   }
 
@@ -123,11 +109,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myOrderId;
   }
 
-  public PluginId getPluginName() {
-    return myPluginDescriptor.getPluginId();
-  }
-
-  public PluginDescriptor getPluginDescriptor() {
+  @Nullable
+  public final PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 
@@ -162,8 +145,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myNotificationSent;
   }
 
-  void setNotificationSent(boolean notificationSent) {
-    myNotificationSent = notificationSent;
+  void setNotificationSent() {
+    myNotificationSent = true;
   }
 
   @Override

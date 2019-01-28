@@ -26,7 +26,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
- * @since 03/02/2011
  */
 public class TextChangesStorageTest {
 

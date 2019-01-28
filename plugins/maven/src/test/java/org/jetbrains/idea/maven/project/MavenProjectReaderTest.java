@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,12 +26,12 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -504,7 +503,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     parentFile.getParentFile().mkdirs();
     FileUtil.writeToFile(parentFile, createPomXml("<groupId>test</groupId>" +
                                                   "<artifactId>parent</artifactId>" +
-                                                  "<version>1</version>").getBytes());
+                                                  "<version>1</version>").getBytes(StandardCharsets.UTF_8));
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>not-a-project</artifactId>" +
@@ -671,7 +670,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                                       "<properties>" +
                                       "  <prop>value</prop>" +
-                                      "</properties>").getBytes());
+                                      "</properties>").getBytes(StandardCharsets.UTF_8));
 
     VirtualFile module = createModulePom("module",
                                          "<parent>" +
@@ -776,7 +775,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                                       "<properties>" +
                                       "  <prop>value</prop>" +
-                                      "</properties>").getBytes());
+                                      "</properties>").getBytes(StandardCharsets.UTF_8));
 
     createProjectPom("<parent>" +
                      "  <groupId>org.test</groupId>" +

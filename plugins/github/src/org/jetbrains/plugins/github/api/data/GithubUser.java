@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
 
+import java.util.Objects;
+
 //https://developer.github.com/v3/users/
 //region GithubUser
 /*
@@ -65,5 +67,18 @@ public class GithubUser {
     GithubUser user = new GithubUser();
     user.login = "ghost";
     return user;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GithubUser)) return false;
+    GithubUser user = (GithubUser)o;
+    return id.equals(user.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }

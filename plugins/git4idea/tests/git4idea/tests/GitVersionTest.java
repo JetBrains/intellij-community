@@ -44,7 +44,8 @@ public class GitVersionTest {
     new TestGitVersion("git version 1.6.4.msysgit.0", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3.msysgit.1", 1, 7, 3, 3),
     new TestGitVersion("git version 1.7.3.2.msysgit", 1, 7, 3, 2),
-    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5)
+    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5),
+    new TestGitVersion("git version 2.19.1.windows.1", 2, 19, 1, 0),
   };
 
   /**

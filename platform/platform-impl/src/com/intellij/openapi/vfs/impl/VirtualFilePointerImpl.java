@@ -107,13 +107,14 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   @Override
   public String toString() {
-    return isDisposed() ? "" : myNode.myFileAndUrl.second;
+    FilePointerPartNode node = myNode;
+    return node == null ? "(disposed)" : node.myFileAndUrl.second;
   }
 
   public void dispose() {
     checkDisposed();
     if (myNode.incrementUsageCount(-1) == 0) {
-      kill("URL when die: "+ toString());
+      kill("URL when die: " + this);
       VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       if (pointerManager instanceof VirtualFilePointerManagerImpl) {
         ((VirtualFilePointerManagerImpl)pointerManager).removeNodeFrom(this);

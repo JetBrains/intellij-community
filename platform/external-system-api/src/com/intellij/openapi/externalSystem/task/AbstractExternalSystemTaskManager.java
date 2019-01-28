@@ -12,7 +12,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/19/13
  *
  * @deprecated use {@link ExternalSystemTaskManager} interface
  */

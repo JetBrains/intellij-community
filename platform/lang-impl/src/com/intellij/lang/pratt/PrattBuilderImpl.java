@@ -141,7 +141,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void error(final String errorText) {
+  public void error(@NotNull final String errorText) {
     final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
     marker.drop();

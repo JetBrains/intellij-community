@@ -5,16 +5,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.visible.VisiblePack
 
 fun LinearGraph.findAncestorNode(startNodeId: Int, condition: (Int) -> Boolean): Int? {
   val resultNodeId = Ref<Int>()
 
-  val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(this))
-  reachableNodes.walk(setOf(startNodeId), true) { currentNodeId ->
+  DfsWalk(setOf(startNodeId), this).walk(true) { currentNodeId: Int ->
     if (condition(currentNodeId)) {
       resultNodeId.set(currentNodeId)
       false // stop walk, we have found it
@@ -31,7 +29,7 @@ fun findVisibleAncestorRow(commitId: Int, visiblePack: VisiblePack): Int? {
   val dataPack = visiblePack.dataPack
   val visibleGraph = visiblePack.visibleGraph
   if (dataPack is DataPack && dataPack.permanentGraph is PermanentGraphInfo<*> && visibleGraph is VisibleGraphImpl) {
-    return findVisibleAncestorRow(commitId, visibleGraph.linearGraph, dataPack.permanentGraph as PermanentGraphInfo<Int>) { _ -> true }
+    return findVisibleAncestorRow(commitId, visibleGraph.linearGraph, dataPack.permanentGraph as PermanentGraphInfo<Int>) { true }
   }
   return null
 }

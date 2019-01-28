@@ -13,7 +13,7 @@ import java.util.function.IntSupplier;
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl<T> & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
   MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
@@ -72,7 +72,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl<T> & IntSupp
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static class Node<T extends RangeMarkerWithGetterImpl<T> & IntSupplier> extends HardReferencingRangeMarkerTree.Node<T> {
+  static class Node<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree.Node<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,

@@ -190,7 +190,7 @@ public class JavaParserUtil {
     final PsiBuilder.Marker root = builder.mark();
     wrapper.parse(builder);
     if (!builder.eof()) {
-      if (!eatAll) throw new AssertionError("Unexpected tokens");
+      if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
       final PsiBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
       extras.error(JavaErrorMessages.message("unexpected.tokens"));
@@ -213,11 +213,11 @@ public class JavaParserUtil {
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages
-  public static void error(final PsiBuilder builder, final String message) {
+  public static void error(final PsiBuilder builder, @NotNull String message) {
     builder.mark().error(message);
   }
 
-  public static void error(final PsiBuilder builder, final String message, @Nullable final PsiBuilder.Marker before) {
+  public static void error(final PsiBuilder builder, @NotNull String message, @Nullable final PsiBuilder.Marker before) {
     if (before == null) {
       error(builder, message);
     }

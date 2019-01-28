@@ -19,33 +19,42 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class UnusedLibraryInspectionTest extends InspectionTestCase {
+
+  private final DefaultLightProjectDescriptor myProjectDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      PsiTestUtil.addProjectLibrary(model, "JUnit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+      if (getTestName(true).endsWith("Runtime")) {
+        for (OrderEntry entry : model.getOrderEntries()) {
+          if (entry instanceof LibraryOrderEntry && "JUnit".equals(((LibraryOrderEntry)entry).getLibraryName())) {
+            ((LibraryOrderEntry)entry).setScope(DependencyScope.RUNTIME);
+          }
+        }
+      }
+    }
+  };
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedLibrary";
   }
 
+  @NotNull
   @Override
-  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
-    super.setupRootModel(testDir, sourceDir, sdkName);
-    PsiTestUtil.addProjectLibrary(getModule(), "JUnit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
-    if (getTestName(true).endsWith("Runtime")) {
-      for (OrderEntry entry : ModuleRootManager.getInstance(getModule()).getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry && "JUnit".equals(((LibraryOrderEntry)entry).getLibraryName())) {
-          ((LibraryOrderEntry)entry).setScope(DependencyScope.RUNTIME);
-        }
-      }
-    }
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return myProjectDescriptor;
   }
 
   private void doTest() {

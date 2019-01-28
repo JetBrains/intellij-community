@@ -44,8 +44,17 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   @Override
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
                                 @NotNull SettingsType settingsType) {
+    customizeXml(consumer, settingsType);
+  }
+
+  static void customizeXml(@NotNull CodeStyleSettingsCustomizable consumer,
+                                   @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING");
+    }
+    if (settingsType == SettingsType.COMMENTER_SETTINGS) {
+      consumer.showStandardOptions(CodeStyleSettingsCustomizable.CommenterOption.LINE_COMMENT_AT_FIRST_COLUMN.name(),
+                                   CodeStyleSettingsCustomizable.CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name());
     }
   }
 

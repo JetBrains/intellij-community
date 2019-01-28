@@ -7,11 +7,21 @@ import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
 interface StreamProvider {
+  /**
+   * Whether is enabled.
+   */
   val enabled: Boolean
     get() = true
 
+  /**
+   * Whether is exclusive and cannot be used alongside another provider.
+   *
+   * Doesn't imply [enabled], callers should check [enabled] also if need.
+   */
+  val isExclusive: Boolean
+
   val isDisableExportAction: Boolean
-    get() = enabled
+    get() = enabled && isExclusive
 
   /**
    * Called only on `write`

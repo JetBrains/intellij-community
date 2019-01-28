@@ -30,7 +30,7 @@ import java.util.Arrays;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 
-public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider {
+public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider, CompositeIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
@@ -125,8 +125,14 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements D
     setIcon(icon, layer, 0, 0);
   }
 
+  @Override
   public Icon getIcon(int layer) {
     return myIcons[layer];
+  }
+
+  @Override
+  public int getIconCount() {
+    return myIcons.length;
   }
 
   @NotNull

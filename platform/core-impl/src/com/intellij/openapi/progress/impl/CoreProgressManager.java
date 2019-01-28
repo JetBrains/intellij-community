@@ -226,7 +226,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }, null);
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable t = exception.get();
     if (t != null) {
       ExceptionUtil.rethrowUnchecked(t);

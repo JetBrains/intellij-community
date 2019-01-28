@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 class GroovyVersionAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    element as? GroovyPsiElement ?: return
+    if (element !is GroovyPsiElement) return
     val config = GroovyConfigUtils.getInstance()
     val version = config.getSDKVersion(element)
     if (version == NO_VERSION) return

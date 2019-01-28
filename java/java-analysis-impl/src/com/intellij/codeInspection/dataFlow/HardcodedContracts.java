@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -90,24 +91,22 @@ public class HardcodedContracts {
               (call, cnt) -> getSubstringContracts(cnt == 2))
     .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
               ContractProvider.of(SpecialField.STRING_LENGTH.getEmptyContracts()))
-    .register(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
+    .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
+                    instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0)),
               ContractProvider.of(SpecialField.COLLECTION_SIZE.getEmptyContracts()))
-    .register(instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0),
-              ContractProvider.of(SpecialField.MAP_SIZE.getEmptyContracts()))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
               ContractProvider.of(SpecialField.STRING_LENGTH.getEqualsContracts()))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "equals").parameterTypes(JAVA_LANG_OBJECT),
-                    instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT)),
+                    instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT),
+                    instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT)),
               ContractProvider.of(SpecialField.COLLECTION_SIZE.getEqualsContracts()))
-    .register(instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT),
-              ContractProvider.of(SpecialField.MAP_SIZE.getEqualsContracts()))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
     .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
               ContractProvider.of(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
               ContractProvider.of(nonnegativeArgumentContract(0),
                                   specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
@@ -153,7 +152,8 @@ public class HardcodedContracts {
                                         returnTrue()),
                 new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
                 new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
-              ));
+              ))
+    .register(enumValues(), ContractProvider.of(new StandardMethodContract(new ValueConstraint[0], returnNew())));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -196,11 +196,14 @@ public class HardcodedContracts {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
-      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
+      if (OptionalUtil.OPTIONAL_GET.methodMatches(method) || "orElseThrow".equals(methodName)) {
+        return Collections.singletonList(optionalAbsentContract(fail()));
       }
-      else if ("isPresent".equals(methodName)) {
+      else if ("isPresent".equals(methodName) && paramCount == 0) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
+      }
+      else if ("isEmpty".equals(methodName) && paramCount == 0) {
+        return Arrays.asList(optionalAbsentContract(returnTrue()), trivialContract(returnFalse()));
       }
     }
     else if (MethodUtils.isEquals(method)) {
@@ -224,7 +227,8 @@ public class HardcodedContracts {
   }
 
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
-    return singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
+    return singleConditionContract(ContractValue.qualifier().specialField(SpecialField.OPTIONAL_VALUE), RelationType.EQ,
+                                   ContractValue.nullValue(), returnValue);
   }
 
   static MethodContract nonnegativeArgumentContract(int argNumber) {

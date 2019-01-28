@@ -20,5 +20,7 @@
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="xml-resolver" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>

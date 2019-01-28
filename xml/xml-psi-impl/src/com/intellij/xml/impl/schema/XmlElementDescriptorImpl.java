@@ -17,14 +17,17 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.*;
-import com.intellij.xml.util.XmlEnumeratedValueReference;
+import com.intellij.xml.util.XmlEnumeratedReferenceSet;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -559,9 +562,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
     XmlTagValue value = xmlTag.getValue();
     XmlText[] elements = value.getTextElements();
     if (elements.length == 0 || xmlTag.getSubTags().length > 0) return PsiReference.EMPTY_ARRAY;
-    return new PsiReference[] {
-      new XmlEnumeratedValueReference(xmlTag, this, ElementManipulators.getValueTextRange(xmlTag))
-    };
+    return new XmlEnumeratedReferenceSet(xmlTag, this).getPsiReferences();
   }
 
   @Override

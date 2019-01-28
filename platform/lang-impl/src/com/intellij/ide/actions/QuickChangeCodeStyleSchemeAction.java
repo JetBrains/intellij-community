@@ -41,7 +41,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           manager.USE_PER_PROJECT_SETTINGS = true;
-          //noinspection deprecation
           CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null);
         }
       });
@@ -69,7 +68,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
         CodeStyleSchemes.getInstance().setCurrentScheme(scheme);
         manager.USE_PER_PROJECT_SETTINGS = false;
         manager.PREFERRED_PROJECT_CODE_STYLE = scheme.getName();
-        //noinspection deprecation
         CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null);
       }
     });

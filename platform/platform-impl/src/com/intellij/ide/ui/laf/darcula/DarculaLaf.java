@@ -9,9 +9,7 @@ import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -44,13 +42,14 @@ import java.util.Properties;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaLaf extends BasicLookAndFeel {
+public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private static final Object SYSTEM = new Object();
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
 
   protected Disposable myDisposable;
   private Alarm myMnemonicAlarm;
+  private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
 
   public DarculaLaf() {}
@@ -81,7 +80,17 @@ public class DarculaLaf extends BasicLookAndFeel {
     }
   }
 
-  @SuppressWarnings("UnusedParameters")
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserData.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserData.putUserData(key, value);
+  }
+
   protected static void log(Exception e) {
 //    everything is gonna be alright
     e.printStackTrace();
@@ -174,7 +183,6 @@ public class DarculaLaf extends BasicLookAndFeel {
     defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
     URL url = getClass().getResource(getPrefix() + (JBUI.isUsrHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
@@ -264,7 +272,6 @@ public class DarculaLaf extends BasicLookAndFeel {
     }));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   protected void loadDefaults(UIDefaults defaults) {
     Properties properties = new Properties();
     try {

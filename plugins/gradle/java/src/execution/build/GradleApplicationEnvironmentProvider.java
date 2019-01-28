@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.task.ExecuteRunConfigurationTask;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +48,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
  *
  * @author Vladislav.Soroka
- * @since 6/21/2016
  */
 public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvironmentProvider {
 
@@ -163,11 +162,12 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       // @formatter:on
 
       gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName);
 
       // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
-      gradleRunConfiguration.setBeforeRunTasks(RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
-                                                .filter(task -> task.getProviderId() != CompileStepBeforeRun.ID)
-                                                .collect(Collectors.toList()));
+      gradleRunConfiguration.setBeforeRunTasks(ContainerUtil.filter(
+        RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration),
+        task -> task.getProviderId() != CompileStepBeforeRun.ID));
       return environment;
     }
     else {

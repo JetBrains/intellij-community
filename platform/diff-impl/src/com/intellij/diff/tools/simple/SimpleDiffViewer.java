@@ -54,7 +54,6 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
@@ -406,6 +405,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Misc
   //
 
+  boolean isDiffForLocalChanges() {
+    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
@@ -531,7 +535,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final Side side = assertNotNull(Side.fromValue(getEditors(), editor));
+      final Side side = Side.fromValue(getEditors(), editor);
+      if (side == null) return;
+
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
@@ -591,6 +597,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return "Revert";
       return "Accept";
     }
 

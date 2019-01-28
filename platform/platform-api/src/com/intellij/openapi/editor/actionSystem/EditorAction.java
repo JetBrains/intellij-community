@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -16,11 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
-public abstract class EditorAction extends AnAction implements DumbAware {
+public abstract class EditorAction extends AnAction implements DumbAware, UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
@@ -48,9 +49,9 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
       final String id = ActionManager.getInstance().getId(this);
-      EditorActionHandlerBean[] extensions = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME);
-      for (int i = extensions.length - 1; i >= 0; i--) {
-        final EditorActionHandlerBean handlerBean = extensions[i];
+      List<EditorActionHandlerBean> extensions = EditorActionHandlerBean.EP_NAME.getExtensionList();
+      for (int i = extensions.size() - 1; i >= 0; i--) {
+        final EditorActionHandlerBean handlerBean = extensions.get(i);
         if (handlerBean.action.equals(id)) {
           myHandler = handlerBean.getHandler(myHandler);
           myHandler.setWorksInInjected(isInInjectedContext());
@@ -121,6 +122,21 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    if (isInInjectedContext()) {
+      Editor editor = CommonDataKeys.HOST_EDITOR.getData(e.getDataContext());
+      if (editor != null) {
+        for (Caret caret : editor.getCaretModel().getAllCarets()) {
+          if (EditorActionHandler.ensureInjectionUpToDate(caret)) {
+            break;
+          }
+        }
+      }
+    }
+    super.beforeActionPerformedUpdate(e);
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
@@ -149,17 +165,14 @@ public abstract class EditorAction extends AnAction implements DumbAware {
       return new DialogAwareDataContext(original);
     }
 
-    return new DataContext() {
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (PROJECT.is(dataId)) {
-          final Project project = editor.getProject();
-          if (project != null) {
-            return project;
-          }
+    return dataId -> {
+      if (PROJECT.is(dataId)) {
+        final Project project = editor.getProject();
+        if (project != null) {
+          return project;
         }
-        return original.getData(dataId);
       }
+      return original.getData(dataId);
     };
   }
 }

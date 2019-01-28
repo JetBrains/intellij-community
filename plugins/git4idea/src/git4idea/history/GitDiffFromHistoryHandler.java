@@ -103,10 +103,15 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     throws VcsException {
     GitRepository repository = getRepository(path);
     String hash1 = rev1.getHash();
-    String hash2 = rev2 != null ? rev2.getHash() : null;
 
-    return ContainerUtil
-      .newArrayList(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2, Collections.singletonList(path)));
+    if (rev2 == null) {
+      return ContainerUtil.newArrayList(GitChangeUtils.getDiffWithWorkingDir(myProject, repository.getRoot(), hash1,
+                                                                             Collections.singleton(path), false));
+    }
+
+    String hash2 = rev2.getHash();
+    return ContainerUtil.newArrayList(GitChangeUtils.getDiff(myProject, repository.getRoot(), hash1, hash2,
+                                                             Collections.singletonList(path)));
   }
 
   @NotNull
@@ -171,7 +176,8 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     new Task.Backgroundable(myProject, "Loading changes...", true) {
       private MergeCommitPreCheckInfo myInfo;
 
-      @Override public void run(@NotNull ProgressIndicator indicator) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         try {
           GitRepository repository = getRepository(filePath);
           boolean fileTouched = wasFileTouched(repository, rev);
@@ -268,7 +274,9 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   }
 
   @NotNull
-  private ActionGroup createActionGroup(@NotNull GitFileRevision rev, @NotNull FilePath filePath, @NotNull Collection<GitFileRevision> parents) {
+  private ActionGroup createActionGroup(@NotNull GitFileRevision rev,
+                                        @NotNull FilePath filePath,
+                                        @NotNull Collection<GitFileRevision> parents) {
     Collection<AnAction> actions = new ArrayList<>(2);
     for (GitFileRevision parent : parents) {
       actions.add(createParentAction(rev, filePath, parent));
@@ -341,6 +349,5 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     public void actionPerformed(@NotNull AnActionEvent e) {
       doShowDiff(myFilePath, myParentRevision, myRevision);
     }
-
   }
 }

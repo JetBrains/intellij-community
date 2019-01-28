@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/1/11 1:30 PM
  */
 public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
 
@@ -22,6 +21,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @Nullable private String myDescription;
   private String myGroup;
   private String myVersion;
+  private String myIdeGrouping;
 
   @Deprecated
   public ProjectData(@NotNull ProjectSystemId owner,
@@ -61,6 +61,15 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
   @NotNull
   public String getLinkedExternalProjectPath() {
     return myLinkedExternalProjectPath;
+  }
+
+  @Nullable
+  public String getIdeGrouping() {
+    return myIdeGrouping;
+  }
+
+  public void setIdeGrouping(@Nullable String ideGrouping) {
+    myIdeGrouping = ideGrouping;
   }
 
   @Override

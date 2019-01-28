@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,15 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
 
   @Override
   public void tearDown() throws Exception {
-    PropertiesComponent.getInstance().setValue(getAnonymousPropertyName(), myShowAnonymousByDefault);
-    super.tearDown();
+    try {
+      PropertiesComponent.getInstance().setValue(getAnonymousPropertyName(), myShowAnonymousByDefault);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static String getAnonymousPropertyName() {

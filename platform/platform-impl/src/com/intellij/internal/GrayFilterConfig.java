@@ -31,7 +31,6 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
 
-  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   private final Object[][] data = new Object[3][2];
 
   private void setData() {
@@ -69,7 +68,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     };
 
     table.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
-      JTextField component = new JTextField();
+      final JTextField component = new JTextField();
 
       @Override
       public Object getCellEditorValue() {

@@ -5,6 +5,8 @@ import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
@@ -125,5 +127,47 @@ public class PluginManagerConfigurableProxy
   @Override
   public void disposeUIResources() {
     myConfigurable.disposeUIResources();
+  }
+
+  public void select(@NotNull IdeaPluginDescriptor... descriptors) {
+    if (myConfigurable instanceof PluginManagerConfigurableNew) {
+      ((PluginManagerConfigurableNew)myConfigurable).select(descriptors);
+    }
+    else {
+      ((PluginManagerConfigurable)myConfigurable).select(descriptors);
+    }
+  }
+
+  public void enable(@NotNull IdeaPluginDescriptor... descriptors) {
+    if (myConfigurable instanceof PluginManagerConfigurableNew) {
+      ((PluginManagerConfigurableNew)myConfigurable).getPluginsModel().changeEnableDisable(descriptors, true);
+    }
+    else {
+      ((InstalledPluginsTableModel)((PluginManagerConfigurable)myConfigurable).getOrCreatePanel().getPluginsModel())
+        .enableRows(descriptors, Boolean.TRUE);
+    }
+  }
+
+  public static void showPluginConfigurableAndEnable(@Nullable Project project, @NotNull IdeaPluginDescriptor... descriptors) {
+    PluginManagerConfigurableProxy configurable = new PluginManagerConfigurableProxy();
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      configurable.enable(descriptors);
+      configurable.select(descriptors);
+    });
+  }
+
+  public static void showPluginConfigurable(@Nullable Component parent,
+                                            @Nullable Project project,
+                                            @NotNull IdeaPluginDescriptor... descriptors) {
+    PluginManagerConfigurableProxy configurable = new PluginManagerConfigurableProxy();
+    Runnable init = () -> configurable.select(descriptors);
+    ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+
+    if (parent != null) {
+      util.editConfigurable(parent, configurable, init);
+    }
+    else {
+      util.editConfigurable(project, configurable, init);
+    }
   }
 }

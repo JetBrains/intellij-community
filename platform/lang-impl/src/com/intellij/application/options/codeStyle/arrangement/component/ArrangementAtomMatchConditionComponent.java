@@ -48,7 +48,6 @@ import java.util.Set;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/8/12 10:06 AM
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
@@ -419,7 +418,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return -1;
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setListener(@NotNull Listener listener) {
     myListener = listener;

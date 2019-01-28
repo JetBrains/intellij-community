@@ -32,7 +32,7 @@ import javax.swing.*;
 public class JsonSchemaFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final JsonSchemaFileType INSTANCE = new JsonSchemaFileType();
 
-  public JsonSchemaFileType() {
+  private JsonSchemaFileType() {
     super(JsonLanguage.INSTANCE);
   }
 

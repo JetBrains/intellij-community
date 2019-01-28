@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.initialization;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -42,6 +43,12 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiCodeBlock.class) != null &&
+           super.isAvailable(project, editor, element);
+  }
+
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiField field = (PsiField)element.getParent();
     final PsiExpression initializer = field.getInitializer();
@@ -66,9 +73,6 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
       if (initializerIsStatic == fieldIsStatic) {
         Predicate<PsiReference> usedBeforeInitializer = ref -> {
           PsiElement refElement = ref.getElement();
-          if (refElement == null) {
-            return true;
-          }
           TextRange textRange = refElement.getTextRange();
           return textRange == null || textRange.getStartOffset() < initializerOffset;
         };
@@ -80,7 +84,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     }
     final PsiManager manager = field.getManager();
     final Project project = manager.getProject();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (classInitializer == null) {
       if (PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesForward(field), JavaTokenType.COMMA)) {
         field.normalizeDeclaration();

@@ -185,7 +185,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             myT = myVcs.getInfo(virtualToIoFile(dir));
           }
         }.compute();
-        if (info1 == null || info1.getRepositoryUUID() == null) {
+        if (info1 == null || info1.getRepositoryId() == null) {
           // go deeper if current parent was added (if parent was added, it theoretically could NOT know its repo UUID)
           final VirtualFile parent = dir.getParent();
           if (parent == null) {
@@ -195,7 +195,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
             return getRepositoryUUID(project, parent);
           }
         } else {
-          return info1.getRepositoryUUID();
+          return info1.getRepositoryId();
         }
       }
       catch (VcsException e) {
@@ -291,7 +291,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, Status srcStatus) throws VcsException {
-    if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
+    if (srcStatus != null && srcStatus.getCopyFromUrl() == null) {
       undo = false;
     }
     if (undo) {
@@ -557,8 +557,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     final File targetFile = new File(ioDir, name);
     Status status = getFileStatus(vcs, targetFile);
 
-    if (status == null || status.getContentsStatus() == StatusType.STATUS_NONE ||
-        status.getContentsStatus() == StatusType.STATUS_UNVERSIONED) {
+    if (status == null || status.is(StatusType.STATUS_NONE, StatusType.STATUS_UNVERSIONED)) {
       myAddedFiles.putValue(vcs.getProject(), new AddedFileInfo(dir, name, null, recursive));
       return false;
     }
@@ -566,7 +565,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       return false;
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
-      NodeKind kind = status.getKind();
+      NodeKind kind = status.getNodeKind();
       // kind differs.
       if (directory && !kind.isDirectory() || !directory && !kind.isFile()) {
         return false;
@@ -740,8 +739,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   private static Runnable createAdditionRunnable(final Project project,
                                final SvnVcs vcs,
                                final Map<VirtualFile, File> copyFromMap,
-                               final Collection<VirtualFile> filesToProcess,
-                               final List<VcsException> exceptions) {
+                               final Collection<? extends VirtualFile> filesToProcess,
+                               final List<? super VcsException> exceptions) {
     return () -> {
       for (VirtualFile file : filesToProcess) {
         final File ioFile = virtualToIoFile(file);
@@ -809,9 +808,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private void fillAddedFiles(Project project,
                               SvnVcs vcs,
-                              List<VirtualFile> addedVFiles,
+                              List<? super VirtualFile> addedVFiles,
                               Map<VirtualFile, File> copyFromMap,
-                              Set<VirtualFile> recursiveItems) {
+                              Set<? super VirtualFile> recursiveItems) {
     final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.remove(project);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
@@ -880,8 +879,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
 
   private static Runnable createDeleteRunnable(final Project project,
                                         final SvnVcs vcs,
-                                        final Collection<FilePath> filesToProcess,
-                                        final List<VcsException> exceptions) {
+                                        final Collection<? extends FilePath> filesToProcess,
+                                        final List<? super VcsException> exceptions) {
     return () -> {
       for (FilePath file : filesToProcess) {
         VirtualFile vFile = file.getVirtualFile();  // for deleted directories
@@ -903,10 +902,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     };
   }
 
-  private static Collection<FilePath> promptAboutDeletion(List<Pair<FilePath, WorkingCopyFormat>> deletedFiles,
-                                                   SvnVcs vcs,
-                                                   VcsShowConfirmationOption.Value value,
-                                                   AbstractVcsHelper vcsHelper) {
+  private static Collection<FilePath> promptAboutDeletion(List<? extends Pair<FilePath, WorkingCopyFormat>> deletedFiles,
+                                                          SvnVcs vcs,
+                                                          VcsShowConfirmationOption.Value value,
+                                                          AbstractVcsHelper vcsHelper) {
     Collection<FilePath> filesToProcess;
     if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       filesToProcess = map(deletedFiles, Functions.pairFirst());
@@ -929,7 +928,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     return filesToProcess;
   }
 
-  private void fillDeletedFiles(Project project, List<Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<FilePath> deleteAnyway)
+  private void fillDeletedFiles(Project project, List<? super Pair<FilePath, WorkingCopyFormat>> deletedFiles, Collection<? super FilePath> deleteAnyway)
     throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final Collection<File> files = myDeletedFiles.remove(project);
@@ -942,7 +941,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       }.compute();
 
       final FilePath filePath = VcsUtil.getFilePath(file);
-      if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+      if (status.is(StatusType.STATUS_ADDED)) {
         deleteAnyway.add(filePath);
       } else {
         deletedFiles.add(Pair.create(filePath, vcs.getWorkingCopyFormat(file)));

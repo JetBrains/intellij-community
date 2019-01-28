@@ -34,7 +34,6 @@ import java.util.List;
  * Holds javadoc-specific navigation logic.
  * 
  * @author Denis Zhdanov
- * @since 5/26/11 5:22 PM
  */
 public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
 

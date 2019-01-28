@@ -34,6 +34,7 @@ import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -499,7 +500,7 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static JVMElementFactory getFactory(@NotNull Project p, @Nullable PsiElement target) {
-    return target == null ? JavaPsiFacade.getInstance(p).getElementFactory() : JVMElementFactories.requireFactory(target.getLanguage(), p);
+    return target == null ? JavaPsiFacade.getElementFactory(p) : JVMElementFactories.requireFactory(target.getLanguage(), p);
   }
 
   private static boolean isBaseNameGenerated(@NotNull JavaCodeStyleManager csManager, @NotNull PsiType parameterType, @NotNull String paramName) {
@@ -535,6 +536,9 @@ public class GenerateMembersUtil {
     }
   }
 
+  /**
+   * May add @Override, body according to the override template and align throws list according to the super method
+   */
   public static void setupGeneratedMethod(PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     PsiClass base = containingClass == null ? null : containingClass.getSuperClass();
@@ -555,6 +559,21 @@ public class GenerateMembersUtil {
         CreateFromUsageUtils.setupMethodBody(method, containingClass);
       }
       return;
+    }
+
+    PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(base, containingClass, PsiSubstitutor.EMPTY);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    String throwsList =
+      Arrays.stream(overridden.getThrowsList().getReferencedTypes())
+        .map(classSubstitutor::substitute)
+        .filter(Objects::nonNull)
+        .map(type -> type.getCanonicalText())
+        .collect(Collectors.joining(", "));
+    if (throwsList.isEmpty()) {
+      method.getThrowsList().delete();
+    }
+    else {
+      method.getThrowsList().replace(factory.createMethodFromText("void m() throws " + throwsList + ";", method).getThrowsList());
     }
 
     if (emptyTemplate) {
@@ -662,9 +681,24 @@ public class GenerateMembersUtil {
                                              boolean ignoreInvalidTemplate,
                                              TemplatesManager templatesManager) {
     Project project = field.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String template = templatesManager.getDefaultTemplate().getTemplate();
-    String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), template, 0, false);
+    Function<String, String> calculateTemplateText = 
+      currentTemplate -> 
+        GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), currentTemplate, 0, false);
+    String methodText;
+    try {
+      methodText = calculateTemplateText.fun(template);
+    }
+    catch (GenerateCodeException e) {
+      if (ignoreInvalidTemplate) {
+        LOG.info(e);
+        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates()[0].getTemplate());
+      }
+      else {
+        throw e;
+      }
+    }
 
     boolean isGetter = templatesManager instanceof GetterTemplatesManager;
     PsiMethod result;

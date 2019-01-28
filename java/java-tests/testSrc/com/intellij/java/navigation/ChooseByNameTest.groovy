@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author peter
  */
@@ -402,7 +401,7 @@ class Intf {
 
     assert gotoFile("barindex") == [fooBarFile]
     assert gotoFile("fooindex") == [fooBarFile]
-    assert gotoFile("fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert gotoFile("fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
     assert gotoFile("fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
 
     // partial slashes
@@ -493,6 +492,30 @@ class Intf {
     def asb = myFixture.findClass('java.lang.AbstractStringBuilder')
     assert gotoClass('Str*Builder', true) == [sb, asb]
     assert gotoClass('java.Str*Builder', true) == [sb, asb]
+  }
+
+  void "test include overridden qualified name method matches"() {
+    def m1 = myFixture.addClass('interface HttpRequest { void start() {} }').methods[0]
+    def m2 = myFixture.addClass('interface Request extends HttpRequest { void start() {} }').methods[0]
+    assert gotoSymbol('Request.start') == [m1, m2]
+    assert gotoSymbol('start') == [m1] // works as usual for non-qualified patterns
+  }
+
+  void "test colon in search end"() {
+    def foo = myFixture.addClass('class Foo { }')
+    assert gotoClass('Foo:') == [foo]
+  }
+
+  void "test multi-word class name with only first letter of second word"() {
+    myFixture.addClass('class Foo { }')
+    def fooBar = myFixture.addClass('class FooBar { }')
+    assert gotoClass('Foo B') == [fooBar]
+  }
+
+  void "test prefer filename match regardless of package match"() {
+    def f1 = addEmptyFile('resolve/ResolveCache.java')
+    def f2 = addEmptyFile('abc/ResolveCacheSettings.xml')
+    assert gotoFile('resolvecache') == [f1, f2]
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {

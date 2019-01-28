@@ -26,6 +26,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JPanel myButtonsPanel;
   private JCheckBox myOptimizeImportsCb;
   private JCheckBox myRearrangeCodeCb;
+  private JCheckBox myApplyCodeCleanup;
   private JRadioButton myOnlyVCSChangedTextRb;
   private JRadioButton mySelectedTextRadioButton;
   private JRadioButton myWholeFileRadioButton;
@@ -105,6 +106,8 @@ public class LayoutCodeDialog extends DialogWrapper {
       myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
     }
 
+    myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
+
     myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
   }
 
@@ -125,6 +128,9 @@ public class LayoutCodeDialog extends DialogWrapper {
     }
     if (myRearrangeCodeCb.isEnabled()) {
       myLastRunOptions.saveRearrangeState(myFile.getLanguage(), myRunOptions.isRearrangeCode());
+    }
+    if (myApplyCodeCleanup.isEnabled()) {
+      myLastRunOptions.saveCodeCleanupState(myApplyCodeCleanup.isSelected());
     }
 
     if (!mySelectedTextRadioButton.isSelected() && myOnlyVCSChangedTextRb.isEnabled()) {
@@ -153,6 +159,11 @@ public class LayoutCodeDialog extends DialogWrapper {
       @Override
       public boolean isOptimizeImports() {
         return myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isSelected();
+      }
+
+      @Override
+      public boolean isCodeCleanup() {
+        return myApplyCodeCleanup.isEnabled() && myApplyCodeCleanup.isSelected();
       }
     };
   }

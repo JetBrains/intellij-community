@@ -42,6 +42,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int DEPRECATED_ANNOTATION = 0x80;
   private static final int ANONYMOUS_INNER = 0x100;
   private static final int LOCAL_CLASS_INNER = 0x200;
+  private static final int HAS_DOC_COMMENT = 0x400;
 
   private final String myQualifiedName;
   private final String myName;
@@ -125,6 +126,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
+  public boolean hasDocComment() {
+    return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
+  }
+
+  @Override
   public LanguageLevel getLanguageLevel() {
     StubElement parent = getParentStub();
     if (parent instanceof PsiJavaFileStub) {
@@ -163,7 +169,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                boolean isInQualifiedNew,
                                boolean hasDeprecatedAnnotation, 
                                boolean anonymousInner,
-                               boolean localClassInner
+                               boolean localClassInner,
+                               boolean hasDocComment
                                 ) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
@@ -176,6 +183,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
     if (anonymousInner) flags |= ANONYMOUS_INNER;
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
+    if (hasDocComment) flags |= HAS_DOC_COMMENT;
     return flags;
   }
 

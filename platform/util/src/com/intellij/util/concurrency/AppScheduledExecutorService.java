@@ -26,7 +26,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -38,8 +37,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
-  private Consumer<? super Thread> newThreadListener;
-  private final AtomicInteger counter = new AtomicInteger();
+  private final MyThreadFactory myCountingThreadFactory;
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
@@ -50,30 +48,38 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return Holder.INSTANCE;
   }
 
-  AppScheduledExecutorService(@NotNull final String name) {
-    super(new BackendThreadPoolExecutor(), new AppDelayQueue());
-    myName = name;
-    ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
+  private static class MyThreadFactory extends CountingThreadFactory {
+    private Consumer<? super Thread> newThreadListener;
 
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
+    @NotNull
+    @Override
+    public Thread newThread(@NotNull final Runnable r) {
+      Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
-        Consumer<? super Thread> listener = newThreadListener;
-        if (listener != null) {
-          listener.consume(thread);
-        }
-        return thread;
+      thread.setPriority(Thread.NORM_PRIORITY - 1);
+
+      Consumer<? super Thread> listener = newThreadListener;
+      if (listener != null) {
+        listener.consume(thread);
       }
-    });
+      return thread;
+    }
+
+    void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
+      if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
+      newThreadListener = threadListener;
+    }
+  }
+
+  AppScheduledExecutorService(@NotNull final String name) {
+    super(new BackendThreadPoolExecutor(new MyThreadFactory()), new AppDelayQueue());
+    myName = name;
+    myCountingThreadFactory = (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
   public void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
-    if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
-    newThreadListener = threadListener;
+    myCountingThreadFactory.setNewThreadListener(threadListener);
   }
 
   @NotNull
@@ -113,7 +119,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   @NotNull
   @TestOnly
   public String statistics() {
-    return myName + " threads created counter = " + counter;
+    return myName + " threads created counter = " + myCountingThreadFactory.counter;
   }
 
   @TestOnly
@@ -132,8 +138,8 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
-    BackendThreadPoolExecutor() {
-      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>());
+    BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
+      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), factory);
     }
 
     @Override
@@ -161,10 +167,6 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @NotNull
     private List<Runnable> doShutdownNow() {
       return super.shutdownNow();
-    }
-
-    private void doSetThreadFactory(@NotNull ThreadFactory threadFactory) {
-      super.setThreadFactory(threadFactory);
     }
 
     // stub out sensitive methods

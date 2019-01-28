@@ -16,84 +16,18 @@
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.actions.CommonCheckinFilesAction
-import com.intellij.openapi.vcs.actions.VcsContext
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
 import org.jetbrains.settingsRepository.ProjectId
 import org.jetbrains.settingsRepository.icsManager
-import org.jetbrains.settingsRepository.icsMessage
 import java.util.*
-
-class CommitToIcsAction : CommonCheckinFilesAction() {
-  class IcsBeforeCommitDialogHandler : CheckinHandlerFactory() {
-    override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-      return CheckinHandler.DUMMY
-    }
-
-    override fun createSystemReadyHandler(project: Project): BeforeCheckinDialogHandler? {
-      return BEFORE_CHECKIN_DIALOG_HANDLER
-    }
-
-    companion object {
-      private val BEFORE_CHECKIN_DIALOG_HANDLER = object : BeforeCheckinDialogHandler() {
-        override fun beforeCommitDialogShown(project: Project, changes: List<Change>, executors: Iterable<CommitExecutor>, showVcsCommit: Boolean): Boolean {
-          val collectConsumer = ProjectChangeCollectConsumer(project)
-          collectProjectChanges(changes, collectConsumer)
-          showDialog(project, collectConsumer, null)
-          return true
-        }
-      }
-    }
-  }
-
-  override fun getActionName(dataContext: VcsContext): String = icsMessage("action.CommitToIcs.text")
-
-  override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
-    val project = dataContext.project
-    return project is ProjectEx && project.stateStore.storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
-  }
-
-  override fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> = roots
-
-  override fun performCheckIn(context: VcsContext, project: Project, roots: Array<out FilePath>) {
-    val projectId = getProjectId(project) ?: return
-    val changes = context.selectedChanges
-    val collectConsumer = ProjectChangeCollectConsumer(project)
-    if (changes != null && changes.isNotEmpty()) {
-      for (change in changes) {
-        collectConsumer.consume(change)
-      }
-    }
-    else {
-      val manager = ChangeListManager.getInstance(project)
-      for (path in getRoots(context)) {
-        collectProjectChanges(manager.getChangesIn(path), collectConsumer)
-      }
-    }
-
-    showDialog(project, collectConsumer, projectId)
-  }
-}
 
 private class ProjectChangeCollectConsumer(private val project: Project) {
   private var projectChanges: MutableList<Change>? = null

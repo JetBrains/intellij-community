@@ -278,7 +278,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
 
   @Override
-  @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(myProject);
     if (extension.isDefault() != myLanguageLevelCombo.isDefault() ||

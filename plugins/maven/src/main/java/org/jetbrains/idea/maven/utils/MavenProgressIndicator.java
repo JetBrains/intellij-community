@@ -58,6 +58,7 @@ public class MavenProgressIndicator {
   }
 
   public synchronized void setFraction(double fraction) {
+    myIndicator.setIndeterminate(false);
     myIndicator.setFraction(fraction);
   }
 

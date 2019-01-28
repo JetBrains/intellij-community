@@ -24,12 +24,12 @@ import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   private final IssueLinkRenderer myRenderer;
-  private final List<CommittedChangeListDecorator> myDecorators;
+  private final List<? extends CommittedChangeListDecorator> myDecorators;
   private final Project myProject;
   private int myDateWidth;
   private int myFontSize;
 
-  public CommittedChangeListRenderer(final Project project, final List<CommittedChangeListDecorator> decorators) {
+  public CommittedChangeListRenderer(final Project project, final List<? extends CommittedChangeListDecorator> decorators) {
     myProject = project;
     myRenderer = new IssueLinkRenderer(project, this);
     myDecorators = decorators;

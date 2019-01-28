@@ -29,10 +29,9 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.Gray;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.reference.SoftReference;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -51,8 +50,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.icons.AllIcons.Process.*;
 
@@ -61,7 +61,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
-  private final AnimatedIcon myProgressIcon;
+  private final AsyncProcessIcon myProgressIcon;
 
   private final List<ProgressIndicatorEx> myOriginals = new ArrayList<>();
   private final List<TaskInfo> myInfos = new ArrayList<>();
@@ -73,11 +73,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private boolean myShouldClosePopupAndOnProcessFinish;
 
-  private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final AnimatedIcon myRefreshIcon;
+  private final JLabel myRefreshIcon = new JLabel(new AnimatedIcon.FS());
 
   private String myCurrentRequestor;
   private boolean myDisposed;
+  private WeakReference<Balloon> myLastShownBalloon;
 
   private final Set<InlineProgressIndicator> myDirtyIndicators = ContainerUtil.newIdentityTroveSet();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
@@ -98,8 +98,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     setOpaque(false);
 
-    myRefreshIcon = new RefreshFileSystemIcon();
-    myRefreshIcon.setPaintPassiveIcon(false);
+    myRefreshIcon.setVisible(false);
 
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
@@ -494,19 +493,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void setRefreshVisible(final boolean visible) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      myRefreshAlarm.cancelAllRequests();
-      myRefreshAlarm.addRequest(() -> {
-        if (visible) {
-          myRefreshIcon.resume();
-        }
-        else {
-          myRefreshIcon.suspend();
-        }
-        myRefreshIcon.revalidate();
-        myRefreshIcon.repaint();
-      }, visible ? 100 : 300);
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
   }
 
   void setRefreshToolTipText(final String tooltip) {
@@ -521,6 +508,14 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       listener).createBalloon();
 
     SwingUtilities.invokeLater(() -> {
+      Balloon oldBalloon = SoftReference.dereference(myLastShownBalloon);
+      if (oldBalloon != null) {
+        balloon.setAnimationEnabled(false);
+        oldBalloon.setAnimationEnabled(false);
+        oldBalloon.hide();
+      }
+      myLastShownBalloon = new WeakReference<>(balloon);
+
       Component comp = this;
       if (comp.isShowing()) {
         int offset = comp.getHeight() / 2;

@@ -52,7 +52,7 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
   @Nullable
   @Override
   public String getElementTooltip(@NotNull PsiElement e) {
-    return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true);
+    return JsonSchemaDocumentationProvider.findSchemaAndGenerateDoc(e, null, true, null);
   }
 
   @NotNull

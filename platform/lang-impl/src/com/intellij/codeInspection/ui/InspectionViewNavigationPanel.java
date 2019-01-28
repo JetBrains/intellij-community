@@ -18,12 +18,9 @@ package com.intellij.codeInspection.ui;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 /**
@@ -70,11 +67,11 @@ public class InspectionViewNavigationPanel extends JPanel implements InspectionT
       myLinks.removeAll();
       myLinks.add(Box.createVerticalStrut(JBUI.scale(10)));
       for (int i = 0; i < currentChildrenCount; i++) {
-        final TreeNode child = myNode.getChildAt(i);
-        final LinkLabel link = new LinkLabel(child.toString(), null) {
+        final InspectionTreeNode child = myNode.getChildAt(i);
+        final LinkLabel link = new LinkLabel(child.getPresentableText(), null) {
           @Override
           public void doClick() {
-            TreeUtil.selectInTree((DefaultMutableTreeNode)child, true, myTree);
+            myTree.selectNode(child);
           }
         };
         link.setBorder(JBUI.Borders.empty(1, 17, 3, 1));

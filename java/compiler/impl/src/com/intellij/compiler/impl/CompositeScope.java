@@ -24,7 +24,7 @@ import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -35,18 +35,18 @@ import java.util.*;
 public class CompositeScope extends ExportableUserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<>();
 
-  public CompositeScope(CompileScope scope1, CompileScope scope2) {
+  public CompositeScope(@NotNull CompileScope scope1, @NotNull CompileScope scope2) {
     addScope(scope1);
     addScope(scope2);
   }
 
-  public CompositeScope(CompileScope[] scopes) {
+  public CompositeScope(@NotNull CompileScope[] scopes) {
     for (CompileScope scope : scopes) {
       addScope(scope);
     }
   }
 
-  private void addScope(CompileScope scope) {
+  private void addScope(@NotNull CompileScope scope) {
     if (scope instanceof CompositeScope) {
       final CompositeScope compositeScope = (CompositeScope)scope;
       for (CompileScope childScope : compositeScope.myScopes) {
@@ -68,11 +68,11 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
         ContainerUtil.addAll(allFiles, files);
       }
     }
-    return VfsUtil.toVirtualFileArray(allFiles);
+    return VfsUtilCore.toVirtualFileArray(allFiles);
   }
 
   @Override
-  public boolean belongs(String url) {
+  public boolean belongs(@NotNull String url) {
     for (CompileScope scope : myScopes) {
       if (scope.belongs(url)) {
         return true;
@@ -112,6 +112,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return super.getUserData(key);
   }
 
+  @NotNull
   public Collection<CompileScope> getScopes() {
     return Collections.unmodifiableList(myScopes);
   }

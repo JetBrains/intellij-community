@@ -702,20 +702,20 @@ final class NegationAnalysis {
           insnIndex = controlFlow.transitions[insnIndex][0];
           break;
         default:
-          switch (insnNode.getOpcode()) {
-            case IRETURN:
-              BasicValue returnValue = frame.pop();
-              if (branchValue) {
-                trueBranchValue = returnValue;
-              }
-              else {
-                falseBranchValue = returnValue;
-              }
-              return;
-            default:
-              checkAssertion(controlFlow.transitions[insnIndex].length == 1);
-              frame.execute(insnNode, interpreter);
-              insnIndex = controlFlow.transitions[insnIndex][0];
+          if (insnNode.getOpcode() == IRETURN) {
+            BasicValue returnValue = frame.pop();
+            if (branchValue) {
+              trueBranchValue = returnValue;
+            }
+            else {
+              falseBranchValue = returnValue;
+            }
+            return;
+          }
+          else {
+            checkAssertion(controlFlow.transitions[insnIndex].length == 1);
+            frame.execute(insnNode, interpreter);
+            insnIndex = controlFlow.transitions[insnIndex][0];
           }
       }
     }

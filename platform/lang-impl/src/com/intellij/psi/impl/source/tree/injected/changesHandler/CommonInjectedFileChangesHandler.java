@@ -17,7 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
-  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = ContainerUtil.newLinkedList();
+  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> myMarkers =
+    ContainerUtil.newLinkedList();
 
   public CommonInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                           Editor editor,
@@ -28,14 +29,12 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     int curOffset = -1;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
-      final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
-        shred.getRange().getStartOffset() + shred.getPrefix().length(),
-        shred.getRange().getEndOffset() - shred.getSuffix().length());
+      final RangeMarker rangeMarker = localRangeMarkerFromShred(shred);
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
-      Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
+      Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>> markers =
         Trinity.create(origMarker, rangeMarker, elementPointer);
       myMarkers.add(markers);
 
@@ -49,11 +48,18 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
     }
   }
 
+  @NotNull
+  protected RangeMarker localRangeMarkerFromShred(PsiLanguageInjectionHost.Shred shred) {
+    return myNewDocument.createRangeMarker(
+      shred.getRange().getStartOffset() + shred.getPrefix().length(),
+      shred.getRange().getEndOffset() - shred.getSuffix().length());
+  }
+
   @Override
   public boolean isValid() {
     boolean valid = myInjectedFile.isValid();
     if (valid) {
-      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> t : myMarkers) {
+      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>> t : myMarkers) {
         if (!t.first.isValid() || !t.second.isValid() || t.third.getElement() == null) {
           valid = false;
           break;
@@ -66,12 +72,8 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
   @Override
   public void commitToOriginal(@NotNull DocumentEvent e) {
     final String text = myNewDocument.getText();
-    final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>> map = ContainerUtil
-      .classify(myMarkers.iterator(),
-                o -> {
-                  final PsiElement element = o.third.getElement();
-                  return (PsiLanguageInjectionHost)element;
-                });
+    final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>>> map =
+      ContainerUtil.classify(myMarkers.iterator(), o -> o.third.getElement());
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     documentManager.commitDocument(myOrigDocument); // commit here and after each manipulator update
     int localInsideFileCursor = 0;
@@ -80,7 +82,7 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
       String hostText = host.getText();
       ProperTextRange insideHost = null;
       StringBuilder sb = new StringBuilder();
-      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> entry : map.get(host)) {
+      for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>> entry : map.get(host)) {
         RangeMarker origMarker = entry.first; // check for validity?
         int hostOffset = host.getTextRange().getStartOffset();
         ProperTextRange localInsideHost =
@@ -114,5 +116,9 @@ public class CommonInjectedFileChangesHandler extends BaseInjectedFileChangesHan
       return range.intersects(hostRange);
     }
     return false;
+  }
+
+  protected List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer<PsiLanguageInjectionHost>>> getMarkers() {
+    return myMarkers;
   }
 }

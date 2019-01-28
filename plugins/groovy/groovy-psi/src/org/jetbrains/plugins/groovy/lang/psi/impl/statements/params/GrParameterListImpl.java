@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -12,11 +13,15 @@ import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
@@ -24,7 +29,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements GrParameterList, StubBasedPsiElement<EmptyStub> {
+public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
+  implements GrParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl");
 
   public GrParameterListImpl(@NotNull ASTNode node) {
@@ -32,7 +39,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   }
 
   public GrParameterListImpl(EmptyStub stub) {
-    super(stub, GroovyElementTypes.PARAMETERS_LIST);
+    super(stub, GroovyEmptyStubElementTypes.PARAMETER_LIST);
   }
 
   @Override
@@ -40,6 +47,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     visitor.visitParameterList(this);
   }
 
+  @Override
   public String toString() {
     return "Parameter list";
   }
@@ -71,7 +79,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   @Override
   @NotNull
   public GrParameter[] getParameters() {
-    return getStubOrPsiChildren(GroovyElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyStubElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
   }
 
   @Override
@@ -161,5 +169,11 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
       }
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getParameters());
   }
 }

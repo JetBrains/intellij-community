@@ -16,11 +16,11 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -76,15 +76,20 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getName() {
-    return myNegated
-           ? InspectionGadgetsBundle.message("inequality.to.not.equals.quickfix")
-           : InspectionGadgetsBundle.message("equality.to.equals.quickfix");
+    return getFixName(myNegated);
+  }
+
+  @NotNull
+  public static String getFixName(boolean negated) {
+    return negated
+           ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!=", "!equals()")
+           : CommonQuickFixBundle.message("fix.replace.x.with.y", "==", "equals()");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message("equality.to.equals.quickfix");
+    return getFixName(false);
   }
 
   @Override

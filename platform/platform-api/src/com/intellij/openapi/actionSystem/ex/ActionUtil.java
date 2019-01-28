@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,7 +117,7 @@ public class ActionUtil {
     final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
     final long startTimeNs = System.nanoTime();
     final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
-    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs)) {
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs) / 1000000L < relaxMs)) {
       // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
       event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
       return;
@@ -130,7 +131,7 @@ public class ActionUtil {
 
     final float smoothAlpha = isSlow ? 0.8f : 0.3f;
     final float smoothCoAlpha = 1 - smoothAlpha;
-    final long spentMs = (finishUpdateNs - startTimeNs)/1000000l;
+    final long spentMs = (finishUpdateNs - startTimeNs) / 1000000L;
 
     ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
@@ -159,9 +160,10 @@ public class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String description = presentation.getText() + " action update (" + action.getClass() + ")";
-    if (insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started(description);
+    String presentationText = presentation.getText();
+    boolean edt = ApplicationManager.getApplication().isDispatchThread();
+    if (edt && insidePerformDumbAwareUpdate++ == 0) {
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {
@@ -180,8 +182,8 @@ public class ActionUtil {
       throw e1;
     }
     finally {
-      if (--insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(description);
+      if (edt && --insidePerformDumbAwareUpdate == 0) {
+        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
       }
       if (!allowed) {
         if (wasEnabledBefore == null) {
@@ -275,6 +277,11 @@ public class ActionUtil {
       runnable.run();
     }
   }
+  @NotNull
+  public static AnActionEvent createEmptyEvent() {
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
+  }
+
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {

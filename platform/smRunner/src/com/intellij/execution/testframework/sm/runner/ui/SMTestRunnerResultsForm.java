@@ -30,7 +30,6 @@ import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.IndexComparator;
@@ -97,8 +96,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private SMTRunnerTestTreeView myTreeView;
 
-  private TestsProgressAnimator myAnimator;
-
   /**
    * Fake parent suite for all tests and suites
    */
@@ -122,7 +119,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private volatile boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
-  private boolean myDisposed = false;
+  private volatile boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this); 
@@ -141,7 +138,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myProject = consoleProperties.getProject();
 
     //Create tests common suite root
-    //noinspection HardCodedStringLiteral
     myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
@@ -177,8 +173,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.setTestsComparator(this);
     Disposer.register(this, myTreeBuilder);
     Disposer.register(this, asyncTreeModel);
-
-    myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
     TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, new Pass<AbstractTestProxy>() {
       @Override
@@ -239,7 +233,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myLastSelected = null;
     myMentionedCategories.clear();
 
-    myAnimator.setCurrentTestCase(myTestsRootNode);
     if (myEndTime != 0) { // no need to reset when running for the first time
       resetTreeAndConsoleOnSubsequentTestingStarted();
       myEndTime = 0;
@@ -292,8 +285,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(true);
     updateIconProgress(true);
 
-    myAnimator.stopMovie();
-
     myRequests.clear();
     myUpdateTreeRequests.cancelAllRequests();
     myTreeBuilder.updateFromRoot();
@@ -332,8 +323,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount),
                        myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
-    UIUtil.invokeLaterIfNeeded(() -> TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation));
-    addToHistory(testsRoot, myProperties, this);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
+      addToHistory(testsRoot, myProperties, this);
+    });
+    
   }
 
   private void addToHistory(final SMTestProxy.SMRootTestProxy root,
@@ -391,6 +385,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (test.isConfig()) {
       myStartedTestCount++;
       myFinishedTestCount++;
+    }
+    else if (test.isSuite()) {
+      myStartedTestCount++;
+      updateTotalCount();
     }
     updateIconProgress(false);
 
@@ -467,7 +465,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @Override
   public void setFilter(final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
-    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
     treeStructure.setFilter(filter);
 
     // TODO - show correct info if no children are available
@@ -607,10 +605,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       update.run();
     }
     else if (!myDisposed && myRequests.add(update)) {
-      myUpdateTreeRequests.addRequest(update, 100);
+      myUpdateTreeRequests.addRequest(update, 50);
     }
-
-    myAnimator.setCurrentTestCase(newTestOrSuite);
 
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
       if (myLastSelected == null || myLastSelected == newTestOrSuite) {
@@ -721,14 +717,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       .add(myCurrentCustomProgressCategory != null ? myCurrentCustomProgressCategory : TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
 
     myStartedTestCount++;
+    updateTotalCount();
 
+    updateStatusLabel(false);
+  }
+
+  private void updateTotalCount() {
     // fix total count if it is corrupted
     // but if test count wasn't set at all let's process such case separately
     if (myStartedTestCount > myTotalTestCount && myTotalTestCount != 0) {
       myTotalTestCount = myStartedTestCount;
     }
-
-    updateStatusLabel(false);
   }
 
   private void updateProgressOnTestDone() {

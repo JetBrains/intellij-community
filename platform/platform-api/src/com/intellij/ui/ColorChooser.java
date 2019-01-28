@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class ColorChooser {
                                   boolean enableOpacity,
                                   List<ColorPickerListener> listeners,
                                   boolean opacityInPercent) {
-    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
+    return ColorChooserService.getInstance().showDialog(null, parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 
   @Nullable
@@ -61,5 +62,43 @@ public class ColorChooser {
                                   @Nls(capitalization = Nls.Capitalization.Title) String caption,
                                   @Nullable Color preselectedColor) {
     return chooseColor(parent, caption, preselectedColor, false);
+  }
+
+  @Nullable
+  public static Color chooseColor(@Nullable Project project,
+                                  Component parent,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                                  @Nullable Color preselectedColor,
+                                  boolean enableOpacity,
+                                  List<ColorPickerListener> listeners,
+                                  boolean opacityInPercent) {
+    return ColorChooserService.getInstance().showDialog(project, parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
+  }
+
+  @Nullable
+  public static Color chooseColor(@Nullable Project project,
+                                  Component parent,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                                  @Nullable Color preselectedColor,
+                                  boolean enableOpacity) {
+    return chooseColor(project, parent, caption, preselectedColor, enableOpacity, Collections.emptyList(), false);
+  }
+
+  @Nullable
+  public static Color chooseColor(@Nullable Project project,
+                                  Component parent,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                                  @Nullable Color preselectedColor,
+                                  boolean enableOpacity,
+                                  boolean opacityInPercent) {
+    return chooseColor(project, parent, caption, preselectedColor, enableOpacity, Collections.emptyList(), opacityInPercent);
+  }
+
+  @Nullable
+  public static Color chooseColor(@Nullable Project project,
+                                  Component parent,
+                                  @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                                  @Nullable Color preselectedColor) {
+    return chooseColor(project, parent, caption, preselectedColor, false);
   }
 }

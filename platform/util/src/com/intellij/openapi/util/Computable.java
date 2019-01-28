@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ *  Please use {@link java.util.function.Supplier} instead
  *  @author dsl
  */
 public interface Computable <T> {

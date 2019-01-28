@@ -45,25 +45,6 @@ public class SetupTaskIntrospector {
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<>();
 
-  public static boolean usesSetuptools(@NotNull PyFile file) {
-    final List<PyFromImportStatement> imports = file.getFromImports();
-    for (PyFromImportStatement anImport : imports) {
-      final QualifiedName qName = anImport.getImportSourceQName();
-      if (qName != null && qName.matches("setuptools")) {
-        return true;
-      }
-    }
-
-    final List<PyImportElement> importElements = file.getImportTargets();
-    for (PyImportElement element : importElements) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null && qName.matches("setuptools")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Nullable
   public static List<SetupTask.Option> getSetupTaskOptions(Module module, String taskName) {
     for (SetupTask task : getTaskList(module)) {
@@ -76,7 +57,7 @@ public class SetupTaskIntrospector {
 
   public static List<SetupTask> getTaskList(Module module) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    return getTaskList(module, setupPy != null && usesSetuptools(setupPy));
+    return getTaskList(module, setupPy != null && PyPsiUtils.containsImport(setupPy, "setuptools"));
   }
 
   @NotNull

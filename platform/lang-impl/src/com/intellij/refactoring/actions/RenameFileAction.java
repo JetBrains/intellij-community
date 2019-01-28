@@ -2,7 +2,6 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -48,7 +47,7 @@ public class RenameFileAction extends AnAction {
   }
 
   protected boolean enabledInProjectView(@NotNull PsiFile file) {
-    for (RenameFileActionProvider provider : Extensions.getExtensions(RenameFileActionProvider.EP_NAME)) {
+    for (RenameFileActionProvider provider : RenameFileActionProvider.EP_NAME.getExtensionList()) {
       if (provider.enabledInProjectView(file)) return true;
     }
 

@@ -33,6 +33,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.DomApplicationComponent;
+import com.intellij.util.xml.impl.DomFileMetaData;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
@@ -71,7 +72,10 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     try {
       XmlUtil.BUILDING_DOM_STUBS.set(Boolean.TRUE);
       DomFileElement<? extends DomElement> fileElement = DomManager.getDomManager(project).getFileElement(xmlFile);
-      if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
+      if (fileElement == null) return null;
+
+      DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(fileElement.getFileDescription());
+      if (meta == null || !meta.hasStubs()) return null;
 
       XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
       if (header.getRootTagLocalName() == null) {

@@ -30,7 +30,6 @@ import com.intellij.psi.xml.XmlProlog;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,8 +79,8 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
         }
         if (prevSibling instanceof XmlComment) {
             final XmlComment comment = (XmlComment)prevSibling;
-            final String text = XmlUtil.getCommentText(comment);
-            if (text != null && InspectionUtil.SUPPRESSION_PATTERN.matcher(text).matches()) {
+            final String text = comment.getCommentText();
+            if (InspectionUtil.SUPPRESSION_PATTERN.matcher(text).matches()) {
                 final String s = text.trim() + ", " + myToolId;
                 final XmlComment newComment = createComment(project, s);
               CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(comment.replace(newComment));

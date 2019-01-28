@@ -2,7 +2,10 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
@@ -14,6 +17,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +138,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
   protected class StandardJsonValidatingElementVisitor extends JsonElementVisitor {
     private final ProblemsHolder myHolder;
+    private final static String MISSING_VALUE = "missingValue";
 
     public StandardJsonValidatingElementVisitor(ProblemsHolder holder) {myHolder = holder;}
 
@@ -150,7 +155,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitComment(PsiComment comment) {
       if (!allowComments() && myWarnAboutComments) {
         if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
-          myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
+          myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"));
         }
       }
     }
@@ -190,7 +195,9 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @Override
     public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
       if (!allowIdentifierPropertyNames() || !JsonPsiUtil.isPropertyKey(reference) || !isValidPropertyName(reference)) {
-        myHolder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.bad.token"), new AddDoubleQuotesFix());
+        if (!MISSING_VALUE.equals(reference.getText()) || !(myHolder.getFile().getViewProvider() instanceof InjectedFileViewProvider)) {
+          myHolder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.bad.token"), new AddDoubleQuotesFix());
+        }
       }
       // May be illegal property key as well
       super.visitReferenceExpression(reference);

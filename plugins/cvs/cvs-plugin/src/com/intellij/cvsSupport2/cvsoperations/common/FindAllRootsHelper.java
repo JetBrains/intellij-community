@@ -29,7 +29,7 @@ import java.util.List;
 public class FindAllRootsHelper {
   private FindAllRootsHelper() { }
 
-  public static List<VirtualFile> findVersionedUnder(final List<VirtualFile> coll) {
+  public static List<VirtualFile> findVersionedUnder(final List<? extends VirtualFile> coll) {
     final List<FilePath> pathList = ObjectsConvertor.vf2fp(coll);
     final MyVisitor visitor = new MyVisitor();
 

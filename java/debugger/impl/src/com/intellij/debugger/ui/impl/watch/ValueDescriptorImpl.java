@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -413,6 +413,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
+  public Renderer getLastLabelRenderer() {
+    Renderer lastRenderer = getLastRenderer();
+    if (lastRenderer instanceof CompoundTypeRenderer) {
+      lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
+    }
+    return lastRenderer;
+  }
+
   public NodeRenderer getChildrenRenderer(DebugProcessImpl debugProcess) {
     return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
   }
@@ -542,9 +550,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return null;
   }
 
-  @NotNull
   public String getIdLabel() {
-    return StringUtil.notNullize(myIdLabel);
+    return myIdLabel;
   }
 
   public String getValueLabel() {

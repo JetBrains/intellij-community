@@ -19,8 +19,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-public class BraceHighlighter implements StartupActivity {
+import java.util.Objects;
 
+public class BraceHighlighter implements StartupActivity {
   private final Alarm myAlarm = new Alarm();
 
   @Override
@@ -31,6 +32,7 @@ public class BraceHighlighter implements StartupActivity {
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (e.getCaret() != e.getEditor().getCaretModel().getPrimaryCaret()) return;
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
@@ -38,17 +40,11 @@ public class BraceHighlighter implements StartupActivity {
         if (editor.getProject() != project || selectionModel.hasSelection()) {
           return;
         }
-
-        final Document document = editor.getDocument();
-        int line = e.getNewPosition().line;
-        if (line < 0 || line >= document.getLineCount()) {
-          return;
-        }
         updateBraces(editor, myAlarm);
       }
     }, project);
 
-    final SelectionListener mySelectionListener = new SelectionListener() {
+    final SelectionListener selectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(@NotNull SelectionEvent e) {
         myAlarm.cancelAllRequests();
@@ -59,14 +55,14 @@ public class BraceHighlighter implements StartupActivity {
 
         final TextRange oldRange = e.getOldRange();
         final TextRange newRange = e.getNewRange();
-        if (oldRange != null && newRange != null && !(oldRange.isEmpty() ^ newRange.isEmpty())) {
+        if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
         updateBraces(editor, myAlarm);
       }
     };
-    eventMulticaster.addSelectionListener(mySelectionListener, project);
+    eventMulticaster.addSelectionListener(selectionListener, project);
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
@@ -111,5 +107,10 @@ public class BraceHighlighter implements StartupActivity {
       handler.clearBraceHighlighters();
       return false;
     });
+  }
+
+  @NotNull
+  public static Alarm getAlarm() {
+    return Objects.requireNonNull(POST_STARTUP_ACTIVITY.findExtension(BraceHighlighter.class)).myAlarm;
   }
 }

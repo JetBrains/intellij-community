@@ -7,69 +7,56 @@ import org.junit.Ignore
 import org.junit.Test
 
 class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
+  private val testedJdk = "1.8"
+
   @Test
   @JvmName("kotlin_cfg_jvm_with_lib")
   fun configureKotlinJvmWithLibInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJvm(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JVM,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
+      expectedLibs = kotlinProjects.getValue(Projects.JavaProject).jars.getJars(KotlinTestProperties.kotlin_artifact_version)
+)
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JVM)
+      expectedLibName = kotlinProjects.getValue(Projects.JavaProject).libName!!
+    )
   }
 
   @Test
   @JvmName("kotlin_cfg_jvm_no_lib")
   fun configureKotlinJvmInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJvm(libInPlugin = true)
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JVM,
+      project = kotlinProjects.getValue(Projects.JavaProject),
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
 
   @Test
   @JvmName("kotlin_cfg_js_with_lib")
   fun configureKotlinJSWithLibInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJs(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JS,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
+      expectedLibs = kotlinProjects.getValue(Projects.KotlinProjectJs).jars.getJars(KotlinTestProperties.kotlin_artifact_version)
+    )
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
       projectPath = projectFolder,
-      kotlinKind = KotlinKind.JS)
+      expectedLibName = kotlinProjects.getValue(Projects.KotlinProjectJs).libName!!
+    )
   }
 
   @Test
   @JvmName("kotlin_cfg_js_no_lib")
   fun configureKotlinJSInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJs(libInPlugin = true)
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-      kotlinKind = KotlinKind.JS,
+      project = kotlinProjects.getValue(Projects.KotlinProjectJs),
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version)
   }
-
-  @Test
-  @Ignore
-  @JvmName("kotlin_cfg_js_no_lib_from_file")
-  fun configureKotlinJSInJavaProjectFromKotlinFile() {
-    createJavaProject(projectFolder)
-//    createKotlinFile(
-//        projectName = projectFolder.name,
-//        fileName = "K1")
-//    ideFrame {   popupClick("org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator@4aae5ef8")
-//    }
-//    configureKotlinJs(libInPlugin = true)
-//      checkKotlinLibsInStructureFromPlugin(
-//          projectType = KotlinKind.JS,
-//          errors = collector)
-  }
-
 
 }

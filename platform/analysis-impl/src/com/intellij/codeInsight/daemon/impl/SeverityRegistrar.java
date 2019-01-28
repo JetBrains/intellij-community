@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -24,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
@@ -212,7 +211,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   int getSeveritiesCount() {
-    return createCurrentSeverityNames().size();
+    return STANDARD_SEVERITIES.size() + myMap.size();
   }
 
   public HighlightSeverity getSeverityByIndex(final int i) {
@@ -244,15 +243,6 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return null;
   }
 
-  @NotNull
-  private List<String> createCurrentSeverityNames() {
-    List<String> list = new ArrayList<>();
-    list.addAll(STANDARD_SEVERITIES.keySet());
-    list.addAll(myMap.keySet());
-    ContainerUtil.sort(list);
-    return list;
-  }
-
   Icon getRendererIconByIndex(int i) {
     final HighlightSeverity severity = getSeverityByIndex(i);
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
@@ -264,7 +254,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   public boolean isSeverityValid(@NotNull String severityName) {
-    return createCurrentSeverityNames().contains(severityName);
+    return STANDARD_SEVERITIES.containsKey(severityName) || myMap.containsKey(severityName);
   }
 
   @Override
@@ -341,7 +331,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   static boolean isGotoBySeverityEnabled(@NotNull HighlightSeverity minSeverity) {
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       if (provider.isGotoBySeverityEnabled(minSeverity)) return true;
     }
     return minSeverity != HighlightSeverity.INFORMATION;

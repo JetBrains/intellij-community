@@ -95,7 +95,7 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   void error(String message, Throwable cause) {
     def writer = new StringWriter()
-    new PrintWriter(writer).withCloseable { cause.printStackTrace(it) }
+    new PrintWriter(writer).withCloseable { cause?.printStackTrace(it) }
     processMessage(new LogMessage(LogMessage.Kind.ERROR, "$message\n$writer"))
     throw new BuildException(message)
   }

@@ -79,7 +79,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.General.InspectionsOff;
+    return AllIcons.Ide.HectorOff;
   }
 
   private String myText = "";
@@ -106,7 +106,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   @Override
   public boolean isSuppressAll() {
-    return SuppressionUtil.ALL.equals(myID);
+    return SuppressionUtil.ALL.equalsIgnoreCase(myID);
   }
 
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {

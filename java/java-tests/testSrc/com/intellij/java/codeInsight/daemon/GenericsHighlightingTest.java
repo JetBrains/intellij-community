@@ -267,7 +267,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA108287() { doTest5(false); }
   public void testIDEA77128() { doTest7(false); }
   public void testDisableCastingToNestedWildcards() { doTest5(false); }
-  public void testBooleanInferenceFromIfCondition() { doTest5(false); }
+  public void testBooleanInferenceFromIfCondition() { doTest7(false); }
   public void testMethodCallOnRawTypesExtended() { doTest5(false); }
   public void testIDEA104100() {doTest7(false);}
   public void testIDEA104160() {doTest7(false);}

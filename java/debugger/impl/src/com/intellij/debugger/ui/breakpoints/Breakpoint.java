@@ -17,6 +17,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -135,6 +137,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     renderer.append(getDisplayName());
   }
 
+  @Override
+  public boolean isObsolete() {
+    return myXBreakpoint instanceof XBreakpointBase && ((XBreakpointBase)myXBreakpoint).isDisposed();
+  }
+
   public abstract String getDisplayName ();
 
   public String getShortName() {
@@ -208,12 +215,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
-    processClassesPrepare(debugProcess, debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded).stream());
+    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    if (virtualMachineProxy.canBeModified()) {
+      processClassesPrepare(debugProcess, virtualMachineProxy.classesByName(classToBeLoaded).stream());
+    }
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+    if (debugProcess.getVirtualMachineProxy().canBeModified()) {
+      processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+    }
   }
 
   private void processClassesPrepare(DebugProcessImpl debugProcess, Stream<ReferenceType> classes) {
@@ -271,6 +283,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   private void runAction(EvaluationContextImpl context, LocatableEvent event) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (getProperties().isTRACING_START() && Registry.is("debugger.call.tracing")) {
+      CallTracer.get(debugProcess).start(context.getSuspendContext().getThread());
+    }
+    if (getProperties().isTRACING_END() && Registry.is("debugger.call.tracing")) {
+      CallTracer.get(debugProcess).stop(event.thread());
+    }
     if (isLogEnabled() || isLogExpressionEnabled() || isLogStack()) {
       StringBuilder buf = new StringBuilder();
       if (myXBreakpoint.isLogMessage()) {
@@ -421,7 +439,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                           EventRequest request,
                                           PsiElement context,
                                           TextWithImports text,
-                                          EvaluatingComputable<ExpressionEvaluator> supplier) throws EvaluateException {
+                                          EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
       if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;

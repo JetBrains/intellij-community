@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -99,7 +98,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
         PsiClass superClass = iterator.next();
         if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) iterator.remove();
       }
-      return ContainerUtil.toArray(allSupers, new PsiClass[allSupers.size()]);
+      return allSupers.toArray(PsiClass.EMPTY_ARRAY);
     }
     else if (e instanceof PsiMethod) {
       return getSupers((PsiMethod)e);
@@ -110,7 +109,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
       for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)e)) {
         supers.addAll(Arrays.asList(getSupers(method)));
       }
-      return ContainerUtil.toArray(supers, new PsiMethod[supers.size()]);
+      return supers.toArray(PsiMethod.EMPTY_ARRAY);
     }
   }
 

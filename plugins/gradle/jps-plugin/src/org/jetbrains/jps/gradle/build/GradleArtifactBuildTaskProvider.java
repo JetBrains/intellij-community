@@ -24,7 +24,6 @@ import java.util.jar.JarFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   @NotNull
@@ -45,12 +44,10 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   @Nullable
   private static JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    switch (buildPhase) {
-      case PRE_PROCESSING:
-        return JpsGradleExtensionService.getArtifactExtension(artifact);
-      default:
-        return null;
+    if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING) {
+      return JpsGradleExtensionService.getArtifactExtension(artifact);
     }
+    return null;
   }
 
   private abstract static class GradleGenerationBuildTask extends BuildTask {

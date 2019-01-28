@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +58,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     final PsiManager manager = myField.getManager();
-    return manager != null && manager.isInProject(myField);
+    return manager != null && BaseIntentionAction.canModify(myField);
   }
 
   @Override
@@ -114,7 +115,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager

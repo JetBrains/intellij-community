@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -50,6 +50,7 @@ public class JdkUtil {
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
 
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
+  private static final String JAVAAGENT = "-javaagent";
 
   private JdkUtil() { }
 
@@ -148,6 +149,16 @@ public class JdkUtil {
     boolean dynamicParameters = dynamicClasspath && javaParameters.isDynamicParameters() && useDynamicParameters();
     boolean dynamicMainClass = false;
 
+    //copy javaagents to the beginning of the classpath to load agent classes faster
+    if (isUrlClassloader(vmParameters)) {
+      for (String parameter : vmParameters.getParameters()) {
+        if (parameter.startsWith(JAVAAGENT)) {
+          int agentArgsIdx = parameter.indexOf("=", JAVAAGENT.length());
+          javaParameters.getClassPath().addFirst(parameter.substring(JAVAAGENT.length() + 1, agentArgsIdx > -1 ? agentArgsIdx : parameter.length()));
+        }
+      }
+    }
+
     if (dynamicClasspath) {
       Class commandLineWrapper;
       if (javaParameters.isArgFile()) {
@@ -178,6 +189,10 @@ public class JdkUtil {
     if (!dynamicParameters) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     }
+  }
+
+  private static boolean isUrlClassloader(ParametersList vmParameters) {
+    return UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"));
   }
 
   private static boolean explicitClassPath(ParametersList vmParameters) {
@@ -248,28 +263,23 @@ public class JdkUtil {
 
   /* https://docs.oracle.com/javase/9/tools/java.htm, "java Command-Line Argument Files" */
   private static String quoteArg(String arg) {
-    if (StringUtil.containsAnyChar(arg, " \"\n\r\t\f") || arg.endsWith("\\") || arg.startsWith("#")) {
-      StringBuilder sb = new StringBuilder(arg.length() * 2);
-      sb.append('"');
-
-      for (int i = 0; i < arg.length(); i++) {
-        char c = arg.charAt(i);
-        switch (c) {
-          case '\n': sb.append("\\n"); break;
-          case '\r': sb.append("\\r"); break;
-          case '\t': sb.append("\\t"); break;
-          case '\f': sb.append("\\f"); break;
-          case '\"': sb.append("\\\""); break;
-          case '\\': sb.append("\\\\"); break;
-          default:   sb.append(c);
-        }
-      }
-
-      sb.append('"');
-      return sb.toString();
+    String specials = " #'\"\n\r\t\f";
+    if (!StringUtil.containsAnyChar(arg, specials)) {
+      return arg;
     }
 
-    return arg;
+    StringBuilder sb = new StringBuilder(arg.length() * 2);
+    for (int i = 0; i < arg.length(); i++) {
+      char c = arg.charAt(i);
+      if (c == ' ' || c == '#' || c == '\'') sb.append('"').append(c).append('"');
+      else if (c == '"') sb.append("\"\\\"\"");
+      else if (c == '\n') sb.append("\"\\n\"");
+      else if (c == '\r') sb.append("\"\\r\"");
+      else if (c == '\t') sb.append("\"\\t\"");
+      else if (c == '\f') sb.append("\"\\f\"");
+      else sb.append(c);
+    }
+    return sb.toString();
   }
 
   private static void setCommandLineWrapperParams(GeneralCommandLine commandLine,
@@ -323,7 +333,7 @@ public class JdkUtil {
 
       Set<String> classpath = new LinkedHashSet<>();
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
-      if (UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"))) {
+      if (isUrlClassloader(vmParameters)) {
         classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
         classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
         classpath.add(PathUtil.getJarPathForClass(THashMap.class));

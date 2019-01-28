@@ -27,8 +27,8 @@ import groovy.lang.Script;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Maxim.Mossienko
@@ -48,14 +48,15 @@ public class GroovyScriptMacro extends Macro {
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
     if (params.length == 0) return null;
     Object o = runIt(params, context);
-    if (o != null) return new TextResult(o.toString());
+    if (o != null) return new TextResult(StringUtil.convertLineSeparators(o.toString()));
     return null;
   }
 
   private static Object runIt(Expression[] params, ExpressionContext context) {
     try {
       Result result = params[0].calculateResult(context);
-      if (result == null) return result;
+      if (result == null) return null;
+
       String text = result.toString();
       GroovyShell shell = new GroovyShell();
       File possibleFile = new File(text);
@@ -77,10 +78,9 @@ public class GroovyScriptMacro extends Macro {
 
       script.setBinding(binding);
 
-      Object o = script.run();
-      return o != null ? StringUtil.convertLineSeparators(o.toString()):null;
-    } catch (Exception e) {
-      return new TextResult(StringUtil.convertLineSeparators(e.getLocalizedMessage()));
+      return script.run();
+    } catch (Exception | Error e) {
+      return StringUtil.convertLineSeparators(e.getLocalizedMessage());
     }
   }
 
@@ -92,11 +92,9 @@ public class GroovyScriptMacro extends Macro {
   @Override
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     Object o = runIt(params, context);
-    if (o != null) {
-      Set<LookupElement> set = new LinkedHashSet<>();
-      set.add(LookupElementBuilder.create(o.toString()));
-      return set.toArray(LookupElement.EMPTY_ARRAY);
-    }
-    return LookupElement.EMPTY_ARRAY;
+    Collection collection = o instanceof Collection ? (Collection)o :
+                            o instanceof Object[] ? Arrays.asList((Object[])o) :
+                            ContainerUtil.createMaybeSingletonList(o);
+    return ContainerUtil.map2Array(collection, LookupElement.class, item -> LookupElementBuilder.create(StringUtil.convertLineSeparators(item.toString())));
   }
 }

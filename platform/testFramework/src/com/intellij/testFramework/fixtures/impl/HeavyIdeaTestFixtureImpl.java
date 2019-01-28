@@ -93,22 +93,26 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public void tearDown() throws Exception {
-    RunAll runAll = new RunAll()
-      .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
-      .append(() -> {
-        for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
-          moduleFixtureBuilder.getFixture().tearDown();
-        }
-      })
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
-      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
-      .append(() -> myProject = null);
+    RunAll runAll = new RunAll();
+
+    if (myProject != null) {
+      runAll = runAll
+        .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
+        .append(() -> {
+          for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+            moduleFixtureBuilder.getFixture().tearDown();
+          }
+        })
+        .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
+        .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
+        .append(() -> myProject = null);
+    }
 
     JarFileSystemImpl.cleanupForNextTest();
 
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        List<Throwable> errors = Files.walk(fileToDelete.toPath())
+        List<IOException> errors = Files.walk(fileToDelete.toPath())
           .sorted(Comparator.reverseOrder())
           .map(x -> {
             try {
@@ -128,8 +132,16 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     runAll
       .append(super::tearDown)
-      .append(() -> myEditorListenerTracker.checkListenersLeak())
-      .append(() -> myThreadTracker.checkLeak())
+      .append(() -> {
+        if (myEditorListenerTracker != null) {
+          myEditorListenerTracker.checkListenersLeak();
+        }
+      })
+      .append(() -> {
+        if (myThreadTracker != null) {
+          myThreadTracker.checkLeak();
+        }
+      })
       .append(LightPlatformTestCase::checkEditorsReleased)
       .append(() -> {
         if (myOldSdks != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CompleteCodeReferenceElement")
 
 package org.jetbrains.plugins.groovy.lang.completion
@@ -95,7 +95,7 @@ private class CompleteReferenceProcessor(
 ) : PsiScopeProcessor {
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    element as? PsiNamedElement ?: return true
+    if (element !is PsiNamedElement) return true
 
     val name = element.name ?: return true
     val importedName = state.get(importedNameKey)

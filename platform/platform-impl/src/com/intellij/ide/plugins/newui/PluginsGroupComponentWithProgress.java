@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -17,12 +16,13 @@ import java.awt.*;
  */
 public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   private AsyncProcessIcon myIcon = new CenteredIcon();
+  private Runnable myVisibleRunnable;
 
   public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
                                            @NotNull EventHandler eventHandler,
                                            @NotNull LinkListener<IdeaPluginDescriptor> listener,
                                            @NotNull LinkListener<String> searchListener,
-                                           @NotNull Function<IdeaPluginDescriptor, CellPluginComponent> function) {
+                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
     super(layout, eventHandler, listener, searchListener, function);
     myIcon.setOpaque(false);
     myIcon.setPaintPassiveIcon(false);
@@ -31,25 +31,19 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   }
 
   @Override
-  public void removeNotify() {
-    super.removeNotify();
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      dispose();
-    }
-  }
-
-  @Override
   public void doLayout() {
     super.doLayout();
-    if (myIcon != null) {
-      myIcon.updateLocation(this);
-    }
+    updateIconLocation();
   }
 
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-    if (myIcon != null) {
+    updateIconLocation();
+  }
+
+  private void updateIconLocation() {
+    if (myIcon != null && myIcon.isVisible()) {
       myIcon.updateLocation(this);
     }
   }
@@ -58,9 +52,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
     if (myIcon != null) {
       myIcon.setVisible(true);
       myIcon.resume();
-      doLayout();
-      revalidate();
-      repaint();
+      fullRepaint();
     }
   }
 
@@ -68,10 +60,14 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);
-      doLayout();
-      revalidate();
-      repaint();
+      fullRepaint();
     }
+  }
+
+  private void fullRepaint() {
+    doLayout();
+    revalidate();
+    repaint();
   }
 
   public void dispose() {
@@ -79,6 +75,28 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
       remove(myIcon);
       Disposer.dispose(myIcon);
       myIcon = null;
+    }
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    if (myIcon != null) {
+      add(myIcon);
+    }
+  }
+
+  public void setVisibleRunnable(@NotNull Runnable visibleRunnable) {
+    myVisibleRunnable = visibleRunnable;
+  }
+
+  @Override
+  public void setVisible(boolean aFlag) {
+    super.setVisible(aFlag);
+    if (aFlag && myVisibleRunnable != null) {
+      Runnable runnable = myVisibleRunnable;
+      myVisibleRunnable = null;
+      runnable.run();
     }
   }
 

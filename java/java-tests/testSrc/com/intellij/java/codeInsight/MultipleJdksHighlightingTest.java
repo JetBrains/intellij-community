@@ -51,12 +51,14 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myJava3Module = null;
       myJava7Module = null;
       myJava8Module = null;
-
       super.tearDown();
     }
   }
@@ -294,6 +296,26 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     final RangeHighlighter highlighter = assertOneElement(myFixture.getEditor().getMarkupModel().getAllHighlighters());
     assertEquals(60, highlighter.getStartOffset());
     assertEquals(66, highlighter.getEndOffset());
+  }
+
+  public void testOverrideClassLoaderMethodSince7() {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
+    myFixture.addFileToProject("java3/MyLoader.java",
+                               "public class MyLoader extends ClassLoader { protected Object getClassLoadingLock(String className) {} }");
+    PsiFile file = myFixture.addFileToProject("java8/Usage.java",
+                                              "class My extends MyLoader {{ " +
+                                              "  <caret>getClassLoadingLock(\"\"); " +
+                                              "}}\n" +
+                                              "" +
+                                              "class Standard extends ClassLoader {{ " +
+                                              "  getClassLoadingLock(\"\"); " +
+                                              "}}" +
+                                              "");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.checkHighlighting();
+
+    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertSize(2, myFixture.getEditor().getMarkupModel().getAllHighlighters());
   }
 
   private void doTestWithoutLibrary() {

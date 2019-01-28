@@ -180,7 +180,6 @@ public class DebugReflectionUtil {
     }
     if (rootClass.isArray()) {
       try {
-        //noinspection ConstantConditions
         for (Object value : (Object[])root) {
           queue(value, null, backLink, queue, shouldExamineValue);
         }

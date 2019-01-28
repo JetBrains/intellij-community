@@ -13,10 +13,17 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
-import java.util.Arrays;
+import java.io.File;
+
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static java.util.Arrays.asList;
 
 public class HgMoveCommand {
 
@@ -26,11 +33,13 @@ public class HgMoveCommand {
     this.project = project;
   }
 
-  public void execute(HgFile source, HgFile target) {
-    if (source.getRepo().equals(target.getRepo())) {
-      new HgCommandExecutor(project).executeInCurrentThread(source.getRepo(), "rename",
-        Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
-    }
+  public HgCommandResult execute(@NotNull VirtualFile repoRoot, @NotNull FilePath sourcePath, @NotNull FilePath targetPath) {
+    // hg wlock error may occur while execute this command
+    // since hg version 2017 config timeout.warn=time_in_seconds can be added as argument to wait before warn
+    File repoFile = VfsUtilCore.virtualToIoFile(repoRoot);
+    return new HgCommandExecutor(project).executeInCurrentThread(repoRoot, "rename",
+                                                                 asList("--after", getRelativePath(repoFile, sourcePath.getIOFile()),
+                                                                        getRelativePath(repoFile, targetPath.getIOFile())));
   }
 
 }

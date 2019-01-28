@@ -28,8 +28,17 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     showToolbar();
   }
 
+
   @Override
-  protected void addGroupByActions(DefaultActionGroup result) {
+  public void setActionActive(String name, boolean state) {
+    if (GroupByWordPrefixes.ID.equals(name)) {
+      ((PropertiesGroupingStructureViewModel)getTreeModel()).setGroupingActive(state);
+    }
+    super.setActionActive(name, state);
+  }
+
+  @Override
+  protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {

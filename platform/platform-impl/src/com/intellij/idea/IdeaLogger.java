@@ -103,9 +103,14 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
+  public void warn(String message, @Nullable Throwable t) {
+    super.warn(message, checkException(t));
+  }
+
+  @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t));
+      myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);
     }
 

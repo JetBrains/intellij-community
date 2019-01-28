@@ -32,7 +32,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 3/11/13 10:25 AM
  */
 public class ArrangementCheckBoxUiComponent extends AbstractArrangementUiComponent {
 

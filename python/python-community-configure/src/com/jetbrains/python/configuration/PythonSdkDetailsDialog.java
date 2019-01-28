@@ -67,10 +67,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
   private final Runnable mySdkSettingsWereModified;
-  private final NullableConsumer<Sdk> myShowMoreCallback;
+  private final NullableConsumer<? super Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
-  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
+  public PythonSdkDetailsDialog(Project project, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(project, true);
     myModule = null;
     mySdkSettingsWereModified = sdkSettingsWereModified;
@@ -89,7 +89,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
+  public PythonSdkDetailsDialog(Module module, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(module.getProject());
     myModule = module;
     mySdkSettingsWereModified = sdkSettingsWereModified;
@@ -107,7 +107,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     mySdkList = new JBList<>();
-    //noinspection unchecked
     mySdkList.setCellRenderer(new PySdkListCellRenderer(myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new ListSpeedSearch<>(mySdkList);
@@ -357,24 +356,24 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void removeSdk() {
-    final Sdk currentSdk = getSelectedSdk();
-    if (currentSdk != null) {
-      final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
+    final Sdk selectedSdk = getSelectedSdk();
+    if (selectedSdk != null) {
+      final Sdk sdk = myProjectSdksModel.findSdk(selectedSdk);
       SdkConfigurationUtil.removeSdk(sdk);
 
       myProjectSdksModel.removeSdk(sdk);
-      myProjectSdksModel.removeSdk(currentSdk);
+      myProjectSdksModel.removeSdk(selectedSdk);
 
-      if (myModificators.containsKey(currentSdk)) {
-        SdkModificator modificator = myModificators.get(currentSdk);
+      if (myModificators.containsKey(selectedSdk)) {
+        SdkModificator modificator = myModificators.get(selectedSdk);
         myModifiedModificators.remove(modificator);
-        myModificators.remove(currentSdk);
+        myModificators.remove(selectedSdk);
       }
       refreshSdkList();
       mySdkListChanged = true;
-      // TODO select initially selected SDK
-      if (mySdkList.getSelectedIndex() < 0) {
-        mySdkList.setSelectedIndex(0);
+      final Sdk currentSdk = getSdk();
+      if (currentSdk != null) {
+        mySdkList.setSelectedValue(currentSdk, true);
       }
     }
   }

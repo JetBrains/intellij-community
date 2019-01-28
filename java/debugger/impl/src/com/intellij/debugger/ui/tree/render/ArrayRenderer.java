@@ -91,7 +91,7 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return ClassRenderer.calcLabel(descriptor);
+    return ClassRenderer.calcLabel(descriptor, evaluationContext);
   }
 
   public void setForced(boolean forced) {
@@ -185,7 +185,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(node.getProject()).getLanguageLevel();
       return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass(languageLevel));

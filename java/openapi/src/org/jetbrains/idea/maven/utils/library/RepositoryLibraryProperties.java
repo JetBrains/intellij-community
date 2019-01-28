@@ -28,6 +28,10 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList());
   }
 
+  public RepositoryLibraryProperties(String mavenId, String packaging, final boolean includeTransitiveDependencies) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, packaging, includeTransitiveDependencies, Collections.emptyList());
+  }
+
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
     this(groupId, artifactId, version, true, ContainerUtil.emptyList());
   }
@@ -62,41 +66,51 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Attribute("maven-id")
   public String getMavenId() {
-    return call(JpsMavenRepositoryLibraryDescriptor::getMavenId);
+    return call(JpsMavenRepositoryLibraryDescriptor::getMavenId, null);
+  }
+
+  @Attribute("packaging")
+  public String getPackaging() {
+    return call(JpsMavenRepositoryLibraryDescriptor::getPackaging, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING);
   }
 
   public void setMavenId(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, isIncludeTransitiveDependencies(), getExcludedDependencies());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, getPackaging(), isIncludeTransitiveDependencies(), getExcludedDependencies());
   }
+
+  public void setPackaging(String packaging) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), packaging,  isIncludeTransitiveDependencies(), getExcludedDependencies());
+  }
+
 
   @Attribute("include-transitive-deps")
   public boolean isIncludeTransitiveDependencies() {
-    return myDescriptor == null || myDescriptor.isIncludeTransitiveDependencies();
+    return call(JpsMavenRepositoryLibraryDescriptor::isIncludeTransitiveDependencies, Boolean.TRUE);
   }
 
   public void setIncludeTransitiveDependencies(boolean value) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), value, getExcludedDependencies());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), value, getExcludedDependencies());
   }
 
   public String getGroupId() {
-    return call(JpsMavenRepositoryLibraryDescriptor::getGroupId);
+    return call(JpsMavenRepositoryLibraryDescriptor::getGroupId, null);
   }
 
   public String getArtifactId() {
-    return call(JpsMavenRepositoryLibraryDescriptor::getArtifactId);
+    return call(JpsMavenRepositoryLibraryDescriptor::getArtifactId, null);
   }
 
   public String getVersion() {
-    return call(JpsMavenRepositoryLibraryDescriptor::getVersion);
+    return call(JpsMavenRepositoryLibraryDescriptor::getVersion, null);
   }
 
   public void changeVersion(String version) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, myDescriptor.isIncludeTransitiveDependencies(), myDescriptor.getExcludedDependencies());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, getPackaging(), isIncludeTransitiveDependencies(), getExcludedDependencies());
   }
 
-  private String call(Function<? super JpsMavenRepositoryLibraryDescriptor, String> method) {
+  private <T> T call(Function<? super JpsMavenRepositoryLibraryDescriptor, T> method, final T defaultValue) {
     final JpsMavenRepositoryLibraryDescriptor descriptor = myDescriptor;
-    return descriptor != null ? method.apply(descriptor) : null;
+    return descriptor != null ? method.apply(descriptor) : defaultValue;
   }
 
   /**
@@ -104,11 +118,11 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
    */
   @Transient
   public List<String> getExcludedDependencies() {
-    return myDescriptor != null ? myDescriptor.getExcludedDependencies() : Collections.emptyList();
+    return call(JpsMavenRepositoryLibraryDescriptor::getExcludedDependencies, Collections.emptyList());
   }
 
   public void setExcludedDependencies(List<String> dependencyMavenIds) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), isIncludeTransitiveDependencies(), dependencyMavenIds);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(), dependencyMavenIds);
   }
 
   @SuppressWarnings("unused") //we need to have a separate method here because XmlSerializer fails if the returned list is unmodifiable

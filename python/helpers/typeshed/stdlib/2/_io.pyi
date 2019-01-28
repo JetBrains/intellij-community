@@ -175,7 +175,7 @@ class TextIOWrapper(_TextIOBase):
                  write_through: bool = ...) -> None: ...
 
 def open(file: Union[str, unicode, int],
-         mode: unicode = ...,
+         mode: Text = ...,
          buffering: int = ...,
          encoding: Optional[Text] = ...,
          errors: Optional[Text] = ...,

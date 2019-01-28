@@ -27,7 +27,6 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -46,6 +45,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
@@ -87,7 +87,7 @@ public class JavaDebugProcess extends XDebugProcess {
     final DebugProcessImpl process = javaSession.getProcess();
 
     myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
-      .append(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
+      .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
@@ -181,6 +181,9 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
     });
+    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
+      ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
+    }
   }
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
@@ -468,7 +471,7 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Nullable
-  private static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
+  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
     if (project != null) {
       XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
       if (session != null) {

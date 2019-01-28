@@ -20,13 +20,13 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
   }
 
   @Override
-  final public void actionPerformed(@NotNull AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
     actionPerformed(tree, e);
   }
 
   @Override
-  final public void update(@NotNull AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
     if (tree != null) {
       e.getPresentation().setEnabled(true);

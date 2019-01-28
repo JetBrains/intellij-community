@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +32,7 @@ public class StringToConstraintsTransformer {
   private static final Set<String> knownOptions = ContainerUtil.set(REF, REGEX, REGEXW, EXPRTYPE, FORMAL, SCRIPT, CONTAINS, WITHIN);
 
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static void transformCriteria(String criteria, MatchOptions options) {
+  public static void transformCriteria(@NotNull String criteria, MatchOptions options) {
     final StringBuilder pattern = new StringBuilder();
     int anonymousTypedVarsCount = 0;
     boolean targetFound = false;
@@ -280,7 +283,7 @@ public class StringToConstraintsTransformer {
     }
     final String regexp = criteria.substring(index, endIndex);
 
-    if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty() && !constraint.getRegExp().equals(regexp)) {
+    if (!constraint.getRegExp().isEmpty() && !constraint.getRegExp().equals(regexp)) {
       throw new MalformedPatternException(SSRBundle.message("error.two.different.type.constraints"));
     }
     else {
@@ -429,7 +432,6 @@ public class StringToConstraintsTransformer {
 
   private static void checkRegex(@NotNull String regex) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(regex);
     }
     catch (PatternSyntaxException e) {

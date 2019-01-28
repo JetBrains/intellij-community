@@ -153,6 +153,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     }
   }
 
+  @Override
   public String toString() {
     return "LightClassReference:" + myRefMember.getName();
   }

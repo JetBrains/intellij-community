@@ -39,6 +39,7 @@ public class ExtractMethodObjectViewDescriptor implements UsageViewDescriptor {
     return "Method to be converted";
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(final int usagesCount, final int filesCount) {
     return "References to be changed";

@@ -41,7 +41,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     return myProjectProfileManager.getProject();
   }
 
-  protected boolean setActiveProfileAsDefaultOnApply() {
+  boolean setActiveProfileAsDefaultOnApply() {
     return true;
   }
 
@@ -168,7 +168,8 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     }
   }
 
-  public SingleInspectionProfilePanel createPanel(InspectionProfileModifiableModel profile) {
+  @NotNull
+  public SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel profile) {
     return new SingleInspectionProfilePanel(myProjectProfileManager, profile) {
       @Override
       protected boolean accept(InspectionToolWrapper entry) {

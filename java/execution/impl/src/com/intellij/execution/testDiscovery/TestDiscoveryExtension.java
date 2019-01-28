@@ -10,6 +10,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -85,6 +86,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (agentPath == null) return;
     params.getVMParametersList().add("-javaagent:" + agentPath);
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
+    params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.DATA_VERSION, String.valueOf(3));
+    if (ApplicationManager.getApplication().isInternal()) {
+      params.getVMParametersList().addProperty(TestDiscoveryProjectData.AFFECTED_ROOTS, configuration.getProject().getBasePath());
+    }
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.HOST_PROP, "127.0.0.1");
@@ -114,13 +119,13 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
     return configuration instanceof JavaTestConfigurationBase && Registry.is(TEST_DISCOVERY_REGISTRY_KEY);
   }
 
   @NotNull
   public static Path baseTestDiscoveryPathForProject(Project project) {
-    return ProjectUtil.getProjectCachePath(project, "testDiscovery", true);
+    return ProjectUtil.getProjectCachePath(project, "testDiscovery");
   }
 
   @Override
@@ -129,7 +134,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   private static final Object ourTracesLock = new Object();
-  
+
   private static void processTracesFile(JavaTestConfigurationWithDiscoverySupport configuration) {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());

@@ -10,11 +10,8 @@ import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
-import java.util.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +24,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =
     FactoryMap.create(key -> new THashMap<>());
 
-  public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
-                                            @NotNull Project project) {
-    super(project);
+  public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content) {
     myContent = content;
   }
 
@@ -59,33 +54,28 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   @Override
-  public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
-                                              @NotNull InspectionNode toolNode,
-                                              @NotNull InspectionTreeNode parentNode,
-                                              boolean showStructure,
-                                              boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
-                                              @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
-    InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-    final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
+  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                    @NotNull InspectionToolWrapper wrapper,
+                                    @NotNull InspectionTreeNode parentNode,
+                                    boolean showStructure,
+                                    boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
+                                    @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
+    final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, wrapper);
+    InspectionResultsView view = context.getView();
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
-      parentNode.insertByOrder(toolNode, false);
-      buildTree(context, filteredContent, false, toolWrapper, descriptor -> {
+      buildTree(context, filteredContent, wrapper, descriptor -> {
                   final RefEntity element = descriptor.getRefElement(context.getRefManager());
                   return new RefEntityContainer<OfflineProblemDescriptor>(element, new OfflineProblemDescriptor[] {descriptor}) {
                     @Nullable
                     @Override
-                    public String getModule() {
-                      final String module = super.getModule();
+                    protected String getModuleName() {
+                      final String module = super.getModuleName();
                       return module == null ? descriptor.getModuleName() : module;
                     }
                   };
                 }, showStructure,
-                (newChild) -> {
-                  toolNode.insertByOrder(newChild, false);
-                  return newChild;
-                });
+                parentNode, view.getTree().getInspectionTreeModel());
     }
-    return toolNode;
   }
 
   @Nullable
@@ -140,10 +130,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                   @NotNull final InspectionToolWrapper toolWrapper,
                                   @NotNull final RefEntityContainer container,
-                                  @NotNull final InspectionTreeNode packageNode,
-                                  final boolean canPackageRepeat) {
+                                  @NotNull final InspectionTreeNode parent) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
-    final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
+    InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
@@ -151,9 +140,9 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       CommonProblemDescriptor resolvedDescriptor = resolveResult.getResolvedDescriptor();
       if (resolvedEntity != null && resolvedDescriptor != null) {
         presentation.getProblemElements().put(resolvedEntity, resolvedDescriptor);
-        elemNode.insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(resolvedEntity, resolvedDescriptor, presentation)), true);
+        model.createProblemDescriptorNode(resolvedEntity, resolvedDescriptor, presentation, parent);
       } else {
-        elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
+        model.createOfflineProblemDescriptorNode(descriptor, resolveResult, presentation, parent);
       }
     }
   }

@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -53,7 +52,7 @@ public abstract class TypeConstraint {
   abstract boolean isSuperStateOf(@NotNull TypeConstraint other);
 
   @Nullable
-  public abstract TypeConstraint union(@NotNull TypeConstraint other);
+  public abstract TypeConstraint unite(@NotNull TypeConstraint other);
 
   @Nullable
   abstract TypeConstraint intersect(@NotNull TypeConstraint right);
@@ -115,10 +114,10 @@ public abstract class TypeConstraint {
 
     @Nullable
     @Override
-    public TypeConstraint union(@NotNull TypeConstraint other) {
+    public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
       if(other.isSuperStateOf(this)) return other;
-      return new Constrained(Collections.singleton(myType), Collections.emptySet()).union(other);
+      return new Constrained(Collections.singleton(myType), Collections.emptySet()).unite(other);
     }
 
     @Override
@@ -249,7 +248,7 @@ public abstract class TypeConstraint {
         }
       }
 
-      Set<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
+      Set<DfaPsiType> newInstanceof = ContainerUtil.newTroveSet(myInstanceofValues);
       newInstanceof.removeAll(moreGeneric);
       newInstanceof.add(type);
       return create(newInstanceof, myNotInstanceofValues);
@@ -274,7 +273,7 @@ public abstract class TypeConstraint {
         }
       }
 
-      Set<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
+      Set<DfaPsiType> newNotInstanceof = ContainerUtil.newTroveSet(myNotInstanceofValues);
       newNotInstanceof.removeAll(moreSpecific);
       newNotInstanceof.add(type);
       return create(myInstanceofValues, newNotInstanceof);
@@ -284,12 +283,12 @@ public abstract class TypeConstraint {
     @NotNull
     TypeConstraint withoutType(@NotNull DfaPsiType type) {
       if (myInstanceofValues.contains(type)) {
-        HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
+        Set<DfaPsiType> newInstanceof = ContainerUtil.newTroveSet(myInstanceofValues);
         newInstanceof.remove(type);
         return create(newInstanceof, myNotInstanceofValues);
       }
       if (myNotInstanceofValues.contains(type)) {
-        HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
+        Set<DfaPsiType> newNotInstanceof = ContainerUtil.newTroveSet(myNotInstanceofValues);
         newNotInstanceof.remove(type);
         return create(myInstanceofValues, newNotInstanceof);
       }
@@ -324,14 +323,14 @@ public abstract class TypeConstraint {
 
     @Override
     @Nullable
-    public TypeConstraint union(@NotNull TypeConstraint other) {
+    public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
       if(other.isSuperStateOf(this)) return other;
       if (other instanceof Constrained) {
-        return union((Constrained)other);
+        return unite((Constrained)other);
       }
       if (other instanceof Exact) {
-        return union(new Constrained(Collections.singleton(((Exact)other).myType), Collections.emptySet()));
+        return unite(new Constrained(Collections.singleton(((Exact)other).myType), Collections.emptySet()));
       }
       return EMPTY;
     }
@@ -354,8 +353,8 @@ public abstract class TypeConstraint {
       return result;
     }
 
-    private TypeConstraint union(@NotNull Constrained other) {
-      Set<DfaPsiType> notTypes = new HashSet<>(this.myNotInstanceofValues);
+    private TypeConstraint unite(@NotNull Constrained other) {
+      Set<DfaPsiType> notTypes = ContainerUtil.newTroveSet(this.myNotInstanceofValues);
       notTypes.retainAll(other.myNotInstanceofValues);
       Set<DfaPsiType> instanceOfTypes;
       if (this.myInstanceofValues.containsAll(other.myInstanceofValues)) {
@@ -382,11 +381,7 @@ public abstract class TypeConstraint {
     }
 
     private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {
-      Set<DfaPsiType> result = new HashSet<>(instanceofValues);
-      for (DfaPsiType type : instanceofValues) {
-        InheritanceUtil.processSuperTypes(type.getPsiType(), false, t -> result.add(type.getFactory().createDfaType(t)));
-      }
-      return result;
+      return StreamEx.of(instanceofValues).flatMap(DfaPsiType::superTypes).append(instanceofValues).toSet();
     }
 
     @Override

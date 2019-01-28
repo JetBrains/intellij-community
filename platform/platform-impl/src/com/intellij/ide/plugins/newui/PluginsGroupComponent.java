@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,14 +26,14 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private final EventHandler myEventHandler;
   private final LinkListener<IdeaPluginDescriptor> myListener;
   private final LinkListener<String> mySearchListener;
-  private final Function<IdeaPluginDescriptor, CellPluginComponent> myFunction;
+  private final Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> myFunction;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
   public PluginsGroupComponent(@NotNull LayoutManager layout,
                                @NotNull EventHandler eventHandler,
                                @NotNull LinkListener<IdeaPluginDescriptor> listener,
                                @NotNull LinkListener<String> searchListener,
-                               @NotNull Function<IdeaPluginDescriptor, CellPluginComponent> function) {
+                               @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
     super(layout);
     myEventHandler = eventHandler;
     myListener = listener;
@@ -58,17 +60,61 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+    myEventHandler.setSelection(components);
+  }
+
   public void addGroup(@NotNull PluginsGroup group) {
     addGroup(group, -1);
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
+    addGroup(group, group.descriptors, groupIndex);
+  }
+
+  public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
+    if (group.descriptors.size() <= gapSize) {
+      addGroup(group);
+    }
+    else {
+      addGroup(group, group.descriptors.subList(0, gapSize), -1);
+      AdjustmentListener listener = new AdjustmentListener() {
+        @Override
+        public void adjustmentValueChanged(AdjustmentEvent e) {
+          if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
+            int fromIndex = group.ui.plugins.size();
+            int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
+            int uiIndex = getComponentIndex(group.ui.plugins.get(fromIndex - 1));
+            PluginLogo.startBatchMode();
+            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex);
+            PluginLogo.endBatchMode();
+
+            if (group.descriptors.size() == group.ui.plugins.size()) {
+              scrollBar.removeAdjustmentListener(this);
+              group.clearCallback = null;
+            }
+
+            uiCallback.run();
+          }
+        }
+      };
+      group.clearCallback = () -> scrollBar.removeAdjustmentListener(listener);
+      scrollBar.addAdjustmentListener(listener);
+    }
+  }
+
+  private static final Color SECTION_HEADER_FOREGROUND =
+    JBColor.namedColor("Plugins.SectionHeader.foreground", new JBColor(0x787878, 0x999999));
+  private static final Color SECTION_HEADER_BACKGROUND =
+    JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
+
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
 
-    OpaquePanel panel = new OpaquePanel(new BorderLayout(), new JBColor(0xF7F7F7, 0x3C3F41));
-    panel.setBorder(JBUI.Borders.empty(4, 13));
+    OpaquePanel panel = new OpaquePanel(new BorderLayout(), SECTION_HEADER_BACKGROUND);
+    panel.setBorder(JBUI.Borders.empty(4, 10));
 
     JLabel title = new JLabel(group.title) {
       @Override
@@ -87,7 +133,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       }
     };
     title.setToolTipText(group.title);
-    title.setForeground(new JBColor(0x787878, 0x999999));
+    title.setForeground(SECTION_HEADER_FOREGROUND);
     panel.add(title, BorderLayout.WEST);
     group.titleLabel = title;
 
@@ -123,9 +169,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     uiGroup.panel = panel;
 
-    for (IdeaPluginDescriptor descriptor : group.descriptors) {
+    addToGroup(group, descriptors, index);
+  }
+
+  private void addToGroup(@NotNull PluginsGroup group, @NotNull List<IdeaPluginDescriptor> descriptors, int index) {
+    for (IdeaPluginDescriptor descriptor : descriptors) {
       CellPluginComponent pluginComponent = myFunction.fun(descriptor);
-      uiGroup.plugins.add(pluginComponent);
+      group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, index);
       pluginComponent.setListeners(myListener, mySearchListener, myEventHandler);
@@ -165,6 +215,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     remove(group.ui.panel);
 
     for (CellPluginComponent plugin : group.ui.plugins) {
+      plugin.close();
       remove(plugin);
       myEventHandler.removeCell(plugin);
     }
@@ -176,6 +227,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
     assert index != -1;
     CellPluginComponent component = group.ui.plugins.remove(index);
+    component.close();
     remove(component);
     myEventHandler.removeCell(component);
     group.descriptors.remove(descriptor);
@@ -192,6 +244,12 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void clear() {
+    for (UIPluginGroup group : myGroups) {
+      for (CellPluginComponent plugin : group.plugins) {
+        plugin.close();
+      }
+    }
+
     myGroups.clear();
     myEventHandler.clear();
     removeAll();

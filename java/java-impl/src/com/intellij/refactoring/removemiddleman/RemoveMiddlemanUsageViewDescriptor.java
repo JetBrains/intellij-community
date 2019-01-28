@@ -30,6 +30,7 @@ class RemoveMiddlemanUsageViewDescriptor implements UsageViewDescriptor {
     this.field = field;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactorJBundle

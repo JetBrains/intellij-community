@@ -4,12 +4,10 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -47,11 +45,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
+import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
+
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
-  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
+  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {REQUIRED_PLUGINS_KEY};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -87,9 +87,12 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
+    boolean isShowSplash = !Boolean.getBoolean(StartupUtil.NO_SPLASH);
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
+
+    myStarter = getStarter();
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
@@ -101,18 +104,11 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      //if (myArgs.length == 0) {
-      myStarter = getStarter();
-      if (myStarter instanceof IdeStarter) {
-        splash = ((IdeStarter)myStarter).showSplash(myArgs);
+      if (isShowSplash && myStarter instanceof IdeStarter) {
+        splash = ((IdeStarter)myStarter).showSplash();
       }
-      //}
 
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
-    }
-
-    if (myStarter == null) {
-      myStarter = getStarter();
     }
 
     if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
@@ -120,7 +116,7 @@ public class IdeaApplication {
       System.exit(Main.NO_GRAPHICS);
     }
 
-    myStarter.premain(args);
+    myStarter.premain(myArgs);
   }
 
   /**
@@ -141,6 +137,10 @@ public class IdeaApplication {
           System.setProperty(keyValue[0], keyValue[1]);
           continue;
         }
+      }
+      if (StartupUtil.NO_SPLASH.equals(arg)) {
+        System.setProperty(StartupUtil.NO_SPLASH, "true");
+        continue;
       }
       arguments.add(arg);
     }
@@ -216,7 +216,6 @@ public class IdeaApplication {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static void initLAF() {
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
@@ -251,20 +250,18 @@ public class IdeaApplication {
     }
 
     @Nullable
-    private Splash showSplash(String[] args) {
-      if (StartupUtil.shouldShowSplash(args)) {
-        final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-        final SplashScreen splashScreen = getSplashScreen();
-        if (splashScreen == null) {
-          mySplash = new Splash(appInfo);
-          mySplash.show();
-          return mySplash;
-        }
-        else {
-          updateSplashScreen(appInfo, splashScreen);
-        }
+    private Splash showSplash() {
+      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      final SplashScreen splashScreen = getSplashScreen();
+      if (splashScreen == null) {
+        mySplash = new Splash(appInfo);
+        mySplash.show();
+        return mySplash;
       }
-      return null;
+      else {
+        updateSplashScreen(appInfo, splashScreen);
+        return null;
+      }
     }
 
     private static void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, @NotNull SplashScreen splashScreen) {
@@ -375,8 +372,7 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
-        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
+        LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
 

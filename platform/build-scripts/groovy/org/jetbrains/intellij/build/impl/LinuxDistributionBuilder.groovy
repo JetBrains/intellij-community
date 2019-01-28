@@ -40,6 +40,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
+    BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
 
     buildContext.ant.copy(file: ideaProperties.path, todir: "$unixDistPath/bin")
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
@@ -130,7 +131,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = jreDirectoryPath != null ? "" : "-no-jdk"
+    def suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
@@ -187,7 +188,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void generateProductJson(String targetDir, String javaExecutablePath) {
     def scriptName = buildContext.productProperties.baseFileName
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
+      .generateProductJson(targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
   }
 
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
@@ -244,12 +245,15 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "bin/fsnotifier*")
           customizer.extraExecutables.each { include(name: it) }
         }
+        fileset(dir: buildContext.paths.distAll){
+          customizer.extraExecutables.each { include(name: it) }
+        }
         fileset(dir: jreDirectoryPath) {
           include(name: "jre64/bin/*")
         }
       }
       generateProductJson(unixSnapDistPath, "jre64/bin/java")
-      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, [unixSnapDistPath, jreDirectoryPath], [])
+      new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")
       buildContext.messages.progress("Building package")

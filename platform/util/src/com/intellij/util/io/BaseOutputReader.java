@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,14 @@ public abstract class BaseOutputReader extends BaseDataReader {
           return policy;
         }
       };
+    }
+
+    public static Options forMostlySilentProcess() {
+      if (Registry.is("output.reader.blocking.mode.for.mostly.silent.processes", true) ||
+          Registry.is("output.reader.blocking.mode", false)) {
+        return BLOCKING;
+      }
+      return NON_BLOCKING;
     }
   }
 

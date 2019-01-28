@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.junit
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
@@ -44,7 +46,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
         data.TEST_OBJECT = when (testKind) {
           "package" -> JUnitConfiguration.TEST_PACKAGE.also { data.PACKAGE_NAME = testKindValue }
           "directory" -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue }
-          "pattern" -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(delimiters = ','))) }
+          "pattern" -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(','))) }
           "class" -> JUnitConfiguration.TEST_CLASS.also { data.MAIN_CLASS_NAME = testKindValue }
           "method" -> JUnitConfiguration.TEST_METHOD.also {
             val className = testKindValue.substringBefore('#')
@@ -77,10 +79,22 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
         runConfig.setModule(module)
       }
     }
+
+    consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
+      try {
+        runConfig.shortenCommandLine = ShortenCommandLine.valueOf(it)
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Illegal value of 'shortenCommandLine': $it", e)
+      }
+    }
   }
 
   override fun getConfigurationFactory(): ConfigurationFactory =
     ConfigurationTypeUtil
       .findConfigurationType<JUnitConfigurationType>(JUnitConfigurationType::class.java)
       .configurationFactories[0]
+
+  companion object {
+    val LOG = Logger.getInstance(JUnitRunConfigurationImporter::class.java)
+  }
 }

@@ -79,12 +79,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull private final TimestampGetter myTimestampGetter;
 
-  @NotNull private final List<CommitId> myCommitIdIndexes;
+  @NotNull private final List<? extends CommitId> myCommitIdIndexes;
 
   @NotNull private final Map<Integer, CommitId> myNotLoadCommits;
 
   public PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
-                                  @NotNull List<CommitId> commitIdIndex,
+                                  @NotNull List<? extends CommitId> commitIdIndex,
                                   @NotNull Map<Integer, CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
@@ -137,12 +137,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @Override
   @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
     return convertToNodeIds(commitIds, false);
   }
 
   @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<CommitId> commitIds, boolean reportNotFound) {
+  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds, boolean reportNotFound) {
     Set<Integer> result = ContainerUtil.newHashSet();
     Set<CommitId> matchedIds = ContainerUtil.newHashSet();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {

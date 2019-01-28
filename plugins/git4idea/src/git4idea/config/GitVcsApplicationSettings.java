@@ -2,6 +2,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,17 +13,8 @@ import org.jetbrains.annotations.Nullable;
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
-  /**
-   * Kinds of SSH executable to be used with the git
-   */
-  public enum SshExecutable {
-    IDEA_SSH,
-    NATIVE_SSH,
-  }
-
   public static class State {
     public String myPathToGit = null;
-    public SshExecutable SSH_EXECUTABLE = SshExecutable.NATIVE_SSH;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
@@ -62,17 +54,8 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     myState.myPathToGit = pathToGit;
   }
 
-  public void setIdeaSsh(@NotNull SshExecutable executable) {
-    myState.SSH_EXECUTABLE = executable;
-  }
-
-  @Nullable
-  SshExecutable getIdeaSsh() {
-    return myState.SSH_EXECUTABLE;
-  }
-
   public boolean isUseIdeaSsh() {
-    return getIdeaSsh() == SshExecutable.IDEA_SSH;
+    return Registry.is("git.use.builtin.ssh");
   }
 
   public boolean isIgnoreWhitespaces() {

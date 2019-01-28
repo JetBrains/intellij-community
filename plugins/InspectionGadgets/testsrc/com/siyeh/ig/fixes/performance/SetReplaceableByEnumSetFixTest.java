@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.performance.SetReplaceableByEnumSetInspection;
@@ -12,7 +13,7 @@ public class SetReplaceableByEnumSetFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new SetReplaceableByEnumSetInspection());
     myRelativePath = "performance/set_replaceable_with_enum_set";
-    myDefaultHint = InspectionGadgetsBundle.message("set.replaceable.by.enum.set.fix.name");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "EnumSet");
     myFixture.addClass("package java.util;\n" +
                        "\n" +
                        "public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E>\n" +

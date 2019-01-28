@@ -39,7 +39,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Runnable myListChangeListener;
   private String myOperationName;
 
-  public static void rollbackChanges(final Project project, final Collection<Change> changes) {
+  public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -123,7 +123,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @NotNull
-  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }
 

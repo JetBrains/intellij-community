@@ -621,7 +621,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
+  public void addLeaf(@NotNull final IElementType leafType, @NotNull CharSequence leafText, final ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
     final LeafElement leaf = ASTFactory.leaf(leafType, holder.getCharTable().intern(leafText));
     CodeEditUtil.setNodeGenerated(leaf, true);
@@ -701,18 +701,18 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
-    while (firstChild != lastChild) {
-      final ASTNode next = firstChild.getTreeNext();
-      addChild(firstChild, anchorBefore);
-      firstChild = next;
+    ASTNode next;
+    for (ASTNode f = firstChild; f != lastChild; f = next) {
+      next = f.getTreeNext();
+      addChild(f, anchorBefore);
     }
   }
 
   /**
-   * Don't call this method, it's public for implementation reasons.
+   * Don't call this method, it's here for implementation reasons.
    */
   @Nullable
-  public final PsiElement getCachedPsi() {
+  final PsiElement getCachedPsi() {
     return myWrapper;
   }
 
@@ -739,7 +739,6 @@ public class CompositeElement extends TreeElement {
       return parserDefinition.createElement(this);
     }
 
-    //noinspection ConstantConditions
     return null;
   }
 
@@ -751,7 +750,7 @@ public class CompositeElement extends TreeElement {
     myWrapper = psi;
   }
 
-  protected void clearPsi() {
+  void clearPsi() {
     myWrapper = null;
   }
 
@@ -776,7 +775,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @NotNull
-  static TreeElement rawSetParents(@NotNull TreeElement child, CompositeElement parent) {
+  static TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
     child.rawRemoveUpToWithoutNotifications(null, false);
     while (true) {
       child.setTreeParent(parent);
@@ -793,39 +792,39 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  private static void repairRemovedElement(final CompositeElement oldParent, final TreeElement oldChild) {
+  private static void repairRemovedElement(@NotNull CompositeElement oldParent, final TreeElement oldChild) {
     if(oldChild == null) return;
     final FileElement treeElement = DummyHolderFactory.createHolder(oldParent.getManager(), null, false).getTreeElement();
     treeElement.rawAddChildren(oldChild);
   }
 
-  private static void add(TreeChangeEventImpl destinationTreeChange, CompositeElement parent, TreeElement first) {
+  private static void add(@NotNull TreeChangeEventImpl destinationTreeChange, @NotNull CompositeElement parent, @NotNull TreeElement first) {
     destinationTreeChange.addElementaryChange(parent);
     parent.rawAddChildren(first);
   }
 
-  private static void remove(TreeChangeEventImpl destinationTreeChange, TreeElement first, TreeElement last) {
+  private static void remove(@NotNull TreeChangeEventImpl destinationTreeChange, TreeElement first, TreeElement last) {
     if (first != null) {
       destinationTreeChange.addElementaryChange(first.getTreeParent());
       first.rawRemoveUpTo(last);
     }
   }
 
-  private static void insertBefore(TreeChangeEventImpl destinationTreeChange, @NotNull TreeElement anchorBefore, TreeElement first) {
+  private static void insertBefore(@NotNull TreeChangeEventImpl destinationTreeChange, @NotNull TreeElement anchorBefore, @NotNull TreeElement first) {
     destinationTreeChange.addElementaryChange(anchorBefore.getTreeParent());
     anchorBefore.rawInsertBeforeMe(first);
   }
 
-  private static void replace(TreeChangeEventImpl sourceTreeChange, TreeElement oldChild, TreeElement newChild) {
+  private static void replace(@NotNull TreeChangeEventImpl sourceTreeChange, @NotNull TreeElement oldChild, @NotNull TreeElement newChild) {
     sourceTreeChange.addElementaryChange(oldChild.getTreeParent());
     oldChild.rawReplaceWithList(newChild);
   }
 
-  private static void removeChildInner(final TreeElement child) {
+  private static void removeChildInner(@NotNull TreeElement child) {
     removeChildrenInner(child, child.getTreeNext());
   }
 
-  private static void removeChildrenInner(final TreeElement first, final TreeElement last) {
+  private static void removeChildrenInner(@NotNull TreeElement first, final TreeElement last) {
     final FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
       ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {

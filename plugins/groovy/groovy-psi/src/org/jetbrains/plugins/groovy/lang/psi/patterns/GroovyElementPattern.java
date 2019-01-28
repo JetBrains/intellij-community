@@ -65,7 +65,6 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
 
               if (nameCondition != null && "withName".equals(nameCondition.getDebugMethodName())) {
                 final String methodName = ref.getReferenceName();
-                //noinspection unchecked
                 if (methodName != null && !nameCondition.getNamePattern().accepts(methodName, context)) {
                   return false;
                 }

@@ -42,6 +42,7 @@ public final class XPathFile extends PsiFileBase implements XPathElement {
     return myType;
   }
 
+  @Override
   public String toString() {
     return "XPathFile:" + getName();
   }

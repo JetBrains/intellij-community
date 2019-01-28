@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
@@ -35,7 +36,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
 
@@ -51,6 +51,8 @@ public class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = getProject(e);
     assert project != null;
+    ExternalSystemActionsCollector.trigger(project, getSystemId(e), this, e);
+
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode)) return;
 

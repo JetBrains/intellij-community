@@ -11,7 +11,6 @@ import java.awt.*;
 
 //TODO remove the class
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCellRenderer {
   protected Icon myLeafIcon;
   protected Color myTextBackground;
@@ -40,9 +39,9 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
     setClosedIcon(UIManager.getIcon("Tree.closedIcon"));
     setOpenIcon(UIManager.getIcon("Tree.openIcon"));
     setSelectionForeground(UIUtil.getTreeSelectionForeground());
-    setTextForeground(UIUtil.getTreeTextForeground());
+    setTextForeground(UIUtil.getTreeForeground());
     setSelectionBackground(UIUtil.getTreeSelectionBackground());
-    setTextBackground(UIUtil.getTreeTextBackground());
+    setTextBackground(UIUtil.getTreeBackground());
     setSelectionBorderColor(UIUtil.getTreeSelectionBorderColor());
     Object obj1 = UIManager.get("Tree.drawsFocusBorderAroundIcon");
     myDrawsFocusBorderAroundIcon = obj1 != null && ((Boolean)obj1).booleanValue();
@@ -51,16 +50,7 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
     mySelected = selected;
     String text = tree.convertValueToText(obj, selected, expanded, leaf, i1, hasFocus);
     setText(text);
-    if (selected){
-      if(hasFocus){
-        setForeground(getSelectionForeground());
-      }else{
-        setForeground(getTextForeground());
-      }
-    }
-    else{
-      setForeground(getTextForeground());
-    }
+    setForeground(UIUtil.getTreeForeground(selected, hasFocus));
     Icon icon = getIcon(tree, obj, selected, expanded, leaf, i1, hasFocus);
     setIcon(icon);
     return this;

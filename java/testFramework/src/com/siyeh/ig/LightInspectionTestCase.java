@@ -94,6 +94,13 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.checkResult(result);
   }
 
+  protected final void checkQuickFix(String intentionName) {
+    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+  }
+
   protected final void doTest(@Language("JAVA") @NotNull String classText, String fileName) {
     final StringBuilder newText = new StringBuilder();
     int start = 0;
@@ -134,9 +141,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
 
   @Override
   protected String getBasePath() {
-    final InspectionProfileEntry inspection = getInspection();
-    assertNotNull("File-based tests should either return an inspection or override this method", inspection);
-    final String className = inspection.getClass().getName();
+    final String className = getInspectionClass().getName();
     final String[] words = className.split("\\.");
     final StringBuilder basePath = new StringBuilder(INSPECTION_GADGETS_TEST_DATA_PATH);
     final int lastWordIndex = words.length - 1;
@@ -169,6 +174,12 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       }
     }
     return basePath.toString();
+  }
+
+  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
+    final InspectionProfileEntry inspection = getInspection();
+    assertNotNull("File-based tests should either return an inspection or override this method", inspection);
+    return inspection.getClass();
   }
 
   protected final void doTest() {

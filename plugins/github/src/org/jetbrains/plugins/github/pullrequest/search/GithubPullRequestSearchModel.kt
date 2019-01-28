@@ -7,7 +7,7 @@ import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 import kotlin.properties.Delegates
 
-class GithubPullRequestSearchModel {
+internal class GithubPullRequestSearchModel {
   @get:CalledInAwt
   @set:CalledInAwt
   var query: GithubPullRequestSearchQuery

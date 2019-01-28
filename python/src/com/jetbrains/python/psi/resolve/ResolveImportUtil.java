@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -20,6 +19,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.typing.PyStubPackages;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -127,9 +127,9 @@ public class ResolveImportUtil {
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      results.addAll(updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false)));
+      results.addAll(resolveChildren(candidate, name, file, false, true, false, false));
     }
-    return results;
+    return updateRatedResults(PyStubPackages.removeRuntimeModulesForWhomStubModulesFound(results));
   }
 
   @NotNull
@@ -382,12 +382,17 @@ public class ResolveImportUtil {
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
     if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, subdir));
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
+    }
+
+    final PsiDirectory stubPackage = PyStubPackages.findStubPackage(dir, referencedName, checkForPackage, withoutStubs);
+    if (stubPackage != null) {
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, stubPackage));
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);
     if (module != null) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, module));
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, module)));
     }
 
     if (!isFileOnly) {
@@ -433,7 +438,7 @@ public class ResolveImportUtil {
       if (target != null) {
         int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
-          for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+          for (PyResolveResultRater rater : PyResolveResultRater.EP_NAME.getExtensionList()) {
             rate += rater.getImportElementRate(target);
           }
         }
@@ -459,7 +464,7 @@ public class ResolveImportUtil {
 
       if (element != null) {
         int delta = 0;
-        for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+        for (PyResolveResultRater rater : PyResolveResultRater.EP_NAME.getExtensionList()) {
           delta += rater.getImportElementRate(element);
         }
 

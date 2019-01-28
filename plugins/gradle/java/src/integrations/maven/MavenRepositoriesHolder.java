@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -26,7 +27,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
 
@@ -82,9 +82,8 @@ public class MavenRepositoriesHolder {
     notificationData.setListener("#update", new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        List<MavenIndex> notIndexed = indicesManager.getIndices().stream()
-          .filter(index -> isNotIndexed(index.getRepositoryPathOrUrl()))
-          .collect(Collectors.toList());
+        List<MavenIndex> notIndexed =
+          ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
         indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
           if (myNotIndexedUrls.isEmpty()) return;
           for (MavenIndex index : notIndexed) {
@@ -121,8 +120,8 @@ public class MavenRepositoriesHolder {
     notificationManager.showNotification(GradleConstants.SYSTEM_ID, notificationData, NOTIFICATION_KEY);
   }
 
-  public static MavenRepositoriesHolder getInstance(Project p) {
-    return p.getComponent(MavenRepositoriesHolder.class);
+  public static MavenRepositoriesHolder getInstance(@NotNull Project p) {
+    return ServiceManager.getService(p, MavenRepositoriesHolder.class);
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {

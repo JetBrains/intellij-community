@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 class ScalaModelBuilderImpl implements ModelBuilderService {
 

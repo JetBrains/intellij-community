@@ -131,7 +131,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   @Nullable
-  private static <T> T processElementPatternText(final String text, final Function<Frame, Object> executor) {
+  private static <T> T processElementPatternText(final String text, final Function<? super Frame, Object> executor) {
     final Stack<Frame> stack = new Stack<>();
     int curPos = 0;
     Frame curFrame = new Frame();
@@ -332,7 +332,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   @Nullable
-  private static Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<Boolean> convertVarArgs) {
+  private static Method findMethod(final String methodName, final Object[] arguments, final Collection<Method> methods, Ref<? super Boolean> convertVarArgs) {
     main: for (Method method : methods) {
       if (!methodName.equals(method.getName())) continue;
       final Class<?>[] parameterTypes = method.getParameterTypes();

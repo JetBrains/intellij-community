@@ -58,8 +58,8 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
                 for (SourceFolder folder : folders) {
                   packagePrefixes.add(folder.getPackagePrefix());
                 }
-                if (packagePrefixes.size() != 1) return null;
-                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.iterator().next());
+                if (packagePrefixes.size() > 1) return null;
+                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
               }
             }
           }

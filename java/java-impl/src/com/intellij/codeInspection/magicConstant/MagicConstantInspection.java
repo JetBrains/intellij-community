@@ -7,6 +7,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -16,12 +18,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -34,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -58,7 +57,24 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              MagicConstantInspection::getCalendarGetValues);
+              MagicConstantInspection::getCalendarGetValues)
+    .register(CallMatcher.instanceCall("java.awt.Toolkit", "getMenuShortcutKeyMaskEx"),
+              // Support especially java.awt.Toolkit.getMenuShortcutKeyMaskEx which is annoying false-positive,
+              // until we can normally annotate Java9+ methods
+              call -> {
+                PsiMethod method = call.resolveMethod();
+                if (method != null) {
+                  PsiClass aClass = method.getContainingClass();
+                  if (aClass != null) {
+                    for (PsiMethod psiMethod : aClass.findMethodsByName("getMenuShortcutKeyMask", false)) {
+                      if (psiMethod.getParameterList().isEmpty()) {
+                        return getAllowedValues(psiMethod, PsiType.INT, null);
+                      }
+                    }
+                  }
+                }
+                return null;
+              });
 
   @Nls
   @NotNull
@@ -401,6 +417,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
+    
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -448,8 +465,14 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element, () ->
-      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+    PsiModifierListOwner realElement;
+    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
+      realElement = (PsiModifierListOwner)element.getNavigationElement();
+    } else {
+      realElement = element;
+    }
+    return CachedValuesManager.getCachedValue(realElement, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -532,12 +555,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean containsBeanInfoText(@NotNull PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, () -> {
-      Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME,
-                                                                                      new IdIndexEntry("beaninfo", true),
-                                                                                      GlobalSearchScope.fileScope(file));
-      return CachedValueProvider.Result.create(!files.isEmpty(), file);
-    });
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo"), file));
   }
 
   private static PsiType getType(@NotNull PsiModifierListOwner element) {
@@ -759,7 +778,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), LanguageSlicing.getProvider(argument).createRootUsage(argument, params));
 
-    Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
+    Collection<? extends AbstractTreeNode> children = ProgressManager.getInstance().runProcess(() -> rootNode.getChildren().iterator().next().getChildren(), new ProgressIndicatorBase());
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
       PsiElement element = usage != null ? usage.getElement() : null;
@@ -774,8 +793,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, @NotNull PsiAnnotationMemberValue... values) {
       super(argument);
-      myMemberValuePointers = Arrays.stream(values).map(
-        value -> SmartPointerManager.getInstance(argument.getProject()).createSmartPsiElementPointer(value)).collect(Collectors.toList());
+      myMemberValuePointers =
+        ContainerUtil.map(values, SmartPointerManager.getInstance(argument.getProject())::createSmartPsiElementPointer);
     }
 
     @Nls
@@ -796,7 +815,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      List<PsiAnnotationMemberValue> values = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).collect(Collectors.toList());
+      List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
       PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);
 

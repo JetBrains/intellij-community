@@ -91,6 +91,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$ternaryWithoutThenElse() { doTest() }
 
+  void testconditional$ternaryNLBeforeColon() { doTest() }
+
+  void testconditional$ternaryNLBeforeElse() { doTest() }
+
+  void testconditional$ternaryNLBeforeQuestion() { doTest() }
+
+  void testconditional$ternaryNLBeforeThen() { doTest() }
+
   void testerrors$err_final() throws Throwable { doTest() }
 
   void testgstring$daniel_sun() throws Throwable { doTest() }
@@ -365,6 +373,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
+
+  void testreferences$dots() { doTest() }
 
   void testregex$chen() throws Throwable { doTest() }
 
@@ -658,6 +668,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$literalInvoked() { doTest() }
 
+  void testcommandExpr$literalInvokedWithUnfinishedLiteral() { doTest() }
+
   void testcommandExpr$slashyInvoked() { doTest() }
 
   void testcommandExpr$safeIndex() { doTest() }
@@ -733,4 +745,110 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testnl$postfixInc() { doTest() }
 
   void testnl$unary() { doTest() }
+
+  void testlambda$parenthesizedAdd() { doTest() }
+
+  void testlambda$standalone1() { doTest() }
+
+  void testlambda$standalone2() { doTest() }
+
+  void testlambda$standalone3() { doTest() }
+
+  void testlambda$standalone4() { doTest() }
+
+  void testlambda$standalone5() { doTest() }
+
+  void testlambda$standalone6() { doTest() }
+
+  void testlambda$standalone7() { doTest() }
+
+  void testlambda$standalone8() { doTest() }
+
+  void testlambda$standalone9() { doTest() }
+
+  void testlambda$standalone10() { doTest() }
+
+  void testlambda$standalone11() { doTest() }
+
+  void testlambda$standalone12() { doTest() }
+
+  void testlambda$closureLike() { doTest() }
+
+  void testlambda$nestedLambda() { doTest() }
+
+  void testlambda$nestedLambda2() { doTest() }
+
+  void testlambda$nestedLambda3() { doTest() }
+
+  void testlambda$nestedLambda4() { doTest() }
+
+  void testlambda$nestedLambda5() { doTest() }
+
+  void testlambda$nestedLambda6() { doTest() }
+
+  void testlambda$assign1() { doTest() }
+
+  void testlambda$assign2() { doTest() }
+
+  void testlambda$assign3() { doTest() }
+
+  void testlambda$assign4() { doTest() }
+
+  void testlambda$methodCall1() { doTest() }
+
+  void testlambda$methodCall2() { doTest() }
+
+  void testlambda$methodCall3() { doTest() }
+
+  void testlambda$methodCall4() { doTest() }
+
+  void testlambda$methodCall5() { doTest() }
+
+  void testlambda$methodCall6() { doTest() }
+
+  void testlambda$methodCall7() { doTest() }
+
+  void testlambda$methodCall8() { doTest() }
+
+  void testlambda$methodCall9() { doTest() }
+
+  void testlambda$methodCall10() { doTest() }
+
+  void testlambda$methodCall11() { doTest() }
+
+  void testlambda$methodCall12() { doTest() }
+
+  void testlambda$command1() { doTest() }
+
+  void testlambda$command2() { doTest() }
+
+  void testlambda$command3() { doTest() }
+
+  void testlambda$command4() { doTest() }
+
+  void testlambda$command5() { doTest() }
+
+  void testlambda$command6() { doTest() }
+
+  void testlambda$command7() { doTest() }
+
+  void testlambda$command8() { doTest() }
+
+  void testlambda$commandInLambda() { doTest() }
+
+  void testlambda$implicitReturn1() { doTest() }
+
+  void testlambda$implicitReturn2() { doTest() }
+
+  void testlambda$implicitReturn3() { doTest() }
+
+  void testlambda$implicitReturn4() { doTest() }
+
+  void testlambda$return1() { doTest() }
+
+  void testlambda$return2() { doTest() }
+
+  void testlambda$return3() { doTest() }
+
+  void testlambda$return4() { doTest() }
 }

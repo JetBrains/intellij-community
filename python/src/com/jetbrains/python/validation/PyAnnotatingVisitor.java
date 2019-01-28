@@ -55,8 +55,12 @@ public class PyAnnotatingVisitor implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    final PsiFile file = psiElement.getContainingFile();
-    for (PyAnnotator annotator : myAnnotators) {
+    runAnnotators(psiElement, holder, myAnnotators);
+  }
+
+  static void runAnnotators(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder, PyAnnotator[] annotators) {
+    PsiFile file = holder.getCurrentAnnotationSession().getFile();
+    for (PyAnnotator annotator : annotators) {
       if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(annotator.getClass())) continue;
       annotator.annotateElement(psiElement, holder);
     }

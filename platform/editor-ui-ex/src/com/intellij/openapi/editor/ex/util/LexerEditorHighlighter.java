@@ -479,14 +479,22 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @NotNull
   TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
-    TextAttributes attrs = new TextAttributes();
+    TextAttributes resultAttributes = new TextAttributes();
+    boolean firstPass = true;
     for (TextAttributesKey key : keys) {
-      TextAttributes attrs2 = myScheme.getAttributes(key);
-      if (attrs2 != null) {
-        attrs = TextAttributes.merge(attrs, attrs2);
+      TextAttributes attributesByKey = myScheme.getAttributes(key);
+      if (attributesByKey == null) {
+        continue;
+      }
+      if (firstPass) {
+        resultAttributes.copyFrom(attributesByKey);
+        firstPass = false;
+      }
+      else {
+        resultAttributes = TextAttributes.merge(resultAttributes, attributesByKey);
       }
     }
-    return attrs;
+    return resultAttributes;
   }
 
   @Override

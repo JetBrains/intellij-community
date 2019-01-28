@@ -25,7 +25,6 @@ import java.util.List;
  * Allows to enumerate all build targets existing in a project.
  *
  * @author Eugene Zhuravlev
- * @since 10/27/12
  */
 public interface BuildTargetRegistry {
   /**

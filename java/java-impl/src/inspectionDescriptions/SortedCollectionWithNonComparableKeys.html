@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports construction of sorted collections, for example <code>new TreeSet&lt;&gt;()</code>, that rely on natural ordering,
+but their element type doesn't implement the <code>Comparable</code> interface.
+It's unlikely that such a collection will work properly.
+<p>
+  A false positive is possible if the collection element is a non-comparable super-type,
+  but it's intended to hold only comparable sub-types. This is however error-prone.
+  It's better to narrow the collection element type or declare the super-type as <code>Comparable</code>.
+</p>
+<!-- tooltip end -->
+<p>
+  The inspection also reports cases when the collection element is a type parameter which is not declared as <code>extends Comparable</code>.
+  You can suppress the warnings on type parameters using the provided option (for example, to keep the API compatibility).
+</p>
+<p>
+  <small>New in 2018.3</small>
+</p>
+</body>
+</html>

@@ -161,7 +161,6 @@ public class CustomRegexpFilter implements Filter {
     return expression;
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   public Result applyFilter(final String line, final int entireLength) {
 
     final Matcher matcher = myPattern.matcher(line);

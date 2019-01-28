@@ -8,20 +8,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
-import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,9 +79,7 @@ public class JavaDebuggerInlayUtil {
     @Override
     public boolean showValueInBlockInlay(@NotNull Project project,
                                          @NotNull XValueNodeImpl node,
-                                         @NotNull XSourcePosition position,
-                                         @NotNull XValue value,
-                                         @NotNull XValuePresentation presentation) {
+                                         @NotNull XSourcePosition position) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
       if (psiFile == null) return false;
       int offset = position.getOffset();
@@ -97,7 +90,9 @@ public class JavaDebuggerInlayUtil {
         if (method != currentMethod) return false;
       }
 
-      String presentationText = createPresentation(node, presentation);
+      SimpleColoredText text = XDebuggerEditorLinePainter.createPresentation(node);
+      if (text == null) return false;
+      String presentationText = text.toString();
       UIUtil.invokeLaterIfNeeded(() -> {
         Editor editor = findEditor(project, position.getFile());
         //noinspection SynchronizeOnThis
@@ -107,25 +102,6 @@ public class JavaDebuggerInlayUtil {
         XDebuggerInlayUtil.addValueToBlockInlay(editor, offset, presentationText);
       });
       return true;
-    }
-
-    @NotNull
-    private static String createPresentation(XValueNodeImpl node, XValuePresentation presentation) {
-      SimpleColoredText text = new SimpleColoredText();
-      XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
-      if (presentation instanceof XValueCompactPresentation && !node.getTree().isUnderRemoteDebug()) {
-        ((XValueCompactPresentation)presentation).renderValue(renderer, node);
-      }
-      else {
-        presentation.renderValue(renderer);
-      }
-      if (StringUtil.isEmpty(text.toString())) {
-        final String type = presentation.getType();
-        if (!StringUtil.isEmpty(type)) {
-          text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        }
-      }
-      return text.toString();
     }
   }
 }

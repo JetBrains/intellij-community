@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -93,23 +92,27 @@ public abstract class EditorActionHandler {
     DataContext caretContext = context == null ? null : new CaretSpecificDataContext(context, hostCaret);
     Editor editor = hostCaret.getEditor();
     if (myWorksInInjected && caretContext != null) {
-      Project project = editor.getProject();
-      if (project != null) {
-        Document document = editor.getDocument();
-        if (InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(document, hostCaret.getOffset())) {
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-          DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
-          Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
-          if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
-            task.perform(injectedCaret, injectedCaretContext);
-            return;
-          }
-        }
+      DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
+      Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
+      if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
+        task.perform(injectedCaret, injectedCaretContext);
+        return;
       }
     }
     if (isEnabledForCaret(editor, hostCaret, caretContext)) {
       task.perform(hostCaret, caretContext);
     }
+  }
+
+  static boolean ensureInjectionUpToDate(@NotNull Caret hostCaret) {
+    Editor editor = hostCaret.getEditor();
+    Project project = editor.getProject();
+    if (project != null &&
+        InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(editor.getDocument(), hostCaret.getOffset())) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -200,11 +203,15 @@ public abstract class EditorActionHandler {
       hostEditor = editor;
     }
     if (contextCaret == null && runForAllCarets()) {
-      hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext,
-                                                                      (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc)));
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        if (myWorksInInjected) ensureInjectionUpToDate(caret);
+        doIfEnabled(caret, dataContext,
+                    (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc));
+      });
     }
     else {
       if (contextCaret == null) {
+        if (myWorksInInjected) ensureInjectionUpToDate(hostEditor.getCaretModel().getCurrentCaret());
         doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext,
                     (caret, dc) -> doExecute(caret.getEditor(), null, dc));
       }

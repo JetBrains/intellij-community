@@ -32,7 +32,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +134,7 @@ public class DocStringUtil {
 
   @NotNull
   private static Substring stripPrefixAndQuotes(@NotNull String text) {
-    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
+    final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
   

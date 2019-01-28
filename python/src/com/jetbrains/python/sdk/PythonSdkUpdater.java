@@ -53,8 +53,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -120,7 +120,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final Application application = ApplicationManager.getApplication();
 
     String sdkHome = sdk.getHomePath();
-    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
       final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
         sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
                         PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
@@ -152,7 +152,7 @@ public class PythonSdkUpdater implements StartupActivity {
       return true;
     }
 
-    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable methodCallStacktrace = new Throwable();
+    final Throwable methodCallStacktrace = new Throwable();
     application.invokeLater(() -> {
       synchronized (ourLock) {
         if (!ourScheduledToRefresh.contains(key)) {

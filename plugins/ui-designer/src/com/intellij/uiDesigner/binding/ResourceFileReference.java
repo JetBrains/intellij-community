@@ -3,15 +3,12 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.ResourceFileUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,13 +26,7 @@ public class ResourceFileReference extends ReferenceInForm {
   @Override
   @Nullable
   public PsiElement resolve() {
-    final Project project = myFile.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile formVirtualFile = myFile.getVirtualFile();
-    if (formVirtualFile == null) {
-      return null;
-    }
-    final Module module = fileIndex.getModuleForFile(formVirtualFile);
+    final Module module = ModuleUtilCore.findModuleForFile(myFile);
     if (module == null) {
       return null;
     }
@@ -43,7 +34,7 @@ public class ResourceFileReference extends ReferenceInForm {
     if (formFile == null) {
       return null;
     }
-    return PsiManager.getInstance(project).findFile(formFile);
+    return myFile.getManager().findFile(formFile);
   }
 
   @Override

@@ -40,6 +40,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomExclusion;
 import org.jetbrains.idea.maven.dom.model.MavenDomExclusions;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import java.util.Collections;
 import java.util.Set;
@@ -107,6 +108,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+      MavenActionsUsagesCollector.trigger(project, "ExtractManagedDependenciesAction");
       Pair<MavenDomDependency, Set<MavenDomProjectModel>> depAndParents = findDependencyAndParent(file, editor);
       if (depAndParents == null) return;
 
@@ -168,7 +170,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
       });
     }
 
-    private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {
+    private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<? extends MavenDomDependency> usages) {
       Set<PsiFile> files = new HashSet<>();
 
       files.add(file);

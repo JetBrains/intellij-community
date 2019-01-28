@@ -13,6 +13,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -145,8 +146,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        syncUpdateOnCaretMove();
-        rescheduleUpdate();
+        UndoManager undoManager = UndoManager.getInstance(myProject);
+        if (!undoManager.isUndoInProgress() && !undoManager.isRedoInProgress()) {
+          syncUpdateOnCaretMove();
+          rescheduleUpdate();
+        }
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -229,6 +233,9 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
+    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+    hintHint.setComponentBorder(JBUI.Borders.empty());
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
@@ -401,16 +408,15 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
       hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
     }
-    List<Inlay> inlays = hostEditor.getInlayModel().getInlineElementsInRange(hostWhitespaceStart, hostWhitespaceEnd);
+    List<Inlay> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
+                                                                                                  hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) {
-        int inlayOffset = inlay.getOffset();
-        if (myEditor instanceof EditorWindow) {
-          if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
-          inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
-        }
-        return inlayOffset;
+      int inlayOffset = inlay.getOffset();
+      if (myEditor instanceof EditorWindow) {
+        if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+        inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
       }
+      return inlayOffset;
     }
     return offset;
   }
@@ -469,7 +475,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
           final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
           // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
-          final E e = (E) ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
         }
       }

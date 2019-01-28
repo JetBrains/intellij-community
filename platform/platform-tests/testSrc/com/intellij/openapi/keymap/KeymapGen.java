@@ -21,7 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.io.File;
 import java.util.Calendar;
@@ -30,7 +30,7 @@ import java.util.Calendar;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("JUnitTestClassNamingConvention")
-public class KeymapGen extends PlatformTestCase {
+public class KeymapGen extends LightPlatformTestCase {
   @Bombed(user = "kb", year = 2117, month = Calendar.NOVEMBER, day = 17)
   public void testGenerate() throws Exception {
     StringBuilder xml = new StringBuilder();

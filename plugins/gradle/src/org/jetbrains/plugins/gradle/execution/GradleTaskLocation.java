@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 3/16/13 1:54 PM
  */
 public class GradleTaskLocation extends PsiLocation<PsiFile> {
   

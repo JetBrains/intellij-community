@@ -167,11 +167,11 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
   }
 
   static class CreateTreeOnFileList {
-    private final Collection<VirtualFile> myFiles;
+    private final Collection<? extends VirtualFile> myFiles;
     private final Map<VirtualFile, AddedFileInfo> myResult = new HashMap<>();
     private final Project myProject;
 
-    CreateTreeOnFileList(Collection<VirtualFile> files, Project project) {
+    CreateTreeOnFileList(Collection<? extends VirtualFile> files, Project project) {
       myFiles = files;
       myProject = project;
       fillFileToInfoMap();

@@ -31,3 +31,7 @@ def test_sample(first, second):
     second.bit_length() #
     second.format()#
     second.__xor__( )#
+
+
+def test_type(first, second:set):
+    second.update()#

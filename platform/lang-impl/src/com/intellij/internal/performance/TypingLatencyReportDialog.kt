@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
-import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
@@ -51,11 +49,25 @@ class TypingLatencyReportDialog(
   override fun createCenterPanel(): JComponent {
     val jbScrollPane = createReportTree()
 
+    val panel: JComponent = if (latencyRecorderProperties.isNotEmpty()) {
+      val header = JLabel(formatHeader(true))
+      JBSplitter(true).apply {
+        setResizeEnabled(false)
+        setResizable(false)
+        proportion = 0.01f
+        firstComponent = header
+        secondComponent = jbScrollPane
+      }
+    }
+    else {
+      jbScrollPane
+    }
+
     if (threadDumps.isEmpty()) {
-      return jbScrollPane
+      return panel
     }
     return JBSplitter(true).apply {
-      firstComponent = jbScrollPane
+      firstComponent = panel
       secondComponent = createThreadDumpBrowser()
     }
   }
@@ -85,8 +97,7 @@ class TypingLatencyReportDialog(
           append(formatLatency(obj.key.name, obj.totalLatency, obj.key.details))
         }
         else if (obj is Pair<*, *>) {
-          val pair = obj as Pair<String, LatencyRecord>
-          append(formatLatency(pair.first, pair.second))
+          append(formatLatency(obj.first as String, obj.second as LatencyRecord))
         }
       }
 
@@ -96,16 +107,26 @@ class TypingLatencyReportDialog(
   }
 
   private fun formatLatency(action: String, latencyRecord: LatencyRecord, details: String? = null): String {
-    val result = "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms"
+    val result = "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms, 90% percentile ${latencyRecord.percentile(
+      90)} ms"
     if (details != null) {
       return "$result, $details"
     }
     return result
   }
 
+  private fun formatHeader(htmlStyle: Boolean): String {
+    return if (htmlStyle) latencyRecorderProperties.map { (key, value) -> "- $key: $value" }.joinToString(
+      prefix = "<html>Latency Recorder Properties<br/>",
+      separator = "<br/>", postfix = "</html>")
+    else latencyRecorderProperties.map { (key, value) -> "  - $key: $value" }.joinToString(
+      prefix = "Latency Recorder Properties\n",
+      separator = "\n")
+  }
+
   private fun createThreadDumpBrowser(): JComponent {
     val builder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
-    builder.filters(*Extensions.getExtensions<Filter>(AnalyzeStacktraceUtil.EP_NAME, project))
+    builder.filters(AnalyzeStacktraceUtil.EP_NAME.getExtensions(project))
     consoleView = builder.console
     Disposer.register(disposable, consoleView)
 
@@ -141,6 +162,8 @@ class TypingLatencyReportDialog(
 
   private fun formatReportAsText(): String {
     return buildString {
+      appendln(formatHeader(false))
+      appendln()
       for (row in latencyMap.values.sortedBy { it.key.name }) {
         appendln(formatLatency(row.key.name, row.totalLatency, row.key.details))
         appendln("Actions:")

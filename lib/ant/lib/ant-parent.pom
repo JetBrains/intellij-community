@@ -20,12 +20,13 @@
   Please contact us if you are not satisfied with the data contained in this POM.
   URL : http://ant.apache.org
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-parent</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <packaging>pom</packaging>
   <description>master POM</description>
   <licenses>
@@ -51,9 +52,9 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     </repository>
   </distributionManagement>
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/ant/core/trunk</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/ant/core/trunk</developerConnection>
-    <url>http://svn.apache.org/repos/asf/ant/core/trunk</url>
+    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/ant.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/ant.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf/ant.git</url>
   </scm>
   <ciManagement>
     <system>hudson</system>
@@ -98,16 +99,18 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <module>ant-jsch</module>
     <module>ant-junit</module>
     <module>ant-junit4</module>
+    <module>ant-junitlauncher</module>
     <module>ant-launcher</module>
     <module>ant-netrexx</module>
     <module>ant-swing</module>
     <module>ant-testutil</module>
+    <module>ant-xz</module>
   </modules>
   <dependencies>
      <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -121,26 +124,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>3.7.0</version>
           <configuration>
-            <source>1.5</source>
-            <target>1.5</target>
+            <source>1.8</source>
+            <target>1.8</target>
           </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>2.4</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.12</version>
+          <version>2.21.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>2.12</version>
+          <version>2.21.0</version>
         </plugin>
       </plugins>
     </pluginManagement>

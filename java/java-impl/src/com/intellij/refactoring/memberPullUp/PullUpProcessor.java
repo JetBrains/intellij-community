@@ -318,6 +318,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
+    @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
       return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";

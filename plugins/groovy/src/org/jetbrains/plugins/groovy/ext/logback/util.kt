@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.psi.PsiClass
@@ -13,9 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiter
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*
 
-internal val configName = "logback.groovy"
-internal val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
-internal val componentDelegateFqn = "ch.qos.logback.classic.gaffer.ComponentDelegate"
+internal const val configName = "logback.groovy"
+internal const val configDelegateFqn = "ch.qos.logback.classic.gaffer.ConfigurationDelegate"
+internal const val componentDelegateFqn = "ch.qos.logback.classic.gaffer.ComponentDelegate"
 internal val appenderMethodPattern = psiMethod(configDelegateFqn, "appender")
 internal val appenderDeclarationPattern = groovyLiteralExpression().methodCallParameter(0, appenderMethodPattern)
 

@@ -27,7 +27,7 @@ public class SetReadOnly implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myListCopy != null && myResult) {
       dispatcher.getMulticaster().changeListChanged(myListCopy);
     }

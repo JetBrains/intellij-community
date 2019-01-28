@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -106,13 +107,13 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.quickfix", replacementText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

@@ -514,4 +514,35 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "}"
     );
   }
+
+  public void testIdea198767() throws IOException {
+    doTextTest(
+      "java",
+
+      "package com.company;\n" +
+      "\n" +
+      "public class SomeExample {\n" +
+      "    void test() {\n" +
+      "        for (int i = 0; i < 10; i++)\n" +
+      "            for (int j = 0; j < 5; j++)\n" +
+      "                for (int k = 0; k < 5; k++) {\n" +
+      "                    System.out.println(\"Sum \" + (i + j + k));\n" +
+      "                }<caret>\n" +
+      "    }\n" +
+      "}",
+
+      "package com.company;\n" +
+      "\n" +
+      "public class SomeExample {\n" +
+      "    void test() {\n" +
+      "        for (int i = 0; i < 10; i++)\n" +
+      "            for (int j = 0; j < 5; j++)\n" +
+      "                for (int k = 0; k < 5; k++) {\n" +
+      "                    System.out.println(\"Sum \" + (i + j + k));\n" +
+      "                }\n" +
+      "        <caret>\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

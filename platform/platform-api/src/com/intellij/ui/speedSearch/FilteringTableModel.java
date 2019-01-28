@@ -29,7 +29,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
   private final List<List<T>> myData = new ArrayList<>();
   private final Class<T> myClz;
   private Condition<T> myCondition = null;
-  private ArrayList<Integer> myIndex = new ArrayList<>();
+  private final ArrayList<Integer> myIndex = new ArrayList<>();
 
   private final TableModelListener myListDataListener = e -> refilter();
 

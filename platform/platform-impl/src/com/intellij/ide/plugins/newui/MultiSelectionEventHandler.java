@@ -13,8 +13,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.ui.UIUtil.uiChildren;
-
 /**
  * @author Alexander Lobas
  */
@@ -33,6 +31,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   private final FocusListener myFocusListener;
 
   private final ShortcutSet mySelectAllKeys;
+  private final ShortcutSet myDeleteKeys;
   private boolean myAllSelected;
   private boolean myMixSelection;
 
@@ -43,7 +42,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseClicked(MouseEvent event) {
         if (SwingUtilities.isLeftMouseButton(event)) {
-          CellPluginComponent component = CellPluginComponent.get(event);
+          CellPluginComponent component = get(event);
           int index = getIndex(component);
 
           if (event.isShiftDown()) {
@@ -66,7 +65,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           }
         }
         else if (SwingUtilities.isRightMouseButton(event)) {
-          CellPluginComponent component = CellPluginComponent.get(event);
+          CellPluginComponent component = get(event);
 
           if (myAllSelected || myMixSelection) {
             int size = getSelection().size();
@@ -107,7 +106,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void mouseMoved(MouseEvent event) {
         if (myHoverComponent == null) {
-          CellPluginComponent component = CellPluginComponent.get(event);
+          CellPluginComponent component = get(event);
           if (component.getSelection() == SelectionType.NONE) {
             myHoverComponent = component;
             component.setSelection(SelectionType.HOVER);
@@ -117,6 +116,7 @@ public class MultiSelectionEventHandler extends EventHandler {
     };
 
     mySelectAllKeys = getShortcuts(IdeActions.ACTION_SELECT_ALL);
+    myDeleteKeys = getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
 
     myKeyListener = new KeyAdapter() {
       @Override
@@ -129,6 +129,9 @@ public class MultiSelectionEventHandler extends EventHandler {
           event.consume();
           selectAll();
           return;
+        }
+        if (check(shortcut, myDeleteKeys)) {
+          code = DELETE_CODE;
         }
 
         if (code == KeyEvent.VK_HOME || code == KeyEvent.VK_END) {
@@ -163,7 +166,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           int pageCount = myContainer.getVisibleRect().height / myLayout.myLineHeight;
           moveOrResizeSelection(code == KeyEvent.VK_PAGE_UP, !event.isShiftDown(), pageCount);
         }
-        else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == KeyEvent.VK_BACK_SPACE) {
+        else if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER || code == DELETE_CODE) {
           assert mySelectionLength != 0;
           CellPluginComponent component = myComponents.get(mySelectionIndex);
           if (component.getSelection() != SelectionType.SELECTION) {
@@ -178,7 +181,7 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void focusGained(FocusEvent event) {
         if (mySelectionIndex >= 0 && mySelectionLength == 1 && !myMixSelection) {
-          CellPluginComponent component = CellPluginComponent.get(event);
+          CellPluginComponent component = get(event);
           int index = getIndex(component);
           if (mySelectionIndex != index) {
             clearSelectionWithout(index);
@@ -187,23 +190,6 @@ public class MultiSelectionEventHandler extends EventHandler {
         }
       }
     };
-  }
-
-  @Nullable
-  private static ShortcutSet getShortcuts(@NotNull String id) {
-    AnAction action = ActionManager.getInstance().getAction(id);
-    return action == null ? null : action.getShortcutSet();
-  }
-
-  private static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
-    if (set != null) {
-      for (Shortcut test : set.getShortcuts()) {
-        if (test.isKeyboard() && shortcut.startsWith(test)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Override
@@ -239,7 +225,7 @@ public class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public void initialSelection(boolean scrollAndFocus) {
-    if (!myComponents.isEmpty()) {
+    if (!myComponents.isEmpty() && mySelectionLength == 0) {
       singleSelection(myComponents.get(0), 0, scrollAndFocus);
     }
   }
@@ -432,6 +418,26 @@ public class MultiSelectionEventHandler extends EventHandler {
     singleSelection(component, getIndex(component), scrollAndFocus);
   }
 
+  @Override
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+    clearSelectionWithout(-1);
+    mySelectionIndex = -1;
+    mySelectionLength = components.size();
+
+    if (mySelectionLength == 0) {
+      return;
+    }
+
+    mySelectionIndex = getIndex(components.get(0));
+
+    for (CellPluginComponent component : components) {
+      mySelectionIndex = Math.min(mySelectionIndex, getIndex(component));
+      if (component.getSelection() != SelectionType.SELECTION) {
+        component.setSelection(SelectionType.SELECTION, true);
+      }
+    }
+  }
+
   private void singleSelection(int index) {
     singleSelection(myComponents.get(index), index);
   }
@@ -457,14 +463,6 @@ public class MultiSelectionEventHandler extends EventHandler {
     component.addMouseMotionListener(myMouseHandler);
     component.addKeyListener(myKeyListener);
     component.addFocusListener(myFocusListener);
-  }
-
-  @Override
-  public void addAll(@NotNull Component component) {
-    add(component);
-    for (Component child : uiChildren(component)) {
-      addAll(child);
-    }
   }
 
   @Override

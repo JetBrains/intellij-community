@@ -1,6 +1,6 @@
-// "Create class 'Abc'" "true"
-public class Test extends Abc {
+// "Create class 'abc'" "true"
+public class Test extends abc {
 }
 
-public class <caret>Abc {
+public class <caret>abc {
 }

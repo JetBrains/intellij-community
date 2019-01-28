@@ -31,9 +31,9 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -81,9 +81,9 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     fileCopy = (PsiFile) fileCopy.setName("NewTest.xxx");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
     if (!(newFile instanceof PsiBinaryFile)) {
-      System.out.println(newFile.getVirtualFile().getFileType());
-      System.out.println(newFile.getFileType());
-      System.out.println(newFile.getText());
+      System.err.println(newFile.getVirtualFile().getFileType());
+      System.err.println(newFile.getFileType());
+      System.err.println(newFile.getText());
     }
     assertInstanceOf(newFile, PsiBinaryFile.class);
 
@@ -235,7 +235,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     final PsiClass aClass;
     try {
-      aClass = JavaPsiFacade.getInstance(getProject()).getElementFactory().createEnum("E");
+      aClass = JavaPsiFacade.getElementFactory(getProject()).createEnum("E");
     }
     finally {
       LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(prevLanguageLevel);
@@ -283,7 +283,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
@@ -300,7 +300,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     aClass.getNode();
     assertNotNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
     
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
     aClass.add(JavaPsiFacade.getElementFactory(getProject()).createMethodFromText("void foo(){}", null));
@@ -318,7 +318,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiClass aClass = file.getClasses()[0];
     //noinspection ResultOfMethodCallIgnored
     aClass.getNode();
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     PsiKeyword kw = assertInstanceOf(aClass.getMethods()[0].getModifierList().getFirstChild(), PsiKeyword.class);
     kw.delete();

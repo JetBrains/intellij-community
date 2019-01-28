@@ -252,13 +252,14 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
+  @CompileStatic
   static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
-      assertNull(actual)
+      assert actual == null
       return
     }
 
-    assertNotNull(actual)
+    assert actual != null
     if (actual instanceof PsiIntersectionType) {
       assertEquals(expected, genIntersectionTypeText(actual))
     }

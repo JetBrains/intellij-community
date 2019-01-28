@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -18,7 +20,7 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -225,7 +227,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
       myInitialRefreshScheduled = true;
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject)).markRootsForRefresh();
+      ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
       if (!app.isCommandLine()) {
@@ -268,6 +270,8 @@ public class StartupManagerImpl extends StartupManagerEx {
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, text, NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER),
           myProject);
       }
+
+      ProjectFsStatsCollector.caseSensitivity(myProject, actual);
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);
@@ -280,7 +284,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational()) return;
+    if (!watcher.isOperational()) {
+      ProjectFsStatsCollector.watchedRoots(myProject, -1);
+      return;
+    }
 
     PooledThreadExecutor.INSTANCE.submit(() -> {
       LOG.debug("FW/roots waiting started");
@@ -292,6 +299,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       LOG.debug("FW/roots waiting finished");
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
+      int pctNonWatched = 0;
       if (!manualWatchRoots.isEmpty()) {
         List<String> nonWatched = new SmartList<>();
         for (VirtualFile root : roots) {
@@ -308,8 +316,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           watcher.notifyOnFailure(message, null);
           LOG.info("unwatched roots: " + nonWatched);
           LOG.info("manual watches: " + manualWatchRoots);
+          pctNonWatched = (int)(100.0 * nonWatched.size() / roots.length);
         }
       }
+
+      ProjectFsStatsCollector.watchedRoots(myProject, pctNonWatched);
     });
   }
 
@@ -343,17 +354,19 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities) {
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
   }
 
-  private static void runActivity(Runnable runnable) {
+  public static void runActivity(Runnable runnable) {
     ProgressManager.checkCanceled();
-
     try {
       runnable.run();
+    }
+    catch (ServiceNotReadyException e) {
+      LOG.error(new Exception(e));
     }
     catch (ProcessCanceledException e) {
       throw e;

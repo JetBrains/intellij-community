@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -36,8 +37,8 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomPerformanceTest extends DomHardCoreTestCase{
-
+@HardwareAgentRequired
+public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
 
@@ -71,7 +72,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
             element.acceptChildren(this);
           }
         });
-
       }
     }).assertTiming();
   }
@@ -132,6 +132,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
   public interface MyNamespacedElement extends DomElement {
 
   }
+
   public interface MyChildElement extends DomElement {
     @Attribute
     @Required
@@ -175,7 +176,6 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     @SubTagsList(value = {"child-element", "abstract-element"}, tagName = "abstract-element")
     MyBarConcreteElement addBarComposite();
-
   }
 
   public interface MyAbstractElement extends MyElement {
@@ -186,6 +186,4 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
   public interface MyBarConcreteElement extends MyAbstractElement {
   }
-
-
 }

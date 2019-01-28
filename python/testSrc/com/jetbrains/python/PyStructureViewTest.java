@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.structureView.PyStructureViewElement;
@@ -135,8 +136,11 @@ public class PyStructureViewTest extends PyTestCase {
   private void doTest(final String expected, final boolean inherited) {
     myFixture.testStructureView(component -> {
       component.setActionActive("SHOW_INHERITED", !inherited);
-      PlatformTestUtil.waitWhileBusy(component.getTree());
-      assertTreeEqual(component.getTree(), expected);
+      final JTree tree = component.getTree();
+      PlatformTestUtil.waitWhileBusy(tree);
+      PlatformTestUtil.waitForPromise(TreeUtil.promiseExpandAll(tree));
+      assertFalse(tree.isRootVisible());
+      assertTreeEqual(tree, expected);
     });
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
@@ -75,7 +76,9 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   public PsiManagerEx getManager() {
     CompositeElement treeParent = getTreeParent();
     if (treeParent != null) return treeParent.getManager();
-    return (PsiManagerEx)getPsi().getManager(); //TODO: cache?
+    PsiElement psi = getPsi();
+    if (psi == null) throw PsiInvalidElementAccessException.createByNode(this, null);
+    return (PsiManagerEx)psi.getManager();
   }
 
   @Override

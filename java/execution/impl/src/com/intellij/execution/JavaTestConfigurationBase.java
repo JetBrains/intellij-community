@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
   private ShortenCommandLine myShortenCommandLine = null;
 

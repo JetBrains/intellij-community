@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Python" implementationClass="com.jetbrains.python.copyright.PyUpdateCopyrightsProvider"/>
+  </extensions>
+</idea-plugin>

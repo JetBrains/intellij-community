@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -23,12 +23,13 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.util.PathsList;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public abstract class ApplicationCommandLineState<T extends
-  ModuleBasedConfiguration<JavaRunConfigurationModule> &
+  ModuleBasedConfiguration<JavaRunConfigurationModule, Element> &
   CommonJavaRunConfigurationParameters &
   ConfigurationWithCommandLineShortener> extends BaseJavaApplicationCommandLineState<T> {
 
@@ -40,7 +41,9 @@ public abstract class ApplicationCommandLineState<T extends
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters params = new JavaParameters();
     T configuration = getConfiguration();
-    params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
+
+    params.setMainClass(myConfiguration.getRunClass());
+    setupJavaParameters(params);
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
@@ -55,11 +58,9 @@ public abstract class ApplicationCommandLineState<T extends
       JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
 
-    params.setMainClass(myConfiguration.getRunClass());
-
-    setupJavaParameters(params);
-
     setupModulePath(params, module);
+
+    params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
     return params;
   }

@@ -82,15 +82,16 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
-    return calcLabel(descriptor);
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
+    throws EvaluateException {
+    return calcLabel(descriptor, evaluationContext);
   }
 
-  protected static String calcLabel(ValueDescriptor descriptor) {
-    final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-    final Value value = valueDescriptor.getValue();
+  protected static String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext) throws EvaluateException {
+    Value value = descriptor.getValue();
     if (value instanceof ObjectReference) {
       if (value instanceof StringReference) {
+        DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
         return ((StringReference)value).value();
       }
       else if (value instanceof ClassObjectReference) {
@@ -115,7 +116,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     else if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
     else {
@@ -223,7 +223,7 @@ public class ClassRenderer extends NodeRendererImpl{
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
         fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
@@ -284,7 +284,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
-    //noinspection HardCodedStringLiteral
     final Field field = classType.fieldByName("name");
     if (field == null) {
       return null;

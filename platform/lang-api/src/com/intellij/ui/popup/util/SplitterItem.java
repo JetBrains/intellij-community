@@ -23,7 +23,6 @@ import javax.swing.*;
 
 /**
  * @author zajac
- * @since 11.05.2012
  */
 public class SplitterItem extends ItemWrapper {
   private final String myText;

@@ -11,6 +11,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,8 @@ import java.util.*;
 import java.util.List;
 
 public class FileNestingInProjectViewDialog extends DialogWrapper {
+  private static final Comparator<NestingRule> RULE_COMPARATOR =
+    Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
 
   private final JBCheckBox myUseNestingRulesCheckBox;
   private final JPanel myRulesPanel;
@@ -141,7 +144,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     return new Action[]{new DialogWrapperAction(IdeBundle.message("file.nesting.reset.to.default.button")) {
       @Override
       protected void doAction(ActionEvent e) {
-        resetTable(Arrays.asList(ProjectViewFileNestingService.DEFAULT_NESTING_RULES));
+        resetTable(ProjectViewFileNestingService.loadDefaultNestingRules());
       }
     }};
   }
@@ -188,7 +191,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
 
   private void resetTable(@NotNull final List<NestingRule> rules) {
     final SortedMap<String, CombinedNestingRule> result = new TreeMap<>();
-    for (NestingRule rule : rules) {
+    for (NestingRule rule : ContainerUtil.sorted(rules, RULE_COMPARATOR)) {
       final CombinedNestingRule r = result.get(rule.getParentFileSuffix());
       if (r == null) {
         result.put(rule.getParentFileSuffix(), new CombinedNestingRule(rule.getParentFileSuffix(), rule.getChildFileSuffix()));
@@ -205,7 +208,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     useNestingRulesOptionConsumer.consume(myUseNestingRulesCheckBox.isSelected());
 
     if (myUseNestingRulesCheckBox.isSelected()) {
-      final SortedSet<NestingRule> result = new TreeSet<>(ProjectViewFileNestingService.RULE_COMPARATOR);
+      final SortedSet<NestingRule> result = new TreeSet<>(RULE_COMPARATOR);
       for (CombinedNestingRule rule : myTable.getListTableModel().getItems()) {
         for (String childSuffix : StringUtil.split(rule.childSuffixes, ";")) {
           if (!StringUtil.isEmptyOrSpaces(childSuffix)) {

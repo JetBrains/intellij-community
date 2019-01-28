@@ -27,7 +27,6 @@ import static java.util.Arrays.stream;
 
 /**
  * @author Denis Zhdanov
- * @since 1/17/13 3:55 PM
  */
 public class ExternalLibraryPathTypeMapperImpl implements ExternalLibraryPathTypeMapper {
 

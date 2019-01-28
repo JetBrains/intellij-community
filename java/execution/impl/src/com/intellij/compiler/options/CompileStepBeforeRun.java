@@ -102,7 +102,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   @Override
-  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
+  public boolean executeTask(@NotNull DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
     return doMake(myProject, configuration, env, false);
   }
 

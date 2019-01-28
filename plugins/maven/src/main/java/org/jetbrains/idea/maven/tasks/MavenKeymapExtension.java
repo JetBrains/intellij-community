@@ -136,8 +136,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     if (anAction instanceof MavenGoalAction) {
       return (MavenGoalAction)anAction;
     }
-    manager.unregisterAction(actionId);
-    manager.registerAction(actionId, mavenGoalAction);
+    manager.replaceAction(actionId, mavenGoalAction);
     return mavenGoalAction;
   }
 
@@ -149,9 +148,11 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       String actionIdPrefix = getActionPrefix(project, eachProject);
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
         String id = actionIdPrefix + eachAction.getGoal();
-        actionManager.unregisterAction(id);
         if(shortcutsManager.hasShortcuts(eachProject, eachAction.getGoal())) {
-          actionManager.registerAction(id, eachAction);
+          actionManager.replaceAction(id, eachAction);
+        }
+        else {
+          actionManager.unregisterAction(id);
         }
       }
     }
@@ -173,7 +174,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
     }
   }
 
-  public static void clearActions(Project project, List<MavenProject> mavenProjects) {
+  public static void clearActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems

@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/compatibilityResources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -43,12 +44,14 @@
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module-library">
       <library name="plexus-archiver" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:2.4.4" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:3.0.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/2.4.4/plexus-archiver-2.4.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.externalSystem" exported="" />
@@ -60,6 +63,9 @@
     <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
   <component name="copyright">
     <Base>

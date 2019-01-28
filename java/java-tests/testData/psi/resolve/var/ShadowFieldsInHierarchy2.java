@@ -11,7 +11,7 @@ class S {
     private void h() {
         new E() {
             {
-                int o = <ref>EXIT_ON_CLOSE;
+                int o = <caret>EXIT_ON_CLOSE;
             }
         }.show();
     }

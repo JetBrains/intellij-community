@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -17,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -35,7 +34,7 @@ public class InvokeTemplateAction extends AnAction {
     myEditor = editor;
   }
 
-  public static String extractMnemonic(String caption, Set<Character> usedMnemonics) {
+  public static String extractMnemonic(String caption, Set<? super Character> usedMnemonics) {
     if (StringUtil.isEmpty(caption)) return "";
 
     for (int i = 0; i < caption.length(); i++) {
@@ -61,33 +60,30 @@ public class InvokeTemplateAction extends AnAction {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(file);
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file));
     }
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> myEditor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
-        // at a meaningful position rather than at indent 0)
-        if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
-          int offset = myEditor.getSelectionModel().getSelectionStart();
-          int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-          int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
-          while (offset < lineEnd && offset < selectionEnd &&
-                 (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
-            offset++;
-          }
-          // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
-          if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
-            selectionEnd--;
-          }
-          if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
-            myEditor.getSelectionModel().setSelection(offset, selectionEnd);
-          }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> myEditor.getCaretModel().runForEachCaret(__ -> {
+      // adjust the selection so that it starts with a non-whitespace character (to make sure that the template is inserted
+      // at a meaningful position rather than at indent 0)
+      if (myEditor.getSelectionModel().hasSelection() && myTemplate.isToReformat()) {
+        int offset = myEditor.getSelectionModel().getSelectionStart();
+        int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+        int lineEnd = document.getLineEndOffset(document.getLineNumber(offset));
+        while (offset < lineEnd && offset < selectionEnd &&
+               (document.getCharsSequence().charAt(offset) == ' ' || document.getCharsSequence().charAt(offset) == '\t')) {
+          offset++;
         }
-        String selectionString = myEditor.getSelectionModel().getSelectedText();
-        TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
+        // avoid extra line break after $SELECTION$ in case when selection ends with a complete line
+        if (selectionEnd == document.getLineStartOffset(document.getLineNumber(selectionEnd))) {
+          selectionEnd--;
+        }
+        if (offset < lineEnd && offset < selectionEnd) {  // found non-WS character in first line of selection
+          myEditor.getSelectionModel().setSelection(offset, selectionEnd);
+        }
       }
+      String selectionString = myEditor.getSelectionModel().getSelectedText();
+      TemplateManager.getInstance(myProject).startTemplate(myEditor, selectionString, myTemplate);
     }), "Wrap with template", "Wrap with template " + myTemplate.getKey());
   }
 }

@@ -8,16 +8,12 @@ import org.jetbrains.debugger.values.ValueManager
  * An object that matches the execution state of the VM while suspended
  */
 interface SuspendContext<out CALL_FRAME : CallFrame> {
-  val state: SuspendState
 
   val script: Script?
     get() = topFrame?.let { vm.scriptManager.getScript(it) }
 
   /**
-   * @return the current exception state, or `null` if current state is
-   * *         not `EXCEPTION`
-   * *
-   * @see .getState
+   * @return the current exception state if execution was paused because of exception, or `null` otherwise.
    */
   val exceptionData: ExceptionData?
     get() = null

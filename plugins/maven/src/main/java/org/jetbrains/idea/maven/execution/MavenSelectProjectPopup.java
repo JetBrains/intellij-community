@@ -82,7 +82,7 @@ public class MavenSelectProjectPopup {
 
   public static void attachToButton(@NotNull final MavenProjectsManager projectsManager,
                                     @NotNull final JButton button,
-                                    @NotNull final Consumer<MavenProject> callback) {
+                                    @NotNull final Consumer<? super MavenProject> callback) {
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

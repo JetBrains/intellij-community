@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -23,7 +23,9 @@ object ExecUtil {
   private val hasPkExec = PathExecLazyValue("pkexec")
   private val hasGnomeTerminal = PathExecLazyValue("gnome-terminal")
   private val hasKdeTerminal = PathExecLazyValue("konsole")
+  private val hasUrxvt = PathExecLazyValue("urxvt")
   private val hasXTerm = PathExecLazyValue("xterm")
+  private val hasSetsid = PathExecLazyValue("setsid")
 
   private const val nicePath = "/usr/bin/nice"
   private val hasNice by lazy { File(nicePath).exists() }
@@ -186,7 +188,7 @@ object ExecUtil {
 
   @JvmStatic
   fun hasTerminalApp(): Boolean =
-    SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.value || hasGnomeTerminal.value || hasXTerm.value
+    SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.value || hasGnomeTerminal.value || hasUrxvt.value || hasXTerm.value
 
   @JvmStatic
   fun getTerminalCommand(title: String?, command: String): List<String> = when {
@@ -203,6 +205,10 @@ object ExecUtil {
     hasGnomeTerminal.value -> {
       if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
       else listOf("gnome-terminal", "-x", command)
+    }
+    hasUrxvt.value -> {
+      if (title != null) listOf("urxvt", "-title", title, "-e", command)
+      else listOf("urxvt", "-e", command)
     }
     hasXTerm.value -> {
       if (title != null) listOf("xterm", "-T", title, "-e", command)
@@ -229,6 +235,15 @@ object ExecUtil {
   }
 
   private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfo.isWindows || hasNice)
+
+  @JvmStatic
+  fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
+    if (SystemInfo.isLinux && hasSetsid.value) {
+      val executablePath = commandLine.exePath
+      commandLine.exePath = "setsid"
+      commandLine.parametersList.prependAll(executablePath)
+    }
+  }
 
   //<editor-fold desc="Deprecated stuff.">
 

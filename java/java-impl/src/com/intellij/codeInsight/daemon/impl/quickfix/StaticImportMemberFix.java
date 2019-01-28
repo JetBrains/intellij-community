@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -72,7 +73,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && getElement().isValid()
            && getQualifierExpression() == null
            && resolveRef() == null
-           && file.getManager().isInProject(file)
+           && BaseIntentionAction.canModify(file)
            && !(candidates == null ? candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS) : candidates).isEmpty()
       ;
   }

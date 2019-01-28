@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -20,7 +21,7 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
 
     @Nullable
     public static <RC extends RunConfiguration, T> JavaScriptDebuggerStarter<RC, T> get(@NotNull RC runConfiguration) {
-      for (JavaScriptDebuggerStarter<?, ?> starter : EP_NAME.getExtensions()) {
+      for (JavaScriptDebuggerStarter<?, ?> starter : EP_NAME.getExtensionList()) {
         if (starter.isApplicable(runConfiguration)) {
           //noinspection unchecked
           return (JavaScriptDebuggerStarter<RC, T>)starter;
@@ -58,7 +59,7 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
     }
 
     public static boolean hasStarters() {
-      return EP_NAME.getExtensions().length > 0;
+      return EP_NAME.hasAnyExtensions();
     }
   }
 }

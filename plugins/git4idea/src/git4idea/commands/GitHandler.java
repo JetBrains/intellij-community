@@ -131,7 +131,7 @@ public abstract class GitHandler {
     myCommandLine.addParameter(command.name());
 
     myStdoutSuppressed = true;
-    mySilent = myCommand.lockingPolicy() == GitCommand.LockingPolicy.READ;
+    mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
   }
 
   @NotNull
@@ -189,15 +189,18 @@ public abstract class GitHandler {
     myListeners.addListener(listener);
   }
 
-  /***
+  /**
    * Execute process with lower priority
-   *
-   * @param isLowPriority whether to use lower or normal priority
    */
-  public void setWithLowPriority(boolean isLowPriority) {
-    if (isLowPriority) {
-      ExecUtil.setupLowPriorityExecution(myCommandLine);
-    }
+  public void withLowPriority() {
+    ExecUtil.setupLowPriorityExecution(myCommandLine);
+  }
+
+  /**
+   * Detach git process from IDE TTY session
+   */
+  public void withNoTty() {
+    ExecUtil.setupNoTtyExecution(myCommandLine);
   }
 
   /**

@@ -26,26 +26,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>  
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-junit</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant + JUnit</name>
   <description>contains the junit and junirreport tasks</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.9.4</version>
+      <version>1.10.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.12</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -67,12 +67,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                   <fileset dir="${project.build.sourceDirectory}/../etc">
                     <include name="junit-frames.xsl"/>
                     <include name="junit-noframes.xsl"/>
+                    <include name="junit-frames-saxon.xsl"/>
+                    <include name="junit-noframes-saxon.xsl"/>
                   </fileset>
                 </copy>              
               </tasks>
             </configuration>
           </execution>
-
         </executions>
       </plugin>
       <plugin>

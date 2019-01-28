@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/29/2016
  */
 public class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector {
   protected MavenGroovyScriptTypeDetector() {

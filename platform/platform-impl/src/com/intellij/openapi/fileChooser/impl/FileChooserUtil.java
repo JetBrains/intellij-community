@@ -89,7 +89,7 @@ public final class FileChooserUtil {
 
   @NotNull
   public static List<VirtualFile> getChosenFiles(@NotNull final FileChooserDescriptor descriptor,
-                                                 @NotNull final List<VirtualFile> selectedFiles) {
+                                                 @NotNull final List<? extends VirtualFile> selectedFiles) {
     return ContainerUtil.mapNotNull(selectedFiles, (NullableFunction<VirtualFile, VirtualFile>)file -> file != null && file.isValid() ? descriptor.getFileToSelect(file) : null);
   }
 }

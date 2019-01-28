@@ -127,9 +127,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         if (isOutdated()) return null;
 
-        final List<Provider> providers = DumbService.getInstance(myProject).
-          filterByDumbAwareness(EXTENSION_POINT_NAME.getExtensions(myProject));
-
+        final List<Provider> providers = DumbService.getDumbAwareExtensions(myProject, EXTENSION_POINT_NAME);
         final List<Runnable> updates = new SmartList<>();
         for (final FileEditor editor : editors) {
           for (final Provider<?> provider : providers) {

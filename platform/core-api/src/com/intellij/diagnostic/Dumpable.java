@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/12 2:10 PM
  */
 public interface Dumpable {
 

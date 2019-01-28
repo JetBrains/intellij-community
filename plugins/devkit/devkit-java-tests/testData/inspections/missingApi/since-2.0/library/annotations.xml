@@ -1,0 +1,47 @@
+<root>
+  <item name='library.RecentClass'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClass recentField'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClass void recentMethod()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClass void recentStaticMethod()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClass OldClass()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClass OldClass(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldClassWithDefaultConstructor OldClassWithDefaultConstructor()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.RecentAnnotation'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+  <item name='library.OldAnnotation int recentParam()'>
+    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
+      <val name="value" val="&quot;2.0&quot;"/>
+    </annotation>
+  </item>
+</root>

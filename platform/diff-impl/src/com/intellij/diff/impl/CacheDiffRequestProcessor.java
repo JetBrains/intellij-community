@@ -117,8 +117,12 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
       () -> {
         applyRequest(new LoadingDiffRequest(getRequestName(requestProvider)), force, scrollToChangePolicy);
       },
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+      getFastLoadingTimeMillis()
     );
+  }
+
+  protected int getFastLoadingTimeMillis() {
+    return ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   }
 
   @Nullable

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * Container for external system task information.
  *
  * @author Denis Zhdanov
- * @since 5/15/13 10:59 AM
  */
 public class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
 
@@ -23,6 +22,7 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
   @Nullable private String myGroup;
   @Nullable private String myType;
   private boolean myInherited;
+  private boolean myIsTest;
 
   public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String path, @Nullable String description) {
     super(owner);
@@ -71,6 +71,14 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
 
   public void setInherited(boolean inherited) {
     myInherited = inherited;
+  }
+
+  public boolean isTest() {
+    return myIsTest;
+  }
+
+  public void setTest(boolean test) {
+    myIsTest = test;
   }
 
   @Override

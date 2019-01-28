@@ -28,6 +28,8 @@ class UsageRepr {
   private static final byte METAMETHOD_USAGE = 0x7;
   private static final byte CLASS_AS_GENERIC_BOUND_USAGE = 0x8;
   private static final byte MODULE_USAGE = 0x9;
+  private static final byte IMPORT_STATIC_MEMBER_USAGE = 0xa;
+  private static final byte IMPORT_STATIC_ON_DEMAND_USAGE = 0xb;
 
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
@@ -227,12 +229,11 @@ class UsageRepr {
 
       final MethodUsage that = (MethodUsage)o;
 
-      if (!Arrays.equals(myArgumentTypes, that.myArgumentTypes)) return false;
       if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
       if (myName != that.myName) return false;
       if (myOwner != that.myOwner) return false;
 
-      return true;
+      return Arrays.equals(myArgumentTypes, that.myArgumentTypes);
     }
 
     @Override
@@ -278,6 +279,32 @@ class UsageRepr {
     @Override
     void kindToStream(final PrintStream stream) {
       stream.println("MetaMethodUsage:");
+    }
+
+    @Override
+    public void toStream(DependencyContext context, PrintStream stream) {
+      super.toStream(context, stream);
+    }
+  }
+
+  public static class ImportStaticMemberUsage extends FMUsage {
+
+    public ImportStaticMemberUsage(final int n, final int o) {
+      super(n, o);
+    }
+
+    public ImportStaticMemberUsage(final DataInput in) {
+      super(in);
+    }
+
+    @Override
+    public void save(final DataOutput out) {
+      save(IMPORT_STATIC_MEMBER_USAGE, out);
+    }
+
+    @Override
+    void kindToStream(final PrintStream stream) {
+      stream.println("ImportStaticMemberUsage:");
     }
 
     @Override
@@ -389,6 +416,59 @@ class UsageRepr {
     @Override
     public void toStream(final DependencyContext context, final PrintStream stream) {
       stream.println("ModuleUsage: " + context.getValue(myModuleName));
+    }
+  }
+
+  public static class ImportStaticOnDemandUsage extends Usage {
+    final int myOwner; // owner class
+
+    @Override
+    public int getOwner() {
+      return myOwner;
+    }
+
+    private ImportStaticOnDemandUsage(final int owner) {
+      this.myOwner = owner;
+    }
+
+    private ImportStaticOnDemandUsage(final DataInput in) {
+      try {
+        myOwner = DataInputOutputUtil.readINT(in);
+      }
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    }
+
+    @Override
+    public void save(final DataOutput out) {
+      try {
+        out.writeByte(IMPORT_STATIC_ON_DEMAND_USAGE);
+        DataInputOutputUtil.writeINT(out, myOwner);
+      }
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final ImportStaticOnDemandUsage that = (ImportStaticOnDemandUsage)o;
+
+      return myOwner == that.myOwner;
+    }
+
+    @Override
+    public int hashCode() {
+      return myOwner;
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ImportStaticOnDemandUsage: " + context.getValue(myOwner));
     }
   }
 
@@ -675,6 +755,14 @@ class UsageRepr {
     return context.getUsage(new MetaMethodUsage(name, owner));
   }
 
+  public static Usage createImportStaticMemberUsage(final DependencyContext context, final int name, final int owner) {
+    return context.getUsage(new ImportStaticMemberUsage(name, owner));
+  }
+
+  public static Usage createImportStaticOnDemandUsage(final DependencyContext context, final int owner) {
+    return context.getUsage(new ImportStaticOnDemandUsage(owner));
+  }
+
   public static Usage createClassUsage(final DependencyContext context, final int name) {
     return context.getUsage(new ClassUsage(name));
   }
@@ -738,6 +826,12 @@ class UsageRepr {
 
           case MODULE_USAGE:
             return context.getUsage(new ModuleUsage(in));
+
+          case IMPORT_STATIC_MEMBER_USAGE:
+            return context.getUsage(new ImportStaticMemberUsage(in));
+
+          case IMPORT_STATIC_ON_DEMAND_USAGE:
+            return context.getUsage(new ImportStaticOnDemandUsage(in));
         }
 
         assert (false);

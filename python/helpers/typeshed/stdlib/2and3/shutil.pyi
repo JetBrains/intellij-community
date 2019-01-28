@@ -7,7 +7,7 @@ import sys
 
 from typing import (
     List, Iterable, Callable, Any, Tuple, Sequence, NamedTuple, IO,
-    AnyStr, Optional, Union, Set, TypeVar, overload, Type, Protocol
+    AnyStr, Optional, Union, Set, TypeVar, overload, Type, Protocol, Text
 )
 
 if sys.version_info >= (3, 6):
@@ -23,7 +23,7 @@ elif sys.version_info >= (3,):
     _AnyPath = str
     _PathReturn = str
 else:
-    _Path = unicode
+    _Path = Text
     _AnyStr = TypeVar("_AnyStr", str, unicode)
     _AnyPath = TypeVar("_AnyPath", str, unicode)
     _PathReturn = Type[None]

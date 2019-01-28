@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,13 +88,11 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     protected void extract(PsiElement first, PsiElement last, PsiElement from) throws IncorrectOperationException {
       // trim leading empty spaces
       while (first != last && isWhiteSpace(first)) {
-        //noinspection ConstantConditions
         first = first.getNextSibling();
       }
 
       // trim trailing empty spaces
       while (last != first && isWhiteSpace(last)) {
-        //noinspection ConstantConditions
         last = last.getPrevSibling();
       }
 
@@ -142,6 +140,10 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
         // it attempts to remove not only the element but sometimes whole expression.
         e.getParent().deleteChildRange(e, e);
       }
+    }
+
+    public final boolean isEffective() {
+      return myIsEffective;
     }
   }
 }

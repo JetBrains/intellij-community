@@ -1,9 +1,10 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
 import java.util.*
 
 val EMPTY_CHARS: CharArray = CharArray(0)
-private val indentGranularity = 2
+private const val indentGranularity = 2
 
 class TextOutput(val out: StringBuilder) {
   private var identLevel: Int = 0

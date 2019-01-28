@@ -46,7 +46,7 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
 
   companion object {
     val REPOSITORY_CACHE: NotNullLazyKey<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>> = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>(
-      "ChangesTree.RepositoryCache") { _ -> mutableMapOf() }
+      "ChangesTree.RepositoryCache") { mutableMapOf() }
 
   }
 }

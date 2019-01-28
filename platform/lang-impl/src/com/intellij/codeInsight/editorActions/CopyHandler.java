@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
@@ -39,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
+  private static final Logger LOG = Logger.getInstance(CopyHandler.class);
+
   private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
@@ -68,19 +57,9 @@ public class CopyHandler extends EditorActionHandler {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          selectionModel.selectLineAtCaret();
-        }
-      });
+      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
       if (!selectionModel.hasSelection(true)) return;
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
-        }
-      });
+      editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor));
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -89,10 +68,15 @@ public class CopyHandler extends EditorActionHandler {
     final int[] endOffsets = selectionModel.getBlockSelectionEnds();
 
     final List<TextBlockTransferableData> transferableDatas = new ArrayList<>();
-    
+
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
-        transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+      for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
+        try {
+          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        }
+        catch (IndexNotReadyException e) {
+          LOG.debug(e);
+        }
       }
     });
 
@@ -101,7 +85,7 @@ public class CopyHandler extends EditorActionHandler {
                   : selectionModel.getSelectedText();
     String rawText = TextBlockTransferable.convertLineSeparators(text, "\n", transferableDatas);
     String escapedText = null;
-    for (CopyPastePreProcessor processor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+    for (CopyPastePreProcessor processor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);
       if (escapedText != null) {
         break;

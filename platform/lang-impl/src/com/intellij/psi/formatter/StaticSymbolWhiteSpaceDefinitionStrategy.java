@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 20, 2010 5:11:49 PM
  */
 public class StaticSymbolWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 

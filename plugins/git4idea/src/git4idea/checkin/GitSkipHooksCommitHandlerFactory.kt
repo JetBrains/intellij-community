@@ -59,7 +59,7 @@ class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
       override fun getComponent(): JComponent {
         runHooks.mnemonic = KeyEvent.VK_H
         runHooks.toolTipText = "<html>If unchecked, Git hook will be skipped with the '--no-verify' parameter</html>"
-        runHooks.isVisible = getRepositoryManager(panel.project).repositories.any { it.hasPreCommitHook() }
+        runHooks.isVisible = getRepositoryManager(panel.project).repositories.any { it.hasCommitHooks() }
         runHooks.isSelected = true
         return JBUI.Panels.simplePanel(runHooks)
       }
@@ -67,7 +67,7 @@ class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
       override fun onChangeListSelected(list: LocalChangeList?) {
         if (runHooks.isEnabled) selectedState = runHooks.isSelected
         val affectedGitRoots = panel.roots.intersect(setOf(*ProjectLevelVcsManager.getInstance(panel.project).getRootsUnderVcs(vcs)))
-        runHooks.isEnabled = getRepositoriesFromRoots(getRepositoryManager(panel.project), affectedGitRoots).any { it.hasPreCommitHook() }
+        runHooks.isEnabled = getRepositoriesFromRoots(getRepositoryManager(panel.project), affectedGitRoots).any { it.hasCommitHooks() }
         runHooks.isSelected = if (runHooks.isEnabled) selectedState else false
       }
 
@@ -79,7 +79,7 @@ class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
 
       fun shouldSkipHook() = runHooks.isVisible && !runHooks.isSelected
 
-      private fun GitRepository.hasPreCommitHook() = info.hooksInfo.isPreCommitHookAvailable
+      private fun GitRepository.hasCommitHooks() = info.hooksInfo.areCommitHooksAvailable
     }
   }
 }

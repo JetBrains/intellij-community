@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class AfterTestEvent extends AbstractTestEvent {
   public AfterTestEvent(GradleTestsExecutionConsole executionConsole) {

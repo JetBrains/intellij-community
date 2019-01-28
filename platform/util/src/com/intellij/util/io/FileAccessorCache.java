@@ -32,7 +32,7 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
     myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
-      protected final void onDropFromCache(K key, Handle<T> value) {
+      protected final void onDropFromCache(K key, @NotNull Handle<T> value) {
         value.release();
       }
     };
@@ -138,12 +138,12 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   }
 
   public static final class Handle<T> extends ResourceHandle<T> {
-    private final FileAccessorCache<?, T> myOwner;
+    private final FileAccessorCache<?, ? super T> myOwner;
     @NotNull
     private final T myResource;
     private final AtomicInteger myRefCount = new AtomicInteger(1);
 
-    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, T> owner) {
+    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, ? super T> owner) {
       myResource = fileAccessor;
       myOwner = owner;
     }

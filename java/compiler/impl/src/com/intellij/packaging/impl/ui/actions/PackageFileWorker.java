@@ -66,12 +66,12 @@ public class PackageFileWorker {
     myPackIntoArchives = packIntoArchives;
   }
 
-  public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
+  public static void startPackagingFiles(Project project, List<? extends VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
     startPackagingFiles(project, files, artifacts, true).doWhenProcessed(
       () -> ApplicationManager.getApplication().invokeLater(onFinishedInAwt));
   }
 
-  public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files,
+  public static ActionCallback startPackagingFiles(final Project project, final List<? extends VirtualFile> files,
                                                    final Artifact[] artifacts, final boolean packIntoArchives) {
     final ActionCallback callback = new ActionCallback();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Shein
- * @since 16.09.2015.
  */
 public class CodeStyleSelectSettingPresentation extends CodeStyleSettingPresentation {
 

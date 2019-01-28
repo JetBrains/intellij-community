@@ -22,6 +22,11 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     return state != null && state.myIsCatalogEnabled;
   }
 
+  public boolean isPreferRemoteSchemas() {
+    MyState state = getState();
+    return state != null && state.myIsPreferRemoteSchemas;
+  }
+
   public void addChangeHandler(Runnable runnable) {
     myChangeHandlers.add(runnable);
   }
@@ -33,8 +38,8 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
   public JsonSchemaCatalogProjectConfiguration() {
   }
 
-  public void setState(boolean isEnabled, boolean isRemoteActivityEnabled) {
-    myState = new MyState(isEnabled, isRemoteActivityEnabled);
+  public void setState(boolean isEnabled, boolean isRemoteActivityEnabled, boolean isPreferRemoteSchemas) {
+    myState = new MyState(isEnabled, isRemoteActivityEnabled, isPreferRemoteSchemas);
     for (Runnable handler : myChangeHandlers) {
       handler.run();
     }
@@ -66,12 +71,16 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     @Tag("remoteActivityEnabled")
     public boolean myIsRemoteActivityEnabled = true;
 
+    @Tag("preferRemoteSchemas")
+    public boolean myIsPreferRemoteSchemas = false;
+
     MyState() {
     }
 
-    MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled) {
+    MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled, boolean isPreferRemoteSchemas) {
       myIsCatalogEnabled = isCatalogEnabled;
       myIsRemoteActivityEnabled = isRemoteActivityEnabled;
+      myIsPreferRemoteSchemas = isPreferRemoteSchemas;
     }
   }
 }

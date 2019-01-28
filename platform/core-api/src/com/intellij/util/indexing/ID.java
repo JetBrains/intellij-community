@@ -137,14 +137,6 @@ public class ID<K, V> extends IndexId<K,V> {
     return myUniqueId;
   }
 
-  /**
-   * Consider to use {@link ID#getName()} instead of this method
-   */
-  @Override
-  public String toString() {
-    return getName();
-  }
-
   public int getUniqueId() {
     return myUniqueId;
   }

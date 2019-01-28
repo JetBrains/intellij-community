@@ -72,7 +72,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       DebuggerInvocationUtil.invokeLater(project, () -> WriteCommandAction.writeCommandAction(project).withName(
         CodeInsightBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
         try {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
           PsiParenthesizedExpression parenth =
             (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type.getCanonicalText() + ")expr)", null);
           //noinspection ConstantConditions

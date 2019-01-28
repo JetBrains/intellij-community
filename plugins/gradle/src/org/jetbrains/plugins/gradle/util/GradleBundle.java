@@ -21,7 +21,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Denis Zhdanov
- * @since 8/1/11 2:44 PM
  */
 public class GradleBundle extends AbstractBundle {
 

@@ -150,13 +150,14 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   
   private fun undo(language: Language, info: MethodInfo) {
     val settings = ParameterNameHintsSettings.getInstance()
-    
-    val diff = settings.getBlackListDiff(language)
+    val languageForSettings = getLanguageForSettingKey(language)
+
+    val diff = settings.getBlackListDiff(languageForSettings)
     val updated = diff.added.toMutableSet().apply {
       remove(info.toPattern())
     }
     
-    settings.setBlackListDiff(language, Diff(updated, diff.removed))
+    settings.setBlackListDiff(languageForSettings, Diff(updated, diff.removed))
     refreshAllOpenEditors()
   }
 
@@ -299,9 +300,7 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
-  return editor.inlayModel
-      .getInlineElementsInRange(startOffset, endOffset)
-      .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
+  return !ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, startOffset, endOffset).isEmpty()
 }
 
 

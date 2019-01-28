@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
@@ -65,6 +64,32 @@ class ProgressDialog implements Disposable {
     }
   };
 
+  private final Runnable myUpdateRequest = () -> update();
+
+  JPanel myPanel;
+  private JLabel myTextLabel;
+
+  private JBLabel myText2Label;
+  private JButton myCancelButton;
+
+  private JButton myBackgroundButton;
+  private JProgressBar myProgressBar;
+
+  private boolean myRepaintedFlag = true; // guarded by this
+  private TitlePanel myTitlePanel;
+  private JPanel myInnerPanel;
+  DialogWrapper myPopup;
+  private final Window myParentWindow;
+
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(), this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(), this);
+
+  ProgressDialog(@NotNull ProgressWindow progressWindow, boolean shouldShowBackground, String cancelText, @Nullable Window parentWindow) {
+    myProgressWindow = progressWindow;
+    myParentWindow = parentWindow;
+    initDialog(shouldShowBackground, cancelText);
+  }
+
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
@@ -74,39 +99,6 @@ class ProgressDialog implements Disposable {
       fullText = "..." + fullText.substring(sep);
     }
     return fullText;
-  }
-
-  private final Runnable myUpdateRequest = () -> update();
-  JPanel myPanel;
-
-  private JLabel myTextLabel;
-  private JBLabel myText2Label;
-
-  private JButton myCancelButton;
-  private JButton myBackgroundButton;
-
-  private JProgressBar myProgressBar;
-  private boolean myRepaintedFlag = true; // guarded by this
-  private TitlePanel myTitlePanel;
-  private JPanel myInnerPanel;
-  DialogWrapper myPopup;
-  private final Window myParentWindow;
-
-  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
-    myProgressWindow = progressWindow;
-    Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-    if (parentWindow == null) {
-      parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-    }
-    myParentWindow = parentWindow;
-
-    initDialog(shouldShowBackground, cancelText);
-  }
-
-  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
-    myProgressWindow = progressWindow;
-    myParentWindow = UIUtil.getWindow(parent);
-    initDialog(shouldShowBackground, cancelText);
   }
 
   private void initDialog(boolean shouldShowBackground, String cancelText) {
@@ -149,11 +141,12 @@ class ProgressDialog implements Disposable {
     UIUtil.dispose(myCancelButton);
   }
 
+  @NotNull
   JPanel getPanel() {
     return myPanel;
   }
 
-  void changeCancelButtonText(String text) {
+  void changeCancelButtonText(@NotNull String text) {
     myCancelButton.setText(text);
   }
 
@@ -179,9 +172,6 @@ class ProgressDialog implements Disposable {
 
     (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
   }
-
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500,this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500,this);
 
   private void createCenterPanel() {
     // Cancel button (if any)
@@ -289,7 +279,7 @@ class ProgressDialog implements Disposable {
       myIsCancellable = cancellable;
     }
 
-    MyDialogWrapper(Component parent, final boolean cancellable) {
+    MyDialogWrapper(@NotNull Component parent, final boolean cancellable) {
       super(parent, false);
       init();
       myIsCancellable = cancellable;

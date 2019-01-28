@@ -3,6 +3,7 @@ package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
@@ -16,9 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.*;
 import java.io.DataOutputStream;
-import java.util.*;
+import java.io.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class CompilerReferenceIndex<Input> {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceIndex.class);
@@ -27,7 +33,7 @@ public class CompilerReferenceIndex<Input> {
   private final static String NAME_ENUM_TAB = "name.tab";
 
   private static final String VERSION_FILE = "version";
-  private final Map<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
+  private final ConcurrentMap<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myBuildDir;
@@ -67,11 +73,18 @@ public class CompilerReferenceIndex<Input> {
         }
       };
 
-      myIndices = new HashMap<>();
+      myIndices = new ConcurrentHashMap<>();
       for (IndexExtension<?, ?, ? super Input> indexExtension : indices) {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
+
+      ShutDownTracker.getInstance().registerShutdownTask(() -> {
+        for (IndexId<?, ?> id : myIndices.keySet()) {
+          //noinspection UseOfSystemOutOrSystemErr
+          System.err.println("Leaked javac compiler index \"" + id.getName() + "\"");
+        }
+      });
 
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
@@ -103,11 +116,19 @@ public class CompilerReferenceIndex<Input> {
   public void close() {
     myLowMemoryWatcher.stop();
     final CommonProcessors.FindFirstProcessor<Exception> exceptionProc =
-      new CommonProcessors.FindFirstProcessor<>();
+      new CommonProcessors.FindFirstProcessor<Exception>() {
+        @Override
+        public boolean process(Exception e) {
+          LOG.error(e);
+          return super.process(e);
+        }
+      };
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
-    for (InvertedIndex<?, ?, ?> index : myIndices.values()) {
-      close(index, exceptionProc);
+    for (Iterator<Map.Entry<IndexId<?, ?>, InvertedIndex<?, ?, Input>>> iterator = myIndices.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<IndexId<?, ?>, InvertedIndex<?, ?, Input>> index = iterator.next();
+      close(index.getValue(), exceptionProc);
+      iterator.remove();
     }
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
@@ -157,15 +178,9 @@ public class CompilerReferenceIndex<Input> {
   public void saveVersion(@NotNull File buildDir, int version) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
 
-    try {
-      FileUtil.createIfDoesntExist(versionFile);
-      final DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile));
-      try {
-        os.writeInt(version);
-      }
-      finally {
-        os.close();
-      }
+    FileUtil.createIfDoesntExist(versionFile);
+    try (DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile))) {
+      os.writeInt(version);
     }
     catch (IOException ex) {
       LOG.error(ex);
@@ -189,7 +204,7 @@ public class CompilerReferenceIndex<Input> {
     try {
       index.dispose();
     }
-    catch (RuntimeException e) {
+    catch (Exception e) {
       exceptionProcessor.process(e);
     }
   }
@@ -202,6 +217,9 @@ public class CompilerReferenceIndex<Input> {
       }
       catch (IOException e) {
         exceptionProcessor.process(new BuildDataCorruptedException(e));
+      }
+      catch (Exception e) {
+        exceptionProcessor.process(e);
       }
     }
   }

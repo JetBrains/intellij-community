@@ -30,13 +30,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,13 +69,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   protected static final int[] ourWrappings =
     {CommonCodeStyleSettings.DO_NOT_WRAP, CommonCodeStyleSettings.WRAP_AS_NEEDED, CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, CommonCodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
-  private String myTextToReformat = null;
+  private String myTextToReformat;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private @Nullable CodeStyleSchemesModel myModel;
-  private boolean mySomethingChanged = false;
+  @Nullable private CodeStyleSchemesModel myModel;
+  private boolean mySomethingChanged;
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
   private final CodeStyleSettings myCurrentSettings;
@@ -98,12 +98,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     if (myEditor != null) {
       myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     }
-    myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
-      @Override
-      public void stateChanged() {
-        somethingChanged();
-      }
-    });
+    myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighligtingListener.TOPIC, this);
 
@@ -123,7 +118,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return mySomethingChanged;
   }
 
-  public void setModel(@Nullable final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     myModel = model;
   }
 
@@ -139,7 +134,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   @Nullable
   private Editor createEditor() {
-    if (getPreviewText() == null) return null;
+    if (StringUtil.isEmpty(getPreviewText())) return null;
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
@@ -167,7 +162,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   }
 
   private void updateEditor(boolean useDefaultSample) {
-    if (!myShouldUpdatePreview || (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getComponent().isShowing())) {
+    if (!myShouldUpdatePreview || !ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getComponent().isShowing()) {
       return;
     }
 
@@ -178,7 +173,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
       myTextToReformat = myEditor.getDocument().getText();
     }
     else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = StringUtil.convertLineSeparators(getPreviewText());
+      myTextToReformat = StringUtil.convertLineSeparators(ObjectUtils.notNull(getPreviewText(), ""));
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -228,7 +223,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   }
 
   private void applySettingsToModel() {
-    if (((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
+    if (mySettings instanceof CodeStyleSchemesModel.ModelSettings && ((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
         apply(mySettings);
@@ -620,7 +615,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         JPanel tabPanel = findTabbedPaneChild(component);
         if (tabPanel != null) {
           JTabbedPane tabbedPane = (JTabbedPane)tabPanel.getParent();
-          tabbedPane.setSelectedComponent(tabPanel);
+          int index = tabbedPane.indexOfComponent(tabPanel);
+          if (index >= 0) {
+            tabbedPane.setSelectedIndex(index);
+          }
         }
       }
     }

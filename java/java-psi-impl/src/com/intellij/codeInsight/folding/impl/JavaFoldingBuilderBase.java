@@ -197,55 +197,26 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  /**
-   * We want to allow to fold subsequent single line comments like
-   * <pre>
-   *     // this is comment line 1
-   *     // this is comment line 2
-   * </pre>
-   *
-   * @param list        fold descriptors holder to store newly created descriptor (if any)
-   * @param comment             comment to check
-   * @param processedComments   set that contains already processed elements. It is necessary because we process all elements of
-*                            the PSI tree, hence, this method may be called for both comments from the example above. However,
-*                            we want to create fold region during the first comment processing, put second comment to it and
-*                            skip processing when current method is called for the second element
-   */
-  private static void addFoldsForComment(@NotNull List<? super FoldingDescriptor> list,
-                                         @NotNull PsiComment comment,
-                                         @NotNull Set<? super PsiElement> processedComments) {
-    if (processedComments.contains(comment) || comment.getTokenType() != JavaTokenType.END_OF_LINE_COMMENT
-        || isCustomRegionElement(comment)) {
-      return;
-    }
-    processedComments.add(comment);
+  private static void addCommentsToFold(@NotNull List<? super FoldingDescriptor> list,
+                                        @NotNull PsiElement element,
+                                        @NotNull Document document,
+                                        @NotNull Set<PsiElement> processedComments) {
+    final PsiComment[] comments = PsiTreeUtil.getChildrenOfType(element, PsiComment.class);
+    if (comments == null) return;
 
-    PsiElement end = null;
-    for (PsiElement current = comment.getNextSibling(); current != null; current = current.getNextSibling()) {
-      ASTNode node = current.getNode();
-      if (node == null) {
-        break;
-      }
-      IElementType elementType = node.getElementType();
-      if (elementType == JavaTokenType.END_OF_LINE_COMMENT && !isCustomRegionElement(current) && !processedComments.contains(current)) {
-        end = current;
-        // We don't want to process, say, the second comment in case of three subsequent comments when it's being examined
-        // during all elements traversal. I.e. we expect to start from the first comment and grab as many subsequent
-        // comments as possible during the single iteration.
-        processedComments.add(current);
-        continue;
-      }
-      if (elementType == TokenType.WHITE_SPACE) {
-        continue;
-      }
-      break;
+    for (PsiComment comment : comments) {
+      addCommentToFold(list, comment, document, processedComments);
     }
+  }
 
-    if (end != null) {
-      list.add(new NamedFoldingDescriptor(comment.getNode(),
-                                          new TextRange(comment.getTextRange().getStartOffset(), end.getTextRange().getEndOffset()), null,
-                                          "//...", JavaCodeFoldingSettings.getInstance().isCollapseEndOfLineComments(), Collections.emptySet()));
-    }
+  private static void addCommentToFold(@NotNull List<? super FoldingDescriptor> list,
+                                       @NotNull PsiComment comment,
+                                       @NotNull Document document,
+                                       @NotNull Set<PsiElement> processedComments) {
+    final NamedFoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
+                                                                                             CustomFoldingBuilder::isCustomRegionElement,
+                                                                                             isCollapseCommentByDefault(comment));
+    if (commentDescriptor != null) list.add(commentDescriptor);
   }
 
   private static void addMethodGenericParametersFolding(@NotNull List<? super FoldingDescriptor> list,
@@ -413,19 +384,20 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                           boolean quick) {
     if (!(root instanceof PsiJavaFile)) return;
     PsiJavaFile file = (PsiJavaFile) root;
+    Set<PsiElement> processedComments = new HashSet<>();
 
     addFoldsForImports(descriptors, file);
 
     PsiJavaModule module = file.getModuleDeclaration();
     if (module != null) {
-      addFoldsForModule(descriptors, module, document);
+      addFoldsForModule(descriptors, module, document, processedComments);
     }
 
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       ProgressManager.checkCanceled();
       ProgressIndicatorProvider.checkCanceled();
-      addFoldsForClass(descriptors, aClass, document, true, quick);
+      addFoldsForClass(descriptors, aClass, document, processedComments, quick);
     }
 
     addFoldsForFileHeader(descriptors, file, document);
@@ -476,43 +448,37 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private static void addFoldsForModule(@NotNull List<? super FoldingDescriptor> list,
                                         @NotNull PsiJavaModule module,
-                                        @NotNull Document document) {
+                                        @NotNull Document document,
+                                        @NotNull Set<PsiElement> processedComments) {
     addToFold(list, module, document, true, getCodeBlockPlaceholder(null), moduleRange(module), false);
-    addDocCommentToFold(list, document, module);
+    addCommentsToFold(list, module, document, processedComments);
     addAnnotationsToFold(list, module.getModifierList(), document);
   }
 
   private void addFoldsForClass(@NotNull List<? super FoldingDescriptor> list,
                                 @NotNull PsiClass aClass,
                                 @NotNull Document document,
-                                boolean foldJavaDocs,
+                                @NotNull Set<PsiElement> processedComments,
                                 boolean quick) {
     PsiElement parent = aClass.getParent();
     if (!(parent instanceof PsiJavaFile) || ((PsiJavaFile)parent).getClasses().length > 1) {
       addToFold(list, aClass, document, true, getCodeBlockPlaceholder(null), classRange(aClass), !(parent instanceof PsiFile) && JavaCodeFoldingSettings.getInstance().isCollapseInnerClasses());
     }
 
-    if (foldJavaDocs) {
-      addDocCommentToFold(list, document, aClass);
-    }
-
     addAnnotationsToFold(list, aClass.getModifierList(), document);
 
-    Set<PsiElement> processedComments = new HashSet<>();
     for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
       ProgressIndicatorProvider.checkCanceled();
 
       if (child instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)child;
 
-        addFoldsForMethod(list, method, document, foldJavaDocs, quick, processedComments);
+        addFoldsForMethod(list, method, document, quick, processedComments);
       }
       else if (child instanceof PsiField) {
         PsiField field = (PsiField)child;
 
-        if (foldJavaDocs) {
-          addDocCommentToFold(list, document, field);
-        }
+        addCommentsToFold(list, field, document, processedComments);
 
         addAnnotationsToFold(list, field.getModifierList(), document);
 
@@ -531,10 +497,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         addCodeBlockFolds(list, child, processedComments, document, quick);
       }
       else if (child instanceof PsiClass) {
-        addFoldsForClass(list, (PsiClass)child, document, true, quick);
+        addFoldsForClass(list, (PsiClass)child, document, processedComments, quick);
       }
       else if (child instanceof PsiComment) {
-        addFoldsForComment(list, (PsiComment)child, processedComments);
+        addCommentToFold(list, (PsiComment)child, document, processedComments);
       }
     }
   }
@@ -542,7 +508,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private void addFoldsForMethod(@NotNull List<? super FoldingDescriptor> list,
                                  @NotNull PsiMethod method,
                                  @NotNull Document document,
-                                 boolean foldJavaDocs,
                                  boolean quick,
                                  @NotNull Set<PsiElement> processedComments) {
     boolean oneLiner = addOneLineMethodFolding(list, method);
@@ -552,9 +517,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
     addAnnotationsToFold(list, method.getModifierList(), document);
 
-    if (foldJavaDocs) {
-      addDocCommentToFold(list, document, method);
-    }
+    addCommentsToFold(list, method, document, processedComments);
 
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       addAnnotationsToFold(list, parameter.getModifierList(), document);
@@ -563,15 +526,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       addCodeBlockFolds(list, body, processedComments, document, quick);
-    }
-  }
-
-  private static void addDocCommentToFold(@NotNull List<? super FoldingDescriptor> list,
-                                          @NotNull Document document,
-                                          @NotNull PsiJavaDocumentedElement element) {
-    PsiDocComment docComment = element.getDocComment();
-    if (docComment != null) {
-      addToFold(list, docComment, document, true, "/**...*/", docComment.getTextRange(), isCollapseDocCommentByDefault(docComment));
     }
   }
 
@@ -645,9 +599,14 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return false;
   }
 
-  private static boolean isCollapseDocCommentByDefault(@NotNull PsiDocComment element) {
-    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    PsiElement parent = element.getParent();
+  /**
+   * Determines whether comment should be collapsed by default.
+   * If comment has unknown type then it is not collapsed.
+   */
+  private static boolean isCollapseCommentByDefault(@NotNull PsiComment comment) {
+    final JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+
+    final PsiElement parent = comment.getParent();
     if (parent instanceof PsiJavaFile) {
       if (((PsiJavaFile)parent).getName().equals(PsiPackage.PACKAGE_INFO_FILE)) {
         return false;
@@ -656,11 +615,19 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       if (firstChild instanceof PsiWhiteSpace) {
         firstChild = firstChild.getNextSibling();
       }
-      if (element.equals(firstChild)) {
+      if (comment.equals(firstChild)) {
         return settings.isCollapseFileHeader();
       }
     }
-    return settings.isCollapseJavadocs();
+
+    if (comment instanceof PsiDocComment) return settings.isCollapseJavadocs();
+
+    final IElementType commentType = comment.getTokenType();
+
+    if (commentType == JavaTokenType.END_OF_LINE_COMMENT) return settings.isCollapseEndOfLineComments();
+    if (commentType == JavaTokenType.C_STYLE_COMMENT) return settings.isCollapseMultilineComments();
+
+    return false;
   }
 
   private static boolean isCollapseMethodByDefault(@NotNull PsiMethod element) {
@@ -685,7 +652,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       public void visitClass(PsiClass aClass) {
         if (dumb || !addClosureFolding(aClass, document, list, processedComments, quick)) {
           addToFold(list, aClass, document, true, getCodeBlockPlaceholder(null), classRange(aClass), JavaCodeFoldingSettings.getInstance().isCollapseInnerClasses());
-          addFoldsForClass(list, aClass, document, false, quick);
+          addFoldsForClass(list, aClass, document, processedComments, quick);
         }
       }
 
@@ -736,7 +703,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
       @Override
       public void visitComment(PsiComment comment) {
-        addFoldsForComment(list, comment, processedComments);
+        addCommentToFold(list, comment, document, processedComments);
         super.visitComment(comment);
       }
     });

@@ -3,13 +3,16 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -57,7 +60,7 @@ public class TabHeaderComponent extends JComponent {
       public void mouseExited(MouseEvent e) {
         if (myHoverTab != -1) {
           myHoverTab = -1;
-          repaint();
+          fullRepaint();
         }
       }
 
@@ -66,7 +69,7 @@ public class TabHeaderComponent extends JComponent {
         int tab = findTab(event);
         if (tab != -1 && tab != myHoverTab) {
           myHoverTab = tab;
-          repaint();
+          fullRepaint();
         }
       }
     };
@@ -86,21 +89,11 @@ public class TabHeaderComponent extends JComponent {
   }
 
   private void addTabSelectionAction(@NotNull String actionId, @NotNull Runnable callback) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action == null) {
-      return;
-    }
-
-    AnAction localAction = new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (isShowing() && !myTabs.isEmpty()) {
-          callback.run();
-        }
+    EventHandler.addGlobalAction(this, actionId, () -> {
+      if (!myTabs.isEmpty()) {
+        callback.run();
       }
-    };
-    localAction.copyShortcutFrom(action);
-    localAction.registerCustomShortcutSet(getRootPane(), null);
+    });
   }
 
   @NotNull
@@ -111,7 +104,9 @@ public class TabHeaderComponent extends JComponent {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(null,
+                                               "Manage Repositories, Configure Proxy or Install Plugin from Disk",
+                                               AllIcons.General.GearPlain) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
@@ -141,8 +136,14 @@ public class TabHeaderComponent extends JComponent {
 
   public void update() {
     mySizeInfo = null;
-    revalidate();
-    repaint();
+    fullRepaint();
+  }
+
+  private void fullRepaint() {
+    Container parent = ObjectUtils.notNull(getParent(), this);
+    parent.doLayout();
+    parent.revalidate();
+    parent.repaint();
   }
 
   public int getSelectionTab() {
@@ -163,13 +164,13 @@ public class TabHeaderComponent extends JComponent {
     else {
       mySelectionTab = index;
     }
-    repaint();
+    fullRepaint();
   }
 
   public void setSelectionWithEvents(int index) {
     mySelectionTab = index;
     myListener.selectionChanged(index);
-    repaint();
+    fullRepaint();
   }
 
   @TestOnly
@@ -202,36 +203,53 @@ public class TabHeaderComponent extends JComponent {
     return -1;
   }
 
+  private Color mySelectedForeground;
+
+  @NotNull
+  private Color getSelectedForeground() {
+    if (mySelectedForeground == null) {
+      mySelectedForeground = JBColor.namedColor("Plugins.Tab.selectedForeground", getForeground());
+    }
+    return mySelectedForeground;
+  }
+
+  private static final Color SELECTED_BG_COLOR =
+    JBColor.namedColor("Plugins.Tab.selectedBackground", JBUI.CurrentTheme.ToolWindow.tabSelectedBackground());
+
+  private static final Color HOVER_BG_COLOR =
+    JBColor.namedColor("Plugins.Tab.hoverBackground", JBUI.CurrentTheme.ToolWindow.tabHoveredBackground());
+
   @Override
   protected void paintComponent(Graphics g) {
+    UISettings.setupAntialiasing(g);
+    g.setFont(getFont());
     super.paintComponent(g);
-
-    if (g instanceof Graphics2D) {
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    }
-
     calculateSize();
 
-    FontMetrics fm = getFontMetrics(getFont());
     int x = getStartX();
     int height = getHeight();
-    int tabTitleY = fm.getAscent() + (height - fm.getHeight()) / 2;
-    if (myBreadcrumbs != null) {
-      tabTitleY = myBaselineY + myBreadcrumbs.getBaseline();
-    }
+    int tabTitleY = getBaseline(-1, -1);
 
     for (int i = 0, size = myTabs.size(); i < size; i++) {
       if (mySelectionTab == i || myHoverTab == i) {
         Rectangle bounds = mySizeInfo.tabs[i];
-        g.setColor(mySelectionTab == i
-                   ? JBUI.CurrentTheme.ToolWindow.tabSelectedBackground()
-                   : JBUI.CurrentTheme.ToolWindow.tabHoveredBackground());
+        g.setColor(mySelectionTab == i ? SELECTED_BG_COLOR : HOVER_BG_COLOR);
         g.fillRect(x + bounds.x, 0, bounds.width, height);
-        g.setColor(getForeground());
+        g.setColor(mySelectionTab == i ? getSelectedForeground() : getForeground());
       }
 
       g.drawString(myTabs.get(i).compute(), x + mySizeInfo.tabTitleX[i], tabTitleY);
     }
+  }
+
+  @Override
+  public int getBaseline(int width, int height) {
+    FontMetrics fm = getFontMetrics(getFont());
+    int tabTitleY = fm.getAscent() + (getHeight() - fm.getHeight()) / 2;
+    if (myBreadcrumbs != null) {
+      tabTitleY = myBaselineY + Math.max(myBreadcrumbs.getBaseline(-1, -1), 0);
+    }
+    return tabTitleY;
   }
 
   @Override

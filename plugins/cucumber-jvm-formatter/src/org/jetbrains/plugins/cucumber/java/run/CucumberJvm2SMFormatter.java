@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
+import com.intellij.junit4.ExpectedPatterns;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
 import cucumber.api.event.*;
@@ -34,8 +36,8 @@ public class CucumberJvm2SMFormatter implements Formatter {
   public CucumberJvm2SMFormatter(PrintStream out, String currentTimeValue) {
     myOut = out;
     myCurrentTimeValue = currentTimeValue;
-    outCommand(String.format(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime()));
-    outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_STARTED, 0, getCurrentTime()));
+    outCommand(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime());
+    outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }
 
   private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
@@ -94,16 +96,15 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestCaseStarted(TestCaseStarted event) {
     if (currentFilePath == null) {
-      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), escape(getEventUri(event)),
-                               escape(getFeatureFileDescription(getEventUri(event)))));
+      outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event), getFeatureFileDescription(getEventUri(event)));
     }
     else if (!getEventUri(event).equals(currentFilePath)) {
       closeCurrentScenarioOutline();
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
-                               escape(getFeatureFileDescription(currentFilePath))));
-      outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), escape(getEventUri(event)),
-                               escape(getFeatureFileDescription(getEventUri(event)))));
+      outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getFeatureFileDescription(currentFilePath));
+      outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event), getFeatureFileDescription(getEventUri(event)));
     }
+
+    outCommand(TEMPLATE_SCENARIO_STARTED, getCurrentTime());
 
     if (isScenarioOutline(event.testCase)) {
       int mainScenarioLine = getScenarioOutlineLine(event.testCase);
@@ -112,44 +113,51 @@ public class CucumberJvm2SMFormatter implements Formatter {
         closeCurrentScenarioOutline();
         currentScenarioOutlineLine = mainScenarioLine;
         currentScenarioOutlineName = getEventName(event);
-        outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(),
-                                 escape(getEventUri(event)) + ":" + currentScenarioOutlineLine, escape(currentScenarioOutlineName)));
-        outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), "", EXAMPLES_CAPTION));
+        outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event) + ":" + currentScenarioOutlineLine,
+                   currentScenarioOutlineName);
+        outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), "", EXAMPLES_CAPTION);
       }
     } else {
       closeCurrentScenarioOutline();
     }
     currentFilePath = getEventUri(event);
 
-    outCommand(String.format(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(),
-                             escape(getEventUri(event)) + ":" + getEventLine(event), escape(getScenarioName(event))));
+    outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event) + ":" + getEventLine(event), getScenarioName(event));
   }
 
   private void handleTestCaseFinished(TestCaseFinished event) {
-    outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), escape(getScenarioName(event))));
+    outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(event));
+    outCommand(TEMPLATE_SCENARIO_FINISHED, getCurrentTime());
   }
 
   private void handleTestRunFinished(TestRunFinished event) {
     closeCurrentScenarioOutline();
-    outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
-                             escape(getFeatureFileDescription(currentFilePath))));
+    outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getFeatureFileDescription(currentFilePath));
   }
   private void handleTestStepStarted(TestStepStarted event) {
-    outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), escape(getStepLocation(event)),
-                             escape(getStepName(event))));
+    outCommand(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event), getStepName(event));
   }
 
   private void handleTestStepFinished(TestStepFinished event) {
     if (event.result.getStatus() == PASSED) {
       // write nothing
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
-      outCommand(String.format(TEMPLATE_TEST_PENDING, escape(getStepName(event)), getCurrentTime()));
+      outCommand(TEMPLATE_TEST_PENDING, getStepName(event), getCurrentTime());
     } else {
-      outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
-                               escape(event.result.getErrorMessage()), getStepName(event), ""));
+      String[] messageAndDetails = getMessageAndDetails(event.result.getErrorMessage());
+
+      ComparisonFailureData comparisonFailureData = ExpectedPatterns.createExceptionNotification(messageAndDetails[0]);
+      if (comparisonFailureData != null) {
+        outCommand(TEMPLATE_COMPARISON_TEST_FAILED, getCurrentTime(), messageAndDetails[1], messageAndDetails[0],
+                   comparisonFailureData.getExpected(), comparisonFailureData.getActual(), getStepName(event), "");
+      }
+      else {
+        outCommand(TEMPLATE_TEST_FAILED, getCurrentTime(), "", event.result.getErrorMessage(), getStepName(event), "");
+      }
+
     }
     Long duration = event.result.getDuration() != null ? event.result.getDuration() / 1000000: 0;
-    outCommand(String.format(TEMPLATE_TEST_FINISHED, getCurrentTime(), duration, escape(getStepName(event))));
+    outCommand(TEMPLATE_TEST_FINISHED, getCurrentTime(), String.valueOf(duration), getStepName(event));
   }
 
   private String getFeatureFileDescription(String uri) {
@@ -166,11 +174,36 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void closeCurrentScenarioOutline() {
     if (currentScenarioOutlineLine > 0) {
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), EXAMPLES_CAPTION));
-      outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), escape(currentScenarioOutlineName)));
+      outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), EXAMPLES_CAPTION);
+      outCommand(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), currentScenarioOutlineName);
       currentScenarioOutlineLine = 0;
       currentScenarioOutlineName = null;
     }
+  }
+
+  private static String[] getMessageAndDetails(String errorReport) {
+    if (errorReport == null) {
+      errorReport = "";
+    }
+    String[] messageAndDetails = errorReport.split("\n", 2);
+
+    String message = null;
+    if (messageAndDetails.length > 0) {
+      message = messageAndDetails[0];
+    }
+    if (message == null) {
+      message = "";
+    }
+
+    String details = null;
+    if (messageAndDetails.length > 1) {
+      details = messageAndDetails[1];
+    }
+    if (details == null) {
+      details = "";
+    }
+
+    return new String[] {message, details};
   }
 
   private static String getStepLocation(TestStep step) {
@@ -209,8 +242,8 @@ public class CucumberJvm2SMFormatter implements Formatter {
     return stepName;
   }
 
-  private void outCommand(String s) {
-    myOut.println(s);
+  private void outCommand(String command, String... parameters) {
+    myOut.println(escapeCommand(command, parameters));
   }
 
   private static PickleEvent getPickleEvent(TestCase testCase) {

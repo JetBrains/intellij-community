@@ -35,7 +35,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -58,12 +57,12 @@ public class CommitPanel extends JBPanel {
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final Consumer<CommitId> myNavigate;
+  @NotNull private final Consumer<? super CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
   @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<CommitId> navigate) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<? super CommitId> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
     myNavigate = navigate;
@@ -110,10 +109,10 @@ public class CommitPanel extends JBPanel {
     myContainingBranchesPanel.setBranches(branches);
   }
 
-  public void setRefs(@NotNull Collection<VcsRef> refs) {
+  public void setRefs(@NotNull Collection<? extends VcsRef> refs) {
     List<VcsRef> references = sortRefs(refs);
-    myBranchesPanel.setReferences(references.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList()));
-    myTagsPanel.setReferences(references.stream().filter(ref -> !ref.getType().isBranch()).collect(Collectors.toList()));
+    myBranchesPanel.setReferences(ContainerUtil.filter(references, ref -> ref.getType().isBranch()));
+    myTagsPanel.setReferences(ContainerUtil.filter(references, ref -> !ref.getType().isBranch()));
     if (myTagsPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
       myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
@@ -144,7 +143,7 @@ public class CommitPanel extends JBPanel {
   }
 
   @NotNull
-  private List<VcsRef> sortRefs(@NotNull Collection<VcsRef> refs) {
+  private List<VcsRef> sortRefs(@NotNull Collection<? extends VcsRef> refs) {
     VcsRef ref = ContainerUtil.getFirstItem(refs);
     if (ref == null) return ContainerUtil.emptyList();
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());

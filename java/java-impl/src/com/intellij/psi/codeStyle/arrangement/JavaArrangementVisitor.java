@@ -67,6 +67,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   @NotNull private final Collection<? extends TextRange> myRanges;
   @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
   @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
+  private final boolean myCheckDeep;
   @NotNull private final  ArrangementSectionDetector mySectionDetector;
   @Nullable private final Document                      myDocument;
 
@@ -77,13 +78,15 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                          @Nullable Document document,
                          @NotNull Collection<? extends TextRange> ranges,
-                         @NotNull ArrangementSettings settings) {
+                         @NotNull ArrangementSettings settings,
+                         boolean checkDeep) {
     myInfo = infoHolder;
     myDocument = document;
     myRanges = ranges;
     myGroupingRules = getGroupingRules(settings);
 
     myMethodBodyProcessor = new MethodBodyProcessor(infoHolder);
+    myCheckDeep = checkDeep;
     mySectionDetector = new ArrangementSectionDetector(document, settings, data -> {
       TextRange range = data.getTextRange();
       JavaSectionArrangementEntry entry = new JavaSectionArrangementEntry(getCurrent(), data.getToken(), range, data.getText(), true);
@@ -392,7 +395,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       return;
     }
 
-    processEntry(entry, method, method.getBody());
+    processEntry(entry, method, myCheckDeep ? method.getBody() : null);
     parseProperties(method, entry);
     myInfo.onMethodEntryCreated(method, entry);
     MethodSignatureBackedByPsiMethod overridden = SuperMethodsSearch.search(method, null, true, false).findFirst();

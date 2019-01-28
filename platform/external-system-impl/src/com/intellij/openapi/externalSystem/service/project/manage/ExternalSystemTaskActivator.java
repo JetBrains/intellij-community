@@ -52,7 +52,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class ExternalSystemTaskActivator {
   private static final Logger LOG = Logger.getInstance(ExternalSystemTaskActivator.class);
@@ -145,7 +144,6 @@ public class ExternalSystemTaskActivator {
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
       new LinkedList<>();
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
     Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
       FactoryMap.create(key -> {
         final AbstractExternalSystemTaskConfigurationType configurationType =

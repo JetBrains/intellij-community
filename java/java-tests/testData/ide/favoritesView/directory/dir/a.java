@@ -1,0 +1,4 @@
+package dir;
+class a{
+
+}

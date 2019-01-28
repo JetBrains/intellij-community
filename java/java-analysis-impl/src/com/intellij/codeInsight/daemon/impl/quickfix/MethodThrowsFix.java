@@ -54,7 +54,7 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
       PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
       boolean alreadyThrows = Arrays.stream(referenceElements).anyMatch(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText));
       if (!alreadyThrows) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
         PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
         ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
@@ -156,7 +156,7 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
     public static PsiElement[] extractRefsToRemove(PsiMethod method, PsiType exceptionType) {
       List<PsiElement> refs = new SmartList<>();
       PsiJavaCodeReferenceElement[] referenceElements = method.getThrowsList().getReferenceElements();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
       Arrays.stream(referenceElements).filter(ref -> {
         PsiType refType = elementFactory.createType(ref);
         return exceptionType.isAssignableFrom(refType);

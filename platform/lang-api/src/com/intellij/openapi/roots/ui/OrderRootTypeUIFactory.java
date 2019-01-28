@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public interface OrderRootTypeUIFactory {
   ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.OrderRootTypeUI");

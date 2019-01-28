@@ -22,11 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
-    (project, text) -> JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(text, null);
+    (project, text) -> JavaPsiFacade.getElementFactory(project).createAnnotationFromText(text, null);
 
   public PsiAnnotationImpl(final PsiAnnotationStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION);
@@ -71,6 +69,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return t;
   }
 
+  @Override
   public String toString() {
     return "PsiAnnotation";
   }
@@ -114,11 +113,6 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     else {
       visitor.visitElement(this);
     }
-  }
-
-  @Override
-  public PsiMetaData getMetaData() {
-    return MetaRegistry.getMetaBase(this);
   }
 
   @Nullable

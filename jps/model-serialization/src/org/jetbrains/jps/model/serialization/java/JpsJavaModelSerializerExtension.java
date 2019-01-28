@@ -61,12 +61,12 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public static final String TEST_OUTPUT_TAG = "output-test";
   public static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
   public static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
-  private static final String ANNOTATION_PATHS_TAG = "annotation-paths";
-  private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
-  private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
+  public static final String ANNOTATION_PATHS_TAG = "annotation-paths";
+  public static final String JAVADOC_PATHS_TAG = "javadoc-paths";
+  public static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
   public static final String ROOT_TAG = "root";
-  private static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
-  private static final String IS_GENERATED_ATTRIBUTE = "generated";
+  public static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
+  public static final String IS_GENERATED_ATTRIBUTE = "generated";
   public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
 
@@ -207,7 +207,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
     final String languageLevel = rootModelComponent.getAttributeValue(MODULE_LANGUAGE_LEVEL_ATTRIBUTE);
     if (languageLevel != null) {
-      extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+      extension.setLanguageLevel(readLanguageLevel(languageLevel, null));
     }
 
     loadAdditionalRoots(rootModelComponent, ANNOTATION_PATHS_TAG, extension.getAnnotationRoots());
@@ -319,6 +319,15 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
+  private static LanguageLevel readLanguageLevel(String level, LanguageLevel defaultLevel) {
+    for (LanguageLevel languageLevel : LanguageLevel.values()) {
+      if (level.equals(languageLevel.name())) {
+        return languageLevel;
+      }
+    }
+    return defaultLevel;
+  }
+
   private static class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
     JavaProjectExtensionSerializer() {
       super(null, "ProjectRootManager");
@@ -336,7 +345,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       }
       String languageLevel = componentTag.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE);
       if (languageLevel != null) {
-        extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+        extension.setLanguageLevel(readLanguageLevel(languageLevel, LanguageLevel.HIGHEST));
       }
     }
 

@@ -103,7 +103,7 @@ public class CommonProcessors {
     private final Set<T> processed;
     private final Processor<? super T> myDelegate;
 
-    public UniqueProcessor(@NotNull Processor<T> delegate) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate) {
       this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
 

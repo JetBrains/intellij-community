@@ -7,8 +7,6 @@ import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
@@ -64,7 +62,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   ShowContentAction myShowContent;
 
-  ContentLayout myTabsLayout = new TabContentLayout(this);
+  TabContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
@@ -266,13 +264,16 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   @Override
   public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
+    Dimension size = new Dimension();
     size.height = 0;
+    size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
+      size.width += each.getPreferredSize().width;
     }
-    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
+
+    size.width = Math.max(size.width, getMinimumSize().width);
     return size;
   }
 
@@ -336,6 +337,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout().getNextContentActionName();
   }
 
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myTabsLayout.setTabDoubleClickActions(actions);
+  }
+
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
     if (c.getClientProperty(ui) != null) return;
 
@@ -394,8 +399,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+            myPressPoint.set(myLastPoint.get());
             if (allowResize && ui.isResizeable()) {
-              myPressPoint.set(myLastPoint.get());
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
             ui.myWindow.fireActivated();
@@ -418,6 +423,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
                     ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
                     : Cursor.getDefaultCursor());
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        c.setCursor(null);
       }
 
       @Override
@@ -504,7 +514,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (selectedContent == null && toolWindowGroup == null) {
       return;
     }
+    DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
+    group.copyFromGroup(configuredGroup);
     if (selectedContent != null) {
       initActionGroup(group, selectedContent);
     }
@@ -513,8 +525,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu =
-      ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 
@@ -593,7 +604,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   @Override
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
+    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
+      return myWindow;
+    }
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
@@ -649,7 +662,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final Content selectedContent = myManager.getSelectedContent();
 
     final SelectContentStep step = new SelectContentStep(contents);
-    step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    if (selectedContent != null) {
+      step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    }
 
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     getCurrentLayout().showContentPopup(popup);

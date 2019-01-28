@@ -84,13 +84,13 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     private class MyProcessor extends BaseProcessor {
-        private final Processor<Usage> myProcessor;
+        private final Processor<? super Usage> myProcessor;
         private final int myTotalFileCount;
 
         private int myFileCount;
         private int myMatchCount;
 
-        MyProcessor(Processor<Usage> processor, int fileCount) {
+        MyProcessor(Processor<? super Usage> processor, int fileCount) {
             myProcessor = processor;
             myTotalFileCount = fileCount;
         }

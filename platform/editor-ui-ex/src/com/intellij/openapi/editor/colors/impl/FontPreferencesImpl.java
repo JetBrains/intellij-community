@@ -34,7 +34,6 @@ import java.util.List;
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
  *
  * @author Denis Zhdanov
- * @since 12/20/12 9:37 PM
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
 

@@ -2,11 +2,12 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/util/descriptor")
-public class DescriptorUtilTest extends JavaCodeInsightFixtureTestCase {
+public class DescriptorUtilTest extends LightCodeInsightFixtureTestCase {
+
   public void testSimple() {
     myFixture.copyFileToProject("simple.xml", "META-INF/plugin.xml");
     assertSameElements(DescriptorUtil.getPluginAndOptionalDependenciesIds(myModule), "com.intellij.example");

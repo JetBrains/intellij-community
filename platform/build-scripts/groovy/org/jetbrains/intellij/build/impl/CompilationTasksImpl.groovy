@@ -41,8 +41,13 @@ class CompilationTasksImpl extends CompilationTasks {
       resolveProjectDependencies()
       return
     }
+    if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+      context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchivesMetadata}' will be used")
+      resolveProjectDependencies()
+      return
+    }
 
-    CompilationContextImpl.setupCompilationDependencies(context.gradle)
+    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
 
     context.messages.progress("Compiling project")
     JpsCompilationRunner runner = new JpsCompilationRunner(context)

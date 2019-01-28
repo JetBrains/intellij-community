@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
 import com.intellij.ide.util.projectWizard.importSources.DetectedContentRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
@@ -73,7 +74,7 @@ public class RootDetectionProcessor {
     }
   }
 
-  public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<DetectedRootData> list) {
+  public static MultiMap<ProjectStructureDetector, DetectedProjectRoot> createRootsMap(List<? extends DetectedRootData> list) {
     MultiMap<ProjectStructureDetector, DetectedProjectRoot> roots = new MultiMap<>();
     for (final DetectedRootData rootData : list) {
       for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {
@@ -165,7 +166,7 @@ public class RootDetectionProcessor {
 
       if (!enabledForChildren.isEmpty()) {
         for (File child : children) {
-          if (child.isDirectory()) {
+          if (child.isDirectory() && !FrameworkDetectionProcessor.SKIPPED_DIRECTORIES.contains(child.getName())) {
             final List<Pair<File, Integer>> toSkip = processRecursively(child, enabledForChildren, parentDirectories);
             if (!toSkip.isEmpty()) {
               if (enabledForChildren == enabledDetectors) {

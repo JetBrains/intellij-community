@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -98,9 +99,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unpredictable.big.decimal.constructor.call.quickfix",
-        argumentText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", argumentText);
     }
 
     @NotNull

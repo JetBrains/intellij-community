@@ -19,7 +19,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
 
-  @NotNull private final List<PatchHunk> myHunks;
+  @NotNull private final List<? extends PatchHunk> myHunks;
   @NotNull private final CharSequence myText;
   @NotNull private final LineOffsets myLineOffsets;
 
@@ -28,11 +28,11 @@ public class PlainSimplePatchApplier {
   private int patchedLine = 0;
 
   @Nullable
-  public static String apply(@NotNull CharSequence text, @NotNull List<PatchHunk> hunks) {
+  public static String apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     return new PlainSimplePatchApplier(text, hunks).execute();
   }
 
-  private PlainSimplePatchApplier(@NotNull CharSequence text, @NotNull List<PatchHunk> hunks) {
+  private PlainSimplePatchApplier(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     myText = text;
     myHunks = hunks;
     myLineOffsets = LineOffsetsUtil.create(text);

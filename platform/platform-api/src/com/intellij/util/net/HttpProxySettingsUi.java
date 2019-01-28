@@ -148,7 +148,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
       reset(settings);  // since password might have been set
 
-      //noinspection ThrowableResultOfMethodCallIgnored
       final IOException exception = exceptionReference.get();
       if (exception == null) {
         Messages.showMessageDialog(myMainPanel, "Connection successful", title, Messages.getInformationIcon());
@@ -161,10 +160,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         Messages.showErrorDialog(myMainPanel, errorText(message));
       }
     });
-  }
-
-  private boolean canEnableConnectionCheck() {
-    return !myNoProxyRb.isSelected();
   }
 
   @Override
@@ -292,7 +287,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     myProxyAuthCheckBox.setEnabled(enabled);
     enableProxyAuthentication(enabled && myProxyAuthCheckBox.isSelected());
-    myCheckButton.setEnabled(canEnableConnectionCheck());
 
     final boolean autoDetectProxy = myAutoDetectProxyRb.isSelected();
     myPacUrlCheckBox.setEnabled(autoDetectProxy);

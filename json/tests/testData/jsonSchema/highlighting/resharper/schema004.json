@@ -22,6 +22,6 @@
       "x25": {
         "type": "string"
       }
-    }
+    },
     "additionalProperties": false
 }

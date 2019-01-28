@@ -59,7 +59,7 @@ public class DetailsComponent {
   public DetailsComponent(boolean detailsEnabled, boolean paintBorder) {
     myDetailsEnabled = detailsEnabled;
     myPaintBorder = paintBorder;
-    myComponent = new JPanel(new BorderLayout());
+    myComponent = new NonOpaquePanel(new BorderLayout());
 
     myComponent.setOpaque(false);
     myContentGutter.setOpaque(false);

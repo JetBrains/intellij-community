@@ -109,15 +109,15 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
-  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
-                              @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
+  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
+                              @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
     loadCommitsData(getCommitsMap(hashes), consumer, errorConsumer, indicator);
   }
 
   private void loadCommitsData(@NotNull TIntIntHashMap commits,
-                               @NotNull Consumer<List<T>> consumer,
-                               @NotNull Consumer<Throwable> errorConsumer,
+                               @NotNull Consumer<? super List<T>> consumer,
+                               @NotNull Consumer<? super Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
     final List<T> result = ContainerUtil.newArrayList();
     final TIntHashSet toLoad = new TIntHashSet();
@@ -179,7 +179,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
   }
 
-  private void sortCommitsByRow(@NotNull List<T> result, @NotNull final TIntIntHashMap rowsForCommits) {
+  private void sortCommitsByRow(@NotNull List<? extends T> result, @NotNull final TIntIntHashMap rowsForCommits) {
     ContainerUtil.sort(result, (details1, details2) -> {
       int row1 = rowsForCommits.get(myStorage.getCommitIndex(details1.getId(), details1.getRoot()));
       int row2 = rowsForCommits.get(myStorage.getCommitIndex(details2.getId(), details2.getRoot()));

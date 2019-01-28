@@ -19,8 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,15 +124,14 @@ public class ReturnNullInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix", myTypeText,
-                                             "com.google.common.base.Optional".equals(myTypeText) ? "absent" : "empty");
+      return CommonQuickFixBundle.message("fix.replace.with.x", getReplacementText());
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("return.of.null.optional.quickfix.family");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Optional.empty()");
     }
 
     @Override
@@ -140,12 +141,12 @@ public class ReturnNullInspection extends BaseInspection {
         return;
       }
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-      if ("com.google.common.base.Optional".equals(myTypeText)) {
-        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".absent()");
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(literalExpression, myTypeText + ".empty()");
-      }
+      PsiReplacementUtil.replaceExpression(literalExpression, getReplacementText());
+    }
+
+    @NotNull
+    private String getReplacementText() {
+      return myTypeText + "." + (OptionalUtil.GUAVA_OPTIONAL.equals(myTypeText) ? "absent" : "empty") + "()";
     }
   }
 

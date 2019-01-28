@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.ide.GeneralSettings;
@@ -8,7 +8,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -109,7 +108,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
                                           @Nullable Project projectToClose,
                                           @NotNull Path path) {
     GradleProjectOpenProcessor gradleProjectOpenProcessor =
-      Extensions.findExtension(ProjectOpenProcessor.EXTENSION_POINT_NAME, GradleProjectOpenProcessor.class);
+      ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor.class);
     VirtualFile virtualFile = VfsUtil.findFile(path, false);
     if (virtualFile != null && virtualFile.isDirectory()) {
       for (VirtualFile file : virtualFile.getChildren()) {
@@ -212,7 +211,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
         }
 
         @Override
-        public void setupRootModel(ModifiableRootModel modifiableRootModel) {
+        public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) {
           String contentEntryPath = getContentEntryPath();
           if (StringUtil.isEmpty(contentEntryPath)) {
             return;

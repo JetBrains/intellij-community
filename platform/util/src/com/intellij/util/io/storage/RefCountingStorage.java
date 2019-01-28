@@ -70,7 +70,7 @@ public class RefCountingStorage extends AbstractStorage {
   public DataInputStream readStream(int record) throws IOException {
     if (myDoNotZipCaches) return super.readStream(record);
     BufferExposingByteArrayOutputStream stream = internalReadStream(record);
-    return new DataInputStream(new UnsyncByteArrayInputStream(stream.getInternalBuffer(), 0, stream.size()));
+    return new DataInputStream(stream.toInputStream());
   }
 
   @Override
@@ -181,7 +181,7 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {
-    super.writeBytes(record, new ByteArraySequence(s.getInternalBuffer(), 0, s.size()), fixedSize);
+    super.writeBytes(record, s.toByteArraySequence(), fixedSize);
   }
 
   @Override

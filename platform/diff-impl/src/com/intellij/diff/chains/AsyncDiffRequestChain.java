@@ -16,11 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.EventListener;
 import java.util.List;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
-public abstract class AsyncDiffRequestChain extends DiffRequestChainBase implements MutableDiffRequestChain {
+public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   private static final Logger LOG = getInstance(AsyncDiffRequestChain.class);
 
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
@@ -30,7 +31,6 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase impleme
   @Nullable private ProgressIndicator myIndicator;
   private int myAssignments = 0;
 
-  @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
     myDispatcher.addListener(listener, disposable);
   }
@@ -45,7 +45,17 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase impleme
     return requests;
   }
 
-  @Override
+  @NotNull
+  @CalledInBackground
+  public ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
+    try {
+      return loadRequestProducers();
+    }
+    catch (DiffRequestProducerException e) {
+      return ListSelection.createSingleton(new DiffRequestProducerWrapper(new ErrorDiffRequest(e)));
+    }
+  }
+
   @CalledInAwt
   public void onAssigned(boolean isAssigned) {
     if (isAssigned) {
@@ -70,15 +80,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase impleme
     if (myRequests != null) return null;
 
     return BackgroundTaskUtil.executeAndTryWait(indicator -> {
-      ListSelection<? extends DiffRequestProducer> producers;
-      try {
-        producers = loadRequestProducers();
-      }
-      catch (DiffRequestProducerException e) {
-        producers = ListSelection.createSingleton(new DiffRequestProducerWrapper(new ErrorDiffRequest(e)));
-      }
-
-      ListSelection<? extends DiffRequestProducer> finalProducers = producers;
+      ListSelection<? extends DiffRequestProducer> producers = loadRequestsInBackground();
       return () -> {
         indicator.checkCanceled();
 
@@ -87,11 +89,11 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase impleme
           return;
         }
 
-        myRequests = finalProducers.getList();
-        setIndex(finalProducers.getSelectedIndex());
+        myRequests = producers.getList();
+        setIndex(producers.getSelectedIndex());
         myIndicator = null;
 
-        myDispatcher.getMulticaster().onChainChange();
+        myDispatcher.getMulticaster().onRequestsLoaded();
       };
     }, null);
   }
@@ -99,4 +101,9 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase impleme
   @NotNull
   @CalledInBackground
   protected abstract ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
+
+  public interface Listener extends EventListener {
+    @CalledInAwt
+    void onRequestsLoaded();
+  }
 }

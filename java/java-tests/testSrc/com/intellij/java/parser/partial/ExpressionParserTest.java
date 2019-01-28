@@ -146,6 +146,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testRawLiteral0() { doParserTest("`.`"); }
 
+  public void testSwitch0() { doParserTest("switch (i) { case 1 -> 1; default -> 2; }"); }
+
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }

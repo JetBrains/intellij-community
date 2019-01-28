@@ -19,7 +19,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;import java.util.HashMap;
+import java.util.HashMap;
+import java.util.*;
 
 public class BidirectionalMap<K,V> implements Map<K,V>{
   private final Map<K,V> myKeyToValueMap = new THashMap<K,V>();
@@ -32,6 +33,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
       if (oldValue.equals(value)) return oldValue;
       List<K> array = myValueToKeysMap.get(oldValue);
       array.remove(key);
+      if (array.isEmpty()) myValueToKeysMap.remove(oldValue);
     }
 
     List<K> array = myValueToKeysMap.get(value);

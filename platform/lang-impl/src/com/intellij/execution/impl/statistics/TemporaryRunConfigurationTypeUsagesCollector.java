@@ -19,14 +19,11 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Nikolay Matveev
- */
 public class TemporaryRunConfigurationTypeUsagesCollector extends AbstractRunConfigurationTypeUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.run.configuration.type.temp";
+    return "run.configuration.type.temp";
   }
 
   @Override

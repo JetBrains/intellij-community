@@ -204,6 +204,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCatchSection";
   }
@@ -237,13 +238,17 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     IElementType i = child.getElementType();
     if (i == PARAMETER) {
       return ChildRole.PARAMETER;
-    } else if (i == CODE_BLOCK) {
+    }
+    if (i == CODE_BLOCK) {
       return ChildRole.CATCH_BLOCK;
-    } else if (i == CATCH_KEYWORD) {
+    }
+    if (i == CATCH_KEYWORD) {
       return ChildRole.CATCH_KEYWORD;
-    } else if (i == LPARENTH) {
+    }
+    if (i == LPARENTH) {
       return ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH;
-    } else if (i == RPARENTH) {
+    }
+    if (i == RPARENTH) {
       return ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH;
     }
 

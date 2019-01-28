@@ -11,11 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * i.e. special markers that are mapped to the current file system environment at runtime.
  * <p/>
  * This class holds those markers and utility method for working with them.
- *
- * @author Denis Zhdanov
- * @since 5/2/12 12:57 PM
  */
-public class StoragePathMacros {
+public final class StoragePathMacros {
   /**
    * {@link Project#getWorkspaceFile() Workspace} file key.
    * {@code 'Workspace file'} holds settings that are local to a particular environment and should not be shared with another
@@ -24,6 +21,10 @@ public class StoragePathMacros {
   @NotNull
   public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
 
+  /**
+   * Storage file for cache-like data. Stored outside of project directory (if project level component)
+   * and outside of application configuration directory (if application level component).
+   */
   public static final String CACHE_FILE = "$CACHE_FILE$";
 
   @NotNull

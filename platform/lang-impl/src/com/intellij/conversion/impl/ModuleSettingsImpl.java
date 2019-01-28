@@ -82,7 +82,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return elements;
   }
 
-  private static void addFacetTypes(@NotNull String facetTypeId, @Nullable Element parent, @NotNull ArrayList<Element> elements) {
+  private static void addFacetTypes(@NotNull String facetTypeId, @Nullable Element parent, @NotNull ArrayList<? super Element> elements) {
     for (Element child : JDOMUtil.getChildren(parent, JpsFacetSerializer.FACET_TAG)) {
       if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
         elements.add(child);

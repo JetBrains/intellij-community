@@ -41,7 +41,6 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
@@ -58,8 +57,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
             result.add(myNamedBindingsMap.get(bindingClass));
           }
         }
-        //noinspection unchecked
-        return result.toArray(new ProviderBinding[0]);
+      return result.toArray(new ProviderBinding[0]);
       }
     );
   }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -62,8 +63,19 @@ class PydevConsoleCommunicationClient(project: Project,
    */
   fun connect() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      // TODO handle exception scenario
-      clientTransport.open()
+      try {
+        clientTransport.open()
+      }
+      catch (e: Exception) {
+        LOG.debug(e)
+
+        stateLock.withLock {
+          isClosed = true
+
+          stateChanged.signalAll()
+        }
+        return@executeOnPooledThread
+      }
 
       val clientProtocol = TBinaryProtocol(clientTransport)
       val client = PythonConsoleBackendService.Client(clientProtocol)
@@ -170,4 +182,8 @@ class PydevConsoleCommunicationClient(project: Project,
   }
 
   override fun isCommunicationClosed(): Boolean = stateLock.withLock { isClosed }
+
+  companion object {
+    private val LOG: Logger = Logger.getInstance(Logger::class.java)
+  }
 }

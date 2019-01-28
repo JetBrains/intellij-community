@@ -9,6 +9,7 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiAnnotation
@@ -55,7 +56,7 @@ class AnnotationHintsPass(
   }
 
   private class AnnotationHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId() = "AnnotationHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "AnnotationHintsContextMenu"
   }
 
   class ToggleExternalAnnotationsHintsAction : ToggleAction() {

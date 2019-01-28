@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.ui.CheckBox;
@@ -27,15 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SerializableHasSerializationMethodsInspection
-  extends SerializableInspectionBase {
+public class SerializableHasSerializationMethodsInspection extends SerializableInspectionBase {
 
-  protected boolean ignoreClassWithoutFields = false;
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return SerializableInspectionUtil.createOptions(this);
-  }
+  public boolean ignoreClassWithoutFields = false;
 
   @Override
   @NotNull
@@ -71,22 +64,9 @@ public class SerializableHasSerializationMethodsInspection
   }
 
   @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
-    for (Element option : node.getChildren("option")) {
-      if ("ignoreClassWithoutFields".equals(option.getAttributeValue("name"))) {
-        ignoreClassWithoutFields = Boolean.valueOf(option.getAttributeValue("value"));
-      }
-    }
-  }
-
-  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (ignoreClassWithoutFields) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreClassWithoutFields")
-                        .setAttribute("value", String.valueOf(ignoreClassWithoutFields)));
-    }
+    defaultWriteSettings(node, "ignoreClassWithoutFields");
+    writeBooleanOption(node, "ignoreClassWithoutFields", false);
   }
 
   @Override

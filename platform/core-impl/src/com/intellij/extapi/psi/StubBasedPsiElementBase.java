@@ -34,6 +34,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SubstrateRef;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -338,7 +339,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return stub.getParentStub().getPsi();
     }
 
-    return SharedImplUtil.getParent(getNode());
+    return SourceTreeToPsiMap.treeElementToPsi(getNode().getTreeParent());
   }
 
   @NotNull

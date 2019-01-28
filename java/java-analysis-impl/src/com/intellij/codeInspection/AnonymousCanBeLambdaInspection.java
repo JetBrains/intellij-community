@@ -472,8 +472,9 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                             PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-        return false;
+      if (containingClass != null && 
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return !(callExpression instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified());
       }
 
       if (callExpression instanceof PsiMethodCallExpression &&
@@ -517,11 +518,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       super.visitMethodCallExpression(methodCallExpression);
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod == myMethod ||
-          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass, methodCallExpression) ||
-          psiMethod != null &&
-          !methodCallExpression.getMethodExpression().isQualified() &&
-          "getClass".equals(psiMethod.getName()) &&
-          psiMethod.getParameterList().isEmpty()) {
+          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass, methodCallExpression)) {
         myBodyContainsForbiddenRefs = true;
       }
     }

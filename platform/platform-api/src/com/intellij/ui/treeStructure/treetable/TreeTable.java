@@ -60,7 +60,6 @@ public class TreeTable extends JBTable {
     setModel(treeTableModel);
   }
 
-  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
   public void setModel(TreeTableModel treeTableModel) {// Create the tree. It will be used as a renderer and editor.
     if (myTree != null) {
       myTree.removePropertyChangeListener(JTree.ROW_HEIGHT_PROPERTY, myTreeRowHeightPropertyListener);
@@ -142,7 +141,6 @@ public class TreeTable extends JBTable {
     }
     // Use the tree's default foreground and background colors in the
     // table.
-    //noinspection HardCodedStringLiteral
     LookAndFeel.installColorsAndFont(this, "Tree.background", "Tree.foreground", "Tree.font");
   }
 

@@ -20,22 +20,22 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val pullRequest = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
-    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null
+    val dataProvider = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
+    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null && dataProvider != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val pullRequest = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
     val repository = e.getRequiredData(GithubPullRequestKeys.REPOSITORY)
-    val branchFetcher = e.getRequiredData(GithubPullRequestKeys.PULL_REQUESTS_BRANCHES_FETCHER)
     val repositoryList = listOf(repository)
 
-    val hashesFuture = branchFetcher.request ?: return
+    val hashesFuture = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER).branchFetchRequest
     val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
                                                          "Checkout New Branch From Pull Request #${pullRequest.number}",
                                                          "pull/${pullRequest.number}") ?: return
 
-    if (options.checkout) {
+    if (!options.checkout) {
       object : Task.Backgroundable(project, "Creating Branch From Pull Request", true) {
         private val git = Git.getInstance()
         private val vcsNotifier = project.service<VcsNotifier>()
@@ -45,7 +45,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
           indicator.text = "Creating branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
-            .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
+            .createBranch(options.name, mapOf(repository to sha))
         }
 
         override fun onSuccess() {
@@ -67,7 +67,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
 
           indicator.text = "Checking out branch"
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
-            .createBranch(options.name, mapOf(repository to sha))
+            .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
         }
 
         override fun onSuccess() {

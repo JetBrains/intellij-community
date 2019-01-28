@@ -82,7 +82,6 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  @SuppressWarnings({ "ForLoopReplaceableByForEach" })
   public void visitXmlTag(XmlTag tag) {
     visitAttributes(tag);
   }

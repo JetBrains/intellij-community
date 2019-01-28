@@ -46,19 +46,20 @@ public class GitFileUtils {
   /**
    * @deprecated Use {@link #deletePaths}
    */
-  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
+  @Deprecated
+  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
                             String... additionalOptions) throws VcsException {
     deletePaths(project, root, files, additionalOptions);
   }
 
-  public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
+  public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
                                  String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files,
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
                                  String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       doDelete(project, root, paths, additionalOptions);

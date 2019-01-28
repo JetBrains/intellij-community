@@ -7,11 +7,13 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
  */
 public class MatchVariableConstraint extends NamedScriptableDefinition {
+  @NotNull
   private String regExp = "";
   private boolean invertRegExp;
   private boolean withinHierarchy;
@@ -23,12 +25,16 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private boolean invertReference;
   private String referenceConstraint = "";
   private boolean partOfSearchResults;
+  @NotNull
   private String nameOfExprType = "";
+  @NotNull
   private String expressionTypes = "";
   private boolean invertExprType;
   private boolean exprTypeWithinHierarchy;
 
+  @NotNull
   private String nameOfFormalArgType = "";
+  @NotNull
   private String expectedTypes = "";
   private boolean invertFormalType;
   private boolean formalArgTypeWithinHierarchy;
@@ -101,7 +107,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return new MatchVariableConstraint(this);
   }
 
-  static String convertRegExpTypeToTypeString(String regexp) {
+  @NotNull
+  static String convertRegExpTypeToTypeString(@NotNull String regexp) {
     StringBuilder result = new StringBuilder();
     for (int i = 0, length = regexp.length(); i < length; i++) {
       int c = regexp.codePointAt(i);
@@ -141,7 +148,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return result.toString();
   }
 
-  static String convertTypeStringToRegExp(String typeString) {
+  @NotNull
+  static String convertTypeStringToRegExp(@NotNull String typeString) {
     StringBuilder result = new StringBuilder();
     for (String type : StringUtil.split(typeString, "|")) {
       if (result.length() > 0) {
@@ -160,11 +168,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.greedy = greedy;
   }
 
+  @NotNull
   public String getRegExp() {
     return regExp;
   }
 
-  public void setRegExp(String regExp) {
+  public void setRegExp(@NotNull String regExp) {
     this.regExp = regExp;
   }
 
@@ -232,11 +241,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.strictlyWithinHierarchy = strictlyWithinHierarchy;
   }
 
+  @NotNull
   public String getNameOfExprType() {
     return Registry.is("ssr.use.regexp.to.specify.type") ? nameOfExprType : expressionTypes;
   }
 
-  public void setNameOfExprType(String nameOfExprType) {
+  public void setNameOfExprType(@NotNull String nameOfExprType) {
     if (Registry.is("ssr.use.regexp.to.specify.type")) {
       this.nameOfExprType = nameOfExprType;
       this.expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
@@ -271,11 +281,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     this.wholeWordsOnly = wholeWordsOnly;
   }
 
+  @NotNull
   public String getNameOfFormalArgType() {
     return Registry.is("ssr.use.regexp.to.specify.type") ? nameOfFormalArgType : expectedTypes;
   }
 
-  public void setNameOfFormalArgType(String nameOfFormalArgType) {
+  public void setNameOfFormalArgType(@NotNull String nameOfFormalArgType) {
     if (Registry.is("ssr.use.regexp.to.specify.type")) {
       this.nameOfFormalArgType = nameOfFormalArgType;
       this.expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
@@ -371,7 +382,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     Attribute attribute = element.getAttribute(REGEXP);
     if (attribute != null) {
-      regExp = attribute.getValue();
+      regExp = StringUtil.notNullize(attribute.getValue());
     }
     withinHierarchy = readBoolean(element, WITHIN_HIERARCHY);
     invertRegExp = readBoolean(element, NEGATE_NAME_CONDITION);
@@ -379,12 +390,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     attribute = element.getAttribute(EXPRESSION_TYPES);
     if (attribute != null) {
-      expressionTypes = attribute.getValue();
+      expressionTypes = StringUtil.notNullize(attribute.getValue());
     }
 
     attribute = element.getAttribute(NAME_OF_EXPRTYPE);
     if (attribute != null) {
-      nameOfExprType = attribute.getValue();
+      nameOfExprType = StringUtil.notNullize(attribute.getValue());
       if (expressionTypes.isEmpty()) {
         expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
       }
@@ -395,12 +406,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     attribute = element.getAttribute(EXPECTED_TYPES);
     if (attribute != null) {
-      expectedTypes = attribute.getValue();
+      expectedTypes = StringUtil.notNullize(attribute.getValue());
     }
 
     attribute = element.getAttribute(NAME_OF_FORMALTYPE);
     if (attribute != null) {
-      nameOfFormalArgType = attribute.getValue();
+      nameOfFormalArgType = StringUtil.notNullize(attribute.getValue());
       if (expectedTypes.isEmpty()) {
         expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
       }

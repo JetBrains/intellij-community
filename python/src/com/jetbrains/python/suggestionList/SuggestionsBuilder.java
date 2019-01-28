@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.suggestionList;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -94,7 +95,7 @@ public class SuggestionsBuilder {
    */
   @NotNull
   List<List<Suggestion>> getList() {
-    return Collections.unmodifiableList(Arrays.asList(myPrefixGroup, myMainGroup));
+    return ContainerUtil.immutableList(myPrefixGroup, myMainGroup);
   }
 
 

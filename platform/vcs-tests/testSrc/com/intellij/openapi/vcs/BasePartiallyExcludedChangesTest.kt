@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
+import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import java.util.stream.Stream
 

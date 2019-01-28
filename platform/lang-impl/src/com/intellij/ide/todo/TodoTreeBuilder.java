@@ -23,6 +23,7 @@ import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -61,6 +62,8 @@ import java.util.*;
  */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoTreeBuilder");
+  public static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR =
+      Comparator.<NodeDescriptor>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);  
   protected final Project myProject;
 
   /**
@@ -101,7 +104,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFileTree = new FileTree();
     myDirtyFileSet = new HashSet<>();
 
-    myFile2Highlighter = ContainerUtil.createSoftValueMap();
+    myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap(); //used from EDT and from StructureTreeModel invoker thread
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
@@ -157,7 +160,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
       if (updatable) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> updateTree());
+        DumbService.getInstance(myProject).runWhenSmart(this::updateTree);
       }
     }
   }
@@ -167,18 +170,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final TodoTreeStructure getTodoTreeStructure() {
     return myTreeStructure;
-  }
-
-  Promise<?> performUpdate(Runnable runnable) {
-    return myModel.getInvoker().runOrInvokeLater(() -> {
-      if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          validateCache();
-          getTodoTreeStructure().validateCache();
-        });
-      }
-      runnable.run();
-    });
   }
 
   /**
@@ -287,7 +278,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     * @see FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
-    if (module.isDisposed()) return Collections.<PsiFile>emptyList().iterator();
+    if (module.isDisposed()) return Collections.emptyIterator();
     ArrayList<PsiFile> psiFileList = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -313,6 +304,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -324,6 +316,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
       myDirtyFileSet.add(vFile);
@@ -349,27 +342,21 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(Set<? extends VirtualFile> files) {
-    Runnable runnable = () -> {
-      myFileTree.clear();
-      myDirtyFileSet.clear();
-      myFile2Highlighter.clear();
+  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myFileTree.clear();
+    myDirtyFileSet.clear();
+    myFile2Highlighter.clear();
 
-      for (VirtualFile virtualFile : files) {
-        myFileTree.add(virtualFile);
-      }
+    for (VirtualFile virtualFile : files) {
+      myFileTree.add(virtualFile);
+    }
 
-      getTodoTreeStructure().validateCache();
-    };
-    if (myModel != null) {
-      myModel.getInvoker().runOrInvokeLater(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    getTodoTreeStructure().validateCache();
   }
 
   private void validateCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First of all we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext();) {
@@ -450,7 +437,15 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final Promise<?> updateTree() {
     if (myUpdatable) {
-      return performUpdate(() -> myModel.invalidate());
+      return myModel.getInvoker().runOrInvokeLater(() -> {
+        DumbService.getInstance(myProject).runWhenSmart(() -> {
+          if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+            validateCache();
+            getTodoTreeStructure().validateCache();
+          }
+          myModel.invalidate();
+        });
+      });
     }
     return Promises.resolvedPromise();
   }
@@ -528,7 +523,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   /**
    * Sets new {@code TodoFilter}, rebuild whole the caches and immediately update the tree.
    *
-   * @see TodoTreeStructure#setTodoFilter
+   * @see TodoTreeStructure#setTodoFilter(TodoFilter)
    */
   void setTodoFilter(TodoFilter filter) {
     getTodoTreeStructure().setTodoFilter(filter);
@@ -566,7 +561,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       return null;
     }
     Object[] children = getTodoTreeStructure().getChildElements(parent);
-    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
+    Arrays.sort(children, (Comparator)NODE_DESCRIPTOR_COMPARATOR);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -612,7 +607,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       return null;
     }
     Object[] children = getTodoTreeStructure().getChildElements(parent);
-    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
+    Arrays.sort(children, (Comparator)NODE_DESCRIPTOR_COMPARATOR);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -649,22 +644,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
-  }
-  
-  protected static final class MyComparator implements Comparator<NodeDescriptor> {
-    public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
-
-    @Override
-    public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      int weight1 = descriptor1.getWeight();
-      int weight2 = descriptor2.getWeight();
-      if (weight1 != weight2) {
-        return weight1 - weight2;
-      }
-      else {
-        return descriptor1.getIndex() - descriptor2.getIndex();
-      }
-    }
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

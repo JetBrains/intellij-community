@@ -23,6 +23,7 @@ import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -204,5 +205,17 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     list.addAll(view);
     list.addAll(filtered);
     return list;
+  }
+
+  public List<IdeaPluginDescriptor> getAllRepoPlugins() {
+    try {
+      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      if (list != null) {
+        return list;
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return Collections.emptyList();
   }
 }

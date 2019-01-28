@@ -97,7 +97,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
   @Nullable
   protected abstract CommitT convertDetails(@NotNull String rev,
                                             @NotNull String changeset,
-                                            @NotNull SmartList<HgRevisionNumber> parents,
+                                            @NotNull SmartList<? extends HgRevisionNumber> parents,
                                             @NotNull Date revisionDate,
                                             @NotNull String author,
                                             @NotNull String email,

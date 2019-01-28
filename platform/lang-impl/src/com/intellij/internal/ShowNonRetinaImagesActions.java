@@ -36,7 +36,6 @@ import java.util.HashMap;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UndesirableClassUsage")
 public class ShowNonRetinaImagesActions extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

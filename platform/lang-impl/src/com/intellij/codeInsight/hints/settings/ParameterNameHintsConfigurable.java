@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hints.*;
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
+import com.intellij.codeInsight.hints.Option;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -38,7 +41,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLineNumbers;
+import static com.intellij.codeInsight.hints.HintUtilsKt.*;
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
@@ -65,6 +68,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     init();
 
     if (selectedLanguage != null) {
+      selectedLanguage = getLanguageForSettingKey(selectedLanguage);
       showLanguagePanel(selectedLanguage);
       myCurrentLanguageCombo.setSelectedItem(selectedLanguage);
       if (newPreselectedPattern != null) {
@@ -153,7 +157,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     Set<String> defaultBlackList = provider.getDefaultBlackList();
     Diff diff = Diff.Builder.build(defaultBlackList, updatedBlackList);
-    ParameterNameHintsSettings.getInstance().setBlackListDiff(language, diff);
+    ParameterNameHintsSettings.getInstance().setBlackListDiff(getLanguageForSettingKey(language), diff);
   }
 
   @Nullable
@@ -368,19 +372,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     if (hintsProvider == null) {
       return "";
     }
-    Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(language);
+    Diff diff = ParameterNameHintsSettings.getInstance().getBlackListDiff(getLanguageForSettingKey(language));
     Set<String> blackList = diff.applyOn(hintsProvider.getDefaultBlackList());
     return StringUtil.join(blackList, "\n");
-  }
-
-  @NotNull
-  private static List<Language> getBaseLanguagesWithProviders() {
-    return HintUtilsKt
-      .getHintProviders()
-      .stream()
-      .map((langWithImplementation) -> langWithImplementation.getFirst())
-      .sorted(Comparator.comparing(l -> l.getDisplayName()))
-      .collect(Collectors.toList());
   }
 
   @NotNull

@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/13
  */
 class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionContributor() {
   init {
@@ -102,11 +101,11 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
   }
 
   companion object {
-    private val GROUP_LABEL = "group"
-    private val NAME_LABEL = "name"
-    private val VERSION_LABEL = "version"
-    private val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
-    private val MAX_RESULT = 1000
+    private const val GROUP_LABEL = "group"
+    private const val NAME_LABEL = "name"
+    private const val VERSION_LABEL = "version"
+    private const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
+    private const val MAX_RESULT = 1000
 
     private val DEPENDENCIES_CALL_PATTERN = psiElement()
       .inside(true, psiElement(GrMethodCallExpression::class.java).with(

@@ -168,7 +168,7 @@ public class EpydocString extends TagBasedDocString {
       myResult.append(text);
     }
 
-    protected void appendMarkup(char markupChar, String markupContent) {
+    protected void appendMarkup(char markupChar, @NotNull String markupContent) {
       appendWithMarkup(markupContent);
     }
 
@@ -184,7 +184,7 @@ public class EpydocString extends TagBasedDocString {
     }
 
     @Override
-    protected void appendMarkup(char markupChar, String markupContent) {
+    protected void appendMarkup(char markupChar, @NotNull String markupContent) {
       if (markupChar == 'U') {
         appendLink(markupContent);
         return;
@@ -200,7 +200,7 @@ public class EpydocString extends TagBasedDocString {
           appendTagPair(markupContent, "code");
           break;
         default:
-          myResult.append(StringUtil.escapeXml(markupContent));
+          myResult.append(StringUtil.escapeXmlEntities(markupContent));
           break;
       }
     }
@@ -211,13 +211,13 @@ public class EpydocString extends TagBasedDocString {
       myResult.append("</").append(tagName).append(">");
     }
 
-    private void appendLink(String markupContent) {
-      String linkText = StringUtil.escapeXml(markupContent);
+    private void appendLink(@NotNull String markupContent) {
+      String linkText = StringUtil.escapeXmlEntities(markupContent);
       String linkUrl = linkText;
       int pos = markupContent.indexOf('<');
       if (pos >= 0 && markupContent.endsWith(">")) {
-        linkText = StringUtil.escapeXml(markupContent.substring(0, pos).trim());
-        linkUrl = joinLines(StringUtil.escapeXml(markupContent.substring(pos + 1, markupContent.length() - 1)), false);
+        linkText = StringUtil.escapeXmlEntities(markupContent.substring(0, pos).trim());
+        linkUrl = joinLines(StringUtil.escapeXmlEntities(markupContent.substring(pos + 1, markupContent.length() - 1)), false);
       }
       myResult.append("<a href=\"");
       if (!linkUrl.matches("[a-z]+:.+")) {

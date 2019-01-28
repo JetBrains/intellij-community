@@ -112,7 +112,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
       LanguageImportStatements.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
 
       TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
-    } finally {
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
       myRealChangeListManager = null;
       myRealCodeStyleManger = null;
       myRealVcsContextFactory = null;
@@ -421,8 +425,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
 
     private void injectChanges(@NotNull List<Change> changes) {
-      Change[] arr = new Change[changes.size()];
-      ContainerUtil.toArray(changes, arr);
+      Change[] arr = changes.toArray(new Change[0]);
       myMockChangeListManager.addChanges(arr);
     }
 

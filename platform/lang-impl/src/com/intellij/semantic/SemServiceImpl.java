@@ -56,12 +56,9 @@ public class SemServiceImpl extends SemService{
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
     final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      @Override
-      public void modificationCountChanged() {
-        if (!isInsideAtomicChange()) {
-          clearCache();
-        }
+    connection.subscribe(PsiModificationTracker.TOPIC, () -> {
+      if (!isInsideAtomicChange()) {
+        clearCache();
       }
     });
 
@@ -87,7 +84,7 @@ public class SemServiceImpl extends SemService{
       @Override
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
                                                                                           final ElementPattern<? extends V> place,
-                                                                                          final NullableFunction<V, T> provider) {
+                                                                                          final NullableFunction<? super V, ? extends T> provider) {
         map.putValue(key, element -> {
           if (place.accepts(element)) {
             return Collections.singleton(provider.fun((V)element));
@@ -99,7 +96,7 @@ public class SemServiceImpl extends SemService{
       @Override
       public <T extends SemElement, V extends PsiElement> void registerRepeatableSemElementProvider(SemKey<T> key,
                                                                                                     ElementPattern<? extends V> place,
-                                                                                                    NullableFunction<V, Collection<T>> provider) {
+                                                                                                    NullableFunction<? super V, ? extends Collection<T>> provider) {
         map.putValue(key, element -> {
           if (place.accepts(element)) {
             return provider.fun((V)element);

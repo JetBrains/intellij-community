@@ -24,13 +24,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class LookupTypedHandler extends TypedActionHandlerBase {
 
@@ -113,7 +114,9 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
         }
       }
 
-      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
+      AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor,
+                                                            DataManager.getInstance().getDataContext(originalEditor.getContentComponent()),
+                                                            modificationStamp);
 
       final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
       if (completion != null) {
@@ -189,7 +192,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
     return null;
   }
 
-  private static CharFilter[] getFilters() {
-    return Extensions.getExtensions(CharFilter.EP_NAME);
+  private static List<CharFilter> getFilters() {
+    return CharFilter.EP_NAME.getExtensionList();
   }
 }

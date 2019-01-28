@@ -47,7 +47,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   private volatile String myCachedName;
 
-  @SuppressWarnings("UnusedDeclaration")
   public PsiLocalVariableImpl() {
     this(JavaElementType.LOCAL_VARIABLE);
   }

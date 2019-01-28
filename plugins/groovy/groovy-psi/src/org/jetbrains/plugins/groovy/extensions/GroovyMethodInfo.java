@@ -229,7 +229,7 @@ public class GroovyMethodInfo {
           values.add(st.nextToken());
         }
 
-        r = new NamedArgumentReference(values.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+        r = new NamedArgumentReference(ArrayUtil.toStringArray(values));
       }
       else {
         continue;

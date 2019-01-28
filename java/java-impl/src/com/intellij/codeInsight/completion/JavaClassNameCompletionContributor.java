@@ -97,7 +97,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
                                    @NotNull final PrefixMatcher matcher,
-                                   @NotNull final Consumer<LookupElement> consumer) {
+                                   @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
     if (JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement)) {
@@ -162,7 +162,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
               AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
             for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew, JAVA_CLASS_INSERT_HANDLER, condition)) {
               element.setLookupString(prefix + element.getLookupString());
-              JavaConstructorCallElement.wrap(element, insertedElement).forEach(consumer::consume);
+
+              JavaConstructorCallElement.wrap(element, insertedElement).forEach(
+                e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
             }
           }
         } else {
@@ -217,10 +219,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       name = parent.getName() + "." + name;
     }
     return name;
-  }
-
-  static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {
-    return JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
   }
 
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {

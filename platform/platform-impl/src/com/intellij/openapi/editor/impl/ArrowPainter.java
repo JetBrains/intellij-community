@@ -25,7 +25,6 @@ import java.awt.*;
  * Encapsulates logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).
  *
  * @author Denis Zhdanov
- * @since Jul 2, 2010 11:35:23 AM
  */
 public class ArrowPainter {
 

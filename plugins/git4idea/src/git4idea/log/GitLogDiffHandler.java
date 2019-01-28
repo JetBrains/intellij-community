@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,14 +43,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.changes.GitChangeUtils;
+import git4idea.diff.GitSubmoduleContentRevision;
+import git4idea.repo.GitSubmodule;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
@@ -104,11 +110,7 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                         @Override
                         public DiffRequest compute() throws VcsException {
                           DiffContent leftDiffContent = createDiffContent(root, revisionPath, revisionHash);
-
-                          VirtualFile file = localPath.getVirtualFile();
-                          LOG.assertTrue(file != null);
-                          DiffContent rightDiffContent = myDiffContentFactory.create(myProject, file);
-
+                          DiffContent rightDiffContent = createCurrentDiffContent(localPath);
                           return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
                                                        leftDiffContent, rightDiffContent,
                                                        revisionHash.asString(), "(Local)");
@@ -118,21 +120,43 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     }
   }
 
+  @NotNull
+  private DiffContent createCurrentDiffContent(@NotNull FilePath localPath) throws VcsException {
+    GitSubmodule submodule = GitContentRevision.getRepositoryIfSubmodule(myProject, localPath);
+    if (submodule != null) {
+      ContentRevision revision = GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
+      String content = revision.getContent();
+      return content != null ? myDiffContentFactory.create(myProject, content) : myDiffContentFactory.createEmpty();
+    }
+    else {
+      VirtualFile file = localPath.getVirtualFile();
+      LOG.assertTrue(file != null);
+      return myDiffContentFactory.create(myProject, file);
+    }
+  }
+
   private void showDiffForDirectory(@NotNull VirtualFile root,
                                     @NotNull FilePath directoryPath,
                                     @NotNull Hash leftRevision, @Nullable Hash rightRevision) {
-    loadDiffAndShow(() -> GitChangeUtils.getDiff(myProject, root,
-                                                 leftRevision.asString(), rightRevision == null ? null : rightRevision.asString(),
-                                                 Collections.singleton(directoryPath)),
+    loadDiffAndShow(() -> getDiff(root, directoryPath, leftRevision, rightRevision),
                     (diff) -> {
                       String dialogTitle = "Changes between " +
                                            leftRevision.asString() +
                                            " and " +
-                                           (rightRevision == null ? "current revision" : rightRevision.asString()) +
+                                           (rightRevision == null ? "local version" : rightRevision.asString()) +
                                            " in " +
                                            getTitle(directoryPath, directoryPath, DIFF_TITLE_RENAME_SEPARATOR);
                       VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
                     }, "Calculating Diff for " + directoryPath.getName());
+  }
+
+  @NotNull
+  private Collection<Change> getDiff(@NotNull VirtualFile root, @NotNull FilePath directoryPath,
+                                     @NotNull Hash leftRevision, @Nullable Hash rightRevision) throws VcsException {
+    if (rightRevision == null) {
+      return GitChangeUtils.getDiffWithWorkingDir(myProject, root, leftRevision.asString(), Collections.singleton(directoryPath), false);
+    }
+    return GitChangeUtils.getDiff(myProject, root, leftRevision.asString(), rightRevision.asString(), Collections.singleton(directoryPath));
   }
 
   private <T> void loadDiffAndShow(@NotNull ThrowableComputable<T, VcsException> load,
@@ -184,21 +208,37 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
                                         @NotNull Hash hash) throws VcsException {
 
     DiffContent diffContent;
+    GitRevisionNumber revisionNumber = new GitRevisionNumber(hash.asString());
     if (path == null) {
       diffContent = new EmptyContent();
     }
     else {
-      try {
-        byte[] content = GitFileUtils.getFileContent(myProject, root, hash.asString(), VcsFileUtil.relativePath(root, path));
-        diffContent = myDiffContentFactory.createFromBytes(myProject, content, path);
+      GitSubmodule submodule = GitContentRevision.getRepositoryIfSubmodule(myProject, path);
+      if (submodule != null) {
+        ContentRevision revision = GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
+        String content = revision.getContent();
+        diffContent = content != null ? myDiffContentFactory.create(myProject, content) : myDiffContentFactory.createEmpty();
       }
-      catch (IOException e) {
-        throw new VcsException(e);
+      else {
+        try {
+          byte[] content = GitFileUtils.getFileContent(myProject, root, hash.asString(), VcsFileUtil.relativePath(root, path));
+          diffContent = myDiffContentFactory.createFromBytes(myProject, content, path);
+        }
+        catch (IOException e) {
+          throw new VcsException(e);
+        }
       }
     }
 
-    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, new Pair<>(path, new GitRevisionNumber(hash.asString())));
+    diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, new Pair<>(path, revisionNumber));
 
     return diffContent;
+  }
+
+  @NotNull
+  @Override
+  public ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash) {
+    GitRevisionNumber revisionNumber = new GitRevisionNumber(hash.asString());
+    return GitContentRevision.createRevision(filePath, revisionNumber, myProject, null);
   }
 }

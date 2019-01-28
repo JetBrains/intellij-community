@@ -26,7 +26,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 2/2/11 12:32 PM
  */
 public class JavadocOptionsProvider implements EditorOptionsProvider {
   

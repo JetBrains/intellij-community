@@ -31,7 +31,6 @@ import java.util.LinkedHashMap;
 
 /**
  * @author anna
- * @since 05-Jun-2006
  */
 public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");

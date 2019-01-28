@@ -29,6 +29,7 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
     visitor.visitCatchClause(this);
   }
 
+  @Override
   public String toString() {
     return "Catch clause";
   }

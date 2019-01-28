@@ -15,9 +15,9 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -99,6 +99,6 @@ public class ObscureThrownExceptionsIntention extends MutablyNamedIntention {
     if (commonSuperClass == null || !InheritanceUtil.isInheritor(commonSuperClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
       return null;
     }
-    return IntentionPowerPackBundle.message("obscure.thrown.exceptions.intention.name", commonSuperClass.getName());
+    return CommonQuickFixBundle.message("fix.replace.with.x", "throws " + commonSuperClass.getName());
   }
 }

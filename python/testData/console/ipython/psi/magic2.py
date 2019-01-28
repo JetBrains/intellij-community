@@ -1,0 +1,1 @@
+%alias_magic t timeit

@@ -28,8 +28,8 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,26 +42,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected TextRange myTextRange;
   protected EditorImpl myEditor;
   protected PsiFile myFile;
-
-  public enum CheckPolicy {
-    PSI(true, false), DOCUMENT(false, true), BOTH(true, true);
-
-    private final boolean myCheckPsi;
-    private final boolean myCheckDocument;
-
-    CheckPolicy(boolean checkPsi, boolean checkDocument) {
-      myCheckDocument = checkDocument;
-      myCheckPsi = checkPsi;
-    }
-
-    public boolean isCheckPsi() {
-      return myCheckPsi;
-    }
-
-    public boolean isCheckDocument() {
-      return myCheckDocument;
-    }
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -89,28 +69,11 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     doTextTest(loadFile(fileNameBefore + "." + getFileExtension(), null), loadFile(fileNameAfter + "." + getFileExtension(), null));
   }
 
-  protected void doTextTest(@NonNls final String text, @NonNls final String textAfter) throws IncorrectOperationException {
-    doTextTest(text, textAfter, CheckPolicy.BOTH);
-  }
+  protected void doTextTest(final String text, final String textAfter) {
+    String fileName = "before." + getFileExtension();
+    PsiFile file = createFileFromText(text, fileName, PsiFileFactory.getInstance(getProject()));
 
-  protected void doTextTest(final String text, final String textAfter, @NotNull CheckPolicy checkPolicy)
-    throws IncorrectOperationException {
-    final String fileName = "before." + getFileExtension();
-    final PsiFile file = createFileFromText(text, fileName, PsiFileFactory.getInstance(getProject()));
-
-    if (checkPolicy.isCheckDocument()) {
-      checkDocument(file, text, textAfter);
-    }
-
-    if (checkPolicy.isCheckPsi()) {
-      /*
-      restoreFileContent(file, text);
-
-      checkPsi(file, textAfter);
-      */
-    }
-
-
+    checkDocument(file, text, textAfter);
   }
 
   protected PsiFile createFileFromText(String text, String fileName, final PsiFileFactory fileFactory) {
@@ -121,7 +84,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     return FileTypeManager.getInstance().getFileTypeByFileName(fileName);
   }
 
-
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -130,20 +92,14 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
         FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       myFile = null;
       super.tearDown();
     }
-  }
-
-  @SuppressWarnings({"UNUSED_SYMBOL"})
-  private void restoreFileContent(final PsiFile file, final String text) {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-      document.replaceString(0, document.getTextLength(), text);
-      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-    }), "test", null);
   }
 
   protected boolean doCheckDocumentUpdate() {
@@ -152,19 +108,18 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   protected void checkDocument(final PsiFile file, final String text, String textAfter) {
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    assert document != null;
     final EditorImpl editor;
 
     if (doCheckDocumentUpdate()) {
       editor =(EditorImpl)FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file.getVirtualFile(), 0), false);
+      assert editor != null;
       editor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
       if (myFile != null) {
         FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
       }
       myEditor = editor;
       myFile = file;
-    }
-    else {
-      editor = null;
     }
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -193,15 +148,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     assertEquals(textAfter, document.getText());
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     assertEquals(textAfter, file.getText());
-  }
-
-  @SuppressWarnings({"UNUSED_SYMBOL"})
-  private void checkPsi(final PsiFile file, String textAfter) {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
-
-
-    String fileText = file.getText();
-    assertEquals(textAfter, fileText);
   }
 
   protected void performFormatting(final PsiFile file) {
@@ -278,25 +224,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     return CodeStyle.getSettings(getProject());
   }
 
-  protected void doSanityTestForDirectory(File directory, final boolean formatWithPsi) throws IOException, IncorrectOperationException {
-    final List<File> failedFiles = new ArrayList<>();
-    doSanityTestForDirectory(directory, failedFiles, formatWithPsi);
-    if (!failedFiles.isEmpty()) {
-      fail("Failed for files: " + composeMessage(failedFiles));
-    }
-  }
-
-  private void doSanityTestForDirectory(final File directory, final List<File> failedFiles, final boolean formatWithPsi)
-    throws IOException, IncorrectOperationException {
-    final File[] files = directory.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        doSanityTestForFile(file, failedFiles, formatWithPsi);
-        doSanityTestForDirectory(file, failedFiles, formatWithPsi);
-      }
-    }
-  }
-
   protected void doSanityTest(final boolean formatWithPsi) throws IOException, IncorrectOperationException {
     final File sanityDirectory = new File(getTestDataPath() + File.separatorChar + getBasePath(), "sanity");
     final File[] subFiles = sanityDirectory.listFiles();
@@ -311,14 +238,13 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
         fail("Failed for files: " + composeMessage(failedFiles));
       }
     }
-
   }
 
   private void doSanityTestForFile(final File subFile, final List<File> failedFiles, final boolean formatWithPsi)
     throws IOException, IncorrectOperationException {
     if (subFile.isFile() && subFile.getName().endsWith(getFileExtension())) {
       final byte[] bytes = FileUtil.loadFileBytes(subFile);
-      final String text = new String(bytes);
+      final String text = new String(bytes, Charsets.UTF_8);
       final String fileName = "before." + getFileExtension();
       final PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, getFileType(fileName), StringUtil.convertLineSeparators(text), LocalTimeCounter.currentTime(), true);
 
@@ -351,7 +277,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     }
   }
 
-  private String composeMessage(final List<File> failedFiles) {
+  private static String composeMessage(final List<File> failedFiles) {
     final StringBuilder result = new StringBuilder();
     for (File file : failedFiles) {
       result.append(file.getPath());

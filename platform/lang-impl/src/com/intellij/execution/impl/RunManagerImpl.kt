@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -26,8 +26,11 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.*
+import com.intellij.util.IconUtil
+import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.*
+import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -38,6 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -274,9 +279,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
-    for (provider in RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.getExtensions(project)) {
-      provider.getRunConfigurationTemplate(factory, this)?.let {
-        return it
+    if (!project.isDefault) {
+      for (provider in RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP.getExtensions(project)) {
+        provider.getRunConfigurationTemplate(factory, this)?.let {
+          return it
+        }
       }
     }
 
@@ -414,13 +421,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() {
-      return lock.read { 
+      return lock.read {
         selectedConfigurationId?.let { idToSettings.get(it) }
       }
     }
     set(value) {
       fun isTheSame() = value?.uniqueID == selectedConfigurationId
-      
+
       lock.read {
         if (isTheSame()) {
           return
@@ -431,11 +438,15 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (isTheSame()) {
           return
         }
-        
-        selectedConfigurationId = value?.uniqueID
+
+        val id = value?.uniqueID
+        if (id != null && !idToSettings.containsKey(id)) {
+          LOG.error("$id must be added before selecting")
+        }
+        selectedConfigurationId = id
       }
-      
-      eventPublisher.runConfigurationSelected()
+
+      eventPublisher.runConfigurationSelected(value)
     }
 
   fun requestSort() {
@@ -488,7 +499,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         val recent = Element(RECENT)
         element.addContent(recent)
 
-        val listElement = recent.element("list")
+        val listElement = Element("list")
+        recent.addContent(listElement)
         for (id in recentList) {
           listElement.addContent(Element("item").setAttribute("itemvalue", id))
         }
@@ -516,7 +528,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   internal fun writeBeforeRunTasks(configuration: RunConfiguration): Element? {
     val tasks = configuration.beforeRunTasks
     val methodElement = Element(METHOD)
-    methodElement.attribute("v", "2")
+    methodElement.setAttribute("v", "2")
     for (task in tasks) {
       val child = Element(OPTION)
       child.setAttribute(NAME_ATTR, task.providerId.toString())
@@ -524,7 +536,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (!task.isEnabled) {
           child.setAttribute("enabled", "false")
         }
-        task.serializeStateInto(child)
+        serializeStateInto(task, child)
       }
       else {
         @Suppress("DEPRECATION")
@@ -631,7 +643,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     fireBeforeRunTasksUpdated()
 
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
-      eventPublisher.runConfigurationSelected()
+      eventPublisher.runConfigurationSelected(selectedConfiguration)
     }
 
     eventPublisher.stateLoaded(this, isFirstLoadState)
@@ -667,7 +679,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
     this.selectedConfigurationId = selectedConfigurationId
 
-    eventPublisher.runConfigurationSelected()
+    eventPublisher.runConfigurationSelected(selectedConfiguration)
   }
 
   override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
@@ -744,10 +756,18 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       // do not register unknown RC type templates (it is saved in any case in the scheme manager, so, not lost on save)
       if (factory !== UnknownConfigurationType.getInstance()) {
         val key = getFactoryKey(factory)
-        lock.write {
-          val old = templateIdToConfiguration.put(key, settings)
-          if (old != null) {
-            LOG.error("Template $key already registered, old: $old, new: $settings")
+        val old = lock.write {
+          templateIdToConfiguration.put(key, settings)
+        }
+
+        if (old != null) {
+          val message = "Template $key already registered, old: $old, new: $settings"
+          // https://youtrack.jetbrains.com/issue/IDEA-205510
+          if (old.configuration.id == "AndroidRunConfigurationType") {
+            LOG.warn(message)
+          }
+          else {
+            LOG.error(message)
           }
         }
       }
@@ -771,7 +791,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
           beforeRunTask.isEnabled = true
-          beforeRunTask.deserializeAndLoadState(methodElement)
+          deserializeAndLoadState(beforeRunTask, methodElement)
         }
         else {
           @Suppress("DEPRECATION")
@@ -893,8 +913,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return icon
   }
 
-  fun isInvalidInCache(settings: RunnerAndConfigurationSettings): Boolean {
-    return iconCache.isInvalid(settings.uniqueID)
+  fun isInvalidInCache(configuration: RunConfiguration): Boolean {
+    findSettings(configuration)?.let {
+      return iconCache.isInvalid(it.uniqueID)
+    }
+    return false
   }
 
   fun getConfigurationById(id: String): RunnerAndConfigurationSettings? = lock.read { idToSettings.get(id) }
@@ -949,10 +972,6 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
     settings.isShared = value
     fireRunConfigurationChanged(settings)
-  }
-
-  override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
-    setBeforeRunTasks(configuration, tasks)
   }
 
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {
@@ -1051,6 +1070,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
     return templateIdToConfiguration
   }
+
+  fun copyTemplatesToProjectFromTemplate(project: Project) {
+    if (workspaceSchemeManager.isEmpty) {
+      return
+    }
+
+    val otherRunManager = RunManagerImpl.getInstanceImpl(project)
+    workspaceSchemeManagerProvider.copyIfNotExists(otherRunManager.workspaceSchemeManagerProvider)
+    otherRunManager.lock.write {
+      otherRunManager.templateIdToConfiguration.clear()
+    }
+    otherRunManager.workspaceSchemeManager.reload()
+  }
 }
 
 @State(name = "ProjectRunConfigurationManager")
@@ -1085,7 +1117,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
-  (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+  (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {

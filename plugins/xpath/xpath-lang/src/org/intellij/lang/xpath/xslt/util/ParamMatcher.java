@@ -30,7 +30,6 @@ public class ParamMatcher extends BaseMatcher {
     private final String myName;
     private final Set<String> myExcludedNames;
 
-    @SuppressWarnings({"unchecked"})
     public ParamMatcher(XmlTag parent, String name) {
         myRoot = parent;
         myName = name;

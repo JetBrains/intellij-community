@@ -59,7 +59,6 @@ public final class TimestampValidityState implements ValidityState {
    *
    * @param is the stream to load the validity state from.
    * @throws IOException if the stream read fails.
-   * @since 5.0.2
    */
   public static TimestampValidityState load(DataInput is) throws IOException {
     return new TimestampValidityState(is.readLong());

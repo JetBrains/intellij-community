@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
@@ -6,6 +6,7 @@ import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,13 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -29,9 +29,10 @@ import java.util.PropertyResourceBundle;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
+import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
@@ -42,7 +43,10 @@ public class ConfigImportHelper {
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 
   private static final String CONFIG = "config";
-  private static final String OPTIONS_XML = "options/options.xml";
+  private static final String[] OPTIONS = {
+    OPTIONS_DIRECTORY + '/' + Storage.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
+    OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
   private static final String CONTENTS = "Contents";
   private static final String PLIST = "Info.plist";
@@ -90,21 +94,12 @@ public class ConfigImportHelper {
   }
 
   public static boolean isValidSettingsFile(@NotNull File file) {
-    try (ZipInputStream zipStream = new ZipInputStream(new FileInputStream(file))) {
-      while (true) {
-        ZipEntry entry = zipStream.getNextEntry();
-        if (entry == null) {
-          break;
-        }
-
-        if (entry.getName().equals(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
-          return true;
-        }
-      }
+    try (ZipFile zip = new ZipFile(file)) {
+      return zip.getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER) != null;
     }
-    catch (IOException ignore) {
+    catch (IOException ignored) {
+      return false;
     }
-    return false;
   }
 
   /**
@@ -112,6 +107,13 @@ public class ConfigImportHelper {
    */
   public static boolean isConfigImported() {
     return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+  }
+
+  public static boolean isConfigDirectory(@NotNull File candidate) {
+    for (String name : OPTIONS) {
+      if (new File(candidate, name).exists()) return true;
+    }
+    return false;
   }
 
   private static ConfigImportSettings getConfigImportSettings() {
@@ -152,10 +154,12 @@ public class ConfigImportHelper {
       long lastModified = 0;
       for (File child : candidates) {
         File candidate = SystemInfo.isMac ? child : new File(child, CONFIG);
-        long modified = new File(candidate, OPTIONS_XML).lastModified();
-        if (modified > lastModified) {
-          lastModified = modified;
-          result = candidate;
+        for (String name : OPTIONS) {
+          long modified = new File(candidate, name).lastModified();
+          if (modified > lastModified) {
+            lastModified = modified;
+            result = candidate;
+          }
         }
       }
     }
@@ -174,27 +178,23 @@ public class ConfigImportHelper {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 
-    if (isValidConfigDir(selectedDir)) {
+    if (isConfigDirectory(selectedDir)) {
       return pair(selectedDir, null);
     }
 
     File config = new File(selectedDir, CONFIG);
-    if (isValidConfigDir(config)) {
+    if (isConfigDirectory(config)) {
       return pair(config, null);
     }
 
     if (new File(selectedDir, SystemInfo.isMac ? CONTENTS : BIN).isDirectory()) {
       File configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
-      if (isValidConfigDir(configDir)) {
+      if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
       }
     }
 
     return null;
-  }
-
-  private static boolean isValidConfigDir(File candidate) {
-    return new File(candidate, OPTIONS_XML).isFile();
   }
 
   @Nullable
@@ -321,16 +321,13 @@ public class ConfigImportHelper {
 
     try {
       if (oldConfigDir.isFile()) {
-        ZipUtil.extract(oldConfigDir, newConfigDir, null);
+        new Decompressor.Zip(oldConfigDir).extract(newConfigDir);
         return;
       }
 
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
-      FileUtil.copyDir(oldConfigDir, newConfigDir);
-
-      // tokens must not be reused
-      FileUtil.delete(new File(newConfigDir, "user.token"));
-      FileUtil.delete(new File(newConfigDir, "user.web.token"));
+      // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
+      FileUtil.copyDir(oldConfigDir, newConfigDir, path -> !blockImport(path, oldConfigDir, newConfigDir));
 
       // on macOS, plugins are normally not under the config directory
       File oldPluginsDir = new File(oldConfigDir, PLUGINS);
@@ -369,5 +366,9 @@ public class ConfigImportHelper {
       String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
       Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
     }
+  }
+
+  private static boolean blockImport(File path, File oldConfig, File newConfig) {
+    return path.getParentFile() == oldConfig && ("user.web.token".equals(path.getName()) || new File(newConfig, path.getName()).exists());
   }
 }

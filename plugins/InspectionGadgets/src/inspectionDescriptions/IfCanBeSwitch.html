@@ -1,12 +1,13 @@
 <html>
 <body>
-Reports any <b>if</b> statements with which can be replaced
+Reports any <b>if</b> statements that can be replaced
 by a <b>switch</b> statement. This inspection will automatically suggest string
 switches when the project language level is Java 7 or higher.
 <!-- tooltip end -->
 <p>
-Use the text field below to indicate the minimum
-number of <b>case</b> branches the resulting <b>switch</b> statement should have.
+Use the text field below to indicate the minimum number of <b>if</b> branches with condition
+an <b>if</b> statement should have to be reported.
+A terminal <b>else</b> branch (without <b>if</b>) is not counted
 <p>
 Use the first checkbox below to have this inspection suggest <b>switch</b> statements on
 primitive and boxed numbers and characters.

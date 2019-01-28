@@ -13,23 +13,17 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -42,7 +36,6 @@ import java.util.*;
 
 /**
  * @author max
- * @since Oct 12, 2001
  */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
@@ -283,60 +276,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     });
 
-    if (isAddNonJavaUsedEnabled()) {
-      checkForReachableRefs(globalContext);
-      final StrictUnreferencedFilter strictUnreferencedFilter = new StrictUnreferencedFilter(this, globalContext);
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        @Override
-        public void run() {
-          final RefManager refManager = globalContext.getRefManager();
-          final PsiSearchHelper helper = PsiSearchHelper.getInstance(refManager.getProject());
-          refManager.iterate(new RefJavaVisitor() {
-            @Override
-            public void visitElement(@NotNull final RefEntity refEntity) {
-              if (refEntity instanceof RefClass && strictUnreferencedFilter.accepts((RefClass)refEntity)) {
-                findExternalClassReferences((RefClass)refEntity);
-              }
-              else if (refEntity instanceof RefMethod) {
-                RefMethod refMethod = (RefMethod)refEntity;
-                if (refMethod.isConstructor() && strictUnreferencedFilter.accepts(refMethod)) {
-                  findExternalClassReferences(refMethod.getOwnerClass());
-                }
-              }
-            }
-
-            private void findExternalClassReferences(final RefClass refElement) {
-              final UClass psiClass = refElement.getUastElement();
-              String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
-              if (qualifiedName != null) {
-                final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(globalContext.getProject());
-                final PsiNonJavaFileReferenceProcessor processor = (file, startOffset, endOffset) -> {
-                  getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                  return false;
-                };
-                final DelegatingGlobalSearchScope globalSearchScope = new DelegatingGlobalSearchScope(projectScope) {
-                  @Override
-                  public boolean contains(@NotNull VirtualFile file) {
-                    return file.getFileType() != JavaFileType.INSTANCE && super.contains(file);
-                  }
-                };
-
-                helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
-
-                //references from java-like are already in graph or
-                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
-                for (RefElement element : refElement.getInReferences()) {
-                  if (!(element instanceof RefJavaElement)) {
-                    getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                  }
-                }
-              }
-            }
-          });
-        }
-      }, null);
-    }
-
     myProcessedSuspicious = new HashSet<>();
     myPhase = 1;
   }
@@ -453,7 +392,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                              @NotNull GlobalInspectionContext globalContext,
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     checkForReachableRefs(globalContext);
-    final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, globalContext) :
+    final boolean firstPhase = myPhase == 1;
+    final RefFilter filter = firstPhase ? new StrictUnreferencedFilter(this, globalContext) :
                              new RefUnreachableFilter(this, globalContext);
     LOG.assertTrue(myProcessedSuspicious != null, "phase: " + myPhase);
 
@@ -486,7 +426,14 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             public void visitMethod(@NotNull final RefMethod refMethod) {
               myProcessedSuspicious.add(refMethod);
               if (refMethod instanceof RefImplicitConstructor) {
-                visitClass(refMethod.getOwnerClass());
+                RefClass ownerClass = refMethod.getOwnerClass();
+                LOG.assertTrue(ownerClass != null);
+                visitClass(ownerClass);
+              }
+              else if (refMethod.isConstructor()) {
+                RefClass ownerClass = refMethod.getOwnerClass();
+                LOG.assertTrue(ownerClass != null);
+                queryQualifiedNameUsages(ownerClass);
               }
               else {
                 UMethod uMethod = (UMethod)refMethod.getUastElement();
@@ -515,7 +462,29 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
                   return false;
                 });
+
+                queryQualifiedNameUsages(refClass);
                 requestAdded[0] = true;
+              }
+            }
+
+            public void queryQualifiedNameUsages(@NotNull RefClass refClass) {
+              if (firstPhase && isAddNonJavaUsedEnabled()) {
+                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
+                  EntryPointsManager entryPointsManager = getEntryPointsManager(globalContext);
+                  entryPointsManager.addEntryPoint(refClass, false);
+                  for (RefMethod constructor : refClass.getConstructors()) {
+                    entryPointsManager.addEntryPoint(constructor, false);
+                  }
+                });
+
+                //references from java-like are already in graph or
+                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
+                for (RefElement element : refClass.getInReferences()) {
+                  if (!(element instanceof RefJavaElement)) {
+                    getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
+                  }
+                }
               }
             }
           });
@@ -602,12 +571,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
-        if (method.isStatic() || method.isConstructor()) {
-          if (method.isConstructor()) {
-            addInstantiatedClass(method.getOwnerClass());
+        if (method.isStatic() || method.isConstructor() || method.isEntry()) {
+          if (method.isStatic()) {
+            ((RefElementImpl)method.getOwner()).setReachable(true);
           }
           else {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            addInstantiatedClass(method.getOwnerClass());
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);

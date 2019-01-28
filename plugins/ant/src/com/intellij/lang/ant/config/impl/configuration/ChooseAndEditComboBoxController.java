@@ -30,12 +30,12 @@ import java.util.Map;
 
 public abstract class ChooseAndEditComboBoxController<Item, Ref> {
   private final ComboboxWithBrowseButton myCombobox;
-  private final Convertor<Item, Ref> myToString;
+  private final Convertor<? super Item, ? extends Ref> myToString;
   private final Map<Ref, Item> myItems = new HashMap<>();
 
   public ChooseAndEditComboBoxController(ComboboxWithBrowseButton combobox,
-                                         Convertor<Item, Ref> toRef,
-                                         Comparator<Ref> comparator) {
+                                         Convertor<? super Item, ? extends Ref> toRef,
+                                         Comparator<? super Ref> comparator) {
     myCombobox = combobox;
     myToString = toRef;
     myCombobox.addActionListener(new ActionListener() {

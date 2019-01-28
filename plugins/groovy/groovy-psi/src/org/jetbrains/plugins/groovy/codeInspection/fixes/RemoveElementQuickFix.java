@@ -13,13 +13,13 @@ import org.jetbrains.annotations.NotNull;
 public class RemoveElementQuickFix implements LocalQuickFix {
 
   private final String myName;
-  private final Function<PsiElement, PsiElement> myElementFunction;
+  private final Function<? super PsiElement, ? extends PsiElement> myElementFunction;
 
   public RemoveElementQuickFix(@NotNull String name) {
     this(name, Functions.identity());
   }
 
-  public RemoveElementQuickFix(@NotNull String name, @NotNull Function<PsiElement, PsiElement> function) {
+  public RemoveElementQuickFix(@NotNull String name, @NotNull Function<? super PsiElement, ? extends PsiElement> function) {
     myName = name;
     myElementFunction = function;
   }

@@ -44,7 +44,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
     return candidates;
   }
 
-  public static void collectUnixPythons(String path, Set<String> candidates) {
+  public static void collectUnixPythons(String path, Set<? super String> candidates) {
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {
@@ -60,8 +60,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
               final String childPath = child.getPath();
               if (!childName.endsWith("-config") &&
                   !childName.startsWith("pythonw") &&
-                  !childName.endsWith("m") &&
-                  !candidates.contains(childPath)) {
+                  !childName.endsWith("m")) {
                 candidates.add(childPath);
               }
               break;

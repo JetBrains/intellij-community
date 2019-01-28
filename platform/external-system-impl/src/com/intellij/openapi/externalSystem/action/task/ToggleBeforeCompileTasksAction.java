@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 
 /**
  * @author Vladislav.Soroka
- * @since 10/29/2014
  */
 public class ToggleBeforeCompileTasksAction extends ToggleTaskActivationAction {
   protected ToggleBeforeCompileTasksAction() {

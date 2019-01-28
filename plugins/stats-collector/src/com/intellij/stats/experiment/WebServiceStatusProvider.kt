@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.experiment
 
@@ -20,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
@@ -31,14 +18,14 @@ class WebServiceStatusProvider(
 ): WebServiceStatus {
 
     companion object {
-        val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"
+        const val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"
 
         private val GSON = Gson()
 
-        private val SALT = "completion.stats.experiment.salt"
-        private val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
-        private val PERFORM_EXPERIMENT_KEY = "completion.ml.perform.experiment"
-        private val STATUS_UPDATED_TIMESTAMP_KEY = "completion.stats.status.updated.ts"
+        private const val SALT = "completion.stats.experiment.salt"
+        private const val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
+        private const val PERFORM_EXPERIMENT_KEY = "completion.ml.perform.experiment"
+        private const val STATUS_UPDATED_TIMESTAMP_KEY = "completion.stats.status.updated.ts"
 
         private val INFO_TTL = TimeUnit.DAYS.toMillis(7)
         private val DEFAULT_INFO = ExperimentInfo(0, "", false)
@@ -51,26 +38,24 @@ class WebServiceStatusProvider(
     @Volatile private var dataServerUrl = ""
 
     override fun experimentVersion(): Int = info.experimentVersion
-    
+
     override fun dataServerUrl(): String = dataServerUrl
 
-    override fun isExperimentGoingOnNow(): Boolean = info.performExperiment
-
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
-    
+
     override fun isExperimentOnCurrentIDE(): Boolean {
-        return info.performExperiment
+        return experimentVersion() == 6 && !Registry.`is`("java.completion.ml.exit.experiment")
     }
-    
+
     override fun updateStatus() {
         serverStatus = ""
         dataServerUrl = ""
-        
+
         assertNotEDT()
         val response = requestSender.get(STATUS_URL)
         if (response != null && response.isOK()) {
             val map = parseServerResponse(response.text)
-            
+
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
             val performExperiment = map["performExperiment"]?.toString() ?: "false"
@@ -88,7 +73,7 @@ class WebServiceStatusProvider(
                 }
                 saveInfo(info)
             }
-            
+
             serverStatus = map["status"]?.toString() ?: ""
             dataServerUrl = map["urlForZipBase64Content"]?.toString() ?: ""
         }

@@ -62,6 +62,9 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
       EditorHistoryManager.getInstance(getProject()).removeAllFiles();
       ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myManager = null;
       myOldManager = null;

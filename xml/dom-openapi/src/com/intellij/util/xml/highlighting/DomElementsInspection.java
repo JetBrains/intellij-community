@@ -72,7 +72,6 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     consumer.consume(domFileElement.getRootElement());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   protected void checkChildren(final DomElement element, Consumer<? super DomElement> visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
@@ -142,7 +141,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   @Nullable
   protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
                                              @NotNull final InspectionManager manager,
-                                             @SuppressWarnings("UnusedParameters") final boolean isOnTheFly) {
+                                             final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
     final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this, isOnTheFly);

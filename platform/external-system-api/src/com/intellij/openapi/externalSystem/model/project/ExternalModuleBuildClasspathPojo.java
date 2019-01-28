@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/14/14
  */
 public class ExternalModuleBuildClasspathPojo {
 

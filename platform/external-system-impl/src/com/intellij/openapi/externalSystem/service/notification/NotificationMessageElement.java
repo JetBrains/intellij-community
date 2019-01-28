@@ -30,7 +30,6 @@ import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/24/2014
  */
 public class NotificationMessageElement extends NavigatableMessageElement {
   public static final String MSG_STYLE = "messageStyle";
@@ -122,12 +121,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       StyleConstants.setForeground(style, JBColor.GRAY);
     }
     else {
-      if (selected) {
-        StyleConstants.setForeground(style, hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground());
-      }
-      else {
-        StyleConstants.setForeground(style, UIUtil.getTreeTextForeground());
-      }
+      StyleConstants.setForeground(style, UIUtil.getTreeForeground(selected, hasFocus));
     }
 
     if (tree != null && WideSelectionTreeUI.isWideSelection(tree)) {

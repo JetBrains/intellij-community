@@ -57,6 +57,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   /**
    * @deprecated use {@link #withUseCygwinLaunch(boolean)}
    */
+  @Deprecated
   public void setUseCygwinLaunch(boolean useCygwinLaunch) {
     withUseCygwinLaunch(useCygwinLaunch);
   }
@@ -64,6 +65,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   /**
    * @deprecated use {@link #withConsoleMode(boolean)}
    */
+  @Deprecated
   public void setConsoleMode(boolean consoleMode) {
     withConsoleMode(consoleMode);
   }
@@ -71,6 +73,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   /**
    * @deprecated use {@link #withInitialColumns(int)}
    */
+  @Deprecated
   public void setInitialColumns(int initialColumns) {
     withInitialColumns(initialColumns);
   }
@@ -78,6 +81,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   /**
    * @deprecated use {@link #withInitialRows(int)}
    */
+  @Deprecated
   public void setInitialRows(int initialRows) {
     withInitialRows(initialRows);
   }

@@ -41,6 +41,9 @@ public enum LanguageLevel {
    */
   @Deprecated
   PYTHON25(25, false, true, false, false),
+  /**
+   * @apiNote This level is not supported since 2019.1.
+   */
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
   /**
@@ -67,16 +70,23 @@ public enum LanguageLevel {
    */
   @Deprecated
   PYTHON33(33, true, false, true, true),
+  /**
+   * @apiNote This level is not supported since 2019.1.
+   */
   PYTHON34(34, true, false, true, true),
   PYTHON35(35, true, false, true, true),
   PYTHON36(36, true, false, true, true),
   PYTHON37(37, true, false, true, true);
 
+  /**
+   * This value is mostly bound to the compatibility of our debugger and helpers.
+   * You're free to gradually drop support of versions not mentioned here if they present too much hassle to maintain.
+   */
   public static final List<LanguageLevel> SUPPORTED_LEVELS =
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion > 33 || v.myVersion == 26 || v.myVersion == 27)
+        .filter(v -> v.myVersion > 34 || v.myVersion == 27)
         .collect(Collectors.toList())
     );
 

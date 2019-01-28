@@ -23,9 +23,13 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
+@CompileStatic
 class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   void "test if null return null"() {
@@ -544,6 +548,7 @@ class Foo {{
 
   void "test anonymous class methods potentially used from outside"() {
     def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+@SuppressWarnings("ALL")
 class Foo {{
   Runnable r = new Runnable() {
     public void run() {
@@ -680,11 +685,32 @@ public static void test(Object obj, int i) {
 }""")
     assert c == ['_, _ -> fail']
   }
+  
+  void "test ternary two notnull"() {
+    def c = inferContracts("""
+static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
+
+static String getFoo() { return "foo"; }
+static String getBar() { return "bar"; }
+""")
+    assert c == ['_, _, _ -> !null']
+  }
+
+  void "test not collapsed"() {
+    def c = inferContracts("""
+static String test(String a, String b) { 
+  if(b == null || a == null) return null;
+  return unknown(a+b);  
+}
+""")
+    assert c == ['_, null -> null', 'null, !null -> null']
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8_ANNOTATED

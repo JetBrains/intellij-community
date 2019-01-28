@@ -352,40 +352,34 @@ public class GeneralCommandLineTest {
   }
 
   @Test(timeout = 60000)
-  public void hackyEnvMap() {
-    Map<String, String> env = createCommandLine().getEnvironment();
-
+  public void hackyEnvMap() throws Exception {
     //noinspection ConstantConditions
-    env.putAll(null);
+    createCommandLine().getEnvironment().putAll(null);
 
-    checkEnvVar(env, null, "-", "null keys should be rejected");
-    checkEnvVar(env, "", "-", "empty keys should be rejected");
-    checkEnvVar(env, "a\0b", "-", "keys with '\\0' should be rejected");
-    checkEnvVar(env, "a=b", "-", "keys with '=' should be rejected");
+    checkEnvVar("", "-", "empty keys should be rejected");
+    checkEnvVar("a\0b", "-", "keys with '\\0' should be rejected");
+    checkEnvVar("a=b", "-", "keys with '=' should be rejected");
     if (SystemInfo.isWindows) {
-      env.put("=wtf", "-");
+      GeneralCommandLine commandLine = createCommandLine("find");
+      commandLine.getEnvironment().put("=wtf", "-");
+      commandLine.createProcess().waitFor();
     }
     else {
-      checkEnvVar(env, "=wtf", "-", "keys with '=' should be rejected");
+      checkEnvVar("=wtf", "-", "keys with '=' should be rejected");
     }
 
-    checkEnvVar(env, "key1", null, "null values should be rejected");
-    checkEnvVar(env, "key1", "a\0b", "values with '\\0' should be rejected");
-
-    try {
-      Map<String, String> indirect = newHashMap(pair("key2", null));
-      env.putAll(indirect);
-      fail("null values should be rejected");
-    }
-    catch (IllegalArgumentException ignored) { }
+    checkEnvVar("key1", null, "null values should be rejected");
+    checkEnvVar("key1", "a\0b", "values with '\\0' should be rejected");
   }
 
-  private static void checkEnvVar(Map<String, String> env, String name, String value, String message) {
+  private void checkEnvVar(String name, String value, String message) throws ExecutionException, InterruptedException {
+    GeneralCommandLine commandLine = createCommandLine(SystemInfo.isWindows ? "find" : "echo");
+    commandLine.getEnvironment().put(name, value);
     try {
-      env.put(name, value);
+      commandLine.createProcess().waitFor();
       fail(message);
     }
-    catch (IllegalArgumentException ignored) { }
+    catch (IllegalEnvVarException ignored) { }
   }
 
   @Test(timeout = 60000)

@@ -85,7 +85,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
@@ -107,7 +107,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
@@ -136,7 +136,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.mySourceDir, "s2.txt");
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
@@ -169,7 +169,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
     assertEquals(SubTree.ourS1Contents, text.toString());
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
   
@@ -190,7 +190,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.myRootDir, "target");
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
 
     for (VirtualFile file : files) {
@@ -230,7 +230,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.myTargetDir, "t10.txt");
     assertVF(subTree.myTargetDir, "t11.txt");
 
-    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate();
     checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
   

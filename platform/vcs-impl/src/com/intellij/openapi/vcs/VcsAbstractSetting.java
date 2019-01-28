@@ -39,7 +39,7 @@ public class VcsAbstractSetting {
     }
   }
 
-  public boolean isApplicableTo(Collection<AbstractVcs> vcs) {
+  public boolean isApplicableTo(Collection<? extends AbstractVcs> vcs) {
     for (AbstractVcs abstractVcs : vcs) {
       if (myApplicable.contains(abstractVcs)) return true;
     }

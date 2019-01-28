@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -79,7 +80,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                            PyAddSystemWideInterpreterPanel(module, existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
-        it.createView(project = project, module = module, newProjectPath = newProjectPath, existingSdks = existingSdks)
+        it.safeCreateView(project = project, module = module, newProjectPath = newProjectPath, existingSdks = existingSdks)
           .registerIfDisposable()
       }
     panels.addAll(extendedPanels)
@@ -114,8 +115,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
            lazyMessage = { "${PyAddSdkDialog::class.java} is not ready for ${DialogStyle.COMPACT} dialog style" })
 
     return doCreateSouthPanel(leftButtons = listOf(),
-                                                           rightButtons = listOf(previousButton.value, nextButton.value,
-                                                                                 cancelButton.value))
+                              rightButtons = listOf(previousButton.value, nextButton.value,
+                                                    cancelButton.value))
   }
 
   private val nextAction: Action = object : DialogWrapperAction("Next") {
@@ -318,6 +319,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   companion object {
+    private val LOG: Logger = Logger.getInstance(PyAddSdkDialog::class.java)
+
     private fun allowCreatingNewEnvironments(project: Project?) =
       project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
 
@@ -333,7 +336,25 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         init()
       }
     }
+
+    /**
+     * Fixes the problem when [PyAddDockerSdkProvider.createView] for Docker
+     * and Docker Compose types throws [NoClassDefFoundError] exception when
+     * `org.jetbrains.plugins.remote-run` plugin is disabled.
+     */
+    private fun PyAddSdkProvider.safeCreateView(project: Project?,
+                                                module: Module?,
+                                                newProjectPath: String?,
+                                                existingSdks: List<Sdk>): PyAddSdkView? {
+      try {
+        return createView(project, module, newProjectPath, existingSdks)
+      }
+      catch (e: NoClassDefFoundError) {
+        LOG.info(e)
+        return null
+      }
+    }
   }
 }
 
-class CreateSdkInterrupted: Exception()
+class CreateSdkInterrupted : Exception()

@@ -1,49 +1,36 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppFileSettings;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
 public class CppBinaryImpl implements CppBinary {
+  private final String myName;
   private final String myBaseName;
   private final String myVariantName;
-  private final Map<File, CppFileSettings> mySources;
-  private final CompilerDetails myCompilerDetails;
-  private final LinkerDetails myLinkerDetails;
-  private final TargetType myTargetType;
+  private CompilationDetailsImpl myCompilationDetails;
+  private LinkageDetailsImpl myLinkageDetails;
 
-  public CppBinaryImpl(String baseName, String variantName,
-                       Map<File, CppFileSettings> sources,
-                       CompilerDetails compilerDetails,
-                       LinkerDetails linkerDetails,
-                       TargetType targetType) {
+  public CppBinaryImpl(String name, String baseName, String variantName) {
+    myName = name;
     myBaseName = baseName;
     myVariantName = variantName;
-    mySources = new LinkedHashMap<File, CppFileSettings>();
-    for (Map.Entry<File, CppFileSettings> fileSettingsEntry : sources.entrySet()) {
-      mySources.put(fileSettingsEntry.getKey(), new CppFileSettingsImpl(fileSettingsEntry.getValue()));
-    }
-    myCompilerDetails = compilerDetails;
-    myLinkerDetails = linkerDetails;
-    myTargetType = targetType;
+    myCompilationDetails = new CompilationDetailsImpl();
+    myLinkageDetails = new LinkageDetailsImpl();
   }
 
   public CppBinaryImpl(CppBinary binary) {
-    this(binary.getBaseName(), binary.getVariantName(), binary.getSources(),
-         new CompilerDetailsImpl(binary.getCompilerDetails()), new LinkerDetailsImpl(binary.getLinkerDetails()), binary.getTargetType());
+    this(binary.getName(), binary.getBaseName(), binary.getVariantName());
+    myCompilationDetails = new CompilationDetailsImpl(binary.getCompilationDetails());
+    myLinkageDetails = new LinkageDetailsImpl(binary.getLinkageDetails());
   }
 
   @Override
-  public String getBaseName() {
-    return myBaseName;
+  public String getName() {
+    return myName;
   }
 
   @Override
@@ -52,42 +39,25 @@ public class CppBinaryImpl implements CppBinary {
   }
 
   @Override
-  public Map<File, CppFileSettings> getSources() {
-    return Collections.unmodifiableMap(mySources);
+  public String getBaseName() {
+    return myBaseName;
   }
 
   @Override
-  public CompilerDetails getCompilerDetails() {
-    return myCompilerDetails;
+  public CompilationDetailsImpl getCompilationDetails() {
+    return myCompilationDetails;
+  }
+
+  public void setCompilationDetails(@NotNull CompilationDetailsImpl compilationDetails) {
+    myCompilationDetails = compilationDetails;
   }
 
   @Override
-  public Set<File> getCompileIncludePath() {
-    return myCompilerDetails.getIncludePath();
+  public LinkageDetailsImpl getLinkageDetails() {
+    return myLinkageDetails;
   }
 
-  @Override
-  public File getCompilerExecutable() {
-    return myCompilerDetails.getExecutable();
-  }
-
-  @Override
-  public List<String> getCompilerArgs() {
-    return myCompilerDetails.getArgs();
-  }
-
-  @Override
-  public LinkerDetails getLinkerDetails() {
-    return myLinkerDetails;
-  }
-
-  @Override
-  public File getOutputFile() {
-    return myLinkerDetails.getOutputFile();
-  }
-
-  @Override
-  public TargetType getTargetType() {
-    return myTargetType;
+  public void setLinkageDetails(@NotNull LinkageDetailsImpl linkageDetails) {
+    myLinkageDetails = linkageDetails;
   }
 }

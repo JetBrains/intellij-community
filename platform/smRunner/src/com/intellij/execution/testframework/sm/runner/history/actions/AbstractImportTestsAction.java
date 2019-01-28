@@ -4,8 +4,6 @@ package com.intellij.execution.testframework.sm.runner.history.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -16,7 +14,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -164,9 +161,8 @@ public abstract class AbstractImportTestsAction extends AnAction {
         if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
           return DefaultExecutionTarget.INSTANCE;
         }
-        final RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
-        for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
-          for (ExecutionTarget target : provider.getTargets(myProject, settings)) {
+        for (ExecutionTargetProvider provider : ExecutionTargetProvider.EXTENSION_NAME.getExtensionList()) {
+          for (ExecutionTarget target : provider.getTargets(myProject, myConfiguration)) {
             if (myTargetId.equals(target.getId())) {
               return target;
             }

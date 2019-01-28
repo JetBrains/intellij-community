@@ -42,7 +42,7 @@ class BrokenAlignment {
 
   private static class Data {
     @Nullable final String text;
-    @Nullable final Data inner;
+    @Nullable Data inner;
 
     Data(@Nullable String text, Data inner) {
       this.text = text;

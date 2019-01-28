@@ -6,8 +6,10 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsSe
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -15,6 +17,7 @@ import java.util.Set;
 public class EventLogExternalSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
+  private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
   public static EventLogExternalSettingsService getInstance() {
@@ -28,7 +31,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   @NotNull
   @Override
   public String[] getAttributeNames() {
-    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE);
+    return ArrayUtil.mergeArrays(super.getAttributeNames(), PERCENT_TRAFFIC, APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
   }
 
   @Override
@@ -46,10 +49,26 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   }
 
   @Override
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return getSettingValue(DICTIONARY_SERVICE);
+  }
+
+  @NotNull
+  public Set<String> getApprovedGroups() {
+    return getWhitelistedGroups();
+  }
+
+  @Override
   @NotNull
   public LogEventFilter getEventFilter() {
     final Set<String> whitelist = getWhitelistedGroups();
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
+  }
+
+  @Override
+  public boolean isInternal() {
+    return false;
   }
 
   @NotNull
@@ -59,6 +78,11 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
       return Collections.emptySet();
     }
     final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl);
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getReportedBuild());
+  }
+
+  @NotNull
+  private static BuildNumber getReportedBuild() {
+    return BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
   }
 }

@@ -16,12 +16,14 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInspection.ui.InspectionTree;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CloseProjectAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -40,9 +42,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.framework.Timeouts;
+import com.intellij.testGuiFramework.framework.TimeoutsKt;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -96,7 +98,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   public static IdeFrameFixture find(@NotNull final Robot robot,
                                      @Nullable final File projectPath,
                                      @Nullable final String projectName,
-                                     long timeoutInSeconds) {
+                                     @NotNull final Timeout timeout) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
@@ -111,26 +113,24 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     };
 
     try {
-
-
       pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
         @Override
         public boolean test() {
           Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
           return !frames.isEmpty();
         }
-      }, Timeout.timeout(timeoutInSeconds, TimeUnit.SECONDS));
+      }, timeout);
 
       IdeFrameImpl ideFrame = robot.finder().find(matcher);
       return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
     }
     catch (WaitTimedOutError timedOutError) {
-      throw new ComponentLookupException("Unable to find IdeFrame in " + timeoutInSeconds + " second(s)");
+      throw new ComponentLookupException("Unable to find IdeFrame in " + TimeoutsKt.toPrintable(timeout));
     }
   }
 
   public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
-    return find(robot, projectPath, projectName, 120L);
+    return find(robot, projectPath, projectName, Timeouts.INSTANCE.getDefaultTimeout());
   }
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
@@ -371,7 +371,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     MouseEvent fakeMainMenuMouseEvent =
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
-    DumbService.getInstance(getProject()).smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+    DumbService.getInstance(getProject())
+      .smartInvokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -427,12 +428,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @Nullable
   @Contract("_, true -> !null")
   public VirtualFile findFileByRelativePath(@NotNull String relativePath, boolean requireExists) {
-    //noinspection Contract
     assertFalse("Should use '/' in test relative paths, not File.separator", relativePath.contains("\\"));
     Project project = getProject();
     VirtualFile file = project.getBaseDir().findFileByRelativePath(relativePath);
     if (requireExists) {
-      //noinspection Contract
       assertNotNull("Unable to find file with relative path " + quote(relativePath), file);
     }
     return file;
@@ -575,7 +574,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
             }
         , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
     }
-    catch (WaitTimedOutError ignored){}
+    catch (WaitTimedOutError ignored) {
+    }
     robot().waitForIdle();
     return this;
   }
@@ -727,15 +727,13 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return project;
   }
 
-  public void closeProject() {
-    invokeMainMenu("CloseProject");
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        RecentProjectsManager.getInstance().updateLastProjectPath();
-        WelcomeFrame.showIfNoProjectOpened();
-      }
-    });
+  public void closeProjectAndWaitWelcomeFrame() {
+    closeProjectAndWaitWelcomeFrame(true);
+  }
+
+  public void closeProjectAndWaitWelcomeFrame(Boolean waitWelcomeFrame) {
+    closeProject();
+    if (!waitWelcomeFrame) return;
     pause(new Condition("Waiting for 'Welcome' page to show up") {
       @Override
       public boolean test() {
@@ -747,6 +745,13 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         return false;
       }
     });
+  }
+
+  public void closeProject() {
+    CloseProjectAction closeAction = new CloseProjectAction();
+    AnActionEvent actionEvent =
+      AnActionEvent.createFromAnAction(closeAction, null, "", DataManager.getInstance().getDataContext(target().getComponent()));
+    DumbService.getInstance(getProject()).smartInvokeLater(() -> closeAction.actionPerformed(actionEvent));
   }
 
   @NotNull

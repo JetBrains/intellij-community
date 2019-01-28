@@ -1,6 +1,7 @@
 package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
@@ -12,11 +13,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
-
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
@@ -25,6 +22,17 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       if (file == null || file.getLanguage() instanceof TemplateLanguage)
         return EMPTY_TOKENIZER;
     }
+
+    if (element instanceof XmlToken) {
+      if (((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+        PsiElement injection = InjectedLanguageManager
+          .getInstance(element.getProject()).findInjectedElementAt(element.getContainingFile(), element.getTextOffset());
+        if (injection == null) {
+          return TEXT_TOKENIZER;
+        }
+      }
+    }
+
     return super.getTokenizer(element);
   }
 

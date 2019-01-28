@@ -16,37 +16,23 @@
 
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.ide.actions.PrintActionHandler;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
-public class PrintAction extends AnAction implements DumbAware {
+public class PrintAction extends DumbAwareAction {
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PrintManager.executePrint(e.getDataContext());
+    PrintActionHandler handler = PrintActionHandler.getHandler(e.getDataContext());
+    if (handler == null) return;
+    handler.print(e.getDataContext());
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if(file != null && file.isDirectory()) {
-      presentation.setEnabled(true);
-      return;
-    }
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    presentation.setEnabled(psiFile != null || editor != null || !PrintManager.getSelectedPsiFiles(dataContext).isEmpty());
+  public void update(@NotNull AnActionEvent e) {
+    PrintActionHandler handler = PrintActionHandler.getHandler(e.getDataContext());
+    e.getPresentation().setEnabled(handler != null);
   }
-
 }

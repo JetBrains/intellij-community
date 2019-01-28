@@ -73,7 +73,7 @@ public class JavaPsiConstructorUtil {
     return findConstructorInSuper(constructor, new HashSet<>());
   }
 
-  private static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<PsiMethod> visited) {
+  private static PsiMethod findConstructorInSuper(PsiMethod constructor, Set<? super PsiMethod> visited) {
     if (visited.contains(constructor)) return null;
     visited.add(constructor);
     PsiMethodCallExpression call = findThisOrSuperCallInConstructor(constructor);

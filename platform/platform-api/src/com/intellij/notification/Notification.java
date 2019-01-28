@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +31,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.
  * <br><br>
  * Warning: be careful not to use the links in HTML content, use {@link #addAction(AnAction)}
+ *
+ * @see NotificationAction
+ * @see com.intellij.notification.SingletonNotificationManager
  *
  * @author spleaner
  * @author Alexander Lobas
@@ -217,15 +219,11 @@ public class Notification {
   }
 
   public static void fire(@NotNull final Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        if (KEY.is(dataId)) {
-          return notification;
-        }
-        return context == null ? null : context.getData(dataId);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataId -> {
+      if (KEY.is(dataId)) {
+        return notification;
       }
+      return context == null ? null : context.getData(dataId);
     });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event, event.getDataContext());
@@ -233,13 +231,7 @@ public class Notification {
   }
 
   public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
-    DataManager.registerDataProvider(component, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        return KEY.getName().equals(dataId) ? notification : null;
-      }
-    });
+    DataManager.registerDataProvider(component, dataId -> KEY.getName().equals(dataId) ? notification : null);
   }
 
   @NotNull
@@ -289,7 +281,7 @@ public class Notification {
   public void expire() {
     if (!myExpired.compareAndSet(false, true)) return;
 
-    UIUtil.invokeLaterIfNeeded(() -> hideBalloon());
+    UIUtil.invokeLaterIfNeeded(this::hideBalloon);
     NotificationsManager.getNotificationsManager().expire(this);
 
     Runnable whenExpired = myWhenExpired;

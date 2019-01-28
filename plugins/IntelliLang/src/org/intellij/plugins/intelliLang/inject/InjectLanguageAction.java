@@ -170,7 +170,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
         Processor<? super PsiLanguageInjectionHost> fixer = host.getUserData(FIX_KEY);
-        String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
+        String text = StringUtil.escapeXmlEntities(language.getDisplayName()) + " was temporarily injected.";
         if (fixer != null) {
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
             SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);

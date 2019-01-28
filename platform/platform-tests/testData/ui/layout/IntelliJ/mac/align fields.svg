@@ -23,7 +23,7 @@
         <path d="M0 0 L0 15 L142 15 L142 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M0 4 L0 22 L167 22 L167 4 Z"/>
+        <path d="M0 4 L0 22 L182 22 L182 4 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
         <path d="M0 0 L0 15 L145 15 L145 0 Z"/>
@@ -49,7 +49,7 @@
     </g>
     <g fill="rgb(29,29,29)" font-weight="bold" font-family="sans-serif" transform="translate(147,-4)" stroke="rgb(29,29,29)">
       <image x="0" y="0" clip-path="url(#6)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBox.png" height="22" preserveAspectRatio="none"/>
-      <text x="25" xml:space="preserve" y="16" clip-path="url(#6)" stroke="none">Android module name:</text>
+      <text x="25" xml:space="preserve" y="16" clip-path="url(#6)" stroke="none">FooBar module name foo</text>
     </g>
     <g font-family="sans-serif" font-weight="bold">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#7)" stroke="none">Create Android module</text>

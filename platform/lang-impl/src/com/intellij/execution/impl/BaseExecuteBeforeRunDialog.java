@@ -202,7 +202,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    List<BeforeRunTask<?>> tasks = runManager.getBeforeRunTasks(config);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(config);
     BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
     if (provider == null) {
       return;
@@ -308,9 +308,9 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
       myCheckbox.setSelected(descriptor.isChecked());
 
-      myCheckbox.setBackground(UIUtil.getTreeTextBackground());
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
-      final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      myCheckbox.setBackground(UIUtil.getTreeBackground());
+      setBackground(UIUtil.getTreeBackground(selected, true));
+      Color foreground = UIUtil.getTreeForeground(selected, true);
       setForeground(foreground);
       myCheckbox.setForeground(foreground);
       myLabel.setForeground(foreground);

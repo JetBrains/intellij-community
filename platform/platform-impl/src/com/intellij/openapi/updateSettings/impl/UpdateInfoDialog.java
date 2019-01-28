@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -42,8 +41,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -56,7 +55,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
   private final boolean myForceHttps;
-  private final Collection<PluginDownloader> myUpdatedPlugins;
+  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -68,8 +67,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @Nullable UpdateChain patches,
                    boolean enableLink,
                    boolean forceHttps,
-                   @Nullable Collection<PluginDownloader> updatedPlugins,
-                   @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
@@ -87,12 +86,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
 
-    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
+    IdeUpdateUsageTriggerCollector.trigger( "dialog.shown");
     if (myPatches == null) {
-      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
+      IdeUpdateUsageTriggerCollector.trigger( "dialog.shown.no.patch");
     }
     else if (!ApplicationManager.getApplication().isRestartCapable()) {
-      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.manual.patch");
+      IdeUpdateUsageTriggerCollector.trigger( "dialog.shown.manual.patch");
     }
   }
 
@@ -252,7 +251,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void restartLaterAndRunCommand(String[] command) {
-    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.update.started");
+    IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     application.invokeLater(() -> application.exit(true, true, true, command));
@@ -280,7 +279,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     String title = IdeBundle.message("update.notifications.title"), message = IdeBundle.message("update.apply.manually.message", file);
-    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.manual.patch.prepared");
+    IdeUpdateUsageTriggerCollector.trigger( "dialog.manual.patch.prepared");
     ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
   }
 
@@ -295,7 +294,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     @Override
     public void actionPerformed(ActionEvent e) {
       if (myInfo.isDownload()) {
-        FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.download.clicked");
+        IdeUpdateUsageTriggerCollector.trigger( "dialog.download.clicked");
       }
       BrowserUtil.browse(augmentUrl(myInfo.getUrl()));
     }
@@ -317,18 +316,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
       String message = myNewBuild.getMessage();
-      String fullProductName = appNames.getFullProductName();
-      if (StringUtil.isEmpty(message)) {
-        message = IdeBundle.message("updates.new.version.available", fullProductName);
-      }
-      String url = myNewBuild.getDownloadUrl();
-      if (!StringUtil.isEmptyOrSpaces(url)) {
-        int idx = message.indexOf(fullProductName);
-        if (idx >= 0) {
-          message = message.substring(0, idx) +
-                    "<a href=\'" + augmentUrl(url) + "\'>" + fullProductName + "</a>" +
-                    message.substring(idx + fullProductName.length());
-        }
+      if (StringUtil.isEmptyOrSpaces(message)) {
+        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName());
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 

@@ -66,7 +66,7 @@ public class OldReferenceResolver {
     myProject = myContext.getProject();
     myManager = myContext.getManager();
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     PsiExpression instanceRef;
     if (myContext instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myContext;
@@ -93,7 +93,7 @@ public class OldReferenceResolver {
 
     Set<Map.Entry<PsiExpression, String>> mappingsSet = myTempVars.entrySet();
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
     replaceOldRefWithNew(mappingsSet, factory);
   }
@@ -109,7 +109,7 @@ public class OldReferenceResolver {
 
   private void resolveOldReferences(PsiElement expr, PsiElement oldExpr, boolean varargs) throws IncorrectOperationException {
     if (expr == null || !expr.isValid() || oldExpr == null) return;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
     if (oldExpr instanceof PsiReferenceExpression) {
@@ -269,7 +269,7 @@ public class OldReferenceResolver {
     if (getter != null) {
 
       if (JavaPsiFacade.getInstance(psiField.getProject()).getResolveHelper().isAccessible(getter, newExpr, null)) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(newExpr.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(newExpr.getProject());
         String id = getter.getName();
         String qualifier = null;
         if (newExpr instanceof PsiReferenceExpression) {

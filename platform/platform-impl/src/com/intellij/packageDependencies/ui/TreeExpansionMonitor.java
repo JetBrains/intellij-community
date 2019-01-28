@@ -20,7 +20,7 @@ public abstract class TreeExpansionMonitor<T> {
     return install(tree, (o1, o2) -> Comparing.equal(o1.getUserObject(), o2.getUserObject()));
   }
 
-  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final Equality<DefaultMutableTreeNode> equality) {
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final Equality<? super DefaultMutableTreeNode> equality) {
     return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree) {
       @Override
       protected TreePath findPathByNode(final DefaultMutableTreeNode node) {

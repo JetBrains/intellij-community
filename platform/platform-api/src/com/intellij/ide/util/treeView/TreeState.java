@@ -119,7 +119,7 @@ public class TreeState implements JDOMExternalizable {
     readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(Element root, List<List<PathElement>> list, String name) throws InvalidDataException {
+  private static void readExternal(Element root, List<? super List<PathElement>> list, String name) throws InvalidDataException {
     list.clear();
     for (Element element : root.getChildren(name)) {
       for (Element child : element.getChildren(PATH_TAG)) {
@@ -165,7 +165,7 @@ public class TreeState implements JDOMExternalizable {
     writeExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void writeExternal(Element element, List<List<PathElement>> list, String name) throws WriteExternalException {
+  private static void writeExternal(Element element, List<? extends List<PathElement>> list, String name) throws WriteExternalException {
     Element root = new Element(name);
     for (List<PathElement> path : list) {
       Element e = XmlSerializer.serialize(path.toArray());
@@ -176,7 +176,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   @NotNull
-  private static List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<TreePath> paths) {
+  private static List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
     return JBIterable.from(paths)
       .filter(o -> o.getPathCount() > 1 || tree.isRootVisible())
       .map(o -> createPath(tree.getModel(), o))
@@ -311,7 +311,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private static void expandImpl(int positionInPath,
-                                 List<PathElement> path,
+                                 List<? extends PathElement> path,
                                  TreePath treePath,
                                  TreeFacade tree,
                                  ProgressIndicator indicator) {
@@ -435,7 +435,6 @@ public class TreeState implements JDOMExternalizable {
    * Not that the specified consumer must resolve async promise at the end.
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void expand(@NotNull JTree tree, @NotNull Consumer<? super AsyncPromise<Void>> consumer) {
     Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
     LOG.debug("EXPANDING: ", expanding);

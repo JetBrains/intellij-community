@@ -23,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
  * Is intended to hold java formatting indentation-specific tests.
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:29:25 PM
  */
 public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 

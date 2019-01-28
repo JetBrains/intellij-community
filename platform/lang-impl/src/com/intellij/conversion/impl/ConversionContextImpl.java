@@ -154,8 +154,10 @@ public class ConversionContextImpl implements ConversionContext {
     List<File> files = new ArrayList<>();
     for (Element module : modules.getChildren(ModuleManagerImpl.ELEMENT_MODULE)) {
       String filePath = module.getAttributeValue(ModuleManagerImpl.ATTRIBUTE_FILEPATH);
-      filePath = macros.substitute(filePath, true);
-      files.add(new File(FileUtil.toSystemDependentName(filePath)));
+      if (filePath != null) {
+        filePath = macros.substitute(filePath, true);
+        files.add(new File(FileUtil.toSystemDependentName(filePath)));
+      }
     }
     return files.toArray(new File[0]);
   }

@@ -46,8 +46,13 @@ public class MoveAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return MoveHandler.canMove(dataContext);
+  }
+
+  @Override
+  protected boolean disableOnCompiledElement() {
+    return false;
   }
 
   @Override

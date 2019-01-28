@@ -2,17 +2,14 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class ShowHideMergePanelAction extends DumbAwareToggleAction {
 
   private final DecoratorManager myManager;
@@ -20,17 +17,10 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
   private boolean myIsSelected;
 
   public ShowHideMergePanelAction(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
+    super("Show Integrate Panel", message("committed.changes.action.enable.merge.highlighting.description.text"),
+          SvnIcons.PreviewDetailsLeft);
     myManager = manager;
     myStrategy = strategy;
-  }
-
-  @Override
-  public void update(@NotNull final AnActionEvent e) {
-    super.update(e);
-    final Presentation presentation = e.getPresentation();
-    presentation.setIcon(SvnIcons.ShowIntegratedFrom);
-    presentation.setText(SvnBundle.message("committed.changes.action.enable.merge.highlighting"));
-    presentation.setDescription(SvnBundle.message("committed.changes.action.enable.merge.highlighting.description.text"));
   }
 
   @Override

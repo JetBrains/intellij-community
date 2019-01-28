@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.Bidi;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -64,7 +64,7 @@ abstract class LineLayout {
     if (runs.size() == 1) {
       BidiRun run = runs.get(0);
       if (run.level == 0 && run.getChunkCount() == 1) {
-        Chunk chunk = run.chunks == null ? new Chunk(0, run.endOffset) : run.chunks[0];
+        Chunk chunk = run.chunks == null ? new Chunk(0, run.endOffset) : run.chunks.get(0);
         return new SingleChunk(chunk);
       }
     }
@@ -252,7 +252,6 @@ abstract class LineLayout {
     }
   }
   
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, 
                                    FontFallbackIterator it) {
     assert start < end;
@@ -387,7 +386,7 @@ abstract class LineLayout {
     private BidiRun[] createRuns() {
       if (myChunk == null) return BidiRun.EMPTY_ARRAY;
       BidiRun run = new BidiRun(myChunk.endOffset);
-      run.chunks = new Chunk[] {myChunk};
+      run.chunks = Collections.singletonList(myChunk);
       return new BidiRun[] {run};
     }
   }
@@ -409,7 +408,7 @@ abstract class LineLayout {
 
     @Override
     Stream<Chunk> getChunksInLogicalOrder() {
-      return Stream.of(myBidiRunsInLogicalOrder).flatMap((BidiRun r) -> r.chunks == null ? Stream.empty() : Stream.of(r.chunks));
+      return Stream.of(myBidiRunsInLogicalOrder).flatMap((BidiRun r) -> r.chunks == null ? Stream.empty() : r.chunks.stream());
     }
 
     @Override
@@ -528,7 +527,7 @@ abstract class LineLayout {
     private final int startOffset;
     private final int endOffset;
     private int visualStartLogicalColumn;
-    private Chunk[] chunks; // in logical order
+    private List<Chunk> chunks; // in logical order
 
     private BidiRun(int length) {
       this((byte)0, 0, length);
@@ -543,20 +542,22 @@ abstract class LineLayout {
     private boolean isRtl() {
       return BitUtil.isSet(level, 1);
     }
-    
-    private Chunk[] getChunks(CharSequence text, int startOffsetInText) {
-      if (chunks == null) {
+
+    @NotNull
+    private List<Chunk> getChunks(CharSequence text, int startOffsetInText) {
+      List<Chunk> c = chunks;
+      if (c == null) {
         int chunkCount = getChunkCount();
-        chunks = new Chunk[chunkCount];
+        chunks = c = new ArrayList<>(chunkCount);
         for (int i = 0; i < chunkCount; i++) {
           int from = startOffset + i * CHUNK_CHARACTERS;
           int to = i == chunkCount - 1 ? endOffset : from + CHUNK_CHARACTERS;
           Chunk chunk = new Chunk(alignToCodePointBoundary(text, from + startOffsetInText) - startOffsetInText,
                                   alignToCodePointBoundary(text, to + startOffsetInText) - startOffsetInText);
-          chunks[i] = chunk;
+          c.add(chunk);
         }
       }
-      return chunks;
+      return c;
     }
 
     private int getChunkCount() {
@@ -577,7 +578,7 @@ abstract class LineLayout {
         if (chunk.startOffset >= end) break;
         subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));
       }
-      subRun.chunks = subChunks.toArray(new Chunk[0]);
+      subRun.chunks = subChunks;
       subRun.visualStartLogicalColumn = (subRun.isRtl() ? end == endOffset : start == startOffset) ? visualStartLogicalColumn :
                                         view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
       return subRun;
@@ -592,6 +593,11 @@ abstract class LineLayout {
     private Chunk(int startOffset, int endOffset) {
       this.startOffset = startOffset;
       this.endOffset = endOffset;
+    }
+
+    @Override
+    public int hashCode() {
+      return startOffset * 31 + endOffset;
     }
 
     private void ensureLayout(@NotNull EditorView view, BidiRun run, int line) {
@@ -718,9 +724,9 @@ abstract class LineLayout {
     public boolean hasNext() {
       if (myRunIndex >= myRuns.length) return false;
       BidiRun run = myRuns[myRunIndex];
-      Chunk[] chunks = run.getChunks(myText, myLineStartOffset);
-      if (myChunkIndex >= chunks.length) return false;
-      Chunk chunk = chunks[run.isRtl() ? chunks.length - 1 - myChunkIndex : myChunkIndex];
+      List<Chunk> chunks = run.getChunks(myText, myLineStartOffset);
+      if (myChunkIndex >= chunks.size()) return false;
+      Chunk chunk = chunks.get(run.isRtl() ? chunks.size() - 1 - myChunkIndex : myChunkIndex);
       if (myView != null) {
         chunk.ensureLayout(myView, run, myLine);
       }
@@ -746,8 +752,8 @@ abstract class LineLayout {
       }
       
       myFragment.isRtl = run.isRtl();
-      Chunk[] chunks = run.getChunks(myText, myLineStartOffset);
-      Chunk chunk = chunks[run.isRtl() ? chunks.length - 1 - myChunkIndex : myChunkIndex];
+      List<Chunk> chunks = run.getChunks(myText, myLineStartOffset);
+      Chunk chunk = chunks.get(run.isRtl() ? chunks.size() - 1 - myChunkIndex : myChunkIndex);
       myFragment.delegate = chunk.fragments.get(run.isRtl() ? chunk.fragments.size() - 1 - myFragmentIndex : myFragmentIndex);
       myFragment.startOffset = run.isRtl() ? run.endOffset - myOffsetInsideRun : run.startOffset + myOffsetInsideRun;
       
@@ -756,7 +762,7 @@ abstract class LineLayout {
       if (myFragmentIndex >= chunk.fragments.size()) {
         myFragmentIndex = 0;
         myChunkIndex++;
-          if (myChunkIndex >= chunks.length) {
+          if (myChunkIndex >= chunks.size()) {
             myChunkIndex = 0;
             myOffsetInsideRun = 0;
             myRunIndex++;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.util.io.storage;
 
@@ -48,9 +44,13 @@ public abstract class StorageTestBase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myStorage);
-    Storage.deleteFiles(getFileName());
-    super.tearDown();
+    try {
+      Disposer.dispose(myStorage);
+      AbstractStorage.deleteFiles(getFileName());
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void appendNBytes(final int r, final int len) throws IOException {

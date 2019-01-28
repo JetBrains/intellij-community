@@ -16,7 +16,6 @@ import java.util.StringTokenizer;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/7/11 11:58 AM
  */
 public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
 
@@ -171,7 +170,6 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
    * @return         buffer that contains signature of the given element if it was produced;
    *                 {@code null} as an indication that signature for the given element was not produced
    */
-  @SuppressWarnings("unchecked")
   @Nullable
   private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
     if (element instanceof PsiNamedElement) {

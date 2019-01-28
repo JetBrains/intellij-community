@@ -794,6 +794,11 @@ public class EditorActionUtil {
                                                            : editor.getScrollingModel().getVisibleArea();
   }
 
+  /**
+   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
+   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+   */
+  @Deprecated
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
     return new EditorPopupHandler() {
       @Override
@@ -806,6 +811,11 @@ public class EditorActionUtil {
     };
   }
 
+  /**
+   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
+   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
+   */
+  @Deprecated
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
     return new EditorPopupHandler() {
       @Override
@@ -861,5 +871,16 @@ public class EditorActionUtil {
       if (region == null || region.shouldNeverExpand()) break;
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
     }
+  }
+
+  public static void moveCaret(@NotNull Caret caret, int offset, boolean withSelection) {
+    if (withSelection) {
+      caret.setSelection(caret.getLeadSelectionOffset(), offset);
+    }
+    else {
+      caret.removeSelection();
+    }
+    caret.moveToOffset(offset);
+    EditorModificationUtil.scrollToCaret(caret.getEditor());
   }
 }

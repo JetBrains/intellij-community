@@ -107,7 +107,6 @@ public class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @SuppressWarnings("Duplicates")
   public static void paint(@NotNull final Graphics2D g,
                            double x1, double y1, double x2, double y2,
                            @NotNull StrokeType strokeType,

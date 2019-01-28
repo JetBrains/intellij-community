@@ -174,7 +174,7 @@ public class DomGenPanel {
     if (schemes.length() > 0) {
       return schemes.split("\n");
     }
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public String getAuthor() {

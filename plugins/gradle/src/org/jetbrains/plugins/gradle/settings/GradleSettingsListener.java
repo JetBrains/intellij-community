@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 1/17/12 1:02 PM
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
 

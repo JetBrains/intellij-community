@@ -91,7 +91,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -116,7 +116,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @NotNull
@@ -142,6 +142,6 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 }

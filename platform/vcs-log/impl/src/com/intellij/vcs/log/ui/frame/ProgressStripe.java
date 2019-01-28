@@ -82,9 +82,9 @@ public class ProgressStripe extends JBPanel {
     private final Disposable myDisposable;
 
     MyLoadingDecorator(@NotNull JComponent component,
-                              @NotNull JPanel contentPanel,
-                              @NotNull Disposable disposable,
-                              int startDelayMs) {
+                       @NotNull JPanel contentPanel,
+                       @NotNull Disposable disposable,
+                       int startDelayMs) {
       super(contentPanel, disposable, startDelayMs, false, ProgressStripeIcon.generateIcon(component));
       myDisposable = disposable;
     }

@@ -20,11 +20,12 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LineExtensionInfo;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -284,28 +285,57 @@ public interface EditorEx extends Editor {
   void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
 
   /**
-   * @return the offset that the caret is expected to be but maybe not yet.
-   * E.g. when user right-clicks the mouse the caret is not immediately jumps there but the click-handler wants to know that location already.
-   *
-   * When no mouse-clicks happened return the regular caret offset.
+   * @return the offset that the caret is expected to be but maybe not yet. This can be used in
+   * {@link EditorMouseListener#mousePressed(EditorMouseEvent)} implementation, as at the time this method is invoked caret wasn't yet moved
+   * to the press position. In other circumstances it's just equal to primary caret's offset.
    */
   int getExpectedCaretOffset();
 
   /**
-   * Sets id of action group what will be used to construct context menu displayed on mouse right button's click. Setting this to 
-   * {@code null} disables built-in logic for showing context menu (it can still be achieved by implementing corresponding mouse
-   * event listener).
+   * Sets id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right button's
+   * click (with {@code null} value disabling context menu). This method might have no effect if default editor's popup handler was
+   * overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
-   * @see #getContextMenuGroupId() 
+   * @see #getContextMenuGroupId()
    */
   void setContextMenuGroupId(@Nullable String groupId);
 
   /**
-   * Returns id of action group what will be used to construct context menu displayed on mouse right button's click. {@code null}
-   * value means built-in logic for showing context menu is disabled.
+   * Returns id of action group what will be used to construct context menu displayed by default editor popup handler on mouse right
+   * button's click ({@code null} value meaning no context menu). Returned value might be meaningless if default editor's popup handler
+   * was overridden using {@link #installPopupHandler(EditorPopupHandler)}.
    * 
    * @see #setContextMenuGroupId(String)
    */
   @Nullable
   String getContextMenuGroupId();
+
+  /**
+   * Allows to override default editor's context popup logic.
+   * <p>
+   * Default handler shows a context menu corresponding to a certain action group
+   * registered in {@link ActionManager}. Group's id can be changed using {@link #setContextMenuGroupId(String)}. For inline custom visual
+   * elements (inlays) action group id is obtained from {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)}.
+   * <p>
+   * If multiple handlers are installed, they are processed in order, starting from the most recently installed one. Processing stops when
+   * some handler returns {@code true} from {@link EditorPopupHandler#handlePopup(EditorMouseEvent)} method.
+   *
+   * @see #uninstallPopupHandler(EditorPopupHandler)
+   */
+  void installPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  /**
+   * Removes previously installed {@link EditorPopupHandler}.
+   *
+   * @see #installPopupHandler(EditorPopupHandler)
+   */
+  void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler);
+
+  /**
+   * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},
+   * otherwise restores default editor cursor management logic ({@code requestor} parameter value should be the same in both setting and
+   * restoring requests). 'Restoring' call for a requestor, which hasn't set a cursor previously, has no effect. If multiple requestors have
+   * currently set custom cursors, one of them will be used (it is unspecified, which one).
+   */
+  void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor);
 }

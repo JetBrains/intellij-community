@@ -75,9 +75,7 @@ public class XsltNamespaceContext implements NamespaceContext {
                     for (Map.Entry<String,String> entry : localPrefixes) {
                         final String prefix = entry.getKey();
                         if (!prefix.isEmpty() && entry.getValue().equals(uri)) {
-                            if (!allPrefixes.contains(prefix)) {
-                                allPrefixes.add(prefix);
-                            }
+                          allPrefixes.add(prefix);
                         }
                     }
                 }

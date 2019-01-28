@@ -256,7 +256,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
   @Override
   public BaseInjection createInjection(Element element) {
-    String place = StringUtil.notNullize(element.getChildText("place"), "");
+    String place = StringUtil.notNullize(element.getChildText("place"));
     if (place.startsWith("xmlAttribute")) {
       return new XmlAttributeInjection();
     }

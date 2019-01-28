@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.tools.index" />
     <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
-    <orderEntry type="library" name="KotlinScriptRuntime" level="project" />
+    <orderEntry type="library" name="kotlin-script-runtime" level="project" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.build" />
   </component>
 </module>

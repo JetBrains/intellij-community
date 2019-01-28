@@ -13,7 +13,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/25/2014
  */
 @State(
   name = "gradleExecuteTaskHistory",

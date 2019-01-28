@@ -24,7 +24,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/24/2014
  */
 public class DefaultExternalProjectDependency extends AbstractExternalDependency implements ExternalProjectDependency {
 

@@ -17,7 +17,7 @@ class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
     myWithinTripleQuoted = false
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return
     if (c != '\'' && c != '"') return
-    editor as? EditorEx ?: return
+    if (editor !is EditorEx) return
     val offset = editor.caretModel.offset
     val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
     val tokenType = iterator.tokenType

@@ -171,6 +171,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState();
     }
 
+    IdeMenuBar.bindAppMenuOfParent(frame, WindowManager.getInstance().getIdeFrame(myProject));
+
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
     myShown = true;
@@ -351,7 +353,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac || IdeMenuBar.isLinuxGlobalMenuAvailable();
+      final boolean setMenuOnFrame = SystemInfo.isMac;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));

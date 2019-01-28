@@ -34,12 +34,11 @@ import java.util.*;
 
 /**
  * @author stathik
- * @since Mar 28, 2003
  */
 public class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
-  @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
+  private static final String TAG_EXT = ".etag";
 
   /**
    * Returns a list of configured plugin hosts.
@@ -154,7 +153,9 @@ public class RepositoryHelper {
           }
         }
         else {
-          return parsePluginList(request.getReader());
+          try (BufferedReader reader = request.getReader()) {
+            return parsePluginList(reader);
+          }
         }
       });
 
@@ -208,7 +209,10 @@ public class RepositoryHelper {
   }
 
   private static List<IdeaPluginDescriptor> loadPluginList(File file) throws IOException {
-    return parsePluginList(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), CharsetToolkit.UTF8_CHARSET));
+    try (InputStreamReader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)),
+                                                          CharsetToolkit.UTF8_CHARSET)) {
+      return parsePluginList(reader);
+    }
   }
 
   private static List<IdeaPluginDescriptor> parsePluginList(Reader reader) throws IOException {
@@ -220,9 +224,6 @@ public class RepositoryHelper {
     }
     catch (ParserConfigurationException | SAXException | RuntimeException e) {
       throw new IOException(e);
-    }
-    finally {
-      reader.close();
     }
   }
 

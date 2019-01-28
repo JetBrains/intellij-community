@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class OpenTasksActivationManagerAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
 

@@ -77,7 +77,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
   @Override
   protected void tearDown() {
     new RunAll()
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).freeze("For Tests"))
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode())
       .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode())
       .append(() -> super.tearDown())
       .run();

@@ -194,7 +194,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return true;
   }
 
-  @SuppressWarnings({"unchecked"})
   public BaseInjection copy() {
     return new BaseInjection(mySupportId).copyFrom(this);
   }

@@ -45,8 +45,17 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "public interface TestReporter {}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface MethodSource {String[] value();}");
-    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface EnumSource { Class<? extends Enum<?>> value();}");
+    addEnvironmentClass("package org.junit.jupiter.params.provider;" +
+                        "public @interface EnumSource {" +
+                        " Class<? extends Enum<?>> value();" +
+                        " String[] names() default {};" +
+                        " Mode mode() default Mode.INCLUDE;" +
+                        " enum Mode {" +
+                        "  INCLUDE," +
+                        "  EXCLUDE," +
+                        "  MATCH_ALL," +
+                        "  MATCH_ANY }" +
+                        "}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "@ArgumentsSource(ValueArgumentsProvider.class)\n" +
                         "public @interface ValueSource {\n" +
@@ -80,6 +89,7 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
 
   public void testMalformedSources() { doTest(); }
   public void testMethodSource() { doTest(); }
+  public void testEnumSource() { doTest(); }
   public void testMalformedSourcesImplicitConversion() { doTest(); }
   public void testMalformedSourcesImplicitParameters() { doTest(); }
   public void testMalformedSourcesTestInstancePerClass() { doTest(); }

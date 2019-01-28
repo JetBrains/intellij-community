@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/24/2015
  */
 public class BuildScriptDataBuilder {
   @NotNull private final VirtualFile myBuildScriptFile;

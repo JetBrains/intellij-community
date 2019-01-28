@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +16,15 @@ import static com.intellij.util.DocumentUtil.isLineEmpty;
  */
 public class ForwardParagraphAction extends EditorAction {
   public ForwardParagraphAction() {
-    super(new MyHandler());
+    super(new Handler(false));
   }
 
-  private static class MyHandler extends EditorActionHandler {
-    private MyHandler() {
+  static class Handler extends EditorActionHandler {
+    private final boolean myWithSelection;
+
+    Handler(boolean withSelection) {
       super(true);
+      myWithSelection = withSelection;
     }
 
     @Override
@@ -49,9 +51,7 @@ public class ForwardParagraphAction extends EditorAction {
         }
       }
 
-      caret.removeSelection();
-      caret.moveToOffset(targetOffset);
-      EditorModificationUtil.scrollToCaret(editor);
+      EditorActionUtil.moveCaret(caret, targetOffset, myWithSelection);
     }
   }
 }

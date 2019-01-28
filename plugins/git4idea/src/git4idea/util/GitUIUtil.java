@@ -92,7 +92,7 @@ public class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<VcsException> errors) {
+  public static @NotNull String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -109,7 +109,7 @@ public class GitUIUtil {
     notifyMessage(project, title, description, true, null);
   }
 
-  public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
+  public static void notifyGitErrors(Project project, String title, String description, Collection<? extends VcsException> gitErrors) {
     StringBuilder content = new StringBuilder();
     if (!StringUtil.isEmptyOrSpaces(description)) {
       content.append(description);
@@ -155,7 +155,7 @@ public class GitUIUtil {
    * @param currentBranchLabel current branch label (might be null)
    */
   public static void setupRootChooser(@NotNull final Project project,
-                                      @NotNull final List<VirtualFile> roots,
+                                      @NotNull final List<? extends VirtualFile> roots,
                                       @Nullable final VirtualFile defaultRoot,
                                       @NotNull final JComboBox gitRootChooser,
                                       @Nullable final JLabel currentBranchLabel) {
@@ -205,10 +205,9 @@ public class GitUIUtil {
    * @param operation the operation name
    */
   public static void showOperationErrors(final Project project,
-                                         final Collection<VcsException> exs,
+                                         final Collection<? extends VcsException> exs,
                                          @NonNls @NotNull final String operation) {
     if (exs.size() == 1) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
     else if (exs.size() > 1) {

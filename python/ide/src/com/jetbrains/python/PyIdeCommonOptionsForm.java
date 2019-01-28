@@ -12,7 +12,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
@@ -29,6 +28,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.configuration.PyConfigureInterpretersLinkPanel;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final Project myProject;
   private List<Sdk> myPythonSdks;
   private boolean myInterpreterRemote;
-  private final HideableDecorator myDecorator;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
 
@@ -117,7 +116,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     updateRemoteInterpreterMode();
 
-    myDecorator = new HideableDecorator(myHideablePanel, "Environment", false) {
+    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
       @Override
       protected void on() {
         super.on();
@@ -134,8 +133,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
       }
     };
-    myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
-    myDecorator.setContentComponent(myMainPanel);
+    decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
+    decorator.setContentComponent(myMainPanel);
 
 
     addInterpreterModeListener((b) ->
@@ -221,8 +220,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private void updateDefaultInterpreter(Module module) {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
-    String projectSdkName = sdk == null ? "none" : sdk.getName();
-    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("Project Default (" + projectSdkName + ")"));
+    myInterpreterComboBox.setRenderer(
+      sdk == null ? new PySdkListCellRenderer(null) : new PySdkListCellRenderer(null, "Project Default (" + sdk.getName() + ")", sdk)
+    );
   }
 
   public void updateSdkList(boolean preserveSelection, PyConfigurableInterpreterList myInterpreterList) {

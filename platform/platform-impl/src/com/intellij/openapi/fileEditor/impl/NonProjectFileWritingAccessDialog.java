@@ -25,12 +25,12 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JRadioButton myUnlockDirButton;
   private JRadioButton myUnlockAllButton;
 
-  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<VirtualFile> nonProjectFiles) {
+  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
     this(project, nonProjectFiles, "Non-Project Files");
   }
 
   public NonProjectFileWritingAccessDialog(@NotNull Project project,
-                                           @NotNull List<VirtualFile> nonProjectFiles,
+                                           @NotNull List<? extends VirtualFile> nonProjectFiles,
                                            @NotNull String filesType) {
     super(project);
     setTitle(filesType + " Protection");

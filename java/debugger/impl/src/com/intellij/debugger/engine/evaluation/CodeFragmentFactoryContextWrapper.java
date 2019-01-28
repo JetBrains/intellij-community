@@ -94,7 +94,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
         String text = markupVariables.getFirst();
         if (!StringUtil.isEmpty(text)) {
           PsiCodeBlock codeFragment =
-            JavaPsiFacade.getInstance(project).getElementFactory().createCodeBlockFromText("{" + text + "}", context);
+            JavaPsiFacade.getElementFactory(project).createCodeBlockFromText("{" + text + "}", context);
           codeFragment.accept(new JavaRecursiveElementVisitor() {
             @Override
             public void visitLocalVariable(PsiLocalVariable variable) {

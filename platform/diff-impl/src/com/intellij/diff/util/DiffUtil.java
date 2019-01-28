@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
@@ -73,6 +73,9 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -178,11 +181,14 @@ public class DiffUtil {
     if (highlighter != null) editor.setHighlighter(highlighter);
   }
 
-  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable FileType fileType) {
-    if (project != null && fileType != null) {
-      CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-      editor.getSettings().setTabSize(codeStyleFacade.getTabSize(fileType));
-      editor.getSettings().setUseTabCharacter(codeStyleFacade.useTabCharacter(fileType));
+  public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
+    if (project != null && content != null && editor.getVirtualFile() == null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      CommonCodeStyleSettings.IndentOptions indentOptions = psiFile != null
+                                                            ? CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile)
+                                                            : CodeStyle.getSettings(project).getIndentOptions(content.getContentType());
+      editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
+      editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
@@ -222,13 +228,13 @@ public class DiffUtil {
   }
 
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
-    setEditorHighlighter(project, editor, content);
-    setEditorCodeStyle(project, editor, content.getContentType());
-
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
     if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
       editor.setFile(virtualFile);
     }
+
+    setEditorHighlighter(project, editor, content);
+    setEditorCodeStyle(project, editor, content);
   }
 
   public static boolean isMirrored(@NotNull Editor editor) {
@@ -624,7 +630,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createStackedComponents(@NotNull List<JComponent> components, int gap) {
+  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int gap) {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -714,7 +720,7 @@ public class DiffUtil {
   }
 
   @Nullable
-  public static MergeInnerDifferences compareThreesideInner(@NotNull List<CharSequence> chunks,
+  public static MergeInnerDifferences compareThreesideInner(@NotNull List<? extends CharSequence> chunks,
                                                             @NotNull ComparisonPolicy comparisonPolicy,
                                                             @NotNull ProgressIndicator indicator) {
     if (chunks.get(0) == null && chunks.get(1) == null && chunks.get(2) == null) return null; // ---
@@ -784,7 +790,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static <T> int[] getSortedIndexes(@NotNull List<T> values, @NotNull Comparator<T> comparator) {
+  public static <T> int[] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
     final List<Integer> indexes = new ArrayList<>(values.size());
     for (int i = 0; i < values.size(); i++) {
       indexes.add(i);
@@ -866,7 +872,7 @@ public class DiffUtil {
       }
 
       Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
-      lines.set(pair.first.line, pair.second.line);
+      lines.set(pair.first.line, Math.max(pair.second.line, pair.first.line + 1));
       if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
@@ -960,7 +966,7 @@ public class DiffUtil {
                                          @NotNull LineOffsets lineOffsets,
                                          @NotNull CharSequence otherText,
                                          @NotNull LineOffsets otherLineOffsets,
-                                         @NotNull List<Range> ranges) {
+                                         @NotNull List<? extends Range> ranges) {
     return new Object() {
       private final StringBuilder stringBuilder = new StringBuilder();
       private boolean isEmpty = true;
@@ -1203,9 +1209,9 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
-                                               @NotNull Equality<ThreeSide> equality,
-                                               @Nullable Equality<ThreeSide> trueEquality,
+  public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
+                                               @NotNull Equality<? super ThreeSide> equality,
+                                               @Nullable Equality<? super ThreeSide> trueEquality,
                                                @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
@@ -1263,7 +1269,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getLineThreeWayDiffType(@NotNull MergeLineFragment fragment,
                                                           @NotNull List<? extends CharSequence> sequences,
-                                                          @NotNull List<LineOffsets> lineOffsets,
+                                                          @NotNull List<? extends LineOffsets> lineOffsets,
                                                           @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
@@ -1274,7 +1280,7 @@ public class DiffUtil {
   @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
                                                    @NotNull List<? extends CharSequence> sequences,
-                                                   @NotNull List<LineOffsets> lineOffsets,
+                                                   @NotNull List<? extends LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
@@ -1284,7 +1290,7 @@ public class DiffUtil {
 
   private static boolean canResolveLineConflict(@NotNull MergeLineFragment fragment,
                                                 @NotNull List<? extends CharSequence> sequences,
-                                                @NotNull List<LineOffsets> lineOffsets) {
+                                                @NotNull List<? extends LineOffsets> lineOffsets) {
     List<? extends CharSequence> contents = ThreeSide.map(side -> {
       return getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side));
     });
@@ -1293,7 +1299,7 @@ public class DiffUtil {
 
   private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
                                                   @NotNull List<? extends CharSequence> sequences,
-                                                  @NotNull List<LineOffsets> lineOffsets,
+                                                  @NotNull List<? extends LineOffsets> lineOffsets,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ThreeSide side1,
                                                   @NotNull ThreeSide side2) {
@@ -1424,7 +1430,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles();
+    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {
@@ -1603,7 +1609,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<K, V> defaultValue) {
+  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<? super K, V> defaultValue) {
     TreeMap<K, V> result = new TreeMap<>();
     for (Map.Entry<K, V> it : map.entrySet()) {
       K key = it.getKey();

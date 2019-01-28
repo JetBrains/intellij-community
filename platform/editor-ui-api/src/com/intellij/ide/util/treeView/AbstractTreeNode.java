@@ -22,8 +22,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class AbstractTreeNode<T>
-  extends PresentableNodeDescriptor<AbstractTreeNode<T>>
+public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>>
   implements NavigationItem, Queryable.Contributor, LeafState.Supplier {
 
   private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
@@ -32,10 +31,10 @@ public abstract class AbstractTreeNode<T>
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
+  static final Object TREE_WRAPPER_VALUE = new Object();
 
-  protected AbstractTreeNode(Project project, T value) {
+  protected AbstractTreeNode(Project project, @NotNull T value) {
     super(project, null);
-    // assume that null value used for AbstractTreeNodeWrapper only
     myNodeWrapper = setInternalValue(value);
   }
 
@@ -153,7 +152,7 @@ public abstract class AbstractTreeNode<T>
   public final void setValue(T value) {
     boolean debug = !myNodeWrapper && LOG.isDebugEnabled();
     int hash = !debug ? 0 : hashCode();
-    myNullValueSet = setInternalValue(value);
+    myNullValueSet = value == null || setInternalValue(value);
     if (debug && hash != hashCode()) {
       LOG.warn("hash code changed: " + myValue);
     }
@@ -165,8 +164,8 @@ public abstract class AbstractTreeNode<T>
    * @param value a new value to set
    * @return {@code true} if the specified value is {@code null} and the anchor is not changed
    */
-  private boolean setInternalValue(T value) {
-    if (value == null) return true;
+  private boolean setInternalValue(@NotNull T value) {
+    if (value == TREE_WRAPPER_VALUE) return true;
     myValue = TreeAnchorizer.getService().createAnchor(value);
     return false;
   }

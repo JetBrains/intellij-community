@@ -16,7 +16,6 @@ import java.util.Set;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/24/11 4:50 PM
  */
 public class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
 

@@ -15,6 +15,6 @@ public class Seq<T> {
     static void foo (Seq<String> seq) {}
 
     static void foo() {
-        foo(<ref>nil());
+        foo(<caret>nil());
     }
 }

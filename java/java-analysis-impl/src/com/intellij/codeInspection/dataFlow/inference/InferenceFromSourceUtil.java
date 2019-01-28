@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class InferenceFromSourceUtil {
-  static boolean shouldInferFromSource(@NotNull PsiMethodImpl method) {
+  static boolean shouldInferFromSource(@NotNull PsiMethodImpl method, boolean allowOverridden) {
+    if (!allowOverridden && PsiUtil.canBeOverridden(method)) return false;
     return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result
       .create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
@@ -24,7 +25,7 @@ public class InferenceFromSourceUtil {
   private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {
     if (isLibraryCode(method) ||
         method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        PsiUtil.canBeOverridden(method)) {
+        method.hasModifierProperty(PsiModifier.NATIVE)) {
       return false;
     }
 

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -11,13 +11,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.FocusEvent;
 import java.util.EventObject;
 
 /**
@@ -107,7 +110,7 @@ public abstract class CompletionPhase implements Disposable {
 
     public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
-      ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
@@ -117,13 +120,20 @@ public abstract class CompletionPhase implements Disposable {
       }, this);
       if (indicator.isAutopopupCompletion()) {
         // lookup is not visible, we have to check ourselves if editor retains focus
-        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
+        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListenerImpl() {
           @Override
-          public void focusGained(@NotNull Editor editor) {
-          }
-
-          @Override
-          public void focusLost(@NotNull Editor editor) {
+          public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
+            // When ScreenReader is active the lookup gets focus on show and we should not close it.
+            if (ScreenReader.isActive() &&
+                indicator.getLookup() != null &&
+                event.getOppositeComponent() != null &&
+                indicator.getLookup().getComponent() != null &&
+                // Check the opposite is in the lookup ancestor
+                (SwingUtilities.getWindowAncestor(event.getOppositeComponent())) ==
+                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent()))
+            {
+              return;
+            }
             indicator.closeAndFinish(true);
           }
         }, this);
@@ -145,7 +155,6 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      indicator.restorePrefix(() -> indicator.getLookup().restorePrefix());
       return indicator.nextInvocationCount(time, repeated);
     }
   }

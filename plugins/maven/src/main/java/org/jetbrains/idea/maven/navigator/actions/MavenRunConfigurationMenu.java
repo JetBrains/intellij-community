@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -36,8 +37,10 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
 
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
-      final ProgramRunner runner = ProgramRunner.getRunner(executors[i].getId(), settings.getConfiguration());
-      AnAction action = new ExecuteMavenRunConfigurationAction(executors[i], runner != null, settings);
+      Executor executor = executors[i];
+      if(!executor.isApplicable(project)) continue;
+      final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
+      AnAction action = new ExecuteMavenRunConfigurationAction(executor, runner != null, settings);
       addAction(action, Constraints.FIRST);
     }
 
@@ -61,6 +64,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
+        MavenActionsUsagesCollector.trigger(event.getProject(), this, event);
         ProgramRunnerUtil.executeConfiguration(mySettings, myExecutor);
       }
     }

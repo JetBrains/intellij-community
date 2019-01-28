@@ -18,10 +18,11 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.FixedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,12 +37,7 @@ public class FrequentEventDetector {
   private long myStartedCounting = System.currentTimeMillis();
   private final AtomicInteger myEventsPosted = new AtomicInteger();
   private final AtomicInteger myLastTraceId = new AtomicInteger();
-  private final Map<String, Integer> myRecentTraces = new LinkedHashMap<String, Integer>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
-      return size() > 50;
-    }
-  };
+  private final Map<String, Integer> myRecentTraces = new FixedHashMap<String, Integer>(50);
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
@@ -118,6 +114,7 @@ public class FrequentEventDetector {
     }
   }
 
+  @TestOnly
   public static void disableUntil(@NotNull Disposable reenable) {
     enabled = false;
     Disposer.register(reenable, new Disposable() {

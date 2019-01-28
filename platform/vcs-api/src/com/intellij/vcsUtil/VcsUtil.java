@@ -31,9 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.*;
@@ -46,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.stream.Collectors.groupingBy;
@@ -100,7 +99,7 @@ public class VcsUtil {
    * @deprecated use the {@link VcsDirtyScopeManager} directly.
    */
   @Deprecated
-  public static void refreshFiles(Project project, HashSet<FilePath> paths) {
+  public static void refreshFiles(Project project, HashSet<? extends FilePath> paths) {
     for (FilePath path : paths) {
       VirtualFile vFile = path.getVirtualFile();
       if (vFile != null) {
@@ -528,7 +527,7 @@ public class VcsUtil {
   }
 
   @NotNull
-  public static List<VcsDirectoryMapping> addMapping(@NotNull List<VcsDirectoryMapping> existingMappings,
+  public static List<VcsDirectoryMapping> addMapping(@NotNull List<? extends VcsDirectoryMapping> existingMappings,
                                                      @NotNull String path,
                                                      @NotNull String vcs) {
     List<VcsDirectoryMapping> mappings = new ArrayList<>(existingMappings);
@@ -550,5 +549,26 @@ public class VcsUtil {
     }
     mappings.add(new VcsDirectoryMapping(path, vcs));
     return mappings;
+  }
+
+  @NotNull
+  public static FilePath getLastCommitPath(@NotNull Project project, @NotNull FilePath path) {
+    if (project.isDefault()) return path;
+
+    Change change = ChangeListManager.getInstance(project).getChange(path);
+    if (change == null || change.getType() != Change.Type.MOVED || change.getBeforeRevision() == null) {
+      return path;
+    }
+
+    return change.getBeforeRevision().getFile();
+  }
+
+  @NotNull
+  public static Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return IgnoredFileContentProvider
+      .IGNORE_FILE_CONTENT_PROVIDER
+      .extensions(project)
+      .map(IgnoredFileContentProvider::getFileName)
+      .collect(Collectors.toSet());
   }
 }

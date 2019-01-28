@@ -45,7 +45,7 @@ public class SimpleIndentingBackspaceHandlerTest extends LightPlatformCodeInsigh
              "  <caret>text");
     }
     finally {
-      CodeStyleSettingsManager.getInstance().dropTemporarySettings();
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     }
   }
 

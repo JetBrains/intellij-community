@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ui.components.JBOptionButton;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ import java.awt.*;
 public class MyOptionButton extends JBOptionButton {
   public MyOptionButton(Action action, Action option) {
     super(action, new Action[]{option});
-    PluginManagerConfigurableNew.setWidth72(this);
+    ColorButton.setWidth72(this);
   }
 
   @Override

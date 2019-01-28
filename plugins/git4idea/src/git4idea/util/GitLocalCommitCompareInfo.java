@@ -48,7 +48,7 @@ public class GitLocalCommitCompareInfo extends LocalCommitCompareInfo {
   }
 
   @Override
-  public void copyChangesFromBranch(@NotNull List<Change> changes,
+  public void copyChangesFromBranch(@NotNull List<? extends Change> changes,
                                     boolean swapSides) throws VcsException {
     GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
 

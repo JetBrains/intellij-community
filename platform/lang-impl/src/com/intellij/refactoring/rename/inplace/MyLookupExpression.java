@@ -12,7 +12,6 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -32,7 +31,7 @@ public class MyLookupExpression extends Expression {
 
   public MyLookupExpression(final String name,
                             final LinkedHashSet<String> names,
-                            PsiNamedElement elementToRename, 
+                            PsiNamedElement elementToRename,
                             final PsiElement nameSuggestionContext,
                             final boolean shouldSelectAll,
                             final String advertisement) {
@@ -42,12 +41,12 @@ public class MyLookupExpression extends Expression {
   }
 
   private static LookupElement[] initLookupItems(LinkedHashSet<String> names,
-                                                 PsiNamedElement elementToRename, 
+                                                 PsiNamedElement elementToRename,
                                                  PsiElement nameSuggestionContext,
                                                  final boolean shouldSelectAll) {
     if (names == null) {
       names = new LinkedHashSet<>();
-      for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+      for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
         final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(elementToRename, nameSuggestionContext, names);
         if (suggestedNameInfo != null &&
             provider instanceof PreferrableNameSuggestionProvider &&

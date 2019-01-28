@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
@@ -153,7 +154,11 @@ public class ExportToFileUtil {
       settings.setAdditionalLinesCount(0);
       settings.setAdditionalColumnsCount(0);
       settings.setAdditionalPageAtBottom(false);
-      ((EditorEx)myTextArea).setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
+
+      EditorEx editorEx = (EditorEx)myTextArea;
+      editorEx.setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
+      editorEx.setColorsScheme(EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
+
       myTextArea.getComponent().setPreferredSize(new Dimension(700, 400));
       return myTextArea.getComponent();
     }

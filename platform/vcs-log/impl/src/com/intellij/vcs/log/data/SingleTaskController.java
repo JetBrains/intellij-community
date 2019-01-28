@@ -50,7 +50,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
   @NotNull private final String myName;
-  @NotNull private final Consumer<Result> myResultHandler;
+  @NotNull private final Consumer<? super Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
   private final boolean myCancelRunning;
 
@@ -61,7 +61,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   public SingleTaskController(@NotNull Project project,
                               @NotNull String name,
-                              @NotNull Consumer<Result> handler,
+                              @NotNull Consumer<? super Result> handler,
                               boolean cancelRunning,
                               @NotNull Disposable parent) {
     myName = name;
@@ -78,7 +78,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    * If there is no active task, starts a new one. <br/>
    * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.
    */
-  public final void request(@NotNull Request ... requests) {
+  public final void request(@NotNull Request... requests) {
     synchronized (LOCK) {
       if (myIsClosed) return;
       myAwaitingRequests.addAll(Arrays.asList(requests));

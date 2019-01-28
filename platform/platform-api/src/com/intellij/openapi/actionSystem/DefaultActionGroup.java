@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +51,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 9.0
    */
   public DefaultActionGroup(@NotNull AnAction... actions) {
     this(Arrays.asList(actions));
@@ -60,7 +60,6 @@ public class DefaultActionGroup extends ActionGroup {
    * Creates an action group containing the specified actions.
    *
    * @param actions the actions to add to the group
-   * @since 13.0
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, actions);
@@ -352,6 +351,9 @@ public class DefaultActionGroup extends ActionGroup {
       }
       replace(stub, action);
       return action;
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
     }
     catch (Throwable e1) {
       LOG.error(e1);

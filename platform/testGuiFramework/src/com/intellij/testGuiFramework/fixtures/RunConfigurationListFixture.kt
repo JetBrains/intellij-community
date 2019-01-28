@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.impl.popupMenu
+import com.intellij.testGuiFramework.util.logInfo
+import com.intellij.testGuiFramework.util.step
 import com.intellij.ui.popup.PopupFactoryImpl
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -52,21 +54,26 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * Trying to click on Edit Configurations attempt times.
    */
   fun editConfigurations(attempts: Int = 5) {
-    try {
-      JButtonFixture(myRobot, addConfigurationButton()).click()
-    }catch(e: ComponentLookupException) {
-      for (i in 0 until attempts) {
-        showPopup()
-        Pause.pause(1000)
-        if (getEditConfigurationsState()) {
-          break
-        }
-        //Close popup
-        showPopup()
+    step("click on 'Edit Configurations...' menu") {
+      try {
+        JButtonFixture(myRobot, addConfigurationButton()).click()
       }
-      myIde.popupMenu(EDIT_CONFIGURATIONS, Timeouts.minutes02).clickSearchedItem()
+      catch (e: ComponentLookupException) {
+        step("initial attempt failed, search again") {
+          for (i in 0 until attempts) {
+            logInfo("attempt #$i")
+            showPopup()
+            Pause.pause(1000)
+            if (getEditConfigurationsState()) {
+              break
+            }
+            //Close popup
+            showPopup()
+          }
+          myIde.popupMenu(EDIT_CONFIGURATIONS, Timeouts.minutes02).clickSearchedItem()
+        }
+      }
     }
-
 
   }
 
@@ -94,16 +101,22 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
   }
 
   private fun showPopup() {
-    JButtonFixture(myRobot, getRunConfigurationListButton()).click()
+    step("show or close popup for list of run/debug configurations") {
+      JButtonFixture(myRobot, getRunConfigurationListButton()).click()
+    }
   }
 
   private fun addConfigurationButton(): JButton {
-    return myRobot.finder()
-      .find(myIde.target()) {
-        it is JButton
-        && it.text == "Add Configuration..."
-        && it.isShowing
-      } as JButton
+    return step("search 'Add Configuration...' button") {
+      val button = myRobot.finder()
+        .find(myIde.target()) {
+          it is JButton
+          && it.text == "Add Configuration..."
+          && it.isShowing
+        } as JButton
+      logInfo("found button '$button'")
+      return@step button
+    }
   }
 
   private fun getRunConfigurationListButton(): JButton {
@@ -117,10 +130,13 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
   }
 
   private fun getEditConfigurationsState(): Boolean {
-    val list = myRobot.finder()
-      .find(myIde.target()) { it is JList<*> } as JList<*>
-    val actionItem = list.model.getElementAt(0) as PopupFactoryImpl.ActionItem
-    return actionItem.isEnabled
+    return step("get '$EDIT_CONFIGURATIONS' state") {
+      val list = myRobot.finder()
+        .find(myIde.target()) { it is JList<*> } as JList<*>
+      val actionItem = list.model.getElementAt(0) as PopupFactoryImpl.ActionItem
+      logInfo("item '$EDIT_CONFIGURATIONS' is ${if(actionItem.isEnabled) "" else "NOT "}enabled")
+      return@step actionItem.isEnabled
+    }
   }
 
 }

@@ -150,7 +150,6 @@ public class OperationChain {
     return Arrays.toString(path) + " on " + myQualifierClass.getName();
   }
 
-  @SuppressWarnings("ConstantConditions")
   public static CompareResult compare(@NotNull OperationChain left, @NotNull OperationChain right) {
     if (left.length() == 0 || right.length() == 0) {
       throw new IllegalStateException("chains can't be empty");

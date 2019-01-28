@@ -10,7 +10,7 @@ public class X {
 
     public int parseInt(){
         //The following line is rejected by the compiler but not by IntelliJ.
-        return <ref>parseInt(str);
+        return <caret>parseInt(str);
     }
 
     public static void main(String[] args) {

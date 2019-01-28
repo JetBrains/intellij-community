@@ -25,7 +25,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Denis Zhdanov
- * @since 11/8/12 10:46 AM
  */
 public class ArrangementAnimationManager implements ArrangementAnimationPanel.Listener, ActionListener {
 

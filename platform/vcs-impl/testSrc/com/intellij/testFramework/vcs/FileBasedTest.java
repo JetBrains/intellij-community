@@ -18,8 +18,10 @@ package com.intellij.testFramework.vcs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import org.junit.After;
 import org.junit.Before;
 
@@ -39,7 +41,10 @@ public abstract class FileBasedTest {
 
   @After
   public void tearDown() throws Exception {
-    myProject = null;
-    EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown());
+    new RunAll()
+      .append(() -> myProject = null)
+      .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown()))
+      .run();
   }
 }

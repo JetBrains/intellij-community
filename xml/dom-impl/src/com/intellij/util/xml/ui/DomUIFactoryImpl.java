@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,8 +47,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
     registerCustomCellEditor(String.class, domElement -> new DefaultCellEditor(removeBorder(new JTextField())));
-    Consumer<DomUIFactory>[] extensions = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (Consumer<DomUIFactory> extension : extensions) {
+    for (Consumer<DomUIFactory> extension : EXTENSION_POINT_NAME.getExtensionList()) {
       extension.consume(this);
     }
   }
@@ -151,7 +149,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
                                                                   true, new ProperTextRange(0, document.getTextLength()), null, new DefaultHighlightInfoProcessor());
         LocalInspectionsPass lip = new LocalInspectionsPass(psiFile, document, 0,
                                                             document.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                            new DefaultHighlightInfoProcessor());
+                                                            new DefaultHighlightInfoProcessor(), true);
         return new HighlightingPass[]{ghp, lip};
       }
 

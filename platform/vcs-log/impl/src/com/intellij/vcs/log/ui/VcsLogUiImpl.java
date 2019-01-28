@@ -1,12 +1,14 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.navigation.History;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -21,15 +23,15 @@ import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EventListener;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
@@ -37,6 +39,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
+  @NotNull private final History myHistory;
+  @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher =
+    EventDispatcher.create(VcsLogFilterListener.class);
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -47,12 +52,14 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties = uiProperties;
     myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
 
-    for (VcsLogHighlighterFactory factory : Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject)) {
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
+
+    myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
 
   @Override
@@ -117,12 +124,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                        pack -> pack.getFilters().isEmpty());
       }
     });
-    if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
+    VcsLogManager logManager = projectLog.getLogManager();
+    if (logManager != null && logManager.getDataManager() == myLogData) {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
-          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(notNull(projectLog.getLogManager()), true);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, true);
           ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
                             pack -> pack.getFilters().isEmpty());
         }
@@ -140,6 +148,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
   public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
+    myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
+  }
+
+  public void addFilterListener(@NotNull VcsLogFilterListener listener) {
+    myFilterListenerDispatcher.addListener(listener);
   }
 
   @NotNull
@@ -175,6 +188,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @Override
   public String getHelpId() {
     return HELP_ID;
+  }
+
+  @Nullable
+  @Override
+  public History getNavigationHistory() {
+    return myHistory;
   }
 
   @Override
@@ -230,7 +249,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
     private void onShowLongEdgesChanged() {
       myVisiblePack.getVisibleGraph().getActionController()
-                   .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
+        .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
+  }
+
+  public interface VcsLogFilterListener extends EventListener {
+    void onFiltersChanged();
   }
 }

@@ -40,7 +40,6 @@ public interface GutterDraggableObject {
    * @param file the DnD target file
    * @param actionId the id of the DnD action {@link java.awt.dnd.DnDConstants}.
    * @return true if the drag and drop operation has completed successfully, false otherwise.
-   * @since 10.0.3
    */
   boolean copy(int line, VirtualFile file, int actionId);
 
@@ -53,7 +52,7 @@ public interface GutterDraggableObject {
    */
   Cursor getCursor(int line, int actionId);
 
-  default void remove() {};
+  default void remove() {}
 
-  static DataFlavor[] getFlavors() {return new DataFlavor[] {flavor};};
+  static DataFlavor[] getFlavors() {return new DataFlavor[] {flavor};}
 }

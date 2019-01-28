@@ -173,7 +173,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         if (owner != myOwner) return;
         myContexts.add(expression);
         LongRangeSet range = state.getValueFact(value, DfaFactType.RANGE);
-        myRange = range == null ? LongRangeSet.all() : myRange.union(range);
+        myRange = range == null ? LongRangeSet.all() : myRange.unite(range);
       }
     }
 

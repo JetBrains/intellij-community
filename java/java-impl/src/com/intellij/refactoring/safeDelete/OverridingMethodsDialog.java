@@ -38,7 +38,7 @@ import java.util.List;
  * @author dsl
  */
 class OverridingMethodsDialog extends DialogWrapper {
-  private final List<UsageInfo> myOverridingMethods;
+  private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
   private final boolean[] myChecked;
 
@@ -46,7 +46,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   private Table myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
-  OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
+  OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];
@@ -199,22 +199,15 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      switch(column) {
-        case CHECK_COLUMN:
-          return " ";
-        default:
-          return RefactoringBundle.message("method.column");
-      }
+      return column == CHECK_COLUMN ? " " : RefactoringBundle.message("method.column");
     }
 
     @Override
     public Class getColumnClass(int columnIndex) {
-      switch(columnIndex) {
-        case CHECK_COLUMN:
-          return Boolean.class;
-        default:
-          return String.class;
+      if (columnIndex == CHECK_COLUMN) {
+        return Boolean.class;
       }
+      return String.class;
     }
 
 

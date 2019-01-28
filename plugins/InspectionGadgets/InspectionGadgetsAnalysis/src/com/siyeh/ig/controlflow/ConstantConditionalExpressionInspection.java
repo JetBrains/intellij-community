@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
@@ -92,7 +93,7 @@ public class ConstantConditionalExpressionInspection
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)ct
           .replaceAndRestoreComments(expression, "(" + expressionType.getCanonicalText() + ")" + ct.text(replacement));
         if (RedundantCastUtil.isCastRedundant(castExpression)) {
-          RedundantCastUtil.removeCast(castExpression);
+          RemoveRedundantCastUtil.removeCast(castExpression);
         }
       }
       else {

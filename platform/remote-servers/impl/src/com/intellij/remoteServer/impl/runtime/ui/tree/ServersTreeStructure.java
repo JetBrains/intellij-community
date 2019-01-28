@@ -65,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author michael.golubev
@@ -221,12 +220,11 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
 
       final List<Object> runConfigsAndTypes = new LinkedList<>();
-      final List<RunnerAndConfigurationSettings> runConfigs = configurationManager.getDeploymentConfigurations(serverType).stream()
-        .filter(settings -> {
+      final List<RunnerAndConfigurationSettings> runConfigs =
+        ContainerUtil.filter(configurationManager.getDeploymentConfigurations(serverType), settings -> {
           DeployToServerRunConfiguration configuration = (DeployToServerRunConfiguration)settings.getConfiguration();
           return StringUtil.equals(server.getName(), configuration.getServerName());
-        })
-        .collect(Collectors.toList());
+        });
       runConfigsAndTypes.addAll(runConfigs);
 
       if (canCreate) {

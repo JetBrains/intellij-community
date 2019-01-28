@@ -99,7 +99,6 @@ class Completer:
 
         """
 
-
         def get_item(obj, attr):
             return obj[attr]
 
@@ -108,7 +107,7 @@ class Completer:
         filtered_builtin = {}
         for (key, val) in dict_iter_items(__builtin__.__dict__):
             # do not use dict comprehension for Py2.6 compatibility
-            if val not in (True, False, None):
+            if not ((val is True) or (val is False) or (val is None)):
                 filtered_builtin[key] = val
 
         for dict_with_comps in [filtered_builtin, self.namespace, self.global_namespace]: #@UndefinedVariable

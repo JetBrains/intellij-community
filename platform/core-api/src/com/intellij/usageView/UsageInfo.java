@@ -40,15 +40,16 @@ public class UsageInfo {
     PsiFile file = element.getContainingFile();
     PsiElement topElement = file == null ? element : file;
     LOG.assertTrue(topElement.isValid(), element);
+    boolean isNullOrBinary = file == null || file.getFileType().isBinary();
 
-    TextRange elementRange = element instanceof PsiCompiledElement ? TextRange.EMPTY_RANGE : element.getTextRange();
+    TextRange elementRange = isNullOrBinary ? TextRange.EMPTY_RANGE : element.getTextRange();
     if (elementRange == null) {
       throw new IllegalArgumentException("text range null for " + element + "; " + element.getClass());
     }
     int effectiveStart;
     int effectiveEnd;
     if (startOffset == -1 && endOffset == -1) {
-      if (element instanceof PsiCompiledElement) {
+      if (isNullOrBinary) {
         effectiveStart = effectiveEnd = 0;
       }
       else {
@@ -86,7 +87,7 @@ public class UsageInfo {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
     if (file != null &&
-        !(element instanceof PsiCompiledElement) &&
+        !isNullOrBinary &&
         (effectiveStart != element.getTextOffset() - elementRange.getStartOffset() || effectiveEnd != elementRange.getLength())) {
       TextRange rangeToStore = InjectedLanguageManager.getInstance(project).isInjectedFragment(file)
                                ? elementRange
@@ -179,7 +180,9 @@ public class UsageInfo {
   public ProperTextRange getRangeInElement() {
     PsiElement element = getElement();
     if (element == null) return null;
-    if (element instanceof PsiCompiledElement) return new ProperTextRange(0,0);
+    PsiFile psiFile = getFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
+    if (isNullOrBinary) return new ProperTextRange(0,0);
     TextRange elementRange = element.getTextRange();
     ProperTextRange result;
     if (myPsiFileRange == null) {
@@ -212,7 +215,9 @@ public class UsageInfo {
 
     PsiElement element = getElement();
     if (element == null) return -1;
-    if (element instanceof PsiCompiledElement) return 0;
+    PsiFile psiFile = getFile();
+    boolean isNullOrBinary = psiFile == null || psiFile.getFileType().isBinary();
+    if (isNullOrBinary) return 0;
     TextRange range = element.getTextRange();
 
     TextRange rangeInElement = getRangeInElement();
@@ -238,15 +243,17 @@ public class UsageInfo {
   }
 
   public boolean isValid() {
-    if (isFileOrCompiled()) {
+    if (isFileOrBinary()) {
       return true; // in case of binary file
     }
     return getSegment() != null;
   }
 
-  protected boolean isFileOrCompiled() {
+  protected boolean isFileOrBinary() {
     PsiElement element = getElement();
-    return myPsiFileRange == null && element instanceof PsiFile || element instanceof PsiCompiledElement;
+    if (myPsiFileRange == null && element instanceof PsiFile) return true;
+    PsiFile psiFile = getFile();
+    return psiFile != null && psiFile.getFileType().isBinary();
   }
 
   @Nullable

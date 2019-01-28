@@ -45,6 +45,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("InnerClassMayBeStatic")
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
@@ -230,6 +230,9 @@ public abstract class DiffRequestProcessor implements Disposable {
           }
         }
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -289,17 +292,29 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    applyRequest(request, force, scrollToChangePolicy, false);
+  }
+
+  @CalledInAwt
+  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+    Runnable task = () -> {
       if (myQueuedApplyRequest == null || myDisposed) return;
       doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
       myQueuedApplyRequest = null;
-    }, ModalityState.current());
+    };
+
+    if (sync) {
+      task.run();
+    }
+    else {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task, ModalityState.current());
+    }
   }
 
   @CalledInAwt
@@ -321,15 +336,18 @@ public abstract class DiffRequestProcessor implements Disposable {
       myActiveRequest = request;
       myActiveRequest.onAssigned(true);
 
+      ViewerState newState = null;
       try {
-        myState = createState();
-        myState.init();
+        newState = createState();
+        newState.init();
       }
       catch (Throwable e) {
         LOG.error(e);
-        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
-        myState.init();
+        if (newState != null) newState.destroy();
+        newState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
+        newState.init();
       }
+      myState = newState;
     });
   }
 
@@ -512,7 +530,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null && component.isShowing() && component.isFocusable() ? component : myToolbar.getComponent();
+    JComponent fallback = myToolbar.getComponent();
+    if (component == null || !component.isFocusable()) return fallback;
+    if (!component.isShowing() && fallback.isShowing()) return fallback;
+    return component;
   }
 
   @Nullable
@@ -557,6 +578,9 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       try {
         ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable ex) {
         Messages.showErrorDialog(e.getProject(), ex.getMessage(), "Can't Show Diff In External Tool");

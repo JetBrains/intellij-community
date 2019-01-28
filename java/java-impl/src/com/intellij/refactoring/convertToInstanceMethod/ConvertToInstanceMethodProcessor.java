@@ -174,7 +174,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    final Set<PsiMember> methods = Collections.singleton((PsiMember)myMethod);
+    final Set<PsiMember> methods = Collections.singleton(myMethod);
     //check that method to call would be still accessible from the call places
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(methods, myTargetClass, conflicts, myNewVisibility);
     //additionally check that body of method contains only accessible in the inheritors references
@@ -412,7 +412,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
       else {
         final PsiExpression expression =
-          JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText("this", null);
+          JavaPsiFacade.getElementFactory(myMethod.getProject()).createExpressionFromText("this", null);
         referenceExpression.replace(expression);
       }
     } else {
@@ -435,7 +435,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void processMethodCall(final PsiMethodCallExpression methodCall) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
     PsiExpression argument;
     if (myTargetParameter != null) {

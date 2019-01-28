@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -10,13 +10,12 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaFile;
@@ -25,6 +24,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   protected CompilerTester myCompilerTester;
@@ -86,7 +85,8 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected final void initCompiler() {
     try {
-      myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]), myProject);
+      Module module = ModuleManager.getInstance(myProject).getModules()[0];
+      myCompilerTester = new CompilerTester(module);
     }
     catch (Throwable e) {
       fail(e.getMessage());
@@ -101,12 +101,16 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
+      if (myCompilerTester != null) {
+        myCompilerTester.tearDown();
+      }
       PathMacros.getInstance().setMacro(PathMacrosImpl.MAVEN_REPOSITORY, oldMacroValue);
-      ProjectManager.getInstance().closeProject(myProject);
-      WriteAction.run(() -> Disposer.dispose(myProject));
-
+      PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
       myProject = null;
       InspectionProfileImpl.INIT_INSPECTIONS = false;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -121,8 +125,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   }
 
   protected static List<CompilerMessage> filterErrors(List<CompilerMessage> messages) {
-    return messages.stream()
-      .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(messages, message -> message.getCategory() == CompilerMessageCategory.ERROR);
   }
 }

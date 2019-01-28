@@ -23,6 +23,7 @@ public class GrRegexImpl extends GrStringImpl implements GrRegex {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Compound regular expression";
   }

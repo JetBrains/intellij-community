@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
@@ -91,7 +93,7 @@ public class JsonSchemaObject {
 
   @Nullable private Integer myMaxProperties;
   @Nullable private Integer myMinProperties;
-  @Nullable private List<String> myRequired;
+  @Nullable private Set<String> myRequired;
 
   @Nullable private Map<String, List<String>> myPropertyDependencies;
   @Nullable private Map<String, JsonSchemaObject> mySchemaDependencies;
@@ -107,6 +109,12 @@ public class JsonSchemaObject {
   @Nullable private JsonSchemaObject myElse;
   private boolean myShouldValidateAgainstJSType;
 
+  public boolean isValidByExclusion() {
+    return myIsValidByExclusion;
+  }
+
+  private boolean myIsValidByExclusion = true;
+
   public JsonSchemaObject(@NotNull JsonContainer object) {
     myJsonObject = object;
     myProperties = new HashMap<>();
@@ -115,6 +123,88 @@ public class JsonSchemaObject {
   private JsonSchemaObject() {
     myJsonObject = null;
     myProperties = new HashMap<>();
+  }
+
+  @Nullable
+  private static JsonSchemaType getSubtypeOfBoth(@NotNull JsonSchemaType selfType,
+                                                 @NotNull JsonSchemaType otherType) {
+    if (otherType == JsonSchemaType._any) return selfType;
+    if (selfType == JsonSchemaType._any) return otherType;
+    switch (selfType) {
+      case _string:
+        return otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
+      case _number:
+        if (otherType == JsonSchemaType._integer) return JsonSchemaType._integer;
+        return otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
+      case _integer:
+        return otherType == JsonSchemaType._number
+               || otherType == JsonSchemaType._string_number
+               || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
+      case _object:
+        return otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
+      case _array:
+        return otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
+      case _boolean:
+        return otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
+      case _null:
+        return otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
+      case _string_number:
+        return otherType == JsonSchemaType._integer
+               || otherType == JsonSchemaType._number
+               || otherType == JsonSchemaType._string
+               || otherType == JsonSchemaType._string_number ? otherType : null;
+    }
+    return otherType;
+  }
+
+  @Nullable
+  private JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
+                                    @Nullable JsonSchemaType otherType,
+                                    @Nullable Set<JsonSchemaType> otherTypeVariants) {
+    if (selfType == null) return otherType;
+    if (otherType == null) {
+      if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
+        Set<JsonSchemaType> filteredVariants = ContainerUtil.newHashSet(otherTypeVariants.size());
+        for (JsonSchemaType variant : otherTypeVariants) {
+          JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
+          if (subtype != null) filteredVariants.add(subtype);
+        }
+        if (filteredVariants.size() == 0) {
+          myIsValidByExclusion = false;
+          return selfType;
+        }
+        if (filteredVariants.size() == 1) {
+          return filteredVariants.iterator().next();
+        }
+        return null; // will be handled by variants
+      }
+      return selfType;
+    }
+
+    JsonSchemaType subtypeOfBoth = getSubtypeOfBoth(selfType, otherType);
+    if (subtypeOfBoth == null){
+      myIsValidByExclusion = false;
+      return otherType;
+    }
+    return subtypeOfBoth;
+  }
+
+  private Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other) {
+    if (self == null) return other;
+    if (other == null) return self;
+
+    Set<JsonSchemaType> resultSet = ContainerUtil.newHashSet(self.size());
+    for (JsonSchemaType type : self) {
+      JsonSchemaType merged = mergeTypes(type, null, other);
+      if (merged != null) resultSet.add(merged);
+    }
+
+    if (resultSet.isEmpty()) {
+      myIsValidByExclusion = false;
+      return other;
+    }
+
+    return resultSet;
   }
 
   // peer pointer is not merged!
@@ -136,11 +226,12 @@ public class JsonSchemaObject {
       myHtmlDescription = other.myHtmlDescription;
     }
 
-    if (other.myType != null) myType = other.myType;
+    myType = mergeTypes(myType, other.myType, other.myTypeVariants);
+
     if (other.myDefault != null) myDefault = other.myDefault;
     if (other.myRef != null) myRef = other.myRef;
     if (other.myFormat != null) myFormat = other.myFormat;
-    myTypeVariants = copySet(myTypeVariants, other.myTypeVariants);
+    myTypeVariants = mergeTypeVariantSets(myTypeVariants, other.myTypeVariants);
     if (other.myMultipleOf != null) myMultipleOf = other.myMultipleOf;
     if (other.myMaximum != null) myMaximum = other.myMaximum;
     if (other.myExclusiveMaximumNumber != null) myExclusiveMaximumNumber = other.myExclusiveMaximumNumber;
@@ -164,7 +255,12 @@ public class JsonSchemaObject {
     if (other.myUniqueItems != null) myUniqueItems = other.myUniqueItems;
     if (other.myMaxProperties != null) myMaxProperties = other.myMaxProperties;
     if (other.myMinProperties != null) myMinProperties = other.myMinProperties;
-    myRequired = copyList(myRequired, other.myRequired);
+    if (myRequired != null && other.myRequired != null) {
+      myRequired.addAll(other.myRequired);
+    }
+    else if (other.myRequired != null) {
+      myRequired = other.myRequired;
+    }
     myPropertyDependencies = copyMap(myPropertyDependencies, other.myPropertyDependencies);
     mySchemaDependencies = copyMap(mySchemaDependencies, other.mySchemaDependencies);
     if (other.myEnum != null) myEnum = other.myEnum;
@@ -204,15 +300,6 @@ public class JsonSchemaObject {
   private static <T> List<T> copyList(@Nullable List<T> target, @Nullable List<T> source) {
     if (source == null || source.isEmpty()) return target;
     if (target == null) target = ContainerUtil.newArrayListWithCapacity(source.size());
-    target.addAll(source);
-    return target;
-  }
-
-  @Nullable
-  private static <T> Set<T> copySet(@Nullable Set<T> target, @Nullable Set<T> source) {
-    if (source == null || source.isEmpty()) return target;
-    if (target != null && source.containsAll(target)) return target;
-    if (target == null) target = ContainerUtil.newHashSet(source.size());
     target.addAll(source);
     return target;
   }
@@ -477,11 +564,11 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public List<String> getRequired() {
+  public Set<String> getRequired() {
     return myRequired;
   }
 
-  public void setRequired(@Nullable List<String> required) {
+  public void setRequired(@Nullable Set<String> required) {
     myRequired = required;
   }
 
@@ -660,7 +747,7 @@ public class JsonSchemaObject {
   private static String unescapeJsonString(@NotNull final String text) {
     try {
       final String object = String.format("{\"prop\": \"%s\"}", text);
-      return new Gson().fromJson(object, com.google.gson.JsonObject.class).get("prop").getAsString();
+      return new Gson().fromJson(object, JsonObject.class).get("prop").getAsString();
     } catch (JsonParseException e) {
       return text;
     }
@@ -697,14 +784,14 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
-    if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
+    if (isSelfReference(ref)) {
       return this;
     }
     if (!ref.startsWith("#/")) {
       return null;
     }
     ref = ref.substring(2);
-    final List<String> parts = StringUtil.split(ref, "/");
+    final List<String> parts = split(ref);
     JsonSchemaObject current = this;
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
@@ -713,13 +800,13 @@ public class JsonSchemaObject {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
-        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(JsonPointerUtil.unescapeJsonPointerPart(nextPart));
+        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(unescapeJsonPointerPart(nextPart));
         continue;
       }
       if (PROPERTIES.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(JsonPointerUtil.unescapeJsonPointerPart(parts.get(++i)));
+        current = current.getProperties().get(unescapeJsonPointerPart(parts.get(++i)));
         continue;
       }
       if (ITEMS.equals(part)) {
@@ -832,8 +919,23 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaType guessType() {
+    // if we have an explicit type, here we are
     JsonSchemaType type = getType();
     if (type != null) return type;
+
+    // process type variants before heuristic type detection
+    final Set<JsonSchemaType> typeVariants = getTypeVariants();
+    if (typeVariants != null) {
+      final int size = typeVariants.size();
+      if (size == 1) {
+        return typeVariants.iterator().next();
+      }
+      else if (size >= 2) {
+        return null;
+      }
+    }
+
+    // heuristic type detection based on the set of applied constraints
     boolean hasObjectChecks = hasObjectChecks();
     boolean hasNumericChecks = hasNumericChecks();
     boolean hasStringChecks = hasStringChecks();
@@ -970,7 +1072,18 @@ public class JsonSchemaObject {
   private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
                                                          @NotNull final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter) {
     final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      final String id = splitter.getSchemaId();
+      if (isSelfReference(id)) {
+        return schema;
+      }
+      if (id != null && id.startsWith("#")) {
+        final String resolvedId = JsonCachedValues.resolveId(schema.getJsonObject().getContainingFile(), id);
+        if (resolvedId == null || id.equals("#" + resolvedId)) return null;
+        return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId));
+      }
+      return schema;
+    }
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
     if (definition == null) {
       LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));

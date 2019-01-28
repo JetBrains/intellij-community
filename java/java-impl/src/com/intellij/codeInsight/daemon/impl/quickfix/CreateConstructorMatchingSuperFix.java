@@ -60,7 +60,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
+    if (!myClass.isValid() || !canModify(myClass)) return false;
     PsiClass base = myClass.getSuperClass();
     if (base == null) return false;
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(base, myClass, PsiSubstitutor.EMPTY);
@@ -126,7 +126,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       () -> {
         try {
           if (targetClass.getLBrace() == null) {
-            PsiClass psiClass = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory().createClass("X");
+            PsiClass psiClass = JavaPsiFacade.getElementFactory(targetClass.getProject()).createClass("X");
             targetClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), targetClass.getLastChild());
           }
           JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);

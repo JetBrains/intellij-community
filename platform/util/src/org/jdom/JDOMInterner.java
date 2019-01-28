@@ -2,15 +2,20 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.JDOMUtil.getAttributes;
+
 public class JDOMInterner {
+  private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
   private final StringInterner myStrings = new StringInterner();
   private final OpenTHashSet<Element> myElements = new OpenTHashSet<Element>(new TObjectHashingStrategy<Element>() {
     @Override
@@ -70,12 +75,6 @@ public class JDOMInterner {
     return result;
   }
 
-  @NotNull
-  private static List<Attribute> getAttributes(@NotNull Element e) {
-    // avoid AttributeList creation if no attributes
-    return e.hasAttributes() ? e.getAttributes() : Collections.<Attribute>emptyList();
-  }
-
   private static boolean attributesEqual(Element o1, Element o2) {
     if (o1 instanceof ImmutableElement)  {
       return ((ImmutableElement)o1).attributesEqual(o2);
@@ -117,6 +116,9 @@ public class JDOMInterner {
   @NotNull
   public synchronized Element internElement(@NotNull final Element element) {
     if (element instanceof ImmutableElement) return element;
+    if (ContainerUtil.exists(element.getContent(), IS_ELEMENT)) {
+      return new ImmutableElement(element, this);
+    }
     Element interned = myElements.get(element);
     if (interned == null) {
       interned = new ImmutableElement(element, this);

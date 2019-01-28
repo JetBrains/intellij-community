@@ -43,8 +43,8 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 class GitUserNameNotDefinedDialog extends DialogWrapper {
 
-  @NotNull private final Collection<VirtualFile> myRootsWithUndefinedProps;
-  @NotNull private final Collection<VirtualFile> myAllRootsAffectedByCommit;
+  @NotNull private final Collection<? extends VirtualFile> myRootsWithUndefinedProps;
+  @NotNull private final Collection<? extends VirtualFile> myAllRootsAffectedByCommit;
   @Nullable private final Couple<String> myProposedValues;
   @NotNull private final GitVcsSettings mySettings;
 
@@ -53,8 +53,8 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
   private JBCheckBox myGlobalCheckbox;
 
   GitUserNameNotDefinedDialog(@NotNull Project project,
-                              @NotNull Collection<VirtualFile> rootsWithUndefinedProps,
-                              @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
+                              @NotNull Collection<? extends VirtualFile> rootsWithUndefinedProps,
+                              @NotNull Collection<? extends VirtualFile> allRootsAffectedByCommit,
                               @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     super(project, false);
     myRootsWithUndefinedProps = rootsWithUndefinedProps;

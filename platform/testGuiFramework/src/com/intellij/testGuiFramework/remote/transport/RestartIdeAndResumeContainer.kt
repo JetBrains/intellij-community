@@ -5,5 +5,5 @@ import java.io.Serializable
 
 enum class RestartIdeCause { PLUGIN_INSTALLED, RUN_WITH_SYSTEM_PROPERTIES }
 open class RestartIdeAndResumeContainer(val restartIdeCause: RestartIdeCause, val dataObject: Any? = null) : Serializable
-data class RunWithSystemPropertiesContainer(val systemProperties: Array<Pair<String, String>>) : RestartIdeAndResumeContainer(
+data class RunWithSystemPropertiesContainer(val systemProperties: List<Pair<String, String>>) : RestartIdeAndResumeContainer(
   RestartIdeCause.RUN_WITH_SYSTEM_PROPERTIES, systemProperties)

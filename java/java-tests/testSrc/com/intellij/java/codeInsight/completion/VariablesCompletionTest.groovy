@@ -19,7 +19,9 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/"
 

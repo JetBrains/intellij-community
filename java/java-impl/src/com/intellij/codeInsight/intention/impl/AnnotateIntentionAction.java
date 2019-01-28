@@ -30,7 +30,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AnnotateIntentionAction extends BaseIntentionAction implements LowPriorityAction {
-  private static final AnnotationProvider[] PROVIDERS = AnnotationProvider.KEY.getExtensions();
   private AnnotationProvider myAnnotationProvider;
   private boolean mySingleMode;
 
@@ -41,7 +40,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   }
 
   private static StreamEx<AnnotationProvider> availableAnnotations(PsiModifierListOwner owner, Project project) {
-    return StreamEx.of(PROVIDERS)
+    return StreamEx.of(AnnotationProvider.KEY.getExtensionList())
                    .filter(p -> p.isAvailable(owner))
                    .filter(p -> !alreadyAnnotated(owner, p, project));
   }

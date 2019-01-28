@@ -53,6 +53,9 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
       assertEquals(numberOfPointersBefore, myVirtualFilePointerManager.numberOfPointers());
       assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners());
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myVirtualFilePointerManager = null;
       super.tearDown();
@@ -89,7 +92,7 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
     myVirtualFilePointerManager.shelveAllPointersIn(() -> {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
-        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
+        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, null, true, false));
       }
       PlatformTestUtil.startPerformanceTest("vfp update", 7_000, () -> {
         for (int i = 0; i < 100; i++) {

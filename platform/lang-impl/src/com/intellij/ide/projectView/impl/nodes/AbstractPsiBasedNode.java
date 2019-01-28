@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Class for node descriptors based on PsiElements. Subclasses should define
@@ -50,7 +51,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
-                                final Value value,
+                                 @NotNull Value value,
                                 final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -64,7 +65,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
-    return AstLoadingFilter.disableTreeLoading(this::doGetChildren);
+    return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
   @NotNull
@@ -107,11 +108,14 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public FileStatus getFileStatus() {
-    VirtualFile file = getVirtualFileForValue();
-    if (file == null) {
+    return computeFileStatus(getVirtualFileForValue(), Objects.requireNonNull(getProject()));
+  }
+
+  protected static FileStatus computeFileStatus(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    if (virtualFile == null) {
       return FileStatus.NOT_CHANGED;
     }
-    return FileStatusManager.getInstance(getProject()).getStatus(file);
+    return FileStatusManager.getInstance(project).getStatus(virtualFile);
   }
 
   @Nullable
@@ -127,7 +131,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public void update(@NotNull final PresentationData data) {
-    AstLoadingFilter.disableTreeLoading(() -> doUpdate(data));
+    AstLoadingFilter.disallowTreeLoading(() -> doUpdate(data));
   }
 
   private void doUpdate(@NotNull PresentationData data) {

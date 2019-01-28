@@ -54,7 +54,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
   @Override
   public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {
-    if (!pattern.startsWith("#")) return;
+    if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) return;
     pattern = pattern.substring(1);
     final List<String> parts = StringUtil.split(pattern, " ");
 

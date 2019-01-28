@@ -95,6 +95,9 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
       ActionManager.getInstance().unregisterAction(MY_SHIFT_SHIFT_ACTION);
       Clock.reset();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

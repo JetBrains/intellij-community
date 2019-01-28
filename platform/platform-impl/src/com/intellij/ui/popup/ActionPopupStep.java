@@ -48,8 +48,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myShowDisabledActions = showDisabledActions;
   }
 
-  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
+  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
+                                                              @NotNull List<? extends PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {

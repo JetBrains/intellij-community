@@ -61,7 +61,7 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
     };
   }
 
-  public static <Domain, Range> ConvertingIterator<Domain, Range> create(Iterator<Domain> iterator, Convertor<Domain, Range> convertor) {
+  public static <Domain, Range> ConvertingIterator<Domain, Range> create(Iterator<? extends Domain> iterator, Convertor<? super Domain, ? extends Range> convertor) {
     return new ConvertingIterator<Domain, Range>(iterator, convertor);
   }
 }

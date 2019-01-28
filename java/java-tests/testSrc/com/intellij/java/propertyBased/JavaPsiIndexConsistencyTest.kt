@@ -16,7 +16,6 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.lang.java.lexer.JavaLexer
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaPsiFacade
@@ -55,13 +54,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
                                                    data.generate(Generator.booleans()),
                                                    data.generate(Generator.booleans())) })
     PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->
-      val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
-      try {
-        PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
-      }
-      finally {
-        IdeaTestUtil.setModuleLanguageLevel(myFixture.module, prevLevel)
-      }
+      PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
       true
     }
 
@@ -113,7 +106,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
   private data class ChangeLanguageLevel(val level: LanguageLevel): Action {
     override fun performAction(model: Model) {
       PostponedFormatting.performAction(model)
-      IdeaTestUtil.setModuleLanguageLevel(model.fixture.module, level)
+      IdeaTestUtil.setModuleLanguageLevel(model.fixture.module, level, model.fixture.testRootDisposable)
     }
   }
 

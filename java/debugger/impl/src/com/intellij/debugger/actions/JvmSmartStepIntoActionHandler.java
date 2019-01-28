@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -33,7 +32,7 @@ public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
     final VirtualFile file = position != null ? position.getFile().getVirtualFile() : null;
     final FileEditor fileEditor = file != null? FileEditorManager.getInstance(project).getSelectedEditor(file) : null;
     if (fileEditor instanceof TextEditor) {
-      for (JvmSmartStepIntoHandler handler : Extensions.getExtensions(JvmSmartStepIntoHandler.EP_NAME)) {
+      for (JvmSmartStepIntoHandler handler : JvmSmartStepIntoHandler.EP_NAME.getExtensionList()) {
         if (handler.isAvailable(position) && handler.doSmartStep(position, session, (TextEditor)fileEditor)) {
           return;
         }

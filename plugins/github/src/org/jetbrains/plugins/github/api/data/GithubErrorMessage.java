@@ -58,7 +58,7 @@ public class GithubErrorMessage {
   @RestModel
   public static class Error {
     @Mandatory private String resource;
-    @Mandatory private String field;
+    private String field;
     @Mandatory private String code;
     private String message;
 
@@ -67,7 +67,7 @@ public class GithubErrorMessage {
       return resource;
     }
 
-    @NotNull
+    @Nullable
     public String getField() {
       return field;
     }

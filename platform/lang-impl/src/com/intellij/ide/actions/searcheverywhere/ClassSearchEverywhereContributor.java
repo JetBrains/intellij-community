@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.GotoClassAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -34,15 +36,23 @@ import java.util.stream.Collectors;
  */
 public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<Language> {
 
-  public ClassSearchEverywhereContributor(Project project) {
-    super(project);
+  public ClassSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
   }
 
   @NotNull
   @Override
   public String getGroupName() {
+    return GotoClassPresentationUpdater.getTabTitle(true);
+  }
+
+  @NotNull
+  @Override
+  public String getFullGroupName() {
     String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
-    return StringUtil.pluralize(split[0]) + (split.length > 1 ? " +" : "");
+    return Arrays.stream(split)
+      .map(StringUtil::pluralize)
+      .collect(Collectors.joining("/"));
   }
 
   @Override
@@ -55,8 +65,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     return 100;
   }
 
+  @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(Project project) {
+  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
     return new GotoClassModel2(project);
   }
 
@@ -166,7 +177,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     @NotNull
     @Override
     public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
-      return new ClassSearchEverywhereContributor(initEvent.getProject());
+      return new ClassSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable

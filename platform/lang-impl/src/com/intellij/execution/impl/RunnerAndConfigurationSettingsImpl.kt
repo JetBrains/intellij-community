@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -8,13 +8,14 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
@@ -52,6 +53,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
+  @Suppress("UNUSED_PARAMETER")
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
@@ -179,26 +184,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
     }
 
-    wasSingletonSpecifiedExplicitly = false
-    if (isTemplate) {
-      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-    }
-    else {
-      val singletonStr = element.getAttributeValue(SINGLETON)
-      if (singletonStr.isNullOrEmpty()) {
-        configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-      }
-      else {
-        wasSingletonSpecifiedExplicitly = true
-        configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
-      }
-    }
-
     _configuration = configuration
     uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
         configuration.configurationModule.findModule(moduleName)?.let {
@@ -207,11 +197,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.deserializeAndLoadState(element)
+    deserializeConfigurationFrom(configuration, element, isTemplate)
+
+    // must be after deserializeConfigurationFrom
+    wasSingletonSpecifiedExplicitly = false
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
     }
     else {
-      configuration.readExternal(element)
+      wasSingletonSpecifiedExplicitly = true
+      @Suppress("PlatformExtensionReceiverOfInline")
+      configuration.isAllowRunningInParallel = !singletonStr.toBoolean()
     }
 
     runnerSettings.loadState(element)
@@ -274,7 +271,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       configuration.configurationModule.module?.let {
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
@@ -295,15 +292,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
 
-  private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.serializeStateInto(element)
-    }
-    else {
-      configuration.writeExternal(element)
-    }
-  }
-
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
@@ -312,8 +300,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    configuration.checkConfiguration()
-    if (configuration !is RunConfigurationBase) {
+    var warning: RuntimeConfigurationWarning?
+
+    warning = doCheck { configuration.checkConfiguration() }
+    if (configuration !is RunConfigurationBase<*>) {
+      if (warning != null) {
+        throw warning
+      }
       return
     }
 
@@ -322,11 +315,26 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
+        val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner], configurationPerRunnerSettings.settings[runner]) }
+        if (warning == null && runnerWarning != null) warning = runnerWarning
       }
     }
     if (executor != null) {
-      configuration.checkSettingsBeforeRun()
+      val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
+      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+    }
+
+    if (warning != null) {
+      throw warning
+    }
+  }
+
+  private inline fun doCheck(crossinline check: () -> Unit): RuntimeConfigurationWarning? {
+    try {
+      check()
+      return null
+    } catch (ex: RuntimeConfigurationWarning) {
+      return ex
     }
   }
 
@@ -400,6 +408,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       else -> null
     }
   }
+
+  fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
     val settings = THashMap<ProgramRunner<*>, T>()
@@ -497,8 +507,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       try {
         return settings.getOrPut(runner) { createSettings(runner) }
       }
-      catch (ignored: AbstractMethodError) {
-        RunManagerImpl.LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+      catch (e: AbstractMethodError) {
+        RunManagerImpl.LOG.error(PluginManagerCore.createPluginException("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass))
         return null
       }
     }
@@ -508,3 +518,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
+
+fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
+  when (configuration) {
+    is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.writePersistent(element)
+    else -> configuration.writeExternal(element)
+  }
+}
+
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
+  when (configuration) {
+    is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+    else -> configuration.readExternal(element)
+  }
+}

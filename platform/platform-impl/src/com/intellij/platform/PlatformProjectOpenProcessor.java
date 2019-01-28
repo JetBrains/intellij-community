@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,7 +46,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
-    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT
+    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT, DO_NOT_USE_DEFAULT_PROJECT
   }
 
   public static PlatformProjectOpenProcessor getInstance() {
@@ -58,8 +57,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
-    ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for (ProjectOpenProcessor processor : processors) {
+    for (ProjectOpenProcessor processor : EXTENSION_POINT_NAME.getExtensionList()) {
       if (processor instanceof PlatformProjectOpenProcessor) {
         return (PlatformProjectOpenProcessor)processor;
       }
@@ -86,7 +84,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
+    if (forceOpenInNewFrame) {
+      options.add(Option.FORCE_NEW_FRAME);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // doesn't make sense to use default project in tests for heavy projects
+      options.add(Option.DO_NOT_USE_DEFAULT_PROJECT);
+    }
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
   }
 
@@ -98,6 +102,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
       options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
     }
+
 
     return doOpenProject(file, null, line, null, options);
   }
@@ -126,7 +131,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     boolean dummyProject = false;
     String dummyProjectName = null;
     boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
-    boolean isReopen = options.contains(Option.REOPEN);
     boolean tempProject = options.contains(Option.TEMP_PROJECT);
 
     if (!baseDir.isDirectory()) {
@@ -165,17 +169,19 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK && !isReopen) {
-        final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, false, "Open Project");
-        if (!dialog.showAndGet()) {
+      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+
+        final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
+
+        if (exitCode == -1) {
           return null;
         }
-        if (dialog.isReplace()) {
+        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
           if (!ProjectUtil.closeAndDispose(projectToClose)) {
             return null;
           }
         }
-        else if (dialog.isAttach()) {
+        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
           if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
             return null;
           }
@@ -205,7 +211,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     if (PathKt.exists(projectDir)) {
       try {
         File baseDirIo = VfsUtilCore.virtualToIoFile(baseDir);
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
+        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
           processor.refreshProjectFiles(baseDirIo);
         }
 
@@ -223,7 +229,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
     else {
-      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), true, dummyProject);
+      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
       newProject = true;
     }
 
@@ -265,7 +271,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
   public static Module runDirectoryProjectConfigurators(VirtualFile baseDir, Project project) {
     final Ref<Module> moduleRef = new Ref<>();
-    for (DirectoryProjectConfigurator configurator: Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
+    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getExtensionList()) {
       try {
         configurator.configureProject(project, baseDir, moduleRef);
       }
@@ -277,7 +283,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }

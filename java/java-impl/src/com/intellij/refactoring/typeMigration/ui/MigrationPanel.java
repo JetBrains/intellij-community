@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -30,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -48,7 +33,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsagePresentation;
@@ -89,7 +74,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   private final MigrationUsagesPanel myUsagesPanel;
   private final MigrationConflictsPanel myConflictsPanel;
 
-  public MigrationPanel(final PsiElement[] roots, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
+  public MigrationPanel(final PsiElement[] roots, @NotNull TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
     super(new BorderLayout());
     myInitialRoots = roots;
     myLabeler = labeler;
@@ -100,7 +85,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
     StructureTreeModel model = new StructureTreeModel(structure, AlphaComparator.INSTANCE);
-    myRootsTree.setModel(new AsyncTreeModel(model));
+    myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -141,7 +126,6 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     model.invalidate();
 
-    Disposer.register(this, model);
   }
 
   private void selectionChanged() {
@@ -206,7 +190,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (ReadonlyStatusHandler.getInstance(myProject).
-                  ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files)).hasReadonlyFiles()) {
+                  ensureFilesWritable(files).hasReadonlyFiles()) {
                   return;
                 }
                 WriteCommandAction.writeCommandAction(myProject).run(() -> {
@@ -216,7 +200,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             }, "Type Migration", false, myProject);
           }
         }
-        UsageViewManager.getInstance(myProject).closeContent(myContent);
+        UsageViewContentManager.getInstance(myProject).closeContent(myContent);
       }
     });
     panel.add(performButton, gc);
@@ -224,7 +208,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     closeButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        UsageViewManager.getInstance(myProject).closeContent(myContent);
+        UsageViewContentManager.getInstance(myProject).closeContent(myContent);
 
       }
     });
@@ -234,7 +218,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       @Override
       public void actionPerformed(final ActionEvent e) {
         TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          UsageViewManager.getInstance(myProject).closeContent(myContent);
+          UsageViewContentManager.getInstance(myProject).closeContent(myContent);
           final TypeMigrationDialog.MultipleElements dialog =
             new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
           dialog.show();

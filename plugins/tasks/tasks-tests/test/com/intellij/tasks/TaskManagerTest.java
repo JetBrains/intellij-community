@@ -21,6 +21,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -48,7 +49,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         count.set(count.get() + 1);
       }
     };
-    myTaskManager.addTaskListener(listener, myFixture.getTestRootDisposable());
+    myTaskManager.addTaskListener(listener, getTestRootDisposable());
     LocalTask localTask = myTaskManager.createLocalTask("foo");
     myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());
@@ -61,7 +62,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testNotifications() {
 
     final Ref<Notification> notificationRef = new Ref<>();
-    getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);
@@ -168,10 +169,14 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testPreserveTaskUrl() {
     String url = "http://server/foo";
     myTaskManager.addTask(new TaskTestUtil.TaskBuilder("foo", "summary", null).withIssueUrl(url));
-    Element element = XmlSerializer.serialize(myTaskManager.getState());
-    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    TaskManagerImpl.Config config = getConfig();
     LocalTaskImpl task = config.tasks.get(1);
     assertEquals(url, task.getIssueUrl());
+  }
+
+  private TaskManagerImpl.Config getConfig() {
+    Element element = XmlSerializer.serialize(myTaskManager.getState());
+    return XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
   }
 
   public void testRestoreRepository() {
@@ -181,10 +186,37 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     TaskTestUtil.TaskBuilder issue = new TaskTestUtil.TaskBuilder("foo", "summary", repository).withIssueUrl(repository.getUrl() + "/foo");
     myTaskManager.activateTask(issue, false);
-    Element element = XmlSerializer.serialize(myTaskManager.getState());
-    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    TaskManagerImpl.Config config = getConfig();
     myTaskManager.loadState(config);
 
     assertEquals(repository, myTaskManager.getActiveTask().getRepository());
+  }
+
+  public void testCopyPresentableName() {
+    LocalTaskImpl task = new LocalTaskImpl("007", "");
+    LocalTaskImpl copy = new LocalTaskImpl(task);
+    copy.setSummary("foo");
+    assertEquals("foo", copy.getPresentableName());
+  }
+
+  public void testUpdateToVelocity() {
+    TaskManagerImpl.Config config = getConfig();
+    config.branchNameFormat = "{id}";
+    config.changelistNameFormat = "{id} {summary}";
+    myTaskManager.loadState(config);
+    assertEquals("${id}", myTaskManager.getState().branchNameFormat);
+    assertEquals("${id} ${summary}", myTaskManager.getState().changelistNameFormat);
+  }
+
+  public void testPasswordMigration() {
+    TestRepository repository = new TestRepository();
+    repository.setUrl("http://server");
+    repository.setUsername("me");
+    String password = "foo";
+    repository.setEncodedPassword(PasswordUtil.encodePassword(password));
+    repository.setRepositoryType(new TestRepositoryType());
+    repository.initializeRepository();
+    assertEquals(password, repository.getPassword());
+    assertNull(repository.getEncodedPassword());
   }
 }

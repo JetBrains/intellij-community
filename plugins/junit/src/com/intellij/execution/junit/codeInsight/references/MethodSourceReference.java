@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.TestUtils;
@@ -49,7 +50,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
     String methodName = getValue();
     String className = StringUtil.getPackageName(methodName, '#');
     boolean selfClassReference = className.isEmpty() ||
-                JavaPsiFacade.getInstance(getElement().getProject()).findClass(className, getElement().getResolveScope()) == null;
+                                 ClassUtil.findPsiClass(getElement().getManager(), className, null, false, getElement().getResolveScope()) == null;
     return super.handleElementRename(selfClassReference ? newElementName : className + '#' + newElementName);
   }
 
@@ -61,7 +62,7 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
       String methodName = getValue();
       String className = StringUtil.getPackageName(methodName, '#');
       if (!className.isEmpty()) {
-        PsiClass aClass = JavaPsiFacade.getInstance(cls.getProject()).findClass(className, cls.getResolveScope());
+        PsiClass aClass = ClassUtil.findPsiClass(cls.getManager(), className, null, false, cls.getResolveScope());
         if (aClass != null) {
           cls = aClass;
           methodName = StringUtil.getShortName(methodName, '#');

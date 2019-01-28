@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,6 +27,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
@@ -56,7 +56,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                      @NotNull Usage[] usages,
                                      @NotNull UsageViewPresentation presentation,
                                      Factory<UsageSearcher> usageSearcherFactory) {
-    for (UsageViewFactory factory : Extensions.getExtensions(UsageViewFactory.EP_NAME)) {
+    for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
         return result;
@@ -105,7 +105,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   void showUsageView(@NotNull UsageViewEx usageView, @NotNull UsageViewPresentation presentation) {
-    Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
+    Content content = UsageViewContentManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
       presentation.getToolwindowTitle(),
@@ -191,7 +191,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   public UsageView getSelectedUsageView() {
-    final Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent();
+    final Content content = UsageViewContentManager.getInstance(myProject).getSelectedContent();
     if (content != null) {
       return content.getUserData(USAGE_VIEW_KEY);
     }

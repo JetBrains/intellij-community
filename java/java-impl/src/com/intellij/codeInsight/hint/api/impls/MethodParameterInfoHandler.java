@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -38,6 +39,7 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -91,6 +93,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       if (call != null) {
         argumentList = call.getArgumentList();
+        if (argumentList != null && !argumentList.getTextRange().containsOffset(offset)) {
+          if (PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiParenthesizedExpression.class, false, PsiCall.class) != null) {
+            return null;
+          }
+        }
       }
     }
     return argumentList;
@@ -214,7 +221,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
               if (Registry.is("editor.completion.hints.virtual.comma")) {
                 int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
                 int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
-                if (actualParameters < requiredParameters) return false;
+                if (actualParameters < requiredParameters && ((PsiCall)parent).resolveMethod() == null) return false;
               }
               else if (((PsiExpressionList)owner).isEmpty() &&
                        (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&
@@ -421,20 +428,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             CharSequence text = editor.getDocument().getImmutableCharSequence();
             int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
             int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
-            for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(firstRangeStartOffset, firstRangeEndOffset)) {
-              if (presentationManager.isParameterHint(inlay)) {
-                highlightedHints.add(inlay);
-                if (i == currentHintIndex && currentHint == null) currentHint = inlay;
-              }
+            for (Inlay inlay : presentationManager.getParameterHintsInRange(editor, firstRangeStartOffset, firstRangeEndOffset)) {
+              highlightedHints.add(inlay);
+              if (i == currentHintIndex && currentHint == null) currentHint = inlay;
             }
             int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
             if (secondRangeEndOffset > firstRangeEndOffset) {
               int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
-              for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(secondRangeStartOffset, secondRangeEndOffset)) {
-                if (presentationManager.isParameterHint(inlay)) {
-                  highlightedHints.add(inlay);
-                }
-              }
+              highlightedHints.addAll(presentationManager.getParameterHintsInRange(editor, secondRangeStartOffset, secondRangeEndOffset));
             }
           }
         }
@@ -486,7 +487,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
     Computable<PsiSubstitutor> computeSubstitutor =
       () -> candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-            ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE, true)
+            ? ((MethodCandidateInfo)candidate).inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE 
+                                                                                : CompletionParameterTypeInferencePolicy.INSTANCE, true)
             : candidate.getSubstitutor();
     if (resolveResult && candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()) {
       return computeSubstitutor.compute();
@@ -513,7 +515,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       parmType = substitutor.substitute(parmType);
 
-      if (!parmType.isAssignableFrom(argType)) {
+      if (!parmType.isAssignableFrom(argType) &&
+          !(parm.getType() instanceof PsiEllipsisType && argType instanceof PsiArrayType &&
+            parmType.isAssignableFrom(((PsiArrayType)argType).getComponentType()))) {
         return false;
       }
     }
@@ -697,7 +701,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
           String type = paramType.getPresentableText(true);
-          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXml(type) : type);
+          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
           String name = param.getName();
           if (name != null && !context.isSingleParameterInfo()) {
             buffer.append(" ");
@@ -818,13 +822,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     Editor editor = context.getEditor();
     Caret caret = editor.getCaretModel().getCurrentCaret();
     int caretOffset = caret.getOffset();
-    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(caretOffset, caretOffset);
+    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
+    List<Inlay> inlays = pm.getParameterHintsInRange(editor, caretOffset, caretOffset);
     if (inlays.isEmpty()) return;
 
     VisualPosition caretPosition = caret.getVisualPosition();
-    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
-    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> pm.isParameterHint(inlay) &&
-                                                                          StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
+    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
                                                                           caretPosition.after(inlay.getVisualPosition()));
     if (inlaysBeforeCaretWithComma == 0) return;
 

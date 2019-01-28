@@ -63,7 +63,7 @@ public class XsltLanguage extends Language {
         @Override
         @Nullable
         public WordsScanner getWordsScanner() {
-            return LanguageFindUsages.INSTANCE.forLanguage(XMLLanguage.INSTANCE).getWordsScanner();
+            return LanguageFindUsages.getWordsScanner(XMLLanguage.INSTANCE);
         }
 
         @Override

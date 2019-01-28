@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -37,8 +23,10 @@ import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -46,6 +34,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -57,8 +47,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
-public class EditorOptionsPanel implements SearchableConfigurable {
+public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvider> implements SearchableConfigurable {
+  private static final String ID = "preferences.editor";
+
   private JPanel    myBehaviourPanel;
   private JCheckBox myCbHighlightBraces;
   private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
@@ -103,13 +96,14 @@ public class EditorOptionsPanel implements SearchableConfigurable {
   private JCheckBox    myCbEnableRichCopyByDefault;
   private JCheckBox    myShowLSTInGutterCheckBox;
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
-  private JCheckBox myCbKeepTrailingSpacesOnCaretLine;
+  private JCheckBox    myCbKeepTrailingSpacesOnCaretLine;
+  private JTextField   myRecentLocationsLimitField;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
+  private static final UINumericRange RECENT_LOCATIONS_RANGE = new UINumericRange(10, 1, 100);
 
-  private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
-
+  private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel(getConfigurables());
 
   public EditorOptionsPanel() {
     if (SystemInfo.isMac) {
@@ -216,6 +210,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
 
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.getRecentFilesLimit()));
+    myRecentLocationsLimitField.setText(Integer.toString(uiSettings.getRecentLocationsLimit()));
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
     myPreselectCheckBox.setSelected(editorSettings.isPreselectRename());
@@ -229,6 +224,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     myShowWhitespacesModificationsInLSTGutterCheckBox.setEnabled(myShowLSTInGutterCheckBox.isSelected());
 
     myErrorHighlightingPanel.reset();
+    super.reset();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     myCbEnableRichCopyByDefault.setSelected(settings.isEnabled());
@@ -280,7 +276,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     boolean uiSettingsChanged = false;
     int maxClipboardContents = getMaxClipboardContents();
     if (uiSettings.getMaxClipboardContents() != maxClipboardContents) {
-      uiSettings.setMaxClipboardContents(maxClipboardContents);
+      uiSettings.getState().setMaxClipboardContents(maxClipboardContents);
       uiSettingsChanged = true;
     }
 
@@ -347,7 +343,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
       try {
         int newRecentFilesLimit = Integer.parseInt(temp);
         if (newRecentFilesLimit > 0 && uiSettings.getRecentFilesLimit() != newRecentFilesLimit) {
-          uiSettings.setRecentFilesLimit(newRecentFilesLimit);
+          uiSettings.getState().setRecentFilesLimit(newRecentFilesLimit);
           uiSettingsChanged = true;
         }
       }catch (NumberFormatException ignored){}
@@ -356,7 +352,14 @@ public class EditorOptionsPanel implements SearchableConfigurable {
       uiSettings.fireUISettingsChanged();
     }
 
+    uiSettingsChanged = setRecentLocationLimit(uiSettings, myRecentLocationsLimitField.getText()) || uiSettingsChanged;
+    if (uiSettingsChanged) {
+      uiSettings.fireUISettingsChanged();
+    }
+
     myErrorHighlightingPanel.apply();
+    super.apply();
+    UISettings.getInstance().fireUISettingsChanged();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     settings.setEnabled(myCbEnableRichCopyByDefault.isSelected());
@@ -367,6 +370,19 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
     restartDaemons();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.OPTIONS_PANEL_TOPIC).changesApplied();
+  }
+
+  private static boolean setRecentLocationLimit(@NotNull UISettings uiSettings, @NotNull String recentLocationsLimit) {
+    try {
+      int newRecentLocationsLimit = Integer.parseInt(recentLocationsLimit.trim());
+      if (uiSettings.getRecentLocationsLimit() != newRecentLocationsLimit) {
+        uiSettings.getState().setRecentLocationsLimit(newRecentLocationsLimit);
+        return true;
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return false;
   }
 
   private int getQuickDocDelayFromGui() {
@@ -400,9 +416,10 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     EditorFactory.getInstance().refreshAllEditors();
   }
 
+  @NotNull
   @Override
-  public void disposeUIResources() {
-    myErrorHighlightingPanel.disposeUIResources();
+  protected List<ErrorOptionsProvider> createConfigurables() {
+    return ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME);
   }
 
   private int getMaxClipboardContents(){
@@ -465,6 +482,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
 
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().getRecentFilesLimit(), RECENT_FILES_RANGE);
+    isModified |= isModified(myRecentLocationsLimitField, UISettings.getInstance().getRecentLocationsLimit(), RECENT_LOCATIONS_RANGE);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
     isModified |= isModified(myPreselectCheckBox, editorSettings.isPreselectRename());
     isModified |= isModified(myShowInlineDialogForCheckBox, editorSettings.isShowInlineLocalDialog());
@@ -476,6 +494,7 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     isModified |= isModified(myShowWhitespacesModificationsInLSTGutterCheckBox, vcsSettings.SHOW_WHITESPACES_IN_LST);
 
     isModified |= myErrorHighlightingPanel.isModified();
+    isModified |= super.isModified();
 
     RichCopySettings settings = RichCopySettings.getInstance();
     isModified |= isModified(myCbEnableRichCopyByDefault, settings.isEnabled());
@@ -550,24 +569,24 @@ public class EditorOptionsPanel implements SearchableConfigurable {
     });
   }
 
-    @Override
-    @NotNull
-    public String getId() {
-      return "Editor.Behavior";
-    }
+  @Override
+  @NotNull
+  public String getId() {
+    return ID;
+  }
 
-    @Override
-    public String getDisplayName() {
-      return ApplicationBundle.message("tab.editor.settings.behavior");
-    }
+  @Override
+  public String getDisplayName() {
+    return ApplicationBundle.message("title.editor");
+  }
 
-    @Override
-    public String getHelpTopic() {
-      return null;
-    }
+  @Override
+  public String getHelpTopic() {
+    return ID;
+  }
 
-    @Override
-    public JComponent createComponent() {
-      return myBehaviourPanel;
-    }
+  @Override
+  public JComponent createComponent() {
+    return myBehaviourPanel;
+  }
 }

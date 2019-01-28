@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
 /**
  * author: lesya
  */
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "IOResourceOpenedButNotSafelyClosed"})
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public abstract class ConnectionOnProcess implements IConnection {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ConnectionOnProcess");

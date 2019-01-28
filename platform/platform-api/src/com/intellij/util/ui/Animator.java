@@ -153,7 +153,7 @@ public abstract class Animator implements Disposable {
         public String toString() {
           return "Scheduled "+Animator.this;
         }
-      }, 0, myCycleDuration * 1000 / myTotalFrames, TimeUnit.MICROSECONDS);
+      }, 0, myCycleDuration * 1000L / myTotalFrames, TimeUnit.MICROSECONDS);
     }
   }
 

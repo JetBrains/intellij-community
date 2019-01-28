@@ -74,8 +74,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
@@ -84,6 +84,7 @@ public abstract class InplaceRefactoring {
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
+  private static boolean ourShowBalloonInHeadlessMode = false;
 
   protected PsiNamedElement myElementToRename;
   protected final Editor myEditor;
@@ -150,7 +151,7 @@ public abstract class InplaceRefactoring {
       final int exitCode = Messages.showYesNoDialog(project, message,
                                                     RefactoringBundle.getCannotRefactorMessage(null),
                                                     "Continue Started", "Cancel Started", Messages.getErrorIcon());
-      navigateToStarted(oldDocument, project, exitCode);
+      navigateToStarted(oldDocument, project, exitCode, startMarkAction.getCommandName());
     }
     else {
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
@@ -218,7 +219,7 @@ public abstract class InplaceRefactoring {
       final PsiFile containingFile = myElementToRename.getContainingFile();
       if (!file.equals(containingFile.getVirtualFile())) {
         final PsiFile topLevelFile = PsiManager.getInstance(myProject).findFile(file);
-        return topLevelFile == null ? ProjectScope.getProjectScope(myElementToRename.getProject()) 
+        return topLevelFile == null ? ProjectScope.getProjectScope(myElementToRename.getProject())
                                     : new LocalSearchScope(topLevelFile);
       }
       return new LocalSearchScope(containingFile);
@@ -322,8 +323,12 @@ public abstract class InplaceRefactoring {
       if (oldDocument != myEditor.getDocument()) {
         final int exitCode = Messages.showYesNoCancelDialog(myProject, e.getMessage(), getCommandName(),
                                                             "Navigate to Started", "Cancel Started", "Cancel", Messages.getErrorIcon());
-        if (exitCode == Messages.CANCEL) return true;
-        navigateToAlreadyStarted(oldDocument, exitCode);
+        if (exitCode == Messages.CANCEL) {
+          finish(true);
+        }
+        else {
+          navigateToAlreadyStarted(oldDocument, exitCode);
+        }
         return true;
       }
       else {
@@ -451,11 +456,27 @@ public abstract class InplaceRefactoring {
     return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getEndOffset() : offset;
   }
 
-  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
-    navigateToStarted(oldDocument, myProject, exitCode);
+  public void stopIntroduce(Editor editor) {
+    stopIntroduce(editor, myProject, getCommandName());
   }
 
-  private static void navigateToStarted(final Document oldDocument, final Project project, @Messages.YesNoResult final int exitCode) {
+  public static void stopIntroduce(Editor editor, Project project, final String commandName) {
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      final Runnable runnable = () -> templateState.gotoEnd(true);
+      CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
+    }
+  }
+
+  protected void navigateToAlreadyStarted(Document oldDocument, @Messages.YesNoResult int exitCode) {
+    finish(true);
+    navigateToStarted(oldDocument, myProject, exitCode, getCommandName());
+  }
+
+  private static void navigateToStarted(final Document oldDocument,
+                                        final Project project,
+                                        @Messages.YesNoResult final int exitCode,
+                                        String commandName) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -475,7 +496,7 @@ public abstract class InplaceRefactoring {
                 }
               }
               else if (exitCode > 0){
-                templateState.gotoEnd();
+                stopIntroduce(textEditor, project, commandName);
                 return;
               }
             }
@@ -615,12 +636,13 @@ public abstract class InplaceRefactoring {
       final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
       ApplicationManager.getApplication().runWriteAction(() -> {
         final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
-        assert state != null;
-        final int segmentsCount = state.getSegmentsCount();
-        final Document document = topLevelEditor.getDocument();
-        for (int i = 0; i < segmentsCount; i++) {
-          final TextRange segmentRange = state.getSegmentRange(i);
-          document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
+        if (state != null) {
+          final int segmentsCount = state.getSegmentsCount();
+          final Document document = topLevelEditor.getDocument();
+          for (int i = 0; i < segmentsCount; i++) {
+            final TextRange segmentRange = state.getSegmentRange(i);
+            document.replaceString(segmentRange.getStartOffset(), segmentRange.getEndOffset(), myOldName);
+          }
         }
       });
       if (!myProject.isDisposed() && myProject.isOpen()) {
@@ -649,8 +671,8 @@ public abstract class InplaceRefactoring {
       }
 
       myHighlighters = null;
-      myEditor.putUserData(INPLACE_RENAMER, null);
     }
+    myEditor.putUserData(INPLACE_RENAMER, null);
     if (myBalloon != null) {
            if (!isRestart()) {
              myBalloon.hide();
@@ -826,8 +848,16 @@ public abstract class InplaceRefactoring {
   protected void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    Dimension size = component.getPreferredSize();
+    if (size.height == 0 && size.width == 0) return;
+    if (!ourShowBalloonInHeadlessMode && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
+
+    Color borderColor = UIManager.getColor("InplaceRefactoringPopup.borderColor");
+    if (borderColor != null) {
+      balloonBuilder.setBorderColor(borderColor);
+    }
+
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
@@ -866,6 +896,14 @@ public abstract class InplaceRefactoring {
     if (!isRestart()) {
       releaseResources();
     }
+  }
+
+  public static boolean isShowBalloonInHeadlessMode() {
+    return ourShowBalloonInHeadlessMode;
+  }
+
+  public static void setShowBalloonInHeadlessMode(boolean showBalloonInHeadlessMode) {
+    ourShowBalloonInHeadlessMode = showBalloonInHeadlessMode;
   }
 
   private abstract class MyTemplateListener extends TemplateEditingAdapter {

@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
-  private final Function<CharSequence, Document> myFactory;
+  private final Function<? super CharSequence, ? extends Document> myFactory;
   @Nullable private final Key<Document> myCachedDocumentKey;
 
-  public MockFileDocumentManagerImpl(Function<CharSequence, Document> factory, @Nullable Key<Document> cachedDocumentKey) {
+  public MockFileDocumentManagerImpl(Function<? super CharSequence, ? extends Document> factory, @Nullable Key<Document> cachedDocumentKey) {
     myFactory = factory;
     myCachedDocumentKey = cachedDocumentKey;
   }

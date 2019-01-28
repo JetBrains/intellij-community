@@ -163,6 +163,12 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def insert(self, index: int, object: _T) -> None: ...
     @overload
     @abstractmethod
+    def __getitem__(self, i: int) -> _T: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, s: slice) -> MutableSequence[_T]: ...
+    @overload
+    @abstractmethod
     def __setitem__(self, i: int, o: _T) -> None: ...
     @overload
     @abstractmethod
@@ -352,17 +358,23 @@ class TextIO(IO[unicode]):
 class ByteString(Sequence[int], metaclass=ABCMeta): ...
 
 class Match(Generic[AnyStr]):
-    pos = 0
-    endpos = 0
-    lastindex = 0
-    lastgroup = ...  # type: AnyStr
-    string = ...  # type: AnyStr
+    pos: int
+    endpos: int
+    lastindex: Optional[int]
+    string: AnyStr
 
     # The regular expression object whose match() or search() method produced
-    # this match instance.
-    re = ...  # type: Pattern[AnyStr]
+    # this match instance. This should not be Pattern[AnyStr] because the type
+    # of the pattern is independent of the type of the matched string in
+    # Python 2. Strictly speaking Match should be generic over AnyStr twice:
+    # once for the type of the pattern and once for the type of the matched
+    # string.
+    re: Pattern[Any]
+    # Can be None if there are no groups or if the last group was unnamed;
+    # otherwise matches the type of the pattern.
+    lastgroup: Optional[Any]
 
-    def expand(self, template: AnyStr) -> AnyStr: ...
+    def expand(self, template: Union[str, Text]) -> Any: ...
 
     @overload
     def group(self, group1: int = ...) -> AnyStr: ...
@@ -370,53 +382,64 @@ class Match(Generic[AnyStr]):
     def group(self, group1: str) -> AnyStr: ...
     @overload
     def group(self, group1: int, group2: int,
-              *groups: int) -> Sequence[AnyStr]: ...
+              *groups: int) -> Tuple[AnyStr, ...]: ...
     @overload
     def group(self, group1: str, group2: str,
-              *groups: str) -> Sequence[AnyStr]: ...
+              *groups: str) -> Tuple[AnyStr, ...]: ...
 
-    def groups(self, default: AnyStr = ...) -> Sequence[AnyStr]: ...
-    def groupdict(self, default: AnyStr = ...) -> dict[str, AnyStr]: ...
+    def groups(self, default: AnyStr = ...) -> Tuple[AnyStr, ...]: ...
+    def groupdict(self, default: AnyStr = ...) -> Dict[str, AnyStr]: ...
     def start(self, group: Union[int, str] = ...) -> int: ...
     def end(self, group: Union[int, str] = ...) -> int: ...
     def span(self, group: Union[int, str] = ...) -> Tuple[int, int]: ...
 
+# We need a second TypeVar with the same definition as AnyStr, because
+# Pattern is generic over AnyStr (determining the type of its .pattern
+# attribute), but at the same time its methods take either bytes or
+# Text and return the same type, regardless of the type of the pattern.
+_AnyStr2 = TypeVar('_AnyStr2', bytes, Text)
+
 class Pattern(Generic[AnyStr]):
-    flags = 0
-    groupindex = 0
-    groups = 0
-    pattern = ...  # type: AnyStr
+    flags: int
+    groupindex: Dict[AnyStr, int]
+    groups: int
+    pattern: AnyStr
 
-    def search(self, string: AnyStr, pos: int = ...,
-               endpos: int = ...) -> Optional[Match[AnyStr]]: ...
-    def match(self, string: AnyStr, pos: int = ...,
-              endpos: int = ...) -> Optional[Match[AnyStr]]: ...
-    def split(self, string: AnyStr, maxsplit: int = ...) -> list[AnyStr]: ...
-    def findall(self, string: AnyStr, pos: int = ...,
-                endpos: int = ...) -> list[Any]: ...
-    def finditer(self, string: AnyStr, pos: int = ...,
-                 endpos: int = ...) -> Iterator[Match[AnyStr]]: ...
-
-    @overload
-    def sub(self, repl: AnyStr, string: AnyStr,
-            count: int = ...) -> AnyStr: ...
-    @overload
-    def sub(self, repl: Callable[[Match[AnyStr]], AnyStr], string: AnyStr,
-            count: int = ...) -> AnyStr: ...
+    def search(self, string: _AnyStr2, pos: int = ...,
+               endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
+    def match(self, string: _AnyStr2, pos: int = ...,
+              endpos: int = ...) -> Optional[Match[_AnyStr2]]: ...
+    def split(self, string: _AnyStr2, maxsplit: int = ...) -> List[_AnyStr2]: ...
+    # Returns either a list of _AnyStr2 or a list of tuples, depending on
+    # whether there are groups in the pattern.
+    def findall(self, string: Union[bytes, Text], pos: int = ...,
+                endpos: int = ...) -> List[Any]: ...
+    def finditer(self, string: _AnyStr2, pos: int = ...,
+                 endpos: int = ...) -> Iterator[Match[_AnyStr2]]: ...
 
     @overload
-    def subn(self, repl: AnyStr, string: AnyStr,
-             count: int = ...) -> Tuple[AnyStr, int]: ...
+    def sub(self, repl: _AnyStr2, string: _AnyStr2,
+            count: int = ...) -> _AnyStr2: ...
     @overload
-    def subn(self, repl: Callable[[Match[AnyStr]], AnyStr], string: AnyStr,
-             count: int = ...) -> Tuple[AnyStr, int]: ...
+    def sub(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2,
+            count: int = ...) -> _AnyStr2: ...
+
+    @overload
+    def subn(self, repl: _AnyStr2, string: _AnyStr2,
+             count: int = ...) -> Tuple[_AnyStr2, int]: ...
+    @overload
+    def subn(self, repl: Callable[[Match[_AnyStr2]], _AnyStr2], string: _AnyStr2,
+             count: int = ...) -> Tuple[_AnyStr2, int]: ...
 
 # Functions
 
 def get_type_hints(obj: Callable, globalns: Optional[dict[Text, Any]] = ...,
                    localns: Optional[dict[Text, Any]] = ...) -> None: ...
 
+@overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
+@overload
+def cast(tp: str, obj: Any) -> Any: ...
 
 # Type constructors
 

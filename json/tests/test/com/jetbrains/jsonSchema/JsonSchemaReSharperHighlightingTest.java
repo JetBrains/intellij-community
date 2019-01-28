@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.Collection;
 
 public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting/resharper";
@@ -99,7 +100,7 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   public void test012() throws Exception {
     doTestFiles("test012", "schema012");
   }
-  public void _test012_2() throws Exception {  // TODO bug
+  public void test012_2() throws Exception {
     doTestFiles("test012_2", "schema012");
   }
   public void test012_3() throws Exception {
@@ -171,7 +172,7 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   public void test026() throws Exception {
     doTestFiles("test026", "schema026");
   }
-  public void _test027() throws Exception { // TODO bug
+  public void _test027() throws Exception { // todo file refs cannot be resolved in tests for now
     doTestFiles("test027", "schema027");
   }
   public void test028() throws Exception {
@@ -179,6 +180,9 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   }
   public void _test029() throws Exception { // TODO bug
     doTestFiles("test029", "schema029");
+  }
+  public void test030() throws Exception {
+    doTestFiles("test030", "schema030");
   }
 
 }

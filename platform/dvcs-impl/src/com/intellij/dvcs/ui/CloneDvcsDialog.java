@@ -96,7 +96,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private final List<String> myLoadedRepositoryHostingServicesNames;
   @Nullable private Alarm myRepositoryUrlAutoCompletionTooltipAlarm;
   @NotNull private final Set<String> myUniqueAvailableRepositories;
-  @NotNull private List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
+  @NotNull private final List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -323,7 +323,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning());
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning().withOKEnabled());
           }
           startTrackingValidation();
         }

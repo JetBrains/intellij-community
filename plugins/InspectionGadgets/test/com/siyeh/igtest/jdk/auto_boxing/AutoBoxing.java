@@ -91,4 +91,19 @@ public class AutoBoxing {
   void varargs() {
       Arrays.asList(<warning descr="Auto-boxing ''a''">'a'</warning>, <warning descr="Auto-boxing ''b''">'b'</warning>, <warning descr="Auto-boxing ''c''">'c'</warning>);
   }
+
+  enum E {
+      A,B,C
+  }
+
+  void switchExpressions(E e) {
+    Integer integer = (Integer)<warning descr="Auto-boxing 'switch (e) { case A -> 1; case B,C -> 2; }'">switch (e) {
+      case A -> 1;
+      case B,C -> 2;
+    }</warning>;
+    Integer two = switch (e) {
+      case A -> <warning descr="Auto-boxing '1'">1</warning>;
+      case B,C -> <warning descr="Auto-boxing '2'">2</warning>;
+    };
+  }
 }

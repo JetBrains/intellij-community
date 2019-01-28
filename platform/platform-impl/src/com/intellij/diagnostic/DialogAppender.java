@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.IdeaApplication;
@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -25,19 +27,30 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
+  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
+  private final Queue<LoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
   @Override
   protected synchronized void append(@NotNull LoggingEvent event) {
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) ||
-        Main.isCommandLine() ||
-        !IdeaApplication.isLoaded()) {
-      return;
+    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || Main.isCommandLine()) {
+      return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
+    if (IdeaApplication.isLoaded()) {
+      LoggingEvent queued;
+      while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
+      queueAppend(event);
+    }
+    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+      myEarlyEvents.add(event);
+    }
+  }
+
+  private void queueAppend(@NotNull LoggingEvent event) {
     if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
       // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase

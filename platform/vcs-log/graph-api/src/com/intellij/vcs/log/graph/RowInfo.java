@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  */
@@ -34,4 +35,7 @@ public interface RowInfo<Id> {
 
   @NotNull
   RowType getRowType();
+
+  @NotNull
+  List<Integer> getAdjacentRows(boolean parent);
 }

@@ -10,9 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UDeclaration;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.*;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -30,7 +28,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int IS_STATIC_MASK = 0x04;
   private static final int IS_FINAL_MASK = 0x08;
   private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
-  private static final int IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK = 0x800;
+  private static final int FORBID_PROTECTED_ACCESS_MASK = 0x800;
 
   protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
@@ -230,18 +228,21 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, UExpression expressionFrom) {
     addInReference(refFrom);
-    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
+    setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
-  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, UExpression expressionFrom) {
-    if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom instanceof UQualifiedReferenceExpression && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
-      setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+  void setForbidProtectedAccess(RefElementImpl refFrom, UExpression expressionFrom) {
+    if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
+        (expressionFrom instanceof UQualifiedReferenceExpression || 
+         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) && 
+        RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+      setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
     }
   }
 
-  public boolean isUsedQualifiedOutsidePackage() {
-    return checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
+  public boolean isProtectedAccessForbidden() {
+    return checkFlag(FORBID_PROTECTED_ACCESS_MASK);
   }
   
   RefJavaManager getRefJavaManager() {

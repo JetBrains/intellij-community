@@ -43,9 +43,7 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter(this);
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
-
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -167,7 +165,7 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected JBEditorTabsPainter getPainter() {
-    return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
+    return myDefaultPainter;
   }
 
   @Override
@@ -208,23 +206,28 @@ public class JBEditorTabs extends JBTabsImpl {
     Rectangle beforeTabs;
     Rectangle afterTabs;
     if (vertical) {
+      int x = r2.x + insets.left;
       int width = maxLength - insets.left - insets.right;
-      beforeTabs = new Rectangle(insets.left, insets.top, width, minOffset - insets.top);
-      afterTabs = new Rectangle(insets.left, maxOffset, width,
-                                r2.height - maxOffset - insets.top - insets.bottom);
+
+      if (getTabsPosition() == JBTabsPosition.right) {
+        x = r2.width - width - insets.left + getActiveTabUnderlineHeight();
+      } else {
+        width -= getActiveTabUnderlineHeight();
+      }
+
+      beforeTabs = new Rectangle(x, insets.top, width, minOffset - insets.top);
+      afterTabs = new Rectangle(x, maxOffset, width, r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;
       int height = maxLength - insets.top - insets.bottom;
       if (getTabsPosition() == JBTabsPosition.bottom) {
         y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
-        height++;
         height -= getActiveTabUnderlineHeight();
       }
-      y--;
 
+      beforeTabs = new Rectangle(insets.left, y, minOffset, height);
       afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
-      beforeTabs = new Rectangle(0, y, minOffset, height);
     }
 
     getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);

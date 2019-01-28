@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -10,10 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,6 @@ import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
  * @author Dmitry Avdeev
  */
 public class ProjectOpeningTest extends PlatformTestCase {
-
   public void testOpenProjectCancelling() throws Exception {
     File foo = createTempDir("foo");
     Project project = null;
@@ -98,10 +97,9 @@ public class ProjectOpeningTest extends PlatformTestCase {
     assertFalse(ProjectUtil.isSameProject(iprFilePath2.getAbsolutePath(), fileBasedProject));
   }
 
-  static void closeProject(final Project project) {
+  static void closeProject(@Nullable Project project) {
     if (project != null && !project.isDisposed()) {
-      ProjectManager.getInstance().closeProject(project);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
   }
 

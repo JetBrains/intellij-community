@@ -18,7 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class TopHitProvidersTest extends PlatformTestCase {
+public class TopHitProvidersTest extends LightPlatformTestCase {
   public void testUiSettings() {
     List<OptionsTopHitProvider> providers = getProvider(AppearanceOptionsTopHitProvider.ID);
     for (OptionsTopHitProvider provider: providers) {

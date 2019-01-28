@@ -29,6 +29,7 @@ public class GrDocTagValueTokenImpl extends GroovyDocPsiElementImpl implements G
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocTagValueToken";
   }

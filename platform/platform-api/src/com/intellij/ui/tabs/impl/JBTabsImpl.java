@@ -1247,7 +1247,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private TabInfo getToSelectOnRemoveOf(TabInfo info) {
+  public TabInfo getToSelectOnRemoveOf(TabInfo info) {
     if (!myVisibleInfos.contains(info)) return null;
     if (mySelectedInfo != info) return null;
 
@@ -3411,11 +3411,6 @@ public class JBTabsImpl extends JComponent
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PAGE_TAB_LIST;
-    }
-
-    @Override
-    public int getAccessibleChildrenCount() {
-      return getTabCount();
     }
 
     @Override

@@ -285,7 +285,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (ForCanBeForeachInspection.isIteratorMethodCalled(variable, body)) {
         return false;
       }
-      //noinspection SimplifiableIfStatement
       if (isIteratorHasNextCalled(variable, body)) {
         return false;
       }

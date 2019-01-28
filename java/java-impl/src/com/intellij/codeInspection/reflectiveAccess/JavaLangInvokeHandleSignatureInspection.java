@@ -343,7 +343,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression typeExpression = factory.createExpressionFromText(myFieldTypeText + ".class", element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(typeExpression));
@@ -380,7 +380,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiIdentifier identifier = factory.createIdentifier(myReplacementName);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(identifier));
@@ -495,7 +495,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
     private static void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ReflectiveSignature signature) {
       final String replacementText = getMethodTypeExpressionText(signature);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression replacement = factory.createExpressionFromText(replacementText, element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(replacement));

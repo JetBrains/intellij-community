@@ -36,7 +36,7 @@ public class SetDefault implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
+  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
     if (myResult) {
       dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy, myAutomatic);
     }

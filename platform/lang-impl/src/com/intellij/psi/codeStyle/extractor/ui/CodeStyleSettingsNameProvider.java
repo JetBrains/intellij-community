@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 03.08.2015.
  */
 public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
@@ -196,7 +195,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     }
   }
 
-  public static Value getValue(final CodeStyleSettingPresentation representation, List<Value> values) {
+  public static Value getValue(final CodeStyleSettingPresentation representation, List<? extends Value> values) {
     Value myValue = ContainerUtil.find(values, value -> {
       return value.state == Value.STATE.SELECTED && value.name.equals(representation.getFieldName());
       //return value.name.equals(representation.getFieldName()); //TODO this is here only to test the UI!!

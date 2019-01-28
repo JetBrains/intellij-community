@@ -57,7 +57,6 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
     readHistory(state, FIND_HISTORY, findHistory);
   }
 
-    @SuppressWarnings({"unchecked"})
     private static void readHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
         final Element historyElement = element.getChild(s);
         if (historyElement != null) {
@@ -120,20 +119,16 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
      * Add a string to the history list
      */
     public void addHistory(HistoryElement element) {
-        final String expression = element.expression;
-        if (history.containsKey(expression)) {
-            history.remove(expression);
-        }
-        history.put(expression, element);
+      String expression = element.expression;
+      history.remove(expression);
+      history.put(expression, element);
     }
 
-    public void addFindHistory(HistoryElement element) {
-        final String expression = element.expression;
-        if (findHistory.containsKey(expression)) {
-            findHistory.remove(expression);
-        }
-        findHistory.put(expression, element);
-    }
+  public void addFindHistory(HistoryElement element) {
+    String expression = element.expression;
+    findHistory.remove(expression);
+    findHistory.put(expression, element);
+  }
 
     /**
      * Returns the history

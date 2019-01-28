@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.replaceInProject;
 
@@ -44,7 +30,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -52,6 +37,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
@@ -127,14 +113,14 @@ public class ReplaceInProjectManager {
 
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    final Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
       toOpenInNewTab = true;
       isOpenInNewTabEnabled = false;
     }
     else {
       toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
     if (model == null) {
 
@@ -174,7 +160,7 @@ public class ReplaceInProjectManager {
     findManager.getFindInProjectModel().copyFrom(findModel);
     final FindModel findModelCopy = findModel.clone();
 
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
@@ -190,7 +176,7 @@ public class ReplaceInProjectManager {
     @NotNull
     @Override
     public String getLongDescriptiveName() {
-      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
+      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
       return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
     }
 
@@ -201,7 +187,7 @@ public class ReplaceInProjectManager {
 
     @Override
     public void showSettings() {
-      Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
       findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);
@@ -223,8 +209,12 @@ public class ReplaceInProjectManager {
         public void usageViewCreated(@NotNull UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
-          usageView.setReRunActivity(
-            () -> searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation));
+          usageView.setRerunAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation);
+            }
+          });
         }
 
         @Override
@@ -242,8 +232,8 @@ public class ReplaceInProjectManager {
   public boolean showReplaceAllConfirmDialog(@NotNull String usagesCount, @NotNull String stringToFind, @NotNull String filesCount, @NotNull String stringToReplace) {
     return Messages.YES == MessageDialogBuilder.yesNo(
       FindBundle.message("find.replace.all.confirmation.title"),
-      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
-                         StringUtil.escapeXml(stringToReplace)))
+      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXmlEntities(stringToFind), filesCount,
+                         StringUtil.escapeXmlEntities(stringToReplace)))
                                                .yesText(FindBundle.message("find.replace.command"))
                                                .project(myProject)
                                                .noText(Messages.CANCEL_BUTTON).show();
@@ -312,7 +302,7 @@ public class ReplaceInProjectManager {
         putValue(LONG_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
         putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
       }
-      
+
       @Override
       public void actionPerformed(ActionEvent e) {
         replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
@@ -410,6 +400,7 @@ public class ReplaceInProjectManager {
       myProject,
       null,
       indicator -> {
+        indicator.setIndeterminate(false);
         int processed = 0;
         VirtualFile lastFile = null;
 
@@ -559,7 +550,7 @@ public class ReplaceInProjectManager {
     }
 
     if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyFiles);
     }
 
     if (hasReadOnlyUsages(selectedUsages)) {

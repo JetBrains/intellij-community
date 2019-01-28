@@ -30,15 +30,19 @@ public class PyPackageManagersImpl extends PyPackageManagers {
     PyPackageManager manager = myInstances.get(key);
     if (manager == null) {
       final VirtualFile homeDirectory = sdk.getHomeDirectory();
-      if (PythonSdkType.isRemote(sdk)) {
-        manager = new PyRemotePackageManagerImpl(sdk);
+      PyPackageManager customPackageManager = PyCustomPackageManagers.tryCreateCustomPackageManager(sdk);
+      if (customPackageManager != null) {
+        manager = customPackageManager;
+      }
+      else if (PythonSdkType.isRemote(sdk)) {
+        manager = new PyUnsupportedPackageManager(sdk);
       }
       else if (PipenvKt.isPipEnv(sdk)) {
         manager = new PyPipEnvPackageManager(sdk);
       }
       else if (PyCondaPackageManagerImpl.isConda(sdk) &&
                homeDirectory != null &&
-               PyCondaPackageService.getCondaExecutable(homeDirectory) != null) {
+               PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
         manager = new PyCondaPackageManagerImpl(sdk);
       }
       else {

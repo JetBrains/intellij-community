@@ -20,6 +20,7 @@ public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonRe
     visitor.visitReferenceExpression(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);

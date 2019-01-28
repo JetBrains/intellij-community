@@ -95,6 +95,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiClassObjectAccessExpression:" + getText();
   }

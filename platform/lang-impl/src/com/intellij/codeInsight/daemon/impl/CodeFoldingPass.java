@@ -46,7 +46,7 @@ class CodeFoldingPass extends EditorBoundHighlightingPass implements PossiblyDum
     return file.getUserData(key) == null || editor.getUserData(key) == null;
   }
 
-  static void clearFirstTimeFlag(PsiFile file, Editor editor, Key<Boolean> key) {
+  static void clearFirstTimeFlag(PsiFile file, Editor editor, Key<? super Boolean> key) {
     file.putUserData(key, Boolean.FALSE);
     editor.putUserData(key, Boolean.FALSE);
   }

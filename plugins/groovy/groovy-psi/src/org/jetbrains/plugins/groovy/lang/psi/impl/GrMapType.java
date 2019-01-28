@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -17,7 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -46,6 +48,10 @@ public abstract class GrMapType extends GrLiteralClassType {
                       GlobalSearchScope scope,
                       @NotNull LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
+  }
+
+  protected GrMapType(@NotNull PsiElement context) {
+    super(LanguageLevel.JDK_1_5, context);
   }
 
   @NotNull
@@ -106,7 +112,7 @@ public abstract class GrMapType extends GrLiteralClassType {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
     boolean tooMany = components.size() > 2;
-    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    final List<String> theFirst = ContainerUtil.getFirstItems(components, 2);
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
@@ -115,22 +121,13 @@ public abstract class GrMapType extends GrLiteralClassType {
     return param == null ? "null" : param.getInternalCanonicalText();
   }
 
-  public boolean equals(Object obj) {
-    if (obj instanceof GrMapType) {
-      GrMapType other = (GrMapType)obj;
-      return getStringEntries().equals(other.getStringEntries()) &&
-             getOtherEntries().equals(other.getOtherEntries());
-    }
-    return super.equals(obj);
-  }
-
   @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return type instanceof GrMapType || super.isAssignableFrom(type);
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {
-    final GlobalSearchScope scope = l.getScope().intersectWith(r.getResolveScope());
+    final GlobalSearchScope scope = l.getResolveScope().intersectWith(r.getResolveScope());
 
     final LinkedHashMap<String, PsiType> strings = ContainerUtil.newLinkedHashMap();
     strings.putAll(l.getStringEntries());
@@ -145,15 +142,8 @@ public abstract class GrMapType extends GrLiteralClassType {
 
   public static GrMapType create(JavaPsiFacade facade,
                                  GlobalSearchScope scope,
-                                 LinkedHashMap<String, PsiType> stringEntries,
-                                 List<Couple<PsiType>> otherEntries) {
-    return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
-  }
-
-  public static GrMapType create(GlobalSearchScope scope) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(scope.getProject());
-    List<Couple<PsiType>> otherEntries = Collections.emptyList();
-    LinkedHashMap<String, PsiType> stringEntries = ContainerUtil.newLinkedHashMap();
+                                 @NotNull LinkedHashMap<String, PsiType> stringEntries,
+                                 @NotNull List<Couple<PsiType>> otherEntries) {
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 

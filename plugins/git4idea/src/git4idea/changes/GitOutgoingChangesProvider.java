@@ -18,7 +18,6 @@ import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +46,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (base == null) {
       return new Pair<>(null, Collections.emptyList());
     }
-    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
-                                                                                handler -> handler.addParameters(base.asString() + "..HEAD"));
+    List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
+                                                                          handler -> handler.addParameters(base.asString() + "..HEAD"));
     return new Pair<>(base, map(lists, identity()));
   }
 
@@ -74,7 +73,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   }
 
   @Override
-  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException {
+  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot)
+    throws VcsException {
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
@@ -82,27 +82,23 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final GitRevisionNumber base;
     try {
       base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       LOG.info(e);
       return new ArrayList<>(localChanges);
     }
     if (base == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
-    final List<Pair<SHAHash, Date>> hashes = GitHistoryUtils.onlyHashesHistory(myProject,
-                                                                               VcsUtil.getFilePath(vcsRoot), vcsRoot, (base.asString() + "..HEAD"));
 
-    if (hashes.isEmpty()) return Collections.emptyList(); // no local commits
-    final String first = hashes.get(0).getFirst().getValue(); // optimization
-    final Set<String> localHashes = new HashSet<>();
-    for (Pair<SHAHash, Date> hash : hashes) {
-      localHashes.add(hash.getFirst().getValue());
-    }
-    final Collection<Change> result = new ArrayList<>();
+    Set<String> localHashes = new HashSet<>();
+    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commit -> localHashes.add(commit.getId().asString()), base.asString() + "..HEAD");
+    if (localHashes.isEmpty()) return Collections.emptyList();
+
+    Collection<Change> result = new ArrayList<>();
     for (Change change : localChanges) {
       if (change.getBeforeRevision() != null) {
-        final String changeBeforeRevision = change.getBeforeRevision().getRevisionNumber().asString().trim();
-        if (first.equals(changeBeforeRevision) || localHashes.contains(changeBeforeRevision)) {
+        if (localHashes.contains(change.getBeforeRevision().getRevisionNumber().asString().trim())) {
           result.add(change);
         }
       }
@@ -115,7 +111,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;
     try {
-      return new Date(GitHistoryUtils.getAuthorTime(myProject, file, revision.asString()));
+      VirtualFile root = GitUtil.getGitRoot(VcsUtil.getLastCommitPath(myProject, file));
+      return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
     }
     catch (VcsException e) {
       return null;
@@ -124,6 +121,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
 
   /**
    * Get a merge base between the current branch and specified branch.
+   *
    * @return the common commit or null if the there is no common commit
    */
   @Nullable

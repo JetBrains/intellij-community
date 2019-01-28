@@ -147,8 +147,8 @@ public class BackgroundTaskUtil {
 
   @Nullable
   @CalledInAny
-  public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<T> computable,
-                                                    @NotNull Consumer<T> asyncCallback,
+  public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<? extends T> computable,
+                                                    @NotNull Consumer<? super T> asyncCallback,
                                                     long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       indicator -> computable.compute(),
@@ -174,19 +174,14 @@ public class BackgroundTaskUtil {
                                                                               @NotNull ModalityState modality,
                                                                               long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
+    indicator.start();
 
     Helper<T> helper = new Helper<>();
 
-    indicator.start();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      try {
-        T result = task.fun(indicator);
-        if (!helper.setResult(result)) {
-          asyncCallback.consume(result, indicator);
-        }
-      }
-      finally {
-        indicator.stop();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      T result = task.fun(indicator);
+      if (!helper.setResult(result)) {
+        asyncCallback.consume(result, indicator);
       }
     }, indicator));
 

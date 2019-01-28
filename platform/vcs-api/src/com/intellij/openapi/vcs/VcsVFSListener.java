@@ -5,13 +5,15 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
@@ -23,13 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author yole
- */
 public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
 
-  private final VcsDirtyScopeManager myDirtyScopeManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
@@ -64,7 +62,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final LinkedHashSet<VirtualFile> myDirtyFiles = ContainerUtil.newLinkedHashSet();
+  private final ProjectConfigurationFilesProcessor myProjectConfigurationFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -72,7 +70,6 @@ public abstract class VcsVFSListener implements Disposable {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
@@ -81,19 +78,17 @@ public abstract class VcsVFSListener implements Disposable {
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
     project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
+
+    myProjectConfigurationFilesProcessor = ServiceManager.getService(myProject, ProjectConfigurationFilesProcessor.class);
   }
 
   @Override
   public void dispose() {
   }
 
-  protected boolean isEventIgnored(@NotNull VirtualFileEvent event, boolean putInDirty) {
+  protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
     if (event.isFromRefresh()) return true;
-    boolean vcsIgnored = !isUnderMyVcs(event.getFile());
-    if (vcsIgnored) {
-      myDirtyFiles.add(event.getFile());
-    }
-    return vcsIgnored;
+    return !isUnderMyVcs(event.getFile());
   }
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
@@ -141,6 +136,9 @@ public abstract class VcsVFSListener implements Disposable {
   protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles, this);
+
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
     }
@@ -152,6 +150,18 @@ public abstract class VcsVFSListener implements Disposable {
                                                                            myAddOption);
       if (filesToProcess != null) {
         performAdding(new ArrayList<>(filesToProcess), copyFromMap);
+      }
+    }
+  }
+
+  protected void saveUnsavedVcsIgnoreFiles() {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Set<String> ignoreFileNames = VcsUtil.getVcsIgnoreFileNames(myProject);
+
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file != null && ignoreFileNames.contains(file.getName())) {
+        fileDocumentManager.saveDocument(document);
       }
     }
   }
@@ -217,7 +227,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void fileAdded(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
-    if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
+    if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(file) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
       LOG.debug("Adding [", file, "] to added files");
       myAddedFiles.add(event.getFile());
@@ -245,12 +255,6 @@ public abstract class VcsVFSListener implements Disposable {
   protected void processMovedFile(@NotNull VirtualFile file, @NotNull String newParentPath, @NotNull String newName) {
     final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
     LOG.debug("Checking moved file ", file, "; status=", status);
-    if (status == FileStatus.IGNORED) {
-      if (file.getParent() != null) {
-        myDirtyFiles.add(file.getParent());
-        myDirtyFiles.add(file); // will be at new path
-      }
-    }
 
     String newPath = newParentPath + "/" + newName;
     if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
@@ -322,7 +326,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
-      if (isEventIgnored(event, true) || myChangeListManager.isIgnoredFile(event.getFile())) return;
+      if (isEventIgnored(event) || myChangeListManager.isIgnoredFile(event.getFile())) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOriginalFile());
       if (oldVcs == myVcs) {
         final VirtualFile parent = event.getFile().getParent();
@@ -339,7 +343,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (isEventIgnored(event, true)) {
+      if (isEventIgnored(event)) {
         return;
       }
       if (!myChangeListManager.isIgnoredFile(file)) {
@@ -360,7 +364,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event, true)) return;
+      if (isEventIgnored(event)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
       LOG.debug("beforeFileMovement ", event, " into ", newVcs);
@@ -374,7 +378,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
-      if (isEventIgnored(event, true)) return;
+      if (isEventIgnored(event)) return;
       final AbstractVcs oldVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getOldParent());
       if (oldVcs != myVcs) {
         myAddedFiles.add(event.getFile());
@@ -383,7 +387,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
-      if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+      if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
         LOG.debug("before file rename ", event);
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
@@ -461,8 +465,7 @@ public abstract class VcsVFSListener implements Disposable {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
       if (myCommandLevel == 0) {
-        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty() ||
-            ! myDirtyFiles.isEmpty()) {
+        if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
           doNotDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
@@ -477,21 +480,6 @@ public abstract class VcsVFSListener implements Disposable {
           if (!myMovedFiles.isEmpty()) {
             executeMoveRename();
             myMovedFiles.clear();
-          }
-          if (! myDirtyFiles.isEmpty()) {
-            final List<VirtualFile> files = new ArrayList<>();
-            final List<VirtualFile> dirs = new ArrayList<>();
-            for (VirtualFile dirtyFile : myDirtyFiles) {
-              if (dirtyFile != null) {
-                if (dirtyFile.isDirectory()) {
-                  dirs.add(dirtyFile);
-                } else {
-                  files.add(dirtyFile);
-                }
-              }
-            }
-            myDirtyScopeManager.filesDirty(files, dirs);
-            myDirtyFiles.clear();
           }
           if (! myExceptions.isEmpty()) {
             AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");

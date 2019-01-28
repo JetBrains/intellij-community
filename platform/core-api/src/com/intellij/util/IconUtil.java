@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.DirectoryFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
@@ -28,6 +27,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
@@ -220,20 +221,20 @@ public class IconUtil {
   }
 
   private static class FileIconProviderHolder {
-    private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
+    private static final List<FileIconProvider> myProviders = FileIconProvider.EP_NAME.getExtensionList();
   }
 
   @NotNull
-  private static FileIconProvider[] getProviders() {
+  private static List<FileIconProvider> getProviders() {
     return FileIconProviderHolder.myProviders;
   }
 
   private static class FileIconPatcherHolder {
-    private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
+    private static final List<FileIconPatcher> ourPatchers = FileIconPatcher.EP_NAME.getExtensionList();
   }
 
   @NotNull
-  private static FileIconPatcher[] getPatchers() {
+  private static List<FileIconPatcher> getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
   }
 
@@ -667,11 +668,13 @@ public class IconUtil {
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
     class MyIcon extends JBUI.ScalableJBIcon {
+      private @NotNull final String myText;
       private Font myFont;
       private FontMetrics myMetrics;
       private final WeakReference<Component> myCompRef = new WeakReference<>(component);
 
-      private MyIcon() {
+      private MyIcon(@NotNull final String text) {
+        myText = text;
         setIconPreScaled(false);
         getScaleContext().addUpdateListener(() -> update());
         update();
@@ -683,7 +686,7 @@ public class IconUtil {
         try {
           GraphicsUtil.setupAntialiasing(g);
           g.setFont(myFont);
-          UIUtil.drawStringWithHighlighting(g, text,
+          UIUtil.drawStringWithHighlighting(g, myText,
                                             (int)scaleVal(x, OBJ_SCALE) + (int)scaleVal(2),
                                             (int)scaleVal(y, OBJ_SCALE) + getIconHeight() - (int)scaleVal(1),
                                             JBColor.foreground(), JBColor.background());
@@ -695,7 +698,7 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return myMetrics.stringWidth(text) + (int)scaleVal(4);
+        return myMetrics.stringWidth(myText) + (int)scaleVal(4);
       }
 
       @Override
@@ -709,9 +712,20 @@ public class IconUtil {
         if (comp == null) comp = new Component() {};
         myMetrics = comp.getFontMetrics(myFont);
       }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MyIcon)) return false;
+        final MyIcon icon = (MyIcon)o;
+
+        if (!Objects.equals(myText, icon.myText)) return false;
+        if (!Objects.equals(myFont, icon.myFont)) return false;
+        return true;
+      }
     }
 
-    return new MyIcon();
+    return new MyIcon(text);
   }
 
   @NotNull
@@ -726,7 +740,7 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
-    return IconLoader.filterIcon(icon, filter, ancestor);
+  public static Icon filterIcon(@NotNull Icon icon, Producer<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
 }

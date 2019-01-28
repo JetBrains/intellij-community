@@ -67,10 +67,15 @@ class PointlessBooleanExpression {
     if(<warning descr="'sideEffect() && true' can be simplified to 'sideEffect()'">sideEffect() && true</warning>) {
       System.out.println("ooh");
     }
-    // Do not warn as we cannot simplify w/o reordering calls which could be undesired
-    // this code is warned by DFA inspection (w/o quick-fix)
-    if(Math.random() > 0.5 && (sideEffect() || true)) {
+    // Here side-effect can be extracted and placed inside loop
+    if(Math.random() > 0.5 && (<warning descr="'sideEffect() || true' can be simplified to 'true'">sideEffect() || true</warning>)) {
       System.out.println("well");
+    }
+    // Extracting side-effects from conjunction in if statement which contains else branch is still not supported (though warning is displayed)
+    if(Math.random() > 0.5 && (sideEffect() || true)) {
+      System.out.println("ok");
+    } else {
+      System.out.println("cancel");
     }
     // Here side-effect can be extracted before loop
     if((<warning descr="'sideEffect() || true' can be simplified to 'true'">sideEffect() || true</warning>) && Math.random() > 0.5) {

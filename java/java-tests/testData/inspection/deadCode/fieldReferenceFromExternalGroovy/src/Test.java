@@ -1,0 +1,3 @@
+class Util {
+    String foo;
+}

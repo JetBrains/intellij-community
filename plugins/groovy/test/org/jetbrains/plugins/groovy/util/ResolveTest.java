@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import groovy.transform.CompileStatic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
@@ -13,7 +12,6 @@ import java.util.Collection;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
 
-@CompileStatic
 public interface ResolveTest extends BaseTest {
 
   @NotNull
@@ -38,7 +36,11 @@ public interface ResolveTest extends BaseTest {
   }
 
   default <T extends PsiElement> void resolveTest(@NotNull String text, @Nullable Class<T> clazz) {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText(text);
+    resolveTest(referenceByText(text), clazz);
+  }
+
+  default <T extends PsiElement> void resolveTest(@NotNull GroovyReference reference, @Nullable Class<T> clazz) {
+    Collection<? extends GroovyResolveResult> results = reference.resolve(false);
     if (clazz == null) {
       assertEmpty(results);
     }

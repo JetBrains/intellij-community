@@ -135,7 +135,6 @@ public class HttpRequestsTest {
       ex.close();
     });
 
-    //noinspection SpellCheckingInspection
     try {
       HttpRequests
         .post(myUrl, null)
@@ -144,7 +143,6 @@ public class HttpRequestsTest {
     }
     catch (SocketException e) {
       // java.net.SocketException: Software caused connection abort: recv failed
-      //noinspection SpellCheckingInspection
       assertThat(e.getMessage()).contains("recv failed");
     }
     catch (HttpRequests.HttpStatusException e) {

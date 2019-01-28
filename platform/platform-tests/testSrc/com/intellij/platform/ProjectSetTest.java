@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.google.gson.JsonElement;
@@ -52,7 +38,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testProjectSetReader() throws IOException {
-    final Ref<List<Pair<String, String>>> ref = Ref.create();
+    final Ref<List<? extends Pair<String, String>>> ref = Ref.create();
     PlatformTestUtil.registerExtension(ProjectSetProcessor.EXTENSION_POINT_NAME, new ProjectSetProcessor() {
       @Override
       public String getId() {
@@ -60,7 +46,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
       }
 
       @Override
-      public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
+      public void processEntries(@NotNull List<? extends Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext) {
         ref.set(entries);
       }
     }, getTestRootDisposable());
@@ -69,7 +55,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     context.directory = getSourceRoot();
     readDescriptor(new File(getTestDataPath() + "descriptor.json"), context);
 
-    List<Pair<String, String>> entries = ref.get();
+    List<? extends Pair<String, String>> entries = ref.get();
     assertEquals(2, entries.size());
     assertEquals("git://foo.bar", entries.get(0).getSecond());
     assertEquals("{\"foo\":\"bar\"}", entries.get(1).getSecond());
@@ -117,7 +103,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
-    ((ProjectManagerEx)ProjectManager.getInstance()).closeAndDispose(project);
+    ((ProjectManagerEx)ProjectManager.getInstance()).forceCloseProject(project, true);
   }
 
   @Override

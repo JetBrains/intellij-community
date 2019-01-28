@@ -69,7 +69,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   @Nullable
   public String getReturnTypeText() {
     final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
-    return typeElement != null ? typeElement.getText() : null;
+    return typeElement != null ? typeElement.getType().getCanonicalText(true) : null;
   }
 
   @Override

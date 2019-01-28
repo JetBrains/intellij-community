@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 3/11/13 11:56 AM
  */
 public class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
   

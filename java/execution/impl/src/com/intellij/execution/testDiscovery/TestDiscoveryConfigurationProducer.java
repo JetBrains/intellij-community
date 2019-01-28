@@ -31,11 +31,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationWithDiscoverySupport> {
-  protected TestDiscoveryConfigurationProducer(ConfigurationType type) {
-    super(type);
-  }
-
-
   protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
   protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
 
@@ -128,7 +123,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return new MyRunProfile(testMethods, module, configuration, configurationName);
   }
 
-  public static Module detectTargetModule(Collection<Module> survivedModules, Project project) {
+  public static Module detectTargetModule(Collection<? extends Module> survivedModules, Project project) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
     survivedModules

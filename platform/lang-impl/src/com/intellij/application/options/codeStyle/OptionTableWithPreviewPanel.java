@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -54,14 +55,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * @author max
  */
-@SuppressWarnings("Duplicates")
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 
@@ -506,7 +506,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private final Function<Integer,String> myDefaultValueRenderer;
+    @Nullable private final Function<? super Integer, String> myDefaultValueRenderer;
 
     IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -517,7 +517,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable Function<Integer,String> defaultValueRenderer) {
+                     @Nullable Function<? super Integer, String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;
@@ -939,7 +939,11 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null && !editor.stopCellEditing()) {
+      throw new ConfigurationException("Editing cannot be stopped");
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
@@ -947,6 +951,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
+    TableCellEditor editor = myTreeTable.getCellEditor();
+    if (editor != null) {
+      return true; // to allow stop editing in #apply
+    }
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     if (isModified(root, settings)) {
@@ -976,7 +984,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return options;
   }
 
-  private static void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+  private static void collectOptions(Set<? super String> optionNames, final List<? extends Option> optionList) {
     for (Option option : optionList) {
       if (option.groupName != null) {
         optionNames.add(option.groupName);

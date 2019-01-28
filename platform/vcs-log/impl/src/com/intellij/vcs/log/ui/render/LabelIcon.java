@@ -33,11 +33,11 @@ import java.util.List;
 public class LabelIcon implements Icon {
   public static final float SIZE = 6.25f;
   private final int mySize;
-  @NotNull private final List<Color> myColors;
+  @NotNull private final List<? extends Color> myColors;
   @NotNull private final Color myBgColor;
   @NotNull private BufferedImage myImage;
 
-  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull List<Color> colors) {
+  public LabelIcon(@NotNull JComponent component, int size, @NotNull Color bgColor, @NotNull List<? extends Color> colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;

@@ -287,6 +287,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       myFile = null;
       myVFile = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

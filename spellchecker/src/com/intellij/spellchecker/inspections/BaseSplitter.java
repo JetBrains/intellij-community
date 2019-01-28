@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public abstract class BaseSplitter implements Splitter {
   public static final int MIN_RANGE_LENGTH = 3;
 
-  protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
+  protected static void addWord(@NotNull Consumer<? super TextRange> consumer, boolean ignore, @Nullable TextRange found) {
     if (found == null || ignore) {
       return;
     }
@@ -93,8 +93,8 @@ public abstract class BaseSplitter implements Splitter {
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(StringUtil.newBombedCharSequence(range.substring(text), 500));
     try {
+      Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
         checkCancelled();
         TextRange found = matcherRange(range, matcher);
@@ -125,6 +125,24 @@ public abstract class BaseSplitter implements Splitter {
     catch (ProcessCanceledException e) {
       return Collections.singletonList(range);
     }
+  }
+
+  protected static CharSequence newBombedCharSequence(String text, TextRange range) {
+    return newBombedCharSequence(range.substring(text));
+  }
+
+  protected static CharSequence newBombedCharSequence(final String substring) {
+    final long myTime = System.currentTimeMillis() + 500;
+    return new StringUtil.BombedCharSequence(substring) {
+      @Override
+      protected void checkCanceled() {
+        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+        long l = System.currentTimeMillis();
+        if (l >= myTime) {
+          throw new ProcessCanceledException();
+        }
+      }
+    };
   }
 
   public static void checkCancelled() {

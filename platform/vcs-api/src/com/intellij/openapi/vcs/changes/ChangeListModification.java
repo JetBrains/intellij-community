@@ -18,6 +18,9 @@ package com.intellij.openapi.vcs.changes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see ChangeListManager
+ */
 public interface ChangeListModification {
   LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment);
 
@@ -36,5 +39,5 @@ public interface ChangeListModification {
 
   boolean editName(@NotNull String fromName, @NotNull String toName);
   @Nullable
-  String editComment(@NotNull String fromName, final String newComment);
+  String editComment(@NotNull String name, final String newComment);
 }

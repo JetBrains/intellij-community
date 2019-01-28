@@ -40,8 +40,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 /**
  * @author Max Medvedev
@@ -68,36 +66,33 @@ public abstract class ImportLayoutPanel extends JPanel {
     super(new BorderLayout());
     setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.import.layout"), false, JBUI.emptyInsets()));
 
-    myCbLayoutStaticImportsSeparately.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (areStaticImportsEnabled()) {
-          boolean found = false;
-          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
-            PackageEntry entry = myImportLayoutList.getEntryAt(i);
-            if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            int index = myImportLayoutList.getEntryCount();
-            if (index != 0 && myImportLayoutList.getEntryAt(index - 1) != PackageEntry.BLANK_LINE_ENTRY) {
-              myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
-            }
-            myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+    myCbLayoutStaticImportsSeparately.addItemListener(e -> {
+      if (areStaticImportsEnabled()) {
+        boolean found = false;
+        for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
+          PackageEntry entry = myImportLayoutList.getEntryAt(i);
+          if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
+            found = true;
+            break;
           }
         }
-        else {
-          for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
-            PackageEntry entry = myImportLayoutList.getEntryAt(i);
-            if (entry.isStatic()) {
-              myImportLayoutList.removeEntryAt(i);
-            }
+        if (!found) {
+          int index = myImportLayoutList.getEntryCount();
+          if (index != 0 && myImportLayoutList.getEntryAt(index - 1) != PackageEntry.BLANK_LINE_ENTRY) {
+            myImportLayoutList.addEntry(PackageEntry.BLANK_LINE_ENTRY);
           }
+          myImportLayoutList.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
         }
-        refresh();
       }
+      else {
+        for (int i = myImportLayoutList.getEntryCount() - 1; i >= 0; i--) {
+          PackageEntry entry = myImportLayoutList.getEntryAt(i);
+          if (entry.isStatic()) {
+            myImportLayoutList.removeEntryAt(i);
+          }
+        }
+      }
+      refresh();
     });
 
     add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
@@ -120,31 +115,13 @@ public abstract class ImportLayoutPanel extends JPanel {
           addBlankLine();
         }
       })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeEntryFromImportLayouts();
-        }
-      })
-      .setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowUp();
-        }
-      })
-      .setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          moveRowDown();
-        }
-      })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(@NotNull AnActionEvent e) {
-          int selectedImport = myImportLayoutTable.getSelectedRow();
-          PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
-          return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
-        }
+      .setRemoveAction(button -> removeEntryFromImportLayouts())
+      .setMoveUpAction(button -> moveRowUp())
+      .setMoveDownAction(button -> moveRowDown())
+      .setRemoveActionUpdater(e -> {
+        int selectedImport = myImportLayoutTable.getSelectedRow();
+        PackageEntry entry = selectedImport < 0 ? null : myImportLayoutList.getEntryAt(selectedImport);
+        return entry != null && entry != PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY && entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
       })
       .setButtonComparator(ApplicationBundle.message("button.add.package"), ApplicationBundle.message("button.add.blank"), "Remove", "Up", "Down")
       .setPreferredSize(new Dimension(-1, 100)).createPanel();

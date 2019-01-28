@@ -43,6 +43,7 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
 
     // When referent is collected, equality should be identity-based (for the processQueues() remove this very same SoftValue)
     // otherwise it's just canonical equals on referents for replace(K,V,V) to work
+    @Override
     public final boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -52,7 +53,7 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
 
       V v = get();
       V thatV = that.get();
-      return key.equals(that.getKey()) && v != null && thatV != null && v.equals(thatV);
+      return key.equals(that.getKey()) && v != null && v.equals(thatV);
     }
   }
 
@@ -60,11 +61,5 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
   @Override
   ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MySoftReference<K,V>(key, value, myQueue);
-  }
-
-  //todo remove when Kotlin stops calling containsKey()
-  @Override
-  public boolean containsKey(Object key) {
-    return get(key) != null;  // Kotlin still calls containsKey()
   }
 }

@@ -34,9 +34,6 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
   @Override
   public DirectoryProcessingResult detectRoots(@NotNull File dir, @NotNull File[] children, @NotNull File base,
                                                @NotNull List<DetectedProjectRoot> result) {
-    if (dir.getName().equals("node_modules")) {
-      return DirectoryProcessingResult.SKIP_CHILDREN;
-    }
     final String fileExtension = getFileExtension();
     if (JavaFileType.DEFAULT_EXTENSION.equals(fileExtension)) {
       for (File child : children) {

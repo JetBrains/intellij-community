@@ -10,14 +10,12 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
@@ -69,7 +67,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getAllAccepted() {
     int result = REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAllAdditionalFlags();
     }
     return result;
@@ -78,7 +76,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getDefinitionSearchFlags() {
     int result = getAllAccepted();
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAdditionalDefinitionSearchFlags();
     }
     return result;
@@ -87,7 +85,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   @Override
   public int getReferenceSearchFlags() {
     int result = getAllAccepted();
-    for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
+    for (TargetElementUtilExtender each : TargetElementUtilExtender.EP_NAME.getExtensionList()) {
       result |= each.getAdditionalReferenceSearchFlags();
     }
     return result;
@@ -167,8 +165,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
    */
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     int offset = editor.getCaretModel().getOffset();
     final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;
@@ -253,7 +249,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
-  protected boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+  private boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
 
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
@@ -362,7 +358,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (ref == null) return null;
 
     final Language language = ref.getElement().getLanguage();
-    TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     if (evaluator != null) {
       final PsiElement element = evaluator.getElementByReference(ref, flags);
       if (element != null) return element;
@@ -419,7 +415,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
-    TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(element.getLanguage());
+    TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(element.getLanguage());
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
@@ -439,16 +435,16 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return PsiSearchHelper.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
-  protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+  private static final LanguageExtension<TargetElementEvaluator> TARGET_ELEMENT_EVALUATOR =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private static TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {
-    TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx ? (TargetElementEvaluatorEx)result : null;
   }
   @Nullable
   private static TargetElementEvaluatorEx2 getElementEvaluatorsEx2(@NotNull Language language) {
-    TargetElementEvaluator result = targetElementEvaluator.forLanguage(language);
+    TargetElementEvaluator result = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     return result instanceof TargetElementEvaluatorEx2 ? (TargetElementEvaluatorEx2)result : null;
   }
 }

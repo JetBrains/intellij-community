@@ -102,7 +102,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
           return oldChoosers[0].getChooserTypes();
         }
       });
-      return (StableElement<T>)t.createStableCopy();
+      return t.createStableCopy();
     });
     if (result != null) {
       domManager.getTypeChooserManager().registerTypeChooser(aClass[0], oldChoosers[0]);

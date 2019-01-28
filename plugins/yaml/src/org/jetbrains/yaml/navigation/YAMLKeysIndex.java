@@ -9,7 +9,6 @@ import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
@@ -23,9 +22,6 @@ import java.util.Map;
 public class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
   @NonNls
   public static final ID<String, Integer> KEY = ID.create("yaml.keys.name");
-
-  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER =
-    new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
 
   @Override
   public int getVersion() {
@@ -91,7 +87,7 @@ public class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return YAML_INPUT_FILTER;
+    return YAMLUtil.YAML_INPUT_FILTER;
   }
 
   @Override

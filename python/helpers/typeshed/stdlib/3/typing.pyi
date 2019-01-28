@@ -254,6 +254,12 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     def insert(self, index: int, object: _T) -> None: ...
     @overload
     @abstractmethod
+    def __getitem__(self, i: int) -> _T: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, s: slice) -> MutableSequence[_T]: ...
+    @overload
+    @abstractmethod
     def __setitem__(self, i: int, o: _T) -> None: ...
     @overload
     @abstractmethod
@@ -535,13 +541,17 @@ class Pattern(Generic[AnyStr]):
 def get_type_hints(obj: Callable, globalns: Optional[dict[str, Any]] = ...,
                    localns: Optional[dict[str, Any]] = ...) -> dict[str, Any]: ...
 
+@overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
+@overload
+def cast(tp: str, obj: Any) -> Any: ...
 
 # Type constructors
 
 # NamedTuple is special-cased in the type checker
 class NamedTuple(tuple):
     _field_types = ...  # type: collections.OrderedDict[str, Type[Any]]
+    _field_defaults: Dict[str, Any] = ...
     _fields = ...  # type: Tuple[str, ...]
     _source = ...  # type: str
 

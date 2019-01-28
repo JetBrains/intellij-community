@@ -139,6 +139,12 @@ class VcsPreviewPanel implements PreviewPanel {
       public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
       }
+
+      @NotNull
+      @Override
+      public String getAccessibleName() {
+        return "VCS marker: changed line";
+      }
     });
   }
 
@@ -152,10 +158,10 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private static class MyTextAnnotationGutterProvider implements TextAnnotationGutterProvider {
-    @NotNull private final List<Color> myBackgroundColors;
+    @NotNull private final List<? extends Color> myBackgroundColors;
     @NotNull private final List<Integer> myAnchorIndexes;
 
-    MyTextAnnotationGutterProvider(@NotNull List<Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
+    MyTextAnnotationGutterProvider(@NotNull List<? extends Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
       myBackgroundColors = backgroundColors;
       myAnchorIndexes = anchorIndexes;
     }

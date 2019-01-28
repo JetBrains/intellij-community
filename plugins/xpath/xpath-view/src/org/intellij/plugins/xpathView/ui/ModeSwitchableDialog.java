@@ -119,7 +119,6 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   @Deprecated
   @Override
   protected final String getDimensionServiceKey() {
-    //noinspection ConstantConditions
     return null;
   }
 }

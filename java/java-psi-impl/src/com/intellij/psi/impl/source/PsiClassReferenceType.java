@@ -82,7 +82,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public boolean equalsToText(@NotNull String text) {
-    return Comparing.equal(text, getCanonicalText());
+    PsiJavaCodeReferenceElement reference = getReference();
+    String name = reference.getReferenceName();
+    return (name == null || text.contains(name)) && Comparing.equal(text, getCanonicalText());
   }
 
   @Override
@@ -201,7 +203,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiClass aClass = (PsiClass)resolved;
       if (!PsiUtil.typeParametersIterable(aClass).iterator().hasNext()) return this;
       PsiManager manager = reference.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
       final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
       return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
     }

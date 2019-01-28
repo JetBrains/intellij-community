@@ -56,7 +56,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = null;
@@ -85,7 +85,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
                                  PsiMethod containingMethod,
                                  PsiExpression mainOccurrence,
                                  PsiExpression[] occurrences) {
-    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = mainOccurrence;

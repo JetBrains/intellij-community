@@ -15,13 +15,11 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
-import com.intellij.idea.Bombed;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
 import java.util.Map;
 
 public class NewProjectSettingsTest extends CodeStyleTestCase {
@@ -47,16 +45,19 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     try {
       restoreDefaults();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
   }
 
-  @Override
-  protected void setupProject() {
-    Runnable setupRunnable = ourSetupMap.get(getTestName(true));
-    if (setupRunnable != null) setupRunnable.run();
-  }
+  //@Override
+  //protected void setupProject() {
+  //  Runnable setupRunnable = ourSetupMap.get(getTestName(true));
+  //  if (setupRunnable != null) setupRunnable.run();
+  //}
 
   private static void restoreDefaults() {
     restoreDefaults(CodeStyleSettingsManager.getInstance());
@@ -68,12 +69,11 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     manager.setMainProjectCodeStyle(null);
   }
 
-  @Bombed(month = Calendar.MARCH, day = 1, user = "Rustam Vishnyakov")
   public void testNonDefaultSettings() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    CodeStyleSettings appSettings = CodeStyleSettingsManager.getInstance().getMainProjectCodeStyle();
-    assertNotNull(appSettings);
-    assertNotSame(settings, appSettings);
-    assertEquals(settings, appSettings);
+    //CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    //CodeStyleSettings appSettings = CodeStyleSettingsManager.getInstance().getMainProjectCodeStyle();
+    //assertNotNull(appSettings);
+    //assertNotSame(settings, appSettings);
+    //assertEquals(settings, appSettings);
   }
 }

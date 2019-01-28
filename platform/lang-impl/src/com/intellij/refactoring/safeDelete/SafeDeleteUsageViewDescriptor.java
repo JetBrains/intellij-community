@@ -43,6 +43,7 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
     return RefactoringBundle.message("items.to.be.deleted");
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code", UsageViewBundle.getReferencesString(usagesCount, filesCount));

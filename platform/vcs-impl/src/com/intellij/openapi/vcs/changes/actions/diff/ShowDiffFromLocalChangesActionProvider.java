@@ -18,12 +18,12 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -130,7 +130,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       Change selectedChange = changes.get(0);
       List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
       if (changelistChanges != null) {
-        int selectedIndex = ContainerUtil.indexOf(changelistChanges, (Condition<Change>)it -> {
+        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> {
           return ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it);
         });
         if (selectedIndex != -1) {
@@ -186,6 +186,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
                                int selected) {
     if (producers.isEmpty()) return;
     DiffRequestChain chain = new ChangeDiffRequestChain(producers, selected);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
 }

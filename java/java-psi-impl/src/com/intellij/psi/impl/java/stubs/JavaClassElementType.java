@@ -77,6 +77,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     boolean isAnnotation = false;
     boolean isInQualifiedNew = false;
     boolean hasDeprecatedAnnotation = false;
+    boolean hasDocComment = false;
 
     String qualifiedName = null;
     String name = null;
@@ -93,6 +94,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     for (final LighterASTNode child : tree.getChildren(node)) {
       final IElementType type = child.getTokenType();
       if (type == JavaDocElementType.DOC_COMMENT) {
+        hasDocComment = true;
         isDeprecatedByComment = RecordUtil.isDeprecatedByDocComment(tree, child);
       }
       else if (type == JavaElementType.MODIFIER_LIST) {
@@ -134,7 +136,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
 
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
-                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false);
+                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
     return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
   }

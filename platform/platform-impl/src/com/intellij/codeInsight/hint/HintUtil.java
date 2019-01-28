@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class HintUtil {
   /** @deprecated use getInformationColor() */
   @Deprecated
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
-  private static final Color INFORMATION_BORDER = new JBColor(0xE6E6E6, 0x5C5C5C);
+  public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
   /** @deprecated use getErrorColor() */
   @Deprecated
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
@@ -75,7 +76,7 @@ public class HintUtil {
   public static HintHint getInformationHint() {
     //noinspection UseJBColor
     return new HintHint()
-      .setBorderColor(INFORMATION_BORDER)
+      .setBorderColor(INFORMATION_BORDER_COLOR)
       .setTextBg(getInformationColor())
       .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
@@ -187,6 +188,9 @@ public class HintUtil {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);
+    label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+    label.setBackground(JBUI.CurrentTheme.Advertiser.background());
+    label.setOpaque(true);
     label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
     if (bottomText != null) {
       label.setBorder(border);

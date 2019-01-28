@@ -48,8 +48,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -413,22 +413,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
     else {
-      Window[] windows = Window.getWindows();
-      for (Window each : windows) {
-        if (each.isActive()) {
-          if (each instanceof JFrame) {
-            toFocus = getFocusTargetFor(((JFrame)each).getRootPane());
-            break;
-          }
-          else if (each instanceof JDialog) {
-            toFocus = getFocusTargetFor(((JDialog)each).getRootPane());
-            break;
-          }
-          else if (each instanceof JWindow) {
-            toFocus = getFocusTargetFor(((JWindow)each).getRootPane());
-            break;
-          }
-        }
+      Optional<Component> toFocusOptional = Arrays.stream(Window.getWindows()).
+        filter(window -> window instanceof RootPaneContainer).
+        filter(window -> ((RootPaneContainer)window).getRootPane() != null).
+        filter(window -> window.isActive()).
+        findFirst().
+        map(w -> getFocusTargetFor(((RootPaneContainer)w).getRootPane()));
+
+      if (toFocusOptional.isPresent()) {
+        toFocus = toFocusOptional.get();
       }
     }
 

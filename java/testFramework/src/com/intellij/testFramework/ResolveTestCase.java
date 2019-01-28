@@ -34,12 +34,18 @@ public abstract class ResolveTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myDocument != null) {
-      FileDocumentManager.getInstance().reloadFromDisk(myDocument);
-      myDocument = null;
+    try {
+      if (myDocument != null) {
+        FileDocumentManager.getInstance().reloadFromDisk(myDocument);
+        myDocument = null;
+      }
     }
-
-    super.tearDown();
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected PsiReference configureByFile(@NotNull String filePath) throws Exception {
@@ -88,6 +94,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
     return ref;
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/psi/resolve/";

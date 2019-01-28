@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,7 +120,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return;
 
-          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(XDebugView.getSession(getTree()));
+          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
           if (data == null) {
             return;
           }
@@ -146,14 +146,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                               XSourcePosition debuggerPosition) {
     if (!Registry.is("debugger.show.values.between.lines") && !Registry.is("debugger.show.values.inplace")) return false;
 
-    XValue container = getValueContainer();
-
-    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl && myValuePresentation != null) {
-      if (XDebuggerInlayUtil.showValueInBlockInlay((XDebugSessionImpl)session, this, position, container, myValuePresentation)) {
+    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
+      if (XDebuggerInlayUtil.showValueInBlockInlay((XDebugSessionImpl)session, this, position)) {
         return true;
       }
     }
     if (Registry.is("debugger.show.values.inplace")) {
+      XValue container = getValueContainer();
       if (debuggerPosition.getLine() == position.getLine() && container instanceof XValueWithInlinePresentation) {
         String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
         if (presentation != null) {
@@ -186,7 +185,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
-    appendName();
+    if (myValuePresentation.isShowName()) {
+      appendName();
+    }
     buildText(myValuePresentation, myText);
   }
 

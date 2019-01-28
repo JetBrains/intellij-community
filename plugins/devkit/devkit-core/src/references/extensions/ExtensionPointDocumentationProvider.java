@@ -98,9 +98,9 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
         sb.append(DocumentationMarkup.SECTIONS_START);
         for (With withElement: withElements) {
 
-          String name = DomUtil.hasXml(withElement.getAttribute())
-                        ? withElement.getAttribute().getStringValue()
-                        : "<" + withElement.getTag().getStringValue() + ">";
+          String name = StringUtil.notNullize(DomUtil.hasXml(withElement.getAttribute())
+                                              ? withElement.getAttribute().getStringValue()
+                                              : "<" + withElement.getTag().getStringValue() + ">");
 
           StringBuilder classLinkSb = new StringBuilder();
           generateClassLink(classLinkSb, withElement.getImplements().getValue());

@@ -38,7 +38,7 @@ public class ImportDetails {
   private final String myLogMessage;
   private final String myModuleName;
   private final CvsEnvironment myEnvironment;
-  private final Collection<FileExtension> myWrappers;
+  private final Collection<? extends FileExtension> myWrappers;
   private final IIgnoreFileFilter myIgnoreFileFilter;
 
   public ImportDetails(@NotNull File baseImportDirectory,
@@ -47,7 +47,7 @@ public class ImportDetails {
                        String logMessage,
                        String moduleName,
                        CvsEnvironment env,
-                       Collection<FileExtension> wrappers,
+                       Collection<? extends FileExtension> wrappers,
                        IIgnoreFileFilter ignoreFileFilter) {
     myBaseImportDirectory = baseImportDirectory;
     myVendor = vendor;

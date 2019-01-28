@@ -21,8 +21,6 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.diff.impl.highlighting.FragmentSide
-import com.intellij.openapi.diff.impl.util.ContextLogger
 import com.intellij.openapi.util.TextRange
 
 class MergeBuilderTest : DiffTestCase() {
@@ -140,37 +138,27 @@ class MergeBuilderTest : DiffTestCase() {
 
   private fun test(leftCount: Int, baseCount: Int, rightCount: Int,
                    block: Test.() -> Unit) {
-    val test = TestNew(leftCount, baseCount, rightCount)
+    val test = Test(leftCount, baseCount, rightCount)
     block(test)
     test.check()
-
-    val oldTest = TestOld(leftCount, baseCount, rightCount)
-    block(oldTest)
-    oldTest.check()
   }
 
-  private interface Test {
-    fun addLeft(base: TextRange, left: TextRange)
-    fun addRight(base: TextRange, right: TextRange)
-    fun addExpected(left: TextRange, base: TextRange, right: TextRange)
-  }
-
-  private inner class TestNew(val leftCount: Int, val baseCount: Int, val rightCount: Int) : Test {
+  private inner class Test(val leftCount: Int, val baseCount: Int, val rightCount: Int) {
     private val leftUnchanged: MutableList<Range> = mutableListOf()
     private val rightUnchanged: MutableList<Range> = mutableListOf()
     private val expected: MutableList<MergeRange> = mutableListOf()
 
-    override fun addLeft(base: TextRange, left: TextRange) {
+    fun addLeft(base: TextRange, left: TextRange) {
       leftUnchanged += Range(base.startOffset, base.endOffset,
                              left.startOffset, left.endOffset)
     }
 
-    override fun addRight(base: TextRange, right: TextRange) {
+    fun addRight(base: TextRange, right: TextRange) {
       rightUnchanged += Range(base.startOffset, base.endOffset,
                               right.startOffset, right.endOffset)
     }
 
-    override fun addExpected(left: TextRange, base: TextRange, right: TextRange) {
+    fun addExpected(left: TextRange, base: TextRange, right: TextRange) {
       expected += MergeRange(left.startOffset, left.endOffset,
                              base.startOffset, base.endOffset,
                              right.startOffset, right.endOffset)
@@ -180,29 +168,6 @@ class MergeBuilderTest : DiffTestCase() {
       val left = fair(DiffIterableUtil.createUnchanged(leftUnchanged, baseCount, leftCount))
       val right = fair(DiffIterableUtil.createUnchanged(rightUnchanged, baseCount, rightCount))
       val actual = ComparisonMergeUtil.buildSimple(left, right, INDICATOR)
-
-      assertEquals(expected, actual)
-    }
-  }
-
-  private inner class TestOld(val leftCount: Int, val baseCount: Int, val rightCount: Int) : Test {
-    private val builder = MergeBuilder(ContextLogger("TEST"))
-    private val expected: MutableList<MergeFragment> = mutableListOf()
-
-    override fun addLeft(base: TextRange, left: TextRange) {
-      builder.add(base, left, FragmentSide.SIDE1)
-    }
-
-    override fun addRight(base: TextRange, right: TextRange) {
-      builder.add(base, right, FragmentSide.SIDE2)
-    }
-
-    override fun addExpected(left: TextRange, base: TextRange, right: TextRange) {
-      expected += MergeFragment(left, base, right)
-    }
-
-    fun check() {
-      val actual = builder.finish(leftCount, baseCount, rightCount)
 
       assertEquals(expected, actual)
     }

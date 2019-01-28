@@ -335,7 +335,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     }
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;

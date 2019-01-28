@@ -50,7 +50,6 @@ import static com.intellij.psi.impl.DebugUtil.sleep;
 
 /**
  * @author anna
- * @since 27-Jun-2007
  */
 public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
@@ -83,12 +82,14 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     try {
       myFixture.tearDown();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myFixture = null;
       myModule = null;
       myProject = null;
       myBusConnection = null;
-
       super.tearDown();
     }
   }

@@ -87,6 +87,9 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
 
       UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

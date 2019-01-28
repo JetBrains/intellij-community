@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
@@ -8,31 +9,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LiteralWithSubstitutionHandler extends MatchingHandler {
-  private final String matchExpression;
-  private Matcher matcher;
-  private final List<SubstitutionHandler> handlers;
+  private final String myRegexp;
+  private Matcher myMatcher;
+  private final List<? extends SubstitutionHandler> myHandlers;
+  private final boolean myCaseSensitive;
 
-  public LiteralWithSubstitutionHandler(String _matchedExpression, List<SubstitutionHandler> _handlers) {
-    matchExpression = _matchedExpression;
-    handlers = _handlers;
+  public LiteralWithSubstitutionHandler(String regexp, List<? extends SubstitutionHandler> handlers, boolean caseSensitive) {
+    myRegexp = regexp;
+    myHandlers = handlers;
+    myCaseSensitive = caseSensitive;
   }
 
   @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     final String text = matchedNode.getText();
-    if (matcher==null) {
-      matcher = Pattern.compile(matchExpression).matcher(text);
+    if (myMatcher == null) {
+      myMatcher = Pattern.compile(myRegexp, myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE).matcher(text);
     } else {
-      matcher.reset(text);
+      myMatcher.reset(text);
     }
 
-    if (!matcher.find()) {
+    if (!myMatcher.matches()) {
       return false;
     }
-    for (int i = 0; i < handlers.size(); ++i) {
-      final SubstitutionHandler handler = handlers.get(i);
+    for (int i = 0; i < myHandlers.size(); ++i) {
+      final SubstitutionHandler handler = myHandlers.get(i);
 
-      if (!handler.handle(matchedNode, matcher.start(i + 1), matcher.end(i + 1), context)) {
+      if (!handler.handle(matchedNode, myMatcher.start(i + 1), myMatcher.end(i + 1), context)) {
         return false;
       }
     }

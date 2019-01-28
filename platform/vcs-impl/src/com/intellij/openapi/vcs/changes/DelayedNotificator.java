@@ -16,11 +16,11 @@ public class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
 
   @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final EventDispatcher<ChangeListListener> myDispatcher;
+  @NotNull private final EventDispatcher<? extends ChangeListListener> myDispatcher;
   @NotNull private final ChangeListManagerImpl.Scheduler myScheduler;
 
   public DelayedNotificator(@NotNull ChangeListManagerImpl manager,
-                            @NotNull EventDispatcher<ChangeListListener> dispatcher,
+                            @NotNull EventDispatcher<? extends ChangeListListener> dispatcher,
                             @NotNull ChangeListManagerImpl.Scheduler scheduler) {
     myManager = manager;
     myDispatcher = dispatcher;
@@ -70,6 +70,11 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
+  public void changeListDataChanged(ChangeList list) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListDataChanged(list));
+  }
+
+  @Override
   public void changeListCommentChanged(final ChangeList list, final String oldComment) {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
   }
@@ -77,6 +82,11 @@ public class DelayedNotificator implements ChangeListListener {
   @Override
   public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
     myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
+  }
+
+  @Override
+  public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
+    defaultListChanged(oldDefaultList, newDefaultList, false);
   }
 
   @Override

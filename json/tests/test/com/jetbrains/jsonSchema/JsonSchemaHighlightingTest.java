@@ -9,8 +9,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
  * @author Irina.Chernushina on 9/21/2015.
  */
 public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
@@ -981,6 +983,84 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
            "  }\n" +
            "}", "{\n" +
                 "  \"a\": <warning>1</warning>\n" +
+                "}");
+  }
+
+  public void testOneOfMultipleBranches() throws Exception {
+    doTest("{\n" +
+           "\t\"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+           "\n" +
+           "\t\"type\": \"object\",\n" +
+           "\t\"oneOf\": [\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"string\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t},\n" +
+           "\t\t{\n" +
+           "\t\t\t\"properties\": {\n" +
+           "\t\t\t\t\"startTime\": {\n" +
+           "\t\t\t\t\t\"type\": \"number\"\n" +
+           "\t\t\t\t}\n" +
+           "\t\t\t}\n" +
+           "\t\t}\n" +
+           "\t]\n" +
+           "}", "{\n" +
+                "  \"startTime\": <warning descr=\"Type is not allowed. Expected one of: number, string.\">null</warning>\n" +
+                "}");
+  }
+
+  public void testReferenceById() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"a\": {\n" +
+           "      \"$id\": \"#aa\",\n" +
+           "      \"type\": \"object\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \"aa\": {\n" +
+           "      \"type\": \"object\"\n" +
+           "    },\n" +
+           "    \"bb\": {\n" +
+           "      \"$ref\": \"#aa\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"aa\": {\n" +
+                "    \"type\": \"string\"\n" +
+                "  },\n" +
+                "  \"bb\": <warning>578</warning>\n" +
+                "}\n" +
+                "\n");
+  }
+
+  public void testComplicatedConditions() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions_schema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testExoticProps() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticPropsSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testLargeInt() throws Exception {
+    // currently we limit it by Java Long range, should be sufficient as per RFC 7159
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"integer\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"x\": 9223372036854775807\n" +
                 "}");
   }
 }

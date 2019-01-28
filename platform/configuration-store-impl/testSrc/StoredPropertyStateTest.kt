@@ -2,8 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.CollectionBean
 import org.junit.Test
@@ -74,7 +74,7 @@ class StoredPropertyStateTest {
     assertThat(state).isEqualTo(newEqualState)
 
     assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
-    assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
+    assertThat(JDOMUtil.load("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
   }
 
   @Test

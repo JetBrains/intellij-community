@@ -44,11 +44,11 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     this(tree, TO_STRING);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
     this(tree, toString, false);
   }
 
-  public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+  public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
     this((JTree)tree, toString, canExpand);
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -20,10 +6,10 @@ import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -53,19 +39,31 @@ import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 public class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
+  private final Customization<T> myCustomization;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super("Select Project Type", true);
+    super(null, true);
+    myCustomization = customization;
+    updateActions();
+  }
 
-    AbstractCallback<T> callback = customization.createCallback();
-    ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    updateActions();
+  }
+
+  protected void updateActions() {
+    removeAll();
+    AbstractCallback<T> callback = myCustomization.createCallback();
+    ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    DirectoryProjectGenerator<T>[] generators = customization.getProjectGenerators();
-    customization.setUpBasicAction(projectSpecificAction, generators);
+    DirectoryProjectGenerator<T>[] generators = myCustomization.getProjectGenerators();
+    myCustomization.setUpBasicAction(projectSpecificAction, generators);
 
-    addAll(customization.getActions(generators, callback));
-    if (customization.showUserDefinedProjects()) {
+    addAll(myCustomization.getActions(generators, callback));
+    if (myCustomization.showUserDefinedProjects()) {
       ArchivedTemplatesFactory factory = new ArchivedTemplatesFactory();
       ProjectTemplate[] templates = factory.createTemplates(CUSTOM_GROUP, null);
       DirectoryProjectGenerator[] projectGenerators = ContainerUtil.map(templates,
@@ -73,9 +71,9 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
                                                                           new TemplateProjectDirectoryGenerator(
                                                                             (LocalArchivedTemplate)template),
                                                                         new DirectoryProjectGenerator[templates.length]);
-      addAll(customization.getActions(projectGenerators, callback));
+      addAll(myCustomization.getActions(projectGenerators, callback));
     }
-    addAll(customization.getExtraActions(callback));
+    addAll(myCustomization.getExtraActions(callback));
   }
 
   protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
@@ -102,7 +100,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
 
     @NotNull
     protected DirectoryProjectGenerator<T>[] getProjectGenerators() {
-      return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+      return DirectoryProjectGenerator.EP_NAME.getExtensions();
     }
 
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T>[] generators, @NotNull AbstractCallback<T> callback) {

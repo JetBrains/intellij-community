@@ -18,30 +18,24 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author max
- */
 public class InspectionNode extends InspectionTreeNode {
-  private final static Logger LOG = Logger.getInstance(InspectionNode.class);
-
+  @NotNull private final InspectionToolWrapper myToolWrapper;
   @NotNull private final InspectionProfileImpl myProfile;
 
-  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionProfileImpl profile) {
-    super(toolWrapper);
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper,
+                        @NotNull InspectionProfileImpl profile,
+                        @NotNull InspectionTreeNode parent) {
+    super(parent);
+    myToolWrapper = toolWrapper;
     myProfile = profile;
-  }
-
-  public String toString() {
-    return getToolWrapper().getDisplayName();
   }
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
-    return (InspectionToolWrapper)getUserObject();
+    return myToolWrapper;
   }
 
   @Nullable
@@ -49,5 +43,10 @@ public class InspectionNode extends InspectionTreeNode {
   public String getTailText() {
     final String shortName = getToolWrapper().getShortName();
     return myProfile.getTools(shortName, null).isEnabled() ? null : "Disabled";
+  }
+
+  @Override
+  public String getPresentableText() {
+    return getToolWrapper().getDisplayName();
   }
 }

@@ -35,7 +35,7 @@ public class BasicExpressionCompletionContributor {
   }
 
   public static void fillCompletionVariants(JavaSmartCompletionParameters parameters,
-                                            final Consumer<LookupElement> result,
+                                            final Consumer<? super LookupElement> result,
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {
@@ -65,23 +65,22 @@ public class BasicExpressionCompletionContributor {
         addKeyword(result, position, PsiKeyword.TRUE);
         addKeyword(result, position, PsiKeyword.FALSE);
 
-        final PsiElement parent = position.getParent();
-        if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-          for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
+        if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+          for (PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
             result.consume(new ExpressionLookupItem(expression));
           }
         }
 
-        processDataflowExpressionTypes(position, expectedType, matcher, result);
+        processDataflowExpressionTypes(parameters, expectedType, matcher, result);
     }
 
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
-    final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
+  static void processDataflowExpressionTypes(JavaSmartCompletionParameters parameters, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
+    final PsiExpression context = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (context == null) return;
 
-    MultiMap<PsiExpression,PsiType> map = GuessManager.getInstance(position.getProject()).getControlFlowExpressionTypes(context);
+    MultiMap<PsiExpression,PsiType> map = GuessManager.getInstance(context.getProject()).getControlFlowExpressionTypes(context, parameters.getParameters().getInvocationCount() > 1);
     if (map.isEmpty()) {
       return;
     }

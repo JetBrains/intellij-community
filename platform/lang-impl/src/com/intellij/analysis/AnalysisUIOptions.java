@@ -12,6 +12,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,6 +30,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   @AnalysisScope.Type
   public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
+  @Transient
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public volatile boolean SHOW_STRUCTURE = false;
   public String FILE_MASK;
@@ -48,17 +50,6 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       }
     };
 
-  }
-
-  @NotNull
-  public AnalysisUIOptions copy() {
-    final AnalysisUIOptions result = new AnalysisUIOptions();
-    XmlSerializerUtil.copyBean(this, result);
-    return result;
-  }
-
-  public void save(AnalysisUIOptions options) {
-    XmlSerializerUtil.copyBean(options, this);
   }
 
   public AutoScrollToSourceHandler getAutoScrollToSourceHandler() {

@@ -92,6 +92,7 @@ public class LocalTaskImpl extends LocalTask {
       myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
       myLastPost = ((LocalTaskImpl)origin).getLastPost();
+      myPresentableName = ((LocalTaskImpl)origin).myPresentableName;
     }
   }
 

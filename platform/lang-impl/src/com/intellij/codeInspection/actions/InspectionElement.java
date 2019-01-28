@@ -13,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class InspectionElement extends FakePsiElement {
+public class InspectionElement extends FakePsiElement {
   public static final InspectionElement[] EMPTY_ARRAY = new InspectionElement[0];
   @NotNull private final InspectionToolWrapper myWrapper;
   @NotNull private final PsiManager myPsiManager;
   @NotNull private final DummyHolder myDummyHolder;
 
-  InspectionElement(@NotNull InspectionToolWrapper wrapper, @NotNull PsiManager psiManager) {
+  public InspectionElement(@NotNull InspectionToolWrapper wrapper, @NotNull PsiManager psiManager) {
     myWrapper = wrapper;
     myPsiManager = psiManager;
     myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);

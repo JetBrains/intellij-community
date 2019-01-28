@@ -22,14 +22,11 @@ import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreeNode;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
@@ -332,7 +329,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
-    final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myToolPresentation), element);
+    final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
@@ -359,16 +356,13 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  public static Set<RefElement> getPossibleChildren(final RefElementNode refElementNode, RefElement refElement) {
-    final TreeNode[] pathToRoot = refElementNode.getPath();
+  private static Set<RefElement> getPossibleChildren(RefElement refElement) {
+    if (!refElement.isValid()) return Collections.emptySet();
 
     final HashSet<RefElement> newChildren = new HashSet<>();
-
-    if (!refElement.isValid()) return newChildren;
-
     for (RefElement refCallee : refElement.getOutReferences()) {
       if (((RefElementImpl)refCallee).isSuspicious()) {
-        if (notInPath(pathToRoot, refCallee)) newChildren.add(refCallee);
+        newChildren.add(refCallee);
       }
     }
 
@@ -379,7 +373,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       if (!refMethod.isStatic() && !refMethod.isConstructor() && (aClass != null && !aClass.isAnonymous())) {
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
           if (((RefMethodImpl)refDerived).isSuspicious()) {
-            if (notInPath(pathToRoot, refDerived)) newChildren.add(refDerived);
+            newChildren.add(refDerived);
           }
         }
       }
@@ -387,25 +381,16 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       RefClass refClass = (RefClass) refElement;
       for (RefClass subClass : refClass.getSubClasses()) {
         if ((subClass.isInterface() || subClass.isAbstract()) && ((RefClassImpl)subClass).isSuspicious()) {
-          if (notInPath(pathToRoot, subClass)) newChildren.add(subClass);
+          newChildren.add(subClass);
         }
       }
 
       if (refClass.getDefaultConstructor() instanceof RefImplicitConstructor) {
-        Set<RefElement> fromConstructor = getPossibleChildren(refElementNode, refClass.getDefaultConstructor());
+        Set<RefElement> fromConstructor = getPossibleChildren(refClass.getDefaultConstructor());
         newChildren.addAll(fromConstructor);
       }
     }
 
     return newChildren;
-  }
-
-  private static boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
-    for (TreeNode aPathToRoot : pathToRoot) {
-      InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
-      if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;
-    }
-
-    return true;
   }
 }

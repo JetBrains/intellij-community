@@ -17,7 +17,7 @@ public class InspectionDescriptionDocumentationProvider extends AbstractDocument
     }
 
     InspectionToolWrapper toolWrapper = ((InspectionElement)element).getToolWrapper();
-    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXml(toolWrapper.getDisplayName()) + DocumentationMarkup.DEFINITION_END +
+    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXmlEntities(toolWrapper.getDisplayName()) + DocumentationMarkup.DEFINITION_END +
            DocumentationMarkup.CONTENT_START + toolWrapper.loadDescription() +
            DocumentationMarkup.CONTENT_END;
   }

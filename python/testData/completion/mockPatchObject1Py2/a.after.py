@@ -1,3 +1,3 @@
 from mock import patch
 
-patch.object
+patch.object()

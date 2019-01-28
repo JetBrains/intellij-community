@@ -100,7 +100,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {
-        final PsiType type = JavaPsiFacade.getInstance(project).getElementFactory().createType(member.getContainingClass());
+        final PsiType type = JavaPsiFacade.getElementFactory(project).createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =
                 JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;

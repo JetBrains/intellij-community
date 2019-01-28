@@ -118,7 +118,7 @@ public class OutputParser{
   }
 
 
-  protected final void processTag(char tagName, final String tagValue, final int priority) {
+  protected final void processTag(char tagName, final String tagValue, @AntMessage.Priority int priority) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.valueOf(tagName) + priority + "=" + tagValue);
     }
@@ -139,7 +139,7 @@ public class OutputParser{
     }
 
     if (IdeaAntLogger2.MESSAGE == tagName) {
-      myMessageView.outputMessage(tagValue, fixPriority(priority));
+      myMessageView.outputMessage(tagValue, priority);
     }
     else if (IdeaAntLogger2.TARGET == tagName) {
       myMessageView.startTarget(tagValue);
@@ -170,7 +170,8 @@ public class OutputParser{
     }
   }
 
-  private static int fixPriority(int priority) {
+  @AntMessage.Priority
+  static int fixPriority(int priority) {
     if (priority == AntBuildMessageView.PRIORITY_ERR ||
         priority == AntBuildMessageView.PRIORITY_WARN ||
         priority == AntBuildMessageView.PRIORITY_INFO ||

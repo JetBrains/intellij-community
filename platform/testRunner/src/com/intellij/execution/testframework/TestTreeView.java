@@ -83,6 +83,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     installHandlers();
     setCellRenderer(getRenderer(myModel.getProperties()));
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
   }
 
   @Override
@@ -192,7 +193,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     new TreeSpeedSearch(this, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
-      return testProxy.getName();
+      return getPresentableName(testProxy);
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
@@ -208,6 +209,10 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       }
       return null;
     });
+  }
+
+  protected String getPresentableName(AbstractTestProxy testProxy) {
+    return testProxy.getName();
   }
 
   public boolean isExpandableHandlerVisibleForCurrentRow(int row) {
@@ -267,12 +272,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     g.translate(0, bounds.y - 1);
     if (isSelected) {
-      if (!hasFocus && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        g.setColor(UIUtil.getTreeForeground());
-      }
-      else {
-        g.setColor(UIUtil.getTreeSelectionForeground());
-      }
+      g.setColor(UIUtil.getTreeSelectionForeground(hasFocus));
     }
     else {
       g.setColor(new JBColor(0x808080, 0x808080));

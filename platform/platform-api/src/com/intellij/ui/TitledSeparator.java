@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +21,10 @@ public class TitledSeparator extends JPanel {
   public static final int SEPARATOR_LEFT_INSET = 6;
   public static final int SEPARATOR_RIGHT_INSET = 3;
 
-  public static final Border EMPTY_BORDER = JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
+  @NotNull
+  public static Border createEmptyBorder() {
+    return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
+  }
 
   protected final JBLabel myLabel = new JBLabel() {
     @Override
@@ -54,13 +44,14 @@ public class TitledSeparator extends JPanel {
   }
 
   public TitledSeparator(String text, @Nullable JComponent labelFor) {
-    super();
+    mySeparator.setForeground(JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51)));
+
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     add(mySeparator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
-    setBorder(EMPTY_BORDER);
+                               JBUI.insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
+    setBorder(createEmptyBorder());
 
     setText(text);
     setLabelFor(labelFor);

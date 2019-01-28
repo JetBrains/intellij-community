@@ -388,7 +388,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
   }
 
   private void printOutputFile(List<Printable> currentPrintables) {
-    if (myOutputFile != null && new File(myOutputFile).exists()) {
+    if (myOutputFile != null && new File(myOutputFile).isFile()) {
       try (PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true))) {
         for (Printable currentPrintable : currentPrintables) {
           currentPrintable.printOn(new Printer() {

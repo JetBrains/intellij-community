@@ -28,12 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeStructureBase implements ViewSettings {
   private final AbstractTreeNode myRoot;
 
-  public AbstractProjectTreeStructure(Project project) {
+  public AbstractProjectTreeStructure(@NotNull Project project) {
     super(project);
     myRoot = createRoot(project, this);
   }
 
-  protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+  protected AbstractTreeNode createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
     return new ProjectViewProjectNode(myProject, this);
   }
 

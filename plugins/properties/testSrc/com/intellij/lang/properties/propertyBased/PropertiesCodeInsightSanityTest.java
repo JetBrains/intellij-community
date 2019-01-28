@@ -31,8 +31,7 @@ public class PropertiesCodeInsightSanityTest extends LightCodeInsightFixtureTest
       file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy() {
                                       @Override
                                       protected boolean shouldSkipIntention(@NotNull String actionText) {
-                                        return actionText.equals("Quote identifier") || // todo IDEA-188706
-                                               actionText.equals("Sort resource bundle files") || // todo IDEA-194044
+                                        return actionText.equals("Sort resource bundle files") || // todo IDEA-194044
                                                actionText.startsWith("Suppress for"); // todo IDEA-193419, IDEA-193420
                                       }
                                     }),
@@ -44,9 +43,7 @@ public class PropertiesCodeInsightSanityTest extends LightCodeInsightFixtureTest
   @NotNull
   private Supplier<MadTestingAction> actionsOnPropertiesFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(),
-                                                f -> {
-                                                  return f.getName().endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION) &&
-                                                         !"CommentInjectorInProps.properties".equals(f.getName()); // todo IDEA-188706
-                                                }, fileActions);
+                                                f -> f.getName().endsWith(PropertiesFileType.DOT_DEFAULT_EXTENSION),
+                                                fileActions);
   }
 }

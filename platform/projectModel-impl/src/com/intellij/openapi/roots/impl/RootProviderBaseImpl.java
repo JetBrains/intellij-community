@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *  @author dsl
  */
 public abstract class RootProviderBaseImpl implements RootProvider {
-  private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
+  protected final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
   @Override
   public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
     myDispatcher.addListener(listener);
@@ -41,8 +41,7 @@ public abstract class RootProviderBaseImpl implements RootProvider {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
-  public void fireRootSetChanged() {
+  protected void fireRootSetChanged() {
     myDispatcher.getMulticaster().rootSetChanged(this);
   }
-
 }

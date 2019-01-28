@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
@@ -25,7 +11,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -91,12 +76,12 @@ public class DvcsUtil {
   };
 
   @NotNull
-  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<VirtualFile> virtualFiles) {
+  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<? extends VirtualFile> virtualFiles) {
     return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
   }
 
   @NotNull
-  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<File> files) {
+  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<? extends File> files) {
     RefreshVFsSynchronously.refreshFiles(files);
     return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
   }
@@ -377,7 +362,7 @@ public class DvcsUtil {
     return rootCandidate;
   }
 
-  public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
+  public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
     Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
     return validRepositories;
@@ -459,7 +444,7 @@ public class DvcsUtil {
 
   @Nullable
   public static PushSupport getPushSupport(@NotNull final AbstractVcs vcs) {
-    return ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, vcs.getProject()),
+    return ContainerUtil.find(PushSupport.PUSH_SUPPORT_EP.getExtensions(vcs.getProject()),
                               support -> support.getVcs().equals(vcs));
   }
 

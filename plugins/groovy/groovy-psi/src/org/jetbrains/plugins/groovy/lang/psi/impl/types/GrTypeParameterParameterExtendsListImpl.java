@@ -24,6 +24,7 @@ public class GrTypeParameterParameterExtendsListImpl extends GrReferenceListImpl
     super(stub, nodeType);
   }
 
+  @Override
   public String toString() {
     return "Type extends bounds list";
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -43,6 +44,8 @@ public class OutputChecker {
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
 
+  private static final String[] IGNORED_PATTERNS_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
+
   private final String myAppPath;
   private final String myOutputPath;
   private Map<Key, StringBuffer> myBuffers;
@@ -67,11 +70,10 @@ public class OutputChecker {
   public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        StringBuffer buffer = myBuffers.get(outputType);
-        if (buffer == null) {
-          myBuffers.put(outputType, buffer = new StringBuffer());
+        if (outputType == ProcessOutputTypes.STDERR && Arrays.stream(IGNORED_PATTERNS_IN_STDERR).anyMatch(s::contains)) {
+          return;
         }
-        buffer.append(s);
+        myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);
       }
     }
   }
@@ -90,12 +92,15 @@ public class OutputChecker {
     if (current == null || res.exists()) {
       current = res;
     }
-    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
-      File outFile = new File(outs, name + ".jdk9.out");
+    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
+    int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
+    do {
+      File outFile = new File(outs, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
+        break;
       }
-    }
+    } while (--feature > 6);
     return current;
   }
 
@@ -202,6 +207,7 @@ public class OutputChecker {
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
         result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
+        result = result.replaceAll(" -agentpath:.*memory_agent\\.\\w*", "");
         result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
         result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
         result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");

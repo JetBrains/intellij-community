@@ -39,7 +39,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -75,6 +74,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.*;
@@ -96,6 +96,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,10 +114,11 @@ import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Denis Zhdanov
- * @since 4/22/13 9:36 AM
  */
 public class ExternalSystemUtil {
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
     Key.create("com.intellij.openapi.externalSystem.util.taskId");
 
@@ -179,8 +181,7 @@ public class ExternalSystemUtil {
       if (window != null) {
         return;
       }
-      ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-      for (final ToolWindowEP bean : beans) {
+      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (id.equals(bean.id)) {
           managerEx.initToolWindow(bean);
         }
@@ -292,7 +293,6 @@ public class ExternalSystemUtil {
     }
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   private static String extractDetails(@NotNull Throwable e) {
     final Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -392,9 +392,14 @@ public class ExternalSystemUtil {
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
+      }
+
+      private void executeImpl(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
 
         if (indicator instanceof ProgressIndicatorEx) {

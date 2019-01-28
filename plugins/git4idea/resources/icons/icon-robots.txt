@@ -1,1 +1,0 @@
-deprecated: star.png -> com.intellij.icons.AllIcons@/nodes/favorite.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite

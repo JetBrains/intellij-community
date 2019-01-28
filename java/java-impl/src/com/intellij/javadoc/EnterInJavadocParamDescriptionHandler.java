@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 5/30/11 2:08 PM
  */
 public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
 

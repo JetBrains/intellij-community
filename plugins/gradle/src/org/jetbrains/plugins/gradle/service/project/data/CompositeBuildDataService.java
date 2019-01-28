@@ -21,7 +21,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/17/2017
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class CompositeBuildDataService extends AbstractProjectDataService<CompositeBuildData, Project> {

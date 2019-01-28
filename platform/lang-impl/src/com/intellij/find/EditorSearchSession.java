@@ -4,6 +4,7 @@ package com.intellij.find;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
+import com.intellij.find.impl.HelpID;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
@@ -146,15 +147,37 @@ public class EditorSearchSession implements SearchSession,
     new SwitchToFind(getComponent());
     new SwitchToReplace(getComponent());
 
-    myFindModel.addObserver(findModel1 -> {
-      String stringToFind = myFindModel.getStringToFind();
-      if (!wholeWordsApplicable(stringToFind)) {
-        myFindModel.setWholeWordsOnly(false);
+    myFindModel.addObserver(new FindModel.FindModelObserver() {
+      boolean myReentrantLock = false;
+      boolean myIsGlobal = myFindModel.isGlobal();
+      boolean myIsReplace = myFindModel.isReplaceState();
+      @Override
+      public void findModelChanged(FindModel findModel1) {
+        if (myReentrantLock) return;
+        try {
+          myReentrantLock = true;
+          String stringToFind = myFindModel.getStringToFind();
+          if (!wholeWordsApplicable(stringToFind)) {
+            myFindModel.setWholeWordsOnly(false);
+          }
+          if (myIsGlobal != myFindModel.isGlobal() || myIsReplace != myFindModel.isReplaceState()) {
+            if (myFindModel.getStringToFind().isEmpty() && myFindModel.isGlobal()) {
+              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText()));
+            }
+            if (!myFindModel.isGlobal() && myFindModel.getStringToFind().equals(myEditor.getSelectionModel().getSelectedText())) {
+              myFindModel.setStringToFind("");
+            }
+            myIsGlobal = myFindModel.isGlobal();
+            myIsReplace = myFindModel.isReplaceState();
+          }
+          EditorSearchSession.this.updateUIWithFindModel();
+          mySearchResults.clear();
+          EditorSearchSession.this.updateResults(true);
+          FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
+        } finally {
+          myReentrantLock = false;
+        }
       }
-      updateUIWithFindModel();
-      mySearchResults.clear();
-      updateResults(true);
-      FindUtil.updateFindInFileModel(getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
     });
 
     updateUIWithFindModel();
@@ -234,6 +257,9 @@ public class EditorSearchSession implements SearchSession,
     }
     if (CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
+    }
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR;
     }
     return null;
   }
@@ -395,7 +421,6 @@ public class EditorSearchSession implements SearchSession,
 
       if (myFindModel.isRegularExpressions()) {
         try {
-          //noinspection ResultOfMethodCallIgnored
           Pattern.compile(text);
         }
         catch (Exception e) {

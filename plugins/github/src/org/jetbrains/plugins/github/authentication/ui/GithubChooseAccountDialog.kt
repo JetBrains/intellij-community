@@ -14,9 +14,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.awt.Component
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
+import javax.swing.ListSelectionModel
 
 class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
@@ -26,6 +28,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
 
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {
+      minimumSize = Dimension(0, 0)
       font = UIUtil.getLabelFont()
       text = it
       lineWrap = true
@@ -38,6 +41,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     }
   }
   private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = object : ColoredListCellRenderer<GithubAccount>() {
       override fun customizeCellRenderer(list: JList<out GithubAccount>,
                                          value: GithubAccount,
@@ -59,8 +63,11 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     this.title = title
     setOKButtonText(okText)
     init()
+    pack()
     accountsList.selectedIndex = 0
   }
+
+  override fun getDimensionServiceKey() = "Github.Dialog.Accounts.Choose"
 
   override fun doValidate(): ValidationInfo? {
     return if (accountsList.selectedValue == null) ValidationInfo("Account is not selected", accountsList) else null
@@ -73,7 +80,9 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
   override fun createCenterPanel(): JComponent? {
     return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
       .apply { description?.run(::addToTop) }
-      .addToCenter(JBScrollPane(accountsList).apply { preferredSize = JBDimension(150, 80) })
+      .addToCenter(JBScrollPane(accountsList).apply {
+        preferredSize = JBDimension(150, 20 * (accountsList.itemsCount + 1))
+      })
       .apply { setDefaultCheckBox?.run(::addToBottom) }
   }
 

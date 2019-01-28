@@ -136,8 +136,10 @@ class ProductModulesLayout {
 
   /**
    * Name of the module containing search/searchableOptions.xml file.
+   * @deprecated not used anymore as searchable options are split between modules
    */
-  String searchableOptionsModule = "intellij.platform.resources"
+  @Deprecated
+  String searchableOptionsModule = ""
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.
@@ -170,8 +172,11 @@ class ProductModulesLayout {
   }
 
   /**
-   * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #setPluginModulesToPublish} will be considered.
+   * If {@code true} then all plugins that compatible with an IDE will be built. By default these plugins will be placed to "auto-uploading"
+   * subdirectory and may be automatically uploaded to plugins.jetbrains.com; use {@link #setPluginPublishingSpec} to override this behavior
+   * for specific plugins if needed.
+   * <br>
+   * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    * 
    * @see #setPluginPublishingSpec
    */

@@ -60,8 +60,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import one.util.streamex.StreamEx;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -482,9 +480,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (contract != null) {
           ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, (PsiParameter)element);
           try {
+            String[] names = ContainerUtil.map(parameterList.getParameters(), PsiParameter::getName, ArrayUtil.EMPTY_STRING_ARRAY);
             PsiAnnotation newContract =
-              ContractConverter.convertContract(method, StreamEx.of(parameterList.getParameters()).map(PsiParameter::getName).toArray(
-                ArrayUtils.EMPTY_STRING_ARRAY), info);
+              ContractConverter.convertContract(method, names, info);
             if (newContract != null && newContract != contract) {
               contract.replace(newContract);
             }

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -107,7 +108,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     Project project = variable.getProject();
     String tempName = suggestNewName(project, variable);
     PsiDeclarationStatement tempVariableDeclaration = factory.createVariableDeclarationStatement(tempName, variable.getType(), null);
@@ -208,7 +209,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
       !(variable instanceof PsiParameter) &&
       !(variable instanceof ImplicitVariable) &&
       expression.isValid() &&
-      variable.getManager().isInProject(variable)
+      BaseIntentionAction.canModify(variable)
         ;
   }
 

@@ -49,6 +49,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     return HEADER;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));

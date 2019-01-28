@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -66,7 +66,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     application.invokeLater(() -> {
       if (application.isDisposed()) return;
       assert !application.isWriteAccessAllowed() || application.isUnitTestMode(); // crazy stuff happens in tests, e.g. UIUtil.dispatchInvocationEvents() inside write action
-      application.addApplicationListener(new ApplicationAdapter() {
+      application.addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           disable("Write action started: " + action);
@@ -552,16 +552,17 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @TestOnly
+  @VisibleForTesting
   // waits for all tasks in 'documentsToCommit' queue to be finished, i.e. wait
   // - for 'commitUnderProgress' executed for all documents from there,
   // - for (potentially) a number of documents added to 'documentsToApplyInEDT'
   // - for these apply tasks (created in 'createFinishCommitInEDTRunnable') executed in EDT
   // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
-  void waitForAllCommits() throws ExecutionException, InterruptedException, TimeoutException {
+  public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    ((BoundedTaskExecutor)executor).waitAllTasksExecuted(100, TimeUnit.SECONDS);
+    ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
     UIUtil.dispatchAllInvocationEvents();
   }
 
@@ -673,17 +674,28 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
 
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
+
     DiffLog diffLog;
     try (
       BlockSupportImpl.ReparseResult result =
         BlockSupportImpl.reparse(file, oldFileNode, changedPsiRange, newDocumentText, task.indicator, task.myLastCommittedText)) {
       diffLog = result.log;
 
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(task.project);
 
       List<BooleanRunnable> injectedRunnables =
         documentManager.reparseChangedInjectedFragments(document, file, changedPsiRange, task.indicator, result.oldRoot, result.newRoot);
       outReparseInjectedProcessors.addAll(injectedRunnables);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return () -> {
+        documentManager.forceReload(file.getViewProvider().getVirtualFile(), file.getViewProvider());
+        return true;
+      };
     }
 
     return () -> {
@@ -720,13 +732,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       final String documentText = document.getText();
       String fileText = file.getText();
       boolean sameText = Comparing.equal(fileText, documentText);
-      LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
-                "; node.length=" + oldFileNode.getTextLength() +
-                "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
-                "; file name:" + file.getName()+
-                "; type:"+file.getFileType()+
-                "; lang:"+file.getLanguage()
-                );
+      String errorMessage = "commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                            "; node.length=" + oldFileNode.getTextLength() +
+                            "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
+                            "; file name:" + file.getName() +
+                            "; type:" + file.getFileType() +
+                            "; lang:" + file.getLanguage();
+      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, file.getLanguage().getClass()));
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
@@ -736,7 +748,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         diffLog.doActualPsiChange(file);
 
         if (oldFileNode.getTextLength() != document.getTextLength()) {
-          LOG.error("PSI is broken beyond repair in: " + file);
+          LOG.error(PluginManagerCore.createPluginException("PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass()));
         }
       }
       finally {

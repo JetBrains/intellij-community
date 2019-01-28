@@ -16,8 +16,8 @@ if __name__ == '__main__':
                         str(dirpath / 'mypy')], check=True)
         subprocess.run([sys.executable, '-m', 'pip', 'install', '-U', '-r',
                         str(dirpath / 'mypy/test-requirements.txt')], check=True)
-        shutil.copytree('stdlib', str(dirpath / 'mypy/typeshed/stdlib'))
-        shutil.copytree('third_party', str(dirpath / 'mypy/typeshed/third_party'))
+        shutil.copytree('stdlib', str(dirpath / 'mypy/mypy/typeshed/stdlib'))
+        shutil.copytree('third_party', str(dirpath / 'mypy/mypy/typeshed/third_party'))
         try:
             subprocess.run(['pytest', '-n12'], cwd=str(dirpath / 'mypy'), check=True)
         except subprocess.CalledProcessError as e:

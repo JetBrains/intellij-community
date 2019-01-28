@@ -2,6 +2,7 @@
 
 package git4idea;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ public class GitRootConverter implements AbstractVcs.RootsConvertor {
     ArrayList<VirtualFile> roots = new ArrayList<>();
     HashSet<VirtualFile> listed = new HashSet<>();
     for (VirtualFile f : result) {
+      ProgressManager.checkCanceled();
       VirtualFile r = GitUtil.gitRootOrNull(f);
       if (r != null && listed.add(r)) {
         roots.add(r);

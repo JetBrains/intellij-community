@@ -7,6 +7,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,21 +25,19 @@ public class DefaultJdkConfigurator implements BaseComponent {
 
   @Override
   public void initComponent() {
-    if (myPropertiesComponent.getBoolean("defaultJdkConfigured", false)) return;
-    List<Sdk> jdks = myProjectJdkTable.getSdksOfType(myJavaSdk);
-    if (jdks.isEmpty()) {
-      Collection<String> homePaths = myJavaSdk.suggestHomePaths();
-      if (homePaths.isEmpty()) return;
-      String homePath = homePaths.iterator().next();
-      if (homePath != null && myJavaSdk.isValidSdkHome(homePath)) {
-        String suggestedName = myJavaSdk.suggestSdkName(null, homePath);
-        if (suggestedName != null) {
-          ApplicationManager.getApplication().runWriteAction(() ->
-            myProjectJdkTable.addJdk(myJavaSdk.createJdk(suggestedName, homePath, false))
+    if (!myPropertiesComponent.getBoolean("defaultJdkConfigured", false)) {
+      List<Sdk> jdks = myProjectJdkTable.getSdksOfType(myJavaSdk);
+      if (jdks.isEmpty()) {
+        Collection<String> homePaths = myJavaSdk.suggestHomePaths();
+        String homePath = ContainerUtil.getFirstItem(homePaths);
+        if (homePath != null && myJavaSdk.isValidSdkHome(homePath)) {
+          String suggestedName = myJavaSdk.suggestSdkName(null, homePath);
+          ApplicationManager.getApplication().runWriteAction(
+            () -> myProjectJdkTable.addJdk(myJavaSdk.createJdk(suggestedName, homePath, false))
           );
         }
       }
+      myPropertiesComponent.setValue("defaultJdkConfigured", true);
     }
-    myPropertiesComponent.setValue("defaultJdkConfigured", true);
   }
 }

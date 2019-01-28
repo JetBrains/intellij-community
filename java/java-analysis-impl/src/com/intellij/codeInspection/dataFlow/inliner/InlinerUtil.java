@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 class InlinerUtil {
-  static boolean isLambdaChainParameterReference(PsiExpression expression, Predicate<PsiType> chainTypePredicate) {
+  static boolean isLambdaChainParameterReference(PsiExpression expression, Predicate<? super PsiType> chainTypePredicate) {
     if(!(expression instanceof PsiReferenceExpression)) return false;
     PsiParameter target = tryCast(((PsiReferenceExpression)expression).resolve(), PsiParameter.class);
     if (target == null) return false;

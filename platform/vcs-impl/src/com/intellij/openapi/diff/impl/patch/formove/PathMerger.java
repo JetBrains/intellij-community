@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static VirtualFile getFile(final VirtualFile base, final String path, final List<String> tail) {
+  public static VirtualFile getFile(final VirtualFile base, final String path, final List<? super String> tail) {
     return getFile(new VirtualFilePathMerger(base), path, tail);
   }
 
@@ -34,7 +35,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static File getFile(final File base, final String path, final List<String> tail) {
+  public static File getFile(final File base, final String path, final List<? super String> tail) {
     return getFile(new IoFilePathMerger(base), path, tail);
   }
 
@@ -44,7 +45,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static FilePath getFile(final FilePath base, final String path, final List<String> tail) {
+  public static FilePath getFile(final FilePath base, final String path, final List<? super String> tail) {
     return getFile(new FilePathPathMerger(base), path, tail);
   }
 
@@ -62,7 +63,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static <T> T getFile(final FilePathMerger<T> merger, final String path, final List<String> tail) {
+  public static <T> T getFile(final FilePathMerger<T> merger, final String path, final List<? super String> tail) {
     final String[] pieces = RelativePathCalculator.split(path);
 
     for (int i = 0; i < pieces.length; i++) {
@@ -79,10 +80,7 @@ public class PathMerger {
       final boolean downResult = merger.down(piece);
       if (! downResult) {
         if (tail != null) {
-          for (int j = i; j < pieces.length; j++) {
-            final String pieceInner = pieces[j];
-            tail.add(pieceInner);
-          }
+          tail.addAll(Arrays.asList(pieces).subList(i, pieces.length));
         }
         return merger.getResult();
       }

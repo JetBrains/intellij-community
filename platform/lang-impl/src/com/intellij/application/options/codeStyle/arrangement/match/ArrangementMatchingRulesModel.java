@@ -24,9 +24,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/12 3:00 PM
  */
-@SuppressWarnings("unchecked")
 public class ArrangementMatchingRulesModel extends DefaultTableModel {
 
   private static final Logger LOG = Logger.getInstance(ArrangementMatchingRulesModel.class);

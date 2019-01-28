@@ -434,16 +434,10 @@ public class SplitterTest {
     if (is != null) {
       StringBuilder sb = new StringBuilder();
 
-      try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetToolkit.UTF8_CHARSET));
-        try {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            sb.append(line).append('\n');
-          }
-        }
-        finally {
-          reader.close();
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, CharsetToolkit.UTF8_CHARSET))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          sb.append(line).append('\n');
         }
       }
       catch (Exception e) {

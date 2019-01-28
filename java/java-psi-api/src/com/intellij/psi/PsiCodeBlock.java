@@ -70,7 +70,6 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
 
   /**
    * @return number of statements this code block contains.
-   * @since 2018.1
    */
   default int getStatementCount() {
     return getStatements().length;
@@ -79,7 +78,6 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
   /**
    * @return true if this code block contains no statements. Note that if code block contains
    * empty statements or empty code blocks inside, this method will return false.
-   * @since 2018.1
    */
   default boolean isEmpty() {
     return getStatementCount() == 0;

@@ -35,11 +35,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 abstract class DiffTestCase : TestCase() {
   private val DEFAULT_CHAR_COUNT = 12
-  private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
-    val map = HashMap<Int, Char>()
-    listOf('\n', '\n', '\t', ' ', ' ', '.', '<', '!').forEachIndexed { i, c -> map.put(i, c) }
-    map
-  }()
+  private val DEFAULT_CHAR_TABLE: List<String> = listOf("\n", "\n", "\t", " ", " ", ".", "<", "!")
 
   val RNG: Random = Random()
   private var gotSeedException = false
@@ -47,6 +43,10 @@ abstract class DiffTestCase : TestCase() {
   val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
   val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 
+  val chSmile = "\uD83D\uDE02"
+  val chGun = "\uD83D\uDD2B"
+  val chMan = "\uD83E\uDDD2"
+  val chFace = "\uD83E\uDD2B"
 
   override fun setUp() {
     super.setUp()
@@ -100,20 +100,26 @@ abstract class DiffTestCase : TestCase() {
     }
   }
 
-  fun generateText(maxLength: Int, charCount: Int, predefinedChars: Map<Int, Char>): String {
+  fun generateText(maxLength: Int, charCount: Int, predefinedChars: List<String>): String {
     val length = RNG.nextInt(maxLength + 1)
     val builder = StringBuilder(length)
 
     for (i in 1..length) {
       val rnd = RNG.nextInt(charCount)
-      val char = predefinedChars[rnd] ?: (rnd + 97).toChar()
+      val char = predefinedChars.getOrElse(rnd) { (rnd + 97).toChar() }
       builder.append(char)
     }
     return builder.toString()
   }
 
-  fun generateText(maxLength: Int): String {
-    return generateText(maxLength, DEFAULT_CHAR_COUNT, DEFAULT_CHAR_TABLE)
+  fun generateText(maxLength: Int, useHighSurrogates: Boolean = false): String {
+    var count = DEFAULT_CHAR_COUNT
+    var table = DEFAULT_CHAR_TABLE
+    if (useHighSurrogates) {
+      count += 4
+      table += listOf(chSmile, chFace, chGun, chMan)
+    }
+    return generateText(maxLength, count, table)
   }
 
   fun getCurrentSeed(): Long {
@@ -160,7 +166,7 @@ abstract class DiffTestCase : TestCase() {
 
     fun <V> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
-    fun forEach(f: (T, ThreeSide) -> Unit): Unit {
+    fun forEach(f: (T, ThreeSide) -> Unit) {
       f(data1, ThreeSide.LEFT)
       f(data2, ThreeSide.BASE)
       f(data3, ThreeSide.RIGHT)
@@ -264,9 +270,12 @@ abstract class DiffTestCase : TestCase() {
 
     fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')
 
-    fun parseMatching(matching: String): BitSet {
+    fun parseMatching(matching: String, text: Document): BitSet {
+      val pattern = matching.filterNot { it == '.' }
+      assertEquals(pattern.length, text.charsSequence.length)
+
       val set = BitSet()
-      matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
+      pattern.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
       return set
     }
 

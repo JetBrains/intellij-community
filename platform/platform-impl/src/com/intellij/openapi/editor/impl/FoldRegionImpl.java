@@ -12,7 +12,7 @@ import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerWithGetterImpl<FoldRegionImpl> implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
 
   private boolean myIsExpanded;
@@ -21,6 +21,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl<FoldRegionImpl> im
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
+  int mySizeBeforeUpdate; // temporary field used during update on document change
 
   FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
@@ -132,7 +133,6 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl<FoldRegionImpl> im
     else {
       myEditor.getFoldingModel().removeRegionFromGroup(this);
     }
-    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override

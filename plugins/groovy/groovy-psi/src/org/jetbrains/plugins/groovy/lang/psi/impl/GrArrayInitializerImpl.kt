@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
@@ -11,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
-class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArrayInitializer {
+class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArrayInitializer, PsiListLikeElement {
 
   override fun toString(): String = "Array initializer"
 
@@ -24,4 +25,6 @@ class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArra
   override fun getExpressions(): List<GrExpression> = childrenOfType()
 
   override fun getRBrace(): PsiElement? = findChildByType(GroovyElementTypes.T_RBRACE)
+
+  override fun getComponents(): List<PsiElement> = expressions
 }

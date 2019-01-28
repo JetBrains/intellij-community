@@ -211,7 +211,7 @@ public class PsiTypesUtil {
           parent = parent.getContext();
         }
         if (parent != null) {
-          qualifierType = JavaPsiFacade.getInstance(project).getElementFactory().createType((PsiClass)parent);
+          qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
@@ -274,7 +274,7 @@ public class PsiTypesUtil {
       }
     }
     else if (PsiUtil.isCondition(element, parent)) {
-      return PsiType.BOOLEAN.getBoxedType(parent);
+      return PsiType.BOOLEAN;
     } 
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();

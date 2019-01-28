@@ -21,7 +21,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/24/2014
  */
 public class DefaultExternalLibraryDependency extends AbstractExternalDependency implements ExternalLibraryDependency {
 

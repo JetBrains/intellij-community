@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -56,7 +57,8 @@ public class ChangeListViewerDialog extends DialogWrapper {
     super(project, parentComponent, true, IdeModalityType.IDE);
 
     myChangesPanel = new CommittedChangeListPanel(project);
-    myChangesPanel.setChangeList(changeList, toSelect);
+    myChangesPanel.setChangeList(changeList);
+    myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
     myLoadingPanel.add(myChangesPanel, BorderLayout.CENTER);
@@ -84,7 +86,8 @@ public class ChangeListViewerDialog extends DialogWrapper {
         ChangelistData result = computable.compute();
         return () -> {
           myLoadingPanel.stopLoading();
-          myChangesPanel.setChangeList(result.changeList, result.toSelect);
+          myChangesPanel.setChangeList(result.changeList);
+          myChangesPanel.getChangesBrowser().getViewer().selectFile(result.toSelect);
           emptyText.setText(DiffBundle.message("diff.count.differences.status.text", 0));
         };
       }
@@ -92,7 +95,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
         LOG.warn(e);
         return () -> {
           myLoadingPanel.stopLoading();
-          myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()), null);
+          myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
           emptyText.setText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
@@ -131,9 +134,9 @@ public class ChangeListViewerDialog extends DialogWrapper {
 
   public static class ChangelistData {
     @NotNull public final CommittedChangeList changeList;
-    @Nullable public final VirtualFile toSelect;
+    @Nullable public final FilePath toSelect;
 
-    public ChangelistData(@NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
+    public ChangelistData(@NotNull CommittedChangeList changeList, @Nullable FilePath toSelect) {
       this.changeList = changeList;
       this.toSelect = toSelect;
     }

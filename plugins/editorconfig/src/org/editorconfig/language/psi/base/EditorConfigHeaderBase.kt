@@ -1,0 +1,27 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.editorconfig.language.psi.base
+
+import com.intellij.lang.ASTNode
+import org.editorconfig.language.codeinsight.inspections.EditorConfigEmptyHeaderInspection
+import org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection
+import org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection
+import org.editorconfig.language.psi.EditorConfigHeader
+import org.editorconfig.language.psi.reference.EditorConfigHeaderReference
+import org.editorconfig.language.util.EditorConfigPsiTreeUtil.containsErrors
+
+abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElementBase(node), EditorConfigHeader {
+  final override fun isValidGlob(): Boolean {
+    if (header.textMatches("[")) return false
+    if (containsErrors(header)) return false
+    if (EditorConfigEmptyHeaderInspection.containsIssue(header)) return false
+    if (EditorConfigNumerousWildcardsInspection.containsIssue(header)) return false
+    if (header.patternEnumerationList.any(patternChecker)) return false
+    return true
+  }
+
+  final override fun getReference() = EditorConfigHeaderReference(this)
+
+  private companion object {
+    private val patternChecker = EditorConfigPatternEnumerationRedundancyInspection.Companion::containsIssue
+  }
+}

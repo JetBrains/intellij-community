@@ -5,64 +5,19 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
+import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
+import org.fest.swing.exception.WaitTimedOutError
 import org.hamcrest.Matcher
-import org.junit.After
 import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TemporaryFolder
-import org.junit.rules.TestName
-
-open class GuiTestCaseExt : GuiTestCase() {
-
-  @Rule
-  @JvmField
-  val testMethod = TestName()
-
-  @Rule
-  @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest(1000) // = 1 sec
-
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
-  @get:Rule
-  val testRootPath: TemporaryFolder by lazy {
-    TemporaryFolder()
-  }
-  val projectFolder: String by lazy {
-    testRootPath.newFolder(testMethod.methodName).canonicalPath
-  }
-
-//  @Rule
-//  @JvmField
-//  val collector = object : ErrorCollector() {
-//    override fun addError(error: Throwable?) {
-//      val screenshotName = testName + "." + testMethod.methodName
-//      takeScreenshotOnFailure(error, screenshotName)
-//      super.addError(error)
-//    }
-//  }
-
-  @Before
-  open fun setUp() {
-    logStartTest(testMethod.methodName)
-  }
-
-  @After
-  fun tearDown() {
-    logEndTest(testMethod.methodName)
-  }
-
-  open fun isIdeFrameRun(): Boolean = true
-}
+import java.awt.IllegalComponentStateException
+import javax.swing.JTree
 
 fun <T> ErrorCollector.checkThat(value: T, matcher: Matcher<T>, reason: () -> String) {
   checkThat(reason(), value, matcher)
@@ -73,26 +28,84 @@ fun <T> ErrorCollector.checkThat(value: T, matcher: Matcher<T>, reason: () -> St
  * */
 fun GuiTestCase.closeProject() {
   ideFrame {
-    logUIStep("Close the project")
-    waitAMoment()
-    closeProject()
+    step("close the project") {
+      waitAMoment()
+      closeProject()
+    }
   }
 }
 
 /**
- * Wrapper for [waitForBackgroundTasksToFinish]
- * adds an extra pause
- * This function should be used instead of  [waitForBackgroundTasksToFinish]
- * because sometimes it doesn't wait enough time
- * After [waitForBackgroundTasksToFinish] fixing this function should be removed
- * @param extraTimeOut time of additional waiting
+ * Provide waiting for background tasks to finish
+ * This function should be used instead of  [IdeFrameFixture.waitForBackgroundTasksToFinish]
+ * because sometimes the latter doesn't wait enough time
+ * The function searches for async icon indicator and waits for its disappearing
+ * This occurs several times as background processes often goes one after another.
  * */
-fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
-  ideFrame {
-    this.waitForBackgroundTasksToFinish()
+fun GuiTestCase.waitAMoment() {
+  fun isWaitIndicatorPresent(): Boolean {
+    var result = false
+    ideFrame {
+      result = indexingProcessIconNullable(Timeouts.seconds03) != null
+    }
+    return result
   }
-  robot().waitForIdle()
-  Pause.pause(extraTimeOut)
+
+  fun waitBackgroundTaskOneAttempt(attempt: Int) {
+    step("wait for background task - attempt #$attempt") {
+      ideFrame {
+        this.waitForBackgroundTasksToFinish()
+        val asyncIcon = indexingProcessIconNullable(Timeouts.seconds03)
+        if (asyncIcon != null) {
+          val timeoutForBackgroundTasks = Timeouts.minutes10
+          try {
+            step("search and click on async icon") {
+              asyncIcon.click()
+            }
+            step("wait for panel 'Background tasks' disappears") {
+              waitForPanelToDisappear(
+                panelTitle = "Background Tasks",
+                timeoutToAppear = Timeouts.seconds01,
+                timeoutToDisappear = timeoutForBackgroundTasks
+              )
+            }
+          }
+          catch (ignore: NullPointerException) {
+            // if asyncIcon disappears at once after getting the NPE from fest might occur
+            // but it's ok - nothing to wait anymore
+          }
+          catch (ignore: IllegalComponentStateException) {
+            // do nothing - asyncIcon disappears, background process has stopped
+          }
+          catch (ignore: ComponentLookupException) {
+            // do nothing - panel hasn't appeared and it seems ok
+          }
+          catch (ignore: IllegalStateException) {
+            // asyncIcon searched earlier might disappear at all (it's ok)
+          }
+          catch (e: WaitTimedOutError) {
+            throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+          }
+        }
+        else logInfo("no async icon found - no background process")
+      }
+      logInfo("attempt #$attempt of waiting for background task finished")
+    }
+  }
+
+  step("wait for background task") {
+    val maxAttemptsWaitForBackgroundTasks = 5
+    var currentAttempt = maxAttemptsWaitForBackgroundTasks
+    while (isWaitIndicatorPresent() && currentAttempt >= 0) {
+      waitBackgroundTaskOneAttempt(maxAttemptsWaitForBackgroundTasks - currentAttempt)
+      currentAttempt--
+    }
+    if (currentAttempt < 0) {
+      throw WaitTimedOutError(
+        "Background processes still continue after $maxAttemptsWaitForBackgroundTasks attempts to wait for their finishing")
+    }
+    logInfo("wait for background task finished")
+  }
 }
 
 /**
@@ -101,11 +114,12 @@ fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
  * before using this test
  * @param expectedItem - expected exact item
  * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
+ * @param predicate - searcher rule, how to compare an item and name. By default they are compared by equality
  * */
-fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
+fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 
@@ -167,95 +181,108 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
  *  I detect end of reimport by following signs:
  *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
  *  enable only for a couple of moments and becomes disable again.
- *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *  - status in the first line in the Build tool window becomes `sync finished` or `sync failed`
  *
- *  @param waitForProject true if we expect reimporting successful
- *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
  *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ *  @return status of reimport - true - successful, false - failed
  * */
-fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
-  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
-    var result = false
-    try {
-      ideFrame {
-        toolwindow(id = "Gradle") {
-          content(tabName = "") {
-            // first, check whether the action button "Refresh all external projects" is enabled
-            val text = "Refresh all external projects"
-            val isReimportButtonEnabled = try {
-              val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
-              assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
-              fixtureByTextAnyState.isEnabled
-            }
-            catch (e: Exception) {
-              logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
-              false
-            }
-            // second, check that Gradle tool window contains a tree with the specified [rootPath]
-            val gradleWindowHasPath = if(waitForProject){
-              try {
-                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
+fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
+  val syncSuccessful = "sync finished"
+  val syncFailed = "sync failed"
+  var reimportStatus = ""
+
+  step("wait for Gradle reimport") {
+    GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05) {
+      var isReimportButtonEnabled: Boolean = false
+      var syncState = false
+      try {
+        ideFrame {
+          toolwindow(id = "Gradle") {
+            content(tabName = "") {
+              // first, check whether the action button "Refresh all external projects" is enabled
+              val text = "Refresh all external projects"
+              isReimportButtonEnabled = try {
+                val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
+                assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
+                fixtureByTextAnyState.isEnabled
               }
               catch (e: Exception) {
-                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
+                logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
                 false
               }
+              logInfo("'$text' button is ${if(isReimportButtonEnabled) "enabled" else "disabled"}")
             }
-            else true
-            // calculate result whether to continue waiting
-            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
-            result = gradleWindowHasPath && isReimportButtonEnabled
           }
-        }
-        // check status in the Build tool window
-        var syncState = !waitForProject
-        if(waitForProject) {
+          // second, check status in the Build tool window
           toolwindow(id = "Build") {
             content(tabName = "Sync") {
               val tree = treeTable().target.tree
-              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
-              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
-              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
-              syncState = state.contains("sync finished")
+              val pathStrings = listOf(rootPath)
+              val treePath = try {
+                ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
+              }
+              catch (e: LocationUnavailableException) {
+                null
+              }
+              if (treePath != null) {
+                reimportStatus = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+                syncState = reimportStatus.contains(syncSuccessful) || reimportStatus.contains(syncFailed)
+              }
+              else {
+                syncState = false
+              }
+              logInfo("Reimport status is '$reimportStatus', synchronization is ${if(syncState) "finished" else "in process"}")
             }
           }
         }
-        // final calculating of result
-        result = result && syncState
       }
+      catch (ignore: Exception) {}
+      // final calculating of result
+      val result = isReimportButtonEnabled && syncState
+      result
     }
-    catch (ignore: Exception) {}
-    result
+    logInfo("end of waiting for background task")
   }
-
+  return reimportStatus.contains(syncSuccessful)
 }
 
 fun GuiTestCase.gradleReimport() {
-  logTestStep("Reimport gradle project")
-  ideFrame {
-    toolwindow(id = "Gradle") {
-      content(tabName = "") {
-        waitAMoment()
-        actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
+  step("reimport gradle project") {
+    ideFrame {
+      toolwindow(id = "Gradle") {
+        content(tabName = "") {
+          waitAMoment()
+          step("click 'Refresh all external projects' button") {
+            actionButton("Refresh all external projects", timeout = Timeouts.minutes05).click()
+          }
+        }
       }
     }
   }
 }
 
 fun GuiTestCase.mavenReimport() {
-  logTestStep("Reimport maven project")
-  ideFrame {
-    toolwindow(id = "Maven") {
-      content(tabName = "") {
-        val button = actionButton("Reimport All Maven Projects")
-        Pause.pause(object : Condition("Wait for button Reimport All Maven Projects to be enabled.") {
-          override fun test(): Boolean {
-            return button.isEnabled
+  step("reimport maven project") {
+    ideFrame {
+      toolwindow(id = "Maven") {
+        content(tabName = "") {
+          step("search when button 'Reimport All Maven Projects' becomes enable and click it") {
+            val reimportAction = "Reimport All Maven Projects"
+            val showDepAction = "Show UML Diagram" // but tooltip says "Show Dependencies"
+            GuiTestUtilKt.waitUntil("Wait for button '$reimportAction' to be enabled.", timeout = Timeouts.minutes02) {
+              actionButton(reimportAction, timeout = Timeouts.seconds30).isEnabled
+            }
+            try {
+              actionButton(showDepAction, timeout = Timeouts.minutes01)
+            }
+            catch (ignore: ComponentLookupException) {
+              logInfo("Maven reimport: not found 'Show Dependencies' button after 1 min waiting")
+            }
+            robot().waitForIdle()
+            actionButton(reimportAction).click()
+            robot().waitForIdle()
           }
-        }, Timeouts.minutes02)
-        robot().waitForIdle()
-        button.click()
-        robot().waitForIdle()
+        }
       }
     }
   }
@@ -264,16 +291,17 @@ fun GuiTestCase.mavenReimport() {
 fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   val textEventLog = "Event Log"
   ideFrame {
-    logTestStep("Going to check how the project compiles")
-    invokeMainMenu("CompileProject")
-    waitAMoment()
-    toolwindow(id = textEventLog) {
-      content(tabName = "") {
-        editor{
-          GuiTestUtilKt.waitUntil("Wait for '$expectedStatus' appears") {
-            val output = this.getCurrentFileContents(false)?.lines() ?: emptyList()
-            val lastLine = output.lastOrNull { it.trim().isNotEmpty() } ?: ""
-            lastLine.contains(expectedStatus)
+    step("check the project compiles") {
+      step("invoke main menu 'CompileProject' ") { invokeMainMenu("CompileProject") }
+      waitAMoment()
+      toolwindow(id = textEventLog) {
+        content(tabName = "") {
+          editor {
+            GuiTestUtilKt.waitUntil("Wait for '$expectedStatus' appears") {
+              val output = this.getCurrentFileContents(false)?.lines() ?: emptyList()
+              val lastLine = output.lastOrNull { it.trim().isNotEmpty() } ?: ""
+              lastLine.contains(expectedStatus)
+            }
           }
         }
       }
@@ -283,20 +311,21 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
 
 fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   val buttonRun = "Run"
-  logTestStep("Going to run configuration `$configuration`")
-  ideFrame {
-    navigationBar {
-      actionButton(buttonRun).click()
-    }
-    waitAMoment()
-    toolwindow(id = buttonRun) {
-      content(tabName = configuration) {
-        editor {
-          GuiTestUtilKt.waitUntil("Wait for '$message' appears") {
-            val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
-            logInfo("output: ${output.map { "\n\t$it" }}")
-            logInfo("expected message = '$message'")
-            output.firstOrNull { it.contains(message) } != null
+  step("run configuration `$configuration`") {
+    ideFrame {
+      navigationBar {
+        actionButton(buttonRun).click()
+      }
+      waitAMoment()
+      toolwindow(id = buttonRun) {
+        content(tabName = configuration) {
+          editor {
+            GuiTestUtilKt.waitUntil("Wait for '$message' appears") {
+              val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
+              logInfo("output: ${output.map { "\n\t$it" }}")
+              logInfo("expected message = '$message'")
+              output.firstOrNull { it.contains(message) } != null
+            }
           }
         }
       }
@@ -308,21 +337,73 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
                                  expectedNumberOfIcons: Int,
                                  expectedLines: List<String>) {
   ideFrame {
-    logTestStep("Going to check whether $expectedNumberOfIcons $gutterIcon gutter icons are present")
-    editor {
-      waitUntilFileIsLoaded()
-      waitUntilErrorAnalysisFinishes()
-      gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
-      val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
-      val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
-      for ((index, line) in gutterLinesWithIcon.withIndex()) {
-        // line numbers start with 1, but index in the contents list starts with 0
-        val currentLine = contents[line - 1]
-        val expectedLine = expectedLines[index]
-        assert(currentLine.contains(expectedLine)) {
-          "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
+    step("check whether $expectedNumberOfIcons '$gutterIcon' gutter icons are present") {
+      editor {
+        step("wait for gutter icons appearing") {
+          waitUntilFileIsLoaded()
+          waitUntilErrorAnalysisFinishes()
+          gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
+        }
+        val gutterLinesWithIcon = gutter.linesWithGutterIcon(gutterIcon)
+        val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
+        for ((index, line) in gutterLinesWithIcon.withIndex()) {
+          // line numbers start with 1, but index in the contents list starts with 0
+          val currentLine = contents[line - 1]
+          val expectedLine = expectedLines[index]
+          logInfo("Found line '$currentLine' with icon '$gutterIcon'. Expected line is '$expectedLine'")
+          assert(currentLine.contains(expectedLine)) {
+            "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
+          }
         }
       }
     }
+  }
+}
+
+fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
+  val dialogName = "Project Structure for New Projects"
+  return step("create a JDK on the path `$jdkPath`") {
+    lateinit var installedJdkName: String
+    welcomeFrame {
+      actionLink("Configure").click()
+      popupMenu("Structure for New Projects").clickSearchedItem()
+      step("open `$dialogName` dialog") {
+        dialog(dialogName) {
+          jList("SDKs").clickItem("SDKs")
+          val sdkTree: ExtendedJTreePathFixture = jTree()
+
+          fun JTree.getListOfInstalledSdks(): List<String> {
+            val root = model.root
+            return (0 until model.getChildCount(root))
+              .map { model.getChild(root, it).toString() }.toList()
+          }
+
+          val preInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+          installedJdkName = if (jdkName.isEmpty() || preInstalledSdks.contains(jdkName).not()) {
+            actionButton("Add New SDK").click()
+            popupMenu("JDK").clickSearchedItem()
+            step("open `Select Home Directory for JDK` dialog") {
+              dialog("Select Home Directory for JDK") {
+                actionButton("Refresh").click()
+                step("type the path `$jdkPath`") {
+                  typeText(jdkPath)
+                }
+                step("close `Select Home Directory for JDK` dialog with OK") {
+                  button("OK").click()
+                }
+              }
+            }
+
+            val postInstalledSdks = sdkTree.tree.getListOfInstalledSdks()
+            postInstalledSdks.first { preInstalledSdks.contains(it).not() }
+          }
+          else jdkName
+          step("close `Default Project Structure` dialog with OK") {
+            button("OK").click()
+          }
+        } // dialog Project Structure
+      }
+    } // ideFrame
+    return@step installedJdkName
   }
 }

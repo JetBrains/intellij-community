@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
@@ -33,7 +20,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -47,6 +33,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,12 +47,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.testIntegration.TestFramework;
 import jetbrains.coverage.report.ReportGenerationFailedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -76,7 +66,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   public static JavaCoverageEngine getInstance() {
-    return Extensions.findExtension(EP_NAME, JavaCoverageEngine.class);
+    return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
   }
 
   @Override
@@ -84,7 +74,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (conf instanceof CommonJavaRunConfigurationParameters) {
       return true;
     }
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isApplicableTo(conf)) {
         return true;
       }
@@ -97,6 +87,83 @@ public class JavaCoverageEngine extends CoverageEngine {
     return !(conf instanceof ApplicationConfiguration) && conf instanceof CommonJavaRunConfigurationParameters;
   }
 
+  @Override
+  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
+    return extractTracedTests(project, classFQName, lineNumber);
+  }
+
+  @Override
+  public boolean wasTestDataCollected(Project project) {
+    File[] files = getTraceFiles(project);
+    return files != null && files.length > 0;
+  }
+
+  private static Set<String> extractTracedTests(Project project, final String classFQName, final int lineNumber) {
+    Set<String> tests = new HashSet<>();
+    final File[] traceFiles = getTraceFiles(project);
+    for (File traceFile : traceFiles) {
+      DataInputStream in = null;
+      try {
+        in = new DataInputStream(new FileInputStream(traceFile));
+        extractTests(traceFile, in, tests, classFQName, lineNumber);
+      }
+      catch (Exception ex) {
+        LOG.error(traceFile.getName(), ex);
+      }
+      finally {
+        try {
+          in.close();
+        }
+        catch (IOException ex) {
+          LOG.error(ex);
+        }
+      }
+    }
+    return tests;
+  }
+
+  private static void extractTests(final File traceFile,
+                                   final DataInputStream in,
+                                   final Set<String> tests,
+                                   final String classFQName,
+                                   final int lineNumber) throws IOException {
+    long traceSize = in.readInt();
+    for (int i = 0; i < traceSize; i++) {
+      final String className = in.readUTF();
+      final int linesSize = in.readInt();
+      for(int l = 0; l < linesSize; l++) {
+        final int line = in.readInt();
+        if (Comparing.strEqual(className, classFQName)) {
+          if (lineNumber == line) {
+            tests.add(FileUtil.getNameWithoutExtension(traceFile));
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static File[] getTraceFiles(Project project) {
+    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
+    if (currentSuite == null) return null;
+    final List<File> files = new ArrayList<>();
+    for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
+
+      final String filePath = coverageSuite.getCoverageDataFileName();
+      final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
+
+      final File parentDir = new File(filePath).getParentFile();
+      final File tracesDir = new File(parentDir, dirName);
+      final File[] suiteFiles = tracesDir.listFiles();
+      if (suiteFiles != null) {
+        Collections.addAll(files, suiteFiles);
+      }
+    }
+
+    return files.isEmpty() ? null : files.toArray(new File[0]);
+  }
+  
   @NotNull
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf) {
@@ -272,7 +339,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)sourceFile).getClasses());
     final Set<String> qNames = new HashSet<>();
-    for (final JavaCoverageEngineExtension nameExtension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (final JavaCoverageEngineExtension nameExtension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (ReadAction.compute(() -> nameExtension.suggestQualifiedName(sourceFile, classes, qNames))) {
         return qNames;
       }
@@ -297,7 +364,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.collectOutputFiles(srcFile, outputpath, testOutputpath, suite, classFiles)) return classFiles;
     }
 
@@ -356,7 +423,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(lineData.getHits()).append("\n");
 
 
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
       if (report != null) {
         buf.append(report);
@@ -513,10 +580,10 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   private static void collectTestsByName(List<? super PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
+    TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
+    if (testFramework == null) return;
     final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(lastIdx + 1), true);
-    if (testsByName.length == 1) {
-      elements.add(testsByName[0]);
-    }
+    Arrays.stream(testsByName).filter(test -> testFramework.isTestMethod(test)).forEach(elements::add);
   }
 
 
@@ -586,7 +653,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         }
       }
 
-      
+
       @Override
       public void onSuccess() {
         if (myExceptions[0] != null) {
@@ -619,7 +686,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public boolean isSourceMapNeeded(RunConfigurationBase configuration) {
-    for (final JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isSourceMapNeeded(configuration)) {
         return true;
       }

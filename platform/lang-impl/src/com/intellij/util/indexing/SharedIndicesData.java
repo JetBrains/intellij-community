@@ -21,9 +21,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import gnu.trove.*;
+import com.intellij.util.io.*;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntLongHashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,7 +195,6 @@ public class SharedIndicesData {
 
     synchronized void flush() throws IOException {
       if (compactNecessary) {
-        //noinspection IOResourceOpenedButNotSafelyClosed
         UnsyncByteArrayOutputStream compactedOutputStream = new UnsyncByteArrayOutputStream(values.length);
         //noinspection IOResourceOpenedButNotSafelyClosed
         DataOutput compactedOutput = new DataOutputStream(compactedOutputStream);
@@ -368,7 +369,6 @@ public class SharedIndicesData {
     throws IOException {
     final BufferExposingByteArrayOutputStream savedKeysData;
     if (keys != null) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
       externalizer.save(new DataOutputStream(savedKeysData = new BufferExposingByteArrayOutputStream()), keys);
     }
     else {

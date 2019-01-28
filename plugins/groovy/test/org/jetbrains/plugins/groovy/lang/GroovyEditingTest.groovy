@@ -237,6 +237,14 @@ class A {}
     doTest(/"""<caret>"""/, '\b', /""<caret>/)
   }
 
+  void 'test backslash before closing quote'() {
+    doTest($/'''<caret>'''/$, '\\', $/'''\<selection>\</selection>'''/$)
+    doTest($/'''    <caret>'''/$, '\\', $/'''    \<selection>\</selection>'''/$)
+    doTest("'''\n\n<caret>'''", '\\', "'''\n\n\\<selection>\\</selection>'''")
+    doTest($/'<caret>'/$, '\\', $/'\<selection>\</selection>'/$)
+    doTest($/'    <caret>'/$, '\\', $/'    \<selection>\</selection>'/$)
+  }
+
   /*
   todo uncomment when implemented
   void testRegex1() {

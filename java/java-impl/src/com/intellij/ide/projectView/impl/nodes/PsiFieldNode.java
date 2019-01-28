@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
-  public PsiFieldNode(Project project, PsiField value, ViewSettings viewSettings) {
+  public PsiFieldNode(Project project, @NotNull PsiField value, @NotNull ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

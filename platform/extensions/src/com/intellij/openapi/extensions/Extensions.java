@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<>("com.intellij.arealistener");
@@ -88,14 +76,22 @@ public class Extensions {
     return getExtensions(extensionPointName, null);
   }
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#getExtensionList()}
+   */
+  @Deprecated
   @NotNull
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getExtensions(extensionPointName, null);
+    return extensionPointName.getExtensions();
   }
 
+  /**
+   * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   */
+  @Deprecated
   @NotNull
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
-    return getExtensions(extensionPointName.getName(), areaInstance);
+    return extensionPointName.getExtensions(areaInstance);
   }
 
   @NotNull
@@ -105,20 +101,18 @@ public class Extensions {
     return extensionPoint.getExtensions();
   }
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
+   */
+  @Deprecated
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
-    for (T t : getExtensions(extensionPointName)) {
-      if (extClass.isInstance(t)) {
-        //noinspection unchecked
-        return (U) t;
-      }
-    }
-    throw new IllegalArgumentException("could not find extension implementation " + extClass);
+    return extensionPointName.findExtensionOrFail(extClass);
   }
 
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance, @NotNull Class<U> extClass) {
-    for (T t : getExtensions(extensionPointName, areaInstance)) {
+    for (T t : extensionPointName.getExtensions(areaInstance)) {
       if (extClass.isInstance(t)) {
         //noinspection unchecked
         return (U) t;
@@ -133,7 +127,7 @@ public class Extensions {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
     ExtensionsArea parentArea = getArea(parentAreaInstance);
-    if (!equals(parentArea.getAreaClass(), configuration.getParentClassName())) {
+    if (!Objects.equals(parentArea.getAreaClass(), configuration.getParentClassName())) {
       throw new IllegalArgumentException("Wrong parent area. Expected class: " + configuration.getParentClassName() + " actual class: " + parentArea.getAreaClass());
     }
     ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer());
@@ -146,15 +140,15 @@ public class Extensions {
   }
 
   @NotNull
-  private static AreaListener[] getAreaListeners() {
-    return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
+  private static List<AreaListener> getAreaListeners() {
+    return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensionList();
   }
 
   public static void registerAreaClass(@NonNls @NotNull String areaClass, @Nullable @NonNls String parentAreaClass) {
     if (ourAreaClass2Configuration.containsKey(areaClass)) {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
-      if (!equals(configuration.getParentClassName(), parentAreaClass)) {
+      if (!Objects.equals(configuration.getParentClassName(), parentAreaClass)) {
         throw new RuntimeException("Area class already registered: " + areaClass + ", "+ configuration);
       }
       else {
@@ -180,10 +174,6 @@ public class Extensions {
     finally {
       ourAreaInstance2area.remove(areaInstance);
     }
-  }
-
-  private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
-    return object1 == object2 || object1 != null && object1.equals(object2);
   }
 
   private static class AreaClassConfiguration {

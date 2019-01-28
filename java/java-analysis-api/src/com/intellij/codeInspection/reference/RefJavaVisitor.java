@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see RefEntity#accept
  * @see RefManager#iterate
- * @since 6.0
  */
 public class RefJavaVisitor extends RefVisitor {
   public void visitField(@NotNull RefField field) {

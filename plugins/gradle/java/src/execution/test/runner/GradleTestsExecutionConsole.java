@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2015
  */
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
   private final Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();

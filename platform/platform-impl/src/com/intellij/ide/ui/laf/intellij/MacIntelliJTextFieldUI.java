@@ -27,18 +27,6 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   @Override
-  protected void updateIconsLayout(Rectangle bounds) {
-    super.updateIconsLayout(bounds);
-    JTextComponent component = getComponent();
-    if (component == null || component.hasFocus()) return;
-    IconHolder clear = icons.get("clear");
-    if (clear == null || clear.icon != null) return;
-    IconHolder search = icons.get("search");
-    if (search == null || search.icon == null || search.isClickable()) return;
-    search.bounds.x = bounds.x + (bounds.width - search.bounds.width) / 2;
-  }
-
-  @Override
   protected int getMinimumHeight(int textHeight) {
     Insets i = getComponent().getInsets();
     Component c = getComponent();

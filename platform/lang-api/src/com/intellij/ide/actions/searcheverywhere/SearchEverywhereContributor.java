@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -11,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -27,6 +26,11 @@ public interface SearchEverywhereContributor<F> {
   @NotNull
   String getGroupName();
 
+  @NotNull
+  default String getFullGroupName() {
+    return getGroupName();
+  }
+
   @Nullable
   String includeNonProjectItemsText();
 
@@ -41,6 +45,14 @@ public interface SearchEverywhereContributor<F> {
   default int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return 0;
   }
+
+  @NotNull
+  default List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  default String getAdvertisement() { return null; }
 
   void fetchElements(@NotNull String pattern,
                      boolean everywhere,
@@ -98,6 +110,10 @@ public interface SearchEverywhereContributor<F> {
 
   default boolean isDumbModeSupported() {
     return true;
+  }
+
+  default boolean isEmptyPatternSupported() {
+    return false;
   }
 
   @NotNull

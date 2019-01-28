@@ -237,6 +237,10 @@
       </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"
               text="Switch to the next stopped breakpoint"/>
+      <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction" text="Trace Calls"
+              icon="AllIcons.Debugger.Db_set_breakpoint">
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
+      </action>
     </group>
 
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
@@ -244,6 +248,20 @@
             text="Show Instances">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
                     relative-to-action="Debugger.ShowReferring"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize"
+            text="Calculate Retained Size">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.ShowGarbageCollectorRootsAction"
+            id="Memory.ShowGarbageCollectorRoots"
+            text="Find Garbage Collector Roots">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.CalculateRetainedSize"/>
     </action>
 
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"

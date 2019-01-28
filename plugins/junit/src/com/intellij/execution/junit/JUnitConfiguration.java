@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
@@ -137,12 +138,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
+    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
     myData = data;
   }
 
   protected JUnitConfiguration(@NotNull Project project, Data data, @NotNull ConfigurationFactory configurationFactory) {
-    super(new JavaRunConfigurationModule(project, false), configurationFactory);
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
     myData = data;
   }
 
@@ -209,7 +210,9 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       default:
         repeat = "";
     }
-    return myData.getGeneratedName(getConfigurationModule()) + repeat;
+    String generatedName = myData.getGeneratedName(getConfigurationModule());
+    if (generatedName == null) return null;
+    return generatedName + repeat;
   }
 
   @Override
@@ -466,7 +469,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<>(persistentData, new Data()));
+    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      }
+    });
 
     if (!persistentData.getEnvs().isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());

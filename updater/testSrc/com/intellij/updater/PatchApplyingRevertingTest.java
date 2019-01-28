@@ -2,6 +2,7 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,8 +20,10 @@ import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+@RunFirst
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
   private PatchSpec myPatchSpec;
@@ -88,13 +91,13 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
-    assumeTrue(UtilsTest.IS_WINDOWS);
+    assumeTrue(Utils.IS_WINDOWS);
     doLockedFileTest();
   }
 
   @Test
   public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
-    assumeTrue(UtilsTest.IS_WINDOWS);
+    assumeTrue(Utils.IS_WINDOWS);
     FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
     doLockedFileTest();
   }
@@ -474,7 +477,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkAdded() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
 
@@ -483,7 +486,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRemoved() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
 
@@ -492,7 +495,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRenamed() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.lnk"));
@@ -502,7 +505,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void testSymlinkRetargeted() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
     Utils.createLink("./Readme.txt", new File(myNewerDir, "Readme.link"));
@@ -572,6 +575,20 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
     assertAppliedAndReverted(preparationResult);
+  }
+
+  @Test
+  public void testExecutableFlagChange() throws Exception {
+    assumeFalse(Utils.IS_WINDOWS);
+
+    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_executable"), "to_become_executable");
+    FileUtil.writeToFile(new File(myOlderDir, "bin/to_become_plain"), "to_become_plain");
+    Utils.setExecutable(new File(myOlderDir, "bin/to_become_plain"), true);
+    resetNewerDir();
+    Utils.setExecutable(new File(myNewerDir, "bin/to_become_plain"), false);
+    Utils.setExecutable(new File(myNewerDir, "bin/to_become_executable"), true);
+
+    assertAppliedAndReverted();
   }
 
 

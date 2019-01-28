@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
-import com.google.common.collect.Iterables;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
@@ -26,9 +25,13 @@ import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PyLazySdk;
+import com.jetbrains.python.sdk.PySdkSettings;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +41,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
@@ -340,11 +342,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
   @NotNull
   private static List<Sdk> getValidPythonSdks() {
-    final List<Sdk> pythonSdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
-    Iterables.removeIf(pythonSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType) ||
-                                          PythonSdkType.isInvalid(sdk) ||
-                                          PySdkExtKt.getAssociatedModulePath(sdk) != null);
-    Collections.sort(pythonSdks, new PreferredSdkComparator());
-    return pythonSdks;
+    return StreamEx
+      .of(PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks())
+      .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkType.isInvalid(sdk))
+      .sorted(new PreferredSdkComparator())
+      .toList();
   }
 }

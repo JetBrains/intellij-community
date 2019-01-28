@@ -4,24 +4,20 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
-import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase {
+public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;
-  private final AbstractTreeStructure myTreeStructure;
+  private final SMTRunnerTreeStructure myTreeStructure;
   private boolean myDisposed;
   private StructureTreeModel myTreeModel;
-  private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   public SMTRunnerTreeBuilder(final JTree tree, final SMTRunnerTreeStructure structure) {
     myTree = tree;
@@ -29,14 +25,12 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   @Override
-  public void repaintWithParents(final AbstractTestProxy testProxy) {
-    TreeUtil.promiseVisit(getTree(), visitor(testProxy))
-      .onSuccess(path -> {
-        while (path != null) {
-          myTreeModel.invalidate(path, false);
-          path = path.getParentPath();
-        }
-      });
+  public void repaintWithParents(SMTestProxy testProxy) {
+    do {
+      getTreeModel().invalidate(testProxy, false);
+      testProxy = testProxy.getParent();
+    }
+    while (testProxy != null);
   }
 
   @Override
@@ -48,28 +42,16 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     return myDisposed;
   }
 
-  
-  public SMTRunnerTreeStructure getSMRunnerTreeStructure() {
-    return ((SMTRunnerTreeStructure)getTreeStructure());
-  }
 
   public void updateTestsSubtree(final SMTestProxy parentTestProxy) {
-    TreeUtil.promiseVisit(getTree(), visitor(parentTestProxy))
-      .onSuccess(path -> {
-        if (path != null) {
-          getTreeModel().invalidate(path, true);
-        }
-        else {
-          getTreeModel().invalidate();
-        }
-      });
+    getTreeModel().invalidate(parentTestProxy, true);
   }
   
   public JTree getTree() {
     return myTree;
   }
 
-  public AbstractTreeStructure getTreeStructure() {
+  public SMTRunnerTreeStructure getTreeStructure() {
     return myTreeStructure;
   }
 
@@ -96,42 +78,16 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   public void expand(AbstractTestProxy test) {
-    TreeUtil.promiseExpand(getTree(), visitor(test));
+    getTreeModel().expand(test, getTree(), path -> {
+    });
   }
 
   public void select(Object proxy, Runnable onDone) {
     if (!(proxy instanceof AbstractTestProxy)) return;
     mySelectionAlarm.cancelAllRequests();
-    mySelectionAlarm.addRequest(() -> TreeUtil.promiseSelect(getTree(), visitor((AbstractTestProxy)proxy))
-      .onSuccess(path -> {
-        if (onDone != null) {
-          onDone.run();
-        }
-      }), 50);
-  }
-
-  @NotNull
-  private static TreeVisitor visitor(@NotNull AbstractTestProxy proxy) {
-    return path -> {
-      BaseTestProxyNodeDescriptor descriptor = TreeUtil.getLastUserObject(BaseTestProxyNodeDescriptor.class, path);;
-      assert descriptor != null;
-      AbstractTestProxy currentProxy = descriptor.getElement();
-      if (currentProxy == proxy) return TreeVisitor.Action.INTERRUPT;
-      return isAncestor(currentProxy, proxy)
-             ? TreeVisitor.Action.CONTINUE
-             : TreeVisitor.Action.SKIP_CHILDREN;
-    };
-  }
-
-  private static boolean isAncestor(AbstractTestProxy parentProxy, AbstractTestProxy proxy) {
-    if (parentProxy.isLeaf()) return false;
-
-    AbstractTestProxy parent = proxy.getParent();
-    while (parent != null) {
-      if (parent == parentProxy) return true;
-      parent = parent.getParent();
-    }
-    return false;
+    mySelectionAlarm.addRequest(() -> getTreeModel().select(proxy, getTree(), path -> {
+      if (onDone != null) onDone.run();
+    }), 50);
   }
 
   //todo

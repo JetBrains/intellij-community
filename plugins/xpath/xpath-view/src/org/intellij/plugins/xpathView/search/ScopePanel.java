@@ -38,7 +38,7 @@ import java.util.Vector;
 
 public class ScopePanel extends JPanel implements Disposable{
 
-    @SuppressWarnings({ "FieldCanBeLocal", "UnusedDeclaration" })
+    @SuppressWarnings({"UnusedDeclaration" })
     private JPanel myRoot;
 
     private JRadioButton myWholeProjectScope;

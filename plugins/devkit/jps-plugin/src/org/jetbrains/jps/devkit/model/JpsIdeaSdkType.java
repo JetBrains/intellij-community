@@ -31,4 +31,9 @@ public class JpsIdeaSdkType extends JpsSdkType<JpsSimpleElement<JpsIdeaSdkProper
   public String getJavaSdkName(@NotNull JpsElement properties) {
     return ((JpsIdeaSdkProperties)((JpsSimpleElement<?>)properties).getData()).getJdkName();
   }
+
+  @Override
+  public String getPresentableName() {
+    return "IntelliJ Platform Plugin SDK";
+  }
 }

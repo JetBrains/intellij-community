@@ -55,7 +55,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public List<ValueConstraint> getConstraints() {
-    return Collections.unmodifiableList(Arrays.asList(myParameters));
+    return ContainerUtil.immutableList(myParameters);
   }
 
   @NotNull
@@ -113,6 +113,29 @@ public final class StandardMethodContract extends MethodContract {
       template.set(i, constraint);
     }
     return StreamEx.of(antiContracts).map(this::intersect).nonNull();
+  }
+
+  /**
+   * Try merge two contracts into one preserving their full meaning
+   * @param other other contract to merge into this
+   * @return merged contract or null if unable to merge
+   */
+  public StandardMethodContract tryCollapse(StandardMethodContract other) {
+    if(!other.getReturnValue().equals(getReturnValue())) return null;
+    ValueConstraint[] thisParameters = this.myParameters;
+    ValueConstraint[] thatParameters = other.myParameters;
+    if (thatParameters.length != thisParameters.length) return null;
+    ValueConstraint[] result = null;
+    for (int i = 0; i < thisParameters.length; i++) {
+      ValueConstraint thisConstraint = thisParameters[i];
+      ValueConstraint thatConstraint = thatParameters[i];
+      if (thisConstraint != thatConstraint) {
+        if (result != null || !thisConstraint.canBeNegated() || thisConstraint.negate() != thatConstraint) return null;
+        result = thisParameters.clone();
+        result[i] = ValueConstraint.ANY_VALUE;
+      }
+    }
+    return result == null ? null : new StandardMethodContract(result, getReturnValue());
   }
 
   /**

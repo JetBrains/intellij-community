@@ -80,7 +80,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     return myBuilder.getCurrentIndent();
   }
 
-  protected void error(String message) {
+  protected void error(@NotNull String message) {
     myBuilder.error(message);
   }
 
@@ -119,7 +119,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     return expect(elementType, "Expected: " + elementType);
   }
 
-  protected boolean expect(@NotNull final IElementType elementType, String expectedMessage) {
+  protected boolean expect(@NotNull final IElementType elementType, @NotNull String expectedMessage) {
     if (getTokenType() == elementType) {
       advance();
       return true;
@@ -160,7 +160,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     advanceUntil(TokenSet.EMPTY);
   }
 
-  protected void errorUntil(TokenSet tokenSet, String message) {
+  protected void errorUntil(TokenSet tokenSet, @NotNull String message) {
     PsiBuilder.Marker errorMarker = mark();
     advanceUntil(tokenSet);
     errorMarker.error(message);

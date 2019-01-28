@@ -1,17 +1,17 @@
 <component name="libraryTable">
   <library name="miglayout-swing" type="repository">
-    <properties maven-id="com.miglayout:miglayout-swing:5.1" />
+    <properties maven-id="com.miglayout:miglayout-swing:5.2" />
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/migLayout" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/5.1/miglayout-swing-5.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/5.1/miglayout-core-5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/5.2/miglayout-swing-5.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/5.2/miglayout-core-5.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/5.1/miglayout-swing-5.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/5.1/miglayout-core-5.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/5.2/miglayout-swing-5.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/5.2/miglayout-core-5.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

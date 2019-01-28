@@ -26,8 +26,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.containers.*;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
+  private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
     FactoryMap.create(closure -> {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -188,7 +188,7 @@ public class LiveVariablesAnalyzer {
       if (instruction instanceof FinishElementInstruction) {
         BitSet currentlyLive = liveVars.get(instruction);
         if (currentlyLive == null) {
-          return new BitSet(); // an instruction unreachable from the end?
+          currentlyLive = new BitSet();
         }
         int index = 0;
         while (true) {
@@ -209,7 +209,7 @@ public class LiveVariablesAnalyzer {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
         // Do not flush special values and this value as they could be used implicitly
-        values.removeIf(var -> var.getSource() instanceof SpecialField || var.getSource() instanceof DfaExpressionFactory.ThisSource);
+        values.removeIf(var -> var.getDescriptor() instanceof SpecialField || var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor);
         instruction.getVarsToFlush().addAll(values);
       }
     }
@@ -231,7 +231,7 @@ public class LiveVariablesAnalyzer {
       queue.addLast(new InstructionState(i, new BitSet()));
     }
 
-    int limit = myForwardMap.size() * 20;
+    int limit = myForwardMap.size() * 100;
     Set<InstructionState> processed = ContainerUtil.newHashSet();
     while (!queue.isEmpty()) {
       int steps = processed.size();

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
@@ -10,13 +11,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
+import org.editorconfig.EditorConfigRegistry;
 import org.editorconfig.configmanagement.DocumentSettingsManager;
 import org.editorconfig.configmanagement.EditorSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
@@ -60,7 +61,7 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
         final VirtualFile file = event.getFile();
         if (".editorconfig".equals(file.getName())) {
           if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file) ||
-              !Registry.is("editor.config.stop.at.project.root")) {
+              !EditorConfigRegistry.shouldStopAtProjectRoot()) {
             alarm.addRequest(() -> {
               SettingsProviderComponent.getInstance().incModificationCount();
               for (Editor editor : editorFactory.getAllEditors()) {

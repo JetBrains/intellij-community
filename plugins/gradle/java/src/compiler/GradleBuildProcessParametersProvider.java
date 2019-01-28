@@ -36,7 +36,6 @@ import java.util.List;
  * Adds Gradle build dependencies to the project build process' classpath.
  *
  * @author Vladislav.Soroka
- * @since 7/22/2014
  */
 public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
   @NotNull private final Project myProject;

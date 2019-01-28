@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author dsl
- * @since 07.05.2002
  */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightRefactoringTestCase  {

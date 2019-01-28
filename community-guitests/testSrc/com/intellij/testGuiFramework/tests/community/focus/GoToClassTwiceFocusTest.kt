@@ -22,11 +22,6 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
 
   private val typedString = "hefuihwefwehrf;werfwerfw"
 
-  @Rule @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest()
-  @Rule @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
   private val actionKeyStroke: KeyStroke by lazy {
     val activeKeymapShortcuts: ShortcutSet = KeymapUtil.getActiveKeymapShortcuts("GotoClass")
     KeymapUtil.getKeyStroke(activeKeymapShortcuts)!!

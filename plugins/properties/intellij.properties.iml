@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.properties.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
   </component>
 </module>

@@ -8,19 +8,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
@@ -173,9 +174,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (scope == this) return scope;
-
-    return new UnionScope(this, scope);
+    return UnionScope.create(new GlobalSearchScope[]{this, scope});
   }
 
   @NotNull
@@ -187,7 +186,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (scopes.size() == 1) {
       return scopes.iterator().next();
     }
-    return new UnionScope(scopes.toArray(new GlobalSearchScope[0]));
+    return UnionScope.create(scopes.toArray(EMPTY_ARRAY));
   }
 
   @NotNull
@@ -199,7 +198,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (scopes.length == 1) {
       return scopes[0];
     }
-    return new UnionScope(scopes);
+    return UnionScope.create(scopes);
   }
 
   @NotNull
@@ -357,7 +356,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     return filesScope(project, files, null);
   }
 
@@ -369,20 +368,20 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithoutLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesWithoutLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, false, false);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     return filesWithLibrariesScope(project, files, false);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files,
+  public static GlobalSearchScope filesWithLibrariesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files,
                                                           boolean searchOutsideRootModel) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return new FilesScope(project, files, true, searchOutsideRootModel);
@@ -393,7 +392,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    */
   @NotNull
   @Contract(pure = true)
-  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
     return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
       @NotNull
@@ -425,8 +424,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private boolean containsScope(@NotNull GlobalSearchScope scope) {
       if (myScope1.equals(scope) || myScope2.equals(scope) || equals(scope)) return true;
       if (myScope1 instanceof IntersectionScope && ((IntersectionScope)myScope1).containsScope(scope)) return true;
-      if (myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope)) return true;
-      return false;
+      return myScope2 instanceof IntersectionScope && ((IntersectionScope)myScope2).containsScope(scope);
     }
 
     @NotNull
@@ -493,7 +491,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
+      //noinspection deprecation
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
 
@@ -507,28 +506,29 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope[] myScopes;
 
-    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
-      this(new GlobalSearchScope[]{scope1, scope2});
-    }
-
-    private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(Stream.of(scopes).map(scope->scope.getProject()).findFirst().orElse(null));
-      if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
-      List<GlobalSearchScope> result = null;
-      for (int i = 0; i < scopes.length; i++) {
-        GlobalSearchScope scope = scopes[i];
+    @NotNull
+    static GlobalSearchScope create(@NotNull GlobalSearchScope[] scopes) {
+      Set<GlobalSearchScope> result = new THashSet<>(scopes.length);
+      Project project = null;
+      for (GlobalSearchScope scope : scopes) {
+        if (scope == EMPTY_SCOPE) continue;
+        Project scopeProject = scope.getProject();
+        if (scopeProject != null) project = scopeProject;
         if (scope instanceof UnionScope) {
-          if (result == null) {
-            result = new ArrayList<>(scopes.length + ((UnionScope)scope).myScopes.length);
-            result.addAll(Arrays.asList(scopes).subList(0, i));
-          }
           ContainerUtil.addAll(result, ((UnionScope)scope).myScopes);
         }
-        else if (result != null) {
+        else {
           result.add(scope);
         }
       }
-      myScopes = result == null ? scopes : result.toArray(result.toArray(EMPTY_ARRAY));
+      if (result.isEmpty()) return EMPTY_SCOPE;
+      if (result.size() == 1) return result.iterator().next();
+      return new UnionScope(project, result.toArray(EMPTY_ARRAY));
+    }
+
+    private UnionScope(Project project, @NotNull GlobalSearchScope[] scopes) {
+      super(project);
+      myScopes = scopes;
     }
 
     @NotNull
@@ -607,7 +607,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return Arrays.hashCode(myScopes);
     }
 
@@ -622,7 +622,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (scope instanceof UnionScope) {
         GlobalSearchScope[] newScopes = ArrayUtil.mergeArrays(myScopes, ((UnionScope)scope).myScopes);
-        return new UnionScope(newScopes);
+        return create(newScopes);
       }
       return super.uniteWith(scope);
     }
@@ -696,8 +696,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
-      int result = super.hashCode();
+    public int calcHashCode() {
+      int result = super.calcHashCode();
       result = 31 * result + Arrays.hashCode(myFileTypes);
       return result;
     }
@@ -790,23 +790,20 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
-    private final Collection<VirtualFile> myFiles;
+    private final Set<? extends VirtualFile> myFiles;
     private final boolean mySearchOutsideRootModel;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
-    /**
-     * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
-     */
-    @Deprecated
-    private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
+    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
       this(project, files, null, false);
     }
 
     // Optimization
-    private FilesScope(@Nullable  Project project, @NotNull Collection<VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
+    private FilesScope(@Nullable  Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots,
                        boolean searchOutsideRootModel) {
       super(project);
-      myFiles = files;
+      myFiles = new CompactVirtualFileSet(files);
+      ((CompactVirtualFileSet)myFiles).freeze();
       mySearchOutsideRootModel = searchOutsideRootModel;
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
     }
@@ -832,7 +829,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return myFiles.hashCode();
     }
 
@@ -842,21 +839,23 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         Project project = getProject();
         myHasFilesOutOfProjectRoots = result =
           project != null && !project.isDefault() &&
-          myFiles.stream().anyMatch(file -> FileIndexFacade.getInstance(project).getModuleForFile(file) == null);
+          ContainerUtil.find(myFiles, file -> FileIndexFacade.getInstance(project).getModuleForFile(file) != null) == null;
       }
       return result;
     }
 
     @Override
     public String toString() {
-      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<>(myFiles) : new ArrayList<>(myFiles).subList(0, 20);
+      List<VirtualFile> files = ContainerUtil.getFirstItems(new ArrayList<>(myFiles), 20);
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 
     @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
-      return myFiles.iterator();
+      //noinspection unchecked
+      return (Iterator<VirtualFile>) // optimization hack: avoid copying in `new ArrayList(myFiles).iterator()`
+        myFiles.iterator();
     }
 
     @Override

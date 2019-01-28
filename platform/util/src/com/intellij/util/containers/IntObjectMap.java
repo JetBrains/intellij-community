@@ -13,11 +13,13 @@
 // limitations under the License.
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 
+@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public interface IntObjectMap<V> {
   V put(int key, @NotNull V value);
 
@@ -41,6 +43,7 @@ public interface IntObjectMap<V> {
 
   boolean containsValue(@NotNull V value);
 
+  @Debugger.Renderer(text = "getKey() + \" -> \\\"\" + getValue() + \"\\\"\"")
   interface Entry<V> {
     int getKey();
     @NotNull

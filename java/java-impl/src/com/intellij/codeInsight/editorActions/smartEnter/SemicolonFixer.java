@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
- * @since Sep 5, 2003
  */
 public class SemicolonFixer implements Fixer {
   @Override

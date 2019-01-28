@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
-  static final String WSL_MNT_ROOT = "/mnt/";
+  static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
@@ -294,7 +294,7 @@ public class WSLDistribution {
    * @return passed processHandler, patched with sudo listener if any
    */
   @NotNull
-  public ProcessHandler patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull ProcessHandler processHandler) {
+  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -334,7 +334,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath);
+    return WSLUtil.getWindowsPath(wslPath, myDescriptor.getMntRoot());
   }
 
   /**
@@ -343,11 +343,18 @@ public class WSLDistribution {
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return WSL_MNT_ROOT +
-             Character.toLowerCase(windowsPath.charAt(0)) +
-             FileUtil.toSystemIndependentName(windowsPath.substring(2));
+      return myDescriptor.getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
+  }
+
+  /**
+   * @param windowsAbsolutePath properly formatted windows local absolute path: {@code drive:\path}
+   * @return windows path converted to the linux path according to wsl rules: {@code c:\some\path} => {@code c/some/path}
+   */
+  @NotNull
+  static String convertWindowsPath(@NotNull String windowsAbsolutePath) {
+    return Character.toLowerCase(windowsAbsolutePath.charAt(0)) + FileUtil.toSystemIndependentName(windowsAbsolutePath.substring(2));
   }
 
   @NotNull

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -25,8 +26,8 @@ import java.util.stream.Stream;
 
 public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
-  public RecentFilesSEContributor(Project project) {
-    super(project);
+  public RecentFilesSEContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
   }
 
   @NotNull
@@ -59,6 +60,10 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<FileType> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+    if (myProject == null) {
+      return; //nothing to search
+    }
+
     String searchString = filterControlSymbols(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
@@ -76,14 +81,25 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
                      .distinct()
                      .map(vf -> psiManager.findFile(vf))
+                     .filter(file -> file != null)
                      .collect(Collectors.toList())
         );
-      }, progressIndicator);
 
-    for (Object element : res) {
-      if (!consumer.apply(element)) {
-        return;
-      }
-    }
+        for (Object element : res) {
+          if (!consumer.apply(element)) {
+            return;
+          }
+        }
+      }, progressIndicator);
+  }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Override
+  public boolean isShownInSeparateTab() {
+    return false;
   }
 }

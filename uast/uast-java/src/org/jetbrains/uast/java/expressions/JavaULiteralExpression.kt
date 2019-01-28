@@ -15,14 +15,23 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.expressions.UInjectionHost
 
 class JavaULiteralExpression(
-  override val psi: PsiLiteralExpression,
+  override val psi: PsiLiteralExpressionImpl,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), ULiteralExpression {
+) : JavaAbstractUExpression(givenParent), ULiteralExpression, UInjectionHost {
   override fun evaluate(): Any? = psi.value
   override val value: Any? by lz { evaluate() }
+
+  override val isString: Boolean
+    get() = super<UInjectionHost>.isString
+
+  override val psiLanguageInjectionHost: PsiLanguageInjectionHost
+    get() = psi
+
 }

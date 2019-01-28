@@ -31,11 +31,11 @@ public class SvnFormatWorker extends Task.Backgroundable {
   private final List<Throwable> myExceptions;
   private final Project myProject;
   @NotNull private final WorkingCopyFormat myNewFormat;
-  private final List<WCInfo> myWcInfos;
+  private final List<? extends WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
   private final SvnVcs myVcs;
 
-  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<WCInfo> wcInfos) {
+  public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
     super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
     myProject = project;
     myNewFormat = newFormat;

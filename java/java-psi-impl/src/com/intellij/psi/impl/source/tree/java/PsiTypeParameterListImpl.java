@@ -70,6 +70,7 @@ public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParamete
     }
   }
 
+  @Override
   public String toString() {
     return "PsiTypeParameterList";
   }

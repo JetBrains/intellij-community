@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Template;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -30,8 +29,7 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
     if (!template.isToReformat()) return;
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile()
-                                                  : PsiUtilBase.getPsiFileInEditor(editor, project);
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (!(file instanceof PsiJavaFile)) return;
 
     CharSequence text = document.getImmutableCharSequence();

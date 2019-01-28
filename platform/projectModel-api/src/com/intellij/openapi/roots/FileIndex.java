@@ -76,11 +76,10 @@ public interface FileIndex {
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns {@code true} if {@code file} is a file located under a sources, tests or resources root and not excluded or ignored.
-   * <p/>
-   * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
-   * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
+   * @deprecated name of this method is unclear, use {@link #isInSourceContent(VirtualFile)} instead and add {@code !file.isDirectory()} check
+   * if you want to accept files only.
    */
+  @Deprecated
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
   /**

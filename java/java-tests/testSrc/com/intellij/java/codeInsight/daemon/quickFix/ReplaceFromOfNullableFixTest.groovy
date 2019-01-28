@@ -23,8 +23,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+@CompileStatic
 class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

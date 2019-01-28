@@ -41,7 +41,9 @@ public class AttachToProcessActionTest extends PlatformTestCase {
   }
 
   @NotNull
-  private RecentItem fixtureCreateHistoryItem(@NotNull ProcessInfo info, @NotNull XAttachPresentationGroup group, @NotNull String debuggerName) {
+  private static RecentItem fixtureCreateHistoryItem(@NotNull ProcessInfo info,
+                                                     @NotNull XAttachPresentationGroup group,
+                                                     @NotNull String debuggerName) {
     return RecentItem.createRecentItem(LocalAttachHost.INSTANCE, info, group, debuggerName);
   }
 

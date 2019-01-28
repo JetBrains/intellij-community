@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/11/2015
  */
 public class EarResource implements Serializable {
   private static final long serialVersionUID = 1L;

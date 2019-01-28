@@ -197,6 +197,10 @@ public abstract class StructuralSearchProfile {
     return getTypedVarString(element);
   }
 
+  public String getAlternativeText(PsiElement element, String previousText) {
+    return null;
+  }
+
   public PsiElement updateCurrentNode(PsiElement node) {
     return node;
   }
@@ -317,7 +321,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public final boolean isApplicableConstraint(String constraintName, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (nodes.isEmpty()) {
       return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
     }

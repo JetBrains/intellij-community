@@ -25,6 +25,7 @@ public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock, PsiModi
     visitor.visitOpenBlock(this);
   }
 
+  @Override
   public String toString() {
     return "Open block";
   }

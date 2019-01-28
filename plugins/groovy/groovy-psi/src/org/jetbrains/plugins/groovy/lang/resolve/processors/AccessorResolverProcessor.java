@@ -16,7 +16,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 
 /**
  * @author Maxim.Medvedev
- * @deprecated use {@link PropertyProcessor}
+ * @deprecated use {@link AccessorProcessor}
  */
 @Deprecated
 public class AccessorResolverProcessor extends MethodResolverProcessor {

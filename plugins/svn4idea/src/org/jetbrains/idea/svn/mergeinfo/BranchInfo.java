@@ -108,11 +108,11 @@ public class BranchInfo {
   @NotNull
   private SvnMergeInfoCache.MergeCheckResult checkAlive(@NotNull SvnChangeList list, @NotNull String branchPath) {
     final Info info = myVcs.getInfo(new File(branchPath));
-    if (info == null || info.getURL() == null || !isAncestor(myBranch.getUrl(), info.getURL())) {
+    if (info == null || info.getUrl() == null || !isAncestor(myBranch.getUrl(), info.getUrl())) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 
-    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, info.getURL());
+    MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = checkPaths(list, branchPath, info.getUrl());
 
     if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
@@ -186,9 +186,9 @@ public class BranchInfo {
         }
         else {
           Info svnInfo = myVcs.getInfo(new File(branchRootPath));
-          result = svnInfo == null || svnInfo.getURL() == null
+          result = svnInfo == null || svnInfo.getUrl() == null
                    ? SvnMergeInfoCache.MergeCheckResult.NOT_MERGED
-                   : goUpInRepo(revisionAsked, targetRevision, removePathTail(svnInfo.getURL()), newTrunkUrl);
+                   : goUpInRepo(revisionAsked, targetRevision, removePathTail(svnInfo.getUrl()), newTrunkUrl);
         }
       }
       else {
@@ -252,7 +252,7 @@ public class BranchInfo {
     }
     else {
       final Info svnInfo = myVcs.getInfo(pathFile);
-      if (svnInfo == null || svnInfo.getURL() == null) {
+      if (svnInfo == null || svnInfo.getUrl() == null) {
         LOG.info("Svninfo for " + pathFile + " is null or not full.");
         result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
       }
@@ -285,7 +285,7 @@ public class BranchInfo {
           }
           else {
             // in repo
-            target = Target.on(svnInfo.getURL());
+            target = Target.on(svnInfo.getUrl());
             revision = Revision.of(targetRevisionCorrected);
           }
 

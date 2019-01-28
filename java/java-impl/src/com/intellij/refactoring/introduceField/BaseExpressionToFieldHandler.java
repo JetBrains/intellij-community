@@ -111,6 +111,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return false;
     }
 
+    String switchLabelError = RefactoringUtil.checkEnumConstantInSwitchLabel(selectedExpr);
+    if (switchLabelError != null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, switchLabelError, getRefactoringName(), getHelpID());
+      return false;
+    }
+
     myParentClass = getParentClass(selectedExpr);
     final List<PsiClass> classes = new ArrayList<>();
     PsiClass aClass = myParentClass;
@@ -229,7 +235,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
       }
       if (settings.isAnnotateAsNonNls()) {
-        PsiAnnotation annotation = JavaPsiFacade.getInstance(field.getProject()).getElementFactory()
+        PsiAnnotation annotation = JavaPsiFacade.getElementFactory(field.getProject())
           .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
         final PsiModifierList modifierList = field.getModifierList();
         LOG.assertTrue(modifierList != null);
@@ -341,7 +347,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)JavaPsiFacade.getInstance(parentClass.getProject()).getElementFactory()
+      (PsiExpressionStatement)JavaPsiFacade.getElementFactory(parentClass.getProject())
         .createStatementFromText(field.getName() + "= expr;", null);
     PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
     final PsiExpression rExpression = expr.getRExpression();
@@ -385,7 +391,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         added = true;
       }
       if (!added && enclosingConstructor == null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
         PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
         final PsiCodeBlock body = constructor.getBody();
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild(), parentClass);
@@ -411,7 +417,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     pattern.append(";");
     PsiManager psiManager = parentClass.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
       final PsiTypeElement typeElement = factory.createTypeElement(type);
@@ -435,7 +441,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     try {
       @NonNls String pattern = "x=0;";
       PsiManager psiManager = parentClass.getManager();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(statement);
 
@@ -825,9 +831,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         if (myReplaceAll) {
           List<PsiElement> array = new ArrayList<>();
           for (PsiExpression occurrence : myOccurrences) {
-            if (occurrence instanceof PsiExpression) {
-              occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
-            }
+            occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
             if (myDeleteSelf && occurrence.equals(mySelectedExpr)) continue;
             final PsiElement replaced = RefactoringUtil.replaceOccurenceWithFieldRef(occurrence, myField, destClass);
             if (replaced != null) {

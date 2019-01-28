@@ -41,8 +41,8 @@ public class SvnPropertyService {
                                            VirtualFile[] file,
                                            IgnoreInfoGetter getter,
                                            String extensionPattern,
-                                           Ref<Boolean> filesOk,
-                                           Ref<Boolean> extensionOk) {
+                                           Ref<? super Boolean> filesOk,
+                                           Ref<? super Boolean> extensionOk) {
     final IgnorePropertyChecker checker = new IgnorePropertyChecker(vcs, extensionPattern);
     try {
       checker.execute(file, getter);

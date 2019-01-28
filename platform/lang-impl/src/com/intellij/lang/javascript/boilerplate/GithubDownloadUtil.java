@@ -8,14 +8,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.Outcome;
-import com.intellij.util.Producer;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
 /**
  * @author Sergey Simonchik
@@ -64,7 +62,6 @@ public class GithubDownloadUtil {
     return new File(dir, cacheFileName);
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public static void downloadContentToFileWithProgressSynchronously(
     @Nullable Project project,
     @NotNull final String url,

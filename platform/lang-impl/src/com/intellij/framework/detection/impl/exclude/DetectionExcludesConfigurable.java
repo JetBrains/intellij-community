@@ -74,7 +74,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList excludesList = new JBList(myModel);
     final ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
-      JPanel panel = new JPanel(new BorderLayout());
+      final JPanel panel = new JPanel(new BorderLayout());
       {
         panel.setBorder(new EmptyBorder(2, 10, 2, 0));
         panel.add(this);
@@ -177,7 +177,7 @@ public class DetectionExcludesConfigurable implements Configurable {
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
     final String projectItem = "In the whole project";
-    return new BaseListPopupStep<String>(null, new String[]{projectItem, "In directory..."}) {
+    return new BaseListPopupStep<String>(null, projectItem, "In directory...") {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {

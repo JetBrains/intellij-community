@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
-@SuppressWarnings({"deprecation", "unused"})
+@SuppressWarnings({"unused"})
 public interface CodeInsightColors {
   TextAttributesKey WRONG_REFERENCES_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WRONG_REFERENCES_ATTRIBUTES");
   TextAttributesKey ERRORS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("ERRORS_ATTRIBUTES");
@@ -241,6 +241,7 @@ public interface CodeInsightColors {
   TextAttributesKey BLINKING_HIGHLIGHTS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("BLINKING_HIGHLIGHTS_ATTRIBUTES");
   TextAttributesKey HYPERLINK_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("HYPERLINK_ATTRIBUTES");
   TextAttributesKey FOLLOWED_HYPERLINK_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("FOLLOWED_HYPERLINK_ATTRIBUTES");
+  TextAttributesKey INACTIVE_HYPERLINK_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INACTIVE_HYPERLINK_ATTRIBUTES");
 
   TextAttributesKey TODO_DEFAULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TODO_DEFAULT_ATTRIBUTES");
   TextAttributesKey BOOKMARKS_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("BOOKMARKS_ATTRIBUTES");

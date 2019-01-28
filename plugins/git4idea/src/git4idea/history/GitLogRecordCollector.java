@@ -98,7 +98,7 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
   public static void processIncompleteRecords(@NotNull MultiMap<String, GitLogRecord> incompleteRecords,
                                               @NotNull Project project,
                                               @NotNull VirtualFile root,
-                                              @NotNull Consumer<List<GitLogRecord>> consumer) throws VcsException {
+                                              @NotNull Consumer<? super List<GitLogRecord>> consumer) throws VcsException {
     List<GitLogRecord> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
     Map<String, String> hashToTreeMap = getHashToTreeMap(project, root, firstRecords);
     for (String hash : incompleteRecords.keySet()) {

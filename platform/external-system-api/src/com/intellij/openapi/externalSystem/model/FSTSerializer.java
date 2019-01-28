@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.util.ReflectionUtil;
 import org.nustaq.serialization.*;
 
 import java.io.ByteArrayInputStream;
@@ -83,6 +84,9 @@ class MultiLoaderWrapper extends ClassLoader {
 
 
 class FSTProxySerializer extends FSTBasicObjectSerializer {
+
+  private static final InvocationHandler ourEmptyHandler = (proxy, method, args) -> null;
+
   @Override
   public void writeObject(FSTObjectOutput out, Object toWrite, FSTClazzInfo clzInfo, FSTClazzInfo.FSTFieldInfo referencedBy, int streamPosition) throws IOException {
     Class<?>[] ifaces = clzInfo.getClazz().getInterfaces();
@@ -110,9 +114,11 @@ class FSTProxySerializer extends FSTBasicObjectSerializer {
         classObjs[i] = Class.forName(interfaces[i], false, this.getClass().getClassLoader());
       }
     }
-    InvocationHandler ih = (InvocationHandler)in.readObject();
-    Object res = Proxy.newProxyInstance(cl, classObjs, ih);
+
+    Object res = Proxy.newProxyInstance(cl, classObjs, ourEmptyHandler);
     in.registerObject(res, streamPosition, serializationInfo, referencee);
+    final InvocationHandler handler = (InvocationHandler)in.readObject();
+    ReflectionUtil.setField(Proxy.class, res, InvocationHandler.class, "h", handler);
     return res;
   }
 }

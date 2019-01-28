@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -27,10 +26,16 @@ import java.util.List;
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 
+  protected AbstractInClassConfigurationProducer() {
+  }
 
   @Override
   public void onFirstRun(@NotNull final ConfigurationFromContext configuration,
@@ -137,7 +142,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
 
     configuration.restoreOriginalModule(originalModule);
     Module module = configuration.getConfigurationModule().getModule();
-    if (module == null) {
+    if (module == null && psiClass.getManager().isInProject(psiClass)) {
       PsiFile containingFile = psiClass.getContainingFile();
       LOG.error("No module found", new Attachment("context.txt",
                                                   "generated name:" + configuration.getName() +
@@ -145,7 +150,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                                                   "; physical: " + psiClass.isPhysical() +
                                                   "; className: " + psiClass.getQualifiedName() +
                                                   "; file: " + containingFile +
-                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass) +
+                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
                                                   "; original module: " + originalModule));
       return false;
     }

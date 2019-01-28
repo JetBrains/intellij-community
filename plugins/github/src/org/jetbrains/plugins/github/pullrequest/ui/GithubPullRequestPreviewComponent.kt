@@ -2,45 +2,38 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.components.panels.Wrapper
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 
-class GithubPullRequestPreviewComponent(project: Project,
-                                        detailsLoader: GithubPullRequestsDetailsLoader,
-                                        changesLoader: GithubPullRequestsChangesLoader,
-                                        actionManager: ActionManager,
-                                        private val uiSettings: GithubPullRequestsUISettings)
-  : Wrapper(), Disposable, GithubPullRequestsUISettings.SettingsChangedListener {
+internal class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
+                                                 private val details: GithubPullRequestDetailsComponent)
+  : OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f), Disposable {
 
-  private val splitter = OnePixelSplitter(true, "Github.PullRequest.Preview.Component", 0.7f)
+  private var currentProvider: GithubPullRequestDataProvider? = null
 
-  private val changes = GithubPullRequestChangesComponent(project, changesLoader, actionManager)
-  private val details = GithubPullRequestDetailsComponent(project, detailsLoader)
+  private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
+    override fun detailsRequestChanged() {
+      details.loadAndUpdate(currentProvider!!.detailsRequest)
+    }
 
-  val toolbarComponent = changes.toolbarComponent
+    override fun commitsRequestChanged() {
+      changes.loadAndUpdate(currentProvider!!.logCommitsRequest)
+    }
+  }
 
   init {
-    Disposer.register(this, changes)
-    Disposer.register(this, details)
-
-    splitter.firstComponent = changes
-    setContent(splitter)
-    uiSettings.addChangesListener(this, this)
-    updateDetails()
+    firstComponent = details
+    secondComponent = changes
   }
 
-  override fun settingsChanged() {
-    updateDetails()
-  }
+  fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {
+    currentProvider?.removeRequestsChangesListener(requestChangesListener)
+    currentProvider = provider
+    currentProvider?.addRequestsChangesListener(requestChangesListener)
 
-  private fun updateDetails() {
-    splitter.secondComponent = if (uiSettings.showDetails) details else null
+    changes.loadAndShow(provider?.logCommitsRequest)
+    details.loadAndShow(provider?.detailsRequest)
   }
 
   override fun dispose() {}

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -34,7 +32,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
       final JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
       final PsiElement element = accessClass.getElement();
       if (element instanceof PsiTypeParameter) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(placeFile.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(placeFile.getProject());
         final PsiClassType type = factory.createType((PsiTypeParameter)element);
         final PsiType accessType = accessClass.getSubstitutor().substitute(type);
         if (accessType instanceof PsiArrayType) {
@@ -92,7 +90,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     return kind == DeclarationKind.VARIABLE || kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST;
   }
 

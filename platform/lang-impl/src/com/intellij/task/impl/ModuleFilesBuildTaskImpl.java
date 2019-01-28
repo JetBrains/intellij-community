@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/14/2016
  */
 public class ModuleFilesBuildTaskImpl extends ModuleBuildTaskImpl implements ModuleFilesBuildTask {
   private final VirtualFile[] myFiles;
@@ -36,7 +35,7 @@ public class ModuleFilesBuildTaskImpl extends ModuleBuildTaskImpl implements Mod
     myFiles = files;
   }
 
-  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, Collection<VirtualFile> files) {
+  public ModuleFilesBuildTaskImpl(Module module, boolean isIncrementalBuild, Collection<? extends VirtualFile> files) {
     this(module, isIncrementalBuild, ArrayUtil.toObjectArray(files, VirtualFile.class));
   }
 

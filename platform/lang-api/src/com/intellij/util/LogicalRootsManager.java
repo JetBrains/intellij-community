@@ -2,15 +2,11 @@
 package com.intellij.util;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EventListener;
 import java.util.List;
 
 /**
@@ -21,7 +17,6 @@ import java.util.List;
  */
 @Deprecated
 public abstract class LogicalRootsManager {
-  public static final Topic<LogicalRootListener> LOGICAL_ROOTS = new Topic<>("logical root changes", LogicalRootListener.class);
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
     return ServiceManager.getService(project, LogicalRootsManager.class);
@@ -31,19 +26,4 @@ public abstract class LogicalRootsManager {
   public abstract LogicalRoot findLogicalRoot(@NotNull final VirtualFile file);
 
   public abstract List<LogicalRoot> getLogicalRoots();
-
-  abstract List<LogicalRoot> getLogicalRoots(@NotNull final Module module);
-
-  abstract <T extends LogicalRoot> List<T> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType<T> type);
-
-  @NotNull
-  abstract LogicalRootType[] getRootTypes(@NotNull final FileType type);
-
-  abstract void registerRootType(@NotNull final FileType fileType, @NotNull final LogicalRootType... rootTypes);
-
-  abstract <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module,List<T>> provider);
-
-  public interface LogicalRootListener extends EventListener {
-    void logicalRootsChanged();
-  }
 }

@@ -350,10 +350,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         double oldZoomFactor = zoomModel.getZoomFactor();
         Point oldPosition = myScrollPane.getViewport().getViewPosition();
 
-        if (rotation < 0) {
+        if (rotation > 0) {
           zoomModel.zoomOut();
         }
-        else if (rotation > 0) {
+        else if (rotation < 0) {
           zoomModel.zoomIn();
         }
 

@@ -53,6 +53,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private JPanel myOptionsPanel;
   private JPanel myFiltersPanel;
   private JLabel myMaskWarningLabel;
+  private JCheckBox myCbCleanupCode;
 
   public LayoutProjectCodeDialog(@NotNull Project project,
                                  @NotNull String title,
@@ -91,6 +92,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private void restoreCbsStates() {
     myCbOptimizeImports.setSelected(myLastRunOptions.getLastOptimizeImports());
     myCbRearrangeEntries.setSelected(myLastRunOptions.getLastRearrangeCode());
+    myCbCleanupCode.setSelected(myLastRunOptions.getLastCodeCleanup());
     myCbOnlyVcsChangedRegions.setEnabled(myEnableOnlyVCSChangedTextCb);
     myCbOnlyVcsChangedRegions.setSelected(
       myEnableOnlyVCSChangedTextCb && myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
@@ -161,6 +163,11 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   @Override
   public boolean isRearrangeCode() {
     return myCbRearrangeEntries.isSelected();
+  }
+
+  @Override
+  public boolean isCodeCleanup() {
+    return myCbCleanupCode.isSelected();
   }
 
   @Override

@@ -196,7 +196,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private class MyDragSession implements DragSession {
 
-    private final JWindow myWindow;
+    private final JDialog myWindow;
 
     private Image myDragImage;
     private final Image myDefaultDragImage;
@@ -208,7 +208,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JWindow();
+      myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
       myContent = content;
 
       Image previewImage = content.getPreviewImage();

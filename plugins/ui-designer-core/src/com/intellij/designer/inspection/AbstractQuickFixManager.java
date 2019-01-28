@@ -35,7 +35,6 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,7 +288,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
-    SecondStep(List<QuickFix> fixList) {
+    SecondStep(List<? extends QuickFix> fixList) {
       super(null, fixList);
     }
 

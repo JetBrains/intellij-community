@@ -19,7 +19,7 @@ public class SshSessionConnection implements IConnection {
   private volatile long myTs;
   private final String myRepository;
   private final Consumer<SshSessionConnection> myCloseListener;
-  private final ThrowableComputable<Session, AuthenticationException> mySessionProvider;
+  private final ThrowableComputable<? extends Session, ? extends AuthenticationException> mySessionProvider;
 
   private volatile LifeStages myState;
   private Session mySession;
@@ -29,7 +29,7 @@ public class SshSessionConnection implements IConnection {
   private StreamGobbler myErrorStreamGobbler;
 
   public SshSessionConnection(final String repository, final Consumer<SshSessionConnection> closeListener,
-                              final ThrowableComputable<Session, AuthenticationException> sessionProvider) {
+                              final ThrowableComputable<? extends Session, ? extends AuthenticationException> sessionProvider) {
     myRepository = repository;
     myCloseListener = closeListener;
     mySessionProvider = sessionProvider;
@@ -62,10 +62,8 @@ public class SshSessionConnection implements IConnection {
     SshLogger.debug("opening session");
     mySession = mySessionProvider.compute();
     // wrapper created, inspection is inapplicable
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myInputStream = new MyInputStreamWrapper(myActivityMonitor, mySession.getStdout());
     // wrapper created, inspection is inapplicable
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myOutputStream = new MyOutputStreamWrapper(myActivityMonitor, mySession.getStdin());
     myErrorStreamGobbler = new StreamGobbler(mySession.getStderr());
     myState = LifeStages.CREATED;

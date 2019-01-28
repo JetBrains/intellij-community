@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.RemoteStateState;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -20,14 +20,15 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getDebuggerDisplayName() {
-      return "Java Debugger";
+      return myInfo.getDebuggerName();
     }
 
     @Override
@@ -68,16 +69,26 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
-  private static final XLocalAttachGroup ourAttachGroup = new XDefaultLocalAttachGroup() {
+  private static final XLocalAttachGroup ourAttachGroup = new JavaDebuggerAttachGroup("Java", -20);
+
+  static class JavaDebuggerAttachGroup extends XDefaultLocalAttachGroup {
+    private final String myName;
+    private final int myOrder;
+
+    JavaDebuggerAttachGroup(String name, int order) {
+      myName = name;
+      myOrder = order;
+    }
+
     @Override
     public int getOrder() {
-      return 1;
+      return myOrder;
     }
 
     @NotNull
     @Override
     public String getGroupName() {
-      return "Java";
+      return myName;
     }
 
     @NotNull
@@ -85,7 +96,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
-      String res = "";
+      String res;
       String executable = info.getExecutableDisplayName();
       if ("java".equals(executable)) {
         if (!StringUtil.isEmpty(attachInfo.myClass)) {
@@ -100,7 +111,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       }
       return attachInfo.getProcessDisplayText(res);
     }
-  };
+  }
 
   @NotNull
   @Override
@@ -118,7 +129,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       addressMap = new HashMap<>();
       contextHolder.putUserData(ADDRESS_MAP_KEY, addressMap);
       final Map<String, LocalAttachInfo> map = addressMap;
-      Set<String> attachedPids = getAttachedPids(project);
+      Set<String> attachedPids = JavaDebuggerAttachUtil.getAttachedPids(project);
       VirtualMachine.list().forEach(desc -> {
         String pid = desc.id();
         LocalAttachInfo address = getProcessAttachInfo(pid, attachedPids);
@@ -129,15 +140,14 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     LocalAttachInfo info = getAttachInfo(project, processInfo, addressMap);
-    return info != null ? Collections.singletonList(new JavaLocalAttachDebugger(project, info)) : Collections.emptyList();
+    if (info != null && isDebuggerAttach(info)) {
+      return Collections.singletonList(new JavaLocalAttachDebugger(project, info));
+    }
+    return Collections.emptyList();
   }
 
-  private static Set<String> getAttachedPids(@NotNull Project project) {
-    return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
-      .map(s -> s.getDebugEnvironment().getRemoteConnection())
-      .select(PidRemoteConnection.class)
-      .map(PidRemoteConnection::getPid)
-      .toSet();
+  boolean isDebuggerAttach(LocalAttachInfo info) {
+    return info instanceof DebuggerLocalAttachInfo;
   }
 
   @Nullable
@@ -172,7 +182,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
           if (param.startsWith("address")) {
             try {
               address = param.split("=")[1];
-              return new DebuggerLocalAttachInfo(socket, address, null, pid);
+              return new DebuggerLocalAttachInfo(socket, address, null, pid, false);
             }
             catch (Exception e) {
               LOG.error(e);
@@ -205,7 +215,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   @Nullable
   private static LocalAttachInfo getProcessAttachInfo(@NotNull String pid, @NotNull Project project) {
-    return getProcessAttachInfo(pid, getAttachedPids(project));
+    return getProcessAttachInfo(pid, JavaDebuggerAttachUtil.getAttachedPids(project));
   }
 
   @Nullable
@@ -217,35 +227,45 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   private static LocalAttachInfo getProcessAttachInfoInt(String pid) {
     VirtualMachine vm = null;
     try {
-      vm = VirtualMachine.attach(pid);
+      vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
       Properties agentProperties = vm.getAgentProperties();
       String command = agentProperties.getProperty("sun.java.command");
       if (!StringUtil.isEmpty(command)) {
         command = StringUtil.replace(command, AppMainV2.class.getName(), "").trim();
-        command = StringUtil.substringBefore(command, " ");
+        command = StringUtil.notNullize(StringUtil.substringBefore(command, " "), command);
       }
       String property = agentProperties.getProperty("sun.jdwp.listenerAddress");
       if (property != null && property.indexOf(':') != -1) {
+        boolean autoAddress = false;
+        String args = agentProperties.getProperty("sun.jvm.args");
+        if (!StringUtil.isEmpty(args)) {
+          for (String arg : args.split(" ")) {
+            if (arg.startsWith("-agentlib:jdwp")) {
+              autoAddress = !arg.contains("address=");
+              break;
+            }
+          }
+        }
         return new DebuggerLocalAttachInfo(!"dt_shmem".equals(StringUtil.substringBefore(property, ":")),
                                            StringUtil.substringAfter(property, ":"),
-                                           command,
-                                           pid);
+                                           command, pid, autoAddress);
       }
 
       //do not allow further for idea process
       if (!pid.equals(OSProcessUtil.getApplicationPid())) {
+        Properties systemProperties = vm.getSystemProperties();
+
         // prefer sa-jdwp attach if available
-        if (SAJDWPRemoteConnection.isAvailable()) {
-          return new LocalAttachInfo(command, pid);
+        // sa pid attach if sa-jdi.jar is available
+        LocalAttachInfo info = SAJDWPLocalAttachInfo.create(systemProperties, command, pid);
+        if (info != null) {
+          return info;
         }
 
         // sa pid attach if sa-jdi.jar is available
-        if (SAPidRemoteConnection.isSAPidAttachAvailable()) {
-          Properties systemProperties = vm.getSystemProperties();
-          File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
-          if (saJdiJar.exists()) {
-            return new SAPIDLocalAttachInfo(command, pid, saJdiJar.getCanonicalPath());
-          }
+        info = SAPIDLocalAttachInfo.create(systemProperties, command, pid);
+        if (info != null) {
+          return info;
         }
       }
     }
@@ -267,18 +287,32 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   private static class DebuggerLocalAttachInfo extends LocalAttachInfo {
-    final boolean myUseSocket;
-    final String myAddress;
+    private final boolean myUseSocket;
+    private final String myAddress;
+    private final boolean myAutoAddress;
 
-    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid) {
+    DebuggerLocalAttachInfo(boolean socket, @NotNull String address, String aClass, String pid, boolean autoAddress) {
       super(aClass, pid);
       myUseSocket = socket;
       myAddress = address;
+      myAutoAddress = autoAddress;
     }
 
     @Override
     RemoteConnection createConnection() {
-      return new PidRemoteConnection(myPid);
+      return myAutoAddress
+             ? new PidRemoteConnection(myPid)
+             : new PidRemoteConnection(myPid, myUseSocket, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, myAddress, false);
+    }
+
+    @Override
+    String getSessionName() {
+      return myAutoAddress ? super.getSessionName() : "localhost:" + myAddress;
+    }
+
+    @Override
+    String getDebuggerName() {
+      return "Java Debugger";
     }
 
     @Override
@@ -295,13 +329,57 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       mySAJarPath = SAJarPath;
     }
 
+    @Nullable
+    static SAPIDLocalAttachInfo create(Properties systemProperties, String aClass, String pid) throws IOException {
+      File saJdiJar = new File(systemProperties.getProperty("java.home"), "../lib/sa-jdi.jar"); // java 8 only for now
+      if (saJdiJar.exists()) {
+        return new SAPIDLocalAttachInfo(aClass, pid, saJdiJar.getCanonicalPath());
+      }
+      return null;
+    }
+
     @Override
     RemoteConnection createConnection() {
       return new SAPidRemoteConnection(myPid, mySAJarPath);
     }
+
+    @Override
+    String getDebuggerName() {
+      return "Read Only Java Debugger";
+    }
   }
 
-  static class LocalAttachInfo {
+  static class SAJDWPLocalAttachInfo extends LocalAttachInfo {
+    private final List<String> myCommands;
+
+    SAJDWPLocalAttachInfo(String aClass, String pid, List<String> commands) {
+      super(aClass, pid);
+      myCommands = commands;
+    }
+
+    @Nullable
+    static LocalAttachInfo create(Properties systemProperties, String aClass, String pid) {
+      try {
+        List<String> commands = SaJdwp.getServerProcessCommand(systemProperties, pid, "0", false, PathUtil.getJarPathForClass(SaJdwp.class));
+        return new SAJDWPLocalAttachInfo(aClass, pid, commands);
+      }
+      catch (Exception ignored) {
+      }
+      return null;
+    }
+
+    @Override
+    RemoteConnection createConnection() {
+      return new SAJDWPRemoteConnection(myPid, myCommands);
+    }
+
+    @Override
+    String getDebuggerName() {
+      return "Read Only Java Debugger";
+    }
+  }
+
+  static abstract class LocalAttachInfo {
     final String myClass;
     final String myPid;
 
@@ -310,16 +388,16 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       myPid = pid;
     }
 
-    RemoteConnection createConnection() {
-      return new SAJDWPRemoteConnection(myPid);
-    }
+    abstract RemoteConnection createConnection();
 
     String getSessionName() {
       return "pid " + myPid;
     }
 
+    abstract String getDebuggerName();
+
     String getProcessDisplayText(String text) {
-      return text + " (read only)";
+      return text;
     }
   }
 

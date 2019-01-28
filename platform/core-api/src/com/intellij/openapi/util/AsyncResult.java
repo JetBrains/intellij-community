@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.Consumer;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated Use Promise
+ * @deprecated Use {@link org.jetbrains.concurrency.Promise}
  * @param <T>
  */
 @Deprecated
@@ -35,7 +35,7 @@ public class AsyncResult<T> extends ActionCallback {
    */
   @NotNull
   @Deprecated
-  public AsyncResult<T> doWhenDone(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
+  public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
   }

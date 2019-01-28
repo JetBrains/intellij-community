@@ -93,10 +93,10 @@ public class RefactoringListeners {
 
   private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
                                                                     implements UndoRefactoringElementListener{
-    private final Accessor<T> myAccessor;
+    private final Accessor<? super T> myAccessor;
     private final String myPath;
 
-    RenameElement(final Accessor<T> accessor, final String path) {
+    RenameElement(final Accessor<? super T> accessor, final String path) {
       myAccessor = accessor;
       myPath = path;
     }
@@ -129,7 +129,7 @@ public class RefactoringListeners {
   }
 
   private static class RefactorPackage extends RenameElement<PsiPackage> {
-    RefactorPackage(final Accessor<PsiPackage> accessor, final String path) {
+    RefactorPackage(final Accessor<? super PsiPackage> accessor, final String path) {
       super(accessor, path);
     }
 
@@ -145,7 +145,7 @@ public class RefactoringListeners {
   }
 
   private static class RefactorClass extends RenameElement<PsiClass> {
-    RefactorClass(final Accessor<PsiClass> accessor, final String path) {
+    RefactorClass(final Accessor<? super PsiClass> accessor, final String path) {
       super(accessor, path);
     }
 
@@ -167,7 +167,7 @@ public class RefactoringListeners {
   }
 
   public static class RefactorPackageByClass extends RenameElement<PsiClass> {
-    public RefactorPackageByClass(final Accessor<PsiClass> accessor) {
+    public RefactorPackageByClass(final Accessor<? super PsiClass> accessor) {
       super(accessor, "*");
     }
 

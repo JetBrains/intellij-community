@@ -368,36 +368,34 @@ abstract class EffectQuantum {
 }
 
 class DataInterpreter extends Interpreter<DataValue> {
-  private int called = -1;
   private final MethodNode methodNode;
-  private final int shift;
-  private final int rangeStart;
-  private final int rangeEnd;
+  private int param = -1;
   final EffectQuantum[] effects;
   DataValue returnValue = null;
 
   protected DataInterpreter(MethodNode methodNode) {
     super(Opcodes.API_VERSION);
     this.methodNode = methodNode;
-    shift = (methodNode.access & Opcodes.ACC_STATIC) == 0 ? 2 : 1;
-    int arity = Type.getArgumentTypes(methodNode.desc).length;
-    rangeStart = shift;
-    rangeEnd = arity + shift;
-    effects = new EffectQuantum[methodNode.instructions.size()];
+    this.effects = new EffectQuantum[methodNode.instructions.size()];
+  }
+
+  @Override
+  public DataValue newParameterValue(boolean isInstanceMethod, int local, Type type) {
+    param++;
+    if (ASMUtils.isThisType(type)) return DataValue.ThisDataValue;
+    int n = isInstanceMethod ? param - 1 : param;
+    if (n >= 0 && ASMUtils.isReferenceType(type)) {
+      return DataValue.ParameterDataValue.create(n);
+    }
+    return newValue(type);
   }
 
   @Override
   public DataValue newValue(Type type) {
     if (type == null) return DataValue.UnknownDataValue1;
-    called += 1;
     if (type == Type.VOID_TYPE) return null;
     if (ASMUtils.isThisType(type)) return DataValue.ThisDataValue;
-    if (rangeStart <= called && called < rangeEnd && ASMUtils.isReferenceType(type)) {
-      return DataValue.ParameterDataValue.create(called - shift);
-    }
-    else {
-      return type.getSize() == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
-    }
+    return type.getSize() == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
   }
 
   @Override

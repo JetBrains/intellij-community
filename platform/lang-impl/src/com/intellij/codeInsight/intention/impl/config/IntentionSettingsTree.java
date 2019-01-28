@@ -70,7 +70,7 @@ public abstract class IntentionSettingsTree {
         CheckedTreeNode node = (CheckedTreeNode)value;
         SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         final String text = getNodeText(node);
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color background = UIUtil.getTreeBackground(selected, true);
         UIUtil.changeBackGround(this, background);
         if (text != null) {
           SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,

@@ -70,7 +70,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,

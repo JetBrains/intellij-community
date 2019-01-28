@@ -16,11 +16,13 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 import static com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl.seemsScrambledByStructure
 /**
  * @author peter
  */
+@CompileStatic
 class SeemsScrambledTest extends LightCodeInsightFixtureTestCase {
 
   void "test Id annotation"() {

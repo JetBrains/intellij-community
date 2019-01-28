@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
@@ -9,12 +10,14 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -40,13 +43,12 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.*;
 import org.picocontainer.*;
 
 import javax.swing.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -57,7 +59,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
-  private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
   private static boolean ourClassesAreLoaded;
@@ -80,7 +81,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     myName = projectName;
-    // light project may be changed later during test, so we need to remember its initial state 
+    // light project may be changed later during test, so we need to remember its initial state
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
 
@@ -109,7 +110,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
-      
+
       StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         if (isDisposed()) return;
 
@@ -189,7 +190,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   @Override
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getProjectComponents();
   }
 
@@ -314,28 +315,19 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
-    save(false);
-  }
-
-  public void save(boolean isForce) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
     }
 
-    if (!mySavingInProgress.compareAndSet(false, true)) {
+    // ensure that expensive save operation is not performed before startupActivityPassed
+    // first save may be quite cost operation, because cache is not warmed up yet
+    if (!isInitialized()) {
+      LOG.debug("Skip save for " + getName() + ": not initialized");
       return;
     }
 
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-
-    try {
-      StoreUtil.save(ServiceKt.getStateStore(this), this, isForce);
-    }
-    finally {
-      mySavingInProgress.set(false);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
-    }
+    StoreUtil.saveSettings(this, false);
   }
 
   @Override

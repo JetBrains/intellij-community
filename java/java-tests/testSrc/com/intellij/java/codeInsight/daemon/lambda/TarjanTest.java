@@ -28,7 +28,6 @@ import static org.junit.Assert.assertEquals;
  * Testdata from https://github.com/bwesterb/py-tarjan
  *
  * @author anna
- * @since 4.07.2013
  */
 public class TarjanTest {
   @Test

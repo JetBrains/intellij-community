@@ -82,7 +82,7 @@ public class DependentSpacingEngine {
         }
 
         final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
-        final boolean containsLineFeeds = myBlockRangesMap.containsLineFeeds(textRange);
+        final boolean containsLineFeeds = myBlockRangesMap.containsLineFeedsOrTooLong(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
           spacing.setDependentRegionLinefeedStatusChanged();

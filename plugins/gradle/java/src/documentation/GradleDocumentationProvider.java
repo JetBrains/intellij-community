@@ -34,12 +34,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/29/13
  */
 public class GradleDocumentationProvider implements DocumentationProvider {
 
@@ -61,8 +59,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    List<String> result = new ArrayList<>();
-    return result.isEmpty() ? null : result;
+    return null;
   }
 
   @Nullable
@@ -70,7 +67,7 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     PsiFile file = element.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
-    return element instanceof GrLiteral ? findDoc(element, GrLiteral.class.cast(element).getValue()) : null;
+    return element instanceof GrLiteral ? findDoc(element, ((GrLiteral)element).getValue()) : null;
   }
 
   @Nullable
@@ -98,7 +95,6 @@ public class GradleDocumentationProvider implements DocumentationProvider {
         GrCall grCall = (GrCall)stmt;
         PsiMethod psiMethod = grCall.resolveMethod();
         if (psiMethod != null && psiMethod.getContainingClass() != null) {
-          //noinspection ConstantConditions
           String qualifiedName = psiMethod.getContainingClass().getQualifiedName();
           if (grLiteral.getParent() instanceof GrNamedArgument) {
             GrNamedArgument namedArgument = (GrNamedArgument)grLiteral.getParent();

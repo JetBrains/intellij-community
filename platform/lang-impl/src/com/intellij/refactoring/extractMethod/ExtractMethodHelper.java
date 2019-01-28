@@ -39,7 +39,7 @@ public class ExtractMethodHelper {
                                        @NotNull final List<PsiElement> scope,
                                        @NotNull final SimpleDuplicatesFinder finder,
                                        @NotNull final Editor editor,
-                                       @NotNull final Consumer<Pair<SimpleMatch, PsiElement>> replacer) {
+                                       @NotNull final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer) {
     finder.setReplacement(callElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       replaceDuplicates(callElement, editor, replacer, finder.findDuplicates(scope, generatedMethod));
@@ -121,7 +121,6 @@ public class ExtractMethodHelper {
             highlightInEditor(project, match, editor, highlighterMap);
 
             int promptResult = FindManager.PromptResult.ALL;
-            //noinspection ConstantConditions
             if (!isUnittest) {
               ReplacePromptDialog promptDialog =
                 new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);

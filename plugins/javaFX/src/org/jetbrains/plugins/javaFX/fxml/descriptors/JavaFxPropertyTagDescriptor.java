@@ -183,7 +183,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   @Override
   public String getName() {
     if (myPsiClass != null && myStatic) {
-      return StringUtil.getQualifiedName(myPsiClass.getName(), myName);
+      return StringUtil.getQualifiedName(myPsiClass.getName(), StringUtil.notNullize(myName));
     }
     return myName;
   }

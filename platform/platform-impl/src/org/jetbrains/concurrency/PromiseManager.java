@@ -77,7 +77,6 @@ public abstract class PromiseManager<HOST, VALUE> {
         return promise;
       }
       else if (state == Promise.State.SUCCEEDED) {
-        //noinspection unchecked
         try {
           if (!checkFreshness || isUpToDate(host, promise.blockingGet(0))) {
             return promise;
@@ -114,7 +113,6 @@ public abstract class PromiseManager<HOST, VALUE> {
     Promise<VALUE> effectivePromise = load(host);
     if (effectivePromise != promise) {
       fieldUpdater.compareAndSet(host, promise, effectivePromise);
-      promise.onError(e -> {});
       effectivePromise.processed(promise);
     }
     return effectivePromise;

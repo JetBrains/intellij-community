@@ -1,7 +1,7 @@
   class Foo {
       private void f() {
           Bar bar=null;
-          bar.<ref>f();
+          bar.<caret>f();
       }
       void g() {
           f();

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FilteredQuery<T> extends CustomProcessorQuery<T, T> {
 
-  public FilteredQuery(@NotNull Query<T> original, @NotNull Condition<T> filter) {
+  public FilteredQuery(@NotNull Query<T> original, @NotNull Condition<? super T> filter) {
     super(original, Preprocessor.filtering(filter::value));
   }
 

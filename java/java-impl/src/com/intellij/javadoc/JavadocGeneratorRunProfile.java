@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
-import com.google.common.collect.Streams;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
@@ -31,16 +30,15 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,7 +65,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new MyJavaCommandLineState(myConfiguration, myProject, myGenerationScope, env);
   }
 
@@ -90,10 +88,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private final JavadocConfiguration myConfiguration;
     private final ArgumentFileFilter myArgFileFilter = new ArgumentFileFilter();
 
-    MyJavaCommandLineState(JavadocConfiguration configuration,
-                                  Project project,
-                                  AnalysisScope generationOptions,
-                                  ExecutionEnvironment env) {
+    MyJavaCommandLineState(JavadocConfiguration configuration, Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
       super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
@@ -220,8 +215,9 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
       try {
         File argsFile = FileUtil.createTempFile("javadoc_args", null);
+        Charset cs = CharsetToolkit.getPlatformCharset();
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(argsFile))) {
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(argsFile), cs))) {
           Set<Module> modules = new LinkedHashSet<>();
           Set<VirtualFile> sources = new HashSet<>();
           Runnable r = () -> myGenerationOptions.accept(new MyContentIterator(myProject, modules, sources));
@@ -273,7 +269,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
             else {
               // placing source roots on a classpath is perfectly legal and allows to generate correct Javadoc
               // when a module without a module-info.java file depends on another module which has one
-              Stream<VirtualFile> roots = Streams.concat(sourceRoots.stream(), classRoots.stream());
+              Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
               String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
               writer.println("-classpath");
               writer.println(StringUtil.wrapWithDoubleQuote(path));
@@ -285,9 +281,10 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
           }
         }
 
-        myArgFileFilter.setPath(argsFile.getPath());
+        myArgFileFilter.setPath(argsFile.getPath(), cs);
         parameters.add("@" + argsFile.getPath());
         OSProcessHandler.deleteFileOnTermination(cmdLine, argsFile);
+        cmdLine.setCharset(cs);
       }
       catch (IOException e) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.temp.file.error"), e);

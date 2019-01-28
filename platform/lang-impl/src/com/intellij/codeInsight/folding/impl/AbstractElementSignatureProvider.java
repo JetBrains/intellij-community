@@ -20,7 +20,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/11 12:00 PM
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
   private static final int CHILDREN_COUNT_LIMIT = 100;
@@ -77,7 +76,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   /**
    * @return -1, if {@code parent} has too many children and calculating child index would be too slow
    */
-  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
+  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<? extends T> hisClass) {
     PsiFile file = parent.getContainingFile();
     Set<PsiElement> cache = file == null ? null :
       CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(ContainerUtil.createWeakSet(), file));
@@ -108,7 +107,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   }
 
   @Nullable
-  static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
+  protected static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
                                                               String name,
                                                               int index,
                                                               @NotNull Class<T> hisClass)

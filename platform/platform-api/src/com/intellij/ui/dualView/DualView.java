@@ -28,7 +28,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.config.Storage;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -185,9 +184,7 @@ public class DualView extends JPanel {
     myCurrentView = view;
     if (myCurrentView != null) {
       myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-      if (myCurrentView instanceof JBTable) {
-        myCurrentView.setStriped(true);
-      }
+      myCurrentView.setStriped(true);
       final int row = myCurrentView.getSelectedRow();
       myCurrentView.scrollRectToVisible(myCurrentView.getCellRect(row, 0, true));
     }
@@ -329,12 +326,8 @@ public class DualView extends JPanel {
   }
 
   public List getSelection() {
-    List<Object> result = ContainerUtil.newArrayList();
     SelectionProvider visibleTable = (SelectionProvider)getVisibleTable();
-    for (Object aSelection : visibleTable.getSelection()) {
-      result.add(aSelection);
-    }
-    return result;
+    return new ArrayList<Object>(visibleTable.getSelection());
   }
 
   private JTable getVisibleTable() {

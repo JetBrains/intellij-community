@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Serves the same purposes as {@link EdtInvocationManager} - allows to enhance intellij threading model in particular environment.
  *
  * @author Denis Zhdanov
- * @since 04/06/15 15:01
  */
 public class AlarmFactory {
   @NotNull private static final AlarmFactory ourInstance = new AlarmFactory();

@@ -61,6 +61,9 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     try {
       FontLayoutService.setInstance(null);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -184,7 +187,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
     if (OVERWRITE_TESTDATA) {
       ImageIO.write(image, "png", fileWithExpectedResult);
-      System.out.println("File " + fileWithExpectedResult.getPath() + " created.");
+      System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
     }
     if (fileWithExpectedResult.exists()) {
       BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
@@ -400,10 +403,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected static class MyInlayRenderer implements EditorCustomElementRenderer {
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return 10; }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
       g.setColor(JBColor.CYAN);
       g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }

@@ -5,10 +5,10 @@ package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -28,7 +28,7 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   @NotNull
   @Override
   public String getText() {
-    return IntentionPowerPackBundle.message("replace.with.arrays.as.list.intention.name", replacementText);
+    return CommonQuickFixBundle.message("fix.replace.with.x", replacementText + "()");
   }
 
   @NotNull

@@ -18,6 +18,9 @@ package com.intellij.execution.junit2.info;
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
@@ -32,16 +35,18 @@ public class LocationUtil {
   public static boolean isJarAttached(@NotNull Location location,
                                       final PsiDirectory[] directories,
                                       final String... fqns) {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(location.getProject());
+    final Project project = location.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final Module locationModule = location.getModule();
-    if (locationModule != null) {
+    VirtualFile locationVirtualFile = location.getVirtualFile();
+    if (locationModule != null && !Comparing.equal(project.getBasePath(), locationVirtualFile != null ? locationVirtualFile.getPath() : null)) {
       for (String fqn : fqns) {
         if (facade.findClass(fqn, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(locationModule, true)) != null) return true;
       }
     }
     else {
       for (PsiDirectory directory : directories) {
-        final Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), location.getProject());
+        final Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
         if (module != null) {
           GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
           for (String fqn : fqns) {

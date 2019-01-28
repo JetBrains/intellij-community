@@ -10,7 +10,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 
 public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/javaDoc/resolve";
-  private JavaDocReferenceInspection myJavaDocReferenceInspection = new JavaDocReferenceInspection();
+  private final JavaDocReferenceInspection myJavaDocReferenceInspection = new JavaDocReferenceInspection();
 
   public void testSee0() { doTest(); }
   public void testSee1() { doTest(); }

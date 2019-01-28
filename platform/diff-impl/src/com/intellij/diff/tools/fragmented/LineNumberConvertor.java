@@ -186,7 +186,6 @@ public class LineNumberConvertor {
   private class Corrector {
     private final List<CorrectedChange> myChanges = new SmartList<>();
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleMasterChange(int startLine, int endLine, int shift, boolean synchronous) {
       int oldLength = endLine - startLine;
       int newLength = oldLength + shift;

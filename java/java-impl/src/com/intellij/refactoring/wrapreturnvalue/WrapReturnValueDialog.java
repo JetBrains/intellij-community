@@ -31,7 +31,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-@SuppressWarnings({"OverridableMethodCallInConstructor"})
 class WrapReturnValueDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
@@ -124,6 +123,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
     }
   }
 
+  @NotNull
   private String getInnerClassName() {
     return myInnerClassNameTextField.getText().trim();
   }

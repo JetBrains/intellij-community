@@ -25,7 +25,7 @@ public class RunAll implements Runnable {
     this(ContainerUtil.newArrayList(actions));
   }
 
-  public RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
+  private RunAll(@NotNull List<? extends ThrowableRunnable<?>> actions) {
     myActions = actions;
   }
 
@@ -37,7 +37,12 @@ public class RunAll implements Runnable {
 
   @Override
   public void run() {
-    CompoundRuntimeException.throwIfNotEmpty(collectExceptions());
+    run(Collections.emptyList());
+  }
+  public void run(@NotNull List<? extends Throwable> suppressedExceptions) {
+    List<Throwable> throwables = collectExceptions();
+    throwables.addAll(0, suppressedExceptions);
+    CompoundRuntimeException.throwIfNotEmpty(throwables);
   }
 
   @NotNull

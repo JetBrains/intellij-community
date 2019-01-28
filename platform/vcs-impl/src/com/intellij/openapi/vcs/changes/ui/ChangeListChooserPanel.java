@@ -30,13 +30,13 @@ public class ChangeListChooserPanel extends JPanel {
 
   private final MyEditorComboBox myExistingListsCombo;
   private final NewEditChangelistPanel myListPanel;
-  private final NullableConsumer<String> myOkEnabledListener;
+  private final NullableConsumer<? super String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
   @Nullable private ChangeListData myData;
 
-  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<? super String> okEnabledListener) {
     super(new BorderLayout());
     myProject = project;
     myExistingListsCombo = new MyEditorComboBox();

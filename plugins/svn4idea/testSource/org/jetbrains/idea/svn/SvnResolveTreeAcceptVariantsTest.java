@@ -15,7 +15,6 @@ import org.jetbrains.idea.svn.TreeConflictData.FileToDir;
 import org.jetbrains.idea.svn.TreeConflictData.FileToFile;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
-import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.treeConflict.SvnTreeConflictResolver;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +36,7 @@ import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Arrays.asList;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.status.StatusType.*;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -156,51 +156,45 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       final Status status = SvnUtil.getStatus(vcs, exFile);
       boolean theirsExists = new File(myTheirs.getPath(), file.myRelativePath).exists();
 
-      if (StatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
+      if (STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
         assertTrue(createTestFailedComment(exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
           // should be deleted
-          assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)",
-                     status == null || StatusType.STATUS_DELETED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)", status == null || status.is(STATUS_DELETED));
         } else {
           // unversioned
-          assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)",
-                     status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (unversioned)", status == null || status.is(STATUS_UNVERSIONED));
         }
-      } else if (StatusType.STATUS_DELETED.equals(file.myNodeStatus)) {
-        assertTrue(createTestFailedComment(exFile.getPath()) + " (deleted status)",
-                   status != null && file.myNodeStatus.equals(status.getNodeStatus()));
-      } else if (StatusType.STATUS_ADDED.equals(file.myNodeStatus)) {
+      }
+      else if (STATUS_DELETED.equals(file.myNodeStatus)) {
+        assertTrue(createTestFailedComment(exFile.getPath()) + " (deleted status)", status != null && status.is(file.myNodeStatus));
+      }
+      else if (STATUS_ADDED.equals(file.myNodeStatus)) {
         assertTrue(createTestFailedComment(exFile.getPath()) + " (file exists)", exFile.exists());
         if (theirsExists) {
-          assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)",
-                     status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)", status != null && status.is(STATUS_REPLACED));
         } else {
-          assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)",
-                     status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus()));
+          assertTrue(createTestFailedComment(exFile.getPath()) + " (added status)", status != null && status.is(STATUS_ADDED));
         }
       } else {
-        if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        if (status.is(STATUS_ADDED)) {
           // in theirs -> deleted
           assertFalse(createTestFailedComment(file.myRelativePath) + " check deleted in theirs", theirsExists);
         } else {
           if (theirsExists) {
-            assertTrue(createTestFailedComment(exFile.getPath()) + " (normal node status)",
-                       status != null && StatusType.STATUS_REPLACED.equals(status.getNodeStatus()));
+            assertTrue(createTestFailedComment(exFile.getPath()) + " (normal node status)", status != null && status.is(STATUS_REPLACED));
           } else {
             assertTrue(createTestFailedComment(exFile.getPath()) + " (normal node status)",
-                       status != null &&
-                       (StatusType.STATUS_NORMAL.equals(status.getNodeStatus()) ||
-                        StatusType.STATUS_MODIFIED.equals(status.getNodeStatus())));
+                       status != null && status.is(STATUS_NORMAL, STATUS_MODIFIED));
           }
         }
         if (file.myCopyFrom != null) {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (copied status)",
-                     status != null && file.myCopyFrom.equals(getRelativeUrl(myRepositoryUrl, status.getCopyFromURL())));
+                     status != null && file.myCopyFrom.equals(getRelativeUrl(myRepositoryUrl, status.getCopyFromUrl())));
         }
         else {
           assertTrue(createTestFailedComment(exFile.getPath()) + " (modified text status)",
-                     status != null && file.myContentsStatus.equals(status.getContentsStatus()));
+                     status != null && status.is(file.myContentsStatus));
         }
       }
     }

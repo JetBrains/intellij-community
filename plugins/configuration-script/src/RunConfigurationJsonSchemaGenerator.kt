@@ -160,7 +160,7 @@ internal class RunConfigurationJsonSchemaGenerator {
     val state: BaseState
     if (optionsClass == null) {
       LOG.debug { "Configuration factory \"${factory.name}\" is not fully described because options class not defined" }
-      // nor LocatableRunConfigurationOptions, neither ModuleBasedConfigurationOptions define any useful properties, so, 
+      // nor LocatableRunConfigurationOptions, neither ModuleBasedConfigurationOptions define any useful properties, so,
       // RunConfigurationOptions is enough without guessing actual RC type.
       state = RunConfigurationOptions()
     }
@@ -206,6 +206,10 @@ internal fun rcFactoryIdToPropertyName(factory: ConfigurationFactory): CharSeque
 
 // returns null if id is not valid
 private fun idToPropertyName(string: String, configurationType: ConfigurationType?, factory: ConfigurationFactory?): CharSequence? {
+  if (string == "JetRunConfigurationType") {
+    return "kotlin"
+  }
+
   val result = string
     .removeSuffix("Type")
     .removeSuffix("RunConfiguration")

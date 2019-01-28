@@ -2,7 +2,9 @@
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +70,19 @@ class ComplexityCalculator {
       PsiUnaryExpression unary = (PsiUnaryExpression)e;
       int c = NEGATIONS.contains(unary.getOperationTokenType()) ? SIMPLE_OPERATOR : OPERATOR;
       return getComplexity(unary.getOperand()) + c;
+    }
+    if (e instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binary = (PsiBinaryExpression)e;
+      IElementType token = binary.getOperationTokenType();
+      PsiExpression left = binary.getLOperand();
+      PsiExpression right = binary.getROperand();
+      int c = BOOLEAN_OPERATION_TOKENS.contains(token) ||
+              JavaTokenType.PLUS.equals(token) && (isLiteral(left, "1") || isLiteral(right, "1")) ||
+              JavaTokenType.MINUS.equals(token) && isLiteral(right, "1") ||
+              JavaTokenType.ASTERISK.equals(token) && (isLiteral(left, "2") || isLiteral(right, "2")) ||
+              JavaTokenType.DIV.equals(token) && isLiteral(right, "2")
+              ? SIMPLE_OPERATOR : OPERATOR;
+      return c + getComplexity(left) + getComplexity(right);
     }
     if (e instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
@@ -147,5 +162,23 @@ class ComplexityCalculator {
       c += PARAMETER + getComplexity(argument);
     }
     return c;
+  }
+
+  private static boolean isLiteral(@Nullable PsiExpression expression, @NotNull String withText) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiLiteral && expression.textMatches(withText);
+  }
+
+  /**
+   * Quick check to filter out the obvious things early
+   */
+  static boolean isDefinitelySimple(@Nullable PsiExpression expression, int threshold) {
+    if (expression instanceof PsiLiteral) {
+      return CONSTANT < threshold;
+    }
+    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
+      return REFERENCE < threshold;
+    }
+    return false;
   }
 }

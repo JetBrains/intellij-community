@@ -159,11 +159,11 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   abstract static class CollectTerminal {
-    private final PsiLocalVariable myTargetVariable;
+    private final @Nullable PsiLocalVariable myTargetVariable;
     private final InitializerUsageStatus myStatus;
     private final PsiStatement myLoop;
 
-    protected CollectTerminal(PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
+    protected CollectTerminal(@Nullable PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
       myTargetVariable = variable;
       myLoop = loop;
       myStatus = status;
@@ -180,6 +180,7 @@ class CollectMigration extends BaseStreamApiMigration {
     abstract String generateIntermediate(CommentTracker ct);
 
     StreamEx<? extends PsiExpression> targetReferences() {
+      if (myTargetVariable == null) return StreamEx.empty();
       List<PsiElement> usedElements = usedElements().toList();
       return StreamEx.of(ReferencesSearch.search(myTargetVariable).findAll()).select(PsiReferenceExpression.class)
         .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));

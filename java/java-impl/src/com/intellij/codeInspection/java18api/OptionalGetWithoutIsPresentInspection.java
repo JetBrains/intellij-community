@@ -3,22 +3,20 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,23 +31,23 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
-        String methodName = nameElement.getText();
+        if (!OptionalUtil.OPTIONAL_GET.test(call)) return;
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
         if (qualifier == null) return;
         PsiClass optionalClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (optionalClass == null) return;
-        if (DfaOptionalSupport.isOptionalGetMethodName(methodName) &&
-            call.getArgumentList().isEmpty() &&
-            TypeUtils.isOptional(optionalClass)) {
-          CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
-          if (result != null &&
-              result.expressionWasAnalyzed(qualifier) &&
-              result.getExpressionFact(qualifier, DfaFactType.OPTIONAL_PRESENCE) == null &&
-              !isPresentCallWithSameQualifierExists(qualifier)) {
-            holder.registerProblem(nameElement,
-                                   InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
-                                   tryCreateFix(call));
-          }
+        CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
+        if (result == null || !result.expressionWasAnalyzed(qualifier)) return;
+        SpecialFieldValue fact = result.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
+        DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
+        if (value != null && !(value instanceof DfaFactMapValue)) return;
+        DfaNullability nullability = value != null ? ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY) : null;
+        if (nullability != DfaNullability.NOT_NULL &&
+            nullability != DfaNullability.FLUSHED &&
+            !isPresentCallWithSameQualifierExists(qualifier)) {
+          holder.registerProblem(nameElement,
+                                 InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
+                                 tryCreateFix(call));
         }
       }
 
@@ -61,7 +59,8 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
             return !PsiTreeUtil.processElements(context, e -> {
               if (e == qualifier || !(e instanceof PsiMethodCallExpression)) return true;
               PsiMethodCallExpression call = (PsiMethodCallExpression)e;
-              if (!"isPresent".equals(call.getMethodExpression().getReferenceName()) || !call.getArgumentList().isEmpty()) return true;
+              String name = call.getMethodExpression().getReferenceName();
+              if ((!"isPresent".equals(name) && !"isEmpty".equals(name)) || !call.getArgumentList().isEmpty()) return true;
               PsiExpression isPresentQualifier = call.getMethodExpression().getQualifierExpression();
               return isPresentQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, isPresentQualifier);
             });
@@ -121,10 +120,8 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
       PsiType elementType = OptionalUtil.getOptionalElementType(qualifier.getType());
       PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
       if (nextCall == null) return;
-      JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-      SuggestedNameInfo info = manager.suggestVariableName(VariableKind.PARAMETER, null, qualifier, elementType, true);
-      String name = info.names.length == 0 ? "value" : info.names[0];
-      name = manager.suggestUniqueVariableName(name, call, true);
+      String name = new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byExpression(qualifier)
+        .byType(elementType).byName("value").generate(true);
       CommentTracker ct = new CommentTracker();
       PsiReferenceExpression methodExpression = nextCall.getMethodExpression();
       ct.markRangeUnchanged(Objects.requireNonNull(methodExpression.getQualifierExpression()).getNextSibling(),

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * We need to avoid memory leaks on ide project rename. This class is responsible for that.
  * 
  * @author Denis Zhdanov
- * @since 7/19/13 1:14 PM
  */
 public class ProjectRenameAware {
   

@@ -7,7 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -170,7 +173,6 @@ public class GroovyGenerateEqualsHelper {
     FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
     if (myCheckParameterWithInstanceof) {
       buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName()).append(")) " + "return ")
@@ -181,7 +183,6 @@ public class GroovyGenerateEqualsHelper {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void addEqualsPrologue(@NonNls StringBuffer buffer) {
     buffer.append("if (this.is(").append(myParameterName).append(")").append(") return true\n");
     if (!superMethodExists(getEqualsSignature(myProject, myClass.getResolveScope()))) {

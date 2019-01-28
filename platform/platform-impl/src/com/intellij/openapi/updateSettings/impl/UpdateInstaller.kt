@@ -21,9 +21,15 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.ZipFile
 import javax.swing.UIManager
 
 object UpdateInstaller {
+  const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
+  private const val PATCH_FILE_NAME = "patch-file.zip"
+  private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
+
   private val patchesUrl: URL
     get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
 
@@ -34,14 +40,15 @@ object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+    val jdk = getJdkSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
-      val patchFile = File(getTempDir(), "patch${i}.jar")
+      System.out.println( "  patchName: $patchName" )
+      val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
@@ -49,6 +56,11 @@ object UpdateInstaller {
         }
       }
       HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
+      ZipFile(patchFile).use {
+        if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+          throw IOException("Corrupted patch file: ${patchFile.name}")
+        }
+      }
       files += patchFile
     }
 
@@ -144,7 +156,7 @@ object UpdateInstaller {
     }
 
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += "-Xmx750m"
+    args += "-Xmx900m"
     args += "-cp"
     args += arrayOf(patchFiles.last().path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 
@@ -156,7 +168,7 @@ object UpdateInstaller {
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
 
-    args += "com.intellij.updater.Runner"
+    args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"
     args += PathManager.getHomePath()
     if (patchFiles.size > 1) {
@@ -172,4 +184,15 @@ object UpdateInstaller {
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
+
+  private fun getJdkSuffix() : String {
+    if (isJdk11Bundled()) return "-jdk11-bundled"
+    return if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
+  }
+
+  private fun isJdk11Bundled() : Boolean {
+    var releaseFile = if (SystemInfo.isMac) File(PathManager.getHomePath() + "/Contents/jdk/Contents/Home/release")
+                      else File(PathManager.getHomePath() + "/jre64/release")
+    return if (releaseFile.isFile) !FileUtil.loadFile(releaseFile).contains("JAVA_VERSION=\"1.8") else false
+  }
 }

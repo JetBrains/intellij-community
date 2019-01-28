@@ -17,7 +17,6 @@ package com.intellij.task;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public interface BuildTask extends ProjectTask {
   boolean isIncrementalBuild();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,10 +22,11 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -213,14 +214,18 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
-          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+          XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(getProject());
+          XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
           if (isCopyAction(actionId)) {
-            WriteAction
-              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
           }
           else {
             setFileUrl(file.getUrl());
             setLine(line, true);
+            XDebugSessionImpl session = debuggerManager.getCurrentSession();
+            if (session != null && session.getActiveNonLineBreakpoint() == XLineBreakpointImpl.this) {
+              session.clearActiveNonLineBreakpoint(true);
+            }
           }
           return true;
         }
@@ -258,6 +263,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
+      mySourcePosition = null; // need to clear this no matter what as the offset may be cached inside
     }
   }
 

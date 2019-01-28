@@ -96,6 +96,13 @@ def _create_default_type_map():
         except:
             pass
 
+        try:
+            from collections import OrderedDict
+            default_type_map.insert(0, (OrderedDict, pydevd_resolver.orderedDictResolver))
+            # we should put it before dict
+        except:
+            pass
+
         if frame_type is not None:
             default_type_map.append((frame_type, pydevd_resolver.frameResolver))
 

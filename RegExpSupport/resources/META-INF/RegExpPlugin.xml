@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+  -->
+
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpLanguageHost"/>
+    </extensionPoint>
+    <extensionPoint name="regExpModifierProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpModifierProvider"/>
+    </extensionPoint>
+    <extensionPoint name="regExpMatcherProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpMatcherProvider"/>
+    </extensionPoint>
+    <extensionPoint name="regExpCapabilitiesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpCapabilitiesProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
+    <completion.contributor language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpCompletionContributor"/>
+    <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
+    <annotator language="RegExp" implementationClass="org.intellij.lang.regexp.validation.RegExpAnnotator"/>
+    <lang.parserDefinition language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory"/>
+    <lang.braceMatcher language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpBraceMatcher"/>
+    <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
+    <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
+    <basicWordSelectionFilter implementation="org.intellij.lang.regexp.RegExpWordSelectionFilter"/>
+    <regExpMatcherProvider language="JSRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpMatcherProvider"/>
+    <lang.parserDefinition language="JSRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpParserDefinition"/>
+    <lang.parserDefinition language="JSUnicodeRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptUnicodeRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="JSRegexp"
+                                   implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpSyntaxHighlighterFactory"/>
+
+    <intentionAction>
+      <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
+      <category>RegExp</category>
+    </intentionAction>
+
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRepeatedSpace" displayName="Consecutive spaces" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpSingleCharAlternation" displayName="Single character alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
+    <localInspection groupName="RegExp" language="RegExp"  shortName="RegExpOctalEscape" displayName="Octal escape" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
+    <!--<localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>-->
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpDuplicateAlternationBranch"
+                     displayName="Duplicate branch in alternation" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpEscapedMetaCharacter" displayName="Escaped meta character"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpEmptyAlternationBranch" displayName="Empty branch in alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.EmptyAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpAnonymousGroup"
+                     displayName="Anonymous capturing group or numeric back reference" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRedundantEscape"
+                     displayName="Redundant character escape" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpUnexpectedAnchor"
+                     displayName="Begin or end anchor in unexpected position" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection"/>
+  </extensions>
+</idea-plugin>

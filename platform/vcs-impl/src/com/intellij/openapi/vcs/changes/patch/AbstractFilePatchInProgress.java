@@ -55,7 +55,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
     }
   }
 
-  public void setAutoBases(@NotNull final Collection<VirtualFile> autoBases) {
+  public void setAutoBases(@NotNull final Collection<? extends VirtualFile> autoBases) {
     final String path = myPatch.getBeforeName() == null ? myPatch.getAfterName() : myPatch.getBeforeName();
     for (VirtualFile autoBase : autoBases) {
       final VirtualFile willBeBase = PathMerger.getBase(autoBase, path);

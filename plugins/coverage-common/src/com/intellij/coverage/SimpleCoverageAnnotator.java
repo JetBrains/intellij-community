@@ -204,7 +204,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (!shouldCollectCoverageInsideLibraryDirs()) {
-      if (index.isInLibrarySource(dir) || index.isInLibraryClasses(dir)) {
+      if (index.isInLibrary(dir)) {
         return null;
       }
     }
@@ -292,7 +292,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
 
-    @SuppressWarnings("unchecked") final Set<String> files = data.getClasses().keySet();
+    final Set<String> files = data.getClasses().keySet();
     final Map<String, String> normalizedFiles2Files = ContainerUtil.newHashMap();
     for (final String file : files) {
       normalizedFiles2Files.put(normalizeFilePath(file), file);

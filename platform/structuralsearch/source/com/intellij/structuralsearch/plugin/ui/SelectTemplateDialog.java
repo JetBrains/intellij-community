@@ -120,7 +120,7 @@ public class SelectTemplateDialog extends DialogWrapper {
 
   private void setPatternFromList(int index) {
     showPatternPreviewFromConfiguration(
-      (Configuration)existingTemplatesComponent.getHistoryList().getModel().getElementAt(index)
+      existingTemplatesComponent.getHistoryList().getModel().getElementAt(index)
     );
   }
 
@@ -262,7 +262,7 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     if (replace) {
       String replacement = configuration instanceof ReplaceConfiguration
-                    ? ((ReplaceConfiguration)configuration).getReplaceOptions().getReplacement()
+                    ? configuration.getReplaceOptions().getReplacement()
                     : configuration.getMatchOptions().getSearchPattern();
 
       UIUtil.setContent(replacePatternEditor, replacement);
@@ -278,7 +278,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     else {
       TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();
       if (paths == null) {
-        return new Configuration[0];
+        return Configuration.EMPTY_ARRAY;
       }
       Collection<Configuration> configurations = new ArrayList<>();
       for (TreePath path : paths) {
@@ -289,7 +289,7 @@ public class SelectTemplateDialog extends DialogWrapper {
           configurations.add((Configuration)userObject);
         }
       }
-      return configurations.toArray(new Configuration[0]);
+      return configurations.toArray(Configuration.EMPTY_ARRAY);
     }
   }
 

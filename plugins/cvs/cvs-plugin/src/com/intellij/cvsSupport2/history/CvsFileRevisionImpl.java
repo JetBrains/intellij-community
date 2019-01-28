@@ -83,7 +83,6 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       }
     }
     // IDEADEV-15186 - show branch name for just created branch with no revisions yet
-    //noinspection unchecked
     final List<SymbolicName> symNames = myLogInformation.getAllSymbolicNames();
     for (final SymbolicName symName : symNames) {
       if (StringUtil.startsWithConcatenation(symName.getRevision(), myCvsRevision.getNumber(), ".") &&
@@ -146,7 +145,6 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   private List<String> collectSymNamesForRevision() {
     ArrayList<String> result = new ArrayList<>();
-    //noinspection unchecked
     List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
     for (final SymbolicName symName : symNames) {
       result.add(symName.getName());

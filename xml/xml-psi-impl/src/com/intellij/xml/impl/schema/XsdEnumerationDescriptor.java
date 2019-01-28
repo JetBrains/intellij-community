@@ -164,4 +164,22 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   protected PsiElement getDefaultValueDeclaration() {
     return getDeclaration();
   }
+
+  @Override
+  public boolean isList() {
+    XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), null);
+    if (elementDescriptor == null) return false;
+    TypeDescriptor type = elementDescriptor.getType(null);
+    if (!(type instanceof ComplexTypeDescriptor)) return false;
+    final Ref<Boolean> result = new Ref<>(false);
+    new XmlSchemaTagsProcessor(((ComplexTypeDescriptor)type).getNsDescriptor()) {
+      @Override
+      protected void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref) {
+        if ("list".equals(tagName) || "union".equals(tagName)) {
+          result.set(true);
+        }
+      }
+    }.startProcessing(type.getDeclaration());
+    return result.get();
+  }
 }

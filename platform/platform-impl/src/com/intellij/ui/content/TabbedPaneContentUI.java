@@ -103,7 +103,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
   private Content getSelectedContent() {
     JComponent selectedComponent = myTabbedPaneWrapper.getSelectedComponent();
-    return myManager.getContent(selectedComponent);
+    return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
   private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
@@ -243,11 +243,9 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         group.add(new TabbedContentAction.MyNextTabAction(myManager));
         group.add(new TabbedContentAction.MyPreviousTabAction(myManager));
         final List<AnAction> additionalActions = myManager.getAdditionalPopupActions(content);
-        if (additionalActions != null) {
+        if (!additionalActions.isEmpty()) {
           group.addSeparator();
-          for (AnAction anAction : additionalActions) {
-            group.add(anAction);
-          }
+          group.addAll(additionalActions);
         }
         ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
         menu.getComponent().show(myTabbedPaneWrapper.getComponent(), x, y);

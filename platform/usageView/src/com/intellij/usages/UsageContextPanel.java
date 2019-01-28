@@ -30,7 +30,7 @@ import java.util.List;
  */
 public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
-  void updateLayout(@Nullable("null means there are no usages to show") List<UsageInfo> infos);
+  void updateLayout(@Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
 
   @NotNull
   JComponent createComponent();

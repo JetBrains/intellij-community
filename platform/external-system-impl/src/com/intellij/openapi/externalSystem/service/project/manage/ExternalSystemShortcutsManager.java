@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
 public class ExternalSystemShortcutsManager implements Disposable {
 

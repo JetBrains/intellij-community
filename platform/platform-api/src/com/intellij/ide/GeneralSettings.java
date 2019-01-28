@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -16,19 +16,23 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 @State(
   name = "GeneralSettings",
-  storages = @Storage("ide.general.xml"),
+  storages = @Storage(GeneralSettings.IDE_GENERAL_XML),
   reportStatistic = true
 )
 public class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
+  public static final String IDE_GENERAL_XML = "ide.general.xml";
+
   public static final int OPEN_PROJECT_ASK = -1;
   public static final int OPEN_PROJECT_NEW_WINDOW = 0;
   public static final int OPEN_PROJECT_SAME_WINDOW = 1;
+  public static final int OPEN_PROJECT_SAME_WINDOW_ATTACH = 2;
 
   public enum ProcessCloseConfirmation {ASK, TERMINATE, DISCONNECT}
 
@@ -219,8 +223,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   @Deprecated
-  public void setConfirmExtractFiles(boolean value) {
-  }
+  public void setConfirmExtractFiles(@SuppressWarnings("unused") boolean value) { }
 
   public boolean isConfirmExit() {
     return myConfirmExit;
@@ -266,11 +269,12 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     mySearchInBackground = searchInBackground;
   }
 
+  @SystemDependent
   public String getDefaultProjectDirectory() {
     return myDefaultProjectDirectory;
   }
 
-  public void setDefaultProjectDirectory(String defaultProjectDirectory) {
+  public void setDefaultProjectDirectory(@SystemDependent String defaultProjectDirectory) {
     myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }

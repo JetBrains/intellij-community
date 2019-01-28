@@ -62,7 +62,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private MemberNodeBase<M> myRoot;
   protected final Project myProject;
   private Tree myTree;
-  private final Consumer<Set<M>> myCallback;
+  private final Consumer<? super Set<M>> myCallback;
   private TreeSelectionListener myTreeSelectionListener;
   private Editor myCallerEditor;
   private Editor myCalleeEditor;
@@ -83,7 +83,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return "";
   }
 
-  public CallerChooserBase(M method, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
+  public CallerChooserBase(M method, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, String fileName, Consumer<? super Set<M>> callback) {
     super(true);
     myMethod = method;
     myProject = project;
@@ -196,7 +196,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private String getText(final M method) {
     if (method == null) return "";
     final PsiFile file = method.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    Document document = file != null ? PsiDocumentManager.getInstance(myProject).getDocument(file) : null;
     if (document != null) {
       final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
       final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));

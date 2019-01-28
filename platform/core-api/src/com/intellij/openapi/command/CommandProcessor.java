@@ -10,13 +10,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A class for defining 'command' scopes. Every undoable change should be executed as part of a command. Commands can nest, in such a case
+ * only the outer-most command is taken into account. Commands with the same 'group id' are merged for undo/redo purposes. 'Transparent'
+ * actions (commands) are similar to usual commands but don't create a separate undo/redo step - they are undone/redone together with a
+ * 'adjacent' non-transparent commands.
+ */
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance() {
     return ServiceManager.getService(CommandProcessor.class);
   }
 
   /**
-   * @deprecated use {@link #executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object)}
+   * @deprecated use {@link #executeCommand(Project, Runnable, String, Object)}
    */
   @Deprecated
   public abstract void executeCommand(@NotNull Runnable runnable,
@@ -75,8 +81,15 @@ public abstract class CommandProcessor {
   @Nullable
   public abstract Project getCurrentCommandProject();
 
+  /**
+   * Defines a scope which contains undoable actions, for which there won't be a separate undo/redo step - they will be undone/redone along
+   * with 'adjacent' command.
+   */
   public abstract void runUndoTransparentAction(@NotNull Runnable action);
 
+  /**
+   * @see #runUndoTransparentAction(Runnable)
+   */
   public abstract boolean isUndoTransparentActionInProgress();
 
   public abstract void markCurrentCommandAsGlobal(@Nullable Project project);

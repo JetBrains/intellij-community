@@ -32,7 +32,7 @@ public abstract class TestClassesFilter {
     for (String aFilter : filterList) {
       String filter = aFilter.trim();
       if (filter.length() == 0) continue;
-      filter = filter.replaceAll("\\*", ".\\*");
+      filter = filter.replace("$", "\\$").replace("*", ".*");
       Pattern pattern = Pattern.compile(filter);
       patterns.add(pattern);
     }
@@ -65,8 +65,8 @@ public abstract class TestClassesFilter {
 
     @Override
     public String toString() {
-      return "AndTestClassesFilter{" +
-             "first: " + first.toString() + "," +
+      return "TestClassesFilter.And{" +
+             "first: " + first.toString() + ", " +
              "second: " + second.toString() + '}';
     }
   }

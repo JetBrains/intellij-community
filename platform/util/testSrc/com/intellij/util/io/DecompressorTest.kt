@@ -41,6 +41,22 @@ class DecompressorTest {
     assertThat(File(dir, "root.txt")).exists()
   }
 
+  @Test fun tarDetectionPlain() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "dir/file.txt") }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).extract(dir)
+    assertThat(File(dir, "dir/file.txt")).exists()
+  }
+
+  @Test fun tarDetectionGZip() {
+    val tar = tempDir.newFile("test.tgz")
+    TarArchiveOutputStream(GzipCompressorOutputStream(FileOutputStream(tar))).use { writeEntry(it, "dir/file.txt") }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).extract(dir)
+    assertThat(File(dir, "dir/file.txt")).exists()
+  }
+
   @Test fun noInternalTraversalInTar() {
     val tar = tempDir.newFile("test.tgz")
     TarArchiveOutputStream(GzipCompressorOutputStream(FileOutputStream(tar))).use { writeEntry(it, "a/../bad.txt") }
@@ -88,7 +104,7 @@ class DecompressorTest {
     tar.closeArchiveEntry()
   }
 
-  private fun testNoTraversal(decompressor: Decompressor<*>, dir: File, unexpected: File) {
+  private fun testNoTraversal(decompressor: Decompressor, dir: File, unexpected: File) {
     val error = try {
       decompressor.extract(dir)
       null

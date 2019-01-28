@@ -31,7 +31,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -252,15 +255,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static final Charset CHARSET;
-  static {
-    Charset cs = null;
-    try {
-      cs = SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
-    }
-    catch (IllegalArgumentException ignored) { }
-    CHARSET = cs;
-  }
+  private static final Charset CHARSET =
+    SystemInfo.isWindows || SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
     @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
@@ -276,7 +272,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private WatcherOp myLastOp;
     private final List<String> myLines = ContainerUtil.newArrayList();
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
       myWriter = new BufferedWriter(writer(process.getOutputStream()));

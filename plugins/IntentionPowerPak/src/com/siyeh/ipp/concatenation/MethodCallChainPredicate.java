@@ -29,7 +29,8 @@ class MethodCallChainPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-    if (parent instanceof PsiExpressionStatement) {
+    if (parent instanceof PsiExpressionStatement || parent instanceof PsiField || parent instanceof PsiReturnStatement 
+        || parent instanceof PsiLambdaExpression || parent instanceof PsiBreakStatement) {
       return true;
     }
     if (parent instanceof PsiLocalVariable) {

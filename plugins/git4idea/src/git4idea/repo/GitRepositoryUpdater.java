@@ -67,7 +67,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
   }
 
   @Override
-  public void filesChanged(@NotNull List<VFileEvent> events) {
+  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;
@@ -105,7 +105,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
       myRepository.update();
     }
-    if (tagChanged) {
+    if (tagChanged || packedRefsChanged) {
       BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GIT_REPO_CHANGE).repositoryChanged(myRepository);
     }
   }

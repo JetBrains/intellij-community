@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,6 +22,7 @@ import java.util.List;
 public class JavaNextParameterActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
+    if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return null;
     Project project = context.getData(CommonDataKeys.PROJECT);
     Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return null;

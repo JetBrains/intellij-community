@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Generated;
 import java.util.*;
 
 /**
@@ -128,7 +114,23 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof Map && entrySet().equals(((Map)obj).entrySet());
+    if (myMap instanceof Map) {
+      return myMap.equals(obj);
+    }
+
+    if (!(obj instanceof Map)) return false;
+
+    Map map = (Map)obj;
+    if (size() != map.size()) return false;
+
+    Object[] array = (Object[])myMap;
+    for (int i = 0; i < array.length; i += 2) {
+      if (!Comparing.equal(array[i + 1], map.get(array[i]))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
@@ -203,7 +205,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Set<K> keySet() {
     if (isEmpty()) return Collections.emptySet();
-    
+
     LinkedHashSet<K> result = new LinkedHashSet<K>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getKey());
@@ -215,7 +217,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Collection<V> values() {
     if (isEmpty()) return Collections.emptyList();
-    
+
     ArrayList<V> result = new ArrayList<V>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getValue());
@@ -246,7 +248,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   public Set<Entry<K, V>> entrySet() {
     if (isEmpty()) return Collections.emptySet();
-    
+
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();
     if (myMap instanceof Map) {
       for (Entry<K, V> entry : ((Map<K, V>)myMap).entrySet()) {
@@ -262,7 +264,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   // copied from AbstractMap
-  @Generated("from AbstractMap")
+  @SuppressWarnings("ALL")
   public String toString() {
     Iterator<Entry<K,V>> i = entrySet().iterator();
     if (! i.hasNext())

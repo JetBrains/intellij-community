@@ -55,7 +55,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/20/2015
  */
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 
@@ -318,10 +317,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return MAVEN_VERSION;
   }
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz, String roleHint);
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz);
 
   public abstract void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable);

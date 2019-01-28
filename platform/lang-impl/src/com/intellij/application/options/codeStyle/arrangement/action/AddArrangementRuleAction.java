@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/24/12 1:54 PM
  */
 public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   

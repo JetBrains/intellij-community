@@ -49,7 +49,7 @@ public class TextRangeUtil {
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<TextRange> excludedRanges) {
+  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
         Collections.sort(excludedRanges, RANGE_COMPARATOR);

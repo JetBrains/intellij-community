@@ -23,7 +23,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2016
  */
 public class ProjectTaskList extends ArrayList<ProjectTask> implements ProjectTask {
   public ProjectTaskList(@NotNull Collection<? extends ProjectTask> c) {

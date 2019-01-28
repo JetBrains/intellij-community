@@ -14,7 +14,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor.CollectElements;
 import com.intellij.psi.search.PsiElementProcessor.CollectFilteredElements;
 import com.intellij.psi.search.PsiElementProcessor.FindElement;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -30,14 +29,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
-
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
-  private static final Class[] WS = {PsiWhiteSpace.class};
-  private static final Class[] WS_COMMENTS = {PsiWhiteSpace.class, PsiComment.class};
+  @SuppressWarnings("unchecked")
+  private static final Class<? extends PsiElement>[] WS = new Class[]{PsiWhiteSpace.class};
+  @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[]
+    WS_COMMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   /**
    * Checks whether one element in the psi tree is under another.
@@ -92,7 +91,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
 
@@ -106,7 +104,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
 
@@ -123,8 +120,10 @@ public class PsiTreeUtil {
   public static PsiElement findCommonParent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     // optimization
     if (element1 == element2) return element1;
-    final PsiFile containingFile = element1.getContainingFile();
-    final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
+    PsiFile file1 = element1.getContainingFile();
+    PsiFile file2 = element2.getContainingFile();
+
+    PsiElement topLevel = file1 == file2 ? file1 : null;
 
     int depth1 = getDepth(element1, topLevel);
     int depth2 = getDepth(element2, topLevel);
@@ -356,12 +355,12 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findFirstParent(@Nullable PsiElement element, Condition<PsiElement> condition) {
+  public static PsiElement findFirstParent(@Nullable PsiElement element, Condition<? super PsiElement> condition) {
     return findFirstParent(element, false, condition);
   }
 
   @Nullable
-  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<? super PsiElement> condition) {
     if (strict && element != null) {
       element = element.getParent();
     }
@@ -376,7 +375,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+  public static PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, Condition<? super PsiElement> condition) {
     if (strict && element != null) {
       element = element.getContext();
     }
@@ -424,7 +423,7 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
 
     List<T> result = null;
@@ -465,7 +464,7 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
     StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
     if (stub == null) {
@@ -497,7 +496,6 @@ public class PsiTreeUtil {
    * @param element the element to get the child for.
    * @param classes the array of classes.
    * @return the element, or null if none was found.
-   * @since 5.1
    */
   @SafeVarargs
   @Nullable
@@ -563,7 +561,7 @@ public class PsiTreeUtil {
   @Contract("null -> null")
   public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         final StubElement parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
@@ -576,10 +574,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, @NotNull Class<E> parentClass) {
     if (element instanceof StubBasedPsiElement) {
-      StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
+      StubElement<?> stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
-        @SuppressWarnings("unchecked") E e = (E)stub.getParentStubOfType(parentClass);
-        return e;
+        return stub.getParentStubOfType(parentClass);
       }
     }
     return getParentOfType(element, parentClass);
@@ -713,7 +710,7 @@ public class PsiTreeUtil {
   @Nullable
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
-                                              @Nullable final Consumer<PsiElement> consumer) {
+                                              @Nullable final Consumer<? super PsiElement> consumer) {
     return findSiblingForward(element, elementType, true, consumer);
   }
 
@@ -734,7 +731,7 @@ public class PsiTreeUtil {
   @Nullable
   public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
                                                @NotNull final IElementType elementType,
-                                               @Nullable final Consumer<PsiElement> consumer) {
+                                               @Nullable final Consumer<? super PsiElement> consumer) {
     return findSiblingBackward(element, elementType, true, consumer);
   }
 
@@ -752,9 +749,10 @@ public class PsiTreeUtil {
     return null;
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
+  public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
       if (!instanceOf(e, elementClasses)) {
@@ -776,9 +774,10 @@ public class PsiTreeUtil {
     return skipSiblingsForward(element, WS_COMMENTS);
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
+  public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
       if (!instanceOf(e, elementClasses)) {
@@ -800,9 +799,10 @@ public class PsiTreeUtil {
     return skipSiblingsBackward(element, WS_COMMENTS);
   }
 
+  @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class... parentClasses) {
+  public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... parentClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
       if (!instanceOf(e, parentClasses)) {
@@ -1028,6 +1028,7 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement prevLeaf(@NotNull PsiElement current) {
+    if (current instanceof PsiFileSystemItem) return null;
     final PsiElement prevSibling = current.getPrevSibling();
     if (prevSibling != null) return lastChild(prevSibling);
     final PsiElement parent = current.getParent();
@@ -1037,6 +1038,7 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement nextLeaf(@NotNull PsiElement current) {
+    if (current instanceof PsiFileSystemItem) return null;
     final PsiElement nextSibling = current.getNextSibling();
     if (nextSibling != null) return firstChild(nextSibling);
     final PsiElement parent = current.getParent();
@@ -1044,12 +1046,14 @@ public class PsiTreeUtil {
     return nextLeaf(parent);
   }
 
+  @NotNull
   public static PsiElement lastChild(@NotNull PsiElement element) {
     PsiElement lastChild = element.getLastChild();
     if (lastChild != null) return lastChild(lastChild);
     return element;
   }
 
+  @NotNull
   public static PsiElement firstChild(@NotNull final PsiElement element) {
     PsiElement child = element.getFirstChild();
     if (child != null) return firstChild(child);
@@ -1085,7 +1089,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean hasErrorElements(@NotNull PsiElement element) {
-    return !psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
+    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
   @NotNull
@@ -1147,7 +1151,7 @@ public class PsiTreeUtil {
 
   public static boolean treeWalkUp(@NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
-                                   @NotNull PairProcessor<PsiElement, PsiElement> eachScopeAndLastParent) {
+                                   @NotNull PairProcessor<? super PsiElement, ? super PsiElement> eachScopeAndLastParent) {
     PsiElement prevParent = null;
     PsiElement scope = entrance;
 
@@ -1213,7 +1217,7 @@ public class PsiTreeUtil {
   /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
-    return psiTraverser().children(element).filter(aClass).iterator();
+    return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();
   }
   //</editor-fold>
 }

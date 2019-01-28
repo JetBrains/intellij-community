@@ -24,7 +24,7 @@ import org.intellij.plugins.xpathView.ui.InputFormPanel;
 import javax.swing.*;
 
 public class FindFormPanel extends JPanel implements InputForm {
-    @SuppressWarnings({ "FieldCanBeLocal", "UnusedDeclaration" })
+    @SuppressWarnings({"UnusedDeclaration" })
     private JPanel myRoot;
 
     private final Project myProject;

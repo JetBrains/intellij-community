@@ -40,7 +40,7 @@ public abstract class AbstractVcsHelper {
     return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
-  public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
+  public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
 
   public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName);
 
@@ -94,13 +94,13 @@ public abstract class AbstractVcsHelper {
    * @param mergeDialogCustomizer custom container of titles, descriptions and messages for the merge dialog.
    * @return changed files for which the merge was actually performed.
    */
-  public abstract @NotNull List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
+  public abstract @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
 
   /**
    * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
    */
   @NotNull
-  public final List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
+  public final List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
     return showMergeDialog(files, provider, provider.createDefaultMergeDialogCustomizer());
   }
 
@@ -109,7 +109,7 @@ public abstract class AbstractVcsHelper {
    * for the current VCS.
    */
   @NotNull
-  public final List<VirtualFile> showMergeDialog(List<VirtualFile> files) {
+  public final List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files) {
     if (files.isEmpty()) return Collections.emptyList();
     MergeProvider provider = null;
     for (VirtualFile virtualFile : files) {
@@ -135,10 +135,10 @@ public abstract class AbstractVcsHelper {
    *
    * @param changes the changes to show in the dialog.
    */
-  public abstract void showRollbackChangesDialog(List<Change> changes);
+  public abstract void showRollbackChangesDialog(List<? extends Change> changes);
 
   @Nullable
-  public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
+  public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
                                                                String title,
                                                                @Nullable String prompt,
                                                                @Nullable String singleFileTitle,
@@ -146,7 +146,7 @@ public abstract class AbstractVcsHelper {
                                                                @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
-  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
@@ -154,7 +154,7 @@ public abstract class AbstractVcsHelper {
                                                                 @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
-  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+  public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
@@ -170,8 +170,8 @@ public abstract class AbstractVcsHelper {
    *    have been called. It doesn't wait for commit itself to succeed or fail - for this use the {@code customResultHandler}.</p>
    * @return true if user decides to commit the changes, false if user presses Cancel.
    */
-  public abstract boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
-                               @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler);
+  public abstract boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
+                                        @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler);
 
   public abstract void loadAndShowCommittedChangesDetails(@NotNull Project project,
                                                           @NotNull VcsRevisionNumber revision,

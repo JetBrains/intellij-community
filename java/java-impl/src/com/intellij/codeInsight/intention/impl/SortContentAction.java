@@ -233,8 +233,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
 
     SortableEntry copy() {
-      List<PsiComment> afterSeparator = myAfterSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
-      List<PsiComment> beforeSeparator = myBeforeSeparator.stream().map(el -> (PsiComment)el.copy()).collect(Collectors.toList());
+      List<PsiComment> afterSeparator = ContainerUtil.map(myAfterSeparator, el -> (PsiComment)el.copy());
+      List<PsiComment> beforeSeparator = ContainerUtil.map(myBeforeSeparator, el -> (PsiComment)el.copy());
       return new SortableEntry(myElement.copy(), beforeSeparator, afterSeparator);
     }
   }
@@ -330,7 +330,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (sm.run()) return null;
 
       List<SortableEntry> entries = sm.mySortableEntries;
-      List<PsiElement> entryElements = entries.stream().map(e -> e.myElement).collect(Collectors.toList());
+      List<PsiElement> entryElements = ContainerUtil.map(entries, e -> e.myElement);
       if (entryElements.size() < MIN_ELEMENTS_COUNT) return null;
       if (!strategy.isSuitableElements(entryElements)) return null;
       return new SortableList(entries, strategy, sm.myLineLayout, beforeFirst);
@@ -658,7 +658,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @Override
     String generateReplacementText(@NotNull SortableList list, @NotNull PsiArrayInitializerMemberValue elementToSort) {
       StringBuilder sb = new StringBuilder();
-      list.generate(sb);
+      boolean newLineRequired = list.generate(sb);
+      if (newLineRequired) {
+        sb.append("\n");
+      }
       sb.append("}");
       return sb.toString();
     }
@@ -795,11 +798,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         sb.append(child.getText());
         child = child.getNextSibling();
       }
-      sortableList.generate(sb);
-
-      List<SortableEntry> entries = sortableList.myEntries;
-      SortableEntry last = entries.get(entries.size() - 1);
-      if (!last.myBeforeSeparator.isEmpty()) {
+      boolean newLineRequired = sortableList.generate(sb);
+      if (newLineRequired) {
         sb.append("\n");
       }
       sb.append(")");

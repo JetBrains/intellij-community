@@ -71,7 +71,7 @@ open class GithubOpenInBrowserActionGroup
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
     val pullRequest = dataContext.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST) ?: return null
     val serverPath = dataContext.getData(GithubPullRequestKeys.SERVER_PATH) ?: return null
-    val fullPath = dataContext.getData(GithubPullRequestKeys.FULL_PATH) ?: return null
+    val fullPath = dataContext.getData(GithubPullRequestKeys.REPO_DETAILS)?.fullPath ?: return null
 
     val htmlUrl = pullRequest.pullRequestLinks?.htmlUrl ?: return null
     return setOf(GithubRepositoryPath(serverPath, fullPath)) to Data.URL(project, htmlUrl)

@@ -13,6 +13,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -24,7 +25,6 @@ import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -300,10 +300,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return null;
   }
 
-  private static void enableNonSuspendingRequest(EventRequest request, Consumer<Event> handler) {
-    request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+  public static void enableRequestWithHandler(EventRequest request, Consumer<Event> handler) {
     request.putProperty(REQUEST_HANDLER, handler);
     request.enable();
+  }
+
+  private static void enableNonSuspendingRequest(EventRequest request, Consumer<Event> handler) {
+    request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+    enableRequestWithHandler(request, handler);
   }
 
   private void processVMStartEvent(final SuspendContextImpl suspendContext, VMStartEvent event) {
@@ -349,7 +353,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         .map(factory -> factory.fun(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
-      Stream.of(Extensions.getExtensions(PositionManagerFactory.EP_NAME, getProject()))
+      Stream.of(PositionManagerFactory.EP_NAME.getExtensions(getProject()))
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
@@ -359,6 +363,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (canBeModified) {
         createStackCapturingBreakpoints();
         AsyncStacksUtils.setupAgent(this);
+      }
+
+      if (canBeModified) {
+        MemoryAgentUtil.loadAgentProxy(this, agent -> myMemoryAgent = agent);
       }
 
       // breakpoints should be initialized after all processAttached listeners work
@@ -438,7 +446,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    //noinspection HardCodedStringLiteral
     RequestHint hint = getRequestHint(event);
 
     deleteStepRequests(event.thread());
@@ -468,9 +475,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     else {
       showStatusText("");
-      if (myReturnValueWatcher != null) {
-        myReturnValueWatcher.disable();
-      }
+      stopWatchingMethodReturn();
       getSuspendManager().voteSuspend(suspendContext);
       if (hint != null) {
         final MethodFilter methodFilter = hint.getMethodFilter();
@@ -574,9 +579,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
-          if (myReturnValueWatcher != null) {
-            myReturnValueWatcher.disable();
-          }
+          stopWatchingMethodReturn();
           //if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
           //  // there could be explicit resume as a result of call to voteSuspend()
           //  // e.g. when breakpoint was considered invalid, in that case the filter will be applied _after_

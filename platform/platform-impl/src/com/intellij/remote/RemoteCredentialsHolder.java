@@ -174,28 +174,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myAuthType = authType;
   }
 
-  @Deprecated
-  @Override
-  public boolean isUseKeyPair() {
-    return myAuthType == AuthType.KEY_PAIR;
-  }
-
-  @Override
-  @Deprecated
-  public void setUseKeyPair(boolean useKeyPair) {
-    if (useKeyPair) {
-      myAuthType = AuthType.KEY_PAIR;
-    }
-    else {
-      if (myAuthType == AuthType.KEY_PAIR) {
-        myAuthType = AuthType.PASSWORD;
-      }
-      else {
-        // do nothing
-      }
-    }
-  }
-
   @NotNull
   public String getSerializedUserName() {
     if (myUserName == null) return "";
@@ -229,28 +207,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     else {
       myPassphrase = null;
       myStorePassphrase = false;
-    }
-  }
-
-  @Deprecated
-  @Override
-  public boolean isUseAuthAgent() {
-    return myAuthType == AuthType.OPEN_SSH;
-  }
-
-  @Deprecated
-  @Override
-  public void setUseAuthAgent(boolean useAuthAgent) {
-    if (useAuthAgent) {
-      myAuthType = AuthType.OPEN_SSH;
-    }
-    else {
-      if (myAuthType == AuthType.OPEN_SSH) {
-        myAuthType = AuthType.PASSWORD;
-      }
-      else {
-        // do nothing
-      }
     }
   }
 

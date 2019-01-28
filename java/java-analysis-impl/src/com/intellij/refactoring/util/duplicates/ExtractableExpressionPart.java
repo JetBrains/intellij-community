@@ -62,22 +62,16 @@ public class ExtractableExpressionPart {
     return new ExtractableExpressionPart(myUsage, myVariable, myValue, myType);
   }
 
-  @NotNull
-  ExtractableExpressionPart deepCopy() {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myUsage.getProject());
-    PsiExpression usageCopy = factory.createExpressionFromText(myUsage.getText(), myUsage);
-    return new ExtractableExpressionPart(usageCopy, myVariable, myValue, myType);
-  }
-
-  boolean isEquivalent(@NotNull ExtractableExpressionPart part) {
+  public boolean isEquivalent(@NotNull ExtractableExpressionPart part) {
     if (myVariable != null && myVariable.equals(part.myVariable)) {
       return true;
     }
     if (myValue != null && myValue.equals(part.myValue)) {
       return true;
     }
-    return JavaPsiEquivalenceUtil.areExpressionsEquivalent(PsiUtil.skipParenthesizedExprDown(myUsage),
-                                                           PsiUtil.skipParenthesizedExprDown(part.myUsage));
+    PsiExpression usage1 = PsiUtil.skipParenthesizedExprDown(myUsage);
+    PsiExpression usage2 = PsiUtil.skipParenthesizedExprDown(part.myUsage);
+    return usage1 != null && usage2 != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(usage1, usage2);
   }
 
   @Nullable
@@ -172,5 +166,10 @@ public class ExtractableExpressionPart {
     assert (usageType = usage.getType()) == null || type.isAssignableFrom(usageType)
       : "expected " + type.getCanonicalText() + ", got " + usageType.getCanonicalText();
     return new ExtractableExpressionPart(usage, null, null, type);
+  }
+
+  @Override
+  public String toString() {
+    return myUsage.getText();
   }
 }

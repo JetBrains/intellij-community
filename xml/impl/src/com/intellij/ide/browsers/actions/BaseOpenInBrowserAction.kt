@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -31,7 +31,7 @@ import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
 import javax.swing.JList
 
-private val LOG = Logger.getInstance(BaseOpenInBrowserAction::class.java)
+private val LOG = logger<BaseOpenInBrowserAction>()
 
 internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
   try {
@@ -39,7 +39,7 @@ internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolea
     if (!urls.isEmpty()) {
       chooseUrl(urls)
         .onSuccess { url ->
-          ApplicationManager.getApplication().saveAll()
+          FileDocumentManager.getInstance().saveAllDocuments()
           BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
         }
     }

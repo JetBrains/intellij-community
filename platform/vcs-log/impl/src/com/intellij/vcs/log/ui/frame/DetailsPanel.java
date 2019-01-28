@@ -201,8 +201,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     repaint();
   }
 
-  private void resolveHashes(@NotNull List<CommitId> ids,
-                             @NotNull List<CommitPresentation> presentations,
+  private void resolveHashes(@NotNull List<? extends CommitId> ids,
+                             @NotNull List<? extends CommitPresentation> presentations,
                              @NotNull Set<String> unResolvedHashes,
                              @NotNull Condition<Object> expired) {
     if (!unResolvedHashes.isEmpty()) {
@@ -253,7 +253,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
   }
 
-  private void setPresentations(@NotNull List<CommitId> ids,
+  private void setPresentations(@NotNull List<? extends CommitId> ids,
                                 @NotNull List<? extends CommitPresentation> presentations) {
     assert ids.size() == presentations.size();
     for (int i = 0; i < mySelection.size(); i++) {
@@ -284,7 +284,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsCommitMetadata> detailsList) {
+    protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
       Set<String> unResolvedHashes = ContainerUtil.newHashSet();

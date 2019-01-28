@@ -17,13 +17,16 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class InspectionModuleNode extends InspectionTreeNode{
+public class InspectionModuleNode extends InspectionTreeNode {
+  @NotNull
   private final Module myModule;
-  public InspectionModuleNode(final Module module) {
-    super(module);
+
+  public InspectionModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
+    super(parent);
     myModule = module;
   }
 
@@ -32,11 +35,12 @@ public class InspectionModuleNode extends InspectionTreeNode{
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
-  public String getName(){
+  public String getName() {
     return myModule.getName();
   }
 
-  public String toString() {
+  @Override
+  public String getPresentableText() {
     return getName();
   }
 }

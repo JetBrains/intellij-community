@@ -27,6 +27,7 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     visitor.visitForInClause(this);
   }
 
+  @Override
   public String toString() {
     return "In clause";
   }

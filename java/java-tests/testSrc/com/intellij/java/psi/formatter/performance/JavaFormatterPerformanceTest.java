@@ -25,7 +25,6 @@ import static com.intellij.psi.SyntaxTraverser.astTraverser;
 
 /**
  * @author Maxim.Mossienko
- * @since Jan 26, 2007
  */
 public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
   private static final String BASE_PATH = "psi/formatter/java";

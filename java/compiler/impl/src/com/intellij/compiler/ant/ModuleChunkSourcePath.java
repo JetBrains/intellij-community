@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * @since Nov 22, 2004
  */
 public class ModuleChunkSourcePath extends CompositeGenerator{
   private final VirtualFile[] mySourceRoots;

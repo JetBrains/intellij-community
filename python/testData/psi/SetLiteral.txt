@@ -15,4 +15,4 @@ PyFile:SetLiteral.py
       PsiElement(Py:LBRACE)('{')
       PyNumericLiteralExpression
         PsiElement(Py:INTEGER_LITERAL)('1')
-      PsiElement(Py:RBRACE)('}')      
+      PsiElement(Py:RBRACE)('}')

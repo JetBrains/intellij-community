@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.uast.UClass;
 
 import javax.swing.*;
 import java.awt.*;
@@ -368,6 +367,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (refMethod.isAbstract() && (refMethod.getDerivedMethods().isEmpty() || refMethod.getAccessModifier() == PsiModifier.PRIVATE)) return false;
 
       for (RefMethod refOverride : refMethod.getDerivedMethods()) {
+        if (accessModifier == PsiModifier.PRIVATE) return false;
         if (!isAccessibleFrom(refOverride, to, accessModifier)) return false;
       }
 
@@ -423,7 +423,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     RefClass toOwner = refUtil.getOwnerClass(to);
 
     if (accessModifier == PsiModifier.PROTECTED) {
-      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isUsedQualifiedOutsidePackage()) {
+      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isProtectedAccessForbidden()) {
         return false;
       }
       return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)

@@ -26,13 +26,12 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsagePresentation;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageInfo> {
   private final UsagePresentation myUsagePresentation;
 
-  public UsageProjectTreeNode(Project project, UsageInfo usage, ViewSettings viewSettings) {
+  public UsageProjectTreeNode(Project project, @NotNull UsageInfo usage, ViewSettings viewSettings) {
     super(project, usage, viewSettings);
     final UsageInfo2UsageAdapter adapter = new UsageInfo2UsageAdapter(usage);
     myUsagePresentation = adapter.getPresentation();

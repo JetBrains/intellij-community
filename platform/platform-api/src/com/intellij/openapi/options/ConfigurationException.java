@@ -40,6 +40,11 @@ public class ConfigurationException extends Exception {
     myTitle = title;
   }
 
+  public ConfigurationException(String message, Throwable cause, String title) {
+    super(message, cause);
+    myTitle = title;
+  }
+
   /**
    * @return the title describing the problem in short
    */

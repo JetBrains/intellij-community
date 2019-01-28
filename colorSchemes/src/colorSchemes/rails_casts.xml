@@ -1354,7 +1354,11 @@
         <option name="FOREGROUND" value="DA4939" />
       </value>
     </option>
-    <option baseAttributes="RUBY_IDENTIFIER" name="RUBY_PARAMETER_ID" />
+    <option name="RUBY_PARAMETER_ID">
+      <value>
+        <option name="FOREGROUND" value="D4B01D" />
+      </value>
+    </option>
     <option name="RUBY_REGEXP">
       <value>
         <option name="FOREGROUND" value="A5C261" />

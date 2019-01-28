@@ -18,7 +18,6 @@ import java.awt.*;
  * </pre>
  *
  * @author Denis Zhdanov
- * @since 8/1/11 4:15 PM
  */
 public class SelectExternalProjectStep extends AbstractImportFromExternalSystemWizardStep {
 

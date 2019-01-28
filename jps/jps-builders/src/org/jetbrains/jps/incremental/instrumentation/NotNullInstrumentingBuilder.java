@@ -20,7 +20,6 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +67,8 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
 
   @Override
   protected boolean canInstrument(CompiledClass compiledClass, int classFileVersion) {
-    return classFileVersion >= Opcodes.V1_5 && !"module-info".equals(compiledClass.getClassName());
+    // in the class version consider only 'major' part
+    return (classFileVersion & 0xFF) >= Opcodes.V1_5 && !"module-info".equals(compiledClass.getClassName());
   }
 
   // todo: probably instrument other NotNull-like annotations defined in project settings?

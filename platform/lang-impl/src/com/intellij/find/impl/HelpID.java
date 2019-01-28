@@ -27,4 +27,6 @@ public interface HelpID {
 
   @NonNls String FIND_IN_PATH = "reference.dialogs.findinpath";
   @NonNls String REPLACE_IN_PATH = "reference.dialogs.findinpath";
+  @NonNls String FIND_IN_EDITOR = "ixFindText";
+  @NonNls String REPLACE_IN_EDITOR = "Replace_the_found_target";
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,7 +32,7 @@ import java.util.Set;
 public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
   private final int myTransitiveBorder;
 
-  public AnalyzeDependenciesHandler(Project project, List<? extends AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
+  public AnalyzeDependenciesHandler(@NotNull Project project, List<? extends AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
     super(project, scopes, excluded);
     myTransitiveBorder = transitiveBorder;
   }

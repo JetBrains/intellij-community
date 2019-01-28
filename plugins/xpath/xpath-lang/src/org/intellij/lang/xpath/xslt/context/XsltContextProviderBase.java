@@ -123,7 +123,6 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         //noinspection unchecked
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
-        //noinspection unchecked
         final Set<XmlElementDescriptor> history = new THashSet<>(150);
 
         final XmlElementDescriptor[] e = rootDescriptor.getRootElementsDescriptors(document);
@@ -343,7 +342,6 @@ public abstract class XsltContextProviderBase extends ContextProvider {
           });
         }
 
-        //noinspection unchecked
         return new Result<>(names, ArrayUtil.toObjectArray(names.dependencies));
       }
     }, false);

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Represents the state of a multiple file merge operation.
  *
  * @see MergeProvider2#createMergeSession
- * @since 8.1
  */
 public interface MergeSession {
   enum Resolution {

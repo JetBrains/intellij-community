@@ -20,11 +20,11 @@ import com.intellij.openapi.components.ServiceManager
 
 
 abstract class CompletionLoggerProvider {
-    
+
     abstract fun newCompletionLogger(): CompletionLogger
-    
+
     open fun dispose(): Unit = Unit
-    
+
     companion object {
         fun getInstance(): CompletionLoggerProvider = ServiceManager.getService(CompletionLoggerProvider::class.java)
     }
@@ -33,19 +33,20 @@ abstract class CompletionLoggerProvider {
 
 abstract class CompletionLogger {
 
-    abstract fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int)
-    
-    abstract fun afterCharTyped(c: Char, lookup: LookupImpl)
-    
-    abstract fun afterBackspacePressed(lookup: LookupImpl)
+    abstract fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int,
+                                   timestamp: Long, mlTimeContribution: Long)
 
-    abstract fun downPressed(lookup: LookupImpl)
-    abstract fun upPressed(lookup: LookupImpl)
+    abstract fun afterCharTyped(c: Char, lookup: LookupImpl, timestamp: Long)
 
-    abstract fun itemSelectedCompletionFinished(lookup: LookupImpl)
-    abstract fun completionCancelled()
-    abstract fun itemSelectedByTyping(lookup: LookupImpl)
+    abstract fun afterBackspacePressed(lookup: LookupImpl, timestamp: Long)
 
-    abstract fun customMessage(message: String)
+    abstract fun downPressed(lookup: LookupImpl, timestamp: Long)
+    abstract fun upPressed(lookup: LookupImpl, timestamp: Long)
 
+    abstract fun itemSelectedCompletionFinished(lookup: LookupImpl, timestamp: Long)
+    abstract fun completionCancelled(timestamp: Long)
+    abstract fun itemSelectedByTyping(lookup: LookupImpl, timestamp: Long)
+
+    abstract fun customMessage(message: String, timestamp: Long)
+    abstract fun performanceMessage(description: String, value: Long, timestamp: Long)
 }

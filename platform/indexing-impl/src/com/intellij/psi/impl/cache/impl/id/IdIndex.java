@@ -20,6 +20,10 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -132,5 +136,14 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
+    if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
+      return StringUtil.contains(file.getViewProvider().getContents(), name);
+    }
+
+    GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
+    return !FileBasedIndex.getInstance().getContainingFiles(NAME, new IdIndexEntry(name, true), scope).isEmpty();
   }
 }

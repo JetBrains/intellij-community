@@ -49,7 +49,6 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
     if (nsDescriptor instanceof Validator) {
-      //noinspection unchecked
       MyHost host = new MyHost();
       ((Validator<XmlDocument>)nsDescriptor).validate(document, host);
       return host;

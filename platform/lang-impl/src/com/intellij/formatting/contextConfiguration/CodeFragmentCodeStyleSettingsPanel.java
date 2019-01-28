@@ -16,20 +16,19 @@
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +40,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
+  @NotNull private final LanguageCodeStyleSettingsProvider mySettingsProvider;
   private final SelectedTextFormatter mySelectedTextFormatter;
   private SpacesPanelWithoutPreview mySpacesPanel;
   private WrappingAndBracesPanelWithoutPreview myWrappingPanel;
@@ -48,12 +48,12 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private Runnable mySomethingChangedCallback;
 
   CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
-                                            @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
-                                            @NotNull Language language,
-                                            @NotNull SelectedTextFormatter selectedTextFormatter)
-  {
-    super(language, settings, settings.clone());
+                                     @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
+                                     @NotNull LanguageCodeStyleSettingsProvider settingsProvider,
+                                     @NotNull SelectedTextFormatter selectedTextFormatter) {
+    super(settingsProvider.getLanguage(), settings, settings.clone());
     mySettingsToShow = settingsToShow;
+    mySettingsProvider = settingsProvider;
     mySelectedTextFormatter = selectedTextFormatter;
 
     ensureTabs();
@@ -107,10 +107,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
                                  : myWrappingPanel.getPreferredFocusedComponent();
   }
 
-  public static CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow calcSettingNamesToShow(CodeStyleSettingsCodeFragmentFilter filter) {
-    return filter.getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
-  }
-
   public static boolean hasOptionsToShow(LanguageCodeStyleSettingsProvider provider) {
     LanguageCodeStyleSettingsProvider.SettingsType[] types = { SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS };
     for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
@@ -154,9 +150,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       if (settingNames.isEmpty()) {
         settingNames = mySettingsToShow.getOtherSetting();
       }
-      
-      String[] names = ContainerUtil.toArray(settingNames, new String[settingNames.size()]);
-      showStandardOptions(names);
+
+      mySettingsProvider.customizeSettings(getFilteredSettingsConsumer(settingNames, this), getSettingsType());
       initTables();
 
       myOptionsTree = createOptionsTree();
@@ -213,8 +208,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       Collection<String> fields = populateWithAssociatedFields(settingNames);
       fields.add("KEEP_LINE_BREAKS");
 
-      String[] names = ContainerUtil.toArray(fields, new String[fields.size()]);
-      showStandardOptions(names);
+      mySettingsProvider.customizeSettings(getFilteredSettingsConsumer(settingNames, this), getSettingsType());
 
       myTreeTable = createOptionsTree(getSettings());
       JBScrollPane scrollPane = new JBScrollPane(myTreeTable) {
@@ -226,8 +220,6 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
       myPanel = new JPanel(new BorderLayout());
       myPanel.add(scrollPane);
-
-      showStandardOptions(names);
 
       isFirstUpdate = false;
     }
@@ -267,5 +259,52 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     public JComponent getPreferredFocusedComponent() {
       return myTreeTable;
     }
+  }
+
+  @NotNull
+  private static CodeStyleSettingsCustomizable getFilteredSettingsConsumer(@NotNull Collection<String> names, @NotNull CodeStyleSettingsCustomizable original) {
+    return new CodeStyleSettingsCustomizable() {
+      @Override
+      public void showAllStandardOptions() {
+        original.showStandardOptions(ArrayUtil.toStringArray(names));
+      }
+
+      @Override
+      public void showStandardOptions(String... optionNames) {
+        String[] toShowOptions = Arrays.stream(optionNames).filter(names::contains).toArray(value -> new String[value]);
+        original.showStandardOptions(toShowOptions);
+      }
+
+      @Override
+      public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                                   String fieldName,
+                                   String title,
+                                   @Nullable String groupName,
+                                   Object... options) {
+        if (names.contains(fieldName)) {
+          original.showCustomOption(settingsClass, fieldName, title, groupName, options);
+        }
+      }
+
+      @Override
+      public void renameStandardOption(String fieldName, String newTitle) {
+        if (names.contains(fieldName)) {
+          original.renameStandardOption(fieldName, newTitle);
+        }
+      }
+
+      @Override
+      public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                                   String fieldName,
+                                   String title,
+                                   @Nullable String groupName,
+                                   @Nullable OptionAnchor anchor,
+                                   @Nullable String anchorFieldName,
+                                   Object... options) {
+        if (names.contains(fieldName)) {
+          original.showCustomOption(settingsClass, fieldName, title, groupName, anchor, anchorFieldName, options);
+        }
+      }
+    };
   }
 }

@@ -39,13 +39,13 @@ import java.util.*;
 /**
  * @author cdr
  */
-@SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
+  private final PsiDocumentManager myDocManager;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
@@ -54,6 +54,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   public InjectedLanguageManagerImpl(Project project, DumbService dumbService) {
     myProject = project;
     myDumbService = dumbService;
+    myDocManager = PsiDocumentManager.getInstance(project);
 
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
     ((ExtensionPointImpl<MultiHostInjector>)multiPoint).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
@@ -80,6 +81,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     };
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
     ((ExtensionPointImpl<LanguageInjector>)psiManagerPoint).addExtensionPointListener(myListener, false, this);
+  }
+
+  PsiDocumentManager getDocManager() {
+    return myDocManager;
   }
 
   @Override
@@ -114,16 +119,22 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
     DocumentWindow documentWindow = getDocumentWindow(injectedContext);
-    return (documentWindow == null) ? injectedTextRange : documentWindow.injectedToHost(injectedTextRange);
+    return documentWindow == null ? injectedTextRange : documentWindow.injectedToHost(injectedTextRange);
   }
 
   @Override
   public int injectedToHost(@NotNull PsiElement element, int offset) {
     DocumentWindow documentWindow = getDocumentWindow(element);
-    return (documentWindow == null) ? offset : documentWindow.injectedToHost(offset);
+    return documentWindow == null ? offset : documentWindow.injectedToHost(offset);
   }
 
-  private static DocumentWindow getDocumentWindow(PsiElement element) {
+  @Override
+  public int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset, boolean minHostOffset) {
+    DocumentWindow documentWindow = getDocumentWindow(injectedContext);
+    return documentWindow == null ? injectedOffset : documentWindow.injectedToHost(injectedOffset, minHostOffset);
+  }
+
+  private static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
@@ -227,7 +238,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
    *  @return list of ranges in encoded (raw) PSI
    */
   @Override
-  @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
@@ -400,18 +410,24 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   interface InjProcessor {
     boolean process(@NotNull PsiElement element, @NotNull MultiHostInjector injector);
   }
-  void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
-    MultiHostInjector[] infos = getInjectorMap().get(element.getClass());
-    if (infos != null) {
-      final boolean dumb = myDumbService.isDumb();
-      for (MultiHostInjector injector : infos) {
-        if (dumb && !DumbService.isDumbAware(injector)) {
-          continue;
-        }
 
-        if (!processor.process(element, injector)) return;
-      }
+  InjectionResult processInPlaceInjectorsFor(@NotNull PsiFile hostPsiFile, @NotNull PsiElement element) {
+    MultiHostInjector[] infos = getInjectorMap().get(element.getClass());
+    if (infos == null || infos.length == 0) {
+      return null;
     }
+    final boolean dumb = myDumbService.isDumb();
+    InjectionRegistrarImpl hostRegistrar = new InjectionRegistrarImpl(myProject, hostPsiFile, element, myDocManager);
+    for (MultiHostInjector injector : infos) {
+      if (dumb && !DumbService.isDumbAware(injector)) {
+        continue;
+      }
+
+      injector.getLanguagesToInject(hostRegistrar, element);
+      InjectionResult result = hostRegistrar.getInjectedResult();
+      if (result != null) return result;
+    }
+    return null;
   }
 
   @Override

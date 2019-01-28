@@ -23,7 +23,8 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    * Possible registration areas are IDEA_PROJECT, MODULE_PROJECT which stand for ProjectComponent and ModuleComponent correspondingly.
    * If area attribute is omitted the component will be registered in root area which corresponds to application component.
    */
-  @NonNls String COMPONENT = "com.intellij.component";
+  @NonNls
+  String COMPONENT = "com.intellij.component";
 
   /**
    * This extension point allows a plugin vendor to provide the user ability to report fatal errors (aka exceptions) that happened in
@@ -34,9 +35,10 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    *   &lt;errorHandler implementation="my.plugin.package.MyErrorHandler"/&gt;
    * &lt;/extensions&gt;
    * </pre>
-   * my.plugin.package.MyErrorHandler class must implement {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter} abstract class.
+   * my.plugin.package.MyErrorHandler class must implement {@link ErrorReportSubmitter} abstract class.
    */
-  @NonNls String ERROR_HANDLER = "com.intellij.errorHandler";
+  @NonNls
+  String ERROR_HANDLER = "com.intellij.errorHandler";
 
   ExtensionPointName<ErrorReportSubmitter> ERROR_HANDLER_EP = ExtensionPointName.create(ERROR_HANDLER);
 
@@ -50,7 +52,8 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    * </pre>
    * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
    */
-  @SuppressWarnings("JavadocReference") @NonNls String JUNIT_PATCHER = "com.intellij.junitPatcher";
+  @NonNls
+  String JUNIT_PATCHER = "com.intellij.junitPatcher";
 
   /**
    * This extensions allows to run custom [command-line] application based on IDEA platform
@@ -61,12 +64,15 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    * </pre>
    * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
    */
-  @NonNls String APPLICATION_STARTER = "com.intellij.appStarter";
+  @NonNls
+  String APPLICATION_STARTER = "com.intellij.appStarter";
 
-  @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
+  @NonNls
+  String ANT_BUILD_GEN = "com.intellij.antBuildGen";
 
   /**
    * Ant custom compiler extension point
    */
-  @NonNls String ANT_CUSTOM_COMPILER = "com.intellij.antCustomCompiler";
+  @NonNls
+  String ANT_CUSTOM_COMPILER = "com.intellij.antCustomCompiler";
 }

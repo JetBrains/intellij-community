@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
 
   @Override
   public PathReference fromString(@Nullable String s, ConvertContext context) {
-    final XmlElement element = context.getXmlElement();
+    final XmlElement element = context.getReferenceXmlElement();
     final Module module = context.getModule();
     if (s == null || element == null || module == null) {
       return null;

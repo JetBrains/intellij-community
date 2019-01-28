@@ -491,6 +491,12 @@
   <item name="javax.swing.UIManager java.lang.Object get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.UIManager java.lang.String getCrossPlatformLookAndFeelClassName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="javax.swing.UIManager javax.swing.Icon getIcon(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

@@ -22,15 +22,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class InlayModelImpl implements InlayModel, Disposable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
+  private static final Comparator<Inlay> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((Inlay inlay) -> inlay.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText());
   private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR =
     Comparator.comparingInt((BlockInlayImpl i) -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator.comparing(BlockInlayImpl::getVerticalAlignment)
-    .thenComparing(i -> i.getVerticalAlignment() == Inlay.VerticalAlignment.ABOVE_LINE ? i.myPriority : -i.myPriority);
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR =
+    Comparator.comparing((BlockInlayImpl inlay) -> inlay.getVerticalAlignment())
+      .thenComparing(i -> i.getVerticalAlignment() == Inlay.VerticalAlignment.ABOVE_LINE ? i.myPriority : -i.myPriority);
   private static final Processor<InlayImpl> UPDATE_SIZE_PROCESSOR = inlay -> {
     inlay.updateSize();
     return true;
@@ -45,6 +47,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   boolean myMoveInProgress;
   boolean myPutMergedIntervalsAtBeginning;
+  private boolean myConsiderCaretPositionOnDocumentUpdates = true;
   private List<Inlay> myInlaysAtCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
@@ -61,7 +64,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+        if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
           List<Inlay> inlays = getInlineElementsInRange(offset, offset);
           int inlayCount = inlays.size();
           if (inlayCount > 0) {
@@ -111,26 +114,28 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Document document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    InlayImpl inlay = new InlineInlayImpl(myEditor, offset, relatesToPrecedingText, renderer);
+    InlineInlayImpl<T> inlay = new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, renderer);
     notifyAdded(inlay);
     return inlay;
   }
 
   @Nullable
   @Override
-  public Inlay addBlockElement(int offset,
-                               boolean relatesToPrecedingText,
-                               boolean showAbove,
-                               int priority,
-                               @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
-    InlayImpl inlay = new BlockInlayImpl(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
+    BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, priority, renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -138,26 +143,52 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<Inlay> result = new ArrayList<>();
-    myInlineElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      result.add(inlay);
-      return true;
-    });
-    Collections.sort(result, INLINE_ELEMENTS_COMPARATOR);
-    return result;
+    List<InlineInlayImpl> range =
+      getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
+  }
+
+  @NotNull
+  @Override
+  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    List<InlineInlayImpl> range =
+      getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
+                         INLINE_ELEMENTS_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
   }
 
   @NotNull
   @Override
   public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
-    List<BlockInlayImpl> result = new ArrayList<>();
-    myBlockElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
-      result.add(inlay);
+    List<BlockInlayImpl> range =
+      getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> true, BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
+  }
+
+  @NotNull
+  @Override
+  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    List<BlockInlayImpl> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
+                                                    BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    //noinspection unchecked
+    return (List)range;
+  }
+
+  private static <T extends Inlay> List<T> getElementsInRange(@NotNull IntervalTreeImpl<? extends T> tree,
+                                                              int startOffset,
+                                                              int endOffset,
+                                                              Predicate<? super T> predicate,
+                                                              Comparator<? super T> comparator) {
+    List<T> result = new ArrayList<>();
+    tree.processOverlappingWith(startOffset, endOffset, inlay -> {
+      if (predicate.test(inlay)) result.add(inlay);
       return true;
     });
-    Collections.sort(result, BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
-    //noinspection unchecked
-    return (List)result;
+    Collections.sort(result, comparator);
+    return result;
   }
 
   @NotNull
@@ -296,6 +327,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
       }
     }
     return null;
+  }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {
+    myConsiderCaretPositionOnDocumentUpdates = enabled;
   }
 
   @Override

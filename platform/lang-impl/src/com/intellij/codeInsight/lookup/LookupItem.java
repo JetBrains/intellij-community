@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -118,7 +117,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public void setLookupString(@NotNull String lookupString) {
-    if (myAllLookupStrings.contains("")) myAllLookupStrings.remove("");
+    myAllLookupStrings.remove("");
     myLookupString = lookupString;
     myAllLookupStrings.add(lookupString);
   }
@@ -137,7 +136,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
       //noinspection unchecked
       return (T)myAttributes.get(key);
     }
-    else{
+    else {
       return null;
     }
   }
@@ -253,7 +252,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    for (final ElementLookupRenderer renderer : Extensions.getExtensions(ElementLookupRenderer.EP_NAME)) {
+    for (final ElementLookupRenderer renderer : ElementLookupRenderer.EP_NAME.getExtensionList()) {
       if (renderer.handlesItem(getObject())) {
         renderer.renderElement(this, getObject(), presentation);
         return;

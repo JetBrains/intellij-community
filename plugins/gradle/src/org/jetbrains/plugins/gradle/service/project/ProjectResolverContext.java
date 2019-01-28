@@ -31,7 +31,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/13
  */
 public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
@@ -82,5 +81,5 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   String getProjectGradleVersion();
 
   @Nullable
-  String getDefaultGroupId();
+  String getBuildSrcGroup();
 }

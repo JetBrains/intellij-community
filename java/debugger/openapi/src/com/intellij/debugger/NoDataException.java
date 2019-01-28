@@ -18,7 +18,7 @@ package com.intellij.debugger;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 
 public class NoDataException extends Exception implements ControlFlowException {
-  @SuppressWarnings({"deprecation", "ThrowableInstanceNeverThrown"})
+  @SuppressWarnings({"deprecation"})
   public static final NoDataException INSTANCE = new NoDataException();
 
   /** @deprecated Use shared {@link NoDataException#INSTANCE} instead */

@@ -14,6 +14,8 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,7 +28,6 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,16 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                                false);
         isPollConnection = true;
       }
-      return attachVirtualMachine(state, environment, connection, isPollConnection);
+
+      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
+      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
+      if (descriptor != null) {
+        ProcessHandler handler = descriptor.getProcessHandler();
+        if (handler instanceof KillableProcessHandler) {
+          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
+        }
+      }
+      return descriptor;
     }
     if (state instanceof PatchedRunnableState) {
       final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
@@ -114,9 +124,6 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
         if (executionResult instanceof DefaultExecutionResult) {
           sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
         }
-        if (Registry.is("debugger.show.values.between.lines")) {
-          sessionImpl.getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
-        }
         return JavaDebugProcess.create(session, debuggerSession);
       }
     }).getRunContentDescriptor();
@@ -154,6 +161,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     }
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
+      .memoryAgent(beforeExecution && Registry.is("debugger.enable.memory.agent"))
       .create(javaParameters);
   }
 

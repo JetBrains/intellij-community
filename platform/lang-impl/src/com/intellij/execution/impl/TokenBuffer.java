@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo})
@@ -149,9 +148,21 @@ class TokenBuffer {
     if (hasTrailingCR()) {
       removeLastLine();
     }
-    return getInfos().stream().map(TokenInfo::getText).collect(Collectors.joining(""));
+    return getRawText(getInfos());
   }
 
+  @NotNull
+  static CharSequence getRawText(@NotNull List<TokenInfo> tokens) {
+    int size = 0;
+    for (TokenInfo token : tokens) {
+      size += token.getText().length();
+    }
+    StringBuilder result = new StringBuilder(size);
+    for (TokenInfo token : tokens) {
+      result.append(token.getText());
+    }
+    return result.toString();
+  }
 
   // the first token may be CR_TOKEN meaning that instead of appending it we should delete the last line of the document
   // all the remaining text is guaranteed not to contain CR_TOKEN - they can be appended safely to the document end

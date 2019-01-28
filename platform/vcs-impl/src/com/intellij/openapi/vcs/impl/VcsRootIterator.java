@@ -112,20 +112,20 @@ public class VcsRootIterator {
 
   public static void iterateVfUnderVcsRoot(final Project project,
                                            final VirtualFile root,
-                                           final Processor<VirtualFile> processor) {
+                                           final Processor<? super VirtualFile> processor) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, null, processor, null);
     rootIterator.iterate();
   }
 
   public static void iterateVcsRoot(final Project project,
                                     final VirtualFile root,
-                                    final Processor<FilePath> processor) {
+                                    final Processor<? super FilePath> processor) {
     iterateVcsRoot(project, root, processor, null);
   }
 
   public static void iterateVcsRoot(final Project project,
                                     final VirtualFile root,
-                                    final Processor<FilePath> processor,
+                                    final Processor<? super FilePath> processor,
                                     @Nullable VirtualFileFilter directoryFilter) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, null, directoryFilter);
     rootIterator.iterate();
@@ -133,8 +133,8 @@ public class VcsRootIterator {
 
   private static class MyRootIterator {
     private final Project myProject;
-    private final Processor<FilePath> myPathProcessor;
-    private final Processor<VirtualFile> myFileProcessor;
+    private final Processor<? super FilePath> myPathProcessor;
+    private final Processor<? super VirtualFile> myFileProcessor;
     @Nullable private final VirtualFileFilter myDirectoryFilter;
     private final VirtualFile myRoot;
     private final MyRootFilter myRootPresentFilter;
@@ -142,8 +142,8 @@ public class VcsRootIterator {
 
     private MyRootIterator(final Project project,
                            final VirtualFile root,
-                           @Nullable final Processor<FilePath> pathProcessor,
-                           @Nullable final Processor<VirtualFile> fileProcessor,
+                           @Nullable final Processor<? super FilePath> pathProcessor,
+                           @Nullable final Processor<? super VirtualFile> fileProcessor,
                            @Nullable VirtualFileFilter directoryFilter) {
       myProject = project;
       myPathProcessor = pathProcessor;

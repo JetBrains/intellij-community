@@ -100,12 +100,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     ADD(VcsBundle.message("vcs.command.name.add")),
     REMOVE(VcsBundle.message("vcs.command.name.remove"));
 
-    StandardConfirmation(final String id) {
+    StandardConfirmation(@NotNull String id) {
       myId = id;
     }
 
+    @NotNull
     private final String myId;
 
+    @NotNull
     public String getId() {
       return myId;
     }

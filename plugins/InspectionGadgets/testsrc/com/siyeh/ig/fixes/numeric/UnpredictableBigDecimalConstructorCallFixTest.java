@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.numeric.UnpredictableBigDecimalConstructorCallInspection;
@@ -44,14 +45,14 @@ public class UnpredictableBigDecimalConstructorCallFixTest extends IGQuickFixesT
   }
 
   public void testFactory() {
-    doTest(InspectionGadgetsBundle.message("unpredictable.big.decimal.constructor.call.quickfix", "BigDecimal.valueOf(val)"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf(val)"));
   }
 
   public void testConstructor() {
-    doTest(InspectionGadgetsBundle.message("unpredictable.big.decimal.constructor.call.quickfix", "new BigDecimal(\"0.1\")"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "new BigDecimal(\"0.1\")"));
   }
 
   public void testLiteral() {
-    doTest(InspectionGadgetsBundle.message("unpredictable.big.decimal.constructor.call.quickfix", "BigDecimal.valueOf(2d)"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "BigDecimal.valueOf(2d)"));
   }
 }

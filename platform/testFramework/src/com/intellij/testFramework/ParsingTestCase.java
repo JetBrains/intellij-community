@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -46,12 +34,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.AbstractComponentAdapter;
@@ -63,9 +50,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
+
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
 public abstract class ParsingTestCase extends PlatformLiteFixture {
-
   protected String myFilePrefix = "";
   protected String myFileExt;
   protected final String myFullDataPath;
@@ -76,11 +64,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   private final ParserDefinition[] myDefinitions;
   private final boolean myLowercaseFirstLetter;
 
-  protected ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
     this(dataPath, fileExt, false, definitions);
   }
 
-  protected ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
+  protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, boolean lowercaseFirstLetter, @NotNull ParserDefinition... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
     myFileExt = fileExt;
@@ -100,8 +88,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
         }
 
         @Override
-        public void verify(PicoContainer container) throws PicoIntrospectionException {
-        }
+        public void verify(PicoContainer container) throws PicoIntrospectionException { }
       });
     }
     Extensions.registerAreaClass("IDEA_PROJECT", null);
@@ -111,7 +98,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     MutablePicoContainer appContainer = getApplication().getPicoContainer();
     registerComponentInstance(appContainer, MessageBus.class, getApplication().getMessageBus());
     registerComponentInstance(appContainer, SchemeManagerFactory.class, new MockSchemeManagerFactory());
-    final MockEditorFactory editorFactory = new MockEditorFactory();
+    MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
       charSequence -> editorFactory.createDocument(charSequence), FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
@@ -134,7 +121,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     }
 
     // That's for reparse routines
-    final PomModelImpl pomModel = new PomModelImpl(myProject);
+    PomModelImpl pomModel = new PomModelImpl(myProject);
     myProject.registerService(PomModel.class, pomModel);
     new TreeAspect(pomModel);
   }
@@ -147,18 +134,18 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                               new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
-  protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
+  protected <T> void addExplicitExtension(LanguageExtension<T> instance, Language language, T object) {
     instance.addExplicitExtension(language, object);
     Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
   }
 
   @Override
-  protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, Class<T> aClass) {
+  protected <T> void registerExtensionPoint(ExtensionPointName<T> extensionPointName, Class<T> aClass) {
     super.registerExtensionPoint(extensionPointName, aClass);
     Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
   }
 
-  protected <T> void registerApplicationService(final Class<T> aClass, T object) {
+  protected <T> void registerApplicationService(Class<T> aClass, T object) {
     getApplication().registerService(aClass, object);
     Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
   }
@@ -244,16 +231,16 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       ensureParsed(myFile);
       assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
       assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
-      assertEquals("doc text mismatch", text, myFile.getViewProvider().getDocument().getText());
+      assertEquals("doc text mismatch", text, requireNonNull(myFile.getViewProvider().getDocument()).getText());
       assertEquals("psi text mismatch", text, myFile.getText());
       ensureCorrectReparse(myFile);
-      if (checkResult){
+      if (checkResult) {
         checkResult(name, myFile);
         if (ensureNoErrorElements) {
           ensureNoErrorElements();
         }
       }
-      else{
+      else {
         toParseTreeText(myFile, skipSpaces(), includeRanges());
       }
     }
@@ -283,7 +270,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return createFile(name + "." + myFileExt, text);
   }
 
-  protected PsiFile createFile(@NotNull @NonNls String name, @NotNull String text) {
+  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     return createFile(virtualFile);
@@ -293,7 +280,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
   }
 
-  protected void checkResult(@NotNull @NonNls @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+  protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
     doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
   }
 
@@ -351,7 +338,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 
-  protected void checkResult(@NotNull @TestDataFile @NonNls String targetDataName, @NotNull String actual) {
+  protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull String actual) {
     doCheckResult(myFullDataPath, targetDataName, actual);
   }
 
@@ -364,7 +351,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return DebugUtil.psiToString(file, skipSpaces, printRanges);
   }
 
-  protected String loadFile(@NotNull @NonNls @TestDataFile String name) throws IOException {
+  protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
     return loadFileDefault(myFullDataPath, name);
   }
 
@@ -391,6 +378,12 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                        diffLog.performActualPsiChange(file);
                                      });
 
-    TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
+  }
+
+  public void registerMockInjectedLanguageManager() {
+    registerExtensionPoint(Extensions.getArea(myProject), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+    registerExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
+    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
   }
 }

@@ -1,1 +1,3 @@
 deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
+deprecated: print.png -> /general/print.svg; to be removed in IDEA 2020 - use AllIcons.General.Print
+deprecated: printPreview.png -> /actions/preview.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Preview

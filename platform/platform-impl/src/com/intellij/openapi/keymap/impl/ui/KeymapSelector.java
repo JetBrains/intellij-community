@@ -18,14 +18,13 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
-
-import static com.intellij.openapi.keymap.KeyMapBundle.message;
 
 /**
  * @author Sergey.Malenkov
@@ -42,6 +41,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     this.consumer = consumer;
   }
 
+  @NotNull
   public KeymapSchemeManager getManager() {
     if (manager == null) manager = new KeymapSchemeManager(this);
     return manager;
@@ -59,11 +59,13 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     return null;
   }
 
+  @NotNull
   @Override
   protected String getSchemeTypeName() {
     return "Keymap";
   }
 
+  @NotNull
   @Override
   protected AbstractSchemeActions<KeymapScheme> createSchemeActions() {
     return getManager();
@@ -105,7 +107,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     if (internal) return;
 
     Keymap keymap = scheme == null ? null : scheme.getParent();
-    messageReplacement = keymap == null ? null : message("based.on.keymap.label", keymap.getPresentableName());
+    messageReplacement = keymap == null ? null : KeyMapBundle.message("based.on.keymap.label", keymap.getPresentableName());
     if (!messageShown) clearMessage();
 
     consumer.accept(scheme == null ? null : scheme.getCurrent());

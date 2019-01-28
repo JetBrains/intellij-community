@@ -210,7 +210,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       AbstractTreeBuilder builder = getTreeBuilder();
       if (builder instanceof BaseProjectTreeBuilder) {
         beforeSelect().doWhenDone(() -> UIUtil.invokeLaterIfNeeded(() -> {
-          if (!builder.isDisposed()) ((BaseProjectTreeBuilder)builder).select(element, file, requestFocus);
+          if (!builder.isDisposed()) {
+            ((BaseProjectTreeBuilder)builder).selectAsync(element, file, requestFocus);
+          }
         }));
       }
       else if (myAsyncSupport != null) {

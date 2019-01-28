@@ -31,4 +31,9 @@ public class AbstractClassNamingConventionInspectionTest extends LightInspection
     conventionInspection.setEnabled(true, AbstractClassNamingConvention.ABSTRACT_CLASS_NAMING_CONVENTION_SHORT_NAME);
     return conventionInspection;
   }
+
+  @Override
+  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
+    return NewClassNamingConventionInspection.class;
+  }
 }

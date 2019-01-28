@@ -50,7 +50,6 @@ public class HTMLControls {
     return ourControls;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static Control[] loadControls() {
     Element element;
     try {

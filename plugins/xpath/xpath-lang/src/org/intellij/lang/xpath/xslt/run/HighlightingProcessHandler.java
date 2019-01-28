@@ -46,7 +46,6 @@ class HighlightingProcessHandler extends ProcessHandler {
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     public OutputStream getProcessInput() {
         return null;
     }

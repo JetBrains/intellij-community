@@ -350,20 +350,20 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
-        final RemoteServer testedServer = myServerInstance;
-        myServerInstance = null;
-
         if (wasConnected) {
           setTestConnectionState(TestConnectionState.SUCCESSFUL);
           UIUtil.invokeLaterIfNeeded(() -> {
             if (!Disposer.isDisposed(WithAutoDetectCombo.this)) {
-              RemoteServersManager.getInstance().addServer(testedServer);
-              refillModel(testedServer);
+              assert myServerInstance != null;
+              RemoteServersManager.getInstance().addServer(myServerInstance);
+              refillModel(myServerInstance);
             }
+            myServerInstance = null;
           });
         }
         else {
           setTestConnectionState(TestConnectionState.FAILED);
+          myServerInstance = null;
         }
       }
 

@@ -12,17 +12,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.HashSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.InvertBooleanFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
@@ -75,36 +75,30 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull final InspectionManager manager,
                                                 @NotNull final GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod)refEntity;
-      if (!refMethod.isReferenced()) return null;
-      if (hasNonInvertedCalls(refMethod)) return null;
-      if (!refMethod.getSuperMethods().isEmpty()) return null;
-      final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-      final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
-      if (psiIdentifier != null) {
-        final Collection<RefElement> inReferences = refMethod.getInReferences();
-        if (inReferences.size() == 1) {
-          final RefElement refElement = inReferences.iterator().next();
-          final PsiElement usagesContainer = refElement.getElement();
-          if (usagesContainer == null) return null;
-          if (ReferencesSearch.search(psiMethod, new LocalSearchScope(usagesContainer)).forEach(new Processor<PsiReference>() {
-            private final Set<PsiReference> myFoundRefs = new HashSet<>();
-            @Override
-            public boolean process(PsiReference reference) {
-              myFoundRefs.add(reference);
-              return myFoundRefs.size() < 2;
-            }
-          })) return null;
-        }
-        return new ProblemDescriptor[]{createProblemDescriptor(manager, psiIdentifier, false)};
+    if (!(refEntity instanceof RefMethod)) return null;
+    RefMethod refMethod = (RefMethod)refEntity;
+    if (!refMethod.isReferenced() ||
+        refMethod.isConstructor() ||
+        hasNonInvertedCalls(refMethod) ||
+        !refMethod.getSuperMethods().isEmpty()) return null;
+    UMethod uMethod = (UMethod)refMethod.getUastElement();
+    if (uMethod == null) return null;
+    PsiElement anchor = UDeclarationKt.getAnchorPsi(uMethod);
+    if (anchor != null) {
+      final Collection<RefElement> inReferences = refMethod.getInReferences();
+      if (inReferences.size() == 1) {
+        final RefElement refElement = inReferences.iterator().next();
+        final PsiElement usagesContainer = refElement.getPsiElement();
+        if (usagesContainer == null) return null;
+        if (ReferencesSearch.search(uMethod.getJavaPsi(), new LocalSearchScope(usagesContainer)).forEach(new CommonProcessors.FindFirstAndOnlyProcessor<>())) return null;
       }
+      return new ProblemDescriptor[]{createProblemDescriptor(manager, anchor, false)};
     }
     return null;
   }
 
   protected ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager,
-                                                      PsiIdentifier psiIdentifier,
+                                                      PsiElement psiIdentifier,
                                                       boolean onTheFly) {
     return manager.createProblemDescriptor(psiIdentifier,
                                            InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
@@ -175,7 +169,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   private static void checkMethodCall(RefElement refWhat, final PsiElement element) {
     if (!(refWhat instanceof RefMethod)) return;
     final RefMethod refMethod = (RefMethod)refWhat;
-    final PsiElement psiElement = refMethod.getElement();
+    final PsiElement psiElement = refMethod.getPsiElement();
     if (!(psiElement instanceof PsiMethod)) return;
     final PsiMethod psiMethod = (PsiMethod)psiElement;
     if (!PsiType.BOOLEAN.equals(psiMethod.getReturnType())) return;
@@ -210,17 +204,15 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   private static class BooleanInvertedAnnotator extends RefGraphAnnotator {
     @Override
     public void onInitialize(RefElement refElement) {
-      if (refElement instanceof RefMethod) {
-        final PsiElement element = refElement.getElement();
-        if (!(element instanceof PsiMethod)) return;
-        if (!PsiType.BOOLEAN.equals(((PsiMethod)element).getReturnType())) return;
-        refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
-      }
+      if (!(refElement instanceof RefMethod) || ((RefMethod)refElement).isConstructor()) return;
+      final UMethod element = (UMethod)((RefMethod)refElement).getUastElement();
+      if (!PsiType.BOOLEAN.equals(element.getReturnType())) return;
+      refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
     }
 
     @Override
     public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
-      checkMethodCall(refWhat, refFrom.getElement());
+      checkMethodCall(refWhat, refFrom.getPsiElement());
     }
   }
 }

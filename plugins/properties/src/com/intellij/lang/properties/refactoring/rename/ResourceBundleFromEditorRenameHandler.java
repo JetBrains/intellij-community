@@ -11,7 +11,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewElement;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -69,8 +68,8 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
           ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
                                                                   group.getPresentableName(),
                                                                   group.getPrefix().length() - group.getPresentableName().length());
-        } else if (selectedElement instanceof ResourceBundlePropertyStructureViewElement) {
-          final PsiElement psiElement = ((ResourceBundlePropertyStructureViewElement)selectedElement).getPsiElement();
+        } else if (selectedElement instanceof PropertyStructureViewElement) {
+          final PsiElement psiElement = ((PropertyStructureViewElement)selectedElement).getPsiElement();
           ResourceBundleRenameUtil.renameResourceBundleKey(psiElement, project);
         } else if (selectedElement instanceof ResourceBundleFileStructureViewElement) {
           ResourceBundleRenameUtil.renameResourceBundleBaseName(((ResourceBundleFileStructureViewElement)selectedElement).getValue(), project);
@@ -88,11 +87,8 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
 
   private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
     return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), (NullableFunction<TreeElement, PsiElement>)treeElement -> {
-      if (treeElement instanceof PropertiesStructureViewElement) {
-        return ((PropertiesStructureViewElement)treeElement).getValue().getPsiElement();
-      }
-      if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-        return ((ResourceBundlePropertyStructureViewElement)treeElement).getPsiElement();
+      if (treeElement instanceof PropertyStructureViewElement) {
+        return ((PropertyStructureViewElement)treeElement).getPsiElement();
       }
       return null;
     });

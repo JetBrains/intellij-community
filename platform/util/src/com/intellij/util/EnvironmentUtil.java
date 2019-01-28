@@ -19,9 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -33,13 +31,19 @@ import java.util.concurrent.Future;
 import static java.util.Collections.unmodifiableMap;
 
 public class EnvironmentUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");
+  private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
   private static final int SHELL_ENV_READING_TIMEOUT = 20000;
 
   private static final String LANG = "LANG";
   private static final String LC_ALL = "LC_ALL";
   private static final String LC_CTYPE = "LC_CTYPE";
+
+  public static final String BASH_EXECUTABLE_NAME = "bash";
+  public static final String SHELL_VARIABLE_NAME = "SHELL";
+  private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
+  private static final String SHELL_LOGIN_ARGUMENT = "-l";
+  public static final String SHELL_COMMAND_ARGUMENT = "-c";
 
   private static final Future<Map<String, String>> ourEnvGetter;
 
@@ -142,22 +146,27 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Validates environment variable's names and values in accordance to
-   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows)
-   * and {@code ProcessEnvironment#validateValue} methods.
+   * Validates environment variable name in accordance to
+   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows).
    *
+   * @see #isValidValue(String)
    * @see <a href="http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap08.html">Environment Variables in Unix</a>
    * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
    */
-  public static void validate(String name, String value) throws IllegalArgumentException {
-    if (name == null || name.isEmpty() || name.indexOf('\0') != -1 || name.indexOf('=', SystemInfo.isWindows ? 1 : 0) != -1) {
-      throw new IllegalArgumentException("Illegal environment variable name: " + name);
-    }
-    if (value == null || value.indexOf('\0') != -1) {
-      throw new IllegalArgumentException("Illegal environment variable value: " + value);
-    }
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidName(@Nullable String name) {
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfo.isWindows ? 1 : 0) == -1;
   }
 
+  /**
+   * Validates environment variable value in accordance to {@code ProcessEnvironment#validateValue}.
+   *
+   * @see #isValidName(String)
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidValue(@Nullable String value) {
+    return value != null && value.indexOf('\0') == -1;
+  }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
@@ -165,7 +174,6 @@ public class EnvironmentUtil {
   private static Map<String, String> getShellEnv() throws Exception {
     return new ShellEnvReader().readShellEnv();
   }
-
 
   public static class ShellEnvReader {
     public Map<String, String> readShellEnv() throws Exception {
@@ -179,12 +187,12 @@ public class EnvironmentUtil {
       try {
         List<String> command = getShellProcessCommand();
 
-        int idx = command.indexOf("-c");
+        int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx>=0) {
           // if there is already a command append command to the end
           command.set(idx + 1, command.get(idx+1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
         } else {
-          command.add("-c");
+          command.add(SHELL_COMMAND_ARGUMENT);
           command.add("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
         }
 
@@ -258,24 +266,47 @@ public class EnvironmentUtil {
 
     @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
-      String shell = getShell();
-      if (shell == null || !new File(shell).canExecute()) {
-        throw new Exception("shell:" + shell);
+      String shellScript = getShell();
+      if (shellScript == null || !new File(shellScript).canExecute()) {
+        throw new Exception("shell:" + shellScript);
       }
-      List<String> commands = ContainerUtil.newArrayList(shell);
-      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
-        // Act as a login shell
-        // tsch does allow to use -l with any other options
-        commands.add("-l");
-      }
-      commands.add("-i"); // enable interactive shell
-      return commands;
+      return buildShellProcessCommand(shellScript, true, true, false);
     }
 
     @Nullable
     protected String getShell() {
-      return System.getenv("SHELL");
+      return System.getenv(SHELL_VARIABLE_NAME);
     }
+  }
+
+  /**
+   * Builds a login shell command list from the {@code shellScript} path.
+   *
+   * @param shellScript   path to the shell script, probably taken from envrionment variable {@code SHELL}
+   * @param isLogin       true iff it should be login shell, usually {@code -l} parameter
+   * @param isInteractive true iff it should be interactive shell, usually {@code -i} parameter
+   * @param isCommand     true iff command should accept a command, instead of script name, usually {@code -c} parameter
+   * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static List<String> buildShellProcessCommand(@NotNull String shellScript,
+                                                      boolean isLogin,
+                                                      boolean isInteractive,
+                                                      boolean isCommand) {
+    List<String> commands = ContainerUtil.newArrayList(shellScript);
+    if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
+      // Act as a login shell
+      // tsch does allow to use -l with any other options
+      commands.add(SHELL_LOGIN_ARGUMENT);
+    }
+    if (isInteractive) {
+      commands.add(SHELL_INTERACTIVE_ARGUMENT); // enable interactive shell
+    }
+    if (isCommand) {
+      commands.add(SHELL_COMMAND_ARGUMENT);
+    }
+    return commands;
   }
 
   @NotNull

@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
+import java.util.Locale;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -189,17 +191,16 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          buffer.append("\\/");
-          break;
-        default:
-          if (Character.isISOControl(ch) || ch == '$') {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        buffer.append("\\/");
+      }
+      else {
+        if (Character.isISOControl(ch) || ch == '$') {
+          appendUnicode(buffer, ch);
+        }
+        else {
+          buffer.append(ch);
+        }
       }
     }
   }
@@ -214,26 +215,24 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          if (idx + 1 < length && str.charAt(idx + 1) == '$') {
-            appendUnicode(buffer, '/');
-            appendUnicode(buffer, '$');
-            break;
-          }
-        default:
-          if (Character.isISOControl(ch)) {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        if (idx + 1 < length && str.charAt(idx + 1) == '$') {
+          appendUnicode(buffer, '/');
+          appendUnicode(buffer, '$');
+          continue;
+        }
+      }
+      if (Character.isISOControl(ch)) {
+        appendUnicode(buffer, ch);
+      }
+      else {
+        buffer.append(ch);
       }
     }
   }
 
   private static void appendUnicode(StringBuilder buffer, char ch) {
-    String hexCode = Integer.toHexString(ch).toUpperCase();
+    String hexCode = Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
     while (paddingCount-- > 0) {

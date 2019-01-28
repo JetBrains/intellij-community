@@ -45,7 +45,7 @@ class MultiFilePainter extends BasePainter {
     while (myFileIndex < myFilesList.size()) {
       if (myTextPainter == null) {
         PsiFile psiFile = myFilesList.get(myFileIndex);
-        myTextPainter = PrintManager.initTextPainter(psiFile);
+        myTextPainter = TextPrintHandler.initTextPainter(psiFile);
       }
       if (myTextPainter != null) {
         myTextPainter.setProgress(myProgress);

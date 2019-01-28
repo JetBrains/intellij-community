@@ -87,7 +87,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -321,7 +322,7 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        if (Registry.is("compiler.document.save.enabled", true)) {
+        if (Registry.is("compiler.document.save.enabled", false)) {
           final Document document = e.getDocument();
           if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
             final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -335,8 +336,10 @@ public class BuildManager implements Disposable {
 
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
 
-    ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
-    Disposer.register(this, () -> future.cancel(false));
+    if (!IS_UNIT_TEST_MODE) {
+      ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
+      Disposer.register(this, () -> future.cancel(false));
+    }
   }
 
   @Nullable
@@ -536,7 +539,7 @@ public class BuildManager implements Disposable {
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
     final TaskFuture future = scheduleBuild(
-      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(), handler
+      project, false, true, false, scopes, Collections.emptyList(), Collections.singletonMap(BuildParametersKeys.IS_AUTOMAKE, "true"), handler
     );
     if (future != null) {
       myAutomakeFutures.put(future, project);
@@ -644,6 +647,9 @@ public class BuildManager implements Disposable {
   }
 
   private void cancelPreloadedBuilds(final String projectPath) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
+    }
     runCommand(() -> {
       Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
       if (pair != null) {
@@ -1061,8 +1067,6 @@ public class BuildManager implements Disposable {
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(vmExecutablePath);
-    //cmdLine.addParameter("-XX:MaxPermSize=150m");
-    //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
 
     boolean isProfilingMode = false;
     String userDefinedHeapSize = null;
@@ -1125,7 +1129,17 @@ public class BuildManager implements Disposable {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
     }
     cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + config.PARALLEL_COMPILATION);
+    if (config.PARALLEL_COMPILATION) {
+      final boolean allowParallelAutomake = Registry.is("compiler.automake.allow.parallel", true);
+      if (!allowParallelAutomake) {
+        cmdLine.addParameter("-D" + GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION + "=false");
+      }
+    }
     cmdLine.addParameter("-D" + GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION + "=" + config.REBUILD_ON_DEPENDENCY_CHANGE);
+
+    if (Registry.is("compiler.build.report.statistics")) {
+      cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
+    }
 
     if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
       cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
@@ -1157,10 +1171,6 @@ public class BuildManager implements Disposable {
         cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
         cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
       }
-    }
-
-    if (!Registry.is("compiler.process.use.memory.temp.cache")) {
-      cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=false");
     }
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
@@ -1310,7 +1320,7 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  private File getBuildLogDirectory() {
+  public static File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
   }
 
@@ -1950,6 +1960,7 @@ public class BuildManager implements Disposable {
     @Override
     public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
+      notifySessionTerminationIfNeeded(future.getRequestID(), null);
     }
   }
 }

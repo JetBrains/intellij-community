@@ -21,6 +21,7 @@ public class CommandLineCommandImpl extends CommandLineElement implements Comman
     visitor.visitCommand(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof CommandLineVisitor) accept((CommandLineVisitor)visitor);
     else super.accept(visitor);

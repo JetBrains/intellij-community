@@ -26,7 +26,7 @@ import java.util.List;
 public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return e instanceof PsiCodeBlock || e instanceof PsiArrayInitializerExpression || e instanceof PsiClass;
+    return e instanceof PsiCodeBlock || e instanceof PsiArrayInitializerExpression || e instanceof PsiClass && !(e instanceof PsiTypeParameter);
   }
 
   @Override

@@ -213,6 +213,14 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
+  public void visitPyFormattedStringElement(PyFormattedStringElement node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyFStringFragment(PyFStringFragment node) {
+    visitPyElement(node);
+  }
+  
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     visitPyElement(node);
   }

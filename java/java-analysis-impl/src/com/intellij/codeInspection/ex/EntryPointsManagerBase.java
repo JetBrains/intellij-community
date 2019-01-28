@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -153,7 +154,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
@@ -174,7 +174,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return element;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
                                    final Map<String, SmartRefElementPointer> persistentEntryPoints,
                                    final JDOMExternalizableStringList additional_annotations) {
@@ -201,7 +200,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       cleanup();
       validateEntryPoints();
 
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ReadAction.run(() -> {
         for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
           if (entryPoint.resolve(manager)) {
             RefEntity refElement = entryPoint.getRefElement();
@@ -229,7 +228,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   private List<RefElementImpl> getPatternEntryPoints(RefManager manager) {
     List<RefElementImpl> entries = new ArrayList<>();
     for (ClassPattern pattern : myPatterns) {
-      final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
+      final RefEntity refClass = ReadAction.compute(() -> manager.getReference(RefJavaManager.CLASS, pattern.pattern));
       if (refClass != null) {
         if (pattern.method.isEmpty()) {
           for (RefMethod refMethod : ((RefClass)refClass).getConstructors()) {

@@ -20,7 +20,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Denis Zhdanov
- * @since 5/11/13 5:42 PM
  */
 public class GradleToolWindowFactoryCondition extends AbstractExternalSystemToolWindowCondition {
 

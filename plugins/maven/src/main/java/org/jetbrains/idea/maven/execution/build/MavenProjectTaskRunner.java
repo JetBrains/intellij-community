@@ -60,6 +60,7 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
     buildModuleFiles(project, callback, getFromGroupedMap(taskMap, ModuleFilesBuildTask.class, emptyList()));
+    buildModules(project, callback, getFromGroupedMap(taskMap, ModuleResourcesBuildTask.class, emptyList()));
     buildModules(project, callback, getFromGroupedMap(taskMap, ModuleBuildTask.class, emptyList()));
 
     buildArtifacts(project, callback, getFromGroupedMap(taskMap, ProjectModelBuildTask.class, emptyList()));
@@ -163,23 +164,26 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     MavenExplicitProfiles explicitProfiles = mavenProjectsManager.getExplicitProfiles();
     Map<MavenProject, List<MavenProject>> rootProjectsToModules = new HashMap<>();
 
+    boolean buildOnlyResources = false;
     for (ModuleBuildTask moduleBuildTask : moduleBuildTasks) {
       MavenProject mavenProject = mavenProjectsManager.findProject(moduleBuildTask.getModule());
       if (mavenProject == null) continue;
 
+      buildOnlyResources = buildOnlyResources || moduleBuildTask instanceof ModuleResourcesBuildTask;
       MavenProject rootProject = mavenProjectsManager.findRootProject(mavenProject);
       rootProjectsToModules.computeIfAbsent(rootProject, p -> new ArrayList<>()).add(mavenProject);
     }
 
     boolean clean = moduleBuildTasks.stream().anyMatch(task -> !(task instanceof ModuleFilesBuildTask) && !task.isIncrementalBuild());
     boolean includeDependentModules = moduleBuildTasks.stream().anyMatch(ModuleBuildTask::isIncludeDependentModules);
+    String goal = buildOnlyResources ? "resources:resources" : "install";
     List<MavenRunnerParameters> commands = new ArrayList<>();
     for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsToModules.entrySet()) {
       ParametersList parameters = new ParametersList();
       if (clean) {
         parameters.add("clean");
       }
-      parameters.add("install");
+      parameters.add(goal);
 
       List<MavenProject> mavenProjects = entry.getValue();
       if (!includeDependentModules) {

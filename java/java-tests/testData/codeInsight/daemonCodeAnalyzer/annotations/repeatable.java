@@ -53,3 +53,6 @@ class C8 {
   <error descr="Container annotation '@AA8' is not applicable to field">@A8</error> <error descr="Container annotation '@AA8' is not applicable to field">@A8</error> int f2;
   @A8 @A8 void m() { }
 }
+
+@interface AA9 { A9[] value(); int i(); }
+@Repeatable(<error descr="Container annotation 'AA9' does not have a default value for 'i'">AA9.class</error>) @interface A9 { }

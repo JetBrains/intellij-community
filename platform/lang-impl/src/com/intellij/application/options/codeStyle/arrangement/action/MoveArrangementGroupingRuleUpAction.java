@@ -27,7 +27,6 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  * @author Denis Zhdanov
- * @since 11/14/12 10:52 AM
  */
 public class MoveArrangementGroupingRuleUpAction extends AnAction implements DumbAware {
 

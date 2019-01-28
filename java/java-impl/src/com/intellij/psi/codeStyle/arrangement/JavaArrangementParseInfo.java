@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
- * @since 9/18/12 11:11 AM
  */
 public class JavaArrangementParseInfo {
 
@@ -204,9 +203,7 @@ public class JavaArrangementParseInfo {
     if (methods == null) {
       myMethodDependencies.put(caller, methods = new LinkedHashSet<>());
     }
-    if (!methods.contains(callee)) {
-      methods.add(callee);
-    }
+    methods.add(callee);
     myRebuildMethodDependencies = true;
   }
 

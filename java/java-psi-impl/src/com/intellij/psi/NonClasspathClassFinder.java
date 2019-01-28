@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -35,7 +20,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +51,10 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         clearCache();
       }
     });
-    LowMemoryWatcher.register(() -> clearCache(), project);
+    LowMemoryWatcher.register(() -> myCache = null, project);
   }
 
-  @NotNull 
+  @NotNull
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
@@ -80,22 +64,21 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         roots = ContainerUtil.filter(roots, VirtualFile::isValid);
         LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
       }
-      myCache = cache = createCache(roots);
+      myCache = cache = PackageDirectoryCache.createCache(roots);
     }
     return cache;
   }
 
   @NotNull
-  protected static PackageDirectoryCache createCache(@NotNull final List<VirtualFile> roots) {
-    final MultiMap<String, VirtualFile> map = MultiMap.create();
-    map.putValues("", roots);
-    return new PackageDirectoryCache(map);
+  @Deprecated
+  protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
+    return PackageDirectoryCache.createCache(roots);
   }
 
   public void clearCache() {
     myCache = null;
   }
-  
+
   protected List<VirtualFile> getClassRoots(@Nullable GlobalSearchScope scope) {
     return getCache(scope).getDirectoriesByPackageName("");
   }
@@ -213,7 +196,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
-    for (PsiElementFinder finder : Extensions.getExtensions(EP_NAME, project)) {
+    for (PsiElementFinder finder : EP_NAME.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
         nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
       }

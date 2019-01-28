@@ -39,9 +39,9 @@ import java.util.*;
  */
 public abstract class AbstractMethodResolveConverter<ParentType extends DomElement> extends ResolvingConverter<PsiMethod> {
   public static final String ALL_METHODS = "*";
-  private final Class<ParentType> myDomMethodClass;
+  private final Class<? extends ParentType> myDomMethodClass;
 
-  protected AbstractMethodResolveConverter(final Class<ParentType> domMethodClass) {
+  protected AbstractMethodResolveConverter(final Class<? extends ParentType> domMethodClass) {
     myDomMethodClass = domMethodClass;
   }
 

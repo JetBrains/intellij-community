@@ -24,7 +24,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public interface BuildScriptClasspathModel extends Serializable {
   DomainObjectSet<? extends ClasspathEntryModel> getClasspath();

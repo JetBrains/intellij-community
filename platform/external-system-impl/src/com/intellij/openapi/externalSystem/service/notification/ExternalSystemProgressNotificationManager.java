@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 
 /**
  * @author Denis Zhdanov
- * @since 11/10/11 12:04 PM
  */
 public interface ExternalSystemProgressNotificationManager {
 

@@ -1,24 +1,26 @@
+package pkg;
+
 public class TestInnerSignature<A, B, C> {
    A a;
    B b;
    C c;
 
-   public TestInnerSignature(A var1, B var2, C var3) {
-      this.a = var1;// 23
-      this.b = var2;// 24
-      this.c = var3;// 25
-   }// 26
+   public TestInnerSignature(A a, @Deprecated B b, C c) {
+      this.a = a;// 9
+      this.b = b;// 10
+      this.c = c;// 11
+   }// 12
 
    public static class InnerStatic<A, B, C> {
       A a;
       B b;
       C c;
 
-      public InnerStatic(A var1, B var2, C var3) {
-         this.a = var1;// 46
-         this.b = var2;// 47
-         this.c = var3;// 48
-      }// 49
+      public InnerStatic(A a, @Deprecated B b, C c) {
+         this.a = a;// 32
+         this.b = b;// 33
+         this.c = c;// 34
+      }// 35
    }
 
    public class Inner {
@@ -26,55 +28,55 @@ public class TestInnerSignature<A, B, C> {
       B b;
       C c;
 
-      public Inner(A var2, B var3, C var4) {
-         this.a = var2;// 34
-         this.b = var3;// 35
-         this.c = var4;// 36
-      }// 37
+      public Inner(A a, @Deprecated B b, C c) {
+         this.a = a;// 20
+         this.b = b;// 21
+         this.c = c;// 22
+      }// 23
    }
 }
 
-class 'TestInnerSignature' {
+class 'pkg/TestInnerSignature' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      6      6
-      b      7
-      10      8
-      13      9
+      6      8
+      b      9
+      10      10
+      13      11
    }
 }
 
-class 'TestInnerSignature$InnerStatic' {
+class 'pkg/TestInnerSignature$InnerStatic' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      6      17
-      b      18
-      10      19
-      13      20
+      6      19
+      b      20
+      10      21
+      13      22
    }
 }
 
-class 'TestInnerSignature$Inner' {
-   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      b      29
-      10      30
-      16      31
-      19      32
+class 'pkg/TestInnerSignature$Inner' {
+   method '<init> (Lpkg/TestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      b      31
+      10      32
+      16      33
+      19      34
    }
 }
 
 Lines mapping:
-23 <-> 7
-24 <-> 8
-25 <-> 9
-26 <-> 10
-34 <-> 30
-35 <-> 31
-36 <-> 32
-37 <-> 33
-46 <-> 18
-47 <-> 19
-48 <-> 20
-49 <-> 21
+9 <-> 9
+10 <-> 10
+11 <-> 11
+12 <-> 12
+20 <-> 32
+21 <-> 33
+22 <-> 34
+23 <-> 35
+32 <-> 20
+33 <-> 21
+34 <-> 22
+35 <-> 23
 Not mapped:
-22
-33
-45
+8
+19
+31

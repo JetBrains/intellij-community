@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -102,7 +103,7 @@ public class DfaPsiUtil {
       return inferParameterNullability((PsiParameter)owner);
     }
 
-    if (owner instanceof PsiMethod) {
+    if (owner instanceof PsiMethod && ((PsiMethod)owner).getParameterList().isEmpty()) {
       PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
       if (field != null && getElementNullability(resultType, field) == Nullability.NULLABLE) {
         return Nullability.NULLABLE;
@@ -137,7 +138,7 @@ public class DfaPsiUtil {
       PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiLambdaExpression) {
         return getFunctionalParameterNullability((PsiLambdaExpression)gParent, ((PsiParameterList)parent).getParameterIndex(parameter));
-      } else if (gParent instanceof PsiMethod && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
+      } else if (gParent instanceof PsiMethod && OptionalUtil.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
         return Nullability.NULLABLE;
       }
     }
@@ -301,8 +302,7 @@ public class DfaPsiUtil {
         final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
-            if (!(instruction instanceof MethodCallInstruction) ||
-                ((MethodCallInstruction)instruction).getMethodType() != MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+            if (!(instruction instanceof MethodCallInstruction)) {
               return false;
             }
 
@@ -358,9 +358,9 @@ public class DfaPsiUtil {
         final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
         Set<PsiField> notNullFields = ContainerUtil.newHashSet();
         if (rc == RunnerResult.OK) {
-          for (PsiField field : map.keySet()) {
-            if (map.get(field)) {
-              notNullFields.add(field);
+          for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
+            if (entry.getValue()) {
+              notNullFields.add(entry.getKey());
             }
           }
         }

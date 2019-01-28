@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
@@ -13,8 +14,8 @@ import java.util.stream.Collectors;
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
-  public static List<TypeInfo> wrap(List<ReferenceType> types) {
-    return types.stream().map(JavaTypeInfo::new).collect(Collectors.toList());
+  public static List<TypeInfo> wrap(List<? extends ReferenceType> types) {
+    return ContainerUtil.map(types, JavaTypeInfo::new);
   }
 
   public JavaTypeInfo(@NotNull ReferenceType referenceType) {
@@ -30,7 +31,7 @@ public class JavaTypeInfo implements TypeInfo {
   @NotNull
   @Override
   public List<ReferenceInfo> getInstances(int limit) {
-    return getReferenceType().instances(limit).stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
+    return ContainerUtil.map(getReferenceType().instances(limit), JavaReferenceInfo::new);
   }
 
   @NotNull

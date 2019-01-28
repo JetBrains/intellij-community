@@ -57,4 +57,9 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   public long getStructureModificationCount() {
     return myManagingFS.getStructureModificationCount();
   }
+
+  @Override
+  public VirtualFile findFileById(int id) {
+    return myManagingFS.findFileById(id);
+  }
 }

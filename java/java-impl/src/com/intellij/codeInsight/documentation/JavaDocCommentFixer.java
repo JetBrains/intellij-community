@@ -27,7 +27,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 9/20/12 8:44 PM
  */
 public class JavaDocCommentFixer implements DocCommentFixer {
   private static final String PARAM_TAG = "@param";

@@ -16,7 +16,6 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,12 +73,4 @@ public class UnionPackageSet extends CompoundPackageSet {
     return create(ContainerUtil.map(mySets, s -> transformation.apply(s), new PackageSet[mySets.length]));
   }
 
-  @Override
-  @NotNull
-  public String getText() {
-    if (myText == null) {
-      myText = StringUtil.join(mySets, s->s.getText(), "||");
-    }
-    return myText;
-  }
 }

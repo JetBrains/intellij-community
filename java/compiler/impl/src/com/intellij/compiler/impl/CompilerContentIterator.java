@@ -29,9 +29,9 @@ public class CompilerContentIterator implements ContentIterator {
   private final FileType myFileType;
   private final FileIndex myFileIndex;
   private final boolean myInSourceOnly;
-  private final Collection<VirtualFile> myFiles;
+  private final Collection<? super VirtualFile> myFiles;
 
-  public CompilerContentIterator(FileType fileType, FileIndex fileIndex, boolean inSourceOnly, Collection<VirtualFile> files) {
+  public CompilerContentIterator(FileType fileType, FileIndex fileIndex, boolean inSourceOnly, Collection<? super VirtualFile> files) {
     myFileType = fileType;
     myFileIndex = fileIndex;
     myInSourceOnly = inSourceOnly;

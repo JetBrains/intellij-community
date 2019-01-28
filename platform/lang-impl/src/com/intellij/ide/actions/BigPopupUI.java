@@ -7,14 +7,15 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,19 +26,19 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable {
+  private static final int MINIMAL_SUGGESTIONS_LIST_HEIGHT= 100;
+
   protected final Project myProject;
   protected JBTextField mySearchField;
   protected JPanel suggestionsPanel;
   protected JBList<Object> myResultsList;
   protected JBPopup myHint;
-  protected Runnable searchFinishedHandler = () -> {
-  };
-  protected final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
+  protected Runnable searchFinishedHandler = () -> { };
+  protected final List<ViewTypeListener> myViewTypeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   protected ViewType myViewType = ViewType.SHORT;
   protected JLabel myHintLabel;
 
@@ -119,7 +120,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   }
 
   public void init() {
-    withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
+    withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
 
     myResultsList = createList();
 
@@ -195,6 +196,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    UIUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
     resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
@@ -208,9 +210,10 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   @NotNull
   private JLabel createHint() {
     String hint = getInitialHint();
-    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
-    hintLabel.setOpaque(false);
-    hintLabel.setForeground(JBColor.GRAY);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.CurrentTheme.BigPopup.advertiserBorder(), SwingConstants.LEFT);
+    hintLabel.setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground());
+    hintLabel.setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground());
+    hintLabel.setOpaque(true);
     Dimension size = hintLabel.getPreferredSize();
     size.height = JBUI.scale(17);
     hintLabel.setPreferredSize(size);
@@ -224,12 +227,20 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
   @Override
   public Dimension getMinimumSize() {
-    return calcPrefSize(ViewType.SHORT);
+    Dimension size = calcPrefSize(ViewType.SHORT);
+    if (getViewType() == ViewType.FULL) {
+      size.height += MINIMAL_SUGGESTIONS_LIST_HEIGHT;
+    }
+    return size;
   }
 
   @Override
   public Dimension getPreferredSize() {
     return calcPrefSize(myViewType);
+  }
+
+  public Dimension getExpandedSize() {
+    return calcPrefSize(ViewType.FULL);
   }
 
   private Dimension calcPrefSize(ViewType viewType) {

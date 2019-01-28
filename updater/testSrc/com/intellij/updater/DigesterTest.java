@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class DigesterTest extends UpdaterTestCase {
   @Test
@@ -47,7 +47,7 @@ public class DigesterTest extends UpdaterTestCase {
 
   @Test
   public void testSymlinks() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File simpleLink = getTempFile("Readme.simple.link");
     Utils.createLink("Readme.txt", simpleLink);
@@ -66,5 +66,15 @@ public class DigesterTest extends UpdaterTestCase {
     catch (IOException e) {
       assertThat(e.getMessage()).startsWith("Absolute link");
     }
+  }
+
+  @Test
+  public void testExecutables() throws Exception {
+    assumeFalse(Utils.IS_WINDOWS);
+    File testFile = new File(tempDir.getRoot(), "idea.bat");
+    Utils.copy(new File(dataDir, "bin/idea.bat"), testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
+    Utils.setExecutable(testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
   }
 }

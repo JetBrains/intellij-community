@@ -1,27 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package org.jetbrains.plugins.github
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -235,6 +222,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             return false
           }
           GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
+          GitUtil.generateGitignoreFileIfNeeded(project, root)
           return true
         }
 
@@ -263,7 +251,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             allFiles.addAll(trackedFiles)
             allFiles.addAll(untrackedFiles)
 
-            val dialog = invokeAndWaitIfNeed(indicator.modalityState) {
+            val dialog = invokeAndWaitIfNeeded(indicator.modalityState) {
               GithubUntrackedFilesDialog(project, allFiles).apply {
                 if (!trackedFiles.isEmpty()) {
                   selectedFiles = trackedFiles
@@ -391,6 +379,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
     init {
       title = "Add Files For Initial Commit"
+      setOKButtonText(CommonBundle.getAddButtonText())
+      setCancelButtonText(CommonBundle.getCancelButtonText())
       init()
     }
 

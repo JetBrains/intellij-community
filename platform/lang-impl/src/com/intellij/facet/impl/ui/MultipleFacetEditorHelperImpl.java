@@ -72,10 +72,10 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
   private static class CheckBoxBinding extends AbstractBinding implements ActionListener {
     private final ThreeStateCheckBox myCommon;
-    private final List<JCheckBox> myCheckBoxesList;
+    private final List<? extends JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
 
-    CheckBoxBinding(final ThreeStateCheckBox common, final List<JCheckBox> checkBoxesList) {
+    CheckBoxBinding(final ThreeStateCheckBox common, final List<? extends JCheckBox> checkBoxesList) {
       LOG.assertTrue(!checkBoxesList.isEmpty());
       myCommon = common;
       myCheckBoxesList = checkBoxesList;
@@ -169,10 +169,10 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
   private static class CombobBoxBinding extends AbstractBinding implements ItemListener {
     private final JComboBox myCommon;
-    private final List<JComboBox> myComponentsList;
+    private final List<? extends JComboBox> myComponentsList;
     private final List<Object> myInitialValues;
 
-    CombobBoxBinding(final JComboBox common, final List<JComboBox> componentsList) {
+    CombobBoxBinding(final JComboBox common, final List<? extends JComboBox> componentsList) {
       LOG.assertTrue(!componentsList.isEmpty());
       myCommon = common;
       myComponentsList = componentsList;

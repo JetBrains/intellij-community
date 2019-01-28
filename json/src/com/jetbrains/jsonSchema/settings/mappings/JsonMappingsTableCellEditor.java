@@ -84,12 +84,8 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     myComponent.getTextField().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_ENTER:
-            if (finalField == null || !finalField.isPopupDisplayed()) {
-              stopCellEditing();
-            }
-            break;
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && (finalField == null || !finalField.isPopupDisplayed())) {
+          stopCellEditing();
         }
       }
     });

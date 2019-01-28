@@ -21,19 +21,19 @@ import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionTest;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReadTest;
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 /**
  * @author Irina.Chernushina on 4/12/2017.
  */
-@SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention"})
-public class JsonSchemaTestSuite extends TestCase {
+@SuppressWarnings({"JUnitTestClassNamingConvention"})
+public class JsonSchemaTestSuite {
   public static Test suite() {
     final TestSuite suite = new TestSuite(JsonSchemaTestSuite.class.getSimpleName());
     suite.addTestSuite(JsonSchemaCrossReferencesTest.class);
     suite.addTestSuite(JsonSchemaDocumentationTest.class);
     suite.addTestSuite(JsonSchemaHighlightingTest.class);
+    suite.addTestSuite(JsonSchemaReSharperHighlightingTest.class);
     suite.addTestSuite(JsonSchemaPatternComparatorTest.class);
     suite.addTestSuite(JsonSchemaSelfHighligthingTest.class);
     suite.addTestSuite(JsonBySchemaCompletionTest.class);

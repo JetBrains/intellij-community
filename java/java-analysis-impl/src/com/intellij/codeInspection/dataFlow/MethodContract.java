@@ -61,7 +61,7 @@ public abstract class MethodContract {
     return new MethodContract(value) {
       @Override
       String getArgumentsPresentation() {
-        return "(any)";
+        return "()";
       }
 
       @Override
@@ -79,7 +79,7 @@ public abstract class MethodContract {
     return new MethodContract(returnValue) {
       @Override
       String getArgumentsPresentation() {
-        return condition.toString();
+        return "("+condition.toString()+")";
       }
 
       @Override

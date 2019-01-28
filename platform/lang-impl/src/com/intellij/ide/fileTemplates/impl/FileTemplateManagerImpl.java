@@ -13,7 +13,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -220,12 +219,17 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   @NotNull
   public FileTemplate[] getInternalTemplates() {
-    InternalTemplateBean[] internalTemplateBeans = Extensions.getExtensions(InternalTemplateBean.EP_NAME);
-    FileTemplate[] result = new FileTemplate[internalTemplateBeans.length];
-    for(int i=0; i<internalTemplateBeans.length; i++) {
-      result [i] = getInternalTemplate(internalTemplateBeans [i].name);
+    List<InternalTemplateBean> internalTemplateBeans = InternalTemplateBean.EP_NAME.getExtensionList();
+    List<FileTemplate> result = new ArrayList<>(internalTemplateBeans.size());
+    for (InternalTemplateBean bean : internalTemplateBeans) {
+      try {
+        result.add(getInternalTemplate(bean.name));
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
-    return result;
+    return result.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -254,8 +258,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   @NotNull
   public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
-    //noinspection HardCodedStringLiteral
-    for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
+    for(InternalTemplateBean bean: InternalTemplateBean.EP_NAME.getExtensionList()) {
       if (bean.name.equals(templateName) && bean.subject != null) {
         return bean.subject;
       }

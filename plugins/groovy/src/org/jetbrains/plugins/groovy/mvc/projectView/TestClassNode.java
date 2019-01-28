@@ -35,7 +35,7 @@ public class TestClassNode extends ClassNode {
 
   public TestClassNode(@NotNull final Module module,
                        @NotNull final GrTypeDefinition controllerClass,
-                       @Nullable final ViewSettings viewSettings, final Icon methodIcon) {
+                       final ViewSettings viewSettings, final Icon methodIcon) {
     super(module, controllerClass, viewSettings);
     myMethodIcon = methodIcon;
   }

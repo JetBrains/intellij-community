@@ -32,7 +32,7 @@ class EnvironmentVariablesModel(val testCase: GuiTestCase) : TestUtilsClass(test
 val GuiTestCase.envVarsModel by EnvironmentVariablesModel
 
 fun EnvironmentVariablesModel.connectDialog(): JDialogFixture =
-  testCase.dialog(EnvironmentVariablesModel.Constants.envVarsTitle, true, Timeouts.defaultTimeout)
+  testCase.dialog(EnvironmentVariablesModel.Constants.envVarsTitle, true)
 
 fun EnvironmentVariablesModel.paste(property: String) {
   assert(property.contains(EnvironmentVariablesModel.Constants.pattern))

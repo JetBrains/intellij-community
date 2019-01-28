@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class PlaybackRunner {
+public class PlaybackRunner implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackRunner");
 
@@ -304,6 +304,11 @@ public class PlaybackRunner {
 
   public void setScriptDir(File baseDir) {
     myScriptDir = baseDir;
+  }
+
+  @Override
+  public void dispose() {
+    myCommands.clear();
   }
 
   public interface StatusCallback {

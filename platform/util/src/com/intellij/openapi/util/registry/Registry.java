@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
@@ -15,6 +15,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
+ * {@code <registryKey>} extension point (see {@link com.intellij.openapi.util.registry.RegistryKeyBean} for more details).
+ */
 public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
@@ -164,8 +168,7 @@ public class Registry  {
   }
 
   void restoreDefaults() {
-    Map<String, String> old = new HashMap<String, String>();
-    old.putAll(myUserProperties);
+    Map<String, String> old = new HashMap<String, String>(myUserProperties);
     for (String each : old.keySet()) {
       try {
         get(each).resetToDefault();

@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ScrambledOutputStream extends OutputStream{
+public final class ScrambledOutputStream extends OutputStream {
   static final int MASK = 0xAA;
   private final OutputStream myOriginalStream;
 
-  public ScrambledOutputStream(OutputStream originalStream) {
+  public ScrambledOutputStream(@NotNull OutputStream originalStream) {
     myOriginalStream = originalStream;
   }
 
@@ -20,7 +22,7 @@ public class ScrambledOutputStream extends OutputStream{
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
     byte[] newBytes = new byte[len];
-    for(int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
       newBytes[i] = (byte)(b[off + i] ^ MASK);
     }
     myOriginalStream.write(newBytes, 0, len);
@@ -35,5 +37,4 @@ public class ScrambledOutputStream extends OutputStream{
   public void close() throws IOException {
     myOriginalStream.close();
   }
-
 }

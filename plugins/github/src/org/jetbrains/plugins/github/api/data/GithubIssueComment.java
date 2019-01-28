@@ -29,7 +29,6 @@ public class GithubIssueComment {
   private String url;
   @Mandatory private String htmlUrl;
   private String body;
-  @Mandatory private String bodyHtml;
 
   @Mandatory private Date createdAt;
   @Mandatory private Date updatedAt;
@@ -43,11 +42,6 @@ public class GithubIssueComment {
   @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
-  }
-
-  @NotNull
-  public String getBodyHtml() {
-    return bodyHtml;
   }
 
   @NotNull

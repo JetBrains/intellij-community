@@ -59,11 +59,13 @@ public class JavaSharedImplUtil {
   }
 
   // collects annotations bound to C-style arrays
-  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor, PsiAnnotation stopAt) {
+  @Nullable
+  private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
 
     List<PsiAnnotation> current = null;
-    boolean found = (stopAt == null), stop = false;
+    boolean found = stopAt == null;
+    boolean stop = false;
     for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
@@ -75,7 +77,7 @@ public class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        annotations.add(ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        annotations.add(current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
       }
@@ -174,7 +176,7 @@ public class JavaSharedImplUtil {
     }
   }
 
-  public static void setInitializer(PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
+  public static void setInitializer(@NotNull PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
     PsiExpression oldInitializer = variable.getInitializer();
     if (oldInitializer != null) {
       oldInitializer.delete();
@@ -202,7 +204,7 @@ public class JavaSharedImplUtil {
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
 
-    private FilteringTypeAnnotationProvider(PsiAnnotation[] candidates, TypeAnnotationProvider originalProvider) {
+    private FilteringTypeAnnotationProvider(@NotNull PsiAnnotation[] candidates, @NotNull TypeAnnotationProvider originalProvider) {
       myCandidates = candidates;
       myOriginalProvider = originalProvider;
     }

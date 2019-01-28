@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author yole
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractVcsTestCase {
   protected boolean myTraceClient;
   protected Project myProject;
@@ -228,7 +227,7 @@ public abstract class AbstractVcsTestCase {
     Assert.assertTrue(beforeFullPath + "!=" + beforeRevPath,  beforeFullPath.equalsIgnoreCase(beforeRevPath));
   }
 
-  public static void sortChanges(final List<Change> changes) {
+  public static void sortChanges(final List<? extends Change> changes) {
     Collections.sort(changes, (o1, o2) -> {
       final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
       final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());

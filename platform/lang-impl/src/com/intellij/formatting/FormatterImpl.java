@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.formatting;
 
@@ -41,7 +41,7 @@ public class FormatterImpl extends FormatterEx
              AlignmentFactory,
              SpacingFactory,
              FormattingModelFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
+  private static final Logger LOG = Logger.getInstance(FormatterImpl.class);
 
   private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
 
@@ -59,14 +59,6 @@ public class FormatterImpl extends FormatterEx
   private final IndentImpl myNormalIndentRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, true);
   private final IndentImpl myNormalIndentNotRelativeToDirectParent = new IndentImpl(Indent.Type.NORMAL, false, false);
   private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false, 0);
-
-  public FormatterImpl() {
-    Indent.setFactory(this);
-    Wrap.setFactory(this);
-    Alignment.setFactory(this);
-    Spacing.setFactory(this);
-    FormattingModelProvider.setFactory(this);
-  }
 
   @Override
   public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine, @NotNull Alignment.Anchor anchor) {
@@ -165,32 +157,6 @@ public class FormatterImpl extends FormatterEx
       result = subBlock;
     }
     return null;
-  }
-
-  @Override
-  public void format(final FormattingModel model, final CodeStyleSettings settings,
-                     final CommonCodeStyleSettings.IndentOptions indentOptions,
-                     final CommonCodeStyleSettings.IndentOptions javaIndentOptions,
-                     final FormatTextRanges affectedRanges) throws IncorrectOperationException
-  {
-    try {
-      validateModel(model);
-      SequentialTask task = new MyFormattingTask() {
-        @NotNull
-        @Override
-        protected FormatProcessor buildProcessor() {
-          FormatProcessor processor = new FormatProcessor(
-            model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, FormattingProgressCallback.EMPTY
-          );
-          processor.format(model);
-          return processor;
-        }
-      };
-      execute(task);
-    }
-    catch (FormattingModelInconsistencyException e) {
-      LOG.error(e);
-    }
   }
 
   @Override
@@ -332,35 +298,6 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
-                                        final Block block,
-                                        final CodeStyleSettings settings,
-                                        final CommonCodeStyleSettings.IndentOptions indentOptions,
-                                        final TextRange affectedRange, final boolean mayChangeLineFeeds)
-  {
-    disableFormatting();
-    try {
-      final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
-      );
-      final LeafBlockWrapper blockBefore = processor.getBlockRangesMap().getBlockAtOrAfter(affectedRange.getStartOffset());
-      LOG.assertTrue(blockBefore != null);
-      WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
-      LOG.assertTrue(whiteSpace != null);
-      if (!mayChangeLineFeeds) {
-        whiteSpace.setLineFeedsAreReadOnly();
-      }
-      processor.setAllWhiteSpacesAreReadOnly();
-      whiteSpace.setReadOnly(false);
-      processor.formatWithoutRealModifications();
-      return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-    }
-    finally {
-      enableFormatting();
-    }
-  }
-
-  @Override
   public void adjustLineIndentsForRange(final FormattingModel model,
                                         final CodeStyleSettings settings,
                                         final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -448,17 +385,11 @@ public class FormatterImpl extends FormatterEx
         ((PsiBasedFormattingModel)model).canModifyAllWhiteSpaces();
       }
       final FormattingDocumentModel documentModel = model.getDocumentModel();
-      final Block block = model.getRootBlock();
-      final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
-      );
-
+      final FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, affectedRange, offset);
       final LeafBlockWrapper blockAfterOffset = processor.getBlockRangesMap().getBlockAtOrAfter(offset);
-
       if (blockAfterOffset != null && blockAfterOffset.contains(offset)) {
         return offset;
       }
-
       WhiteSpace whiteSpace = blockAfterOffset != null ? blockAfterOffset.getWhiteSpace() : processor.getLastWhiteSpace();
       return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace,
                               blockAfterOffset != null ? blockAfterOffset.getNode() : null);
@@ -470,6 +401,17 @@ public class FormatterImpl extends FormatterEx
       enableFormatting();
     }
     return offset;
+  }
+
+  @NotNull
+  private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingModel model,
+                                                             CodeStyleSettings settings,
+                                                             CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                             @Nullable TextRange affectedRange,
+                                                             int offset) {
+    FormattingDocumentModel docModel = model.getDocumentModel();
+    Block rootBlock = model.getRootBlock();
+    return buildProcessorAndWrapBlocks(docModel, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset);
   }
 
   private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingDocumentModel docModel,
@@ -491,6 +433,7 @@ public class FormatterImpl extends FormatterEx
     FormatProcessor processor = new FormatProcessor(
       docModel, rootBlock, options, FormattingProgressCallback.EMPTY
     );
+    //noinspection StatementWithEmptyBody
     while (!processor.iteration()) ;
     return processor;
   }
@@ -550,9 +493,7 @@ public class FormatterImpl extends FormatterEx
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return null; // handing empty document case
-    final FormatProcessor processor = buildProcessorAndWrapBlocks(
-      documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
-    );
+    final FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, affectedRange, offset);
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
@@ -626,146 +567,6 @@ public class FormatterImpl extends FormatterEx
     return lineStartOffset;
   }
 
-  @Override
-  public void adjustTextRange(final FormattingModel model,
-                              final CodeStyleSettings settings,
-                              final CommonCodeStyleSettings.IndentOptions indentOptions,
-                              final TextRange affectedRange,
-                              final boolean keepBlankLines,
-                              final boolean keepLineBreaks,
-                              final boolean changeWSBeforeFirstElement,
-                              final boolean changeLineFeedsBeforeFirstElement,
-                              @Nullable final IndentInfoStorage indentInfoStorage) {
-    disableFormatting();
-    try {
-      validateModel(model);
-      final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
-      );
-      LeafBlockWrapper current = processor.getFirstTokenBlock();
-      while (current != null) {
-        WhiteSpace whiteSpace = current.getWhiteSpace();
-
-        if (!whiteSpace.isReadOnly()) {
-          if (whiteSpace.getStartOffset() > affectedRange.getStartOffset()) {
-            if (whiteSpace.containsLineFeeds() && indentInfoStorage != null) {
-              whiteSpace.setLineFeedsAreReadOnly(true);
-              current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
-            }
-            else {
-              whiteSpace.setReadOnly(true);
-            }
-          }
-          else {
-            if (!changeWSBeforeFirstElement) {
-              whiteSpace.setReadOnly(true);
-            }
-            else {
-              if (!changeLineFeedsBeforeFirstElement) {
-                whiteSpace.setLineFeedsAreReadOnly(true);
-              }
-              final SpacingImpl spaceProperty = current.getSpaceProperty();
-              if (spaceProperty != null) {
-                boolean needChange = false;
-                int newKeepLineBreaks = spaceProperty.getKeepBlankLines();
-                boolean newKeepLineBreaksFlag = spaceProperty.shouldKeepLineFeeds();
-
-                if (!keepLineBreaks) {
-                  needChange = true;
-                  newKeepLineBreaksFlag = false;
-                }
-                if (!keepBlankLines) {
-                  needChange = true;
-                  newKeepLineBreaks = 0;
-                }
-
-                if (needChange) {
-                  assert !(spaceProperty instanceof DependantSpacingImpl);
-                  current.setSpaceProperty(
-                    getSpacingImpl(
-                      spaceProperty.getMinSpaces(), spaceProperty.getMaxSpaces(), spaceProperty.getMinLineFeeds(),
-                      spaceProperty.isReadOnly(),
-                      spaceProperty.isSafe(), newKeepLineBreaksFlag, newKeepLineBreaks, false, spaceProperty.getPrefLineFeeds()
-                    )
-                  );
-                }
-              }
-            }
-          }
-        }
-        current = current.getNextBlock();
-      }
-      processor.format(model);
-    }
-    catch (FormattingModelInconsistencyException e) {
-      LOG.error(e);
-    }
-    finally {
-      enableFormatting();
-    }
-  }
-
-  @Override
-  public void adjustTextRange(final FormattingModel model,
-                              final CodeStyleSettings settings,
-                              final CommonCodeStyleSettings.IndentOptions indentOptions,
-                              final TextRange affectedRange) {
-    disableFormatting();
-    try {
-      validateModel(model);
-      final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
-      );
-      LeafBlockWrapper current = processor.getFirstTokenBlock();
-      while (current != null) {
-        WhiteSpace whiteSpace = current.getWhiteSpace();
-
-        if (!whiteSpace.isReadOnly()) {
-          if (whiteSpace.getStartOffset() > affectedRange.getStartOffset()) {
-            whiteSpace.setReadOnly(true);
-          }
-          else {
-            whiteSpace.setReadOnly(false);
-          }
-        }
-        current = current.getNextBlock();
-      }
-      processor.format(model);
-    }
-    catch (FormattingModelInconsistencyException e) {
-      LOG.error(e);
-    }
-    finally {
-      enableFormatting();
-    }
-  }
-
-  @Override
-  public void saveIndents(final FormattingModel model, final TextRange affectedRange,
-                          IndentInfoStorage storage,
-                          final CodeStyleSettings settings,
-                          final CommonCodeStyleSettings.IndentOptions indentOptions) {
-    try {
-      validateModel(model);
-      final Block block = model.getRootBlock();
-
-      final FormatProcessor processor = buildProcessorAndWrapBlocks(
-        model.getDocumentModel(), block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
-      );
-      LeafBlockWrapper current = processor.getFirstTokenBlock();
-      while (current != null) {
-        WhiteSpace whiteSpace = current.getWhiteSpace();
-
-        if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
-          storage.saveIndentInfo(current.calcIndentFromParent(), current.getStartOffset());
-        }
-        current = current.getNextBlock();
-      }
-    }
-    catch (FormattingModelInconsistencyException e) {
-      LOG.error(e);
-    }
-  }
 
   @Override
   public FormattingModel createFormattingModelForPsiFile(@NotNull final PsiFile file,

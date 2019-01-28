@@ -39,7 +39,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
@@ -110,7 +110,10 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return remotePath != null ? remotePath : localPath;
   }
 
-  public void add(@NotNull PathMapping mapping) {
+  public void add(@Nullable PathMapping mapping) {
+    if (mapping == null) {
+      return;
+    }
     if (isAnyEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
       return;
     }
@@ -274,7 +277,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return !localPrefix.isEmpty() && normLocal(path).startsWith(localPrefix);
+      if (localPrefix.isEmpty()) {
+        return false;
+      }
+      final String localPath = normLocal(path);
+      final int prefixLength = localPrefix.length();
+      return localPath.startsWith(localPrefix) && (localPath.length() == prefixLength || localPath.charAt(prefixLength) == '/');
     }
 
     public String mapToRemote(@NotNull String path) {

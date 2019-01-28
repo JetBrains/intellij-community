@@ -584,7 +584,6 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      @SuppressWarnings({"HardCodedStringLiteral"})
       FileLoader(URL url, int index) throws IOException {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {
@@ -667,10 +666,9 @@ public class InstrumentationClassFinder {
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
-          if (!new File(s).exists()) {
-            throw new FileNotFoundException(s);
+          if (new File(s).exists()) {
+            return new ZipFile(s);
           }
-          return new ZipFile(s);
         }
 
         return null;

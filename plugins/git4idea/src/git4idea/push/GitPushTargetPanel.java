@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
@@ -188,7 +189,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         else {
           String message = "Couldn't add remote: " + myResult.getErrorOutputAsHtmlString();
           LOG.warn(message);
-          Messages.showErrorDialog(myProject, message, "Add Remote");
+          Messages.showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), "Add Remote");
         }
       }
     });
@@ -355,7 +356,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setFireOnChangeAction(@NotNull Runnable action) {
     myFireOnChangeAction = action;

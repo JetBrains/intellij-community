@@ -12,10 +12,7 @@ import java.util.List;
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.text.StringUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
- *
- * @since 12.0
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class StringUtilRt {
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
@@ -347,6 +344,9 @@ public class StringUtilRt {
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
   }
 
+  /**
+   * @return true if the string starts and ends with quote (") or apostrophe (')
+   */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
     return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);

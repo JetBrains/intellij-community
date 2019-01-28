@@ -2,15 +2,13 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -22,7 +20,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -58,9 +55,9 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.JBUI;
@@ -77,6 +74,7 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -362,9 +360,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @NotNull
   public String getFileTooltipText(@NotNull VirtualFile file) {
-    EditorTabTitleProvider[] allExtensions = Extensions.getExtensions(EditorTabTitleProvider.EP_NAME);
-    List<EditorTabTitleProvider> availableProviders = DumbService.getInstance(myProject).filterByDumbAwareness(allExtensions);
-
+    List<EditorTabTitleProvider> availableProviders = DumbService.getDumbAwareExtensions(myProject, EditorTabTitleProvider.EP_NAME);
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
       if (text != null) {
@@ -705,7 +701,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
-        ((MouseEvent)event).isShiftDown() &&
+        ((MouseEvent)event).getModifiersEx() == InputEvent.SHIFT_DOWN_MASK &&
         (event.getID() == MouseEvent.MOUSE_CLICKED ||
          event.getID() == MouseEvent.MOUSE_PRESSED ||
          event.getID() == MouseEvent.MOUSE_RELEASED)) {
@@ -726,7 +722,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorWindow[] windows = splitters.getWindows();
 
     if (file != null && windows.length == 2) {
-      for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+      for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
         VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
 
         if (associatedFile != null) {
@@ -841,7 +837,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return;
       }
 
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
       compositeRef.set(window.findFileComposite(file));
@@ -1178,16 +1173,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @Nullable
   public Editor openTextEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
-    final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (FileEditor fileEditor : fileEditors) {
-      if (fileEditor instanceof TextEditor) {
-        setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
-        Editor editor = ((TextEditor)fileEditor).getEditor();
-        return getOpenedEditor(editor, focusEditor);
-      }
-    }
-
-    return null;
+    TextEditor textEditor = doOpenTextEditor(descriptor, focusEditor);
+    return textEditor == null ? null : getOpenedEditor(textEditor.getEditor(), focusEditor);
   }
 
   protected Editor getOpenedEditor(@NotNull Editor editor, final boolean focusEditor) {
@@ -1200,14 +1187,36 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   @Override
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    assertDispatchThread();
+    doOpenTextEditor(descriptor, focusEditor);
+  }
+
+  @Nullable
+  private TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
-    for (FileEditor fileEditor : fileEditors) {
-      if (fileEditor instanceof TextEditor) {
-        setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
-        return;
+
+    if (fileEditors.isEmpty()) return null;
+    else if (fileEditors.size() == 1) return ObjectUtils.tryCast((ContainerUtil.getFirstItem(fileEditors)), TextEditor.class);
+
+    List<TextEditor> textEditors = ContainerUtil.mapNotNull(fileEditors, e -> ObjectUtils.tryCast(e, TextEditor.class));
+    if (textEditors.isEmpty()) return null;
+
+    TextEditor target = textEditors.get(0);
+    if (textEditors.size() > 1) {
+      EditorWithProviderComposite composite = getEditorComposite(target);
+      assert composite != null;
+      FileEditor[] editors = composite.getEditors();
+      FileEditorProvider[] providers = composite.getProviders();
+      String textProviderId = TextEditorProvider.getInstance().getEditorTypeId();
+      for (int i = 0; i < editors.length; i++) {
+        FileEditor editor = editors[i];
+        if (editor instanceof TextEditor && providers[i].getEditorTypeId().equals(textProviderId)) {
+          target = (TextEditor)editor;
+          break;
+        }
       }
     }
+    setSelectedEditor(target);
+    return target;
   }
 
   @Override
@@ -1486,8 +1495,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
               if (startTime != null) {
                 long time = (currentTime - startTime.longValue()) / 1000000;
-                FUSProjectUsageTrigger.getInstance(myProject).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.open.time."+(time/1000));
-                FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opening.finished", Collections.singletonMap("time.ms", time));
+                LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
                 LOG.info("Project opening took " + time + " ms");
                 PluginManagerCore.dumpPluginClassStatistics();
@@ -1555,7 +1563,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
       if (oldData.first != null && newData.first != null) {
-        for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+        for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
           VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
 
           if (Comparing.equal(associatedFile, newData.first)) {
@@ -1828,7 +1836,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleRootChange() {
-      EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
+      List<EditorFileSwapper> swappers = EditorFileSwapper.EP_NAME.getExtensionList();
 
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();

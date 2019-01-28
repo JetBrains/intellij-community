@@ -132,7 +132,6 @@ public class JavaCompletionUtil {
     return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
-  @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
     if (!type.isValid()) {
@@ -208,7 +207,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public boolean shouldProcess(DeclarationKind kind) {
+      public boolean shouldProcess(@NotNull DeclarationKind kind) {
         return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
                member instanceof PsiField ? kind == DeclarationKind.FIELD :
                kind == DeclarationKind.METHOD;
@@ -216,6 +215,7 @@ public class JavaCompletionUtil {
 
       @Override
       public <T> T getHint(@NotNull Key<T> hintKey) {
+        //noinspection unchecked
         return hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY ? (T)this : null;
       }
     }
@@ -351,7 +351,7 @@ public class JavaCompletionUtil {
           }
         }
 
-        return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier);
+        return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier, parameters.getInvocationCount() > 1);
       }
     }
     return Collections.emptyList();
@@ -405,9 +405,9 @@ public class JavaCompletionUtil {
 
   @NotNull
   private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
-    return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
+    return new LookupElementDecorator<LookupElement>(item) {
       @Override
-      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
+      public void handleInsert(@NotNull InsertionContext context) {
         final Document document = context.getEditor().getDocument();
         context.commitDocument();
         final PsiFile file = context.getFile();
@@ -433,9 +433,16 @@ public class JavaCompletionUtil {
           }
         }
 
-        item.getDelegate().handleInsert(context);
+        super.handleInsert(context);
       }
-    });
+
+      @Override
+      public void renderElement(LookupElementPresentation presentation) {
+        super.renderElement(presentation);
+
+        presentation.appendTailText(" on " + castTypeItem.getType().getPresentableText(), true);
+      }
+    };
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
@@ -836,13 +843,10 @@ public class JavaCompletionUtil {
     }
 
     manager.commitDocument(document);
-    final PsiReference ref = file.findReferenceAt(offset);
+    PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {
-      PsiElement element = ref.getElement();
-      if (element != null) {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-      }
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref.getElement());
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     }
   }
 
@@ -910,9 +914,10 @@ public class JavaCompletionUtil {
     };
   }
 
-  public static String escapeXmlIfNeeded(InsertionContext context, String generics) {
+  @NotNull
+  public static String escapeXmlIfNeeded(InsertionContext context, @NotNull String generics) {
     if (context.getFile().getViewProvider().getBaseLanguage() == StdLanguages.JSPX) {
-      return StringUtil.escapeXml(generics);
+      return StringUtil.escapeXmlEntities(generics);
     }
     return generics;
   }

@@ -239,7 +239,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
     // When user types text and presses modifier keys it causes to show alternative touchbar layouts, some of them are visible less than second.
     // To avoid unnecessary slow-update invocations for such bars we always try to use cached presentations for the first 500 ms (for slow actions only)
     final long elapsedFromStartShowNs = System.nanoTime() - myStartShowNs;
-    final boolean forceUseCached = elapsedFromStartShowNs < 500*1000000l;
+    final boolean forceUseCached = elapsedFromStartShowNs < 500 * 1000000L;
 
     final boolean[] layoutChanged = new boolean[]{false};
     forEachDeep(tbitem->{

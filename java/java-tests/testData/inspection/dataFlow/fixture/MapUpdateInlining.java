@@ -2,6 +2,7 @@ import foo.*;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.function.Function;
 
 class MapUpdateInlining {
   void testKey(Map<String, String> map) {
@@ -82,4 +83,22 @@ class MapUpdateInlining {
   }
 
   native void doSmth();
+
+  // IDEA-204641
+  public static void testAnyLambda(@NotNull Function<String, String> lambda) {
+    Map<String, String> map = new HashMap<>();
+    Throwable thrown = null;
+    try {
+      map.computeIfAbsent("a", lambda);
+    }
+    catch (Throwable t) {
+      thrown = t;
+      throw t;
+    }
+    finally {
+      if (thrown != null) { // possible
+        int x = 0;
+      }
+    }
+  }
 }

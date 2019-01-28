@@ -156,11 +156,6 @@ public class ExpressionUtils {
         return false;
       }
       final PsiElement element = referenceExpression.resolve();
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
-        final PsiExpression initializer = field.getInitializer();
-        return field.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
-      }
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
         if (PsiTreeUtil.isAncestor(variable, expression, true)) {
@@ -408,8 +403,7 @@ public class ExpressionUtils {
 
   private static boolean expressionIsOffsetVariableLookup(
     @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    if (VariableAccessUtils.evaluatesToVariable(expression,
-                                                variable)) {
+    if (isReferenceTo(expression, variable)) {
       return true;
     }
     final PsiExpression strippedExpression =
@@ -433,48 +427,28 @@ public class ExpressionUtils {
            !JavaTokenType.MINUS.equals(tokenType);
   }
 
-  public static boolean isVariableLessThanComparison(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+  public static boolean isVariableLessThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.LT) ||
-        tokenType.equals(JavaTokenType.LE)) {
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+    if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
+      return isReferenceTo(binaryExpression.getLOperand(), variable);
     }
-    else if (tokenType.equals(JavaTokenType.GT) ||
-             tokenType.equals(JavaTokenType.GE)) {
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+    else if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
+      return isReferenceTo(binaryExpression.getROperand(), variable);
     }
     return false;
   }
 
-  public static boolean isVariableGreaterThanComparison(
-    @Nullable PsiExpression expression,
-    @NotNull PsiVariable variable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+  public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.GT) ||
-        tokenType.equals(JavaTokenType.GE)) {
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+    if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
+      return isReferenceTo(binaryExpression.getLOperand(), variable);
     }
-    else if (tokenType.equals(JavaTokenType.LT) ||
-             tokenType.equals(JavaTokenType.LE)) {
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+    else if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
+      return isReferenceTo(binaryExpression.getROperand(), variable);
     }
     return false;
   }
@@ -900,7 +874,13 @@ public class ExpressionUtils {
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
     if (variable == null) return false;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
+    if (!(expression instanceof PsiReferenceExpression)) return false;
+    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    if ((variable instanceof PsiLocalVariable || variable instanceof PsiParameter) && ref.isQualified()) {
+      // Optimization: references to locals and parameters are unqualified
+      return false;
+    }
+    return ref.isReferenceTo(variable);
   }
 
   /**
@@ -1039,7 +1019,7 @@ public class ExpressionUtils {
       PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable != null) {
         PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+        if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
           return initializer;
         }
       }
@@ -1340,13 +1320,24 @@ public class ExpressionUtils {
   /**
    * Returns true if expression is evaluated in void context (i.e. its return value is not used)
    * @param expression expression to check
-   * @return true if expression is evaluated in void context. More precisely if its parent is expression statement or lambda with void SAM
+   * @return true if expression is evaluated in void context.
    */
   public static boolean isVoidContext(PsiExpression expression) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    return element instanceof PsiExpressionStatement ||
-           (element instanceof PsiLambdaExpression &&
-            PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element)));
+    if (element instanceof PsiExpressionStatement) {
+      if (element.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)element.getParent()).getEnclosingSwitchBlock();
+        return !(block instanceof PsiSwitchExpression);
+      }
+      return true;
+    }
+    if (element instanceof PsiExpressionList && element.getParent() instanceof PsiExpressionListStatement) {
+      return true;
+    }
+    if (element instanceof PsiLambdaExpression) {
+      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element))) return true;
+    }
+    return false;
   }
 
   /**
@@ -1387,5 +1378,57 @@ public class ExpressionUtils {
    */
   public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
     return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
+  }
+
+  /**
+   * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
+   * 
+   * @param expression an expression to find its ancestor
+   * @return a top-level expression for given expression (may return an expression itself)
+   */
+  @NotNull
+  public static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
+    while(true) {
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression && !(parent instanceof PsiLambdaExpression)) {
+        expression = (PsiExpression)parent;
+      } else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
+        expression = (PsiExpression)parent.getParent();
+      } else {
+        return expression;
+      }
+    }
+  }
+
+  public static PsiElement getPassThroughParent(PsiExpression expression) {
+    while (true) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != expression) {
+        expression = (PsiExpression)parent;
+        continue;
+      }
+      else if (parent instanceof PsiExpressionStatement) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiSwitchLabeledRuleStatement) {
+          final PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)grandParent).getEnclosingSwitchBlock();
+          if (block instanceof PsiSwitchExpression) {
+            expression = (PsiExpression)block;
+            continue;
+          }
+        }
+      }
+      else if (parent instanceof PsiBreakStatement) {
+        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
+        if (exitedElement instanceof PsiSwitchExpression) {
+          expression = (PsiExpression)exitedElement;
+          continue;
+        }
+      }
+      return parent;
+    }
   }
 }

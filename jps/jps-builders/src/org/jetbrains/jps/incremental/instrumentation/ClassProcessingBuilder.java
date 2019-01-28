@@ -99,8 +99,8 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
 
   // utility methods
   public static InstrumentationClassFinder createInstrumentationClassFinder(@Nullable JpsSdk<?> sdk,
-                                                                            Collection<File> platformCp,
-                                                                            Collection<File> cp,
+                                                                            Collection<? extends File> platformCp,
+                                                                            Collection<? extends File> cp,
                                                                             final OutputConsumer outputConsumer) throws
                                                                                                                                                                    MalformedURLException {
     final URL[] platformUrls;

@@ -38,8 +38,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @author Jeka
+ * @deprecated use {@link BaseCompilerTestCase} instead
  */
+@Deprecated
 public abstract class CompilerTestCase extends ModuleTestCase {
   private static final int COMPILING_TIMEOUT = 2 * 60 * 1000;
   protected static final String SOURCE = "source";
@@ -417,7 +418,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
@@ -433,6 +434,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           mySourceDir = null;
           myOriginalSourceDir = null;
           CompilerTestUtil.disableExternalCompiler(myProject);
+        }
+        catch (Throwable e) {
+          addSuppressedException(e);
         }
         finally {
           super.tearDown();

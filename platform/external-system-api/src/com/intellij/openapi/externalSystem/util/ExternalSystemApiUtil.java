@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,6 @@ import static com.intellij.util.PlatformUtils.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
 
@@ -163,7 +162,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
+    if (file.getFileType() == ArchiveFileType.INSTANCE) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
         return jar.getPath();
@@ -202,17 +201,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
     return ContainerUtil.groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
     return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
@@ -245,7 +244,7 @@ public class ExternalSystemApiUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
         return (DataNode<T>)child;
@@ -254,7 +253,6 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     return findParent(node, key, null);
@@ -272,7 +270,6 @@ public class ExternalSystemApiUtil {
            ? (DataNode<T>)parent : findParent(parent, key, predicate);
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
@@ -350,7 +347,6 @@ public class ExternalSystemApiUtil {
       if (predicate.fun(node)) {
         return node;
       }
-      //noinspection unchecked
       queue.addAll(node.getChildren());
     }
     return null;
@@ -436,7 +432,6 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Nullable
   public static String normalizePath(@Nullable String s) {
     return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
@@ -547,7 +542,7 @@ public class ExternalSystemApiUtil {
    * @param e exception to process
    * @return error message for the given exception
    */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -572,7 +567,6 @@ public class ExternalSystemApiUtil {
     return writer.toString();
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException {
@@ -720,6 +714,41 @@ public class ExternalSystemApiUtil {
 
     findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
     return tasks;
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ModuleData> findModuleData(@NotNull Module module,
+                                                    @NotNull ProjectSystemId systemId) {
+    String externalProjectPath = getExternalProjectPath(module);
+    if (externalProjectPath == null) return null;
+    Project project = module.getProject();
+    DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
+    if (projectNode == null) return null;
+    return find(projectNode, ProjectKeys.MODULE, node -> externalProjectPath.equals(node.getData().getLinkedExternalProjectPath()));
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ProjectData> findProjectData(@NotNull Project project,
+                                                      @NotNull ProjectSystemId systemId,
+                                                      @NotNull String projectPath) {
+    ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
+    if (projectInfo == null) return null;
+    return projectInfo.getExternalProjectStructure();
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static ExternalProjectInfo findProjectInfo(@NotNull Project project,
+                                                    @NotNull ProjectSystemId systemId,
+                                                    @NotNull String projectPath) {
+    AbstractExternalSystemSettings settings = getSettings(project, systemId);
+    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+    if (linkedProjectSettings == null) return null;
+    return ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
+      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
+      .findFirst().orElse(null);
   }
 
   /**

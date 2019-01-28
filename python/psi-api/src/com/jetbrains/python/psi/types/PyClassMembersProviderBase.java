@@ -43,7 +43,7 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
    * @return found member or null
    */
   @Nullable
-  public static PsiElement resolveMemberByName(@NotNull Collection<PyCustomMember> members,
+  public static PsiElement resolveMemberByName(@NotNull Collection<? extends PyCustomMember> members,
                                                @NotNull String name,
                                                @NotNull PsiElement context,
                                                @NotNull PyResolveContext resolveContext) {

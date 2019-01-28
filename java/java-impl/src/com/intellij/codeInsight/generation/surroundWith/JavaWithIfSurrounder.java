@@ -35,7 +35,7 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
   @Override
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
@@ -47,13 +47,13 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    ifStatement = (PsiIfStatement)container.addAfter(ifStatement, statements[statements.length - 1]);
+    ifStatement = (PsiIfStatement)addAfter(ifStatement, container, statements);
 
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
       PsiCodeBlock thenBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
       SurroundWithUtil.indentCommentIfNecessary(thenBlock, statements);
-      thenBlock.addRange(statements[0], statements[statements.length - 1]);
+      addRangeWithinContainer(thenBlock, container, statements, true);
       container.deleteChildRange(statements[0], statements[statements.length - 1]);
     }
 

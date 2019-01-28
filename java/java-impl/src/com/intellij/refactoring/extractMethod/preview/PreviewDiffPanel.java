@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.comparison.ComparisonManagerImpl;
+import com.intellij.diff.comparison.InnerFragmentsPolicy;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
@@ -154,10 +155,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       ? ReadAction.compute(() -> collectExcludedRanges(allNodes, duplicateMatches.keySet(), patternCopy[0].getContainingFile()))
       : Collections.emptyList();
 
-    Bounds patternReplacementBounds = ReadAction.compute(() -> {
-      Bounds patternBounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
+    ElementsRange patternReplacement = ReadAction.compute(() -> {
+      Bounds bounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
       copyProcessor.doExtract();
-      return patternBounds;
+      return bounds.getElementsRange();
     });
     progress.increment(); // +2
 
@@ -182,8 +183,6 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       PsiMethod extractedMethod = copyProcessor.getExtractedMethod();
       return (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(extractedMethod);
     });
-
-    ElementsRange patternReplacement = ReadAction.compute(() -> patternReplacementBounds.getElementsRange());
 
     Document refactoredDocument = ReadAction.compute(() -> {
       PsiFile refactoredFile = method.getContainingFile();
@@ -232,8 +231,8 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     PsiElement anchorElement = myAnchor.getElement();
     if (anchorElement != null) {
-      int anchorOffset = anchorElement.getTextRange().getEndOffset();
-      int anchorLineNumber = myPatternDocument.getLineNumber(anchorOffset);
+      int anchorLineNumber = getLineNumberAfter(myPatternDocument, anchorElement.getTextRange());
+      int anchorOffset = myPatternDocument.getLineStartOffset(anchorLineNumber);
       Range diffRange = new Range(anchorLineNumber,
                                   anchorLineNumber,
                                   getStartLineNumber(refactoredDocument, methodRange),
@@ -254,7 +253,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DocumentContent oldContent = contentFactory.create(myProject, myPatternDocument);
-    DocumentContent newContent = contentFactory.create(myProject, refactoredDocument);
+    DocumentContent newContent = contentFactory.create(myProject, refactoredDocument.getText(), patternFile.getFileType(), false);
 
     myDiffRequest = new PreviewDiffRequest(linesBounds, oldContent, newContent, node -> myTree.selectNode(node));
     myDiffRequest.putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, getDiffComputer(diffRanges));
@@ -389,13 +388,14 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   @NotNull
   private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
     return (text1, text2, policy, innerChanges, indicator) -> {
+      InnerFragmentsPolicy fragmentsPolicy = innerChanges ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
       LineOffsets offsets1 = LineOffsetsUtil.create(text1);
       LineOffsets offsets2 = LineOffsetsUtil.create(text2);
 
       List<LineFragment> result = new ArrayList<>();
       ComparisonManagerImpl comparisonManager = ComparisonManagerImpl.getInstanceImpl();
       for (Range range : ranges) {
-        result.addAll(comparisonManager.compareLinesInner(range, text1, text2, offsets1, offsets2, policy, innerChanges, indicator));
+        result.addAll(comparisonManager.compareLinesInner(range, text1, text2, offsets1, offsets2, policy, fragmentsPolicy, indicator));
       }
       return result;
     };

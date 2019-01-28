@@ -173,6 +173,19 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20159
+  public void testCaseInsensitiveOrderOfImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
+    doTest();
+  }
+
+  // PY-20159
+  public void testCaseInsensitiveOrderOfNamesInsideFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
+    doTest();
+  }
+
   // PY-19674
   public void testUnresolvedRelativeImportsShouldBeInProjectGroup() {
     final String testName = getTestName(true);
@@ -283,6 +296,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-25567
   public void testExistingParenthesesInCombinedFromImports() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-20100
+  public void testSplittingOfFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
     doTest();
   }
 

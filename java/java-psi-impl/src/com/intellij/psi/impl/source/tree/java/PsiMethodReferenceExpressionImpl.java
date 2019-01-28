@@ -53,7 +53,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
 
   public PsiMethodReferenceExpressionImpl(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
-    super(stub, JavaStubElementTypes.METHOD_REFERENCE);
+    super(stub, JavaStubElementTypes.METHOD_REF_EXPRESSION);
   }
 
   public PsiMethodReferenceExpressionImpl(@NotNull ASTNode node) {
@@ -355,7 +355,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         Comparing.strEqual(oldRefName, newElementName)) {
       return this;
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }

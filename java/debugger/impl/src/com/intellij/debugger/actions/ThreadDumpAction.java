@@ -52,7 +52,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
             ApplicationManager.getApplication().invokeLater(() -> {
               XDebugSession xSession = session.getXDebugSession();
               if (xSession != null) {
-                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session);
+                DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
             }, ModalityState.NON_MODAL);
           }

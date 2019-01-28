@@ -91,7 +91,7 @@ public class MalformedRegexInspection extends BaseInspection {
         }
         return;
       }
-      //noinspection UnusedCatchParameter,ProhibitedExceptionCaught
+      // noinspection ProhibitedExceptionCaught
       try {
         Pattern.compile(value);
       }

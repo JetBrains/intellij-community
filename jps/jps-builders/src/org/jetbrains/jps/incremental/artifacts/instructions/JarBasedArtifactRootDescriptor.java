@@ -26,7 +26,7 @@ import java.util.zip.ZipFile;
  */
 public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
-  private final Condition<String> myPathInJarFilter;
+  private final Condition<? super String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
@@ -34,7 +34,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         int index,
                                         @NotNull ArtifactBuildTarget target,
                                         @NotNull DestinationInfo destinationInfo,
-                                        @NotNull Condition<String> pathInJarFilter) {
+                                        @NotNull Condition<? super String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
     myPathInJarFilter = pathInJarFilter;
@@ -49,24 +49,18 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       prefix = "";
     }
 
-    try {
-      ZipFile zipFile = new ZipFile(myRoot);
-      try {
-        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    try (ZipFile zipFile = new ZipFile(myRoot)) {
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          final String name = entry.getName();
-          if (name.startsWith(prefix)) {
-            String relativePath = name.substring(prefix.length());
-            if (myPathInJarFilter.value(relativePath)) {
-              processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
-            }
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        final String name = entry.getName();
+        if (name.startsWith(prefix)) {
+          String relativePath = name.substring(prefix.length());
+          if (myPathInJarFilter.value(relativePath)) {
+            processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
           }
         }
-      }
-      finally {
-        zipFile.close();
       }
     }
     catch (IOException e) {

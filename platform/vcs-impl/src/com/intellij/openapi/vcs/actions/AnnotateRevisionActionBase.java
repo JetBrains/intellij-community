@@ -72,10 +72,13 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
                                   @Nullable VirtualFile file,
                                   @Nullable VcsFileRevision fileRevision) {
     if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
-
     AnnotationProvider provider = vcs.getAnnotationProvider();
-    if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
-    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
+    if (provider == null) return false;
+    if (!provider.isAnnotationValid(fileRevision)) return false;
+
+    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) {
+      return false;
+    }
 
     return true;
   }

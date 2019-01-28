@@ -24,7 +24,7 @@ class SimpleLocalLineStatusTracker(project: Project,
                                    document: Document,
                                    virtualFile: VirtualFile,
                                    mode: Mode
-) : LineStatusTracker<Range>(project, document, virtualFile, mode) {
+) : LocalLineStatusTracker<Range>(project, document, virtualFile, mode) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
   override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)

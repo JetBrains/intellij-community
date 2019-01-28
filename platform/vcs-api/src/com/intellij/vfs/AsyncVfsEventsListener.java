@@ -43,5 +43,5 @@ public interface AsyncVfsEventsListener {
    * The call happens on a pooled thread, under a special {@link ProgressIndicator} which is cancelled on project disposal,
    * thus one can call {@code ProgressManager.checkCancelled()} to cancel the background task when the project is disposed.
    */
-  void filesChanged(@NotNull List<VFileEvent> events);
+  void filesChanged(@NotNull List<? extends VFileEvent> events);
 }

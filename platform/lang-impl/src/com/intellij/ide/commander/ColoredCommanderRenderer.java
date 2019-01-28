@@ -23,9 +23,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +80,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
         final PresentationData presentation = treeNode.getPresentation();
         if (presentation.hasSeparatorAbove() && !selected) {
-          setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND),
+          setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                                        BorderFactory.createEmptyBorder(0, 0, 1, 0)));
         }
       }

@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SplitRawStringIntentionAction extends PsiElementBaseIntentionAction {
@@ -66,10 +68,24 @@ public class SplitRawStringIntentionAction extends PsiElementBaseIntentionAction
     int offset = editor.getCaretModel().getOffset();
     int splitIdx = offset - token.getTextOffset();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiBinaryExpression concatenation =
-      (PsiBinaryExpression)token.getParent().replace(factory.createExpressionFromText(text.substring(0, splitIdx) + breakSequence + " + " +
-                                                                                        breakSequence + text.substring(splitIdx), element));
-    editor.getCaretModel().moveToOffset(concatenation.getOperationSign().getTextOffset());
+    PsiBinaryExpression replacement = (PsiBinaryExpression)factory
+      .createExpressionFromText(text.substring(0, splitIdx) + breakSequence + " + " + breakSequence + text.substring(splitIdx), element);
+    PsiPolyadicExpression replacedExpression = (PsiPolyadicExpression)ExpressionUtils.replacePolyadicWithParent((PsiExpression)token.getParent(), replacement);
+    if (replacedExpression != null) {
+      PsiElement leftOperand = replacedExpression.findElementAt(splitIdx);
+      PsiExpression[] operands = replacedExpression.getOperands();
+      int idx = ArrayUtil.find(operands, leftOperand);
+      if (idx < operands.length - 1) {
+        PsiJavaToken tokenBeforeOperand = replacedExpression.getTokenBeforeOperand(operands[idx + 1]);
+        if (tokenBeforeOperand != null) {
+          editor.getCaretModel().moveToOffset(tokenBeforeOperand.getTextOffset());
+        }
+      }
+    }
+    else {
+      PsiBinaryExpression replaced = (PsiBinaryExpression)token.getParent().replace(replacement);
+      editor.getCaretModel().moveToOffset(replaced.getOperationSign().getTextOffset());
+    }
   }
 
   @NotNull

@@ -43,7 +43,7 @@ public class PsiEquivalenceUtil {
 
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
-                                              @Nullable Comparator<PsiElement> resolvedElementsComparator,
+                                              @Nullable Comparator<? super PsiElement> resolvedElementsComparator,
                                               boolean areCommentsSignificant) {
     return areElementsEquivalent(element1, element2, new ReferenceComparator(resolvedElementsComparator), null, null, areCommentsSignificant);
   }

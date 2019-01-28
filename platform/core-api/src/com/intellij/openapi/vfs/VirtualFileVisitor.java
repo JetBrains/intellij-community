@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- * @since 31.10.2011
  */
 public abstract class VirtualFileVisitor<T> {
   public static class Option {

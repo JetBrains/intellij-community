@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
@@ -251,7 +251,7 @@ public class ExtensionPointImplTest {
   }
 
   private static ExtensionsAreaImpl buildExtensionArea() {
-    return new ExtensionsAreaImpl(new DefaultPicoContainer());
+    return new ExtensionsAreaImpl(null, null, new DefaultPicoContainer());
   }
 
   private static MyShootingComponentAdapter stringAdapter() {
@@ -262,7 +262,7 @@ public class ExtensionPointImplTest {
     private boolean myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, null, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"));
+      super(implementationClass, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
     }
 
     public void setFire(boolean fire) {

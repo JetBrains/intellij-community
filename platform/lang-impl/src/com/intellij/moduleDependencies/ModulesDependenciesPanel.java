@@ -52,7 +52,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since Feb 10, 2005
  */
 public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";

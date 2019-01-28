@@ -213,7 +213,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
       paintHighlightsForeground = false;
     }
     else {
-      bgColor = myEnforcedBackground == null ? UIUtil.getTreeTextBackground() : myEnforcedBackground;
+      bgColor = myEnforcedBackground == null ? UIUtil.getTreeBackground() : myEnforcedBackground;
       fgColor = getForeground();
       paintHighlightsBackground = isOpaque();
       paintHighlightsForeground = true;

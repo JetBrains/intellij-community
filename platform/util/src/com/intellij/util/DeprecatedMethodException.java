@@ -13,6 +13,6 @@ public class DeprecatedMethodException extends RuntimeException {
   public static void report(@NotNull String message) {
 
     LOG.warn(new DeprecatedMethodException("This method in " + ReflectionUtil.findCallerClass(2) +
-                                           " is going to be removed soon. "+message));
+                                           " is deprecated and going to be removed soon. "+message));
   }
 }

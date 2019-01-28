@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -31,11 +31,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getDelegatesToInfo
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 /**
  * @author Vladislav.Soroka
- *
- * @since 11/25/2016
  */
 class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,
@@ -77,6 +76,9 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
       }
       else return
 
+      if (!processor.shouldProcessProperties()) {
+        return
+      }
       val processVariable: (GradleExtensionsSettings.TypeAware) -> Boolean = {
         val docRef = Ref.create<String>()
         val variable = object : GrLightVariable(place.manager, propCandidate, it.typeFqn, place) {
@@ -142,7 +144,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         val wrappedBase = GrLightMethodBuilder(place.manager, propCandidate).apply {
           returnType = domainObjectType
           containingClass = aClass
-          val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)
+          val closureParam = addAndGetOptionalParameter("configuration", GROOVY_LANG_CLOSURE)
           closureParam.putUserData(DELEGATES_TO_KEY, domainObjectFqn)
           closureParam.putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
 

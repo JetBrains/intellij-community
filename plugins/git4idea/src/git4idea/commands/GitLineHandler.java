@@ -40,7 +40,8 @@ public class GitLineHandler extends GitTextHandler {
    * Remote url which require authentication
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
-  private boolean myIgnoreAuthenticationRequest;
+  @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
+  @Nullable private GitAuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
@@ -84,12 +85,22 @@ public class GitLineHandler extends GitTextHandler {
     return !myUrls.isEmpty();
   }
 
-  public boolean isIgnoreAuthenticationRequest() {
+  @NotNull
+  public GitAuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
-  public void setIgnoreAuthenticationRequest(boolean ignoreAuthenticationRequest) {
-    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+    myIgnoreAuthenticationRequest = authenticationMode;
+  }
+
+  @Nullable
+  public GitAuthenticationGate getAuthenticationGate() {
+    return myAuthenticationGate;
+  }
+
+  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+    myAuthenticationGate = authenticationGate;
   }
 
   @Override

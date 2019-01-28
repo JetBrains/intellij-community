@@ -16,17 +16,19 @@ import java.util.List;
 public class TextComponentInlayModel implements InlayModel {
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
     return null;
   }
 
   @Nullable
   @Override
-  public Inlay addBlockElement(int offset,
-                               boolean relatesToPrecedingText,
-                               boolean showAbove,
-                               int priority,
-                               @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     return null;
   }
 
@@ -64,6 +66,9 @@ public class TextComponentInlayModel implements InlayModel {
   public Inlay getElementAt(@NotNull Point point) {
     return null;
   }
+
+  @Override
+  public void setConsiderCaretPositionOnDocumentUpdates(boolean enabled) {}
 
   @Override
   public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {

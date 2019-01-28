@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -87,7 +72,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
 
     // Return special reference
-    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+    final ConsoleCommunication communication = getContainingFile().getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
     if (communication != null) {
       final String prefix = qualifier == null ? "" : qualifier.getText() + ".";
       return new PydevConsoleReference(this, communication, prefix, context.allowRemote());
@@ -392,7 +377,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private PyType getTypeFromProviders(@NotNull TypeEvalContext context) {
-    for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
       try {
         final PyType type = provider.getReferenceExpressionType(this, context);
         if (type != null) {
@@ -400,7 +385,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       catch (AbstractMethodError e) {
-        LOG.info(new ExtensionException(provider.getClass()));
+        LOG.info(PluginManagerCore.createPluginException("Failed to get expression type via " + provider.getClass(), e, provider.getClass()));
       }
     }
     return null;
@@ -450,15 +435,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile)target);
     }
-    if ((target instanceof PyTargetExpression || target instanceof PyNamedParameter) && context.allowDataFlow(anchor)) {
+    if (target instanceof PyElement && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
-      if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {
-        final String name = ((PyElement)target).getName();
-        if (name != null) {
-          final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
-          if (type != null) {
-            return type;
-          }
+      final String name = ((PyElement)target).getName();
+      if (scopeOwner != null &&
+          name != null &&
+          !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()) {
+        final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
+        if (type != null) {
+          return type;
         }
       }
     }
@@ -536,7 +521,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                                     @NotNull TypeEvalContext context,
                                                                     @Nullable PsiElement anchor) {
     return StreamEx
-      .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+      .of(PyTypeProvider.EP_NAME.getExtensionList())
       .select(PyOverridingTypeProvider.class)
       .map(provider -> provider.getReferenceType(target, context, anchor))
       .findFirst(Objects::nonNull)
@@ -547,7 +532,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public static Ref<PyType> getReferenceTypeFromProviders(@NotNull PsiElement target,
                                                           @NotNull TypeEvalContext context,
                                                           @Nullable PsiElement anchor) {
-    for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
       final Ref<PyType> result = provider.getReferenceType(target, context, anchor);
       if (result != null) {
         return result;

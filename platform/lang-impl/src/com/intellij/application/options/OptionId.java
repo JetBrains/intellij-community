@@ -26,4 +26,5 @@ public class OptionId {
   public static final OptionId RENAME_IN_PLACE = new OptionId();
   public static final OptionId COMPLETION_SMART_TYPE = new OptionId();
   public static final OptionId AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION = new OptionId();
+  public static final OptionId SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = new OptionId();
 }

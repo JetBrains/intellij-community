@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,7 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public class SerializableHasSerialVersionUIDFieldInspection extends
-                                                            SerializableInspectionBase {
-  @Override
-  public JComponent createOptionsPanel() {
-    return SerializableInspectionUtil.createOptions(this);
-  }
+public class SerializableHasSerialVersionUIDFieldInspection extends SerializableInspectionBase {
 
   @Pattern("[a-zA-Z_0-9.-]+")
   @Override

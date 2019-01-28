@@ -137,13 +137,13 @@ public class OpenTaskDialog extends DialogWrapper {
         }
       }
     }
-    taskManager.activateTask(myTask, isClearContext());
-    if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
-      AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
-    }
 
     for (TaskDialogPanel panel : myPanels) {
       panel.commit();
+    }
+    taskManager.activateTask(myTask, isClearContext());
+    if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
+      AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
   }
 
@@ -165,6 +165,9 @@ public class OpenTaskDialog extends DialogWrapper {
         return component;
       }
     }
+    if (myNameField.getText().trim().isEmpty()) {
+      return myNameField;
+    }
     if (myTaskStateCombo.isVisible() && myTaskStateCombo.isEnabled()){
       return myTaskStateCombo.getComboBox();
     }
@@ -174,6 +177,10 @@ public class OpenTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
+    String taskName = myNameField.getText().trim();
+    if (taskName.isEmpty()) {
+      return new ValidationInfo("Task name should not be empty", myNameField);
+    }
     for (TaskDialogPanel panel : myPanels) {
       ValidationInfo validate = panel.validate();
       if (validate != null) return validate;

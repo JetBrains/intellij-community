@@ -54,6 +54,8 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
   public static final String FS_STATE_FILE = "fs_state.dat";
+  private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
+  
   private final UUID mySessionId;
   private final Channel myChannel;
   @Nullable 
@@ -162,14 +164,14 @@ final class BuildSession implements Runnable, CanceledStatus {
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
           else if (buildMessage instanceof BuilderStatisticsMessage) {
-            BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
-            int srcCount = message.getNumberOfProcessedSources();
-            long time = message.getElapsedTimeMs();
-            if (srcCount != 0 || time > 50) {
-              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed" +
-                       (srcCount == 0 ? "" : " ("+ time/srcCount +"ms per file)"));
+            final BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
+            final boolean worthReporting = message.getNumberOfProcessedSources() != 0 || message.getElapsedTimeMs() > 50;
+            if (worthReporting) {
+              LOG.info(message.getMessageText());
             }
-            response = null;
+            response = worthReporting && REPORT_BUILD_STATISTICS ?
+                       CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f):
+                       null;
           }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
@@ -393,7 +395,6 @@ final class BuildSession implements Runnable, CanceledStatus {
       Collection<BuildRootDescriptor> descriptor = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptor.isEmpty()) {
         if (!cacheCleared) {
-          pd.getFSCache().clear();
           cacheCleared = true;
         }
         if (LOG.isDebugEnabled()) {
@@ -425,7 +426,6 @@ final class BuildSession implements Runnable, CanceledStatus {
             final long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
               if (!cacheCleared) {
-                pd.getFSCache().clear();
                 cacheCleared = true;
               }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
@@ -507,6 +507,13 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
+    try (FileOutputStream fos = writeOrCreate(file)) {
+      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream writeOrCreate(@NotNull File file) throws FileNotFoundException {
     FileOutputStream fos = null;
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
@@ -519,12 +526,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fos == null) {
       fos = new FileOutputStream(file);
     }
-    try {
-      fos.write(bytes.getInternalBuffer(), 0, bytes.size());
-    }
-    finally {
-      fos.close();
-    }
+    return fos;
   }
 
   @Nullable

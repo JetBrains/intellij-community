@@ -3,10 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -145,7 +145,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       PsiType[] parameters = type.getParameters();
       myTypeParameter =
         parameters.length == 1 ? "<" + GenericsUtil.getVariableTypeByExpressionType(parameters[0]).getCanonicalText() + ">" : "";
-      myMethodName = myTypeName.equals("com.google.common.base.Optional") ? "absent" : "empty";
+      myMethodName = myTypeName.equals(OptionalUtil.GUAVA_OPTIONAL) ? "absent" : "empty";
     }
 
     @Nls
@@ -169,7 +169,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
       PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
   }
 

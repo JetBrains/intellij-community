@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -32,6 +34,7 @@ import java.util.Set;
 public class DfaPsiType {
   private final PsiType myPsiType;
   private final DfaValueFactory myFactory;
+  private List<DfaPsiType> mySuperTypes;
   private final int myID;
 
   DfaPsiType(int id, @NotNull PsiType psiType, DfaValueFactory factory) {
@@ -43,6 +46,18 @@ public class DfaPsiType {
   @NotNull
   public PsiType getPsiType() {
     return myPsiType;
+  }
+
+  /**
+   * @return stream of all supertypes of given type excluding self
+   */
+  public Stream<DfaPsiType> superTypes() {
+    if (mySuperTypes == null) {
+      List<DfaPsiType> superTypes = new ArrayList<>();
+      InheritanceUtil.processSuperTypes(getPsiType(), false, t -> superTypes.add(myFactory.createDfaType(t)));
+      mySuperTypes = superTypes;
+    }
+    return mySuperTypes.stream();
   }
 
   @NotNull
@@ -116,7 +131,7 @@ public class DfaPsiType {
       for (PsiClassType type : types) {
         PsiClass resolved = type.resolve();
         if (resolved != null && processed.add(resolved)) {
-          PsiClassType classType = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(resolved);
+          PsiClassType classType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(resolved);
           result.add(normalizeClassType(classType, processed));
         }
       }

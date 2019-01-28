@@ -21,7 +21,10 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -31,7 +34,13 @@ import static org.junit.Assert.assertThat;
 /**
  * @author dsl
  */
-public class ResolveMethod15Test extends Resolve15TestCase {
+public class ResolveMethod15Test extends LightResolveTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_5;
+  }
+
   public void testStaticImportOnDemand() throws Exception {
     final PsiReference ref = configureByFile();
     final PsiElement element = ref.resolve();
@@ -410,7 +419,7 @@ public class ResolveMethod15Test extends Resolve15TestCase {
   }
 
   private PsiReference configureByFile() throws Exception {
-    return configureByFile("method/generics/" + getTestName(false) + ".java");
+    return findReferenceAtCaret("method/generics/" + getTestName(false) + ".java");
   }
   private static PsiMethod checkResolvesUnique(final PsiReference ref) {
     assertThat(ref, instanceOf(PsiReferenceExpression.class));

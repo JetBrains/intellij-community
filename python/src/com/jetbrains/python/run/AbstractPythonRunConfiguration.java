@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -124,8 +125,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), runConfigurationEditor);
 
     // tabs provided by extensions:
-    //noinspection unchecked
-    PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
@@ -147,7 +147,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   private void checkExtensions() throws RuntimeConfigurationException {
     try {
-      PythonRunConfigurationExtensionsManager.getInstance().validateConfiguration(this, false);
+      PythonRunConfigurationExtensionsManager.Companion.getInstance().validateConfiguration(this, false);
     }
     catch (RuntimeConfigurationException e) {
       throw e;
@@ -239,7 +239,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
-    PythonRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().readExternal(this, element);
   }
 
   protected void readEnvs(Element element) {
@@ -265,7 +265,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
 
     // extension settings:
-    PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().writeExternal(this, element);
 
     PathMappingSettings.writeExternal(element, getMappingSettings());
   }
@@ -302,6 +302,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   @Nullable
+  @Transient
   public Module getModule() {
     return getConfigurationModule().getModule();
   }

@@ -191,12 +191,12 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return myFunctionDecl != null ? myFunctionDecl.getName() : getFunctionName();
       }
 
+      @Override
       public String toString() {
         return "Function: " + getName();
       }
 
       @Override
-      @SuppressWarnings({"ConstantConditions"})
       public String getText() {
         return getName();
       }

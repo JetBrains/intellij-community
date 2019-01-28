@@ -124,10 +124,8 @@ public class XPathEvalAction extends XPathAction {
   @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-        if (XpathIcons.Xml != null) {
-            event.getPresentation().setIcon(XpathIcons.Xml);
-        }
-    }
+    event.getPresentation().setIcon(XpathIcons.Xml);
+  }
 
     @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {

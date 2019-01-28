@@ -1,26 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.OldComponentConfig;
-import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
-
 public class OptimizedPluginBean {
-  @XCollection(propertyElementName = APPLICATION_COMPONENTS)
-  public OldComponentConfig[] applicationComponents;
-
-  @XCollection(propertyElementName = PROJECT_COMPONENTS)
-  public OldComponentConfig[] projectComponents;
-
-  @XCollection(propertyElementName = MODULE_COMPONENTS)
-  public OldComponentConfig[] moduleComponents;
-
   @NonNls public static final String APPLICATION_COMPONENTS = "application-components";
   @NonNls public static final String PROJECT_COMPONENTS = "project-components";
   @NonNls public static final String MODULE_COMPONENTS = "module-components";
@@ -31,14 +18,8 @@ public class OptimizedPluginBean {
   @Tag("id")
   public String id;
 
-  @Tag("productCode")
-  public String productCode;
-
-  @Tag("releaseDate")
-  public String releaseDate;
-
-  @Tag("releaseVersion")
-  public int releaseVersion;
+  @Property(surroundWithTag = false)
+  public ProductDescriptor productDescriptor;
 
   @Tag("description")
   public String description;
@@ -83,8 +64,4 @@ public class OptimizedPluginBean {
 
   @Attribute("allow-bundled-update")
   public boolean allowBundledUpdate;
-
-  @Property(surroundWithTag = false)
-  @XCollection(elementName = "module")
-  public List<String> modules = new SmartList<>();
 }

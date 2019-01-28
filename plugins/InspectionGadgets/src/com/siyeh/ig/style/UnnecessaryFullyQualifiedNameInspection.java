@@ -35,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +187,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (qualifier == null) {
         return;
       }
-      qualifier.delete();
+      new CommentTracker().deleteAndRestoreComments(qualifier);
       shortenedElements.add(reference);
     }
   }

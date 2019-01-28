@@ -35,8 +35,8 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
     }
 
     TemplateImpl template = ((LiveTemplateElement)element).getTemplate();
-    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXml(template.getString()) + DocumentationMarkup.DEFINITION_END +
-           DocumentationMarkup.CONTENT_START + StringUtil.escapeXml(StringUtil.notNullize(template.getDescription())) +
+    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXmlEntities(template.getString()) + DocumentationMarkup.DEFINITION_END +
+           DocumentationMarkup.CONTENT_START + StringUtil.escapeXmlEntities(StringUtil.notNullize(template.getDescription())) +
            DocumentationMarkup.CONTENT_END;
   }
 

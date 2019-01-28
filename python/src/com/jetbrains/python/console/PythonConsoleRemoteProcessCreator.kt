@@ -17,16 +17,14 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.CredentialsCase
-import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PyRemoteProcessHandlerBase
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
-import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
+import com.jetbrains.python.remote.*
 
 interface PythonConsoleRemoteProcessCreator<T> {
   val credentialsType: CredentialsType<T>
@@ -40,7 +38,8 @@ interface PythonConsoleRemoteProcessCreator<T> {
                                  credentials: T): RemoteConsoleProcessData
 
   companion object {
-    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>("Pythonid.remoteConsoleProcessCreator")
+    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>(
+      "Pythonid.remoteConsoleProcessCreator")
   }
 }
 
@@ -50,11 +49,17 @@ data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler
                                     val process: Process,
                                     val socketProvider: PyRemoteSocketToLocalHostProvider) {
   constructor(remoteProcessHandlerBase: PyRemoteProcessHandlerBase,
-              pydevConsoleCommunication: PydevConsoleCommunication) : this(remoteProcessHandlerBase = remoteProcessHandlerBase,
+              pydevConsoleCommunication: PydevConsoleCommunication) : this(remoteProcessHandlerBase,
+                                                                           remoteProcessHandlerBase.remoteSocketToLocalHostProvider,
+                                                                           pydevConsoleCommunication)
+
+  constructor(processHandler: BaseProcessHandler<*>,
+              remoteSocketToLocalHostProvider: PyRemoteSocketToLocalHostProvider,
+              pydevConsoleCommunication: PydevConsoleCommunication) : this(remoteProcessHandlerBase = processHandler,
                                                                            pydevConsoleCommunication = pydevConsoleCommunication,
-                                                                           commandLine = remoteProcessHandlerBase.commandLine,
-                                                                           process = remoteProcessHandlerBase.process,
-                                                                           socketProvider = remoteProcessHandlerBase.remoteSocketToLocalHostProvider)
+                                                                           commandLine = processHandler.commandLine,
+                                                                           process = processHandler.process,
+                                                                           socketProvider = remoteSocketToLocalHostProvider)
 }
 
 @Throws(ExecutionException::class)

@@ -159,7 +159,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     AnAction collapseAction = actionsManager.createCollapseAllAction(expander, myTree);
     collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
 
-    toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
+    toolWindow.setTitleActions(new ScrollFromSourceAction(), collapseAction);
   }
 
   @NotNull
@@ -219,7 +219,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
 
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new MvcProjectNode(project, this, myDescriptor);
       }
     };
@@ -238,7 +238,9 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   @NotNull
   @Override
   protected AbstractTreeUpdater createTreeUpdater(@NotNull final AbstractTreeBuilder treeBuilder) {
-    return new AbstractTreeUpdater(treeBuilder);
+    return new AbstractTreeUpdater(treeBuilder) {
+      // unique class to simplify search through the logs
+    };
   }
 
   @Override

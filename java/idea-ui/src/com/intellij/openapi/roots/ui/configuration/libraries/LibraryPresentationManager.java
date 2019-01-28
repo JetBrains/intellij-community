@@ -50,11 +50,11 @@ public abstract class LibraryPresentationManager {
   public abstract List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
 
   @NotNull
-  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<LibraryKind> excludedKinds);
+  public abstract List<String> getDescriptions(@NotNull VirtualFile[] classRoots, Set<? extends LibraryKind> excludedKinds);
 
-  public abstract List<Library> getLibraries(@NotNull Set<LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
+  public abstract List<Library> getLibraries(@NotNull Set<? extends LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 
-  public abstract boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull LibraryKind kind);
+  public abstract boolean isLibraryOfKind(@NotNull List<? extends VirtualFile> files, @NotNull LibraryKind kind);
 
   public abstract boolean isLibraryOfKind(@NotNull Library library, @NotNull LibrariesContainer librariesContainer,
                                           @NotNull Set<? extends LibraryKind> acceptedKinds);

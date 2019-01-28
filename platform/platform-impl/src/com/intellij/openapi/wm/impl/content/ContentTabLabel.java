@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
@@ -24,8 +27,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,15 +34,16 @@ import java.util.Optional;
 class ContentTabLabel extends BaseLabel {
   private static final int MAX_WIDTH = JBUI.scale(300);
   private static final int DEFAULT_HORIZONTAL_INSET = JBUI.scale(12);
-  protected static final int ICONS_GAP = JBUI.scale(3);
+  private static final int ICONS_GAP = JBUI.scale(3);
 
   private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
                                                         JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
+  @NotNull
   private final Content myContent;
   private final TabContentLayout myLayout;
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
-  private String myText = null;
+  private String myText;
   private int myIconWithInsetsWidth;
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
@@ -122,7 +124,7 @@ class ContentTabLabel extends BaseLabel {
     currentIconTooltip = null;
   }
 
-  BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+  private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     @Override
     protected void execute(final MouseEvent e) {
 
@@ -136,6 +138,17 @@ class ContentTabLabel extends BaseLabel {
       }
 
       selectContent();
+
+      if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.myDoubleClickActions.isEmpty()) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(ContentTabLabel.this);
+        for (AnAction action : myLayout.myDoubleClickActions) {
+          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, dataContext, event);
+            ActionUtil.performActionDumbAware(action, event);
+          }
+        }
+      }
     }
   };
 
@@ -162,7 +175,7 @@ class ContentTabLabel extends BaseLabel {
     super.setText(myText);
   }
 
-  protected final boolean mouseOverIcon(AdditionalIcon icon) {
+  final boolean mouseOverIcon(AdditionalIcon icon) {
     if (!isHovered() || !icon.getAvailable()) return false;
 
     PointerInfo info = MouseInfo.getPointerInfo();
@@ -182,20 +195,17 @@ class ContentTabLabel extends BaseLabel {
     behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
 
-    myContent.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent event) {
-        final String property = event.getPropertyName();
-        if (Content.IS_CLOSABLE.equals(property)) {
-          repaint();
-        }
+    myContent.addPropertyChangeListener(event -> {
+      final String property = event.getPropertyName();
+      if (Content.IS_CLOSABLE.equals(property)) {
+        repaint();
       }
     });
 
     setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
   }
 
-  protected void fillIcons(List<AdditionalIcon> icons) {
+  protected void fillIcons(@NotNull List<? super AdditionalIcon> icons) {
     icons.add(closeTabIcon);
   }
 
@@ -249,7 +259,6 @@ class ContentTabLabel extends BaseLabel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    int iconWidth = 0;
     Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
     for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
       if (myAdditionalIcon.getAvailable()) {
@@ -257,9 +266,9 @@ class ContentTabLabel extends BaseLabel {
       }
     }
 
-    int right = DEFAULT_HORIZONTAL_INSET;
     int left = DEFAULT_HORIZONTAL_INSET;
 
+    int iconWidth = 0;
     if (map.get(false) != null) {
       iconWidth = ICONS_GAP;
 
@@ -272,6 +281,7 @@ class ContentTabLabel extends BaseLabel {
       iconWidth = 0;
     }
 
+    int right = DEFAULT_HORIZONTAL_INSET;
     if (map.get(true) != null) {
       right = ICONS_GAP + JBUI.scale(4);
 
@@ -289,7 +299,7 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return isSelected() || (myUi != null && myUi.myWindow.isActive());
+    return isSelected() || myUi != null && myUi.myWindow.isActive();
   }
 
   @Override

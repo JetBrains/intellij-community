@@ -93,7 +93,6 @@ public abstract class ProjectBuild extends Generator {
 
   @Override
   public void generate(PrintWriter out) throws IOException {
-    //noinspection HardCodedStringLiteral
     writeXmlHeader(out);
     myAntProject.generate(out);
   }

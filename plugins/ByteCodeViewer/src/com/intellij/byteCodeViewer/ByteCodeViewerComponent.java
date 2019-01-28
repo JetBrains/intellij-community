@@ -37,7 +37,6 @@ import java.awt.*;
 
 /**
  * @author anna
- * @since 5/7/12
  */
 public class ByteCodeViewerComponent extends JPanel implements Disposable {
 

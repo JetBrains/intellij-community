@@ -66,7 +66,7 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
   }
 
   @Override
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
     if (lists.size() == 1) {
       return lists.get(0);
     }

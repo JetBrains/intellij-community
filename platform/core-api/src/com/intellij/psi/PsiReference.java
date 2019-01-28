@@ -45,6 +45,14 @@ public interface PsiReference extends PsiSymbolReference {
   /**
    * Returns the part of the underlying element which serves as a reference, or the complete
    * text range of the element if the entire element is a reference.
+   * <p/>
+   * Sample: PsiElement representing a fully qualified name with multiple dedicated PsiReferences, each bound
+   * to the range it resolves to (skipping the '.' separator).
+   * <pre>
+   * PsiElement text: qualified.LongName
+   * PsiReferences:   [Ref1---]X[Ref2--]
+   * </pre>
+   * where {@code Ref1} would resolve to a "namespace" and {@code Ref2} to an "element".
    *
    * @return Relative range in element
    */
@@ -101,7 +109,7 @@ public interface PsiReference extends PsiSymbolReference {
   boolean isReferenceTo(@NotNull PsiElement element);
 
   /**
-   * Returns the array of String, {@link PsiElement} and/or {@link LookupElement}
+   * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.codeInsight.lookup.LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
@@ -111,7 +119,6 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return the array of available identifiers.
    */
-  @SuppressWarnings("JavadocReference")
   @NotNull
   default Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

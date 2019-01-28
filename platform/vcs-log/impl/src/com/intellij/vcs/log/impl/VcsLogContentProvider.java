@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
@@ -48,7 +49,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  @Nullable private Consumer<VcsLogUiImpl> myOnCreatedListener;
+  @Nullable private Consumer<? super VcsLogUiImpl> myOnCreatedListener;
 
   @Nullable private volatile VcsLogUiImpl myUi;
 
@@ -120,7 +121,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    * @param consumer consumer to execute.
    */
   @CalledInAwt
-  public void executeOnMainUiCreated(@NotNull Consumer<VcsLogUiImpl> consumer) {
+  public void executeOnMainUiCreated(@NotNull Consumer<? super VcsLogUiImpl> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     if (myUi == null) {
@@ -151,8 +152,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      return !VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project)
-                           .isEmpty();
+      VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
+      return !VcsLogManager.findLogProviders(Arrays.asList(roots), project).isEmpty();
     }
   }
 }

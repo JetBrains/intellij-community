@@ -176,7 +176,6 @@ public class ContentEntryTreeEditor {
     myExcludePatternsField.setText(StringUtil.join(entry.getExcludePatterns(), ";"));
 
     final Runnable init = () -> {
-      //noinspection ConstantConditions
       myFileSystemTree.updateTree();
       myFileSystemTree.select(file, null);
     };

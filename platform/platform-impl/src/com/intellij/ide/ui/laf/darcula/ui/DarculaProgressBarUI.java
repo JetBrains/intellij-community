@@ -181,7 +181,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Rectangle r = new Rectangle(progressBar.getSize());
-      if (c.isOpaque()) {
+      if (c.isOpaque() && c.getParent()!= null) {
         g2.setColor(c.getParent().getBackground());
         g2.fill(r);
       }

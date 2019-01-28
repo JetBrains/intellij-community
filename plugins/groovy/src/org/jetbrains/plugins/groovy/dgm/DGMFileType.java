@@ -44,8 +44,12 @@ public class DGMFileType extends LanguageFileType implements FileTypeIdentifiabl
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    if (parent != null && Comparing.equal("services", parent.getNameSequence())) {
+    final VirtualFile parent = file.getParent();
+    if (parent == null) {
+      return false;
+    }
+    final CharSequence parentName = parent.getNameSequence();
+    if (Comparing.equal("services", parentName) || Comparing.equal("groovy", parentName)) {
       final VirtualFile gParent = parent.getParent();
       if (gParent != null && Comparing.equal("META-INF", gParent.getNameSequence())) {
         final String fileName = file.getName();

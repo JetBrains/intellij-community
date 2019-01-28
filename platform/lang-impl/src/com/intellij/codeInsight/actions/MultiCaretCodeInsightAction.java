@@ -113,21 +113,18 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
                                  @NotNull final MultiCaretCodeInsightActionHandler handler) {
     PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
 
-    hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        Editor editor = hostEditor;
-        if (hostFile != null) {
-          Caret injectedCaret = InjectedLanguageUtil.getCaretForInjectedLanguageNoCommit(caret, hostFile);
-          if (injectedCaret != null) {
-            caret = injectedCaret;
-            editor = caret.getEditor();
-          }
+    hostEditor.getCaretModel().runForEachCaret(caret -> {
+      Editor editor = hostEditor;
+      if (hostFile != null) {
+        Caret injectedCaret = InjectedLanguageUtil.getCaretForInjectedLanguageNoCommit(caret, hostFile);
+        if (injectedCaret != null) {
+          caret = injectedCaret;
+          editor = caret.getEditor();
         }
-        final PsiFile file = PsiUtilBase.getPsiFileInEditor(caret, project);
-        if (file != null) {
-          handler.invoke(project, editor, caret, file);
-        }
+      }
+      final PsiFile file = PsiUtilBase.getPsiFileInEditor(caret, project);
+      if (file != null) {
+        handler.invoke(project, editor, caret, file);
       }
     });
   }

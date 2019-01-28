@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
@@ -100,8 +99,7 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
     C content = getTreeContent(e);
     if (content == null) return;
 
-    List<T> verifiedTargetNodes = getTargetNodes(e).stream().filter(node -> isVisible4(node) && isEnabled4(node))
-      .collect(Collectors.toList());
+    List<T> verifiedTargetNodes = ContainerUtil.filter(getTargetNodes(e), node -> isVisible4(node) && isEnabled4(node));
     doActionPerformed(content, e, verifiedTargetNodes);
   }
 

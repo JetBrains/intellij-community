@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,18 @@ public class PyWrapTest extends PyTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
-    final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
-    pythonSettings.RIGHT_MARGIN = myOldMargin;
-    super.tearDown();
+    try {
+      final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
+      final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+      settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
+      pythonSettings.RIGHT_MARGIN = myOldMargin;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testBackslashOnWrap() {

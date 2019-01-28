@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,8 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public class Splitter extends JPanel implements Splittable {
+  private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
+  private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Splitter");
   @NonNls public static final String PROP_PROPORTION = "proportion";
   @NonNls public static final String PROP_ORIENTATION = "orientation";
@@ -547,7 +550,7 @@ public class Splitter extends JPanel implements Splittable {
         return;
       }
 
-      Icon glueIcon = isVerticalSplit ? AllIcons.General.SplitGlueV : AllIcons.General.SplitGlueH;
+      Icon glueIcon = isVerticalSplit ? SplitGlueV : SplitGlueH;
       add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                        new Insets(0, 0, 0, 0), 0, 0));
 

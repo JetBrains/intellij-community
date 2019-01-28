@@ -18,9 +18,12 @@ package com.siyeh.ipp.forloop;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -237,37 +240,14 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     return variableName;
   }
 
-  public static String createVariableName(
-    @Nullable String baseName,
-    @NotNull PsiExpression assignedExpression) {
-    final Project project = assignedExpression.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final SuggestedNameInfo names =
-      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                           baseName, assignedExpression, null);
-    if (names.names.length == 0) {
-      return codeStyleManager.suggestUniqueVariableName(baseName,
-                                                        assignedExpression, true);
-    }
-    return codeStyleManager.suggestUniqueVariableName(names.names[0],
-                                                      assignedExpression, true);
+  public static String createVariableName(@Nullable String baseName, @NotNull PsiExpression assignedExpression) {
+    return new VariableNameGenerator(assignedExpression, VariableKind.LOCAL_VARIABLE).byName(baseName).byExpression(assignedExpression)
+      .byType(assignedExpression.getType()).generate(true);
   }
 
   public static String createVariableName(@Nullable String baseName,
                                           @NotNull PsiType type,
                                           @NotNull PsiElement context) {
-    final Project project = context.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
-    final SuggestedNameInfo names =
-      codeStyleManager.suggestVariableName(
-        VariableKind.LOCAL_VARIABLE, baseName, null, type);
-    if (names.names.length == 0) {
-      return codeStyleManager.suggestUniqueVariableName(baseName,
-                                                        context, true);
-    }
-    return codeStyleManager.suggestUniqueVariableName(names.names[0],
-                                                      context, true);
+    return new VariableNameGenerator(context, VariableKind.LOCAL_VARIABLE).byName(baseName).byType(type).generate(true);
   }
 }

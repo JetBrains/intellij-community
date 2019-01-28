@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A pruned and optimized version of javolution.text.Text
@@ -54,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@SuppressWarnings({"AssignmentToForLoopParameter","UnnecessaryThis"})
+@SuppressWarnings({"UnnecessaryThis"})
 final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
@@ -89,41 +88,13 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   private static LeafNode createLeafNode(@NotNull CharSequence str) {
-    byte[] bytes = toBytesIfPossible(str);
+    byte[] bytes = ByteArrayCharSequence.toBytesIfPossible(str);
     if (bytes != null) {
       return new Leaf8BitNode(bytes);
     }
     char[] chars = new char[str.length()];
     CharArrayUtil.getChars(str, chars, 0, 0, str.length());
     return new WideLeafNode(chars);
-  }
-
-  @Nullable
-  private static byte[] toBytesIfPossible(CharSequence seq) {
-    if (seq instanceof ByteArrayCharSequence) {
-      return ((ByteArrayCharSequence)seq).getBytes();
-    }
-    byte[] bytes = new byte[seq.length()];
-    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
-    if (chars == null) {
-      for (int i = 0; i < bytes.length; i++) {
-        char c = seq.charAt(i);
-        if ((c & 0xff00) != 0) {
-          return null;
-        }
-        bytes[i] = (byte)c;
-      }
-    }
-    else {
-      for (int i = 0; i < bytes.length; i++) {
-        char c = chars[i];
-        if ((c & 0xff00) != 0) {
-          return null;
-        }
-        bytes[i] = (byte)c;
-      }
-    }
-    return bytes;
   }
 
   /**

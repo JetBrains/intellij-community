@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -20,6 +19,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +61,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     final Config configuration = getConfiguration();
     myDisplayName = getSettings().getName();
-    myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
+    myHelpTopic = configuration.getType().getHelpTopic();
 
     myBrokenConfiguration = !configuration.getType().isManaged();
     setFolderName(getSettings().getFolderName());
@@ -144,7 +146,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
-    DataManager.registerDataProvider(result, new MyDataProvider());
+    DataManager.registerDataProvider(result, dataId -> {
+      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
+        return getEditor();
+      }
+      return null;
+    });
     return result;
   }
 
@@ -317,6 +324,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JCheckBox myCbStoreProjectConfiguration;
     private JBCheckBox myIsAllowRunningInParallelCheckBox;
     private JPanel myValidationPanel;
+    private JBScrollPane myJBScrollPane;
 
     private Runnable myQuickFix = null;
 
@@ -356,6 +364,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
       myIsAllowRunningInParallelCheckBox.addActionListener(actionListener);
+
+      myJBScrollPane.setBorder(JBUI.Borders.empty());
+      myJBScrollPane.setViewportBorder(JBUI.Borders.empty());
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
@@ -413,17 +424,27 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private String generateWarningLabelText(final ValidationResult configurationException) {
       return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
     }
-  }
 
-  private class MyDataProvider implements DataProvider {
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return getEditor();
-      }
-      return null;
+    private void createUIComponents() {
+      myComponentPlace = new NonOpaquePanel();
+      myJBScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension d = super.getMinimumSize();
+          JViewport viewport = getViewport();
+          if (viewport != null) {
+            Component view = viewport.getView();
+            if (view instanceof Scrollable) {
+              d.width = ((Scrollable)view).getPreferredScrollableViewportSize().width;
+            }
+            if (view != null) {
+              d.width = view.getMinimumSize().width;
+            }
+          }
+          d.height = Math.max(d.height, JBUI.scale(400));
+          return d;
+        }
+      };
     }
   }
 }

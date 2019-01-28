@@ -413,18 +413,18 @@ public abstract class PluginManagerMain implements Disposable {
    */
   @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<PluginId> allPlugins,
+                                        List<? extends PluginId> allPlugins,
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
-                           allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
+                           ContainerUtil.map(allPlugins, p -> new PluginNode(p, p.getIdString(), "-1")),
                            onSuccess,
                            new PluginEnabler.HEADLESS(),
                            cleanup);
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> allPlugins,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
@@ -638,7 +638,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<PluginNode> list) {
+                                                                 List<? extends PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
- * @since 7.0.3
  */
 public interface FileHyperlinkInfo extends HyperlinkInfo {
   @Nullable

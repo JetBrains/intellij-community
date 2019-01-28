@@ -117,6 +117,9 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
           .first();
         e.getPresentation().setVisible(replacingActions == null);
       }
+      else {
+        e.getPresentation().setVisible(false);
+      }
     }
   }
 

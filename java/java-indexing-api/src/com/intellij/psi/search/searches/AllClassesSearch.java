@@ -69,7 +69,7 @@ public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClasse
   }
 
   @NotNull
-  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<String> shortNameCondition) {
+  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<? super String> shortNameCondition) {
     return INSTANCE.createQuery(new SearchParameters(scope, project, shortNameCondition));
   }
 }

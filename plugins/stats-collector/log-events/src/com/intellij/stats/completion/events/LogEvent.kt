@@ -16,21 +16,18 @@
 
 package com.intellij.stats.completion.events
 
-import com.intellij.stats.completion.Action
-import com.intellij.stats.completion.LogEventVisitor
-import com.intellij.stats.completion.LookupEntryInfo
-import com.intellij.stats.completion.ValidationStatus
+import com.intellij.stats.completion.*
 
 
 abstract class LogEvent(
         @Transient var userUid: String,
         @Transient var sessionUid: String,
-        @Transient var actionType: Action
+        @Transient var actionType: Action,
+        @Transient var timestamp: Long
 ) {
 
     @Transient var recorderId: String = "completion-stats"
-    @Transient var recorderVersion: String = "4"
-    @Transient var timestamp: Long = System.currentTimeMillis()
+    @Transient var recorderVersion: String = "6"
     @Transient var bucket: String = "-1"
     var validationStatus: ValidationStatus = ValidationStatus.UNKNOWN
 
@@ -42,11 +39,14 @@ abstract class LookupStateLogData(
         userId: String,
         sessionId: String,
         action: Action,
-        @JvmField var completionListIds: List<Int>,
-        @JvmField var newCompletionListItems: List<LookupEntryInfo>,
-        @JvmField var currentPosition: Int
-) : LogEvent(userId, sessionId, action) {
+        state: LookupState,
+        timestamp: Long
+) : LogEvent(userId, sessionId, action, timestamp) {
 
+    @JvmField var completionListIds: List<Int> = state.ids
+    @JvmField var newCompletionListItems: List<LookupEntryInfo> = state.newItems
+    @JvmField var itemsDiff: List<LookupEntryDiff> = state.itemsDiff
+    @JvmField var currentPosition: Int = state.selectedPosition
 
     @JvmField var originalCompletionType: String = ""
     @JvmField var originalInvokationCount: Int = -1

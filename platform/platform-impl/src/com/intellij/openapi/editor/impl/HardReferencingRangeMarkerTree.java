@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see RangeMarkerWithGetterImpl
  */
-class HardReferencingRangeMarkerTree<T extends RangeMarkerWithGetterImpl<T>> extends RangeMarkerTree<T> {
+class HardReferencingRangeMarkerTree<T extends RangeMarkerWithGetterImpl> extends RangeMarkerTree<T> {
   HardReferencingRangeMarkerTree(@NotNull Document document) {
     super(document);
   }
@@ -27,7 +27,7 @@ class HardReferencingRangeMarkerTree<T extends RangeMarkerWithGetterImpl<T>> ext
     return new Node<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
   }
 
-  static class Node<T extends RangeMarkerWithGetterImpl<T>> extends RMNode<T> {
+  static class Node<T extends RangeMarkerWithGetterImpl> extends RMNode<T> {
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,
          @NotNull T key,
          int start,
@@ -40,7 +40,8 @@ class HardReferencingRangeMarkerTree<T extends RangeMarkerWithGetterImpl<T>> ext
 
     @Override
     protected Getter<T> createGetter(@NotNull T interval) {
-      return interval;
+      //noinspection unchecked
+      return (Getter<T>) interval;
     }
   }
 }

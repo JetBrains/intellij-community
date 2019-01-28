@@ -59,9 +59,7 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
-    if (psiElement == null || !psiElement.isValid()) return false;
-    final LocalQuickFix fix = getFix();
-    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).isAvailable(project, editor, file);
+    return psiElement != null && psiElement.isValid();
   }
 
   @Override

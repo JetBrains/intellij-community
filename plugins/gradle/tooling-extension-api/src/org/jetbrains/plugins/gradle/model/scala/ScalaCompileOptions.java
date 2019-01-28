@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public interface ScalaCompileOptions extends Serializable {
   /**

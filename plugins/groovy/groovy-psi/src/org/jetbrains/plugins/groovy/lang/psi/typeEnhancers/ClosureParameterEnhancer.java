@@ -97,7 +97,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
   @Override
   @Nullable
-  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
     if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic(closure)) {
       return null;
     }

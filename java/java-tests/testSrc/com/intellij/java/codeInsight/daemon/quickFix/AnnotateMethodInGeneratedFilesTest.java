@@ -39,6 +39,9 @@ public class AnnotateMethodInGeneratedFilesTest extends LightCodeInsightFixtureT
     try {
       Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

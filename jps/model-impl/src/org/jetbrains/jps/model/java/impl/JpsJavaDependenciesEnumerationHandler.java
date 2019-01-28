@@ -43,7 +43,7 @@ public abstract class JpsJavaDependenciesEnumerationHandler {
     return handlers;
   }
 
-  public static boolean shouldProcessDependenciesRecursively(final List<JpsJavaDependenciesEnumerationHandler> handlers) {
+  public static boolean shouldProcessDependenciesRecursively(final List<? extends JpsJavaDependenciesEnumerationHandler> handlers) {
     if (handlers != null) {
       for (JpsJavaDependenciesEnumerationHandler handler : handlers) {
         if (!handler.shouldProcessDependenciesRecursively()) {

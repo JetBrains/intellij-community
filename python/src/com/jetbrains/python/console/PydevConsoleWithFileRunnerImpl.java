@@ -14,7 +14,7 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   @NotNull private final PythonRunConfiguration myConfig;
 
   public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
-                                        @NotNull Sdk sdk,
+                                        @Nullable Sdk sdk,
                                         @NotNull PyConsoleType consoleType,
                                         @NotNull String title,
                                         @Nullable String workingDir,

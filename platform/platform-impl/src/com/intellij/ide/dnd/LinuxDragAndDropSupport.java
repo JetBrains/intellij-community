@@ -83,7 +83,7 @@ public class LinuxDragAndDropSupport {
   }
 
   @NotNull
-  public static String toUriList(@NotNull final List<File> files) {
+  public static String toUriList(@NotNull final List<? extends File> files) {
     return StringUtil.join(files, file -> file.toURI().toString(), "\n");
   }
 

@@ -96,6 +96,15 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         return myField.declaringType().getValue(myField);
       }
     }
+    catch (InternalException e) {
+      if (evaluationContext.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+        LOG.debug(e);
+      }
+      else {
+        LOG.warn(e);
+      }
+      throw new EvaluateException("Internal error, see logs for more details");
+    }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
@@ -153,7 +162,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     String fieldName;
     if(isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');

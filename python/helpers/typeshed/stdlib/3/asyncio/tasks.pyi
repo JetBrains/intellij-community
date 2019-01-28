@@ -1,8 +1,9 @@
+import concurrent.futures
+import sys
 from typing import (Any, TypeVar, Set, Dict, List, TextIO, Union, Tuple, Generic, Callable,
                     Coroutine, Generator, Iterable, Awaitable, overload, Sequence, Iterator,
                     Optional)
 from types import FrameType
-import concurrent.futures
 from .events import AbstractEventLoop
 from .futures import Future
 
@@ -70,3 +71,8 @@ class Task(Future[_T], Generic[_T]):
     def cancel(self) -> bool: ...
     def _step(self, value: Any = ..., exc: Exception = ...) -> None: ...
     def _wakeup(self, future: Future[Any]) -> None: ...
+
+if sys.version_info >= (3, 7):
+    def all_tasks(loop: Optional[AbstractEventLoop] = ...) -> Set[Task]: ...
+    def create_task(coro: Union[Generator[Any, None, _T], Awaitable[_T]]) -> Task: ...
+    def current_task(loop: Optional[AbstractEventLoop] = ...) -> Optional[Task]: ...

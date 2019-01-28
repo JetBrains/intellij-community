@@ -8,6 +8,6 @@ class SortedList<E extends Comparable> extends ArrayList<E>
   }
 
   public boolean add(E e){
-      <ref>binarySearch(this,e); //infer E
+      <caret>binarySearch(this,e); //infer E
   }
 }

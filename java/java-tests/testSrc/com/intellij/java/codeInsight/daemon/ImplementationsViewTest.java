@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
+import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.psi.PsiClass;
@@ -25,7 +12,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.*;
@@ -146,8 +135,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
-    final ImplementationViewComponent component =
-      new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     try {
       final String[] visibleFiles = component.getVisibleFiles();
       assertTrue(visibleFiles.length > 0);
@@ -159,6 +147,11 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     finally {
       component.removeNotify();
     }
+  }
+
+  @NotNull
+  private ImplementationViewComponent createImplementationView(List<? extends PsiElement> elements) {
+    return new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
   }
 
   public void testFunctionalInterface() {
@@ -180,7 +173,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
@@ -199,7 +192,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiClass);
     all.addAll(classes);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL in AFoo)"});
   }
 
@@ -222,7 +215,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
   }
 
@@ -252,7 +245,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     List<PsiElement> all = new ArrayList<>();
     all.add(psiMethod);
     all.addAll(methods);
-    final ImplementationViewComponent component = new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     assertContent(component, new String[]{"a.java (AFoo)"});
   }
 
@@ -292,8 +285,7 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
 
     //make sure they are in predefined order
     Collections.sort(all, Comparator.comparing(o -> o.getContainingClass().getQualifiedName()));
-    final ImplementationViewComponent component =
-      new ImplementationViewComponent(all.toArray(PsiElement.EMPTY_ARRAY), 0);
+    final ImplementationViewComponent component = createImplementationView(all);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});
   }
 

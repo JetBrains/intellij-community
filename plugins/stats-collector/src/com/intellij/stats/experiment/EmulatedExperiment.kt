@@ -14,10 +14,11 @@ class EmulatedExperiment {
         val userId = PermanentInstallationID.get()
         val hash = (userId + salt).hashCode() % 10
         val version = when (hash) {
-            3, 4 -> 4
+            3 -> 5
+            4 -> 6
             else -> 3
         }
-        val perform = hash == 4
+        val perform = hash == 6
         return Pair(version, perform)
     }
 }

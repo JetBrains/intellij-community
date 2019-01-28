@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
@@ -20,7 +21,6 @@ import java.util.List;
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.lang.Math.min;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
 
@@ -123,7 +123,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
     List<SvnChangeList> changeLists = getChangeLists(mergeContext, settings, beforeRevision, size, (changeList, tree) -> changeList);
     return Pair.create(
-      changeLists.subList(0, min(size, changeLists.size())),
+      ContainerUtil.getFirstItems(changeLists, size),
       changeLists.size() < size + 1);
   }
 

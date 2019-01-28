@@ -16,16 +16,11 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
@@ -82,8 +77,7 @@ class ClassMapCachingNulls<T> {
     }
     
     if (result == null) return null;
-    final Set<T> _result = result;
-    return myOrderingArray.stream().filter(_result::contains).collect(Collectors.toList());
+    return ContainerUtil.filter(myOrderingArray, result::contains);
   }
 
   private Set<T> addFromUpper(Set<T> value, Class superclass) {
@@ -93,11 +87,7 @@ class ClassMapCachingNulls<T> {
       if (value == null) {
         value = new HashSet<>(fromUpper.length);
       }
-      for (T t : fromUpper) {
-        if (!value.contains(t)) {
-          value.add(t);
-        }
-      }
+      Collections.addAll(value, fromUpper);
       assert !value.isEmpty();
     }
     return value;

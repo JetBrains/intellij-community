@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,6 +44,7 @@ import java.util.*;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 import static git4idea.util.GitUIUtil.*;
 
 /**
@@ -131,7 +132,7 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    if (!fetchAndNotify(trackedBranches.keySet())) {
+    if (!fetchAndNotify(myRepositories)) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -313,7 +314,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(repositories, "Update failed", false);
+    return fetchSupport(myProject).fetchDefaultRemote(repositories).showNotificationIfFailed("Update failed");
   }
 
   /**
@@ -343,7 +344,7 @@ public class GitUpdateProcess {
       }
     }
 
-    if (currentBranches.isEmpty() || (isSyncControl() && (currentBranches.size() < myRepositories.size()))) {
+    if (!detachedHeads.isEmpty() && (currentBranches.isEmpty() || isSyncControl())) {
       notifyDetachedHeadError(detachedHeads.get(0));
       return null;
     }
@@ -369,7 +370,7 @@ public class GitUpdateProcess {
     }
 
     if (myCheckForTrackedBranchExistence &&
-        (trackedBranches.isEmpty() || (isSyncControl() && (trackedBranches.size() < myRepositories.size())))) {
+        !noTrackedBranch.isEmpty() && (trackedBranches.isEmpty() || isSyncControl())) {
       GitRepository repo = noTrackedBranch.get(0);
       notifyNoTrackedBranchError(repo, currentBranches.get(repo));
       return null;

@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.ModuleTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -87,6 +84,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         }
       }
       CompilerTestUtil.disableExternalCompiler(getProject());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -250,20 +250,31 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       };
       PlatformTestUtil.saveProject(myProject);
       CompilerTestUtil.saveApplicationSettings();
+      try {
+        CompilerTester.enableDebugLogging();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       action.accept(callback);
     });
 
-    final long start = System.currentTimeMillis();
-    while (!semaphore.waitFor(10)) {
-      if (System.currentTimeMillis() - start > 5 * 60 * 1000) {
-        throw new RuntimeException("timeout");
+    try {
+      final long start = System.currentTimeMillis();
+      while (!semaphore.waitFor(10)) {
+        if (System.currentTimeMillis() - start > 50 * 60 * 1000) {
+          throw new RuntimeException("timeout");
+        }
+        if (SwingUtilities.isEventDispatchThread()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
       }
       if (SwingUtilities.isEventDispatchThread()) {
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+    finally {
+      CompilerTester.printBuildLog();
     }
 
     return result.get();
@@ -303,7 +314,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   @NotNull
   @Override
-  protected Module doCreateRealModule(String moduleName) {
+  protected Module doCreateRealModule(@NotNull String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
     final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);

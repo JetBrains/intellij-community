@@ -30,7 +30,6 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
   private final String myDisplayName;
-  private CodeStyleSchemesModel myModel;
 
   public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
                                        final String displayName) {
@@ -99,11 +98,10 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
     return myPanel;
   }
 
-  public void setModel(final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     if (myPanel != null) {
       myPanel.setModel(model);
     }
-    myModel = model;
   }
 
   public void onSomethingChanged() {

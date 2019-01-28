@@ -240,7 +240,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
   @Nullable
   public static String getEntityPlaceholder(@NotNull PsiElement psi) {
     String text = psi.getText();
-    String fastPath = StringUtil.unescapeXml(text);
+    String fastPath = StringUtil.unescapeXmlEntities(text);
     if (!StringUtil.equals(fastPath, text)) return fastPath;
     if (psi.isValid()) {
       final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());

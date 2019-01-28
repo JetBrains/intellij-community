@@ -108,7 +108,6 @@ public class ProjectTemplateList extends JPanel {
     Collections.sort(list, (o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
-    //noinspection unchecked
     myList.setModel(new CollectionListModel<>(list));
     if (myList.isEnabled()) {
       myList.setSelectedIndex(index == -1 ? 0 : index);
@@ -137,7 +136,6 @@ public class ProjectTemplateList extends JPanel {
   void restoreSelection() {
     final String templateName = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_TEMPLATE);
     if (templateName != null && myList.getModel() instanceof CollectionListModel) {
-      @SuppressWarnings("unchecked")
       List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
       ProjectTemplate template = ContainerUtil.find(list, template1 -> templateName.equals(template1.getName()));
       if (template != null) {

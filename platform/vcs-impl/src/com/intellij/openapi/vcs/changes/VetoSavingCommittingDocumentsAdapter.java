@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.changes.ui.AbstractCommitter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -39,7 +39,7 @@ public class VetoSavingCommittingDocumentsAdapter {
   private Map<Document, Project> getDocumentsBeingCommitted() {
     Map<Document, Project> documentsToWarn = ContainerUtil.newHashMap();
     for (Document unsavedDocument : myFileDocumentManager.getUnsavedDocuments()) {
-      final Object data = unsavedDocument.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
+      final Object data = unsavedDocument.getUserData(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY);
       if (data instanceof Project) {
         documentsToWarn.put(unsavedDocument, (Project)data);
       }
@@ -52,7 +52,7 @@ public class VetoSavingCommittingDocumentsAdapter {
     for (Document document : documentsToWarn.keySet()) {
       Project oldData = documentsToWarn.get(document);
       //the committing thread could have finished already and file is not being committed anymore
-      ((UserDataHolderEx)document).replace(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY, oldData, newValue);
+      ((UserDataHolderEx)document).replace(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, oldData, newValue);
     }
   }
 

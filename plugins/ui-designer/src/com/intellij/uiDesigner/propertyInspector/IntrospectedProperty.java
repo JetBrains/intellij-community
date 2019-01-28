@@ -141,7 +141,6 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   @Override
   public boolean appliesTo(final RadComponent component) {
     @NonNls String name = getName();
-    //noinspection SimplifiableIfStatement
     if (name.equals(SwingProperties.PREFERRED_SIZE) ||
         name.equals(SwingProperties.MINIMUM_SIZE) ||
         name.equals(SwingProperties.MAXIMUM_SIZE)) {

@@ -18,13 +18,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
@@ -37,6 +40,11 @@ import java.util.NoSuchElementException;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
+
+  private static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.GRAY), JBUI.insets(1));
+  private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(UIUtil.getToolTipBackground().brighter(), Gray._111));
+  private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
 
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
@@ -392,15 +400,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     private final SearchField mySearchField;
 
     SearchPopup(String initialString) {
-      final Color foregroundColor = UIUtil.getToolTipForeground();
-      Color color1 = new JBColor(UIUtil.getToolTipBackground().brighter(), Gray._111);
       mySearchField = new SearchField();
       final JLabel searchLabel = new JLabel(" " + UIBundle.message("search.popup.search.for.label") + " ");
       searchLabel.setFont(searchLabel.getFont().deriveFont(Font.BOLD));
-      searchLabel.setForeground(foregroundColor);
+      searchLabel.setForeground(FOREGROUND_COLOR);
       mySearchField.setBorder(null);
-      mySearchField.setBackground(color1);
-      mySearchField.setForeground(foregroundColor);
+      mySearchField.setBackground(BACKGROUND_COLOR);
+      mySearchField.setForeground(FOREGROUND_COLOR);
 
       mySearchField.setDocument(new PlainDocument() {
         @Override
@@ -416,17 +422,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           if (findElement(newText) == null) {
-            mySearchField.setForeground(JBColor.RED);
+            mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
           }
           else {
-            mySearchField.setForeground(foregroundColor);
+            mySearchField.setForeground(FOREGROUND_COLOR);
           }
         }
       });
       mySearchField.setText(initialString);
 
-      setBorder(BorderFactory.createLineBorder(Color.gray, 1));
-      setBackground(color1);
+      setBorder(BORDER);
+      setBackground(BACKGROUND_COLOR);
       setLayout(new BorderLayout());
       add(searchLabel, BorderLayout.WEST);
       add(mySearchField, BorderLayout.EAST);
@@ -464,10 +470,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     private void updateSelection(Object element) {
       if (element != null) {
         selectElement(element, mySearchField.getText());
-        mySearchField.setForeground(UIUtil.getLabelForeground());
+        mySearchField.setForeground(FOREGROUND_COLOR);
       }
       else {
-        mySearchField.setForeground(JBColor.red);
+        mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
       }
       if (mySearchPopup != null) {
         mySearchPopup.setSize(mySearchPopup.getPreferredSize());
@@ -484,6 +490,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private class SearchField extends JTextField {
     SearchField() {
       setFocusable(false);
+    }
+
+    @Override
+    public void setForeground(Color color) {
+      super.setForeground(color);
     }
 
     @Override

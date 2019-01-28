@@ -15,8 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
 import java.io.Writer;
 
@@ -172,73 +170,6 @@ public abstract class LineOutputWriter extends Writer {
     @Override
     public boolean hasData() {
       return myCursor < myChars.length();
-    }
-  }
-
-  private  static class CharArrayCharSequence implements CharSequence {
-    protected final char[] myChars;
-    protected final int myStart;
-    protected final int myEnd;
-
-    CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
-      if (start < 0 || end > chars.length || start > end) {
-        throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
-      }
-      myChars = chars;
-      myStart = start;
-      myEnd = end;
-    }
-
-    @Override
-    public final int length() {
-      return myEnd - myStart;
-    }
-
-    @Override
-    public final char charAt(int index) {
-      return myChars[index + myStart];
-    }
-
-    @NotNull
-    @Override
-    public CharSequence subSequence(int start, int end) {
-      return start == 0 && end == length() ? this : new CharArrayCharSequence(myChars, myStart + start, myStart + end);
-    }
-
-    @Override
-    @NotNull
-    public String toString() {
-      return new String(myChars, myStart, myEnd - myStart);
-    }
-  }
-
-  private static final class SingleCharSequence implements CharSequence {
-    private final char myCh;
-
-    SingleCharSequence(char ch) {
-      myCh = ch;
-    }
-
-    @Override
-    public int length() {
-      return 1;
-    }
-
-    @Override
-    public char charAt(int index) {
-      if (index != 0) {
-        throw new IndexOutOfBoundsException("Index out of bounds: " + index);
-      }
-      return myCh;
-    }
-
-    @Override
-    public CharSequence subSequence(int start, int end) {
-      throw new RuntimeException("Method subSequence not implemented");
-    }
-
-    public String toString() {
-      return String.valueOf(myCh);
     }
   }
 }

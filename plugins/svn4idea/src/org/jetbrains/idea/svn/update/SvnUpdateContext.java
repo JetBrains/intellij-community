@@ -13,6 +13,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+
 public class SvnUpdateContext implements SequentialUpdatesContext {
   private final Set<File> myUpdatedExternals;
   private final SvnVcs myVcs;
@@ -48,7 +50,7 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
       result = false;
     }
     else if (FilePathUtil.isNested(myContentRoots, ioRoot)) {
-      final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
+      final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(ioRoot));
 
       if (info != null) {
         if (NestedCopyType.switched.equals(info.getType())) {

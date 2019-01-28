@@ -39,7 +39,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 6/13/13 5:42 PM
  */
 public class DetachExternalProjectAction extends ExternalSystemNodeAction<ProjectData> {
 

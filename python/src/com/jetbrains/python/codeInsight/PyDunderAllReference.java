@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.LightNamedElement;
@@ -50,7 +49,7 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
 
     if (onlyDunderAlls) return ResolveResult.EMPTY_ARRAY;
 
-    return ContainerUtil.toArray(resolveResults, RatedResolveResult.EMPTY_ARRAY);
+    return resolveResults.toArray(RatedResolveResult.EMPTY_ARRAY);
   }
 
   @NotNull

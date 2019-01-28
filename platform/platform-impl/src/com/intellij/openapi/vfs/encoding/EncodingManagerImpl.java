@@ -273,7 +273,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
     Project project = guessProject(virtualFileOrDir);
-    EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
+    if (project != null) {
+      EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
+    }
   }
 
   @Override

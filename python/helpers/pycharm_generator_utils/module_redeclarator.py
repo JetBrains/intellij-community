@@ -1,6 +1,3 @@
-import keyword
-import os
-
 from pycharm_generator_utils.util_methods import *
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
@@ -315,7 +312,7 @@ class ModuleRedeclarator(object):
                                 real_value = "None"
                             else:
                                 notice = " # (!) forward: %s, real value is %r" % (found_name, real_value)
-                        if SANE_REPR_RE.match(real_value):
+                        if SANE_REPR_RE.match(real_value) and is_valid_expr(real_value):
                             out(indent, prefix, real_value, postfix, notice)
                         else:
                             if not found_name:
@@ -674,6 +671,7 @@ class ModuleRedeclarator(object):
         except:
             field_keys = ()
         for item_name in field_keys:
+            item_qname = p_modname + '.' + p_name + '.' + item_name
             if item_name in ("__doc__", "__module__"):
                 if we_are_the_base_class:
                     item = "" # must be declared in base types
@@ -681,6 +679,9 @@ class ModuleRedeclarator(object):
                     continue # in all other cases must be skipped
             elif keyword.iskeyword(item_name):  # for example, PyQt4 contains definitions of methods named 'exec'
                 continue
+            elif item_qname in CLASS_ATTR_BLACKLIST:
+                note('skipping blacklisted attribute ' + item_qname)
+                item = field_source.get(item_name)
             else:
                 try:
                     item = getattr(p_class, item_name) # let getters do the magic

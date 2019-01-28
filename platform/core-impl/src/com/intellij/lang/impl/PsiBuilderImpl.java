@@ -18,8 +18,8 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -371,6 +371,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void done(@NotNull IElementType type) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.error() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, null);
     }
@@ -383,12 +386,15 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before) {
+      if (type == TokenType.ERROR_ELEMENT) {
+        LOG.warn("Error elements with empty message are discouraged. Please use builder.errorBefore() instead", new RuntimeException());
+      }
       myType = type;
       myBuilder.processDone(this, null, (StartMarker)before);
     }
 
     @Override
-    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, final String errorMessage) {
+    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, @NotNull final String errorMessage) {
       StartMarker marker = (StartMarker)before;
       ErrorItem errorItem = myBuilder.myPool.allocateErrorItem();
       errorItem.myMessage = errorMessage;
@@ -398,13 +404,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, null);
     }
 
     @Override
-    public void errorBefore(final String message, @NotNull final Marker before) {
+    public void errorBefore(@NotNull final String message, @NotNull final Marker before) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, (StartMarker)before);
     }
@@ -871,7 +877,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return true;
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   private void doValidityChecks(@NotNull StartMarker marker, @Nullable StartMarker before) {
     if (marker.isDone()) {
       LOG.error("Marker already done.");
@@ -883,7 +888,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
-  public void error(String messageText) {
+  public void error(@NotNull String messageText) {
     ProductionMarker lastMarker = myProduction.getStartingMarkerAt(myProduction.size() - 1);
     if (lastMarker instanceof ErrorItem && lastMarker.myLexemeIndex == myCurrentLexeme) {
       return;
@@ -1265,7 +1270,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private static CompositeElement createComposite(@NotNull StartMarker marker, @Nullable ASTFactory astFactory) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
-      return Factory.createErrorElement(marker.myBuilder.myOptionalData.getDoneError(marker.markerId));
+      String error = marker.myBuilder.myOptionalData.getDoneError(marker.markerId);
+      return Factory.createErrorElement(error);
     }
 
     if (type == null) {

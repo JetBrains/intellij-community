@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.opassign;
 
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
@@ -13,7 +13,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntentionTest extends IPPTest
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.some.operator.with.other.intention.name", "=", "i++");
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "i++");
   }
 
   @Override

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   private final XmlElementDescriptor myDelegate;

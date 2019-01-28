@@ -3,8 +3,6 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -20,13 +18,12 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
 public class TestDataUtil {
@@ -70,18 +67,16 @@ public class TestDataUtil {
     return beforeName + " | " + afterName;
   }
 
+  @TestOnly
   @Nullable
-  static TestDataGroupVirtualFile getTestDataGroup(@NotNull List<String> fileNames) {
-    if (fileNames.size() != 2) {
-      return null;
-    }
-    return getTestDataGroup(fileNames.get(0), fileNames.get(1));
+  static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
+    return getTestDataGroup(new TestDataFile.LazyResolved(fileName1), new TestDataFile.LazyResolved(fileName2));
   }
 
   @Nullable
-  static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
-    VirtualFile file1 = getFileByPath(fileName1);
-    VirtualFile file2 = getFileByPath(fileName2);
+  static TestDataGroupVirtualFile getTestDataGroup(@NotNull TestDataFile testDataFile1, @NotNull TestDataFile testDataFile2) {
+    VirtualFile file1 = testDataFile1.getVirtualFile();
+    VirtualFile file2 = testDataFile2.getVirtualFile();
     if (file1 == null || file2 == null) {
       return null;
     }
@@ -141,7 +136,7 @@ public class TestDataUtil {
            !StringUtil.containsAlphaCharacters(secondNameExt.replace(TESTDATA_FILE_BEFORE_MARKER, ""));
   }
 
-  static VirtualFile createFileByName(final Project project, final String path) {
+  static VirtualFile createFileByPath(final Project project, final String path) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -158,30 +153,20 @@ public class TestDataUtil {
     });
   }
 
-  static void openOrAskToCreateFile(@NotNull Project project, @NotNull String path) {
-    VirtualFile file = getFileByPath(path);
+  static void openOrAskToCreateFile(@NotNull Project project, @NotNull TestDataFile testDataFile) {
+    VirtualFile file = testDataFile.getVirtualFile();
     if (file != null) {
       PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
     }
     else {
-      String displayPath = getHtmlDisplayPathForMissingFile(project, path);
+      String displayPath = getHtmlDisplayPathForMissingFile(project, testDataFile.getPath());
       int rc = Messages.showYesNoDialog(project, DevKitBundle.message("testdata.file.doesn.not.exist", displayPath),
                                         DevKitBundle.message("testdata.create.dialog.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
-        VirtualFile vFile = createFileByName(project, path);
+        VirtualFile vFile = createFileByPath(project, testDataFile.getPath());
         PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
       }
     }
-  }
-
-  @Nullable
-  static Icon getIcon(@NotNull String path) {
-    VirtualFile file = getFileByPath(path);
-    if (file == null) {
-      return null;
-    }
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-    return fileType.getIcon();
   }
 
   @Nullable

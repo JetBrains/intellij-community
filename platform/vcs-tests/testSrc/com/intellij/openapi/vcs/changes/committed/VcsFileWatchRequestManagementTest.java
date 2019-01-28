@@ -143,7 +143,7 @@ public class VcsFileWatchRequestManagementTest extends PlatformTestCase {
 
     @NotNull
     @Override
-    public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+    public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                  @Nullable Collection<String> recursiveRoots,
                                                  @Nullable Collection<String> flatRoots) {
       for (WatchRequest watchRequest : watchRequests) {

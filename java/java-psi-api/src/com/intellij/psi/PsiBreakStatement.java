@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,19 +9,41 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiBreakStatement extends PsiStatement {
   /**
-   * Returns the identifier representing the label specified on the statement.
-   *
-   * @return the identifier for the label, or null if the statement has no label.
+   * Returns the label expression iff it is present, is an unqualified reference, and the statement is not inside a switch expression,
+   * {@code null} otherwise.
    */
-  @Nullable
-  PsiIdentifier getLabelIdentifier();
+  @Nullable PsiReferenceExpression getLabelExpression();
 
   /**
-   * Returns the statement instance ({@link PsiForStatement}, {@link PsiSwitchStatement} etc.) representing
-   * the statement out of which {@code break} transfers control.
-   *
-   * @return the statement instance, or null if the statement is not valid in the context where it is located.
+   * Returns the value expression iff it is present and the statement is inside a switch expression, {@code null} otherwise.
    */
-  @Nullable
-  PsiStatement findExitedStatement();
+  @Nullable PsiExpression getValueExpression();
+
+  /**
+   * Returns the label or value expression, or {@code null} if the statement is empty.
+   *
+   * @see #getLabelExpression()
+   * @see #getValueExpression()
+   */
+  @Nullable PsiExpression getExpression();
+
+  /**
+   * Returns the statement ({@link PsiLoopStatement} or {@link PsiSwitchStatement}) or {@link PsiSwitchExpression switch expression}
+   * representing the element out of which {@code break} transfers control.
+   */
+  @Nullable PsiElement findExitedElement();
+
+  /** @deprecated the PSI structure has changed since 2019.1; use {@link #getLabelExpression()} instead */
+  @Deprecated
+  default PsiIdentifier getLabelIdentifier() {
+    PsiReferenceExpression expression = getLabelExpression();
+    return expression != null ? PsiTreeUtil.getChildOfType(expression, PsiIdentifier.class) : null;
+  }
+
+  /** @deprecated doesn't support switch expressions; use {@link #findExitedElement()} instead */
+  @Deprecated
+  default PsiStatement findExitedStatement() {
+    PsiElement enclosingElement = findExitedElement();
+    return enclosingElement instanceof PsiStatement ? (PsiStatement)enclosingElement : null;
+  }
 }

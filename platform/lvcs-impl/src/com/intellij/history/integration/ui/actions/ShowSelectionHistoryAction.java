@@ -20,7 +20,6 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,8 +49,8 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (e.getData(CommonDataKeys.EDITOR) == null) {
-      e.getPresentation().setVisible(false);
+    if (getSelection(e) == null) {
+      e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       super.update(e);

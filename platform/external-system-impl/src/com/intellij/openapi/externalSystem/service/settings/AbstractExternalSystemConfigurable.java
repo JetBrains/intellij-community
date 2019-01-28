@@ -34,12 +34,14 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -58,7 +60,6 @@ import java.util.List;
  * </pre>
  * 
  * @author Denis Zhdanov
- * @since 4/30/13 12:50 PM
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
@@ -144,7 +145,6 @@ public abstract class AbstractExternalSystemConfigurable<
     }
 
     myProjectsList.addListSelectionListener(new ListSelectionListener() {
-      @SuppressWarnings("unchecked")
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
@@ -187,7 +187,6 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
   
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getProjectName(@NotNull String path) {
     File file = new File(path);
@@ -236,8 +235,8 @@ public abstract class AbstractExternalSystemConfigurable<
       }
       systemSettings.setLinkedProjectsSettings(projectSettings);
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
-        if(control instanceof AbstractExternalProjectSettingsControl){
-          AbstractExternalProjectSettingsControl.class.cast(control).updateInitialSettings();
+        if(control instanceof AbstractExternalProjectSettingsControl) {
+          ((AbstractExternalProjectSettingsControl)control).updateInitialSettings();
         }
       }
       if (mySystemSettingsControl != null) {
@@ -258,10 +257,10 @@ public abstract class AbstractExternalSystemConfigurable<
   @Override
   public void reset() {
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
-      control.reset();
+      control.reset(myProject);
     }
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.reset();
+      mySystemSettingsControl.reset(myProject);
     }
   }
 
@@ -270,10 +269,19 @@ public abstract class AbstractExternalSystemConfigurable<
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.disposeUIResources();
     }
+    if (mySystemSettingsControl != null) {
+      mySystemSettingsControl.disposeUIResources();
+    }
     myProjectSettingsControls.clear();
     myComponent = null;
     myProjectsList = null;
     myProjectsModel = null;
     mySystemSettingsControl = null;
+  }
+
+  @TestOnly
+  @NotNull
+  List<ExternalSystemSettingsControl<ProjectSettings>> getProjectSettingsControls() {
+    return Collections.unmodifiableList(myProjectSettingsControls);
   }
 }

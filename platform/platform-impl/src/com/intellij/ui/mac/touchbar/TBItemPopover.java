@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class TBItemPopover extends TBItem {
-  private Icon myIcon;
-  private String myText;
-  private int myWidthPix;
+  private final Icon myIcon;
+  private final String myText;
+  private final int myWidthPix;
   private TouchBar myExpandTB;
   private TouchBar myTapAndHoldTB;
 

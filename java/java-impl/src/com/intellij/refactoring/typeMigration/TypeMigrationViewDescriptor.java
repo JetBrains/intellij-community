@@ -40,6 +40,7 @@ class TypeMigrationViewDescriptor implements UsageViewDescriptor {
     return "Root for type migration";
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("occurences.to.be.migrated", UsageViewBundle.getReferencesString(usagesCount, filesCount));

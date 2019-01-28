@@ -26,7 +26,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -355,7 +354,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
           valueExternalizer.save(outputStream, value);
           outputStream.close();
           final Value deserializedValue =
-            valueExternalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(out.getInternalBuffer(), 0, out.size())));
+            valueExternalizer.read(new DataInputStream(out.toInputStream()));
 
           if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
             LOG.error("Index " + indexId + " deserialization violates equals / hashCode contract for Value parameter");

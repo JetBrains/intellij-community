@@ -60,6 +60,7 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
@@ -192,7 +193,6 @@ public final class DomManagerImpl extends DomManager {
         return true;
       }
 
-      @Nullable
       @Override
       public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
         return ((NewVirtualFile)file).getCachedChildren();
@@ -283,7 +283,6 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
-    //noinspection unchecked
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       mySemService.clearCache();
@@ -431,12 +430,12 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
+  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
     return createStableValue(provider, t -> t.isValid());
   }
 
   @Override
-  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
+  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);
@@ -450,15 +449,10 @@ public final class DomManagerImpl extends DomManager {
                                         handler);
   }
 
+  @TestOnly
   public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     registerFileDescription(description);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        getFileDescriptions(description.getRootTagName()).remove(description);
-        getAcceptingOtherRootTagNameDescriptions().remove(description);
-      }
-    });
+    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
   @Override
@@ -476,7 +470,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);

@@ -1,9 +1,11 @@
 <html>
 <body>
-Reports <b>switch</b> statements with
-<b>default</b> branches which
-can never be taken. At present, such branches are only marked for <b>switch</b> statements
-over enumerated types all of whose values have corresponding <b>case</b> branches.
+Reports enum <b>switch</b> statements or expression with<b>default</b> branches which can never be taken,
+because all possible values are covered by a <b>case</b> branch.
+These are unnecessary, especially for <b>switch</b> expressions, because they don't compile when all
+enum constants are not covered by a <b>case</b> branch.
+<p>
+  The language level needs to be at least Java 12 Preview to report <b>switch</b> expressions.
 <!-- tooltip end -->
 <p>
 

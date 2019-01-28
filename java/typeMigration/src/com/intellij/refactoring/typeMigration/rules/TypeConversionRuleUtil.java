@@ -18,11 +18,11 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 class TypeConversionRuleUtil {
   static List<PsiVariable> getVariablesToMakeFinal(@NotNull PsiExpression expression) {
@@ -37,10 +37,8 @@ class TypeConversionRuleUtil {
     Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false);
     if (!writtenVariables.isEmpty()) return null;
 
-    return ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize())
-      .stream()
-      .filter(v -> !v.hasModifierProperty(PsiModifier.FINAL))
-      .collect(Collectors.toList());
+    return ContainerUtil
+      .filter(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()), v -> !v.hasModifierProperty(PsiModifier.FINAL));
   }
 
   private static class MyControlFlowPolicy implements ControlFlowPolicy {

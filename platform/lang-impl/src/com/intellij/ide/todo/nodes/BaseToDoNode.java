@@ -22,12 +22,13 @@ import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseToDoNode<Value> extends AbstractTreeNode<Value> {
   protected final ToDoSettings myToDoSettings;
   protected final TodoTreeBuilder myBuilder;
 
-  protected BaseToDoNode(Project project, Value value, TodoTreeBuilder builder) {
+  protected BaseToDoNode(Project project, @NotNull Value value, TodoTreeBuilder builder) {
     super(project, value);
     myBuilder = builder;
     myToDoSettings = myBuilder.getTodoTreeStructure();

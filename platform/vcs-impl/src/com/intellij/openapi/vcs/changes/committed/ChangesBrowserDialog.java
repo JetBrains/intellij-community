@@ -26,17 +26,17 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private Mode myMode;
   private CommittedChangesBrowserDialogPanel myCommittedChangesBrowser;
   private AsynchConsumer<List<CommittedChangeList>> myAppender;
-  private final Consumer<ChangesBrowserDialog> myInitRunnable;
+  private final Consumer<? super ChangesBrowserDialog> myInitRunnable;
 
   public enum Mode { Simple, Browse, Choose }
 
-  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
+  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode, Consumer<? super ChangesBrowserDialog> initRunnable) {
     super(project, true);
     myInitRunnable = initRunnable;
     initDialog(project, changes, mode);
   }
 
-  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
+  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode, Consumer<? super ChangesBrowserDialog> initRunnable) {
     super(parent, true);
     myInitRunnable = initRunnable;
     initDialog(project, changes, mode);

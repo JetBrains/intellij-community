@@ -303,7 +303,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return false;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Override
   @NotNull
   public String getHelpTopic() {

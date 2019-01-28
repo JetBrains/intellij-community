@@ -33,10 +33,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +61,7 @@ public class XDebuggerInlayUtil {
         Editor e = ((TextEditor)editor).getEditor();
         CharSequence text = e.getDocument().getImmutableCharSequence();
         int insertOffset = getIdentifierEndOffset(text, offset);
-        List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset);
-        for (Inlay inlay : existing) {
-          if (inlay.getRenderer() instanceof MyRenderer) {
-            Disposer.dispose(inlay);
-          }
-        }
-
+        e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, MyRenderer.class).forEach(Disposer::dispose);
         e.getInlayModel().addInlineElement(insertOffset, new MyRenderer(inlayText));
       }
     });
@@ -80,12 +73,7 @@ public class XDebuggerInlayUtil {
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           Editor e = ((TextEditor)editor).getEditor();
-          List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength());
-          for (Inlay inlay : existing) {
-            if (inlay.getRenderer() instanceof MyRenderer) {
-              Disposer.dispose(inlay);
-            }
-          }
+          e.getInlayModel().getInlineElementsInRange(0, e.getDocument().getTextLength(), MyRenderer.class).forEach(Disposer::dispose);
         }
       }
     });
@@ -104,11 +92,9 @@ public class XDebuggerInlayUtil {
 
   public static boolean showValueInBlockInlay(@NotNull XDebugSessionImpl session,
                                               @NotNull XValueNodeImpl node,
-                                              @NotNull XSourcePosition position,
-                                              @NotNull XValue value,
-                                              @NotNull XValuePresentation presentation) {
+                                              @NotNull XSourcePosition position) {
     XDebuggerInlayUtil.Helper helper = session.getSessionData().getUserData(HELPER_KEY);
-    return helper != null && helper.showValueInBlockInlay(session.getProject(), node, position, value, presentation);
+    return helper != null && helper.showValueInBlockInlay(session.getProject(), node, position);
   }
 
   public static void createBlockInlay(@NotNull Editor editor, int offset) {
@@ -117,50 +103,47 @@ public class XDebuggerInlayUtil {
 
   public static void addValueToBlockInlay(@NotNull Editor editor, int offset, String inlayText) {
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
-    List<Inlay> inlays = editor.getInlayModel().getBlockElementsInRange(lineStartOffset, lineStartOffset);
+    List<Inlay<? extends MyBlockRenderer>>
+      inlays = editor.getInlayModel().getBlockElementsInRange(lineStartOffset, lineStartOffset, MyBlockRenderer.class);
     if (inlays.size() != 1) return;
-    Inlay inlay = inlays.get(0);
+    Inlay<? extends MyBlockRenderer> inlay = inlays.get(0);
     CharSequence text = editor.getDocument().getImmutableCharSequence();
     int identifierEndOffset = getIdentifierEndOffset(text, offset);
-    ((MyBlockRenderer)inlay.getRenderer()).addValue(offset, identifierEndOffset, inlayText);
+    inlay.getRenderer().addValue(offset, identifierEndOffset, inlayText);
     inlay.updateSize();
   }
 
   public static void clearBlockInlays(@NotNull Editor editor) {
-    List<Inlay> existing = editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength());
-    for (Inlay inlay : existing) {
-      if (inlay.getRenderer() instanceof MyBlockRenderer) {
-        Disposer.dispose(inlay);
-      }
-    }
+    editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength(), MyBlockRenderer.class)
+      .forEach(Disposer::dispose);
   }
 
   public interface Helper {
     void setupValuePlaceholders(@NotNull Project project, @Nullable XSourcePosition currentPosition);
-    boolean showValueInBlockInlay(@NotNull Project project, @NotNull XValueNodeImpl node, @NotNull XSourcePosition position,
-                                  @NotNull XValue value, @NotNull XValuePresentation presentation);
+    boolean showValueInBlockInlay(@NotNull Project project, @NotNull XValueNodeImpl node, @NotNull XSourcePosition position);
   }
 
   private static class MyBlockRenderer implements EditorCustomElementRenderer  {
     private final SortedSet<ValueInfo> values = new TreeSet<>();
 
-    private void addValue(int refStartOffset, int refEndOffset, @NotNull String value) {
+    void addValue(int refStartOffset, int refEndOffset, @NotNull String value) {
       ValueInfo info = new ValueInfo(refStartOffset, refEndOffset, value);
       values.remove(info);
       values.add(info); // retain latest reported value for given offset
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
       return 0;
     }
 
     @Override
-    public void paint(@NotNull Editor editor,
+    public void paint(@NotNull Inlay inlay,
                       @NotNull Graphics g,
                       @NotNull Rectangle targetRegion,
                       @NotNull TextAttributes textAttributes) {
       if (values.isEmpty()) return;
+      Editor editor = inlay.getEditor();
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
       TextAttributes attributes = colorsScheme.getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
       if (attributes == null) return;
@@ -171,7 +154,7 @@ public class XDebuggerInlayUtil {
 
       int curX = 0;
       for (ValueInfo value : values) {
-        curX += 5; // minimum gap between values
+        curX += JBUI.scale(5); // minimum gap between values
         int xStart = editor.offsetToXY(value.refStartOffset, true, false).x;
         int xEnd = editor.offsetToXY(value.refEndOffset, false, true).x;
         int width = g.getFontMetrics().stringWidth(value.value);
@@ -218,13 +201,14 @@ public class XDebuggerInlayUtil {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      FontInfo fontInfo = getFontInfo(editor);
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      FontInfo fontInfo = getFontInfo(inlay.getEditor());
       return fontInfo.fontMetrics().stringWidth(myText);
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      Editor editor = inlay.getEditor();
       TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
       if (attributes == null) return;
       Color fgColor = attributes.getForegroundColor();

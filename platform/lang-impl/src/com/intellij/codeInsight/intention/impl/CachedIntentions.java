@@ -63,7 +63,7 @@ public class CachedIntentions {
   }
 
   @NotNull
-  Set<IntentionActionWithTextCaching> getInspectionFixes() {
+  public Set<IntentionActionWithTextCaching> getInspectionFixes() {
     return myInspectionFixes;
   }
 

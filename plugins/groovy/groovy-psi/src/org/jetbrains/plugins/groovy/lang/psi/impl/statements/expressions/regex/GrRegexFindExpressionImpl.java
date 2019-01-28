@@ -29,6 +29,7 @@ public class GrRegexFindExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "RegexFindExpression";
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -27,13 +27,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.intellij.util.DocumentUtil
 import com.intellij.util.JdomKt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 /**
  * @author spleaner
  */
@@ -302,7 +303,7 @@ class Foo {
   }
 
   void testFinishTemplateVariantWithDot() {
-    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
     configure()
     startTemplate("soutv", "output")
     myFixture.type('fil')
@@ -1120,5 +1121,47 @@ class Foo {
     manager.startTemplate(myFixture.editor, template)
     
     myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
+  }
+
+  void "test show lookup with groovyScript collection result"() {
+    myFixture.configureByText 'a.java', '<caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V$')
+    template.addVariable("V", 'groovyScript("[1, 2, true]")', '', true)
+    manager.startTemplate(myFixture.editor, template)
+    
+    assert myFixture.lookupElementStrings == ['1', '2', 'true']
+  }
+
+  void "test unrelated command should not finish live template"() {
+    myFixture.configureByText 'a.txt', 'foo <caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V$')
+    template.addVariable("V", '"Y"', '', true)
+    manager.startTemplate(myFixture.editor, template)
+
+    // undo-transparent document change (e.g. auto-import on the fly) doesn't currently terminate template
+    DocumentUtil.writeInRunUndoTransparentAction { myFixture.editor.document.insertString(0, 'bar ') }
+    assert state
+
+    myFixture.editor.caretModel.moveToOffset(0)
+    // it's just caret outside template, we shouldn't yet cancel it
+    assert state
+    myFixture.checkResult '<caret>bar foo <selection>Y</selection>'
+
+    // unrelated empty command should have no effect
+    WriteCommandAction.runWriteCommandAction(project) {}
+    assert state
+
+    // undo-transparent change still doesn't terminate template
+    DocumentUtil.writeInRunUndoTransparentAction { myFixture.editor.document.insertString(0, 'bar ') }
+    assert state
+    myFixture.checkResult '<caret>bar bar foo <selection>Y</selection>'
+
+    // now we're really typing outside template, so it should be canceled
+    myFixture.type('a')
+    assert !state
   }
 }

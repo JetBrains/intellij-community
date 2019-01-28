@@ -1,17 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.google.gson.JsonParseException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
@@ -21,27 +23,54 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.util.*
 import java.util.function.Supplier
+import java.util.zip.GZIPInputStream
 
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
  */
 sealed class GithubApiRequestExecutor {
+
+  protected val authDataChangedEventDispatcher = EventDispatcher.create(AuthDataChangeListener::class.java)
+
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
   @TestOnly
+  @CalledInBackground
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
+  fun addListener(listener: AuthDataChangeListener, disposable: Disposable) =
+    authDataChangedEventDispatcher.addListener(listener, disposable)
+
+  fun addListener(disposable: Disposable, listener: () -> Unit) =
+    authDataChangedEventDispatcher.addListener(object : AuthDataChangeListener {
+      override fun authDataChanged() {
+        listener()
+      }
+    }, disposable)
+
   class WithTokenAuth internal constructor(githubSettings: GithubSettings,
-                                           private val token: String,
+                                           token: String,
                                            private val useProxy: Boolean) : Base(githubSettings) {
+    @Volatile
+    internal var token: String = token
+      set(value) {
+        field = value
+        authDataChangedEventDispatcher.multicaster.authDataChanged()
+      }
+
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
       return createRequestBuilder(request)
-        .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token") }
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
+        }
         .useProxy(useProxy)
         .execute(request, indicator)
     }
@@ -65,6 +94,7 @@ sealed class GithubApiRequestExecutor {
       return try {
         createRequestBuilder(request)
           .tuner { connection ->
+            request.additionalHeaders.forEach(connection::addRequestProperty)
             connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $header")
             twoFactorCode?.let { connection.addRequestProperty(OTP_HEADER_NAME, it) }
           }
@@ -85,16 +115,16 @@ sealed class GithubApiRequestExecutor {
         return connect {
           val connection = it.connection as HttpURLConnection
           if (request is GithubApiRequest.WithBody) {
-            LOG.debug("Request: ${connection.url} ${connection.requestMethod} with body:\n${request.body} : Connected")
-            it.write(request.body)
+            LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body} : Connected")
+            request.body?.let { body -> it.write(body) }
           }
           else {
-            LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Connected")
+            LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")
           }
           checkResponseCode(connection)
           indicator.checkCanceled()
           val result = request.extractResult(createResponse(it, indicator))
-          LOG.debug("Request: ${connection.url} ${connection.requestMethod} : Result extracted")
+          LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Result extracted")
           result
         }
       }
@@ -116,6 +146,7 @@ sealed class GithubApiRequestExecutor {
       return when (request) {
         is GithubApiRequest.Get -> HttpRequests.request(request.url)
         is GithubApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
+        is GithubApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
         is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Head -> HttpRequests.head(request.url)
         is GithubApiRequest.Delete -> HttpRequests.delete(request.url)
@@ -133,9 +164,11 @@ sealed class GithubApiRequestExecutor {
       if (connection.responseCode < 400) return
       val statusLine = "${connection.responseCode} ${connection.responseMessage}"
       val errorText = getErrorText(connection)
-      val jsonError = getJsonError(connection, errorText)
+      LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Error ${statusLine} body:\n${errorText}")
 
-      LOG.debug("Request: ${connection.requestMethod} ${connection.url}: Error ${statusLine} body:\n${errorText}")
+      val jsonError = getJsonError(connection, errorText)
+      jsonError ?: LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Unable to parse JSON error")
+
       throw when (connection.responseCode) {
         HttpURLConnection.HTTP_UNAUTHORIZED,
         HttpURLConnection.HTTP_PAYMENT_REQUIRED,
@@ -161,7 +194,9 @@ sealed class GithubApiRequestExecutor {
     }
 
     private fun getErrorText(connection: HttpURLConnection): String {
-      return connection.errorStream?.let { InputStreamReader(it).use { it.readText() } } ?: ""
+      val errorStream = connection.errorStream ?: return ""
+      val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
+      return InputStreamReader(stream, Charsets.UTF_8).use { it.readText() }
     }
 
     private fun getJsonError(connection: HttpURLConnection, errorText: String): GithubErrorMessage? {
@@ -169,8 +204,7 @@ sealed class GithubApiRequestExecutor {
       return try {
         return GithubApiContentHelper.fromJson(errorText)
       }
-      catch (jse: JsonParseException) {
-        LOG.debug(jse)
+      catch (jse: GithubJsonException) {
         null
       }
     }
@@ -216,5 +250,9 @@ sealed class GithubApiRequestExecutor {
     private val LOG = logger<GithubApiRequestExecutor>()
 
     private const val OTP_HEADER_NAME = "X-GitHub-OTP"
+  }
+
+  interface AuthDataChangeListener : EventListener {
+    fun authDataChanged()
   }
 }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -166,6 +167,13 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }
+  @Contract(pure=true)
+  public LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
+    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
+    set.addAll(another);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation, myPsiElement,
+                                    Collections.unmodifiableSet(set), myCaseSensitive);
+  }
 
   @Override
   public boolean isCaseSensitive() {
@@ -231,9 +239,6 @@ public final class LookupElementBuilder extends LookupElement {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.2
-   */
   @Contract(pure=true)
   public LookupElementBuilder withItemTextItalic(boolean italic) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -277,9 +282,6 @@ public final class LookupElementBuilder extends LookupElement {
                                     myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @since 2018.1
-   */
   public LookupElementBuilder withTypeIconRightAligned(boolean typeIconRightAligned) {
     final LookupElementPresentation presentation = copyPresentation();
     presentation.setTypeIconRightAligned(typeIconRightAligned);

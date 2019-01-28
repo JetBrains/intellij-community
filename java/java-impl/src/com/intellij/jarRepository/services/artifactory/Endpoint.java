@@ -1,37 +1,15 @@
-
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.artifactory;
 
 import org.jvnet.ws.wadl.util.DSDispatcher;
-import org.jvnet.ws.wadl.util.JAXBDispatcher;
 import org.jvnet.ws.wadl.util.UriBuilder;
 
 import javax.activation.DataSource;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-
-/**
- * 
- */
 public class Endpoint {
 
   public static DataSource getArtifactInfoByUri(String uri) throws IOException {
@@ -50,7 +28,6 @@ public class Endpoint {
 
             private final DSDispatcher _dsDispatcher;
             private final UriBuilder _uriBuilder;
-            private JAXBContext _jc;
             private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
@@ -59,7 +36,6 @@ public class Endpoint {
              * @param url
              */
             public Artifact(final String url)
-                throws JAXBException
             {
                 _dsDispatcher = new DSDispatcher();
                 _uriBuilder = new UriBuilder();
@@ -85,10 +61,8 @@ public class Endpoint {
 
         public static class Gavc {
 
-            private JAXBDispatcher _jaxbDispatcher;
             private final DSDispatcher _dsDispatcher;
             private final UriBuilder _uriBuilder;
-            private JAXBContext _jc;
             private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
@@ -97,7 +71,6 @@ public class Endpoint {
              * @param url
              */
             public Gavc(final String url)
-                throws JAXBException
             {
                 _dsDispatcher = new DSDispatcher();
                 _uriBuilder = new UriBuilder();
@@ -125,10 +98,8 @@ public class Endpoint {
         }
         public static class Archive {
 
-            private JAXBDispatcher _jaxbDispatcher;
             private final DSDispatcher _dsDispatcher;
             private final UriBuilder _uriBuilder;
-            private JAXBContext _jc;
             private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
@@ -137,7 +108,6 @@ public class Endpoint {
              * @param url
              */
             public Archive(final String url)
-                throws JAXBException
             {
                 _dsDispatcher = new DSDispatcher();
                 _uriBuilder = new UriBuilder();
@@ -165,10 +135,8 @@ public class Endpoint {
 
     public static class System {
 
-        private JAXBDispatcher _jaxbDispatcher;
         private final DSDispatcher _dsDispatcher;
         private final UriBuilder _uriBuilder;
-        private JAXBContext _jc;
         private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
@@ -177,7 +145,6 @@ public class Endpoint {
          * @param url
          */
         public System(final String url)
-            throws JAXBException
         {
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -198,10 +165,8 @@ public class Endpoint {
 
         public static class Configuration {
 
-            private JAXBDispatcher _jaxbDispatcher;
             private final DSDispatcher _dsDispatcher;
             private final UriBuilder _uriBuilder;
-            private JAXBContext _jc;
             private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
             /**
@@ -210,7 +175,6 @@ public class Endpoint {
              * @param url
              */
             public Configuration(final String url)
-                throws JAXBException
             {
                 _dsDispatcher = new DSDispatcher();
                 _uriBuilder = new UriBuilder();
@@ -241,10 +205,8 @@ public class Endpoint {
 
             public static class RemoteRepositories {
 
-                private JAXBDispatcher _jaxbDispatcher;
                 private final DSDispatcher _dsDispatcher;
                 private final UriBuilder _uriBuilder;
-                private JAXBContext _jc;
                 private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
                 /**
@@ -253,7 +215,6 @@ public class Endpoint {
                  * @param url
                  */
                 public RemoteRepositories(final String url)
-                    throws JAXBException
                 {
                     _dsDispatcher = new DSDispatcher();
                     _uriBuilder = new UriBuilder();
@@ -282,10 +243,8 @@ public class Endpoint {
 
     public static class SystemVersion {
 
-        private JAXBDispatcher _jaxbDispatcher;
         private final DSDispatcher _dsDispatcher;
         private final UriBuilder _uriBuilder;
-        private JAXBContext _jc;
         private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
@@ -294,7 +253,6 @@ public class Endpoint {
          * @param url
          */
         public SystemVersion(final String url)
-            throws JAXBException
         {
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -320,10 +278,8 @@ public class Endpoint {
   */
   public static class Repositories {
 
-      private JAXBDispatcher _jaxbDispatcher;
       private final DSDispatcher _dsDispatcher;
       private final UriBuilder _uriBuilder;
-      private JAXBContext _jc;
       private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
       /**
@@ -332,7 +288,6 @@ public class Endpoint {
        * @param url
        */
       public Repositories(String url)
-          throws JAXBException
       {
           _dsDispatcher = new DSDispatcher();
           _uriBuilder = new UriBuilder();
@@ -354,10 +309,8 @@ public class Endpoint {
 
       public static class RepoKeyConfiguration {
 
-          private JAXBDispatcher _jaxbDispatcher;
           private final DSDispatcher _dsDispatcher;
           private final UriBuilder _uriBuilder;
-          private JAXBContext _jc;
           private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
           /**
@@ -365,7 +318,6 @@ public class Endpoint {
            *
            */
           public RepoKeyConfiguration(final String url, String repokey)
-              throws JAXBException
           {
               _dsDispatcher = new DSDispatcher();
               _uriBuilder = new UriBuilder();

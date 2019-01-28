@@ -19,7 +19,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/2/2015
  */
 public class FailureResultImpl extends DefaultOperationResult implements FailureResult {
 

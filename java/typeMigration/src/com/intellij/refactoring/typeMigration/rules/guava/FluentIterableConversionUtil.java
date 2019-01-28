@@ -73,7 +73,7 @@ public class FluentIterableConversionUtil {
     }
     if (PsiTypesUtil.compareTypes(parameters[0], targetParameters[0], false)) {
       return new TypeConversionDescriptor("$q$.toArray($type$)", null) {
-        PsiType myType = parameters[0];
+        final PsiType myType = parameters[0];
 
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
@@ -212,7 +212,7 @@ public class FluentIterableConversionUtil {
     }
 
     private static boolean determineType(PsiExpression retValue,
-                                         List<Pair<PsiExpression, Boolean>> iterableReturnValues,
+                                         List<? super Pair<PsiExpression, Boolean>> iterableReturnValues,
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;

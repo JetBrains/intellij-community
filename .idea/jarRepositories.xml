@@ -4,42 +4,42 @@
     <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Maven Central repository" />
-      <option name="url" value="https://repo1.maven.org/maven2" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="intellij-third-party-dependencies" />
       <option name="name" value="IntelliJ Dependencies on Bintray" />
-      <option name="url" value="https://jetbrains.bintray.com/intellij-third-party-dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="jcenter" />
       <option name="name" value="JCenter on Bintray" />
-      <option name="url" value="https://jcenter.bintray.com" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jcenter" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
       <option name="name" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
-      <option name="url" value="https://dl.google.com/dl/android/maven2" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="name" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
-      <option name="url" value="https://repo.jenkins-ci.org/releases" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/repo.jenkins-ci.org/releases" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="groovy" />
       <option name="name" value="Groovy Bintray Repository" />
-      <option name="url" value="https://dl.bintray.com/groovy/maven/" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/dl.bintray.com/groovy/maven/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="jitpack" />
       <option name="name" value="jitpack" />
-      <option name="url" value="https://jitpack.io" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jitpack.io" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
       <option name="name" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
-      <option name="url" value="https://jetbrains.bintray.com/jediterm/" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/jediterm/" />
     </remote-repository>
   </component>
 </project>

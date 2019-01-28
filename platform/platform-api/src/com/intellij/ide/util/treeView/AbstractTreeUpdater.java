@@ -285,7 +285,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
    * @deprecated use {@link AbstractTreeBuilder#queueUpdateFrom(Object, boolean)}
    */
   @Deprecated
-  public boolean addSubtreeToUpdateByElement(Object element) {
+  public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
     if (node != null) {
       myTreeBuilder.queueUpdateFrom(element, false);
@@ -334,7 +334,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   @NonNls
   @Override
   public synchronized String toString() {
-    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue + "] " + " nodeQueue=" + myNodeQueue;
+    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue + "] " + " nodeQueue=" + myNodeQueue + " builder=" + myTreeBuilder;
   }
 
   public void flush() {

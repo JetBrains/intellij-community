@@ -82,13 +82,11 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
           final File ioFile = file.getIOFile();
           if (ioFile.exists()) {
             if (!ioFile.delete()) {
-              //noinspection ThrowableInstanceNeverThrown
               vcsExceptions.add(new VcsException("Unable to delete file: " + file));
             }
           }
         }
         catch (Exception e) {
-          //noinspection ThrowableInstanceNeverThrown
           vcsExceptions.add(new VcsException("Unable to delete file: " + file, e));
         }
       }

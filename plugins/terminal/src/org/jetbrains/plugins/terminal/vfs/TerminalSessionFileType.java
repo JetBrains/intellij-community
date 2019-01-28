@@ -17,7 +17,10 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.TerminalIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author traff
@@ -36,6 +39,11 @@ public class TerminalSessionFileType extends FakeFileType {
   @NotNull
   public String getDescription() {
     return getName() + " Fake File Type";
+  }
+
+  @Override
+  public Icon getIcon() {
+    return TerminalIcons.OpenTerminal_13x13;
   }
 
   @Override

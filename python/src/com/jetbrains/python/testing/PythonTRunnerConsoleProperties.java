@@ -18,6 +18,7 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,20 +56,37 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
   /**
    * Makes configuration id-based,
+   *
    * @see GeneralIdBasedToSMTRunnerEventsConvertor
    */
   final void makeIdTestBased() {
     setIdBasedTestTree(true);
     getProject().getMessageBus().connect(this)
-      .subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        @Override
-        public void onTestFailed(@NotNull final SMTestProxy test) {
-          SMTestProxy currentTest = test.getParent();
-          while (currentTest != null) {
-            currentTest.setTestFailed(" ", null, false);
-            currentTest = currentTest.getParent();
-          }
-        }
-      });
+      .subscribe(SMTRunnerEventsListener.TEST_STATUS, new MySMTRunnerEventsAdapter());
+  }
+
+  private static final class MySMTRunnerEventsAdapter extends SMTRunnerEventsAdapter {
+
+    private static final String EMPTY_SUITE = PyBundle.message("runcfg.tests.empty_suite");
+
+    @Override
+    public void onBeforeTestingFinished(@NotNull final SMTestProxy.SMRootTestProxy testsRoot) {
+      if (testsRoot.isEmptySuite()) {
+        testsRoot.setPresentation(EMPTY_SUITE);
+        testsRoot.setTestFailed(EMPTY_SUITE, null, false);
+      }
+      PySMTestProxyUtilsKt.calculateAndReturnMagnitude(testsRoot);
+      super.onBeforeTestingFinished(testsRoot);
+    }
+
+    @Override
+    public void onTestFailed(@NotNull final SMTestProxy test) {
+      super.onTestFailed(test);
+      SMTestProxy currentTest = test.getParent();
+      while (currentTest != null) {
+        currentTest.setTestFailed(" ", null, false);
+        currentTest = currentTest.getParent();
+      }
+    }
   }
 }

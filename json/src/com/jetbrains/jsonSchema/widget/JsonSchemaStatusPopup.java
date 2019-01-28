@@ -35,7 +35,7 @@ public class JsonSchemaStatusPopup {
     }
   };
 
-  static final JsonSchemaInfo LOAD_REMOTE = new JsonSchemaInfo("") {
+  public static final JsonSchemaInfo LOAD_REMOTE = new JsonSchemaInfo("") {
     @NotNull
     @Override
     public String getDescription() {
@@ -77,6 +77,6 @@ public class JsonSchemaStatusPopup {
     else {
       allSchemas = ContainerUtil.createMaybeSingletonList(EDIT_MAPPINGS);
     }
-    return new JsonSchemaInfoPopupStep(allSchemas, project, virtualFile, service);
+    return new JsonSchemaInfoPopupStep(allSchemas, project, virtualFile, service, null);
   }
 }

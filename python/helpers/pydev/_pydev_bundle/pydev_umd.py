@@ -31,7 +31,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import os
-import shlex
 import sys
 
 from _pydev_bundle import pydev_imports
@@ -156,7 +155,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             __umd__.run(verbose=verbose)
 
     if global_vars is None:
-        m = save_main_module(filename, 'pydevconsole')
+        m = save_main_module(filename, 'pydev_umd')
         global_vars = m.__dict__
         try:
             global_vars['__builtins__'] = __builtins__
@@ -182,7 +181,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
 
     sys.argv = [filename]
     if args is not None:
-        for arg in shlex.split(args):
+        for arg in args:
             sys.argv.append(arg)
 
     if wdir is not None:

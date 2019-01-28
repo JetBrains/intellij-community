@@ -67,7 +67,7 @@ public class PluginDescriptorChooser {
   public static void show(final Project project,
                           final Editor editor,
                           final PsiFile file,
-                          final Consumer<DomFileElement<IdeaPlugin>> consumer) {
+                          final Consumer<? super DomFileElement<IdeaPlugin>> consumer) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
     List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, project,
@@ -129,7 +129,7 @@ public class PluginDescriptorChooser {
   }
 
   @NotNull
-  public static Extensions findOrCreateExtensionsForEP(DomFileElement<IdeaPlugin> domFileElement, String epName) {
+  public static Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
     final IdeaPlugin ideaPlugin = domFileElement.getRootElement();
     final List<Extensions> extensionsList = ideaPlugin.getExtensions();
     for (Extensions extensions : extensionsList) {
@@ -149,7 +149,7 @@ public class PluginDescriptorChooser {
   }
 
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
-                                                                  List<DomFileElement<IdeaPlugin>> elements) {
+                                                                  List<? extends DomFileElement<IdeaPlugin>> elements) {
     ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());
     final List<String> groupPath = grouper.getGroupPath(currentModule);
 

@@ -262,11 +262,11 @@ public class TooBroadCatchInspection extends BaseInspection {
 
     private List<PsiType> findMaskedExceptions(Set<? extends PsiClassType> thrownTypes, PsiType caughtType, Set<? super PsiType> caughtTypes) {
       if (thrownTypes.contains(caughtType)) {
+        caughtTypes.add(caughtType);
+        thrownTypes.remove(caughtType);
         if (ignoreThrown) {
           return Collections.emptyList();
         }
-        caughtTypes.add(caughtType);
-        thrownTypes.remove(caughtType);
       }
       if (onlyWarnOnRootExceptions) {
         if (!ExceptionUtils.isGenericExceptionClass(caughtType)) {

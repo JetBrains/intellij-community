@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -18,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -79,7 +81,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public Indent getChildIndent(@NotNull final GroovyBlock parentBlock, @NotNull final ASTNode child) {
     myChildType = child.getElementType();
     if (parentBlock instanceof ClosureBodyBlock) {
-      if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+      if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
         return getNoneIndent();
       }
       else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
@@ -157,7 +159,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
-    if (myChildType == GroovyElementTypes.ANNOTATION_ARGUMENTS) {
+    if (myChildType == GroovyEmptyStubElementTypes.ANNOTATION_ARGUMENT_LIST) {
       myResult = getContinuationIndent();
     }
     else {
@@ -280,10 +282,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(@NotNull GrMethod method) {
-    if (myChildType == GroovyElementTypes.PARAMETERS_LIST) {
+    if (myChildType == GroovyEmptyStubElementTypes.PARAMETER_LIST) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.THROW_CLAUSE) {
+    else if (myChildType == GroovyStubElementTypes.THROWS_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? getNoneIndent() : getContinuationIndent();
     } else if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
       myResult = getBlockIndent(getGroovySettings().METHOD_BRACE_STYLE);
@@ -292,10 +294,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
-    if (myChildType == GroovyElementTypes.EXTENDS_CLAUSE || myChildType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
+    if (myChildType == GroovyStubElementTypes.EXTENDS_CLAUSE || myChildType == GroovyStubElementTypes.IMPLEMENTS_CLAUSE) {
       myResult = getContinuationIndent();
     }
-    else if (myChildType == GroovyElementTypes.ENUM_BODY || myChildType == GroovyElementTypes.CLASS_BODY) {
+    else if (myChildType == GroovyEmptyStubElementTypes.ENUM_BODY || myChildType == GroovyEmptyStubElementTypes.CLASS_BODY) {
       myResult = getBlockIndent(getGroovySettings().CLASS_BRACE_STYLE);
     }
   }

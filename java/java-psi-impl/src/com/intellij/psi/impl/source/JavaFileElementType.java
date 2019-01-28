@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 41;
+  public static final int STUB_VERSION = 42;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);

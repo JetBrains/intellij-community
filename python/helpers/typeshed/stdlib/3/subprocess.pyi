@@ -43,12 +43,9 @@ if sys.version_info >= (3, 5):
                      stderr: Optional[_TXT] = ...) -> None: ...
         def check_returncode(self) -> None: ...
 
-    if sys.version_info >= (3, 6):
-        # Nearly same args as Popen.__init__ except for timeout, input, and check
+    if sys.version_info >= (3, 7):
+        # Nearly the same args as for 3.6, except for capture_output and text
         def run(args: _CMD,
-                timeout: Optional[float] = ...,
-                input: Optional[_TXT] = ...,
-                check: bool = ...,
                 bufsize: int = ...,
                 executable: _PATH = ...,
                 stdin: _FILE = ...,
@@ -66,8 +63,38 @@ if sys.version_info >= (3, 5):
                 start_new_session: bool = ...,
                 pass_fds: Any = ...,
                 *,
+                capture_output: bool = ...,
+                check: bool = ...,
                 encoding: Optional[str] = ...,
-                errors: Optional[str] = ...) -> CompletedProcess: ...
+                errors: Optional[str] = ...,
+                input: Optional[_TXT] = ...,
+                text: Optional[bool] = ...,
+                timeout: Optional[float] = ...) -> CompletedProcess: ...
+    elif sys.version_info >= (3, 6):
+        # Nearly same args as Popen.__init__ except for timeout, input, and check
+        def run(args: _CMD,
+                bufsize: int = ...,
+                executable: _PATH = ...,
+                stdin: _FILE = ...,
+                stdout: _FILE = ...,
+                stderr: _FILE = ...,
+                preexec_fn: Callable[[], Any] = ...,
+                close_fds: bool = ...,
+                shell: bool = ...,
+                cwd: Optional[_PATH] = ...,
+                env: Optional[_ENV] = ...,
+                universal_newlines: bool = ...,
+                startupinfo: Any = ...,
+                creationflags: int = ...,
+                restore_signals: bool = ...,
+                start_new_session: bool = ...,
+                pass_fds: Any = ...,
+                *,
+                check: bool = ...,
+                encoding: Optional[str] = ...,
+                errors: Optional[str] = ...,
+                input: Optional[_TXT] = ...,
+                timeout: Optional[float] = ...) -> CompletedProcess: ...
     else:
         # Nearly same args as Popen.__init__ except for timeout, input, and check
         def run(args: _CMD,
@@ -182,6 +209,7 @@ STDOUT = ...  # type: int
 DEVNULL = ...  # type: int
 class SubprocessError(Exception): ...
 class TimeoutExpired(SubprocessError):
+    def __init__(self, cmd: _CMD, timeout: float, output: Optional[_TXT] = ..., stderr: Optional[_TXT] = ...) -> None: ...
     # morally: _CMD
     cmd = ...  # type: Any
     timeout = ...  # type: float

@@ -19,6 +19,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 
+/**
+ * @deprecated See {@link ToolWindowViewModeAction} \
+ **/
+@Deprecated
 public class TogglePinnedModeAction extends BaseToolWindowToggleAction {
 
   @Override

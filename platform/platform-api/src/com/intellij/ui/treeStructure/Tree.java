@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
@@ -156,7 +144,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();
@@ -186,7 +173,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public Color getBackground() {
-    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeTextBackground();
+    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeBackground();
   }
 
   @Override
@@ -197,6 +184,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void addNotify() {
     super.addNotify();
+
+    // hack to invalidate sizes, see BasicTreeUI.Handler.propertyChange
+    // now the sizes calculated before the tree has the correct GraphicsConfiguration and may be incorrect on the secondary display
+    // see IDEA-184010
+    firePropertyChange("font", null, null);
 
     updateBusy();
   }
@@ -400,14 +392,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     MouseEvent e2 = e;
 
     if (SystemInfo.isMac) {
-      if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
-        int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
-        e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
-                            true, MouseEvent.BUTTON3);
-      }
+      e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
     super.processMouseEvent(e2);
+
+    if (e != e2 && e2.isConsumed()) e.consume();
   }
 
   /**

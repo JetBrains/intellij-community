@@ -179,7 +179,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
 
     @Override
-    public void apply(@NotNull List<FilePatch> remaining,
+    public void apply(@NotNull List<? extends FilePatch> remaining,
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
@@ -396,7 +396,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       preloadRevisionContents(change.getBeforeRevision());
       preloadRevisionContents(change.getAfterRevision());
     }
-    Map<Boolean, List<Change>> changesSplit = changes.stream().collect(partitioningBy(ChangesUtil::isBinaryChange));
+    Map<Boolean, List<Change>> changesSplit = changes.stream().collect(partitioningBy(MergeFromTheirsResolver::isBinaryChange));
     myTheirsBinaryChanges.addAll(changesSplit.get(Boolean.TRUE));
     myTheirsChanges.addAll(changesSplit.get(Boolean.FALSE));
   }
@@ -481,5 +481,13 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private static boolean containAdditions(@NotNull List<Change> changes) {
     return changes.stream().anyMatch(change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
+  }
+
+  private static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {
+    return revision instanceof BinaryContentRevision && !revision.getFile().isDirectory();
+  }
+
+  private static boolean isBinaryChange(@NotNull Change change) {
+    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
   }
 }

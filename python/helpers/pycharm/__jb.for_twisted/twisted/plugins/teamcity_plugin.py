@@ -8,7 +8,10 @@ from twisted.plugins.twisted_trial import _Reporter
 class FailureWrapper(Failure):
 
     def __getitem__(self, key):
-        return self.value[key]
+        try:
+            return self.value[key]
+        except (KeyError, TypeError):
+            return None
 
 
 class TeamcityReporter(TeamcityTestResult, Reporter):

@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Who will serialize panel?
+@SuppressWarnings({"SerializableClassInSecureContext"}) // Who will serialize panel?
 final class PanelWithActions extends JPanel {
   private PanelWithActions() {
 

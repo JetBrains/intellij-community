@@ -56,7 +56,6 @@ public abstract class ModalityState {
 
   /**
    * @return the modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
-   * @see Application#getCurrentModalityState()
    */
   @NotNull
   public static ModalityState current() {
@@ -64,8 +63,9 @@ public abstract class ModalityState {
   }
 
   /**
-   * @return a special modality state that's equivalent to using no modality state at all in invokeLater. Please don't use it unless absolutely needed.
-   * @see Application#getAnyModalityState()
+   * @return a special modality state that's equivalent to using no modality state at all in invokeLater.
+   * Please don't use it unless absolutely needed. The code under this modality can only perform purely UI operations,
+   * it shouldn't access any PSI, VFS or project model.
    */
   @NotNull
   public static ModalityState any() {
@@ -84,7 +84,6 @@ public abstract class ModalityState {
   /**
    * When invoked on AWT thread, returns {@link #current()}. When invoked in the thread of some modal progress, returns modality state
    * corresponding to that progress' dialog. Otherwise, returns {@link #NON_MODAL}.
-   * @see Application#getDefaultModalityState()
    */
   @NotNull
   public static ModalityState defaultModalityState() {

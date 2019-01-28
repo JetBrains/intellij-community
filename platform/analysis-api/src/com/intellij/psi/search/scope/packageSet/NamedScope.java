@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.Icon;
 
 public class NamedScope {
+  public static final NamedScope[] EMPTY_ARRAY = new NamedScope[0];
   private final String myName;
   private final Icon myIcon;
   private final PackageSet myValue;

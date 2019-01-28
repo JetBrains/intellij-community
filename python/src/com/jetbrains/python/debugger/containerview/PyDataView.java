@@ -18,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "SciView";
@@ -212,7 +212,7 @@ public class PyDataView implements DumbAware {
   }
 
   public List<TabInfo> getVisibleTabs() {
-    return myTabs.getTabs().stream().filter(tabInfo -> !tabInfo.isHidden()).collect(Collectors.toList());
+    return ContainerUtil.filter(myTabs.getTabs(), tabInfo -> !tabInfo.isHidden());
   }
 
 

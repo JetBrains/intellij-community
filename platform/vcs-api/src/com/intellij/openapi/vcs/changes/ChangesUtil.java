@@ -125,12 +125,12 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
+  public static List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
     return getPaths(changes.stream()).collect(toList());
   }
 
   @NotNull
-  public static List<File> getIoFilesFromChanges(@NotNull Collection<Change> changes) {
+  public static List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getPaths(changes.stream())
       .map(FilePath::getIOFile)
       .distinct()
@@ -168,7 +168,7 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
+  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
@@ -270,14 +270,6 @@ public class ChangesUtil {
     return fileName.toString();
   }
 
-  public static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {
-    return revision instanceof BinaryContentRevision && !revision.getFile().isDirectory();
-  }
-
-  public static boolean isBinaryChange(@NotNull Change change) {
-    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
-  }
-
   public static boolean isTextConflictingChange(@NotNull Change change) {
     FileStatus status = change.getFileStatus();
     return FileStatus.MERGED_WITH_CONFLICTS.equals(status) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status);
@@ -326,10 +318,8 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static List<File> filePathsToFiles(@NotNull Collection<FilePath> filePaths) {
-    return filePaths.stream()
-      .map(FilePath::getIOFile)
-      .collect(toList());
+  public static List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
+    return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }
 
   public static boolean hasFileChanges(@NotNull Collection<? extends Change> changes) {

@@ -147,7 +147,7 @@ public class CheckoutAdminWriter implements IAdminWriter {
     }
 
     @Override
-    protected void onDropFromCache(final String key, final EntriesHandler value) {
+    protected void onDropFromCache(final String key, @NotNull final EntriesHandler value) {
       writeHandler(value);
     }
 

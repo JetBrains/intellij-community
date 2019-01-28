@@ -17,14 +17,15 @@ package com.intellij.settingsSummary;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
- * Implement this interface and register the implementation as com.intellij.settingsSummaryFactory extension
- * to see result of {@link #collectInfo} in Help|Settings Summary dialog.
- * <p>
- * Implement toString() for better presentation in {@link com.intellij.settingsSummary.ui.SettingsSummaryDialog}
+ * @deprecated use {@link com.intellij.troubleshooting.TroubleInfoCollector}. To be removed in IDEA 2020.1.
  */
+@Deprecated
 public interface ProblemType {
   ExtensionPointName<ProblemType> EP_SETTINGS = ExtensionPointName.create("com.intellij.settingsSummaryFactory");
 

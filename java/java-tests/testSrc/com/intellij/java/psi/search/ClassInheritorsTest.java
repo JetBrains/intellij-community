@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -138,6 +139,19 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
+  }
+
+  public void testInheritorsInAnotherModuleWithProductionOnTestDependency() throws IOException {
+    myFixture.addFileToProject("tests/B.java", "class B {}");
+    myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
+
+    PsiTestUtil.addSourceRoot(myModule, myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
+    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+
+    ModuleRootModificationUtil.updateModel(mod2, model ->
+      ((ModuleOrderEntryImpl)model.addModuleOrderEntry(myModule)).setProductionOnTestDependency(true));
+
+    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
   }
 
   public void testSpaceBeforeSuperTypeGenerics() {

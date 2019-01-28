@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public class BeforeTestEvent extends AbstractTestEvent {
 

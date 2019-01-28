@@ -9,7 +9,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -50,9 +49,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_INSTANCE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
   private JPanel myPanel;
   private JBCheckBox myReportPrivateMethodsCB;
+  private JBCheckBox myReportInstanceMethodsCB;
 
   @Override
   @NotNull
@@ -72,8 +73,16 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (owner instanceof PsiClass && !REPORT_INVARIANT_CLASSES && VarianceUtil.getClassVariance((PsiClass)owner, candidate.typeParameter) == Variance.INVARIANT) {
           return; // Nikolay despises List<? extends T>
         }
-        if (!REPORT_PRIVATE_METHODS && candidate.method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass containingClass = candidate.method.getContainingClass();
+        if (!REPORT_PRIVATE_METHODS && (candidate.method.hasModifierProperty(PsiModifier.PRIVATE)
+                                        // methods of private class considered private for the purpose of this inspection
+                                        || containingClass != null && containingClass.hasModifierProperty(PsiModifier.PRIVATE))) {
           return; // somebody hates his precious private methods highlighted
+        }
+        if (!REPORT_INSTANCE_METHODS &&
+            !candidate.method.hasModifierProperty(PsiModifier.STATIC) &&
+            !candidate.method.isConstructor()) {
+          return; // somebody don't want to report instance methods highlighted because they can be already overridden
         }
         Project project = holder.getProject();
         boolean canBeSuper = canChangeTo(project, candidate, false);
@@ -390,7 +399,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
 
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
-    HighlightVisitor visitor = ContainerUtil.find(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
+    HighlightVisitor visitor = ContainerUtil.find(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
     HighlightInfoHolder holder = new HighlightInfoHolder(method.getContainingFile());
     visitor.analyze(method.getContainingFile(), false, holder, ()->{
       method.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -462,6 +471,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   public JComponent createOptionsPanel() {
     myReportInvariantClassesCB.setSelected(REPORT_INVARIANT_CLASSES);
     myReportPrivateMethodsCB.setSelected(REPORT_PRIVATE_METHODS);
+    myReportInstanceMethodsCB.setSelected(REPORT_INSTANCE_METHODS);
     return myPanel;
   }
 
@@ -470,5 +480,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     super.readSettings(node);
     myReportInvariantClassesCB.addItemListener(__ -> REPORT_INVARIANT_CLASSES = myReportInvariantClassesCB.isSelected());
     myReportPrivateMethodsCB.addItemListener(__ -> REPORT_PRIVATE_METHODS = myReportPrivateMethodsCB.isSelected());
+    myReportInstanceMethodsCB.addItemListener(__ -> REPORT_INSTANCE_METHODS = myReportInstanceMethodsCB.isSelected());
   }
 }

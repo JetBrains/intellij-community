@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 24-Dec-2008
  */
 public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
@@ -169,12 +168,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       LOG.error(environment.getExecutor().getActionName() + " is not available now");
     }
     else if (availableRunners.size() == 1) {
-      //noinspection ConstantConditions
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
       ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
-      //noinspection ConstantConditions
       JBPopupFactory.getInstance().createPopupChooserBuilder(model)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)
@@ -198,10 +195,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((value) -> {
-          //noinspection ConstantConditions
-          performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value));
-        }).createPopup().showUnderneathOf(event.getComponent());
+        .setItemChosenCallback((value) -> performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value)))
+        .createPopup().showUnderneathOf(event.getComponent());
     }
   }
 

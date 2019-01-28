@@ -764,6 +764,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     private class MyAbstractExtractDialog implements AbstractExtractDialog {
+      @NotNull
       @Override
       public String getChosenMethodName() {
         return "name";

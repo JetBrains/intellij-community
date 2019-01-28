@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 3/26/13 6:40 PM
  */
 @State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"))
 public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {

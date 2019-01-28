@@ -59,7 +59,7 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(@NotNull final List<VcsFullCommitDetails> commits) {
+  public void cherryPick(@NotNull final List<? extends VcsFullCommitDetails> commits) {
     Map<HgRepository, List<VcsFullCommitDetails>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
       HgUtil.getRepositoryManager(myProject), commits);
     for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
@@ -96,7 +96,7 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public boolean canHandleForRoots(@NotNull Collection<VirtualFile> roots) {
+  public boolean canHandleForRoots(@NotNull Collection<? extends VirtualFile> roots) {
     HgRepositoryManager hgRepositoryManager = HgUtil.getRepositoryManager(myProject);
     return roots.stream().allMatch(r -> hgRepositoryManager.getRepositoryForRootQuick(r) != null);
   }

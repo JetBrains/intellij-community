@@ -39,6 +39,9 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     try {
       if (myTree != null) myTree.dispose(myDocument);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -184,7 +187,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     return result;
   }
 
-  private class MyRange extends RangeMarkerWithGetterImpl<MyRange> implements IntSupplier {
+  private class MyRange extends RangeMarkerWithGetterImpl implements IntSupplier {
     private int myValue;
 
     MyRange(int offset, int value) {

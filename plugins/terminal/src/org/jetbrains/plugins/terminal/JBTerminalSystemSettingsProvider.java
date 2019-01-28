@@ -26,13 +26,13 @@ import com.jediterm.terminal.TtyConnector;
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-    return TerminalOptionsProvider.Companion.getInstance().closeSessionOnLogout();
+    return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
   }
 
   @Override
   public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
     if (ttyConnector instanceof PtyProcessTtyConnector) {
-      return TerminalOptionsProvider.Companion.getInstance().getTabName();
+      return TerminalOptionsProvider.getInstance().getTabName();
     }
     else {
       return sessionName;
@@ -42,22 +42,22 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean audibleBell() {
-    return TerminalOptionsProvider.Companion.getInstance().audibleBell();
+    return TerminalOptionsProvider.getInstance().audibleBell();
   }
 
   @Override
   public boolean enableMouseReporting() {
-    return TerminalOptionsProvider.Companion.getInstance().enableMouseReporting();
+    return TerminalOptionsProvider.getInstance().enableMouseReporting();
   }
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.Companion.getInstance().copyOnSelection();
+    return TerminalOptionsProvider.getInstance().copyOnSelection();
   }
 
   @Override
   public boolean pasteOnMiddleMouseClick() {
-    return TerminalOptionsProvider.Companion.getInstance().pasteOnMiddleMouseButton();
+    return TerminalOptionsProvider.getInstance().pasteOnMiddleMouseButton();
   }
 
   @Override
@@ -67,12 +67,12 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean overrideIdeShortcuts() {
-    return TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts();
+    return TerminalOptionsProvider.getInstance().overrideIdeShortcuts();
   }
 
   @Override
   public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
-    return TerminalOptionsProvider.Companion.getInstance().highlightHyperlinks()
+    return TerminalOptionsProvider.getInstance().highlightHyperlinks()
            ? HyperlinkStyle.HighlightMode.ALWAYS
            : HyperlinkStyle.HighlightMode.HOVER;
   }

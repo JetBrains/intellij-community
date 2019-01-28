@@ -6,11 +6,8 @@ import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.util.IncorrectOperationException;
@@ -29,13 +26,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
 
   @Override
   public PsiElement resolve() {
-    final Project project = myFile.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile formVirtualFile = myFile.getVirtualFile();
-    if (formVirtualFile == null) {
-      return null;
-    }
-    final Module module = fileIndex.getModuleForFile(formVirtualFile);
+    final Module module = ModuleUtilCore.findModuleForFile(myFile);
     if (module == null) {
       return null;
     }

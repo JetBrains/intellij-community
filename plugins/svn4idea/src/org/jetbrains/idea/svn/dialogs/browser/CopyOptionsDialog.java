@@ -96,7 +96,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   @NotNull
   public static ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
                                                                   @NotNull ComboBox<String> comboBox,
-                                                                  @NotNull Consumer<String> messageConsumer) {
+                                                                  @NotNull Consumer<? super String> messageConsumer) {
     List<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
     Collections.reverse(messages);
     CollectionComboBoxModel<String> model = new CollectionComboBoxModel<>(messages);

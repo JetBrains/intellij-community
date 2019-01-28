@@ -54,6 +54,9 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
       myInspection = null;
       Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -93,7 +96,8 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
   public void testGetterSetterProblems() { doTest(); }
   public void testNonTrivialGettersSetters() { doTest(); }
-  
+  public void testGetterSetterFieldMismatch() { doTest(); }
+
   public void testOverriddenMethods() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTest();

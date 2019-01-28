@@ -178,4 +178,12 @@ public class PyJoinLinesTest extends PyTestCase {
   public void testBackslashBetweenTargetsInFromImport() {
     doTest();
   }
+
+  public void testFStrings() {
+    doTest();
+  }
+  
+  public void testFStringAndPlainLiteral() {
+    doTest();
+  }
 }

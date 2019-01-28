@@ -48,7 +48,6 @@ import java.io.IOException;
 
 /**
  * @author anna
- * @since 12-Jul-2007
  */
 public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> extends ProjectOpenProcessor {
   private final T myBuilder;

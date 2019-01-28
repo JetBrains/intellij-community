@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -48,6 +46,7 @@ import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
@@ -83,6 +82,7 @@ import java.util.zip.CRC32;
 import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.util.xml.NanoXmlBuilder.stop;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
@@ -250,7 +250,7 @@ public class MavenUtil {
     return new File(parent.getPath(), MavenConstants.PROFILES_XML);
   }
 
-  public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
+  public static <T, U> List<T> collectFirsts(List<? extends Pair<T, U>> pairs) {
     List<T> result = new ArrayList<>(pairs.size());
     for (Pair<T, ?> each : pairs) {
       result.add(each.first);
@@ -258,7 +258,7 @@ public class MavenUtil {
     return result;
   }
 
-  public static <T, U> List<U> collectSeconds(List<Pair<T, U>> pairs) {
+  public static <T, U> List<U> collectSeconds(List<? extends Pair<T, U>> pairs) {
     List<U> result = new ArrayList<>(pairs.size());
     for (Pair<T, U> each : pairs) {
       result.add(each.second);
@@ -266,11 +266,11 @@ public class MavenUtil {
     return result;
   }
 
-  public static List<String> collectPaths(List<VirtualFile> files) {
+  public static List<String> collectPaths(List<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> file.getPath());
   }
 
-  public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
+  public static List<VirtualFile> collectFiles(Collection<? extends MavenProject> projects) {
     return ContainerUtil.map(projects, project -> project.getFile());
   }
 
@@ -612,17 +612,22 @@ public class MavenUtil {
     if(mavenHome == null) return null;
     String[] libs = new File(mavenHome, "lib").list();
 
+
     if (libs != null) {
       for (String lib : libs) {
         File mavenLibFile = new File(mavenHome, "lib/" + lib);
+
         if (lib.equals("maven-core.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-core.xxx.jar");
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
+          MavenLog.LOG.debug("Choosing version by maven-xxx-uber.jar");
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
         }
       }
@@ -990,8 +995,7 @@ public class MavenUtil {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
           Reader reader = new BufferedReader(new InputStreamReader(in, CharsetToolkit.UTF8_CHARSET));
-          NanoXmlUtil.parse(reader, new NanoXmlUtil.IXMLBuilderAdapter() {
-
+          NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
             @Override
             public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
               if ("project".equals(name)) {

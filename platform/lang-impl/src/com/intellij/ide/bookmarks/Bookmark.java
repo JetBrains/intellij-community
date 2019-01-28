@@ -66,6 +66,8 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
+import static com.intellij.ide.ui.UISettings.setupAntialiasing;
+
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
@@ -75,6 +77,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private final Project myProject;
   private Reference<RangeHighlighterEx> myHighlighterRef;
 
+  @NotNull
   private String myDescription;
   private char myMnemonic;
   int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
@@ -205,6 +208,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
+  @NotNull
   public String getDescription() {
     return myDescription;
   }
@@ -286,7 +290,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder(getQualifiedName());
-    String description = StringUtil.escapeXml(nullizeEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }
@@ -329,7 +334,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
-    String description = StringUtil.escapeXml(nullizeEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }
@@ -377,6 +383,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
+      setupAntialiasing(g);
 
       float startingFontSize = 40f;  // large font for smaller rounding error
       Font font = getBookmarkFont().deriveFont(startingFontSize);
@@ -496,6 +503,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
           return DragSource.DefaultMoveDrop;
         }
       };
+    }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "icon: bookmark " + myBookmark.myMnemonic;
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
       PsiElement psiMethod = refMethod.getPsiElement();
       if (!(psiMethod instanceof PsiMethod)) return null;
+
+      if (((PsiMethod)psiMethod).hasModifier(JvmModifier.NATIVE)) return null;
+
       PsiReferenceList list = ((PsiMethod)psiMethod).getThrowsList();
       PsiClassType[] throwsList = list.getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = list.getReferenceElements();
@@ -89,7 +93,8 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           if (psiManager.areElementsEquivalent(s, throwsResolvedType)) {
             if (problems == null) problems = new ArrayList<>(1);
 
-            if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
+            RefClass ownerClass = refMethod.getOwnerClass();
+            if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
                 "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), new MyQuickFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                                            false));
@@ -218,7 +223,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
-            final PsiType psiType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(classRef);
+            final PsiType psiType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(classRef);
             removeException(refMethod, psiType, refsToDelete, psiMethod);
           } else {
             final PsiReferenceList throwsList = psiMethod.getThrowsList();

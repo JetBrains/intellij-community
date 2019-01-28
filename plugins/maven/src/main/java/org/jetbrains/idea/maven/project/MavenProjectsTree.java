@@ -690,6 +690,14 @@ public class MavenProjectsTree {
     });
   }
 
+  @Override
+  public String toString() {
+    return "MavenProjectsTree{" +
+           "myRootProjects=" + myRootProjects +
+           ", myProject=" + myProject +
+           '}';
+  }
+
   private static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
     VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(mavenProject.getDirectoryFile()), false);
     if (baseDir != null) {

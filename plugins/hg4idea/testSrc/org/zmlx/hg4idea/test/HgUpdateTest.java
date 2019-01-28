@@ -38,7 +38,7 @@ import java.util.Set;
 
 import static org.testng.Assert.*;
 
-@SuppressWarnings({"ConstantConditions", "ThrowableResultOfMethodCallIgnored"})
+@SuppressWarnings({"ConstantConditions"})
 public class HgUpdateTest extends HgCollaborativeTest {
 
   private VirtualFile projectRepoVirtualFile;

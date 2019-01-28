@@ -285,7 +285,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
-                                                           final Set<String> preselected) {
+                                                           final Collection<String> preselected) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<>();
     Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<>();
     List<FrameworkSupportNodeBase> roots = new ArrayList<>();

@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/2/13 9:23 PM
  */
 public class ExternalSystemStartupActivity implements StartupActivity, DumbAware {
 

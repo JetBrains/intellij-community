@@ -16,13 +16,14 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,12 +61,6 @@ public abstract class ReorderableListController <T> {
 
   public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
     final AddMultipleActionDescription description = new AddMultipleActionDescription(actionName, creator, createShortcut);
-    addActionDescription(description);
-    return description;
-  }
-
-  public CopyActionDescription addCopyAction(final String actionName, final Convertor<? super T, ? extends T> copier, final Condition<? super T> enableCondition) {
-    final CopyActionDescription description = new CopyActionDescription(actionName, copier, enableCondition);
     addActionDescription(description);
     return description;
   }
@@ -259,7 +254,7 @@ public abstract class ReorderableListController <T> {
     }
   }
 
-  public abstract class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
+  public abstract static class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
     private final String myActionDescription;
     private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;
@@ -334,60 +329,6 @@ public abstract class ReorderableListController <T> {
         }
       }
       return t;
-    }
-  }
-
-  public class CopyActionDescription extends CustomActionDescription<T> {
-    private final Convertor<? super T, ? extends T> myCopier;
-    private final Condition<? super T> myEnabled;
-    private final String myActionName;
-    private boolean myVisibleWhenDisabled;
-
-    public CopyActionDescription(final String actionName, final Convertor<? super T, ? extends T> copier, final Condition<? super T> enableCondition) {
-      myActionName = actionName;
-      myCopier = copier;
-      myEnabled = enableCondition;
-      myVisibleWhenDisabled = true;
-    }
-
-    @Override
-    public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<T> behaviour = new ActionBehaviour<T>() {
-        @Override
-        public T performAction(@NotNull final AnActionEvent e) {
-          final T newElement = myCopier.convert((T)myList.getSelectedValue());
-          handleNewElement(newElement);
-          return newElement;
-        }
-
-        @Override
-        public void updateAction(@NotNull final AnActionEvent e) {
-          final boolean applicable = myList.getSelectedIndices().length == 1;
-          final Presentation presentation = e.getPresentation();
-          if (!applicable) {
-            presentation.setEnabled(applicable);
-            return;
-          }
-          final boolean enabled = myEnabled.value((T)myList.getSelectedValue());
-          presentation.setEnabled(enabled);
-          presentation.setVisible(enabled || myVisibleWhenDisabled);
-        }
-      };
-      return createAction(behaviour);
-    }
-
-    @Override
-    public Icon getActionIcon() {
-      return PlatformIcons.COPY_ICON;
-    }
-
-    @Override
-    public String getActionName() {
-      return myActionName;
-    }
-
-    public void setVisibleWhenDisabled(final boolean visible) {
-      myVisibleWhenDisabled = visible;
     }
   }
 

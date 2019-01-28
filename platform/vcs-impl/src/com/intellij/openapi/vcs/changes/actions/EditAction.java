@@ -24,7 +24,7 @@ public class EditAction extends DumbAwareAction {
     editFilesAndShowErrors(project, files);
   }
 
-  public static void editFilesAndShowErrors(Project project, List<VirtualFile> files) {
+  public static void editFilesAndShowErrors(Project project, List<? extends VirtualFile> files) {
     final List<VcsException> exceptions = new ArrayList<>();
     editFiles(project, files, exceptions);
     if (!exceptions.isEmpty()) {
@@ -32,7 +32,7 @@ public class EditAction extends DumbAwareAction {
     }
   }
 
-  public static void editFiles(final Project project, final List<VirtualFile> files, final List<VcsException> exceptions) {
+  public static void editFiles(final Project project, final List<? extends VirtualFile> files, final List<? super VcsException> exceptions) {
     ChangesUtil.processVirtualFilesByVcs(project, files, (vcs, items) -> {
       final EditFileProvider provider = vcs.getEditFileProvider();
       if (provider != null) {

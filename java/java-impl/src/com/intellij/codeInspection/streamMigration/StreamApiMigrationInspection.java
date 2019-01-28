@@ -834,7 +834,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
-      return statement.findExitedStatement() == mySource.getMainStatement();
+      return statement.findExitedElement() == mySource.getMainStatement();
     }
   }
 
@@ -948,7 +948,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       if (myVariable == variable) {
-        if (reference.getParent() == PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class)) return true;
+        if (PsiUtil.skipParenthesizedExprUp(reference.getParent()) ==
+            PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class)) {
+          return true;
+        }
         PsiForStatement forStatement = PsiTreeUtil.getParentOfType(variable, PsiForStatement.class);
         if (forStatement != null && forStatement == PsiTreeUtil.getParentOfType(myVariable, PsiForStatement.class)) {
           return PsiTreeUtil.isAncestor(forStatement.getUpdate(), reference, false) ||
@@ -985,11 +988,9 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (!BUFFERED_READER_READ_LINE.test(readerCall)) return null;
       PsiExpression reader = readerCall.getMethodExpression().getQualifierExpression();
 
-      PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(assignment.getLExpression());
+      PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()));
       if (lineVar == null) return null;
-      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
-        return PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true);
-      })) {
+      if (ReferencesSearch.search(lineVar).anyMatch(ref -> !PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true))) {
         return null;
       }
       return new BufferedReaderLines(loopStatement, lineVar, reader, false);
@@ -1025,9 +1026,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (declarations.length != 1) return null;
       PsiLocalVariable lineVar = tryCast(declarations[0], PsiLocalVariable.class);
       if (lineVar == null) return null;
-      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
-        return PsiTreeUtil.isAncestor(forLoop, ref.getElement(), true);
-      })) {
+      if (ReferencesSearch.search(lineVar).anyMatch(ref -> !PsiTreeUtil.isAncestor(forLoop, ref.getElement(), true))) {
         return null;
       }
       PsiMethodCallExpression maybeReadLines = tryCast(PsiUtil.skipParenthesizedExprDown(lineVar.getInitializer()), PsiMethodCallExpression.class);
@@ -1296,7 +1295,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     StreamEx<PsiExpression> expressions() {
-      return StreamEx.of(myInitializer, myExpression);
+      return StreamEx.of(myInitializer, myExpression, myCondition).nonNull();
     }
 
     @Override

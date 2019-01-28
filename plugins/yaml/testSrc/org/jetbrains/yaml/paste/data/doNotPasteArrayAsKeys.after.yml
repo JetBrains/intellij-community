@@ -1,0 +1,4 @@
+top:
+  next: value1
+  key:
+    [x.y]<caret>

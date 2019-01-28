@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
- * @since 3/23/13 3:17 PM
  */
 public abstract class AbstractRegistry<T> {
 

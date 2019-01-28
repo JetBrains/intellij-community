@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author lex
- * @since Nov 26, 2003
  */
 public class JavaParametersUtil {
   private JavaParametersUtil() { }
@@ -57,6 +56,7 @@ public class JavaParametersUtil {
       for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
         vmParameters = StringUtil.replace(vmParameters, "$" + each.getKey() + "$", each.getValue(), false); //replace env usages
       }
+      vmParameters = ProgramParametersConfigurator.expandMacros(vmParameters);
     }
 
     parameters.getVMParametersList().addParametersString(vmParameters);

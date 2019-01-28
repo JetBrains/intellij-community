@@ -36,14 +36,14 @@ public final class TypeEvalContextBasedCache<T> {
   private final CachedValue<ConcurrentMap<TypeEvalConstraints, T>> myCachedMapStorage;
 
   @NotNull
-  private final Function<TypeEvalContext, T> myProvider;
+  private final Function<? super TypeEvalContext, ? extends T> myProvider;
 
   /**
    * @param manager       Cache manager to be used to store cache
    * @param valueProvider engine to create value based on context.
    */
   public TypeEvalContextBasedCache(@NotNull final CachedValuesManager manager,
-                                   @NotNull final Function<TypeEvalContext, T> valueProvider) {
+                                   @NotNull final Function<? super TypeEvalContext, ? extends T> valueProvider) {
     myCachedMapStorage = manager.createCachedValue(new MapCreator<T>(), false);
     myProvider = valueProvider;
   }

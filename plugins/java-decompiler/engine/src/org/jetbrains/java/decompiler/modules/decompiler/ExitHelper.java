@@ -80,32 +80,31 @@ public class ExitHelper {
         }
       }
 
-      switch (stat.type) {
-        case Statement.TYPE_IF:
-          IfStatement ifst = (IfStatement)stat;
-          if (ifst.getIfstat() == null) {
-            StatEdge ifedge = ifst.getIfEdge();
-            dest = isExitEdge(ifedge);
-            if (dest != null) {
-              BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
-                DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-              bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
+      if (stat.type == Statement.TYPE_IF) {
+        IfStatement ifst = (IfStatement)stat;
+        if (ifst.getIfstat() == null) {
+          StatEdge ifedge = ifst.getIfEdge();
+          dest = isExitEdge(ifedge);
+          if (dest != null) {
+            BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
+              DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+            bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
-              ifst.getFirst().removeSuccessor(ifedge);
-              StatEdge newedge = new StatEdge(StatEdge.TYPE_REGULAR, ifst.getFirst(), bstat);
-              ifst.getFirst().addSuccessor(newedge);
-              ifst.setIfEdge(newedge);
-              ifst.setIfstat(bstat);
-              ifst.getStats().addWithKey(bstat, bstat.id);
-              bstat.setParent(ifst);
+            ifst.getFirst().removeSuccessor(ifedge);
+            StatEdge newedge = new StatEdge(StatEdge.TYPE_REGULAR, ifst.getFirst(), bstat);
+            ifst.getFirst().addSuccessor(newedge);
+            ifst.setIfEdge(newedge);
+            ifst.setIfstat(bstat);
+            ifst.getStats().addWithKey(bstat, bstat.id);
+            bstat.setParent(ifst);
 
-              StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
-              StatEdge newexitedge = new StatEdge(StatEdge.TYPE_BREAK, bstat, oldexitedge.getDestination());
-              bstat.addSuccessor(newexitedge);
-              oldexitedge.closure.addLabeledEdge(newexitedge);
-              ret = 1;
-            }
+            StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
+            StatEdge newexitedge = new StatEdge(StatEdge.TYPE_BREAK, bstat, oldexitedge.getDestination());
+            bstat.addSuccessor(newexitedge);
+            oldexitedge.closure.addLabeledEdge(newexitedge);
+            ret = 1;
           }
+        }
       }
     }
 

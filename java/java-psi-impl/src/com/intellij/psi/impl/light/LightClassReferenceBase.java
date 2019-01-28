@@ -120,6 +120,7 @@ abstract class LightClassReferenceBase extends LightElement implements PsiJavaCo
     }
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + getText();
   }

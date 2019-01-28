@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,8 +43,8 @@ public class SeparatorWithText extends JComponent implements Accessible {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
     setFont(UIUtil.getLabelFont());
     setFont(getFont().deriveFont(Font.BOLD));
-    setForeground(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
-    setTextForeground(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
+    setForeground(JBUI.CurrentTheme.Popup.separatorColor());
+    setTextForeground(JBUI.CurrentTheme.Popup.separatorTextColor());
   }
 
   public Color getTextForeground() {
@@ -134,7 +135,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }
 
-  protected String getCaption() {
+  public String getCaption() {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 

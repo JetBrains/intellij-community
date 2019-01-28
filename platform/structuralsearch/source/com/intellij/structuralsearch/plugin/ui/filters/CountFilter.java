@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
@@ -38,6 +38,13 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
+  public void initFilter() {
+    final MatchVariableConstraint constraint = myTable.getConstraint();
+    constraint.setMinCount(myMinZero ? 0 : 1);
+    constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
+  }
+
+  @Override
   public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
@@ -55,21 +62,12 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();
       private final JLabel myMinLabel = new JLabel("min=");
       private final JLabel myMaxLabel = new JLabel("max=");
-
-      {
-        myMinField.getValueEditor().addListener(newValue -> {
-          if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);
-        });
-        myMaxField.getValueEditor().addListener(newValue -> {
-          if (myMaxField.getValueEditor().isValid(newValue) && myMinField.getValue() > newValue) myMinField.setValue(newValue);
-        });
-      }
 
       @Override
       protected void layoutComponents() {
@@ -92,6 +90,12 @@ public class CountFilter extends FilterAction {
                 .addComponent(myMaxLabel)
                 .addComponent(myMaxField)
         );
+        myMinField.getValueEditor().addListener(newValue -> {
+          if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);
+        });
+        myMaxField.getValueEditor().addListener(newValue -> {
+          if (myMaxField.getValueEditor().isValid(newValue) && myMinField.getValue() > newValue) myMinField.setValue(newValue);
+        });
       }
 
       @Override

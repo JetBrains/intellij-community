@@ -22,10 +22,12 @@ import javax.swing.*;
 
 
 /**
- * This class is mostly for testing purposes: in case an icon is hidden behind a private or a restricted interface,
- * marking it as RetrievableIcon will help get the actual icon and perform checks.
+ * An icon wrapping and painting another icon.
  */
 public interface RetrievableIcon extends Icon {
+  /**
+   * Returns the wrapped icon.
+   */
   @Nullable
   Icon retrieveIcon();
 }

@@ -621,7 +621,7 @@ public class ActionsTree {
           }
         }
         if (!myHaveLink) {
-          Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
           if (actionId != null && myPaintInternalInfo) {
             String pluginName = myPluginNames.get(actionId);

@@ -18,10 +18,12 @@
  include "structural.rnc"
  include "ruby.rnc"
  include "media.rnc"
-@@ -33,5 +37,6 @@
+@@ -33,7 +37,6 @@
                   )
              )
  }
+-include "its20-html5.rnc"
+-common.attrs &= its-html-attributes
 +include "meta-ext.rnc"
  include "microdata.rnc"
  include "rdfa.rnc"

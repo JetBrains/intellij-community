@@ -3,9 +3,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -234,17 +237,36 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    doMultiFileTest();
-  }
+    final String testName = getTestName(true);
 
-  // PY-11208
-  public void testMockPatchObject3() {
-    doMultiFileTest();
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-21060
@@ -370,6 +392,17 @@ public class Py3CompletionTest extends PyTestCase {
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots2() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                                "    pass\n" +
+                                                "c1 = Cat1(\"name\", 5)\n" +
+                                                "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
 
 

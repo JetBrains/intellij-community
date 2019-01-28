@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -25,14 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -42,6 +40,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
 /**
  * @author ven
@@ -399,7 +400,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (expression.isOperatorAssignment()) {
+    if (expression.isOperatorAssignment() || expression.getOperationTokenType() == T_ELVIS_ASSIGN) {
       if (lValue instanceof GrReferenceExpression && myPolicy.isReferenceAccepted((GrReferenceExpression)lValue)) {
         String referenceName = ((GrReferenceExpression)lValue).getReferenceName();
         if (referenceName != null) {
@@ -519,9 +520,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       else {
         final int type = PsiUtil.isLValue(refExpr) ? ReadWriteVariableInstruction.WRITE : ReadWriteVariableInstruction.READ;
         addNodeAndCheckPending(new ReadWriteVariableInstruction(name, refExpr, type));
-        if (refExpr.getParent() instanceof GrArgumentList && refExpr.getParent().getParent() instanceof GrCall) {
-          addNodeAndCheckPending(new ArgumentInstruction(refExpr));
-        }
       }
     }
 
@@ -531,26 +529,23 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    visitCall(methodCallExpression);
-  }
-
-  @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    super.visitApplicationStatement(applicationStatement);
-    visitCall(applicationStatement);
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    super.visitMethodCall(call);
+    addNodeAndCheckPending(new ArgumentsInstruction(call));
+    visitCall(call);
   }
 
   @Override
   public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
     super.visitConstructorInvocation(invocation);
+    addNodeAndCheckPending(new ArgumentsInstruction(invocation));
     visitCall(invocation);
   }
 
   @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
+    addNodeAndCheckPending(new ArgumentsInstruction(newExpression));
     visitCall(newExpression);
   }
 
@@ -564,6 +559,18 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       expression.getLeftOperand().accept(this);
       processInstanceOf(expression, ((GrInExpression)expression).getNegationToken() != null);
       return;
+    }
+    if (opType == T_EQ || opType == T_NEQ) {
+      if (isNullLiteral(right)) {
+        left.accept(this);
+        processInstanceOf(expression, opType == T_NEQ);
+        return;
+      }
+      else if (right != null && isNullLiteral(left)) {
+        right.accept(this);
+        processInstanceOf(expression, opType == T_NEQ);
+        return;
+      }
     }
 
     if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != GroovyTokenTypes.kIN) {
@@ -1119,7 +1126,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     error("broken control flow for a scope");
   }
 
-  private void error(String descr) {
+  private void error(@NotNull String descr) {
     PsiFile file = myScope.getContainingFile();
     String fileText = file != null ? file.getText() : null;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);

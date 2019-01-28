@@ -71,7 +71,12 @@ public class DirectoryNode extends PackageDependenciesNode {
         }
       }
       else {
-        myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
+        if (myVDirectory.equals(index.getSourceRootForFile(myVDirectory)) || myVDirectory.equals(index.getClassRootForFile(myVDirectory))) {
+          myFQName = dirName;
+        }
+        else {
+          myFQName = FilePatternPackageSet.getLibRelativePath(myVDirectory, index);
+        }
       }
       dirName = myFQName;
     } else {

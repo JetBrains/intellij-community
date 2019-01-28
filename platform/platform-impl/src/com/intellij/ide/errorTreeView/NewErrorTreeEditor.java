@@ -21,7 +21,6 @@ import java.util.EventObject;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/25/14
  */
 public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
 

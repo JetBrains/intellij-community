@@ -105,7 +105,7 @@
                               implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiPackage"
                               implementationClass="com.intellij.psi.presentation.java.PackagePresentationProvider"/>
-    <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
+    <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes" externalIdPrefix="java."/>
     <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
     <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>

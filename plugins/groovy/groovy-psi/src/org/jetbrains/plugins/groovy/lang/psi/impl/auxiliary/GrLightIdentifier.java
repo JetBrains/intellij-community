@@ -49,6 +49,7 @@ public class GrLightIdentifier extends LightElement {
     return new GrLightIdentifier(getManager(), myText);
   }
 
+  @Override
   public String toString() {
     return "PsiIdentifier:" + getText();
   }

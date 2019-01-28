@@ -2948,6 +2948,9 @@
     <inspection_tool class="PackageInfoWithoutPackage" enabled="false" level="WARNING" enabled_by_default="false">
       <scope name="android" level="WARNING" enabled="false" />
     </inspection_tool>
+    <inspection_tool class="PackageName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="namePattern" value="[a-z_][a-z\d_]*(\.[a-z_][a-zA-Z\d_]*)*" />
+    </inspection_tool>
     <inspection_tool class="PackageNamingConvention" enabled="false" level="WARNING" enabled_by_default="false">
       <scope name="android" level="WARNING" enabled="false" />
       <option name="m_regex" value="[a-z]*" />

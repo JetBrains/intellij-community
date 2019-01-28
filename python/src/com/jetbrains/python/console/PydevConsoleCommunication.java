@@ -52,6 +52,7 @@ import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
 public abstract class PydevConsoleCommunication extends AbstractConsoleCommunication implements PyFrameAccessor {
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class);
 
+  protected volatile boolean keyboardInterruption;
   /**
    * Input that should be sent to the server (waiting for raw_input)
    */
@@ -224,9 +225,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myExecuting = executing;
   }
 
-  private Object execRequestInput() {
+  private Object execRequestInput() throws KeyboardInterruptException {
     waitingForInput = true;
     inputReceived = null;
+    keyboardInterruption = false;
     boolean needInput = true;
 
     //let the busy loop from execInterpreter free and enter a busy loop
@@ -237,6 +239,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     //busy loop until we have an input
     while (inputReceived == null) {
+      if (keyboardInterruption) {
+        waitingForInput = false;
+
+        throw new KeyboardInterruptException();
+      }
       synchronized (lock) {
         try {
           lock.wait(10);
@@ -450,6 +457,12 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
   @Override
   public void interrupt() {
+    if (waitingForInput) {
+      // we do not want to forcibly `interrupt()` the `requestInput()` on the
+      // Python side otherwise the message queue to the IDE will be broken
+      keyboardInterruption = true;
+      return;
+    }
     try {
       getPythonConsoleBackendClient().interrupt();
     }
@@ -675,7 +688,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
 
     @Override
-    public String requestInput(String path) {
+    public String requestInput(String path) throws KeyboardInterruptException {
       return (String)execRequestInput();
     }
 

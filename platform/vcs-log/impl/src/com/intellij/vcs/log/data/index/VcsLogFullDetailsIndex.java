@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implements Disposable {
@@ -107,15 +106,11 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     });
   }
 
-  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<T> consumer) throws StorageException {
+  protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<? super T> consumer) throws StorageException {
     myMapReduceIndex.getData(key).forEach((id, value) -> {
       consumer.accept(value, id);
       return true;
     });
-  }
-
-  protected boolean iterateCommitIdsAndValues(int key, @NotNull BiPredicate<T, Integer> consumer) throws StorageException {
-    return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
   @Nullable
@@ -148,8 +143,8 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
-                            @NotNull MyMapIndexStorage<T> mapIndexStorage,
-                            @NotNull ForwardIndex<Integer, T> forwardIndex) {
+                     @NotNull MyMapIndexStorage<T> mapIndexStorage,
+                     @NotNull ForwardIndex<Integer, T> forwardIndex) {
       super(extension, mapIndexStorage, forwardIndex);
     }
 
@@ -191,8 +186,8 @@ public class VcsLogFullDetailsIndex<T, D extends VcsFullCommitDetails> implement
     private final int myVersion;
 
     MyIndexExtension(@NotNull String name, @NotNull DataIndexer<Integer, T, D> indexer,
-                            @NotNull DataExternalizer<T> externalizer,
-                            int version) {
+                     @NotNull DataExternalizer<T> externalizer,
+                     int version) {
       myID = IndexId.create(name);
       myIndexer = indexer;
       myExternalizer = externalizer;

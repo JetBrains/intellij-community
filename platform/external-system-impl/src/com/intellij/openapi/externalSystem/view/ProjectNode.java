@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
   private String myTooltipCache;
@@ -55,12 +54,17 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   @NotNull
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
+    setIdeGrouping(null);
     final List<? extends ExternalSystemNode> children = super.doBuildChildren();
     final List<ExternalSystemNode> visibleChildren = ContainerUtil.filter(children, node -> node.isVisible());
     if (visibleChildren.size() == 1 && visibleChildren.get(0).getName().equals(getName())) {
       singleModuleProject = true;
+      final ExternalSystemNode node = visibleChildren.get(0);
+      if (node instanceof ModuleNode) {
+        setIdeGrouping(((ModuleNode)node).getIdeGrouping());
+      }
       //noinspection unchecked
-      return visibleChildren.get(0).doBuildChildren();
+      return node.doBuildChildren();
     }
     else {
       singleModuleProject = false;
@@ -69,7 +73,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   public boolean isSingleModuleProject() {
-    getChildren();
     return singleModuleProject;
   }
 
@@ -97,26 +100,26 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     StringBuilder desc = new StringBuilder();
     final ProjectData projectData = getData();
     desc
-      .append("<table>" +
-              "<tr>" +
-              "<td nowrap>" +
-              "<table>" +
-              "<tr><td nowrap>Project:</td><td nowrap>").append(getName()).append("</td></tr>")
+      .append("Project: ").append(getName())
       .append(projectData != null ?
-              "<tr><td nowrap>Location:</td><td nowrap>" + projectData.getLinkedExternalProjectPath() + "</td></tr>" : "")
+              "\n\rLocation: " + projectData.getLinkedExternalProjectPath() : "")
       .append(projectData != null && !StringUtil.isEmptyOrSpaces(projectData.getDescription()) ?
-              "<tr><td colspan='2' nowrap><hr align='center' width='90%' />" + projectData.getDescription() + "</td></tr>" : "")
-      .append("</td></tr>" +
-              "</table>" +
-              "</td>" +
-              "</tr>");
-    appendProblems(desc);
-    desc.append("</table>");
+              "\n\r" + projectData.getDescription() : "");
     return desc.toString();
   }
 
-  private void appendProblems(StringBuilder desc) {
-    // TBD
+  @Nullable
+  public String getIdeGrouping() {
+    ProjectData data = getData();
+    if (data == null) return null;
+    return data.getIdeGrouping();
+  }
+
+  private void setIdeGrouping(@Nullable String ideGrouping) {
+    ProjectData data = getData();
+    if (data != null) {
+      data.setIdeGrouping(ideGrouping);
+    }
   }
 
   @Override

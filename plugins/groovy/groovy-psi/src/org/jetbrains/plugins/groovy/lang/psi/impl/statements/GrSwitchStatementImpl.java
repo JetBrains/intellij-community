@@ -29,6 +29,7 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
     visitor.visitSwitchStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Switch statement";
   }

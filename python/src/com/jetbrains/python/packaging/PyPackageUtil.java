@@ -41,7 +41,6 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -271,7 +270,7 @@ public class PyPackageUtil {
   }
 
   @NotNull
-  public static String requirementsToString(@NotNull List<PyRequirement> requirements) {
+  public static String requirementsToString(@NotNull List<? extends PyRequirement> requirements) {
     return StringUtil.join(requirements, requirement -> String.format("'%s'", requirement.getPresentableText()), ", ");
   }
 
@@ -313,10 +312,14 @@ public class PyPackageUtil {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.equals(root)) {
+          return true;
+        }
         if (!fileIndex.isExcluded(file) && file.isDirectory() && file.findChild(PyNames.INIT_DOT_PY) != null) {
           results.add(VfsUtilCore.getRelativePath(file, root, '.'));
+          return true;
         }
-        return true;
+        return false;
       }
     });
   }
@@ -352,7 +355,7 @@ public class PyPackageUtil {
 
 
     final Ref<List<PyPackage>> packagesRef = Ref.create();
-    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
+    final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
@@ -398,7 +401,7 @@ public class PyPackageUtil {
 
 
   @Nullable
-  public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
+  public static PyPackage findPackage(@NotNull List<? extends PyPackage> packages, @NotNull String name) {
     for (PyPackage pkg : packages) {
       if (name.equalsIgnoreCase(pkg.getName())) {
         return pkg;
@@ -407,7 +410,7 @@ public class PyPackageUtil {
     return null;
   }
 
-  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
+  public static boolean hasManagement(@NotNull List<? extends PyPackage> packages) {
     return (findPackage(packages, SETUPTOOLS) != null || findPackage(packages, DISTRIBUTE) != null) ||
            findPackage(packages, PIP) != null;
   }
@@ -491,7 +494,7 @@ public class PyPackageUtil {
   private static PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
                                                          @NotNull String requirementName,
                                                          @NotNull LanguageLevel languageLevel) {
-    final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? INSTALL_REQUIRES : REQUIRES;
+    final String keyword = PyPsiUtils.containsImport(setupPy, "setuptools") ? INSTALL_REQUIRES : REQUIRES;
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 

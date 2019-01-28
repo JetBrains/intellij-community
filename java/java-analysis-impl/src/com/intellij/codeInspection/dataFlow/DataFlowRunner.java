@@ -8,6 +8,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -30,12 +32,16 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
+  private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
@@ -43,6 +49,7 @@ public class DataFlowRunner {
   private final DfaValueFactory myValueFactory;
   private boolean myInlining = true;
   private boolean myCancelled = false;
+  private boolean myWasForciblyMerged = false;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
@@ -148,7 +155,9 @@ public class DataFlowRunner {
     ControlFlow flow = null;
     DfaInstructionState lastInstructionState = null;
     try {
+      TimeStats stats = new TimeStats();
       flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
+      stats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
@@ -157,6 +166,7 @@ public class DataFlowRunner {
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myNestedClosures.clear();
+      myWasForciblyMerged = false;
 
       Set<Instruction> joinInstructions = getJoinInstructions();
 
@@ -178,7 +188,9 @@ public class DataFlowRunner {
       int stateLimit = Registry.intValue("ide.dfa.state.limit");
       int count = 0;
       while (!queue.isEmpty()) {
+        stats.startMerge();
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
+        stats.endMerge();
         if (states.size() > MAX_STATES_PER_BRANCH) {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
@@ -204,6 +216,14 @@ public class DataFlowRunner {
             Collection<DfaMemoryState> processed = processedStates.get(branching);
             if (containsState(processed, instructionState)) {
               continue;
+            }
+            if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
+              stats.startMerge();
+              instructionState = mergeBackBranches(instructionState, processed);
+              stats.endMerge();
+              if (containsState(processed, instructionState)) {
+                continue;
+              }
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.trace("Too complex because too many different possible states");
@@ -252,6 +272,12 @@ public class DataFlowRunner {
       }
 
       LOG.trace("Analysis ok");
+      myWasForciblyMerged |= queue.wasForciblyMerged();
+      stats.endProcess();
+      if (stats.isTooSlow()) {
+        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + stats;
+        reportDfaProblem(psiBlock, flow, null, new RuntimeException(message));
+      }
       return RunnerResult.OK;
     }
     catch (ProcessCanceledException ex) {
@@ -261,6 +287,25 @@ public class DataFlowRunner {
       reportDfaProblem(psiBlock, flow, lastInstructionState, e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  @NotNull
+  private DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
+    DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
+    Object key = curState.getMergeabilityKey();
+    DfaMemoryStateImpl mergedState =
+      StreamEx.of(processed).select(DfaMemoryStateImpl.class).filterBy(DfaMemoryStateImpl::getMergeabilityKey, key)
+        .foldLeft(curState, (s1, s2) -> {
+          s1.merge(s2);
+          return s1;
+        });
+    instructionState = new DfaInstructionState(instructionState.getInstruction(), mergedState);
+    myWasForciblyMerged = true;
+    return instructionState;
+  }
+
+  boolean wasForciblyMerged() {
+    return myWasForciblyMerged;
   }
 
   @NotNull
@@ -357,8 +402,8 @@ public class DataFlowRunner {
   @Nullable
   private static DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
     DfaValueFactory factory = var.getFactory();
-    if (var.getSource() instanceof DfaExpressionFactory.ThisSource) {
-      PsiClass aClass = ((DfaExpressionFactory.ThisSource)var.getSource()).getPsiElement();
+    if (var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
+      PsiClass aClass = ((DfaExpressionFactory.ThisDescriptor)var.getDescriptor()).getPsiElement();
       DfaValue value = factory.createTypeValue(var.getType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
@@ -548,5 +593,61 @@ public class DataFlowRunner {
     }
 
     return Pair.create(trueSet, falseSet);
+  }
+  
+  private static class TimeStats {
+    private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
+    private final @Nullable ThreadMXBean myMxBean;
+    private final long myStart;
+    private long myMergeStart, myFlowTime, myMergeTime, myProcessTime;
+
+    TimeStats() {
+      Application application = ApplicationManager.getApplication();
+      if (application.isInternal() || application.isEAP()) {
+        myMxBean = ManagementFactory.getThreadMXBean();
+        myStart = myMxBean.getCurrentThreadCpuTime();
+      } else {
+        myMxBean = null;
+        myStart = 0;
+      }
+    }
+    
+    void endFlow() {
+      if (myMxBean != null) {
+        myFlowTime = myMxBean.getCurrentThreadCpuTime() - myStart;
+      }
+    }
+    
+    void startMerge() {
+      if (myMxBean != null) {
+        myMergeStart = System.nanoTime();
+      }
+    }
+    
+    void endMerge() {
+      if (myMxBean != null) {
+        myMergeTime += System.nanoTime() - myMergeStart;
+      }
+    }
+    
+    void endProcess() {
+      if (myMxBean != null) {
+        myProcessTime = myMxBean.getCurrentThreadCpuTime() - myStart;
+      }
+    }
+    
+    boolean isTooSlow() {
+      return myProcessTime > DFA_EXECUTION_TIME_TO_REPORT_NANOS; 
+    }
+
+    @Override
+    public String toString() {
+      double flowTime = myFlowTime/1e9;
+      double mergeTime = myMergeTime/1e9;
+      double interpretTime = (myProcessTime - myFlowTime - myMergeTime)/1e9;
+      double totalTime = myProcessTime/1e9;
+      return String.format(Locale.ENGLISH, "Building ControlFlow: %.2fs\nMerging states: %.2fs\nInterpreting: %.2fs\nTotal: %.2fs", 
+                           flowTime, mergeTime, interpretTime, totalTime);
+    }
   }
 }

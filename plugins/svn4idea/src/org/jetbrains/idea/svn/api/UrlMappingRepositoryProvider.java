@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+
 public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
 
   public UrlMappingRepositoryProvider(@NotNull SvnVcs vcs, @NotNull Target target) {
@@ -33,7 +35,7 @@ public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
 
     if (!myVcs.getProject().isDefault()) {
       rootInfo = myTarget.isFile()
-                 ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
+                 ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(myTarget.getFile()))
                  : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getUrl());
     }
 

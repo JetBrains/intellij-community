@@ -39,7 +39,6 @@ import java.util.List;
  * @author max
  * @author jeka
  */
-@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
@@ -142,7 +141,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   }
 
   public static class CorruptedException extends IOException {
-    @SuppressWarnings("HardCodedStringLiteral")
     public CorruptedException(File file) {
       this("PersistentEnumerator storage corrupted " + file.getPath());
     }
@@ -153,7 +151,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
   }
 
   public static class VersionUpdatedException extends CorruptedException {
-    @SuppressWarnings("HardCodedStringLiteral")
     VersionUpdatedException(@NotNull File file) {
       super("PersistentEnumerator storage corrupted " + file.getPath());
     }

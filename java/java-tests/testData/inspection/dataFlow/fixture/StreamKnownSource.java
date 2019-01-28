@@ -77,7 +77,7 @@ public class StreamKnownSource {
   }
 
   void testStreamOf(int[] arr) {
-    if(Stream.of().count() > 0) {
+    if(<warning descr="Condition 'Stream.of().count() > 0' is always 'false'">Stream.of().count() > 0</warning>) {
       System.out.println("Impossible");
     }
     if(<warning descr="Condition 'Stream.of(\"foo\", \"bar\").findFirst().isPresent()' is always 'true'">Stream.of("foo", "bar").findFirst().isPresent()</warning>) {

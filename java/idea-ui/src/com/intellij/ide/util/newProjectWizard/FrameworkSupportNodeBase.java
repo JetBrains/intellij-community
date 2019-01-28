@@ -60,7 +60,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
       return o1.getTitle().compareToIgnoreCase(o2.getTitle());
     });
     for (FrameworkSupportNodeBase node : nodes) {
-      sortByName((List)node.children, null);
+      sortByName(node.children, null);
     }
   }
 
@@ -81,7 +81,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
 
   @NotNull
   public List<FrameworkSupportNodeBase> getChildren() {
-    return children != null ? (List)children : Collections.emptyList();
+    return children != null ? children : Collections.emptyList();
   }
 
   public FrameworkSupportNodeBase getParentNode() {

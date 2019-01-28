@@ -600,7 +600,6 @@ public final class FormSourceCodeGenerator {
 
       Object value = component.getPropertyValue(property);
 
-      //noinspection HardCodedStringLiteral
       final boolean isTextWithMnemonicProperty =
         "text".equals(property.getName()) &&
         (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope) ||

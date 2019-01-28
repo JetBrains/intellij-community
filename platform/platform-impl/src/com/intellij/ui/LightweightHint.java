@@ -216,14 +216,14 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       }
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(actualComponent, myFocusRequestor)
-        .setRequestFocus(myFocusRequestor != null)
-        .setFocusable(myFocusRequestor != null)
+        .setRequestFocus(myFocusRequestor != null || hintHint.isRequestFocus())
+        .setFocusable(myFocusRequestor != null || hintHint.isRequestFocus())
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)
         .setModalContext(false)
         .setShowShadow(isRealPopup() && !isForceHideShadow())
-        .setCancelKeyEnabled(false)
+        .setCancelKeyEnabled(true)
         .setCancelOnClickOutside(myCancelOnClickOutside)
         .setCancelCallback(() -> {
           onPopupCancel();

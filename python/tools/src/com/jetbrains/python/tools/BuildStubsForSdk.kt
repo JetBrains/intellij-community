@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -26,11 +27,11 @@ import java.io.File
  * @author traff
  */
 
-val stubsFileName: String = SDK_STUBS_STORAGE_NAME
+const val stubsFileName: String = SDK_STUBS_STORAGE_NAME
 
-val MERGE_STUBS_FROM_PATHS: String = "MERGE_STUBS_FROM_PATHS"
+const val MERGE_STUBS_FROM_PATHS: String = "MERGE_STUBS_FROM_PATHS"
 
-val PACK_STDLIB_FROM_PATH: String = "PACK_STDLIB_FROM_PATH"
+const val PACK_STDLIB_FROM_PATH: String = "PACK_STDLIB_FROM_PATH"
 
 fun getBaseDirValue(): String? {
   val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)

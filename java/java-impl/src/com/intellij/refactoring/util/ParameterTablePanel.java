@@ -50,7 +50,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
     init(variableData, project, scopeElements);
   }
 
-  public ParameterTablePanel(Predicate<String> parameterNameValidator) {
+  public ParameterTablePanel(Predicate<? super String> parameterNameValidator) {
     super(new PassParameterColumnInfo(),
           new TypeColumnInfo(),
           new NameColumnInfo(parameterNameValidator));

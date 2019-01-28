@@ -6,7 +6,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -14,12 +16,18 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
@@ -33,7 +41,41 @@ import static org.junit.Assert.*;
 /**
  * @author yole
  */
-public class NotNullVerifyingInstrumenterTest {
+public abstract class NotNullVerifyingInstrumenterTest {
+  @Retention(RetentionPolicy.RUNTIME)
+  private @interface TestDirectory { String value(); }
+
+  @TestDirectory("members")
+  public static class MembersTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("types")
+  public static class TypesTargetTest extends NotNullVerifyingInstrumenterTest { }
+  @TestDirectory("mixed")
+  public static class MixedTargetTest extends NotNullVerifyingInstrumenterTest { }
+
+  private static final String TEST_DATA_PATH = "/compiler/notNullVerification/";
+
+  private static class AnnotationCompiler extends ExternalResource {
+    private File classes;
+
+    @Override
+    public Statement apply(Statement base, Description description) {
+      TestDirectory annotation = description.getAnnotation(TestDirectory.class);
+      if (annotation == null) throw new IllegalArgumentException("Class " + description.getTestClass() + " misses @TestDirectory annotation");
+      File source = new File(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH + annotation.value() + "/NotNull.java");
+      if (!source.isFile()) throw new IllegalArgumentException("Cannot find annotation file at " + source);
+      classes = IoTestUtil.createTestDir("test-notNullInstrumenter-" + annotation.value());
+      IdeaTestUtil.compileFile(source, classes);
+      return super.apply(base, description);
+    }
+
+    @Override
+    protected void after() {
+      IoTestUtil.delete(classes);
+    }
+  }
+
+  @ClassRule public static final AnnotationCompiler annotation = new AnnotationCompiler();
+
   @Rule public TempDirectory tempDir = new TempDirectory();
   @Rule public TestName testName = new TestName();
 
@@ -122,8 +164,7 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructor() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
@@ -134,7 +175,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), NullPointerException.class);
       assertEquals("Argument 1 for @NotNull parameter of CustomExceptionType.foo must not be null", e.getCause().getMessage());
     }
@@ -143,8 +183,13 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnumConstructorSecondParam() throws Exception {
     Class testClass = prepareTest();
-    Object field = testClass.getField("Value");
-    assertNotNull(field);
+    assertNotNull(testClass.getField("Value").get(null));
+  }
+
+  @Test
+  public void testGroovyEnum() throws Exception {
+    Class testClass = prepareTest();
+    assertNotNull(testClass.getField("Value").get(null));
   }
 
   @Test
@@ -155,8 +200,18 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
-    Class aClass = prepareTest();
-    assertNotNull(aClass.newInstance());
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument 1 for @NotNull parameter of NonStaticInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
+  }
+
+  @Test
+  public void testGroovyInnerClass() throws Exception {
+    Class<?> testClass = prepareTest();
+    assertNotNull(testClass.newInstance());
+    verifyCallThrowsException(
+      "Argument for @NotNull parameter 's2' of GroovyInnerClass$Inner.<init> must not be null", null, testClass.getMethod("fail"));
   }
 
   @Test
@@ -167,7 +222,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), IllegalArgumentException.class);
       String trace = ExceptionUtil.getThrowableText(e.getCause());
       assertEquals("Exception should happen in real, non-bridge method: " + trace,
@@ -201,7 +255,7 @@ public class NotNullVerifyingInstrumenterTest {
     Object instance = test.newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseOnlyAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseOnlyAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
-    test.getMethod("foo3", List.class).invoke(instance, (List)null);
+    test.getMethod("foo3", List.class).invoke(instance, new Object[]{null});
   }
 
   @Test
@@ -233,8 +287,10 @@ public class NotNullVerifyingInstrumenterTest {
   @Test
   public void testEnclosingClass() throws Exception {
     Class<?> testClass = prepareTest();
-    Object obj = testClass.getMethod("main").invoke(null);
-    assertEquals(testClass, obj.getClass().getEnclosingClass());
+    Object obj1 = testClass.getMethod("fromStatic").invoke(null);
+    assertEquals(testClass, obj1.getClass().getEnclosingClass());
+    Object obj2 = testClass.getMethod("fromInstance").invoke(testClass.newInstance());
+    assertEquals(testClass, obj2.getClass().getEnclosingClass());
   }
 
   @Test
@@ -272,48 +328,33 @@ public class NotNullVerifyingInstrumenterTest {
     return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
 
-  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
-    String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
-    String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
-    String javaPath = (base + baseClassName) + ".java";
+  private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
+    String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
+    File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newFolder("output");
+    List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
+    if (withDebugInfo) args.add("-g");
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
-    try {
-      List<String> cmdLine = ContainerUtil.newArrayList("-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath());
-      if (withDebugInfo) {
-        cmdLine.add("-g");
+    File[] files = classesDir.listFiles();
+    assertNotNull(files);
+    Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    boolean modified = false;
+    MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
+    Class mainClass = null;
+    for (File file: files) {
+      FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
+      ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
+      String className = FileUtil.getNameWithoutExtension(file.getName());
+      Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
+      if (className.equals(testName)) {
+        mainClass = aClass;
       }
-      cmdLine.add(javaPath);
-      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
-
-      Class mainClass = null;
-      File[] files = classesDir.listFiles();
-      assertNotNull(files);
-      Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-      boolean modified = false;
-      MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      for (File file: files) {
-        String fileName = file.getName();
-        byte[] content = FileUtil.loadFileBytes(file);
-
-        FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnos);
-
-        byte[] instrumented = writer.toByteArray();
-        String className = FileUtil.getNameWithoutExtension(fileName);
-        Class aClass = classLoader.doDefineClass(className, instrumented);
-        if (className.equals(baseClassName)) {
-          mainClass = aClass;
-        }
-      }
-      assertTrue("Class file not instrumented!", modified);
-      assertNotNull("Class " + baseClassName + " not found!", mainClass);
-      return mainClass;
     }
-    finally {
-      FileUtil.delete(classesDir);
-    }
+    assertTrue("Class file not instrumented!", modified);
+    assertNotNull("Class " + testName + " not found!", mainClass);
+    return mainClass;
   }
 
   private static class MyClassLoader extends ClassLoader {

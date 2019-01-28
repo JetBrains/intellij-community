@@ -3,7 +3,9 @@ package org.jetbrains.intellij.build.impl.productInfo
 
 import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import groovy.transform.CompileStatic
 import org.apache.tools.tar.TarEntry
 import org.apache.tools.tar.TarInputStream
 import org.jetbrains.intellij.build.BuildContext
@@ -14,6 +16,7 @@ import java.util.zip.ZipFile
 /**
  * Validates that paths specified in product-info.json file are correct
  */
+@CompileStatic
 class ProductInfoValidator {
   private final BuildContext context
 
@@ -30,7 +33,7 @@ class ProductInfoValidator {
       context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archivePath")
     }
 
-    validateProductJson(loadEntry(archivePath, productJsonPath), archivePath, [], [Pair.create(archivePath, pathInArchive)])
+    validateProductJson(loadEntry(archivePath, productJsonPath), archivePath, "", [], [Pair.create(archivePath, pathInArchive)])
   }
 
   /**
@@ -39,17 +42,17 @@ class ProductInfoValidator {
    * @param installationArchives archives which will be unpacked and included into product installation (the first part specified path to archive,
    * the second part specifies path inside archive)
    */
-  void validateInDirectory(String directoryWithProductJson, List<String> installationDirectories,
+  void validateInDirectory(String directoryWithProductJson, String relativePathToProductJson, List<String> installationDirectories,
                            List<Pair<String, String>> installationArchives) {
-    def productJsonFile = new File(directoryWithProductJson, ProductInfoGenerator.FILE_NAME)
+    def productJsonFile = new File(directoryWithProductJson, relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
     if (!productJsonFile.exists()) {
       context.messages.error("Failed to validate product-info.json: $productJsonFile doesn't exist")
     }
 
-    validateProductJson(productJsonFile.text, productJsonFile.absolutePath, installationDirectories, installationArchives)
+    validateProductJson(productJsonFile.text, productJsonFile.absolutePath, relativePathToProductJson, installationDirectories, installationArchives)
   }
 
-  private void validateProductJson(String jsonText, String presentablePathToProductJson, List<String> installationDirectories,
+  private void validateProductJson(String jsonText, String presentablePathToProductJson, String relativePathToProductJson, List<String> installationDirectories,
                                    List<Pair<String, String>> installationArchives) {
     ProductInfoData productJson
     try {
@@ -61,24 +64,28 @@ class ProductInfoValidator {
     }
 
     productJson.launch.each {
-      checkFileExists(it.launcherPath, "$it.os launcher", installationDirectories, installationArchives)
-      checkFileExists(it.javaExecutablePath, "$it.os java executable", installationDirectories, installationArchives)
-      checkFileExists(it.vmOptionsFilePath, "$it.os VM options file", installationDirectories, installationArchives)
+      checkFileExists(it.launcherPath, "$it.os launcher", relativePathToProductJson, installationDirectories,
+                      installationArchives)
+      checkFileExists(it.javaExecutablePath, "$it.os java executable", relativePathToProductJson,
+                      installationDirectories, installationArchives)
+      checkFileExists(it.vmOptionsFilePath, "$it.os VM options file", relativePathToProductJson,
+                      installationDirectories, installationArchives)
     }
   }
 
-  private void checkFileExists(String path, String description, List<String> installationDirectories,
+  private void checkFileExists(String path, String description, String relativePathToProductJson, List<String> installationDirectories,
                                List<Pair<String, String>> installationArchives) {
     if (path == null) return
 
-    if (!installationDirectories.any { new File(it, path).exists() } && !installationArchives.any { archiveContainsEntry(it.first, joinPaths(it.second, path)) }) {
-      context.messages.error("Incorrect path to $description '$path' in product-info.json: the specified file doesn't exist in directories $installationDirectories " +
+    String pathFromProductJson = relativePathToProductJson + path
+    if (!installationDirectories.any { new File(it, pathFromProductJson).exists() } && !installationArchives.any { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }) {
+      context.messages.error("Incorrect path to $description '$path' in $relativePathToProductJson/product-info.json: the specified file doesn't exist in directories $installationDirectories " +
                              "and archives ${installationArchives.collect { "$it.first/$it.second" }}")
     }
   }
 
   private static String joinPaths(String parent, String child) {
-    parent.isEmpty() ? child : child.isEmpty() ? parent : "$parent/$child"
+    FileUtil.toCanonicalPath("$parent/$child", '/' as char).dropWhile { it == '/' as char}
   }
 
   static boolean archiveContainsEntry(String archivePath, String entryPath) {
@@ -93,8 +100,9 @@ class ProductInfoValidator {
       return archiveFile.withInputStream {
         def inputStream = new TarInputStream(new GZIPInputStream(it))
         TarEntry entry
+        def altEntryPath = "./$entryPath"
         while (null != (entry = inputStream.nextEntry)) {
-          if (entry.name == entryPath) {
+          if (entry.name == entryPath || entry.name == altEntryPath) {
             return true
           }
         }

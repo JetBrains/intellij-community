@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
@@ -121,7 +122,7 @@ public class OverrideImplementExploreUtil {
   @FunctionalInterface
   public interface MemberImplementorExplorersProvider {
     @NotNull
-    MemberImplementorExplorer[] getExplorers();
+    List<? extends MemberImplementorExplorer> getExplorers();
   }
 
   private static final NullableLazyValue<MemberImplementorExplorersProvider> ourExplorersProvider = new VolatileNullableLazyValue<MemberImplementorExplorersProvider>() {
@@ -208,7 +209,7 @@ public class OverrideImplementExploreUtil {
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
+        substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, typeParameters);
       }
     }
     return substitutor;

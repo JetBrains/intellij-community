@@ -24,6 +24,6 @@ public interface LineProcessEventListener extends ProcessEventListener {
    * @param line       a line of the text
    * @param outputType a type of output (one of constants from {@link com.intellij.execution.process.ProcessOutputTypes})
    */
-  @SuppressWarnings({"UnusedParameters", "UnnecessaryFullyQualifiedName"})
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName"})
   void onLineAvailable(String line, Key outputType);
 }

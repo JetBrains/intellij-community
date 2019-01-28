@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
@@ -50,25 +51,24 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon;
 import static com.intellij.ide.projectView.impl.ShowModulesAction.hasModules;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
-import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
-import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
-import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
+import static com.intellij.openapi.vfs.VfsUtilCore.*;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -209,8 +209,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       root.childrenValid = false;
       LOG.debug("whole structure changed");
       ViewSettings settings = root.getSettings();
-      model.setSettings(settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles(),
-                        hasModules() && settings.isShowModules());
+      boolean isShowExcludedFiles = false;
+      if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
+        NamedScopeFilter filter = getFilter();
+        Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
+        isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
+      }
+      model.setSettings(isShowExcludedFiles, hasModules() && settings.isShowModules());
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
@@ -570,9 +575,8 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         }
       });
       if (provider == null) return children;
-      children.addAll(provider.modify(parent, files.stream()
-        .map(file -> new PsiFileNode(getProject(), file, getSettings()))
-        .collect(Collectors.toList()), getSettings()));
+      List<AbstractTreeNode> nodes = ContainerUtil.map(files, file -> new PsiFileNode(getProject(), file, getSettings()));
+      children.addAll(provider.modify(parent, nodes, getSettings()));
       return children;
     }
 
@@ -628,24 +632,17 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   private static class FileNode extends Node {
     final List<VirtualFile> compacted;
     final ProjectFileNode node;
-    volatile String packageName;
-    volatile String nodeName;
 
     FileNode(@NotNull Node parent, @NotNull ProjectFileNode node) {
       super(parent, node);
       this.node = node;
       compacted = getCompactedFolders(parent.getVirtualFile(), node.getVirtualFile());
-    }
-
-    @Override
-    public void setIcon(@Nullable Icon icon) {
-      super.setIcon(icon);
-      packageName = !isPackage(icon) ? null : getPackageName(findFileSystemItem(getVirtualFile()));
-      nodeName = getNodeName(packageName);
+      super.myName = node.getVirtualFile().getName(); // to avoid possible NPE
     }
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
+      super.myName = getNodeName(); // rebuild a node name used in #toString()
       VirtualFile file = getVirtualFile();
       String title = getTitle();
       SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -718,9 +715,8 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     }
 
     @NotNull
-    @Override
-    public String toString() {
-      return nodeName;
+    protected String getNodeName() {
+      return getNodeName(getPackageName());
     }
 
     @NotNull
@@ -728,7 +724,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       if (name != null) {
         AbstractTreeNode parent = getParent();
         FileNode node = parent instanceof FileNode ? (FileNode)parent : null;
-        String prefix = node == null ? null : node.packageName;
+        String prefix = node == null ? null : node.getPackageName();
         if (prefix == null) return name;
         int length = prefix.length();
         if (length > 0 && name.startsWith(prefix)) {
@@ -744,6 +740,19 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         return sb.append(getVirtualFile().getName()).toString();
       }
       return getVirtualFile().getName();
+    }
+
+    @Nullable
+    private String getPackageName() {
+      PsiElement element = !isPackage(getIcon()) ? null : findFileSystemItem(getVirtualFile());
+      if (element instanceof PsiDirectory && element.isValid()) {
+        PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
+        if (factory != null && factory.isPackage((PsiDirectory)element)) {
+          String name = factory.getQualifiedName((PsiDirectory)element, false);
+          if (factory.isValidPackageName(name)) return name;
+        }
+      }
+      return null;
     }
   }
 
@@ -776,7 +785,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     @Override
-    public String toString() {
+    protected String getNodeName() {
       return getLocation(true);
     }
 
@@ -1134,18 +1143,6 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
   private static Module getModule(@NotNull VirtualFile file, @Nullable Project project) {
     ProjectFileIndex index = getProjectFileIndex(project);
     return index == null ? null : index.getModuleForFile(file);
-  }
-
-  @Nullable
-  private static String getPackageName(@Nullable PsiElement element) {
-    if (element instanceof PsiDirectory && element.isValid()) {
-      PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
-      if (factory != null && factory.isPackage((PsiDirectory)element)) {
-        String name = factory.getQualifiedName((PsiDirectory)element, false);
-        if (factory.isValidPackageName(name)) return name;
-      }
-    }
-    return null;
   }
 
   private static boolean hasModuleGroups(@Nullable Project project) {

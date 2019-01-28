@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 
 /**
  * @author anna
- * @since 17.07.2012
  */
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
@@ -121,6 +120,21 @@ public class LambdaUtil {
       if (isAssignmentOrInvocationContext(parentContext)) return true;
       if (parentContext instanceof PsiConditionalExpression) {
         return isValidLambdaContext(parentContext);
+      }
+    }
+    if (context instanceof PsiBreakStatement) {
+      PsiElement element = ((PsiBreakStatement)context).findExitedElement();
+      if (element instanceof PsiSwitchExpression) {
+        return isValidLambdaContext(element.getParent());
+      }
+    }
+    if (context instanceof PsiExpressionStatement) {
+      PsiElement parent = context.getParent();
+      if (parent instanceof PsiSwitchLabeledRuleStatement) {
+        PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+        if (switchBlock != null) {
+          return isValidLambdaContext(switchBlock.getParent());
+        }
       }
     }
     return false;
@@ -410,6 +424,10 @@ public class LambdaUtil {
     else if (parent instanceof PsiLambdaExpression) {
       return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);
     }
+    PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class);
+    if (switchExpression != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(element)) {
+      return getFunctionalInterfaceType(switchExpression, tryToSubstitute);
+    }
     return null;
   }
 
@@ -678,7 +696,7 @@ public class LambdaUtil {
     else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaExpression);
       for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, () -> expression.getType());
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           errors.put(expression, "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText());
         }
@@ -723,6 +741,7 @@ public class LambdaUtil {
                                                     PsiExpressionList.class,
                                                     PsiLambdaExpression.class,
                                                     PsiConditionalExpression.class,
+                                                    PsiSwitchExpression.class,
                                                     PsiCodeBlock.class,
                                                     PsiCall.class);
     while (true) {
@@ -751,7 +770,7 @@ public class LambdaUtil {
         }
       }
 
-      if (parent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+      if ((parent instanceof PsiConditionalExpression || parent instanceof PsiSwitchExpression) && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
         break;
       }
 
@@ -825,7 +844,7 @@ public class LambdaUtil {
       for (PsiTypeParameter parameter : typeParameters) {
         final PsiClassType[] types = parameter.getExtendsListTypes();
         if (types.length > 0) {
-          final List<PsiType> conjuncts = ContainerUtil.map(types, type -> substitutor.substitute(type));
+          final List<PsiType> conjuncts = ContainerUtil.map(types, substitutor::substitute);
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
           final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(PsiType.EMPTY_ARRAY));
@@ -1032,10 +1051,53 @@ public class LambdaUtil {
   }
 
   private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
-    PsiExpression expr = JavaPsiFacade.getInstance(context.getProject())
-                                      .getElementFactory()
+    PsiExpression expr = JavaPsiFacade.getElementFactory(context.getProject())
                                       .createExpressionFromText(exprText, context);
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
     return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
+  }
+
+  /**
+   * Returns true if given lambda captures any variable or "this" reference.
+   * @param lambda lambda to check
+   * @return true if given lambda captures any variable or "this" reference.
+   */
+  public static boolean isCapturingLambda(PsiLambdaExpression lambda) {
+    PsiElement body = lambda.getBody();
+    if (body == null) return false;
+    class CapturingLambdaVisitor extends JavaRecursiveElementWalkingVisitor {
+      boolean capturing;
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (expression instanceof PsiMethodReferenceExpression) return;
+        if (expression.getParent() instanceof PsiMethodCallExpression && expression.getQualifierExpression() != null) return;
+        PsiElement target = expression.resolve();
+        // variable/parameter/field/method/class are always PsiModifierListOwners
+        if (target instanceof PsiModifierListOwner &&
+            !((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
+            !PsiTreeUtil.isAncestor(body, target, true)) {
+          if (target instanceof PsiClass && ((PsiClass)target).getContainingClass() == null) return;
+          capturing = true;
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitSuperExpression(PsiSuperExpression expression) {
+        capturing = true;
+        stopWalking();
+      }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression expression) {
+        capturing = true;
+        stopWalking();
+      }
+    }
+    CapturingLambdaVisitor visitor = new CapturingLambdaVisitor();
+    body.accept(visitor);
+    return visitor.capturing;
   }
 }

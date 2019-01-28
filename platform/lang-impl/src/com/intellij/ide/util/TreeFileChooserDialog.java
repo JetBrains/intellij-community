@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -52,7 +38,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -73,8 +58,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -95,7 +80,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private final boolean myShowLibraryContents;
   private boolean mySelectSearchByNameTab = false;
 
-  public TreeFileChooserDialog(final Project project,
+  public TreeFileChooserDialog(@NotNull Project project,
                                String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
@@ -216,7 +201,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (myInitialFile != null) {
       name = myInitialFile.getName();
     }
-    PsiElement context = myInitialFile == null ? null : myInitialFile;
+    PsiElement context = myInitialFile;
     myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
       @Override
       protected void close(final boolean isOk) {
@@ -301,7 +286,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBuilder != null) {
-        myBuilder.select(file, file.getVirtualFile(), true);
+        myBuilder.selectAsync(file, file.getVirtualFile(), true);
       }
     }, ModalityState.stateForComponent(getWindow()));
   }
@@ -409,11 +394,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
       final Set<String> array = new THashSet<>();
-      for (String fileName : fileNames) {
-        if (!array.contains(fileName)) {
-          array.add(fileName);
-        }
-      }
+      Collections.addAll(array, fileNames);
 
       final String[] result = ArrayUtil.toStringArray(array);
       Arrays.sort(result);

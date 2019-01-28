@@ -26,6 +26,6 @@ import java.util.List;
  */
 public interface ChangeListOwner {
   void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes);
-  void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<VirtualFile> unversionedFiles);
+  void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
   Project getProject();
 }

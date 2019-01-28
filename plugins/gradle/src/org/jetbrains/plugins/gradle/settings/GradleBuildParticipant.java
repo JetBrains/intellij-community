@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/6/2016
  */
 public class GradleBuildParticipant implements Serializable {
   private static final long serialVersionUID = 1L;

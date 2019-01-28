@@ -6,6 +6,6 @@ class ImportDuty {
     }
 
     void printArgs(Object... args) {
-        System.out.println(<ref>toString(args));
+        System.out.println(<caret>toString(args));
     }
 }

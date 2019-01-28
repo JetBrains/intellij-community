@@ -68,12 +68,8 @@ public class BuildTargetsState {
     try {
       File targetTypesFile = getTargetTypesFile();
       FileUtil.createParentDirs(targetTypesFile);
-      DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)));
-      try {
+      try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
-      }
-      finally {
-        output.close();
       }
     }
     catch (IOException e) {
@@ -98,6 +94,14 @@ public class BuildTargetsState {
 
   public void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
     getTypeState(type).removeStaleTarget(targetId);
+  }
+
+  public void setAverageBuildTime(BuildTargetType<?> type, long time) {
+    getTypeState(type).setAverageTargetBuildTime(time);
+  }
+
+  public long getAverageBuildTime(BuildTargetType<?> type) {
+    return getTypeState(type).getAverageTargetBuildTime();
   }
 
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {

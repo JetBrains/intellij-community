@@ -20,7 +20,7 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer implements Col
   DataFrameTableCellRenderer() {
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(LEFT);
-    setVerticalAlignment(BOTTOM);
+    setVerticalAlignment(CENTER);
   }
 
   @Override

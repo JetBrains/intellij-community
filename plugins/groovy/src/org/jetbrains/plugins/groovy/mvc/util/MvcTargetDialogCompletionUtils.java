@@ -117,7 +117,7 @@ public class MvcTargetDialogCompletionUtils {
     return res;
   }
 
-  private static void collectClassesAndPackageNames(Collection<LookupElement> res, @NotNull PsiPackage aPackage, GlobalSearchScope scope) {
+  private static void collectClassesAndPackageNames(Collection<? super LookupElement> res, @NotNull PsiPackage aPackage, GlobalSearchScope scope) {
     PsiPackage[] subPackages = aPackage.getSubPackages(scope);
 
     String qualifiedName = aPackage.getQualifiedName();
@@ -154,7 +154,7 @@ public class MvcTargetDialogCompletionUtils {
     return result;
   }
 
-  private static void collectScriptsFromUserHome(Set<String> result) {
+  private static void collectScriptsFromUserHome(Set<? super String> result) {
     String userHome = SystemProperties.getUserHome();
     if (userHome == null) return;
 

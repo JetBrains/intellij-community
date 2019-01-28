@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
@@ -201,7 +202,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
       if (isKnownExceptionalSideEffectCaught(call)) return;
 
-      if (isPureMethod(method)) {
+      if (isPureMethod(method, call)) {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
@@ -272,12 +273,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isPureMethod(PsiMethod method) {
+    private boolean isPureMethod(PsiMethod method, PsiExpression call) {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
-      return JavaMethodContractUtil.isPure(method) &&
-             !SideEffectChecker.mayHaveExceptionalSideEffect(method) &&
-             !hasTrivialReturnValue(method);
+      if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
+      if (!SideEffectChecker.mayHaveExceptionalSideEffect(method)) return true;
+      if (!(call instanceof PsiCallExpression)) return false;
+      CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(call);
+      return result != null && result.cannotFailByContract((PsiCallExpression)call);
     }
 
     private boolean hasTrivialReturnValue(PsiMethod method) {

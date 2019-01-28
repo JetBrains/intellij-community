@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2014
  */
 public class InvalidSdkException extends ExternalSystemJdkException {
 

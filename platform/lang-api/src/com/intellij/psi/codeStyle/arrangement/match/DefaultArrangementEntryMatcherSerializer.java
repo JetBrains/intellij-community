@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 1:00 PM
  */
 public class DefaultArrangementEntryMatcherSerializer {
 
@@ -69,7 +68,6 @@ public class DefaultArrangementEntryMatcherSerializer {
     myMixin = mixin;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public <T extends ArrangementEntryMatcher> Element serialize(@NotNull T matcher) {
     if (matcher instanceof StdArrangementEntryMatcher) {
@@ -89,7 +87,6 @@ public class DefaultArrangementEntryMatcherSerializer {
     return visitor.result;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public StdArrangementEntryMatcher deserialize(@NotNull Element matcherElement) {
     ArrangementMatchCondition condition = deserializeCondition(matcherElement);

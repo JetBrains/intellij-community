@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -33,7 +34,6 @@ import static com.intellij.openapi.util.Pair.pair;
  */
 class ImportOldConfigsPanel extends JDialog {
   private JPanel myRootPanel;
-  private JLabel mySuggestLabel;
   private JRadioButton myRbImportAuto;
   private JRadioButton myRbImport;
   private TextFieldWithBrowseButton myPrevInstallation;
@@ -52,7 +52,7 @@ class ImportOldConfigsPanel extends JDialog {
     myGuessedOldConfig = guessedOldConfig;
     myValidator = validator;
     myProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-    setTitle(ApplicationBundle.message("title.complete.installation"));
+    setTitle(ApplicationBundle.message("title.import.settings", myProductName));
     init();
   }
 
@@ -65,7 +65,6 @@ class ImportOldConfigsPanel extends JDialog {
     group.add(myRbDoNotImport);
     myRbDoNotImport.setSelected(true);
 
-    mySuggestLabel.setText(ApplicationBundle.message("label.you.can.import", myProductName));
     myRbDoNotImport.setText(ApplicationBundle.message("radio.do.not.import"));
     if (myGuessedOldConfig != null) {
       String path = FileUtil.getLocationRelativeToUserHome(myGuessedOldConfig.getAbsolutePath());
@@ -90,7 +89,7 @@ class ImportOldConfigsPanel extends JDialog {
         }
       }
     }
-
+    myPrevInstallation.setTextFieldPreferredWidth(50);
     myPrevInstallation.addActionListener(e -> {
       FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
       chooserDescriptor.setHideIgnored(false);
@@ -138,6 +137,7 @@ class ImportOldConfigsPanel extends JDialog {
     update();
     pack();
     setLocationRelativeTo(null);
+    setMinimumSize(getSize());
   }
 
   private void update() {
@@ -145,6 +145,8 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
+    ImportOldConfigsState.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport);
+
     if (myRbImport.isSelected()) {
       String text = myPrevInstallation.getText();
       if (StringUtil.isEmptyOrSpaces(text)) {

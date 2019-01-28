@@ -73,7 +73,6 @@ public interface ExtensionPoint extends DomElement {
    * Returns the fully qualified EP name
    *
    * @return {@code PluginID.name} or {@code qualifiedName}.
-   * @since 14
    */
   @NotNull
   String getEffectiveQualifiedName();

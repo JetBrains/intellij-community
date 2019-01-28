@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrNameValuePairStub;
 
 import java.io.IOException;
 
-@SuppressWarnings("Duplicates")
 public class GrNameValuePairElementType extends GrStubElementType<GrNameValuePairStub, GrAnnotationNameValuePair> {
 
   public GrNameValuePairElementType(String debugName) {

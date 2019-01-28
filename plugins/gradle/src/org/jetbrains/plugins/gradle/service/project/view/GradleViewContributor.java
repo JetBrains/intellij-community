@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public class GradleViewContributor extends ExternalSystemViewContributor {
   private static final Key<?>[] KEYS = new Key[]{

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavadocWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
   @Override
   public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
-    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().isEmpty();
+    return (node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA ||
+            node.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) && node.getText().trim().isEmpty();
   }
 }

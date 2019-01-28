@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/21/13
  */
 public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 

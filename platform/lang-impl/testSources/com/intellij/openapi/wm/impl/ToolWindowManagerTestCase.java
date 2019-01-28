@@ -39,6 +39,9 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
       ((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myOldManager);
       myOldManager = null;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

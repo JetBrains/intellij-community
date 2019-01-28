@@ -25,7 +25,6 @@ import java.util.function.Function;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 4/12/13 11:53 AM
  */
 public class DataNode<T> implements Serializable, UserDataHolderEx {
 
@@ -98,10 +97,14 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
    *
    * @param loaders  class loaders which are assumed to be able to build object of the target content class
    */
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public void prepareData(@NotNull final ClassLoader ... loaders) {
     if (myData != null) {
       return;
+    }
+
+    if (myRawData == null) {
+      throw new IllegalStateException(String.format("Data node of key '%s' does not contain raw or prepared data", myKey));
     }
 
     try {
@@ -298,7 +301,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   @Nullable
   @Override
   public <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
-    return (U)myUserData.getUserData(key);
+    return myUserData.getUserData(key);
   }
 
   @Override

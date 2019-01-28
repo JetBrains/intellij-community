@@ -411,6 +411,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36, false, false);
   }
 
+  // PY-32321
+  public void testMixedBytesAndNonBytes() {
+    doTest(LanguageLevel.PYTHON36, false, false);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();

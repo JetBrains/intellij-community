@@ -25,4 +25,11 @@ public abstract class FeatureUsagesCollector {
 
   @NotNull
   public abstract String getGroupId();
+
+  /**
+   * Increment collector version if any changes in collector logic were implemented.
+   */
+  public int getVersion() {
+    return 1;
+  }
 }

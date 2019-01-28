@@ -18,6 +18,7 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.IOUtil;
@@ -81,12 +82,12 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
           myNameStorage.close();
         }
 
+        StubSerializationHelper prevHelper = myStubSerializationHelper;
+
         IOUtil.deleteAllFilesStartingWith(myFile);
         myNameStorage = new PersistentStringEnumerator(myFile, true);
         myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
-        for (ObjectStubSerializer serializer : myAllSerializers) {
-          myStubSerializationHelper.assignId(serializer);
-        }
+        myStubSerializationHelper.copyFrom(prevHelper);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -113,7 +114,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     repairNameStorage();
   }
 
-  protected void nameStorageCrashed() {
+  private void nameStorageCrashed() {
     myNameStorageCrashed.set(true);
   }
 
@@ -137,10 +138,9 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   }
 
   @Override
-  public void registerSerializer(@NotNull ObjectStubSerializer serializer) {
-    super.registerSerializer(serializer);
+  protected void registerSerializer(String externalId, Computable<ObjectStubSerializer> lazySerializer) {
     try {
-      myStubSerializationHelper.assignId(serializer);
+      myStubSerializationHelper.assignId(lazySerializer, externalId);
     }
     catch (IOException e) {
       LOG.info(e);

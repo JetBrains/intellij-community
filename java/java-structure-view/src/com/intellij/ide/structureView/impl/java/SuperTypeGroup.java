@@ -37,7 +37,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   private final OwnershipType myOverrides;
   private final Collection<TreeElement> myChildren = new ArrayList<>();
 
-  public static enum OwnershipType {
+  public enum OwnershipType {
     IMPLEMENTS,
     OVERRIDES,
     INHERITS

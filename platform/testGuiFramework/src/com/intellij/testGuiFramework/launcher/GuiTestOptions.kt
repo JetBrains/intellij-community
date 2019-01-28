@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 
 object GuiTestOptions {
@@ -28,7 +29,13 @@ object GuiTestOptions {
 
   val configPath: String by lazy { getSystemProperty("idea.config.path", configDefaultPath) }
   val systemPath: String by lazy { getSystemProperty("idea.system.path", systemDefaultPath) }
+  val guiTestLogFile: String by lazy { javaClass.classLoader.getResource("gui-test-log.xml").file }
+  val guiTestRootDirPath: String? by lazy { System.getProperty("idea.gui.tests.root.dir.path", null) }
+  val isGradleRunner: Boolean by lazy { getSystemProperty("idea.gui.tests.gradle.runner", false) }
+
   val isDebug: Boolean by lazy { getSystemProperty("idea.debug.mode", false) }
+  val isPassPrivacyPolicy: Boolean by lazy { getSystemProperty("idea.pass.privacy.policy", true) }
+  val isPassDataSharing: Boolean by lazy { getSystemProperty("idea.pass.data.sharing", true) }
   val suspendDebug: String by lazy { if (isDebug) "y" else "n" }
   val isInternal: Boolean by lazy { getSystemProperty("idea.is.internal", true) }
   val useAppleScreenMenuBar: Boolean by lazy { getSystemProperty("apple.laf.useScreenMenuBar", false) }
@@ -49,6 +56,13 @@ object GuiTestOptions {
   val testsToRecord: List<String> by lazy { System.getenv("SCREENRECOREDER_TESTS_TO_RECORD")?.split(";") ?: emptyList() }
   val videoDuration: Long by lazy { System.getenv("SCREENRECORDER_VIDEO_DURATION")?.toLong() ?: 3 }
 
+  // PyCharm Tests needs global projects folder
+  val projectsDir: File by lazy {
+    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
+    // EditorFixture seems to require a canonical path when opening the file.
+    FileUtil.generateRandomTemporaryPath().canonicalFile
+  }
+
   private val configDefaultPath: String by lazy {
     try {
       "${PathManager.getHomePath()}/config"
@@ -65,13 +79,6 @@ object GuiTestOptions {
     catch (e: RuntimeException) {
       "../system"
     }
-  }
-
-  val tempDirPath: File by lazy { File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))) }
-  val projectDirPath: File by lazy {
-    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-    // EditorFixture seems to require a canonical path when opening the file.
-    File(tempDirPath, "guiTest").canonicalFile
   }
 
   private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {

@@ -62,7 +62,7 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
@@ -180,7 +180,7 @@ public class PsiElementListNavigator {
       listUpdaterTask.init(popup, new ListComponentUpdater() {
         @Override
         public void replaceModel(@NotNull List<? extends PsiElement> data) {
-          updatedTargetsList.set(data.toArray(new NavigatablePsiElement[0]));
+          updatedTargetsList.set(data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY));
           popupUpdater.replaceModel(data);
         }
 

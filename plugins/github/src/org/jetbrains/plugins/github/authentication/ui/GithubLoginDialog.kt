@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,9 +28,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
@@ -111,9 +110,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     return this
   }
 
-  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text)
-  fun getLogin(): String = login
-  fun getToken(): String = token
+  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
+  fun getLogin(): String = login.trim()
+  fun getToken(): String = token.trim()
 
   override fun doOKAction() {
     setBusy(true)
@@ -178,7 +177,6 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     currentUi = ui
     centerPanel.setContent(currentUi.getPanel())
     southAdditionalPanel.setContent(currentUi.getSouthPanel())
-    setErrorText(null)
     currentUi.getPreferredFocus().requestFocus()
     tokenAcquisitionError = null
   }
@@ -213,7 +211,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     init {
       contextHelp.apply {
         editorKit = UIUtil.getHTMLEditorKit()
-        val linkColor = JBColor.link()
+        val linkColor = JBUI.CurrentTheme.Link.linkColor()
         //language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
         //language=HTML
@@ -262,7 +260,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     override fun createExecutor(): GithubApiRequestExecutor.WithBasicAuth {
       val modalityState = ModalityState.stateForComponent(passwordField)
       return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
-        invokeAndWaitIfNeed(modalityState) {
+        invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
                                    "Authentication Code",
                                    "Github Two-Factor Authentication",
@@ -285,7 +283,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField)
         is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.").withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
         is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
@@ -299,6 +297,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
   }
 
   private inner class TokenCredentialsUI : CredentialsUI() {
+    private val GIST_SCOPE_PATTERN = Regex("(?:^|, )repo(?:,|$)")
+    private val REPO_SCOPE_PATTERN = Regex("(?:^|, )gist(?:,|$)")
+
     private val tokenTextField = JBTextField()
 
     private val switchUiLink = LinkLabel.create("Log In with Username") { applyUi(passwordUi) }
@@ -323,7 +324,22 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     override fun acquireLoginAndToken(server: GithubServerPath,
                                       executor: GithubApiRequestExecutor,
                                       indicator: ProgressIndicator): Pair<String, String> {
-      val login = executor.execute(indicator, GithubApiRequests.CurrentUser.get(server)).login
+      var scopes: String? = null
+      val login = executor.execute(indicator,
+                                   object : GithubApiRequest.Get.Json<GithubAuthenticatedUser>(
+                                     GithubApiRequests.getUrl(server, GithubApiRequests.CurrentUser.urlSuffix),
+                                     GithubAuthenticatedUser::class.java) {
+                                     override fun extractResult(response: GithubApiResponse): GithubAuthenticatedUser {
+                                       scopes = response.findHeader("X-OAuth-Scopes")
+                                       return super.extractResult(response)
+                                     }
+                                   }.withOperationName("get profile information")).login
+      if (scopes.isNullOrEmpty()
+          || !GIST_SCOPE_PATTERN.containsMatchIn(scopes!!)
+          || !REPO_SCOPE_PATTERN.containsMatchIn(scopes!!)) {
+        throw GithubAuthenticationException("Access token should have `repo` and `gist` scopes.")
+      }
+
 
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
@@ -334,7 +350,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added").withOKEnabled()
         is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.").withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials. ${error.message.orEmpty()}").withOKEnabled()
         is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
         else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }

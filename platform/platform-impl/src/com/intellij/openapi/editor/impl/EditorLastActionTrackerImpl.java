@@ -61,7 +61,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
   }
 
   @Override
-  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     myCurrentEditor = CommonDataKeys.EDITOR.getData(dataContext);
     if (myCurrentEditor != myLastEditor) {
       resetLastAction();
@@ -69,7 +69,7 @@ public class EditorLastActionTrackerImpl implements AnActionListener, EditorMous
   }
 
   @Override
-  public void afterActionPerformed(AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     myLastActionId = getActionId(action);
     myLastEditor = myCurrentEditor;
     myCurrentEditor = null;

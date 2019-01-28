@@ -208,7 +208,7 @@ public class EditorTracker implements ProjectComponent {
     myDispatcher.getMulticaster().activeEditorsChanged(editors);
   }
 
-  void addEditorTrackerListener(@NotNull EditorTrackerListener listener, @NotNull Disposable parentDisposable) {
+  void addEditorTrackerListener(@NotNull Disposable parentDisposable, @NotNull EditorTrackerListener listener) {
     myDispatcher.addListener(listener,parentDisposable);
   }
 

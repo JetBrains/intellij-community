@@ -4,6 +4,7 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.PositionTrackingListener
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -26,9 +27,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     var isEnabledInTests: Boolean = false
   }
 
-  private var loggingStrategy: LoggingStrategy = if (isEAP()) LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP) else LogAllSessions
+  private var loggingStrategy: LoggingStrategy = createDefaultLoggingStrategy(experimentHelper)
   private val actionListener = LookupActionsListener()
-
   private val lookupTrackerInitializer = PropertyChangeListener {
     val lookup = it.newValue
     if (lookup == null) {
@@ -36,6 +36,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
 
       val globalStorage = UserFactorStorage.getInstance()
       val projectStorage = UserFactorStorage.getInstance(lookup.project)
@@ -79,7 +80,18 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
 
-  private fun isEAP(): Boolean = ApplicationManager.getApplication().isEAP && !isUnitTestMode()
+  private fun createDefaultLoggingStrategy(experimentHelper: WebServiceStatus): LoggingStrategy {
+    val application = ApplicationManager.getApplication()
+
+    if (application.isUnitTestMode) return LogAllSessions
+
+    if (!application.isEAP) return LogNothing
+
+    val experimentVersion = experimentHelper.experimentVersion()
+    if (PluginManager.BUILD_NUMBER.contains("-183") && experimentVersion == 5 || experimentVersion == 6) return LogAllSessions
+
+    return LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP)
+  }
 
   override fun initComponent() {
     if (!shouldInitialize()) return

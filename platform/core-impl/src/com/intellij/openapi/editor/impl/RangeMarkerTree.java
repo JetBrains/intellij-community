@@ -211,7 +211,6 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
           marker.documentChanged(e);
           if (marker.isValid()) {
             findOrInsertWithIntervals(node);
-            assert marker.isValid();
           }
           else {
             node.setValid(false);
@@ -239,7 +238,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   // returns true if all deltas involved are still 0
-  private boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
+  boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
                                                          @NotNull DocumentEvent e,
                                                          @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return true;

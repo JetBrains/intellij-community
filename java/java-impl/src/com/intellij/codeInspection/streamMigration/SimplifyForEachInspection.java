@@ -217,7 +217,6 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       return myCustomName;
     }
 
-    @SuppressWarnings("DialogTitleCapitalization")
     @NotNull
     @Override
     public String getFamilyName() {

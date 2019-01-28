@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -19,7 +18,7 @@ import java.util.List;
 /**
  * @author Alexey.Ivanov
  */
-public class  PyIntentionTest extends PyTestCase {
+public class PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
 
   @Override
@@ -31,9 +30,16 @@ public class  PyIntentionTest extends PyTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    if (myDocumentationSettings != null) {
-      myDocumentationSettings.setFormat(DocStringFormat.PLAIN);
+    try {
+      if (myDocumentationSettings != null) {
+        myDocumentationSettings.setFormat(DocStringFormat.PLAIN);
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
     }
   }
 

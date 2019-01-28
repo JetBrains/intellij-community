@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.completion.StatisticsUpdate;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -34,8 +33,10 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   @Override
   protected void tearDown() throws Exception {
     try {
-      LookupManager.hideActiveLookup(getProject());
       UISettings.getInstance().setSortLookupElementsLexicographically(false);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

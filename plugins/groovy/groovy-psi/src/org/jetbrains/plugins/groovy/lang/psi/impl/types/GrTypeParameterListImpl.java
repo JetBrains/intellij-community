@@ -1,17 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -20,22 +17,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
 /**
  * @author ilyas
  */
-public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
+public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
+  implements GrTypeParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 
   public GrTypeParameterListImpl(EmptyStub stub) {
-    super(stub, GroovyElementTypes.TYPE_PARAMETER_LIST);
+    super(stub, GroovyEmptyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   public GrTypeParameterListImpl(@NotNull ASTNode node) {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Type parameter list";
   }
@@ -43,7 +45,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
   @NotNull
   @Override
   public GrTypeParameter[] getTypeParameters() {
-    return getStubOrPsiChildren(GroovyElementTypes.TYPE_PARAMETER, GrTypeParameter.ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyStubElementTypes.TYPE_PARAMETER, GrTypeParameter.ARRAY_FACTORY);
   }
 
   @Override
@@ -133,5 +135,11 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
       if (!processElement(processor, typeParameter, state)) return false;
     }
     return true;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getTypeParameters());
   }
 }

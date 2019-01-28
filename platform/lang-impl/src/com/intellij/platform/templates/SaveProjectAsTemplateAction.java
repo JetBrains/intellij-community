@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -14,12 +15,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,6 +47,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +61,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateAction extends AnAction {
+public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
@@ -122,14 +122,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                  boolean shouldEscape) {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project instanceof ProjectImpl) {
-        (((ProjectImpl)project)).save(true);
-      }
-      else {
-        project.save();
-      }
-    });
+    StoreUtil.saveSettings(project, true);
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
@@ -191,6 +184,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     else if (PlatformUtils.isPhpStorm()) {
       return FileTemplateBase.getQualifiedName("PHP File Header", "php");
+    } else if (PlatformUtils.isWebStorm()) {
+      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
     } else {
       throw new IllegalStateException("Provide file header template for your IDE");
     }
@@ -202,7 +197,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final VirtualFile descriptionFile = getDescriptionFile(project, path);
     if (descriptionFile == null) {
       stream.putNextEntry(new ZipEntry(prefix + "/" + path));
-      stream.write(text.getBytes());
+      stream.write(text.getBytes(StandardCharsets.UTF_8));
       stream.closeEntry();
     }
     else if (overwrite) {
@@ -221,8 +216,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final Map<String, String> parameters = new HashMap<>();
     if (replaceParameters) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
-        for (ProjectTemplateParameterFactory extension : extensions) {
+        for (ProjectTemplateParameterFactory extension : ProjectTemplateParameterFactory.EP_NAME.getExtensionList()) {
           String value = extension.detectParameterValue(project);
           if (value != null) {
             parameters.put(value, extension.getParameterId());
@@ -414,14 +408,15 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                myPrefix + "/" + relativePath, null, null,
                                new ZipUtil.FileContentProcessor() {
                                  @Override
-                                 public InputStream getContent(final File file) throws IOException {
-                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName()))
+                                 public InputStream getContent(@NotNull final File file) throws IOException {
+                                   if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
                                      return STANDARD.getContent(file);
+                                   }
                                    String result =
                                      getEncodedContent(virtualFile, myProject, myParameters, getFileHeaderTemplateName(), myShouldEscape);
-                                   return new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET));
+                                   return new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                                  }
-                               });
+                               }, false);
         }
         catch (IOException e) {
           LOG.error(e);

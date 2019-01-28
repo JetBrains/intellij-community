@@ -118,7 +118,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   @Override
-  public boolean isLibraryOfKind(@NotNull List<VirtualFile> files, @NotNull final LibraryKind kind) {
+  public boolean isLibraryOfKind(@NotNull List<? extends VirtualFile> files, @NotNull final LibraryKind kind) {
     return !LibraryDetectionManager.getInstance().processProperties(files, new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind processedKind, @NotNull P properties) {
@@ -152,7 +152,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
 
   @NotNull
   @Override
-  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<LibraryKind> excludedKinds) {
+  public List<String> getDescriptions(@NotNull VirtualFile[] classRoots, final Set<? extends LibraryKind> excludedKinds) {
     final SmartList<String> result = new SmartList<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
@@ -170,7 +170,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   }
 
   @Override
-  public List<Library> getLibraries(@NotNull Set<LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context) {
+  public List<Library> getLibraries(@NotNull Set<? extends LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context) {
     List<Library> libraries = new ArrayList<>();
     if (context != null) {
       Collections.addAll(libraries, context.getProjectLibrariesProvider().getModifiableModel().getLibraries());

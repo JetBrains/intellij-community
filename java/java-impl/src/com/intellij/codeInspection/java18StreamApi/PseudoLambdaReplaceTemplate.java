@@ -25,7 +25,6 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,8 +288,8 @@ public class PseudoLambdaReplaceTemplate {
         if (substitutionMap.size() != 1) {
           return false;
         }
-        final PsiType iterableParametrizedType = ObjectUtils.notNull(ContainerUtil.getFirstItem(substitutionMap.values()));
-        if (!TypeConversionUtil.isAssignable(lambdaReturnType, iterableParametrizedType)) {
+        final PsiType iterableParametrizedType = ContainerUtil.getFirstItem(substitutionMap.values());
+        if (iterableParametrizedType == null || !TypeConversionUtil.isAssignable(lambdaReturnType, iterableParametrizedType)) {
           return false;
         }
       }

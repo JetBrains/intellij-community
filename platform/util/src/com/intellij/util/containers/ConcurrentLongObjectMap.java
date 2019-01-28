@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to long keys
  * @see java.util.concurrent.ConcurrentMap
  */
+@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public interface ConcurrentLongObjectMap<V> {
   /**
    * @return written value
@@ -90,6 +92,7 @@ public interface ConcurrentLongObjectMap<V> {
    */
   V putIfAbsent(long key, @NotNull V value);
 
+  @Debugger.Renderer(text = "getKey() + \" -> \\\"\" + getValue() + \"\\\"\"")
   interface LongEntry<V> {
     long getKey();
     @NotNull

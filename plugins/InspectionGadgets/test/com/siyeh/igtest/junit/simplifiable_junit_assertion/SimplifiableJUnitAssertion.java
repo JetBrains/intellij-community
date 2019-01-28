@@ -14,6 +14,8 @@ public class SimplifiableJUnitAssertion extends TestCase{
         <warning descr="'assertFalse()' can be simplified to 'fail()'">assertFalse</warning>("foo", true);
         Collection collection = null;
         <warning descr="'assertTrue()' can be simplified to 'assertEquals()'">assertTrue</warning>(collection.size() == 2);
+        <warning descr="'assertTrue()' can be simplified to 'assertFalse()'">assertTrue</warning>(!(3 == 4));
+        <warning descr="'assertFalse()' can be simplified to 'assertTrue()'">assertFalse</warning>(!(3 == 4));
     }
 
     public void testObjectEquals() {

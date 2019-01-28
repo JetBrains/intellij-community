@@ -41,13 +41,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
+
 public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private Icon myCurrentIcon;
   private String myToolTipText;
 
   public TogglePopupHintsPanel(@NotNull final Project project) {
     super(project);
-    myCurrentIcon = AllIcons.Ide.HectorNo;
+    myCurrentIcon = getDisabledIcon(AllIcons.Ide.HectorOff);
     myConnection.subscribe(PowerSaveMode.TOPIC, this::updateStatus);
   }
 
@@ -105,7 +107,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   }
 
   public void clear() {
-    myCurrentIcon = AllIcons.Ide.HectorNo;
+    myCurrentIcon = getDisabledIcon(AllIcons.Ide.HectorOff);
     myToolTipText = null;
     myStatusBar.updateWidget(ID());
   }
@@ -118,7 +120,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     if (isDisposed()) return;
     if (isStateChangeable(file)) {
       if (PowerSaveMode.isEnabled()) {
-        myCurrentIcon = AllIcons.Ide.HectorNo;
+        myCurrentIcon = getDisabledIcon(AllIcons.Ide.HectorOff);
         myToolTipText = "Code analysis is disabled in power save mode.\n";
       }
       else if (HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) {
@@ -138,7 +140,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
       myToolTipText += UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text");
     }
     else {
-      myCurrentIcon = AllIcons.Ide.HectorNo;
+      myCurrentIcon = getDisabledIcon(AllIcons.Ide.HectorOff);
       myToolTipText = null;
     }
 

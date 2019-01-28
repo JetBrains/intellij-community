@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
@@ -33,7 +32,6 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
@@ -47,8 +45,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -314,8 +312,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
-      final boolean isEditorThemeDark = ColorUtil.isDark(activeOriginalScheme.getDefaultBackground());
-      changeLafIfNecessary(isEditorThemeDark);
+      changeLafIfNecessary(activeOriginalScheme);
 
       reset();
     }
@@ -419,9 +416,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           }
           return DisplayPriority.LANGUAGE_SETTINGS;
         }
+
+        @NotNull
+        @Override
+        public Class<?> getOriginalClass() {
+          return page.getClass();
+        }
       });
     }
-    Collections.addAll(extensions, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
+    extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
     Collections.sort(extensions, (f1, f2) -> {
       if (f1 instanceof DisplayPrioritySortable) {
         if (f2 instanceof DisplayPrioritySortable) {
@@ -526,7 +529,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
     }
-    for (ColorAndFontDescriptorsProvider provider : Extensions.getExtensions(ColorAndFontDescriptorsProvider.EP_NAME)) {
+    for (ColorAndFontDescriptorsProvider provider : ColorAndFontDescriptorsProvider.EP_NAME.getExtensionList()) {
       initDescriptions(provider, descriptions, scheme);
     }
   }
@@ -1308,6 +1311,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myFactory.getOriginalClass();
     }
 
     @NotNull

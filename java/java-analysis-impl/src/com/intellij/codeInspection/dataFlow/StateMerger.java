@@ -35,7 +35,6 @@ import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
  * @author peter
  */
 class StateMerger {
-  public static final int MAX_RANGE_STATES = 100;
   private static final int COMPLEXITY_LIMIT = 250000;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
@@ -214,7 +213,7 @@ class StateMerger {
   List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
     Map<DfaVariableValue, Set<LongRangeSet>> ranges = createRangeMap(states);
     boolean changed = false;
-    // For every variable with more than one range, try to union range info and see if some states could be merged after that
+    // For every variable with more than one range, try to unite range info and see if some states could be merged after that
     for (Map.Entry<DfaVariableValue, Set<LongRangeSet>> entry : ranges.entrySet()) {
       if (entry.getValue().size() > 1) {
         List<DfaMemoryStateImpl> updated = mergeIndependentRanges(states, entry.getKey());
@@ -224,8 +223,7 @@ class StateMerger {
         }
       }
     }
-    if (changed) return states;
-    return dropExcessRangeInfo(states, ranges.keySet());
+    return changed ? states : null;
   }
 
   @NotNull
@@ -261,14 +259,15 @@ class StateMerger {
           .filter(fact -> fact.myVar == var || fact.myArg == var).toSet();
       }
 
-      Record union(Record other) {
+      Record unite(Record other) {
         Set<EqualityFact> equalities = myCommonEqualities == null ? getEqualityFacts() : myCommonEqualities;
         equalities.retainAll(other.getEqualityFacts());
-        return new Record(myState, myRange.union(other.myRange), equalities);
+        return new Record(myState, myRange.unite(other.myRange), equalities);
       }
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
+          myFacts.remove(myState);
           myState.removeEquivalenceForVariableAndWrappers(var);
           myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
@@ -288,20 +287,9 @@ class StateMerger {
         range = LongRangeSet.fromType(var.getType());
         if (range == null) return null;
       }
-      merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);
+      merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::unite);
     }
     return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
-  }
-
-  @Nullable
-  private static List<DfaMemoryStateImpl> dropExcessRangeInfo(List<DfaMemoryStateImpl> states, Set<DfaVariableValue> rangeVariables) {
-    if (states.size() <= MAX_RANGE_STATES || rangeVariables.isEmpty()) return null;
-    // If there are too many states, try to drop range information from some variable
-    DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
-    for (DfaMemoryStateImpl state : states) {
-      state.dropFact(lastVar, RANGE);
-    }
-    return new ArrayList<>(new HashSet<>(states));
   }
 
   @NotNull
@@ -619,11 +607,11 @@ class StateMerger {
 
   static final class EqClassInfo {
     final List<DfaVariableValue> vars;
-    final DfaValue constant;
+    final DfaConstValue constant;
 
     EqClassInfo(EqClass eqClass) {
       vars = eqClass.getVariables(false);
-      constant = eqClass.findConstant(true);
+      constant = eqClass.findConstant();
     }
   }
 }

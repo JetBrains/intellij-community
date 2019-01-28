@@ -106,7 +106,6 @@ public abstract class FindSettings{
    * group box.
    *
    * @return the recent file masks list
-   * @since 5.0.2
    */
   @NotNull
   public abstract String[] getRecentFileMasks();

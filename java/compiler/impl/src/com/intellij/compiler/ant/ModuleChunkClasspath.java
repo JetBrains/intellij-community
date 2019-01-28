@@ -47,7 +47,6 @@ public class ModuleChunkClasspath extends Path {
    * @param generateRuntimeClasspath if true, runtime classpath is being generated. Otherwise a compile time classpath is constructed
    * @param generateTestClasspath    if true, a test classpath is generated.
    */
-  @SuppressWarnings({"unchecked"})
   public ModuleChunkClasspath(final ModuleChunk chunk,
                               final GenerationOptions genOptions,
                               final boolean generateRuntimeClasspath,

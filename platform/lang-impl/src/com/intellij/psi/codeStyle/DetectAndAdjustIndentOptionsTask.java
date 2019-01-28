@@ -101,7 +101,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
     if (!currentDefault.equals(myOptionsToAdjust)) {
       myOptionsToAdjust.setDetected(true);
-      //noinspection deprecation
+      myOptionsToAdjust.setOverrideLanguageOptions(true);
       CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }

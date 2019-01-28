@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/1/2017
  */
 public class GradleRefreshProjectDependenciesAction extends RefreshExternalProjectAction {
 

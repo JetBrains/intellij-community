@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/14/13 2:32 PM
  */
 public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
 

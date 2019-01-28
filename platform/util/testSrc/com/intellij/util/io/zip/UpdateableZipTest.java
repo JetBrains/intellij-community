@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import junit.framework.TestCase;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -61,7 +62,7 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/second", "second");
 
       JBZipEntry newEntry = jbZip.getOrCreateEntry("/third");
-      newEntry.setData("third".getBytes());
+      newEntry.setData("third".getBytes(StandardCharsets.UTF_8));
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
@@ -79,7 +80,7 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/second", "second");
 
       JBZipEntry newEntry = jbZip.getOrCreateEntry("/second");
-      newEntry.setData("Content Replaced".getBytes());
+      newEntry.setData("Content Replaced".getBytes(StandardCharsets.UTF_8));
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
@@ -100,11 +101,42 @@ public class UpdateableZipTest extends TestCase {
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry presentEntry = utilZip.getEntry("/first");
+      assertNotNull(presentEntry);
       ZipEntry removedEntry = utilZip.getEntry("/second");
       assertNull(removedEntry);
     }
   }
-  
+
+  public void testGc() throws Exception {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
+
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+
+      jbZip.getEntry("/second").erase();
+      jbZip.gc();
+    }
+
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+    }
+
+    try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry presentEntry = utilZip.getEntry("/first");
+      assertNotNull(presentEntry);
+      ZipEntry removedEntry = utilZip.getEntry("/second");
+      assertNull(removedEntry);
+    }
+
+    try (RandomAccessFile file = new RandomAccessFile(zipFile, "r")) {
+      int length = (int)file.length();
+      byte[] buffer = new byte[length];
+      file.readFully(buffer, 0, length);
+      assertFalse(new String(buffer, CharsetToolkit.US_ASCII_CHARSET).contains("second"));
+    }
+  }
+
   public void testReadWrite1() throws Exception {
     try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");
@@ -176,8 +208,8 @@ public class UpdateableZipTest extends TestCase {
     File zipFile = FileUtil.createTempFile("test", ".zip");
     try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)))) {
 
-      appendEntry(zos, "/first", "first".getBytes());
-      appendEntry(zos, "/second", "second".getBytes());
+      appendEntry(zos, "/first", "first".getBytes(StandardCharsets.UTF_8));
+      appendEntry(zos, "/second", "second".getBytes(StandardCharsets.UTF_8));
     }
     return zipFile;
   }

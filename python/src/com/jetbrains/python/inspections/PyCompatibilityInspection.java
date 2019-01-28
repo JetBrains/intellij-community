@@ -43,14 +43,15 @@ import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.validation.CompatibilityVisitor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * User: catherine
@@ -71,14 +72,20 @@ public class PyCompatibilityInspection extends PyInspection {
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
   @NotNull
-  public static final List<String> SUPPORTED_LEVELS = ContainerUtil.map(LanguageLevel.SUPPORTED_LEVELS, LanguageLevel::toString);
+  public static final List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
+    .of(LanguageLevel.values())
+    .filter(v -> v.isPython2() && v.isAtLeast(LanguageLevel.PYTHON26) || v.isAtLeast(LanguageLevel.PYTHON34))
+    .toImmutableList();
+
+  @NotNull
+  private static final List<String> SUPPORTED_IN_SETTINGS = ContainerUtil.map(SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourVersions.addAll(SUPPORTED_LEVELS);
+      ourVersions.addAll(SUPPORTED_IN_SETTINGS);
     }
     else {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
@@ -101,7 +108,7 @@ public class PyCompatibilityInspection extends PyInspection {
     List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
-      if (SUPPORTED_LEVELS.contains(version)) {
+      if (SUPPORTED_IN_SETTINGS.contains(version)) {
         LanguageLevel level = LanguageLevel.fromPythonVersion(version);
         result.add(level);
       }
@@ -119,8 +126,8 @@ public class PyCompatibilityInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(SUPPORTED_LEVELS, false);
-    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_LEVELS::contains));
+    chooser.setElements(SUPPORTED_IN_SETTINGS, false);
+    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_IN_SETTINGS::contains));
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(String element, boolean isMarked) {
@@ -197,8 +204,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
             registerForAllMatchingVersions(level -> unsupportedMethods.getOrDefault(level, Collections.emptySet()).contains(functionName),
                                            " not have method " + functionName,
-                                           node,
-                                           null);
+                                           node);
           }
         }
 
@@ -208,8 +214,7 @@ public class PyCompatibilityInspection extends PyInspection {
             !myUsedImports.contains(functionName)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(functionName),
                                          " not have method " + functionName,
-                                         node,
-                                         null);
+                                         node);
         }
       }
       else if (resolvedCallee instanceof PyTargetExpression) {
@@ -220,8 +225,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PyBuiltinCache.getInstance(resolvedCallee).isBuiltin(resolvedCallee)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(PyNames.TYPE_LONG),
                                          " not have type long. Use int instead.",
-                                         node,
-                                         null);
+                                         node);
         }
       }
     }
@@ -249,8 +253,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
                                        " not have module " + moduleName,
-                                       importElement,
-                                       null);
+                                       importElement);
       }
     }
 
@@ -280,8 +283,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
                                        " not have module " + name,
-                                       source,
-                                       null);
+                                       source);
       }
     }
 
@@ -357,14 +359,19 @@ public class PyCompatibilityInspection extends PyInspection {
       warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
+    @Override
+    protected boolean registerForLanguageLevel(@NotNull LanguageLevel level) {
+      return level != LanguageLevel.forElement(myHolder.getFile());
+    }
+
     private void warnAsyncAndAwaitAreBecomingKeywordsInPy37(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
       final PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
 
       if (nameIdentifier != null &&
           ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC) &&
           LanguageLevel.forElement(nameIdentifierOwner).isOlderThan(LanguageLevel.PYTHON37)) {
-        registerOnFirstMatchingVersion(level -> level.isAtLeast(LanguageLevel.PYTHON37),
-                                       "'async' and 'await' are keywords in Python 3.7 and newer",
+        registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON37),
+                                       " not allow 'async' and 'await' as names",
                                        nameIdentifier,
                                        new PyRenameElementQuickFix(nameIdentifierOwner));
       }

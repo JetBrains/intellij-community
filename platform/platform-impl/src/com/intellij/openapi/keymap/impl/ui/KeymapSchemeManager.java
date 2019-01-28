@@ -17,10 +17,13 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +31,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.keymap.KeyMapBundle.message;
-import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
-import static java.util.stream.Collectors.toList;
 
 /**
  * This class operates with the KeymapManager.
@@ -40,8 +40,8 @@ import static java.util.stream.Collectors.toList;
  * @author Sergey.Malenkov
  */
 final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  private static final Condition<Keymap> FILTER = keymap -> !isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
-  private final ArrayList<KeymapScheme> list = new ArrayList<>();
+  private static final Condition<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+  private final List<KeymapScheme> list = new ArrayList<>();
   private final KeymapSelector selector;
 
   KeymapSchemeManager(KeymapSelector selector) {
@@ -59,9 +59,9 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     if (scheme == null) return null;
     if (scheme.isMutable()) return scheme.getMutable();
 
-    String name = message("new.keymap.name", keymap.getPresentableName());
+    String name = KeyMapBundle.message("new.keymap.name", keymap.getPresentableName());
     for (int i = 1; containsScheme(name, false); i++) {
-      name = message("new.indexed.keymap.name", keymap.getPresentableName(), i);
+      name = KeyMapBundle.message("new.indexed.keymap.name", keymap.getPresentableName(), i);
     }
     return copyScheme(scheme, name).getMutable();
   }
@@ -74,6 +74,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     }
   }
 
+  @NotNull
   @Override
   protected Class<KeymapScheme> getSchemeType() {
     return KeymapScheme.class;
@@ -199,15 +200,15 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     for (KeymapScheme scheme : list) {
       String name = scheme.getName();
       if (isEmptyOrSpaces(name)) {
-        return message("configuration.all.keymaps.should.have.non.empty.names.error.message");
+        return KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message");
       }
       if (!set.add(name)) {
-        return message("configuration.all.keymaps.should.have.unique.names.error.message");
+        return KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message");
       }
     }
     KeymapScheme selected = selector.getSelectedScheme();
     Keymap active = selected == null ? null : selected.getOriginal();
-    List<Keymap> keymaps = list.stream().map(scheme -> scheme.apply()).collect(toList());
+    List<Keymap> keymaps = ContainerUtil.map(list, scheme -> scheme.apply());
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     manager.setKeymaps(keymaps, active, FILTER);
     selector.notifyConsumer(selected);
@@ -252,7 +253,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
 
     Iterator<Keymap> keymaps = getKeymaps().stream().sorted(KEYMAP_COMPARATOR).iterator();
-    Iterator<KeymapScheme> schemes = this.list.iterator();
+    Iterator<KeymapScheme> schemes = list.iterator();
     while (keymaps.hasNext() && schemes.hasNext()) {
       if (!Objects.equals(keymaps.next(), schemes.next().getCurrent())) return true;
     }

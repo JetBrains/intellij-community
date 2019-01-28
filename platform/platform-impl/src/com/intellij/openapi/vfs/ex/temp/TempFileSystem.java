@@ -100,7 +100,8 @@ public class TempFileSystem extends LocalFileSystemBase {
     return new FakeVirtualFile(parent, file);
   }
 
-  @Nullable public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
+  @Nullable
+  public VirtualFile findModelChild(@NotNull VirtualFile parent, @NotNull String name) {
     FSItem child = convertDirectory(parent).findChild(name);
     return child == null ? null : new FakeVirtualFile(parent, name);
   }
@@ -265,7 +266,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     public abstract boolean isDirectory();
 
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull String name) {
       return null;
     }
 
@@ -299,7 +300,7 @@ public class TempFileSystem extends LocalFileSystemBase {
 
     @Override
     @Nullable
-    public FSItem findChild(final String name) {
+    public FSItem findChild(@NotNull final String name) {
       return myChildren.get(name);
     }
 
@@ -349,7 +350,7 @@ public class TempFileSystem extends LocalFileSystemBase {
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     throw new IncorrectOperationException();
