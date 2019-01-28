@@ -146,7 +146,6 @@ public class ThreadTracker {
         if (group != null && "system".equals(group.getName()))continue;
         if (!thread.isAlive()) continue;
 
-        thread.interrupt();
         long start = System.currentTimeMillis();
         //if (thread.isAlive()) {
         //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
