@@ -121,7 +121,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public boolean hasStaticDescription;
 
   @Nullable
-  private String getLocalizedString(String bundleName, String key) {
+  private String getLocalizedString(@Nullable String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
