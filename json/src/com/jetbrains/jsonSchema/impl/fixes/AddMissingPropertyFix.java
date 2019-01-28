@@ -91,7 +91,9 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
           });
   }
 
-  private PsiElement performFix(PsiElement element, Ref<Boolean> hadComma) {
+  @Nullable
+  public PsiElement performFix(@Nullable PsiElement element, @NotNull Ref<Boolean> hadComma) {
+    if (element == null) return null;
     Ref<PsiElement> newElementRef = Ref.create(null);
 
     WriteAction.run(() -> {
