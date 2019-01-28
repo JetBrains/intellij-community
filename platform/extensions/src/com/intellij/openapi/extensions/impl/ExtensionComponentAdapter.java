@@ -52,7 +52,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
+  public Object getComponentInstance(@NotNull PicoContainer container) throws PicoException, ProcessCanceledException {
     Object instance = myComponentInstance;
     if (instance != null) {
       return instance;
