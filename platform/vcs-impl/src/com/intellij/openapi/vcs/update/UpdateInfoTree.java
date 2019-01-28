@@ -42,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -55,8 +53,6 @@ import java.util.List;
 import java.util.*;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
-  private VirtualFile mySelectedFile;
-  private FilePath mySelectedUrl;
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
@@ -163,24 +159,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     SelectionSaver.installOn(myTree);
     createTreeModel();
 
-    myTree.addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)e.getPath().getLastPathComponent();
-        VirtualFilePointer pointer = null;
-        if (treeNode instanceof FileTreeNode) {
-          pointer = ((FileTreeNode)treeNode).getFilePointer();
-        }
-        if (pointer != null) {
-          mySelectedUrl = getFilePath(pointer);
-          mySelectedFile = pointer.getFile();
-        }
-        else {
-          mySelectedUrl = null;
-          mySelectedFile = null;
-        }
-      }
-    });
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree, path -> {
@@ -231,8 +209,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       return null;
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
-      return new OpenFileDescriptor(myProject, mySelectedFile);
+      VirtualFilePointer pointer = getSelectedFilePointer();
+      if (pointer == null || !pointer.isValid()) return null;
+      VirtualFile selectedFile = pointer.getFile();
+      return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : null;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
@@ -247,7 +227,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         return myTreeExpander;
       }
     } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
-      return mySelectedUrl;
+      VirtualFilePointer pointer = getSelectedFilePointer();
+      return pointer != null ? getFilePath(pointer) : null;
     } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
       return myTreeIterable;
     } else if (VcsDataKeys.LABEL_BEFORE.is(dataId)) {
@@ -331,6 +312,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     public Iterator<Pair<FilePath, FileStatus>> iterator() {
       return new MyTreeIterator();
     }
+  }
+
+  @Nullable
+  private VirtualFilePointer getSelectedFilePointer() {
+    AbstractTreeNode treeNode = (AbstractTreeNode)myTree.getSelectionPath().getLastPathComponent();
+    return treeNode instanceof FileTreeNode ? ((FileTreeNode)treeNode).getFilePointer() : null;
   }
 
   private VirtualFile[] getVirtualFileArray() {
