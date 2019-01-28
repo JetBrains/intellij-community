@@ -53,7 +53,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     final List<ProblemDescriptor> descriptions =
       ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);
-        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
+        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext());
       }, new EmptyProgressIndicator());
 
     if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;

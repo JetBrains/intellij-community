@@ -135,7 +135,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
         continue;
       }
       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-      final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+      final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
       for (InspectionToolWrapper toolWrapper : toolsCopy) {
         toolWrapper.initialize(context);
       }
