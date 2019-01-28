@@ -50,10 +50,6 @@ task setupJdk(dependsOn: downloadJdk) {
   fileTree(outputDir).each {
     outputs.file(it)
   }
-  onlyIf {
-    // gradle is not running on it
-    !System.getProperty('java.home').contains(outputDir)
-  }
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")
     unpackJdk(downloadOutputs.singleFile, outputDir)
@@ -61,24 +57,29 @@ task setupJdk(dependsOn: downloadJdk) {
 }
 
 def unpackJdk(jdkArchive, outputDir) {
-  logger.info("Unpacking $jdkArchive to ${outputDir}")
-  if (file(outputDir).exists()) {
-    delete(outputDir)
-  }
-  def currentOs = OperatingSystem.current()
-  if (currentOs.isWindows()) {
-    copy {
-      from tarTree(jdkArchive)
-      into outputDir
+  try {
+    logger.info("Unpacking $jdkArchive to ${outputDir}")
+    if (file(outputDir).exists()) {
+      delete(outputDir)
+    }
+    def currentOs = OperatingSystem.current()
+    if (currentOs.isWindows()) {
+      copy {
+        from tarTree(jdkArchive)
+        into outputDir
+      }
+    }
+    else {
+      exec { commandLine 'mkdir', '-p', outputDir }
+      exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+      if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
+        exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
+        exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
+      }
     }
   }
-  else {
-    exec { commandLine 'mkdir', '-p', outputDir }
-    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
-    if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
-      exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
-      exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
-    }
+  catch (Exception ignored) {
+    println(ignored.message)
   }
 }
 
