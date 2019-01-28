@@ -60,27 +60,6 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return dir?.canonicalPath
   }
 
-  val defaultShellPath: String
-    get() {
-      val shell = System.getenv("SHELL")
-
-      if (shell != null && File(shell).canExecute()) {
-        return shell
-      }
-
-      if (SystemInfo.isUnix) {
-        if (File("/bin/bash").exists()) {
-          return "/bin/bash"
-        }
-        else {
-          return "/bin/sh"
-        }
-      }
-      else {
-        return "cmd.exe"
-      }
-    }
-
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
 

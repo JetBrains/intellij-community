@@ -126,7 +126,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
-  private fun defaultShellPath(): String {
+  fun defaultShellPath(): String {
     val shell = System.getenv("SHELL")
     if (shell != null && File(shell).canExecute()) {
       return shell
