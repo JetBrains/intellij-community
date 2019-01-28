@@ -580,9 +580,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else {
           seManager.setShownContributor(searchProviderID);
-          FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(e))
-            .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
-            .orElseGet(() -> FUSUsageContext.create(searchProviderID));
+          String shortcut = KeymapUtil.getEventCallerKeystrokeText(e);
+          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, shortcut);
           SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
         }
         return;

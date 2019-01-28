@@ -445,7 +445,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         @Override
         public void mousePressed(MouseEvent e) {
           switchToTab(SETab.this);
-          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, FUSUsageContext.create(getID(), "mouseClick"));
+          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(getID(), "mouseClick");
+          featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
         }
       });
     }
@@ -621,12 +622,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> {
       fetchGroups(true);
-      FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+      FUSUsageContext context = getEventShortcut(e)
+        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+        .orElse(null);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
     });
     registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> {
       fetchGroups(false);
-      FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+      FUSUsageContext context = getEventShortcut(e)
+        .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+        .orElse(null);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
     });
     registerSelectItemAction();
@@ -746,9 +751,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private void triggerTabSwitched(AnActionEvent e) {
     String selectedContributorID = getSelectedContributorID();
-    FUSUsageContext context = getEventShortcut(e)
-      .map(shortcut -> FUSUsageContext.create(selectedContributorID, shortcut))
-      .orElseGet(() -> FUSUsageContext.create(selectedContributorID));
+    String shortcut = getEventShortcut(e).orElse(null);
+    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(selectedContributorID, shortcut);
     featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
   }
 
@@ -835,7 +839,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
       if (isAllTab) {
-        featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, FUSUsageContext.create(contributor.getSearchProviderId()));
+        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(contributor.getSearchProviderId(), null);
+        featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, context);
       }
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
@@ -1429,7 +1434,9 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (completeCommand()) {
-        FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
+        FUSUsageContext context = getEventShortcut(e)
+          .map(shortcut -> SearchEverywhereUsageTriggerCollector.createContext(null, shortcut))
+          .orElse(null);
         featureTriggered(SearchEverywhereUsageTriggerCollector.COMMAND_COMPLETED, context);
       }
     }
