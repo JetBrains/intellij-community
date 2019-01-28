@@ -456,10 +456,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return withLock(() -> {
       if (myPresentableArranger != myArranger) {
         myPresentableArranger = myArranger;
-        myOffsets.clearAdditionalPrefix();
+
+        boolean isCompletionArranger = myArranger instanceof CompletionLookupArrangerImpl;
+        if (!isCompletionArranger && ((CompletionLookupArrangerImpl) myArranger).getLastLookupPrefix().equals(getAdditionalPrefix())) {
+          LOG.trace("prefix doesn't match, do not clear lookup additional prefix");
+        } else{
+          myOffsets.clearAdditionalPrefix();
+        }
         myPresentableArranger.prefixChanged(this);
         return true;
       }
+
       return false;
     });
   }
