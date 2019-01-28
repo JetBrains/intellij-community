@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.util.TroveUtil
 import gnu.trove.TIntHashSet
 
 import java.awt.*
@@ -32,26 +33,15 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
+    val selectedRowsToCommits = selectedRows.associateWith { table.visibleGraph.getRowInfo(it).commit }
+    TroveUtil.addAll(selectedCommits, selectedRowsToCommits.values)
+
     val visibleRows = getVisibleRows(table)
     isOnTop = visibleRows.first == 0
 
-    val graph = table.visibleGraph
-
-    var target: ScrollingTarget? = null
-    for (row in selectedRows) {
-      if (row < graph.visibleCommitCount) {
-        val commit = graph.getRowInfo(row).commit
-        selectedCommits.add(commit)
-        if (visibleRows.first <= row && row <= visibleRows.second && target == null) {
-          target = ScrollingTarget(commit, getTopGap(row))
-        }
-      }
-    }
-    if (target == null && visibleRows.first >= 0) {
-      target = ScrollingTarget(graph.getRowInfo(visibleRows.first).commit, visibleRows.first)
-    }
-
-    scrollingTarget = target
+    val visibleRow = selectedRowsToCommits.values.find { visibleRows.first <= it && it <= visibleRows.second } ?: visibleRows.first
+    val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
+    scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
   }
 
   private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
