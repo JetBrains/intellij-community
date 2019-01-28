@@ -27,9 +27,8 @@ import javax.swing.JTable
 
 internal class Selection(private val table: VcsLogGraphTable) {
   private val selectedCommits: TIntHashSet = TIntHashSet()
-  private val visibleSelectedCommit: Int?
-  private val topGap: Int?
   private val isOnTop: Boolean
+  private val scrollingTarget: ScrollingTarget?
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
@@ -38,25 +37,21 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
     val graph = table.visibleGraph
 
-    var visibleSelectedCommit: Int? = null
-    var delta: Int? = null
+    var target: ScrollingTarget? = null
     for (row in selectedRows) {
       if (row < graph.visibleCommitCount) {
         val commit = graph.getRowInfo(row).commit
         selectedCommits.add(commit)
-        if (visibleRows.first <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
-          visibleSelectedCommit = commit
-          delta = getTopGap(row)
+        if (visibleRows.first <= row && row <= visibleRows.second && target == null) {
+          target = ScrollingTarget(commit, getTopGap(row))
         }
       }
     }
-    if (visibleSelectedCommit == null && visibleRows.first >= 0) {
-      visibleSelectedCommit = graph.getRowInfo(visibleRows.first).commit
-      delta = getTopGap(visibleRows.first)
+    if (target == null && visibleRows.first >= 0) {
+      target = ScrollingTarget(graph.getRowInfo(visibleRows.first).commit, visibleRows.first)
     }
 
-    this.visibleSelectedCommit = visibleSelectedCommit
-    this.topGap = delta
+    scrollingTarget = target
   }
 
   private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
@@ -81,8 +76,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
         scrollToRow(0, 0)
       }
       else if (toSelectAndScroll.second != null) {
-        assert(topGap != null)
-        scrollToRow(toSelectAndScroll.second, topGap)
+        scrollToRow(toSelectAndScroll.second, scrollingTarget!!.topGap)
       }
     }
     // sometimes commits that were selected are now collapsed
@@ -115,7 +109,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
       if (selectedCommits.contains(commit)) {
         rowsToSelect.add(row)
       }
-      if (visibleSelectedCommit != null && visibleSelectedCommit == commit) {
+      if (scrollingTarget?.commit == commit) {
         rowToScroll = row
       }
       row++
@@ -123,3 +117,5 @@ internal class Selection(private val table: VcsLogGraphTable) {
     return Pair.create(rowsToSelect, rowToScroll)
   }
 }
+
+private data class ScrollingTarget(val commit: Int, val topGap: Int)
