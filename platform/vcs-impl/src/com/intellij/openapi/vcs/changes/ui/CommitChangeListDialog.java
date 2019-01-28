@@ -275,7 +275,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
-    myCommitOptions = new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet());
+    myCommitOptions =
+      new CommitOptionsPanel(this, myHandlers, myShowVcsCommit ? myAffectedVcses : emptySet(), myWorkflow.getAdditionalDataConsumer());
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel;
@@ -540,8 +541,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         CheckinHandler.ReturnResult result = performBeforeCommitChecks(executor);
         if (result == CheckinHandler.ReturnResult.COMMIT) {
           close(OK_EXIT_CODE);
-          myWorkflow.doCommit(myBrowser.getSelectedChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers,
-                              myCommitOptions.getAdditionalData());
+          myWorkflow.doCommit(myBrowser.getSelectedChangeList(), getIncludedChanges(), getCommitMessage(), myHandlers);
 
           defaultListCleaner.clean();
         }
@@ -741,7 +741,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (CheckinHandler handler : myHandlers) {
       if (!handler.acceptExecutor(executor)) continue;
       LOG.debug("CheckinHandler.beforeCheckin: " + handler);
-      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myCommitOptions.getAdditionalData());
+      CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myWorkflow.getAdditionalDataConsumer());
       if (result == CheckinHandler.ReturnResult.COMMIT) continue;
       if (result == CheckinHandler.ReturnResult.CANCEL) {
         restartUpdate();

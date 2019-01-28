@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.NullableFunction
+import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.UIUtil.addBorder
@@ -40,6 +41,11 @@ open class DialogCommitWorkflow(val project: Project,
   val isPartialCommitEnabled: Boolean = affectedVcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || executors.any { it.supportsPartialCommit() })
 
   protected val commitContext: CommitContext = CommitContext()
+
+  // TODO Probably unify with "CommitContext"
+  private val _additionalData = PseudoMap<Any, Any>()
+  protected val additionalDataConsumer: PairConsumer<Any, Any> get() = _additionalData
+  protected val additionalData: NullableFunction<Any, Any> get() = _additionalData
 
   fun showDialog(): Boolean {
     val dialog = CommitChangeListDialog(this)
@@ -66,11 +72,7 @@ open class DialogCommitWorkflow(val project: Project,
     return true
   }
 
-  protected open fun doCommit(changeList: LocalChangeList,
-                              changes: List<Change>,
-                              commitMessage: String,
-                              handlers: List<CheckinHandler>,
-                              additionalData: NullableFunction<Any, Any>) {
+  protected open fun doCommit(changeList: LocalChangeList, changes: List<Change>, commitMessage: String, handlers: List<CheckinHandler>) {
     LOG.debug("Do actual commit")
     val committer = SingleChangeListCommitter(project, changeList, changes, commitMessage, handlers, additionalData, vcsToCommit,
                                               DIALOG_TITLE, isDefaultChangeListFullyIncluded)

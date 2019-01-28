@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -9,13 +9,13 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.PseudoMap
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -32,11 +32,11 @@ private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSEN
 
 class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
                          private val myHandlers: Collection<CheckinHandler>,
-                         vcses: Collection<AbstractVcs<*>>) : BorderLayoutPanel(), Disposable {
+                         vcses: Collection<AbstractVcs<*>>,
+                         private val additionalData: PairConsumer<Any, Any>) : BorderLayoutPanel(), Disposable {
   private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
   private val myCheckinChangeListSpecificComponents = mutableSetOf<CheckinChangeListSpecificComponent>()
-  val additionalData = PseudoMap<Any, Any>()
   val isEmpty = init(vcses)
 
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
