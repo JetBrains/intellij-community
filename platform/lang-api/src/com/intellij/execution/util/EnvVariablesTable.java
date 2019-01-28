@@ -216,17 +216,19 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
-      removeSelected();
-      stopEditing();
       String content = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       Map<String, String> map = parseEnvsFromText(content);
       if (map.isEmpty()) return;
+      stopEditing();
+      removeSelected();
       List<EnvironmentVariable> parsed = new ArrayList<>();
       for (Map.Entry<String, String> entry : map.entrySet()) {
         parsed.add(new EnvironmentVariable(entry.getKey(), entry.getValue(), false));
       }
       List<EnvironmentVariable> variables = new ArrayList<>(getEnvironmentVariables());
       variables.addAll(parsed);
+      variables = ContainerUtil.filter(variables, variable -> !StringUtil.isEmpty(variable.getName()) ||
+                                                              !StringUtil.isEmpty(variable.getValue()));
       setValues(variables);
     }
 
