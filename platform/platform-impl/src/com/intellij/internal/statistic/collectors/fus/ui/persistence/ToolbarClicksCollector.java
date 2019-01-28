@@ -2,9 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,7 +28,7 @@ import static com.intellij.internal.statistic.collectors.fus.actions.persistence
   }
 )
 public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarClicksCollector.ClicksState> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("toolbar", 4);
+  private static final String GROUP = "toolbar";
 
   public final static class ClicksState {
     @Tag("counts")
@@ -53,7 +52,7 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
     if (collector != null) {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
       final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info).addOS().addPlace(place);
-      FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action, data), data);
+      FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
     }
   }
 

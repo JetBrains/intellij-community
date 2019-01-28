@@ -9,6 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+
+/**
+ * @deprecated use {@link FUCounterUsageLogger} and register collector as {@link CounterUsageCollectorEP}
+ */
+@Deprecated
 public class FUSCounterUsageLogger {
 
   /**

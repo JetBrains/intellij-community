@@ -6,10 +6,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
-import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
-import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
+import com.intellij.internal.statistic.service.fus.collectors.*;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
@@ -80,6 +77,10 @@ public class StatisticsJobsScheduler implements BaseComponent {
 
   private static void runStatesLogging() {
     if (!StatisticsUploadAssistant.isSendAllowed()) return;
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUCounterUsageLogger.getInstance().logRegisteredGroups(),
+                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN,
+                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN,
+                                                       TimeUnit.MINUTES);
     JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
                                                        LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
                                                        LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);

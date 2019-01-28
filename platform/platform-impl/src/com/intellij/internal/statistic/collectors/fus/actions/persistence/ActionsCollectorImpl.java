@@ -4,9 +4,8 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -33,7 +32,7 @@ import java.util.Set;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("actions", 4);
+  private static final String GROUP = "actions";
   private static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
@@ -50,7 +49,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
-    FUSCounterUsageLogger.logEvent(GROUP, recorded, data);
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, recorded, data);
   }
 
   @Override
@@ -66,7 +65,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
-    FUSCounterUsageLogger.logEvent(GROUP, toReportedId(info, action, data), data);
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
   }
 
   @NotNull
