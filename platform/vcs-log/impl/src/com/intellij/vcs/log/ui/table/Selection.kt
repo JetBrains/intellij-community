@@ -27,7 +27,7 @@ import java.awt.*
 internal class Selection(private val table: VcsLogGraphTable) {
   private val selectedCommits: TIntHashSet = TIntHashSet()
   private val visibleSelectedCommit: Int?
-  private val delta: Int?
+  private val topGap: Int?
   private val isOnTop: Boolean
 
   init {
@@ -45,18 +45,20 @@ internal class Selection(private val table: VcsLogGraphTable) {
         selectedCommits.add(commit)
         if (visibleRows.first - 1 <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
           visibleSelectedCommit = commit
-          delta = table.getCellRect(row, 0, false).y - table.visibleRect.y
+          delta = getTopGap(row)
         }
       }
     }
     if (visibleSelectedCommit == null && visibleRows.first - 1 >= 0) {
       visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).commit
-      delta = table.getCellRect(visibleRows.first - 1, 0, false).y - table.visibleRect.y
+      delta = getTopGap(visibleRows.first - 1)
     }
 
     this.visibleSelectedCommit = visibleSelectedCommit
-    this.delta = delta
+    this.topGap = delta
   }
+
+  private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
 
   fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
     val toSelectAndScroll = findRowsToSelectAndScroll(table.model, newVisibleGraph)
@@ -73,8 +75,8 @@ internal class Selection(private val table: VcsLogGraphTable) {
         scrollToRow(0, 0)
       }
       else if (toSelectAndScroll.second != null) {
-        assert(delta != null)
-        scrollToRow(toSelectAndScroll.second, delta)
+        assert(topGap != null)
+        scrollToRow(toSelectAndScroll.second, topGap)
       }
     }
     // sometimes commits that were selected are now collapsed
