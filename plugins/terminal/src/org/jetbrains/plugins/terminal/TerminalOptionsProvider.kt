@@ -26,11 +26,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   fun getShellPath(): String? {
-    return myState.myShellPath ?: defaultShellPath()
+    return if (myState.myShellPath.isNullOrEmpty()) defaultShellPath() else myState.myShellPath
   }
 
   fun setShellPath(shellPath: String) {
-    myState.myShellPath = shellPath
+    myState.myShellPath = if (shellPath == defaultShellPath()) null else shellPath
   }
 
   fun closeSessionOnLogout(): Boolean {
