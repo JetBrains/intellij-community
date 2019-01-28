@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
@@ -74,7 +75,8 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     if (module.isDisposed()) {
       return;
     }
-    assert !ApplicationManager.getApplication().isDispatchThread() : "This method should not be called on AWT";
+    final Application application = ApplicationManager.getApplication();
+    assert !application.isDispatchThread() : "This method should not be called on AWT";
 
     final PyDocumentationSettings docSettings = PyDocumentationSettings.getInstance(module);
     LOG.debug("Integrated tools configurator has started");
@@ -101,7 +103,8 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     for (VirtualFile file : pyFiles) {
       if (file.getName().startsWith("test")) {
         if (testRunner.isEmpty()) {
-          testRunner = checkImports(file, module); //find test runner import
+          //find test runner import
+          testRunner = application.runReadAction((Computable<String>)() -> checkImports(file, module));
           if (!testRunner.isEmpty()) {
             LOG.debug("Test runner '" + testRunner + "' was detected from imports in the file '" + file.getPath() + "'");
           }
@@ -200,6 +203,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   @NotNull
   private static String checkImports(@NotNull VirtualFile file, @NotNull Module module) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();
