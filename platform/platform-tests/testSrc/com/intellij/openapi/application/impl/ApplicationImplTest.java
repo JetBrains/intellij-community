@@ -182,7 +182,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         throw new TimeoutException();
       }
     }
-    threads.clear();
   }
 
   private long timeOut;
