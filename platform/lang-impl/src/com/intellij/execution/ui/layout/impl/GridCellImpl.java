@@ -81,14 +81,6 @@ public class GridCellImpl implements GridCell {
       }
 
       @Override
-      protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
-        if (UIUtil.isUnderDarcula()) {
-          return;
-        }
-        super.paintBorder(g2d, shape, borderColor);
-      }
-
-      @Override
       public void processDropOver(TabInfo over, RelativePoint point) {
         ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
       }

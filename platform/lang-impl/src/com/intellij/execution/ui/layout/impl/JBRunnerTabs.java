@@ -91,11 +91,6 @@ public class JBRunnerTabs extends JBEditorTabs {
   }
 
   @Override
-  protected Color getEmptySpaceColor() {
-    return UIUtil.getBgFillColor(getParent());
-  }
-
-  @Override
   protected TabLabel createTabLabel(TabInfo info) {
     return new MyTabLabel(this, info);
   }

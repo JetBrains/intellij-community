@@ -18,7 +18,7 @@ interface JBTabPainter {
 }
 
 class TabTheme(
-  val background: Color? = null,
+  val background: Color = JBUI.CurrentTheme.EditorTabs.backgroundColor(),
   val underline: Color = JBUI.CurrentTheme.DefaultTabs.underlineColor(),
   val inactiveUnderline: Color = JBUI.CurrentTheme.DefaultTabs.inactiveUnderlineColor(),
   val thickness : Int = 2
@@ -28,7 +28,7 @@ class TabTheme(
 
 class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   override fun paintTab(g2d: Graphics2D, rect: Rectangle, tabColor: Color?) {
-    g2d.color = tabColor ?: return
+    g2d.color = tabColor ?: theme.background
     g2d.fillRect(rect.x, rect.y, rect.width, rect.height)
   }
 
@@ -38,9 +38,9 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
     val thickness = theme.thickness
 
     val underline = when(position) {
-      JBTabsPosition.bottom -> Rectangle(rect.x, rect.y - 1, rect.width, thickness)
-      JBTabsPosition.top -> Rectangle(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness)
-      JBTabsPosition.left -> Rectangle(rect.x + rect.width - thickness + 1, rect.y, thickness, rect.height)
+      JBTabsPosition.bottom -> Rectangle(rect.x, rect.y, rect.width, thickness)
+      JBTabsPosition.top -> Rectangle(rect.x, rect.y + rect.height - thickness, rect.width, thickness)
+      JBTabsPosition.left -> Rectangle(rect.x + rect.width - thickness, rect.y, thickness, rect.height)
       else -> Rectangle(rect.x, rect.y, thickness, rect.height)
     }
 

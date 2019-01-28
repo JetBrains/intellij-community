@@ -58,9 +58,6 @@ public class TabLabel extends JPanel implements Accessible {
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl myTabs;
 
-  private BufferedImage myInactiveStateImage;
-  private Rectangle myLastPaintedInactiveImageBounds;
-
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     super(false);
 
@@ -224,7 +221,7 @@ public class TabLabel extends JPanel implements Accessible {
     return label;
   }
 
-  @Override
+/*  @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
@@ -236,7 +233,7 @@ public class TabLabel extends JPanel implements Accessible {
       }
     }
     return insets;
-  }
+  }*/
 
   public void setAlignmentToCenter(boolean toCenter) {
     if (myCentered == toCenter && getLabelComponent().getParent() != null) return;
@@ -271,9 +268,7 @@ public class TabLabel extends JPanel implements Accessible {
   public void paint(final Graphics g) {
     if (myTabs.isDropTarget(myInfo)) return;
 
-    if (myTabs.getSelectedInfo() != myInfo) {
-      doPaint(g);
-    }
+    doPaint(g);
   }
 
   public void paintImage(Graphics g) {
@@ -317,14 +312,14 @@ public class TabLabel extends JPanel implements Accessible {
         break;
     }
 
-    if (!myTabs.isDropTarget(myInfo)) {
+/*    if (!myTabs.isDropTarget(myInfo)) {
       if (myTabs.getSelectedInfo() != myInfo) {
         consumer.consume(dX, dY);
       }
       else {
         consumer.consume(dXs, dYs);
       }
-    }
+    }*/
   }
 
   private void doPaint(final Graphics g) {
@@ -341,7 +336,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   protected int getNonSelectedOffset() {
-    return 1;
+    return 0;
   }
 
   protected int getSelectedOffset() {
@@ -351,23 +346,11 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
+    //size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
 
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
       size.width += actionPanelSize.width;
-    }
-
-    final JBTabsPosition pos = myTabs.getTabsPosition();
-    switch (pos) {
-      case top:
-      case bottom:
-        size.height -= JBUI.scale(1); //TODO нафига это?
-        break;
-      case left:
-      case right:
-        size.width += getSelectedOffset();
-        break;
     }
 
     return size;
@@ -427,8 +410,6 @@ public class TabLabel extends JPanel implements Accessible {
     if (d != null && d.equals(pref)) {
       return;
     }
-
-    setInactiveStateImage(null);
 
     getLabelComponent().invalidate();
 
@@ -611,10 +592,10 @@ public class TabLabel extends JPanel implements Accessible {
 
     final Rectangle textBounds = SwingUtilities.convertRectangle(getLabelComponent().getParent(), getLabelComponent().getBounds(), this);
     // Paint border around label if we got the focus
-    if (isFocusOwner()) {
+/*    if (isFocusOwner()) {
       g.setColor(UIUtil.getTreeSelectionBorderColor());
       UIUtil.drawDottedRectangle(g, textBounds.x, textBounds.y, textBounds.x + textBounds.width - 1, textBounds.y + textBounds.height - 1);
-    }
+    }*/
 
     if (myOverlayedIcon == null)
       return;
@@ -658,27 +639,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   public void setTabEnabled(boolean enabled) {
     getLabelComponent().setEnabled(enabled);
-  }
-
-
-  @Nullable
-  public BufferedImage getInactiveStateImage(Rectangle effectiveBounds) {
-    BufferedImage img = null;
-    if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
-      img = myInactiveStateImage;
-    }
-    else {
-      setInactiveStateImage(null);
-    }
-    myLastPaintedInactiveImageBounds = effectiveBounds;
-    return img;
-  }
-
-  public void setInactiveStateImage(@Nullable BufferedImage img) {
-    if (myInactiveStateImage != null && img != myInactiveStateImage) {
-      myInactiveStateImage.flush();
-    }
-    myInactiveStateImage = img;
   }
 
   public JComponent getLabelComponent() {
