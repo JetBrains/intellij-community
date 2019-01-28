@@ -47,8 +47,8 @@ task setupJdk(dependsOn: downloadJdk) {
   inputs.files(downloadOutputs)
   inputs.property("jdkOutputDir", outputDir)
   outputs.dir(outputDir)
-  fileTree(outputDir).each {
-    outputs.file(it)
+  outputs.upToDateWhen {
+    !fileTree(outputDir).isEmpty()
   }
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")
@@ -57,29 +57,24 @@ task setupJdk(dependsOn: downloadJdk) {
 }
 
 def unpackJdk(jdkArchive, outputDir) {
-  try {
-    logger.info("Unpacking $jdkArchive to ${outputDir}")
-    if (file(outputDir).exists()) {
-      delete(outputDir)
-    }
-    def currentOs = OperatingSystem.current()
-    if (currentOs.isWindows()) {
-      copy {
-        from tarTree(jdkArchive)
-        into outputDir
-      }
-    }
-    else {
-      exec { commandLine 'mkdir', '-p', outputDir }
-      exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
-      if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
-        exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
-        exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
-      }
+  logger.info("Unpacking $jdkArchive to ${outputDir}")
+  if (file(outputDir).exists()) {
+    delete(outputDir)
+  }
+  def currentOs = OperatingSystem.current()
+  if (currentOs.isWindows()) {
+    copy {
+      from tarTree(jdkArchive)
+      into outputDir
     }
   }
-  catch (Exception ignored) {
-    println(ignored.message)
+  else {
+    exec { commandLine 'mkdir', '-p', outputDir }
+    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+    if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
+      exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
+      exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
+    }
   }
 }
 
