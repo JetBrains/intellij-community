@@ -38,10 +38,11 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
   protected void installEditorScheme() {
     String name = getTheme().getEditorScheme();
     if (name != null && myEditorSchemeFile != null) {
-      EditorColorsManager cm = EditorColorsManager.getInstance();
-      ((EditorColorsManagerImpl)cm).getSchemeManager().loadBundledScheme(myEditorSchemeFile.toString(), this);
+      EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+      cm.getSchemeManager().loadBundledScheme(myEditorSchemeFile.toString(), this);
       EditorColorsScheme scheme = cm.getScheme(getTheme().getEditorSchemeName());
       if (scheme != null) {
+        EditorColorsManagerImpl.setTempScheme(scheme);
         cm.setGlobalScheme(scheme);
         MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
         connect.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
@@ -50,7 +51,7 @@ public class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo
             if (editorColorsScheme == scheme) {
               return;
             }
-            ((EditorColorsManagerImpl)cm).getSchemeManager().removeScheme(scheme);
+            cm.getSchemeManager().removeScheme(scheme);
             connect.disconnect();
           }
         });
