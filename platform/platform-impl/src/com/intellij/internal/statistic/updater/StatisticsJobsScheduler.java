@@ -77,10 +77,6 @@ public class StatisticsJobsScheduler implements BaseComponent {
 
   private static void runStatesLogging() {
     if (!StatisticsUploadAssistant.isSendAllowed()) return;
-    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUCounterUsageLogger.getInstance().logRegisteredGroups(),
-                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN,
-                                                       LOG_APPLICATION_STATES_DELAY_IN_MIN,
-                                                       TimeUnit.MINUTES);
     JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
                                                        LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
                                                        LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);

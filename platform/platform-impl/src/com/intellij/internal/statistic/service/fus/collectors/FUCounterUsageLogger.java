@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
@@ -12,9 +13,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class FUCounterUsageLogger {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger");
+
+  private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
+  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
   /**
    * System event which indicates that the counter collector is enabled in current IDE build, can be used to calculate the base line
@@ -44,11 +49,14 @@ public class FUCounterUsageLogger {
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
       register(new FeatureUsageGroup(ep.groupID, ep.version));
     }
+
+    JobScheduler.getScheduler().scheduleWithFixedDelay(
+      () -> logRegisteredGroups(), LOG_REGISTERED_INITIAL_DELAY_MIN, LOG_REGISTERED_DELAY_MIN, TimeUnit.MINUTES
+    );
   }
 
   public void register(@NotNull FeatureUsageGroup group) {
     myGroups.put(group.getId(), group);
-    FeatureUsageLogger.INSTANCE.log(group, REGISTERED);
   }
 
   public void logRegisteredGroups() {
