@@ -280,7 +280,7 @@ class A { def aMethod() { "42" } }
   }
 
   @Test
-  void 'Collectors.toList()'() {
+  void 'Collectors toList'() {
     def call = elementUnderCaret '''\
 static void testCode(java.util.stream.Stream<Integer> ss) {
   ss.collect(java.util.stream.Collectors.<caret>toList())
