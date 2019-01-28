@@ -1050,4 +1050,17 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
     doTest(schemaText, inputText);
   }
+
+  public void testLargeInt() throws Exception {
+    // currently we limit it by Java Long range, should be sufficient as per RFC 7159
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"integer\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"x\": 9223372036854775807\n" +
+                "}");
+  }
 }
