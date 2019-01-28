@@ -201,7 +201,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if(resolverCtx.isPreviewMode()){
       executionSettings.withArgument("-Didea.isPreviewMode=true");
       final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
-      projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
+      projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(previewLightWeightToolingModels));
     }
     if(resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
@@ -228,7 +228,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if(!resolverCtx.isPreviewMode()){
         // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
         try {
-          projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+          projectImportAction.addProjectImportExtraModelProvider(
+            new ClassSetProjectImportExtraModelProvider(resolverExtension.getExtraProjectModelClasses()));
         }
         catch (Throwable t) {
           LOG.warn(t);
