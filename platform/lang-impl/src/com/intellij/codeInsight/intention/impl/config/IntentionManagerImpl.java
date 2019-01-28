@@ -16,7 +16,6 @@ import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -176,26 +175,29 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
     }
 
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      FileModifier fix = action;
-      if (action instanceof QuickFixWrapper) {
-        fix = ((QuickFixWrapper)action).getFix();
-      }
-      return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
+      return createFixAllIntentionInternal(toolWrapper, action);
     }
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       GlobalInspectionTool wrappedTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
       if (wrappedTool instanceof GlobalSimpleInspectionTool && (action instanceof LocalQuickFix || action instanceof QuickFixWrapper)) {
-        FileModifier fix = action;
-        if (action instanceof QuickFixWrapper) {
-          fix = ((QuickFixWrapper)action).getFix();
-        }
-        return new CleanupInspectionIntention(toolWrapper, fix, action.getText());
+        return createFixAllIntentionInternal(toolWrapper, action);
       }
     }
     else {
       throw new AssertionError("unknown tool: " + toolWrapper);
     }
     return null;
+  }
+
+  private static IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper toolWrapper,
+                                                               @NotNull IntentionAction action) {
+    PsiFile file = null;
+    FileModifier fix = action;
+    if (action instanceof QuickFixWrapper) {
+      fix = ((QuickFixWrapper)action).getFix();
+      file = ((QuickFixWrapper)action).getFile();
+    }
+    return new CleanupInspectionIntention(toolWrapper, fix, file, action.getText());
   }
 
   @NotNull

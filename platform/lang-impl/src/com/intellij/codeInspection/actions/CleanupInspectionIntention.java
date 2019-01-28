@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -27,11 +28,16 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   private final InspectionToolWrapper myToolWrapper;
   private final FileModifier myQuickfix;
+  @Nullable private final PsiFile myFile;
   private final String myText;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull FileModifier quickFix, String text) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper,
+                                    @NotNull FileModifier quickFix,
+                                    @Nullable PsiFile file,
+                                    String text) {
     myToolWrapper = toolWrapper;
     myQuickfix = quickFix;
+    myFile = file;
     myText = text;
   }
 
@@ -49,14 +55,14 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-
+    PsiFile targetFile = myFile != null ? myFile : file;
     final List<ProblemDescriptor> descriptions =
       ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);
-        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext());
+        return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
       }, new EmptyProgressIndicator());
 
-    if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+    if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) return;
 
     final AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Fixes", descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
 
@@ -70,7 +76,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
            (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix) &&
            editor != null &&
-           (!(myQuickfix instanceof IntentionAction) || ((IntentionAction)myQuickfix).isAvailable(project, editor, file)) &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
