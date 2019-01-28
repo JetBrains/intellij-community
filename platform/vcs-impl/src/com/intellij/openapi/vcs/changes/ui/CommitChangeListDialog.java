@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -98,7 +98,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
-  @NotNull private final CommitContext myCommitContext;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
   @NotNull private final CommitDialogChangesBrowser myBrowser;
   @NotNull private final JComponent myBrowserBottomPanel = createHorizontalBox();
@@ -243,7 +242,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   CommitChangeListDialog(@NotNull DialogCommitWorkflow workflow) {
     super(workflow.getProject(), true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
-    myCommitContext = new CommitContext();
     myWorkflow = workflow;
     myProject = myWorkflow.getProject();
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
@@ -256,7 +254,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    myHandlers.addAll(createCheckinHandlers(myProject, this, myCommitContext));
+    myHandlers.addAll(createCheckinHandlers(myProject, this, getCommitContext()));
 
     setTitle(myShowVcsCommit ? DIALOG_TITLE : getExecutorPresentableText(myExecutors.get(0)));
     myCommitActionName = getCommitActionName(myAffectedVcses);
@@ -566,7 +564,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     saveComments(true);
 
     if (session instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)session).setContext(myCommitContext);
+      ((CommitSessionContextAware)session).setContext(getCommitContext());
     }
 
     ensureDataIsActual(() -> {
@@ -1001,6 +999,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       return this;
     }
     return myBrowser.getData(dataId);
+  }
+
+  @NotNull
+  private CommitContext getCommitContext() {
+    return myWorkflow.getCommitContext();
   }
 
   @NotNull
