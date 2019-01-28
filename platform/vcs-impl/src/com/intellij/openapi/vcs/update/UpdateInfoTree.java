@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -21,6 +22,7 @@ import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -288,7 +290,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
           final FileTreeNode treeNode = (FileTreeNode)o;
           VirtualFilePointer filePointer = treeNode.getFilePointer();
 
-          myNext = getFilePath(filePointer);
+          FilePath filePath = getFilePath(filePointer);
+          if (filePath == null) continue;
+
+          myNext = filePath;
           myStatus = FileStatus.MODIFIED;
 
           final GroupTreeNode parent = findParentGroupTreeNode(treeNode.getParent());
@@ -514,8 +519,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  @NotNull
+  @Nullable
   private static FilePath getFilePath(@NotNull VirtualFilePointer filePointer) {
-    return VcsUtil.getFilePath(filePointer.getPresentableUrl(), false);
+    String path = VirtualFileManager.extractPath(filePointer.getUrl());
+    if (StringUtil.isEmpty(path)) return null; // pointer disposed
+    return VcsUtil.getFilePath(path, false);
   }
 }
