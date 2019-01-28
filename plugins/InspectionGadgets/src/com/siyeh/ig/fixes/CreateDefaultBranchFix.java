@@ -22,15 +22,17 @@ import java.io.IOException;
 import java.util.*;
 
 public class CreateDefaultBranchFix extends BaseSwitchFix {
+  private final String myMessage;
 
-  public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block) {
+  public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, String message) {
     super(block);
+    myMessage = message;
   }
 
   @NotNull
   @Override
   public String getText() {
-    return getName();
+    return myMessage == null ? getName() : myMessage;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

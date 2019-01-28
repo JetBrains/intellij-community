@@ -1224,9 +1224,53 @@ public class ControlFlowUtil {
     return null;
   }
 
+  /**
+   * Returns true of instruction at given offset is a dominator for target instruction (that is: execution from flow start to
+   * the target always goes through given offset).
+   * @param flow control flow to analyze
+   * @param maybeDominator a dominator candidate offset
+   * @param target a target instruction offset
+   * @return true if instruction at maybeDominator offset is actually a dominator.
+   */
+  public static boolean isDominator(ControlFlow flow, int maybeDominator, int target) {
+    class MyVisitor extends InstructionClientVisitor<Boolean> {
+      final BitSet myReachedWithoutDominator = new BitSet();
+      
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        super.visitInstruction(instruction, offset, nextOffset);
+        if (nextOffset != maybeDominator && (target == nextOffset || myReachedWithoutDominator.get(nextOffset))) {
+          myReachedWithoutDominator.set(offset);
+        }
+      }
+
+      @Override
+      public Boolean getResult() {
+        return myReachedWithoutDominator.get(0);
+      }
+    }
+    MyVisitor visitor = new MyVisitor();
+    depthFirstSearch(flow, visitor, 0, target);
+    return !visitor.getResult();
+  }
 
   public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
-    class MyVisitor extends InstructionClientVisitor<Boolean> {
+    final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+    int offset = variableDeclarationOffset > -1 ? variableDeclarationOffset : 0;
+    boolean[] unassignedOffsets = getVariablePossiblyUnassignedOffsets(variable, flow);
+    return unassignedOffsets[offset];
+  }
+
+  /**
+   * Returns offsets starting from which the variable could be unassigned 
+   * 
+   * @param variable variable to check
+   * @param flow control flow
+   * @return a boolean array which values correspond to control flow offset. 
+   * True value means that variable could be unassigned when execution starts from given offset.
+   */
+  public static boolean[] getVariablePossiblyUnassignedOffsets(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {
+    class MyVisitor extends InstructionClientVisitor<boolean[]> {
       // true if from this point below there may be branch with no variable assignment
       private final boolean[] maybeUnassigned = new boolean[flow.getSize() + 1];
 
@@ -1291,15 +1335,14 @@ public class ControlFlowUtil {
 
       @Override
       @NotNull
-      public Boolean getResult() {
-        final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
-        return !maybeUnassigned[variableDeclarationOffset > -1 ? variableDeclarationOffset : 0];
+      public boolean[] getResult() {
+        return maybeUnassigned;
       }
     }
-    if (flow.getSize() == 0) return false;
+    if (flow.getSize() == 0) return new boolean[0];
     MyVisitor visitor = new MyVisitor();
     depthFirstSearch(flow, visitor);
-    return visitor.getResult().booleanValue();
+    return visitor.getResult();
   }
 
   public static boolean isVariableDefinitelyNotAssigned(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {

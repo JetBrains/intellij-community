@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
@@ -18,10 +19,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -331,5 +335,56 @@ public class HighlightFixUtil {
 
   static void registerChangeParameterClassFix(PsiType lType, PsiType rType, HighlightInfo info) {
     QuickFixAction.registerQuickFixAction(info, getChangeParameterClassFix(lType, rType));
+  }
+
+  static PsiSwitchStatement findInitializingSwitch(@NotNull PsiVariable variable,
+                                                   @NotNull PsiElement topBlock,
+                                                   PsiElement readPoint) {
+    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
+    if (scope == null) return null;
+    PsiSwitchStatement switchForAll = null;
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, scope)) {
+      if (PsiUtil.isAccessedForWriting(reference)) {
+        PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(reference, PsiSwitchStatement.class);
+        if (switchStatement == null || !PsiTreeUtil.isAncestor(scope, switchStatement, true)) return null;
+        if (switchForAll != null) {
+          if (switchForAll != switchStatement) return null;
+        }
+        else {
+          switchForAll = switchStatement;
+        }
+      }
+    }
+    if (switchForAll == null) return null;
+    if (SwitchUtils.calculateBranchCount(switchForAll) < 0) return null;
+    List<PsiSwitchLabelStatementBase> labels =
+      PsiTreeUtil.getChildrenOfTypeAsList(switchForAll.getBody(), PsiSwitchLabelStatementBase.class);
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(topBlock.getProject()).getControlFlow(topBlock, policy);
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
+    int switchOffset = controlFlow.getStartOffset(switchForAll);
+    int readOffset = controlFlow.getStartOffset(readPoint);
+    if (switchOffset == -1 || readOffset == -1 || !ControlFlowUtil.isDominator(controlFlow, switchOffset, readOffset)) return null;
+    boolean[] offsets = ControlFlowUtil.getVariablePossiblyUnassignedOffsets(variable, controlFlow);
+    for (PsiSwitchLabelStatementBase label : labels) {
+      int offset = controlFlow.getStartOffset(label);
+      if (offset == -1 || offsets[offset]) return null;
+    }
+    return switchForAll;
+  }
+
+  @Nullable
+  static IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable, PsiElement topBlock, PsiElement readPoint) {
+    PsiSwitchStatement switchStatement = findInitializingSwitch(variable, topBlock, readPoint);
+    if (switchStatement != null) {
+      String message = QuickFixBundle.message("add.default.branch.to.variable.initializing.switch.fix.name", variable.getName());
+      return QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchStatement, message);
+    }
+    return null;
   }
 }
