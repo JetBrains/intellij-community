@@ -36,7 +36,8 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
                          private val additionalData: PairConsumer<Any, Any>) : BorderLayoutPanel(), Disposable {
   private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
-  private val myCheckinChangeListSpecificComponents = mutableSetOf<CheckinChangeListSpecificComponent>()
+
+  private val changeListSpecificOptions get() = myAdditionalComponents.filterIsInstance<CheckinChangeListSpecificComponent>()
 
   val isEmpty: Boolean get() = myAdditionalComponents.isEmpty()
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
@@ -58,10 +59,10 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
       panel.isVisible = affectedVcses.contains(vcs)
     }
 
-    myCheckinChangeListSpecificComponents.forEach { it.onChangeListSelected(changeList) }
+    changeListSpecificOptions.forEach { it.onChangeListSelected(changeList) }
   }
 
-  fun saveChangeListComponentsState() = myCheckinChangeListSpecificComponents.forEach { it.saveState() }
+  fun saveChangeListComponentsState() = changeListSpecificOptions.forEach { it.saveState() }
 
   override fun dispose() {
   }
@@ -75,9 +76,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
         vcsCommitOptions.add(vcsOptions)
         myPerVcsOptionsPanels[vcs] = vcsOptions
         myAdditionalComponents.add(options)
-        if (options is CheckinChangeListSpecificComponent) {
-          myCheckinChangeListSpecificComponents.add(options)
-        }
         hasVcsOptions = true
       }
     }
@@ -122,9 +120,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
     container.add(component.component)
     myAdditionalComponents.add(component)
-    if (component is CheckinChangeListSpecificComponent) {
-      myCheckinChangeListSpecificComponents.add(component)
-    }
   }
 
   companion object {
