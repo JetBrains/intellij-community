@@ -56,6 +56,11 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     return 200;
   }
 
+  @Override
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return super.getElementPriority(element, searchPattern) + 2;
+  }
+
   @NotNull
   @Override
   protected FilteringGotoByModel<FileType> createModel(@NotNull Project project) {
