@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -25,9 +28,10 @@ public interface ExternalFormatProcessor {
    *
    * @param source the source file with code
    * @param range the range for formatting
+   * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
    * @return the range after formatting or the initial range, if external format procedure cannot be applied to the source
    */
-  TextRange format(@NotNull PsiFile source, @NotNull TextRange range);
+  TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly);
 
   /**
    * @return the unique id for external formatter
@@ -56,15 +60,33 @@ public interface ExternalFormatProcessor {
   /**
    * @param source the source file with code
    * @param range the range for formatting
+   * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
    * @return the range after formatting or empty value, if external format procedure was not found or inactive (disabled)
    */
   @NotNull
-  static Optional<TextRange> formatExternally(@NotNull PsiFile source, @NotNull TextRange range) {
+  static Optional<TextRange> formatExternally(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly) {
     for (ExternalFormatProcessor efp : EP_NAME.getExtensionList()) {
       if (efp.activeForFile(source)) {
-        return Optional.of(efp.format(source, range));
+        return Optional.of(efp.format(source, range, canChangeWhiteSpacesOnly));
       }
     }
     return Optional.empty();
+  }
+
+  static PsiElement formatInternalWhitespaces(@NotNull PsiElement elementToFormat, int startOffset, int endOffset) {
+    final PsiFile file = elementToFormat.getContainingFile();
+    if (useExternalFormatter(file)) {
+      final Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        final Optional<TextRange> range = formatExternally(file, new TextRange(startOffset, endOffset), true);
+        if (range.isPresent()) {
+          PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+          if (!elementToFormat.isValid()) {
+            return file.findElementAt(range.get().getStartOffset());
+          }
+        }
+      }
+    }
+    return elementToFormat;
   }
 }
