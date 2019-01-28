@@ -1255,11 +1255,10 @@ public class ControlFlowUtil {
   }
 
   public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
-    if (flow.getSize() == 0) return false;
     final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
     int offset = variableDeclarationOffset > -1 ? variableDeclarationOffset : 0;
     boolean[] unassignedOffsets = getVariablePossiblyUnassignedOffsets(variable, flow);
-    return unassignedOffsets[offset];
+    return !unassignedOffsets[offset];
   }
 
   /**
@@ -1340,7 +1339,7 @@ public class ControlFlowUtil {
         return maybeUnassigned;
       }
     }
-    if (flow.getSize() == 0) return new boolean[0];
+    if (flow.getSize() == 0) return new boolean[] {true};
     MyVisitor visitor = new MyVisitor();
     depthFirstSearch(flow, visitor);
     return visitor.getResult();
