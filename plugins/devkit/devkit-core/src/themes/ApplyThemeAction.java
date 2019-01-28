@@ -19,14 +19,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,16 +36,12 @@ public class ApplyThemeAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    VirtualFile file = fromMouseEvent(e);
-
-    if (file == null) {
-      file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      if (file == null || !UITheme.isThemeFile(file)) {
-        for (FileEditor fileEditor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-          if (UITheme.isThemeFile(fileEditor.getFile())) {
-            file = fileEditor.getFile();
-            break;
-          }
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file == null || !UITheme.isThemeFile(file)) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getSelectedEditors()) {
+        if (UITheme.isThemeFile(fileEditor.getFile())) {
+          file = fileEditor.getFile();
+          break;
         }
       }
     }
@@ -57,16 +49,6 @@ public class ApplyThemeAction extends DumbAwareAction {
     if (file != null && UITheme.isThemeFile(file)) {
       applyTempTheme(file, project);
     }
-  }
-
-  private VirtualFile fromMouseEvent(AnActionEvent e) {
-    if (e.getInputEvent() instanceof MouseEvent) {
-      Component component = e.getInputEvent().getComponent();
-      EditorNotificationPanel panel = UIUtil.getParentOfType(EditorNotificationPanel.class, component);
-      if (panel != null) {
-      }
-    }
-return null;
   }
 
   private static void applyTempTheme(@NotNull VirtualFile json, Project project) {
