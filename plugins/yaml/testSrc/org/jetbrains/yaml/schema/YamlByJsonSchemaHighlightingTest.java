@@ -93,7 +93,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "  }\n" +
                                                    "}");
     doTest(schema, "prop:\n - 101\n - 102");
-    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than a minimum 18.0\">16</warning>");
+    doTest(schema, "prop:\n - <warning descr=\"Schema validation: Less than a minimum 18\">16</warning>");
     doTest(schema, "prop:\n - <warning descr=\"Schema validation: Type is not allowed. Expected: number.\">test</warning>");
   }
 
@@ -125,7 +125,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "    \"type\": \"number\", \"minimum\": 18" +
                                                    "  }, {\"type\" : \"string\"}]\n" +
                                                    "}");
-    doTest(schema, "prop:\n - 101\n - 102");
+    doTest(schema, "prop:\n - 101\n - <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">102</warning>");
 
     @Language("JSON") final String schema2 = schema("{\n" +
                                                     "  \"type\": \"array\",\n" +
@@ -133,7 +133,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                     "    \"type\": \"number\", \"minimum\": 18" +
                                                     "  }, {\"type\" : \"string\"}],\n" +
                                                     "\"additionalItems\": false}");
-    doTest(schema2, "prop:\n - 101\n - 102\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
+    doTest(schema2, "prop:\n - 101\n - <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">102</warning>\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
   }
 
   public void testArrayLength() throws Exception {
@@ -328,8 +328,8 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                             "  }\n" +
                                             "}";
     doTest(schema,
-                   "p1: 1\n" +
-                   "p2: 3\n" +
+                   "p1: <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">1</warning>\n" +
+                   "p2: <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">3</warning>\n" +
                    "a2: auto!\n" +
                    "a1: <warning descr=\"Schema validation: Value should be one of: \\\"auto!\\\"\">moto!</warning>\n"
                    );
@@ -789,5 +789,12 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "    }\n" +
            "  }\n" +
            "}\n";
+  }
+
+  public void testTravisPythonVersion() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "python: 3.5"); // validates as 'number'
+    doTest(schema, "python: 3.50"); // validates as 'string'
+    doTest(schema, "python: <warning descr=\"Schema validation: Type is not allowed. Expected one of: array, number, string.\">null</warning>");
   }
 }
