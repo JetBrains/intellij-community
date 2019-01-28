@@ -3,6 +3,7 @@
 package com.intellij.util.indexing;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.plugins.PluginManager;
@@ -36,10 +37,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -95,6 +93,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static com.intellij.util.FileContentUtilCore.reparseFiles;
 
 /**
  * @author Eugene Zhuravlev
@@ -270,6 +270,21 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         LOG.info(e);
       }
     }
+  }
+
+  //TODO: move to a better place
+  public void forceReindex(VirtualFile file) {
+    List<VirtualFile> filesToReindex = Lists.newArrayList();
+
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        filesToReindex.add(file);
+        return true;
+      }
+    });
+
+    reparseFiles(filesToReindex);
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
@@ -1526,6 +1541,11 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     VirtualFile file = content.getVirtualFile();
     final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+
+    if (project != null && IndexLibraryManager.Companion.getInstance(project).isNotImportedLibrary(file)) {
+      return;
+    }
+
 
     try {
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
