@@ -25,7 +25,7 @@ import gnu.trove.TIntHashSet
 import java.awt.*
 
 internal class Selection(private val table: VcsLogGraphTable) {
-  private val selectedCommits: TIntHashSet
+  private val selectedCommits: TIntHashSet = TIntHashSet()
   private val visibleSelectedCommit: Int?
   private val delta: Int?
   private val isOnTop: Boolean
@@ -36,8 +36,6 @@ internal class Selection(private val table: VcsLogGraphTable) {
     isOnTop = visibleRows.first - 1 == 0
 
     val graph = table.visibleGraph
-
-    selectedCommits = TIntHashSet()
 
     var visibleSelectedCommit: Int? = null
     var delta: Int? = null
