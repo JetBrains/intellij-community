@@ -58,10 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -75,6 +72,8 @@ public class RecentLocationsAction extends AnAction {
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
   private static final int DEFAULT_HEIGHT = JBUI.scale(500);
+  private static final int MINIMUM_WIDTH = JBUI.scale(200);
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
   private static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                  SHORTCUT_FOREGROUND_COLOR.getRed(),
@@ -142,16 +141,15 @@ public class RecentLocationsAction extends AnAction {
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(DEFAULT_WIDTH, JBUI.scale(100)))
+      .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
       .setLocateWithinScreenBounds(false)
       .createPopup();
 
     Disposer.register(popup, () -> {
       Dimension contentSize = popup.getContent().getSize();
-      int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
-      Dimension scrollPaneDimension = new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+      Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
       //scroll pane
-      DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneDimension, project);
+      DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
     });
 
     Dimension scrollPaneSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
@@ -159,8 +157,18 @@ public class RecentLocationsAction extends AnAction {
       scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
+    scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
+
     scrollPane.setPreferredSize(scrollPaneSize);
     popup.setSize(mainPanel.getPreferredSize());
+
+    popup.getContent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        scrollPane.setPreferredSize(calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent()));
+        scrollPane.revalidate();
+      }
+    });
 
     ApplicationManager.getApplication().invokeLater(() -> {
       Dimension minSize = mainPanel.getMinimumSize();
@@ -211,6 +219,16 @@ public class RecentLocationsAction extends AnAction {
     });
 
     showPopup(project, popup);
+  }
+
+  @NotNull
+  private Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
+                                      @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                      @NotNull JPanel topPanel,
+                                      @NotNull JComponent content) {
+    Dimension contentSize = content.getSize();
+    int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
+    return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
   }
 
   @Override
