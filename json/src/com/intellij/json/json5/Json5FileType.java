@@ -8,7 +8,7 @@ public class Json5FileType extends JsonFileType {
   public static final Json5FileType INSTANCE = new Json5FileType();
   public static final String DEFAULT_EXTENSION = "json5";
 
-  public Json5FileType() {
+  private Json5FileType() {
     super(Json5Language.INSTANCE);
   }
 

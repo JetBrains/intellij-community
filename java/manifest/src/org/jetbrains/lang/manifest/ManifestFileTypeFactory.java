@@ -24,10 +24,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ManifestFileTypeFactory extends FileTypeFactory {
-  public final static LanguageFileType MANIFEST = new ManifestFileType();
+  /**
+   * @deprecated use {@link ManifestFileType#INSTANCE} instead
+   */
+  @Deprecated public static final LanguageFileType MANIFEST = ManifestFileType.INSTANCE;
 
   @Override
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(MANIFEST, "MF");
+    consumer.consume(ManifestFileType.INSTANCE, "MF");
   }
 }
