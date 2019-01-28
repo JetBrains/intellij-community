@@ -4,7 +4,7 @@ package com.intellij.ide.startup.impl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.internal.statistic.collectors.fus.project.FsCaseSensitivityTriggerCollector;
+import com.intellij.internal.statistic.collectors.fus.project.ProjectFsStatsCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -271,7 +271,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           myProject);
       }
 
-      FsCaseSensitivityTriggerCollector.trigger(myProject, actual);
+      ProjectFsStatsCollector.caseSensitivity(myProject, actual);
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);
@@ -284,7 +284,10 @@ public class StartupManagerImpl extends StartupManagerEx {
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-    if (!watcher.isOperational()) return;
+    if (!watcher.isOperational()) {
+      ProjectFsStatsCollector.watchedRoots(myProject, -1);
+      return;
+    }
 
     PooledThreadExecutor.INSTANCE.submit(() -> {
       LOG.debug("FW/roots waiting started");
@@ -296,6 +299,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       LOG.debug("FW/roots waiting finished");
 
       Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
+      int pctNonWatched = 0;
       if (!manualWatchRoots.isEmpty()) {
         List<String> nonWatched = new SmartList<>();
         for (VirtualFile root : roots) {
@@ -312,8 +316,11 @@ public class StartupManagerImpl extends StartupManagerEx {
           watcher.notifyOnFailure(message, null);
           LOG.info("unwatched roots: " + nonWatched);
           LOG.info("manual watches: " + manualWatchRoots);
+          pctNonWatched = (int)(100.0 * nonWatched.size() / roots.length);
         }
       }
+
+      ProjectFsStatsCollector.watchedRoots(myProject, pctNonWatched);
     });
   }
 
