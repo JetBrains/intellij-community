@@ -521,11 +521,19 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   protected final ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
                                                             @NotNull Element extensionElement,
                                                             boolean isNeedToDeserialize,
-                                                            @NotNull PluginDescriptor pluginDescriptor) {
+                                                            @NotNull PluginDescriptor pluginDescriptor,
+                                                            boolean isConstructorInjectionSupported) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    return new XmlExtensionComponentAdapter(implementationClassName, myOwner.getPicoContainer(), pluginDescriptor, orderId, order,
-                                            isNeedToDeserialize ? extensionElement : null);
+    if (isConstructorInjectionSupported) {
+      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName, myOwner.getPicoContainer(),
+                                                                          pluginDescriptor, orderId, order,
+                                                                          isNeedToDeserialize ? extensionElement : null);
+    }
+    else {
+      return new XmlExtensionComponentAdapter(implementationClassName, myOwner.getPicoContainer(), pluginDescriptor, orderId, order,
+                                              isNeedToDeserialize ? extensionElement : null);
+    }
   }
 
   @TestOnly

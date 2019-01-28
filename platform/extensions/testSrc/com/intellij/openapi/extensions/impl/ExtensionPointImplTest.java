@@ -266,6 +266,7 @@ public class ExtensionPointImplTest {
       myFire = fire;
     }
 
+    @NotNull
     @Override
     public Object getExtension() {
       if (myFire) {

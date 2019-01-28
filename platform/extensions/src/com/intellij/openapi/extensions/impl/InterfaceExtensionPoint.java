@@ -28,7 +28,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    return doCreateAdapter(implClass, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor);
+    return doCreateAdapter(implClass, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
+final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   BeanExtensionPoint(@NotNull String name,
                      @NotNull String className,
                      @NotNull ExtensionsAreaImpl owner,
@@ -17,6 +17,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   @Override
   @NotNull
   ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
-    return doCreateAdapter(getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor);
+    // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
+    return doCreateAdapter(getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor, getArea() != null);
   }
 }
