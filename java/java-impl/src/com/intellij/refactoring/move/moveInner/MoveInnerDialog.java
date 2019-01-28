@@ -332,6 +332,7 @@ public class MoveInnerDialog extends MoveDialogBase {
   }
 
   private void createUIComponents() {
+    myClassNameField = new EditorTextField("", myProject);
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiManager manager = myInnerClass.getManager();
       PsiType outerType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(myInnerClass.getContainingClass());
