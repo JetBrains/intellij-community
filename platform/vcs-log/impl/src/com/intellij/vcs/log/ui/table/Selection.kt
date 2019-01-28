@@ -39,16 +39,16 @@ internal class Selection(private val table: VcsLogGraphTable) {
     val visibleRows = getVisibleRows(table)
     isOnTop = visibleRows.first == 0
 
-    val visibleRow = selectedRowsToCommits.values.find { visibleRows.first <= it && it <= visibleRows.second } ?: visibleRows.first
+    val visibleRow = selectedRowsToCommits.values.find { visibleRows.contains(it) } ?: visibleRows.first
     val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
     scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
   }
 
   private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
 
-  private fun getVisibleRows(table: JTable): Pair<Int, Int> {
+  private fun getVisibleRows(table: JTable): IntRange {
     val visibleRows = ScrollingUtil.getVisibleRows(table)
-    return Pair(visibleRows.first - 1, visibleRows.second)
+    return IntRange(visibleRows.first - 1, visibleRows.second)
   }
 
   fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
