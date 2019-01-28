@@ -52,7 +52,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
   }
 
   fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
-    val toSelectAndScroll = findRowsToSelectAndScroll(table.model, newVisibleGraph)
+    val toSelectAndScroll = findRowsToSelectAndScroll(newVisibleGraph)
     if (!toSelectAndScroll.first.isEmpty) {
       table.selectionModel.valueIsAdjusting = true
       toSelectAndScroll.first.forEach { row ->
@@ -81,17 +81,8 @@ internal class Selection(private val table: VcsLogGraphTable) {
                                         startRect.width, table.visibleRect.height))
   }
 
-  private fun findRowsToSelectAndScroll(model: GraphTableModel,
-                                        visibleGraph: VisibleGraph<Int>): Pair<TIntHashSet, Int> {
+  private fun findRowsToSelectAndScroll(visibleGraph: VisibleGraph<Int>): Pair<TIntHashSet, Int> {
     val rowsToSelect = TIntHashSet()
-
-    if (model.rowCount == 0) {
-      // this should have been covered by facade.getVisibleCommitCount,
-      // but if the table is empty (no commits match the filter), the GraphFacade is not updated, because it can't handle it
-      // => it has previous values set.
-      return Pair.create(rowsToSelect, null)
-    }
-
     var rowToScroll: Int? = null
     var row = 0
     while (row < visibleGraph.visibleCommitCount && (rowsToSelect.size() < selectedCommits.size() || rowToScroll == null)) { //stop iterating if found all hashes
