@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.actions;
 
@@ -70,6 +70,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
            (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix) &&
            editor != null &&
+           (!(myQuickfix instanceof IntentionAction) || ((IntentionAction)myQuickfix).isAvailable(project, editor, file)) &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
