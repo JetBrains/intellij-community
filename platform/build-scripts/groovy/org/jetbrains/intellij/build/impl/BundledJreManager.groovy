@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -26,6 +26,54 @@ class BundledJreManager {
    */
   String extractLinuxJre() {
     return extractJre("linux")
+  }
+
+  String getSecondJreBuild() {
+    return System.getProperty("intellij.build.bundled.second.jre.build")
+  }
+
+  String getSecondJreVersion() {
+    return System.getProperty("intellij.build.bundled.second.jre.version", "11")
+  }
+
+  @CompileDynamic
+  String extractSecondJre(String osName, String secondJreBuild) {
+    String targetDir = "$baseDirectoryForJre/secondJre.${osName}_${JvmArchitecture.x64}"
+    if (new File(targetDir).exists()) {
+      buildContext.messages.info("JRE is already extracted to $targetDir")
+      return targetDir
+    }
+
+    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${JvmArchitecture.x64}.tar.gz"
+    File archive = new File(buildContext.paths.projectHome, "build/jdk11/${osName}/$jreArchive")
+    if (!archive.file || !archive.exists()) {
+      def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found"
+      buildContext.messages.warning(errorMessage)
+    }
+    if (archive == null) {
+      return null
+    }
+
+    buildContext.messages.block("Extract $archive.absolutePath JRE") {
+      String destination = "$targetDir/jre64"
+      def destinationDir = new File(destination)
+      if (destinationDir.exists()) destinationDir.deleteDir()
+
+      if (SystemInfo.isWindows) {
+        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
+      }
+      else {
+        //'tar' command is used instead of Ant task to ensure that executable flags will be preserved
+        buildContext.ant.mkdir(dir: destination)
+        buildContext.ant.exec(executable: "tar", dir: archive.parent) {
+          arg(value: "-xf")
+          arg(value: archive.name)
+          arg(value: "--directory")
+          arg(value: destination)
+        }
+      }
+    }
+    return targetDir
   }
 
   /**
