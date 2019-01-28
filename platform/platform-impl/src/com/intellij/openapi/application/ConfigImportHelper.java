@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -327,9 +326,8 @@ public class ConfigImportHelper {
       }
 
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
-      // the filter prevents accidental overwrite of files already created by this instance (port/lock/tokens etc.)
-      FileFilter filter = child -> !(child.getParentFile() == oldConfigDir && new File(newConfigDir, child.getName()).exists());
-      FileUtil.copyDir(oldConfigDir, newConfigDir, filter);
+      // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
+      FileUtil.copyDir(oldConfigDir, newConfigDir, path -> !blockImport(path, oldConfigDir, newConfigDir));
 
       // on macOS, plugins are normally not under the config directory
       File oldPluginsDir = new File(oldConfigDir, PLUGINS);
@@ -368,5 +366,9 @@ public class ConfigImportHelper {
       String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
       Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
     }
+  }
+
+  private static boolean blockImport(File path, File oldConfig, File newConfig) {
+    return path.getParentFile() == oldConfig && ("user.web.token".equals(path.getName()) || new File(newConfig, path.getName()).exists());
   }
 }
