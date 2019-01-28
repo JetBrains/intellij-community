@@ -339,14 +339,12 @@ public class HighlightFixUtil {
 
   static PsiSwitchStatement findInitializingSwitch(@NotNull PsiVariable variable,
                                                    @NotNull PsiElement topBlock,
-                                                   PsiElement readPoint) {
-    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
-    if (scope == null) return null;
+                                                   @NotNull PsiElement readPoint) {
     PsiSwitchStatement switchForAll = null;
-    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, scope)) {
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, topBlock)) {
       if (PsiUtil.isAccessedForWriting(reference)) {
         PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(reference, PsiSwitchStatement.class);
-        if (switchStatement == null || !PsiTreeUtil.isAncestor(scope, switchStatement, true)) return null;
+        if (switchStatement == null || !PsiTreeUtil.isAncestor(topBlock, switchStatement, true)) return null;
         if (switchForAll != null) {
           if (switchForAll != switchStatement) return null;
         }
@@ -379,7 +377,9 @@ public class HighlightFixUtil {
   }
 
   @Nullable
-  static IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable, PsiElement topBlock, PsiElement readPoint) {
+  static IntentionAction createInsertSwitchDefaultFix(@NotNull PsiVariable variable,
+                                                      @NotNull PsiElement topBlock,
+                                                      @NotNull PsiElement readPoint) {
     PsiSwitchStatement switchStatement = findInitializingSwitch(variable, topBlock, readPoint);
     if (switchStatement != null) {
       String message = QuickFixBundle.message("add.default.branch.to.variable.initializing.switch.fix.name", variable.getName());
