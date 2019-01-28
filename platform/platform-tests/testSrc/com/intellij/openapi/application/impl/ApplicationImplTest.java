@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -160,13 +161,28 @@ public class ApplicationImplTest extends LightPlatformTestCase {
             });
           }
         }
-        ConcurrencyUtil.joinAll(threads);
-        threads.clear();
+        joinWithTimeout(threads);
       }).assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  private static void joinWithTimeout(List<Thread> threads) throws TimeoutException {
+    for (Thread thread : threads) {
+      try {
+        thread.join(10_000);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      if (thread.isAlive()) {
+        System.err.println(thread + " is still running. threaddump:\n" + ThreadDumper.dumpThreadsToString());
+        throw new TimeoutException();
+      }
+    }
+    threads.clear();
   }
 
   private long timeOut;
@@ -338,9 +354,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       LOG.debug("write lock released");
     }
 
-    readAction1.join();
-    readActions2.join();
-    checkThread.join();
+    joinWithTimeout(Arrays.asList(readAction1, readActions2, checkThread));
     if (exception != null) throw exception;
   }
 
@@ -418,8 +432,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
       LOG.append("\nfinished write action");
     });
-    main.join();
-    ConcurrencyUtil.joinAll(readThreads);
+    joinWithTimeout(ContainerUtil.concat(Collections.singletonList(main), readThreads));
 
     if (exception != null) {
       System.err.println(LOG);
@@ -471,7 +484,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testWriteActionIsAllowedFromEDTOnly() throws InterruptedException {
+  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException {
     Thread thread = new Thread("test") {
       @Override
       public void run() {
@@ -484,7 +497,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     };
     thread.start();
-    thread.join();
+    joinWithTimeout(Collections.singletonList(thread));
     assertNotNull(exception);
   }
 
@@ -545,7 +558,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         thread.start();
         threads.add(thread);
       }
-      ConcurrencyUtil.joinAll(threads);
+      joinWithTimeout(threads);
     }).usesAllCPUCores().assertTiming();
   }
 
