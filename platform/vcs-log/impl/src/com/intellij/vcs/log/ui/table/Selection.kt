@@ -23,6 +23,7 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import gnu.trove.TIntHashSet
 
 import java.awt.*
+import javax.swing.JTable
 
 internal class Selection(private val table: VcsLogGraphTable) {
   private val selectedCommits: TIntHashSet = TIntHashSet()
@@ -32,8 +33,8 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
-    val visibleRows = ScrollingUtil.getVisibleRows(table)
-    isOnTop = visibleRows.first - 1 == 0
+    val visibleRows = getVisibleRows(table)
+    isOnTop = visibleRows.first == 0
 
     val graph = table.visibleGraph
 
@@ -43,15 +44,15 @@ internal class Selection(private val table: VcsLogGraphTable) {
       if (row < graph.visibleCommitCount) {
         val commit = graph.getRowInfo(row).commit
         selectedCommits.add(commit)
-        if (visibleRows.first - 1 <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
+        if (visibleRows.first <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
           visibleSelectedCommit = commit
           delta = getTopGap(row)
         }
       }
     }
-    if (visibleSelectedCommit == null && visibleRows.first - 1 >= 0) {
-      visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).commit
-      delta = getTopGap(visibleRows.first - 1)
+    if (visibleSelectedCommit == null && visibleRows.first >= 0) {
+      visibleSelectedCommit = graph.getRowInfo(visibleRows.first).commit
+      delta = getTopGap(visibleRows.first)
     }
 
     this.visibleSelectedCommit = visibleSelectedCommit
@@ -59,6 +60,11 @@ internal class Selection(private val table: VcsLogGraphTable) {
   }
 
   private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
+
+  private fun getVisibleRows(table: JTable): Pair<Int, Int> {
+    val visibleRows = ScrollingUtil.getVisibleRows(table)
+    return Pair(visibleRows.first - 1, visibleRows.second)
+  }
 
   fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
     val toSelectAndScroll = findRowsToSelectAndScroll(table.model, newVisibleGraph)
