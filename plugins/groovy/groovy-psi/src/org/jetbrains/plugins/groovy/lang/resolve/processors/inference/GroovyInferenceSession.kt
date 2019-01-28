@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.openapi.util.component1
@@ -52,17 +52,16 @@ class GroovyInferenceSession(
     return null
   }
 
-  fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
+  fun initArgumentConstraints(mapping: ArgumentMapping?) {
     if (mapping == null) return
-    val substitutor = inferenceSubstitution.putAll(inferenceSubstitutor)
     for ((expectedType, argument) in mapping.expectedTypes) {
       if (argument is ExpressionArgument) {
-        addConstraint(ExpressionConstraint(substitutor.substitute(expectedType), argument.expression))
+        addConstraint(ExpressionConstraint(substituteWithInferenceVariables(contextSubstitutor.substitute(expectedType)), argument.expression))
       }
       else {
         val type = argument.type
         if (type != null) {
-          addConstraint(TypeConstraint(substitutor.substitute(expectedType), type, context))
+          addConstraint(TypeConstraint(substituteWithInferenceVariables(expectedType), type, context))
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
@@ -18,14 +18,14 @@ class MethodCallConstraint(
     val method = candidate.method
     val contextSubstitutor = result.contextSubstitutor
     session.startNestedSession(method.typeParameters, contextSubstitutor, context, result) { nested ->
-      nested.initArgumentConstraints(candidate.argumentMapping, session.inferenceSubstitution)
+      nested.initArgumentConstraints(candidate.argumentMapping)
       nested.repeatInferencePhases()
 
       if (leftType != null) {
-        val left = session.substituteWithInferenceVariables(session.contextSubstitutor.substitute(leftType))
+        val left = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(leftType))
         if (left != null) {
           val rt = PsiUtil.getSmartReturnType(method)
-          val right = session.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
+          val right = nested.substituteWithInferenceVariables(contextSubstitutor.substitute(rt))
           if (right != null && right != PsiType.VOID) {
             nested.addConstraint(TypeConstraint(left, right, context))
             nested.repeatInferencePhases()

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiClass
@@ -19,9 +19,11 @@ class ConstructorCallConstraint(private val leftType: PsiType?, private val expr
     session.startNestedSession(clazz.typeParameters, contextSubstitutor, expression, result) { nested ->
       val constructorResult = expression.advancedResolve() as? GroovyMethodResult
       if (constructorResult != null) {
-        val constraint = MethodCallConstraint(null, constructorResult, expression) // leftType is null to only process arguments
-        nested.addConstraint(constraint)
-        nested.repeatInferencePhases()
+        val mapping = constructorResult.candidate?.argumentMapping
+        if (mapping != null) {
+          nested.initArgumentConstraints(mapping)
+          nested.repeatInferencePhases()
+        }
       }
       if (leftType != null) {
         val left = nested.substituteWithInferenceVariables(leftType)
