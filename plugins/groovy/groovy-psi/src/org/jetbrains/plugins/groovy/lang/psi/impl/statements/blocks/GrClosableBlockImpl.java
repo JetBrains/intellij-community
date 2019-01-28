@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.psi.util.CachedValueProvider.Result.create;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
 
 /**
@@ -63,7 +63,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                             @NotNull final ResolveState state,
                                             @Nullable final PsiElement lastParent,
                                             @NotNull final PsiElement place) {
-    return processWithCallsiteDeclarations(plainProcessor, state, lastParent, place);
+    return processDeclarationsWithCallsite(this, plainProcessor, state, lastParent, place);
   }
 
   @Override
@@ -165,7 +165,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Nullable
   @Override
   public PsiType getOwnerType() {
-    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(this, () -> create(doGetOwnerType(this), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

@@ -68,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.processDeclarationsWithCallsite;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
@@ -119,7 +120,7 @@ public class ResolveUtil {
                                        @NotNull ResolveState state) {
     boolean processNonCodeMembers = ResolveUtilKt.processNonCodeMembers(state);
     if (scope instanceof GrFunctionalExpression && processNonCodeMembers) {
-      if (!((GrFunctionalExpression)scope).processWithCallsiteDeclarations(processor, state, lastParent, place)) return false;
+      if (!processDeclarationsWithCallsite((GrFunctionalExpression)scope, processor, state, lastParent, place)) return false;
     }
     else {
       if (scope instanceof PsiClass) {

@@ -53,20 +53,21 @@ internal fun GrFunctionalExpression.processOwnerAndDelegate(processor: PsiScopeP
   return processOwner(processor, state, place)
 }
 
+internal fun GrFunctionalExpression.processDeclarationsWithCallsite(processor: PsiScopeProcessor,
+                                                                    state: ResolveState,
+                                                                    lastParent: PsiElement?,
+                                                                    place: PsiElement): Boolean {
+  return processDeclarations(processor, state, lastParent, place) && processOwnerAndDelegate(processor, state, place)
+}
+
 private fun GrFunctionalExpression.processDelegatesTo(processor: PsiScopeProcessor,
                                                       state: ResolveState,
                                                       place: PsiElement): Boolean? {
   val info = getDelegatesToInfo(this) ?: return null
 
   when (info.strategy) {
-    Closure.OWNER_FIRST -> {
-      if (!processOwner(processor, state, place)) return false
-      return processDelegate(processor, state, place, info.typeToDelegate)
-    }
-    Closure.DELEGATE_FIRST -> {
-      if (!processDelegate(processor, state, place, info.typeToDelegate)) return false
-      return processOwner(processor, state, place)
-    }
+    Closure.OWNER_FIRST -> return processOwner(processor, state, place) && processDelegate(processor, state, place, info.typeToDelegate)
+    Closure.DELEGATE_FIRST -> return processDelegate(processor, state, place, info.typeToDelegate) && processOwner(processor, state, place)
     Closure.OWNER_ONLY -> return processOwner(processor, state, place)
     Closure.DELEGATE_ONLY -> return processDelegate(processor, state, place, info.typeToDelegate)
     Closure.TO_SELF -> return true
