@@ -104,7 +104,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
     }
     PsiStatement stripped = ControlFlowUtils.stripBraces(statement);
-    if (!isRuleBasedFormat || stripped instanceof PsiThrowStatement) {
+    if (!isRuleBasedFormat || stripped instanceof PsiThrowStatement || stripped instanceof PsiExpressionStatement) {
       statement = stripped;
     }
     if (isRuleBasedFormat) {
