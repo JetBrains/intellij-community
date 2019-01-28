@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
 import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
 import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
-import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -45,6 +45,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
@@ -188,7 +189,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           } else {
             return null;
           }
-        }).installOn(text1);
+        }).andRegisterOnDocumentListener(text1).installOn(text1);
 
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
@@ -208,30 +209,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
             new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>", text2) : null;
-        }).andStartOnFocusLost().installOn(text2);
+        }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
-
-      ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
-      text1.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          String text = text1.getText();
-          if (cp != null) {
-            cp.setCommentText(text);
-          }
-
-          ComponentValidator.getInstance(text1).ifPresent(ComponentValidator::revalidate);
-        }
-      });
-
-      text2.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          ComponentValidator.getInstance(text2).ifPresent(ComponentValidator::revalidate);
-        }
-      });
 
       JCheckBox cb1 = new JCheckBox("Scroll tab layout");
       cb1.addActionListener(e -> pane.setTabLayoutPolicy(cb1.isSelected() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT));
@@ -291,14 +272,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
+      HyperlinkListener hyperlinkListener = e -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          System.out.println("Table cell tooltip link clicked. Desc = " + e.getDescription());
+        }
+      };
+
+      BiFunction<String, JComponent, ValidationInfo> validationInfoGenerator = (text, component) ->
+        new ValidationInfo("Illegal value: " + text + "<br/>Please <a href=\"#check.cell.rules\">check rules.</a>", component);
+
       // Install custom tooltip manager for displaying error/warning tooltips
       new CellTooltipManager(getDisposable()).
-        withCellComponentProvider(new CellComponentProvider.TableProvider(table)).
-        withHyperlinkListener(e -> {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            System.out.println("Table cell tooltip link clicked. Desc = " + e.getDescription());
-          }
-        }).installOn(table);
+        //withCellComponentProvider(CellComponentProvider.forTable(table)).
+        withCellComponentProvider(CellComponentProvider.forTable(table)).
+        withHyperlinkListener(hyperlinkListener).installOn(table);
 
       // Configure left column
       ExtendableTextField cellEditor = new ExtendableTextField();
@@ -306,23 +293,24 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
                                                  "Open file", () -> System.out.println("Table browse clicked"));
       ExtendableTextComponent.Extension errorExtension =
-        ExtendableTextComponent.Extension.create(AllIcons.General.BalloonError, "Value not allowed", () -> System.out.println("Error clicked"));
+        ExtendableTextComponent.Extension.create(AllIcons.General.BalloonError, null, null);
       cellEditor.addExtension(browseExtension);
 
       cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
-      cellEditor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          if (ALLOWED_VALUES.contains(cellEditor.getText())) {
-            cellEditor.putClientProperty("JComponent.outline", null);
-            cellEditor.removeExtension(errorExtension);
-          }
-          else if (cellEditor.getClientProperty("JComponent.outline") == null) {
-            cellEditor.putClientProperty("JComponent.outline", "error");
-            cellEditor.addExtension(errorExtension);
-          }
+
+      new ComponentValidator(getDisposable()).withValidator(() -> {
+        boolean isAllowed = ALLOWED_VALUES.contains(cellEditor.getText());
+        if (isAllowed) {
+          cellEditor.removeExtension(errorExtension);
         }
-      });
+        else if (cellEditor.getClientProperty("JComponent.outline") == null) {
+          cellEditor.addExtension(errorExtension);
+        }
+
+        return isAllowed ? null : validationInfoGenerator.apply(cellEditor.getText(), cellEditor);
+      }).withHyperlinkListener(hyperlinkListener).
+        andRegisterOnDocumentListener(cellEditor).
+        installOn(cellEditor);
 
       TableColumn col = table.getColumnModel().getColumn(0);
       col.setCellEditor(new DefaultCellEditor(cellEditor));
@@ -331,7 +319,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withCellValidator(value ->
                             value == null ? new ValidationInfo("Null value") :
                             ALLOWED_VALUES.contains(value.toString()) ? null :
-                            new ValidationInfo("Illegal value: " + value.toString() + "<br/>Please <a href=\"#check.cell.rules\">check rules.</a>")));
+                            validationInfoGenerator.apply(value.toString(), null)));
 
       // Configure right column
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
@@ -358,8 +346,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }
         }
-      }).
-        bindToEditorSize(rightEditor::getPreferredSize).
+      }).bindToEditorSize(rightEditor::getPreferredSize).
         withCellValidator(value -> {
           if (value == null) return NULL_VALUE_ERROR;
           else {

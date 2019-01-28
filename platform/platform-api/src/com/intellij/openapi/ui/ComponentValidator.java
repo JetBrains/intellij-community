@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.DefaultCaret;
@@ -157,6 +159,19 @@ public class ComponentValidator {
     return this;
   }
 
+  /**
+   * Convenient wrapper for mostly used scenario.
+   */
+  public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
+    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
+      }
+    });
+    return this;
+  }
+
   public void revalidate() {
     if (validator != null) {
       updateInfo(validator.get());
@@ -175,7 +190,7 @@ public class ComponentValidator {
       validationInfo.component.repaint();
     }
 
-    hidePopup();
+    hidePopup(true);
 
     popupBuilder = null;
     popupLocation = null;
@@ -288,15 +303,18 @@ public class ComponentValidator {
     }
   }
 
-  private void hidePopup() {
+  private void hidePopup(boolean now) {
     if (popup != null && popup.isVisible()) {
-      popupAlarm.cancelAllRequests();
-      popupAlarm.addRequest(() -> {
-        if (popup != null && (!isOverPopup || hyperlinkListener == null)) {
-          popup.cancel();
-          popup = null;
-        }
-      }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+      if (now || hyperlinkListener == null) {
+        popup.cancel();
+        popup = null;
+      } else {
+        popupAlarm.addRequest(() -> {
+          if (!isOverPopup || hyperlinkListener == null) {
+            hidePopup(true);
+          }
+        }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+      }
     }
   }
 
@@ -319,7 +337,7 @@ public class ComponentValidator {
 
     @Override
     public void focusLost(FocusEvent e) {
-      hidePopup();
+      hidePopup(false);
 
       ValidationInfo info = null;
       if (focusValidator != null) {
@@ -346,7 +364,7 @@ public class ComponentValidator {
       if (validationInfo != null) {
         getFocusable(validationInfo.component).ifPresent(fc -> {
           if (!fc.hasFocus()) {
-            hidePopup();
+            hidePopup(false);
           }
         });
       }

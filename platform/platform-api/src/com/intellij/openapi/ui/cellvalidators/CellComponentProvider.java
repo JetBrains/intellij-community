@@ -27,11 +27,15 @@ public abstract class CellComponentProvider<C extends JComponent> {
   @NotNull
   abstract public Rectangle getCellRect(@NotNull MouseEvent e);
 
+  public static CellComponentProvider<JTable> forTable(JTable table) {
+    return new TableProvider(table);
+  }
+
   /**
    * Convenient classes with standard implementations.
    */
-  public static class TableProvider extends CellComponentProvider<JTable> {
-    public TableProvider(@NotNull JTable owner) {
+  private static class TableProvider extends CellComponentProvider<JTable> {
+    private TableProvider(@NotNull JTable owner) {
       super(owner);
     }
 

@@ -61,7 +61,7 @@ public final class CellTooltipManager {
     component.addMouseMotionListener(mouseListener);
 
     Disposer.register(parentDisposable, () -> {
-      closePopup(true, null);
+      hidePopup(true, null);
 
       component.removeMouseListener(mouseListener);
       component.removeMouseMotionListener(mouseListener);
@@ -90,13 +90,13 @@ public final class CellTooltipManager {
             popupSize = tipComponent.getPreferredSize();
           });
 
-          closePopup(false, () -> showPopup(e));
+          hidePopup(false, () -> showPopup(e));
         } else if (!isShowing()) {
           showPopup(e);
         }
       } else {
         validationInfo = null;
-        closePopup(false, null);
+        hidePopup(false, null);
       }
     }
   }
@@ -113,7 +113,7 @@ public final class CellTooltipManager {
     cellPopup.show(new RelativePoint(cellComponentProvider.getOwner(), point));
   }
 
-  private void closePopup(boolean now, @Nullable Runnable onHidden) {
+  private void hidePopup(boolean now, @Nullable Runnable onHidden) {
     if (isShowing()) {
       if (now || hyperlinkListener == null || !closeWithDelay) {
         cellPopup.cancel();
@@ -127,7 +127,7 @@ public final class CellTooltipManager {
         popupAlarm.addRequest(() -> {
           isClosing = false;
           if (!isOverPopup) {
-            closePopup(true, onHidden);
+            hidePopup(true, onHidden);
           }
         }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
       }
@@ -148,7 +148,7 @@ public final class CellTooltipManager {
 
     @Override
     public void mouseExited(MouseEvent e) {
-      closePopup(false, null);
+      hidePopup(false, null);
     }
 
     @Override
@@ -166,7 +166,7 @@ public final class CellTooltipManager {
     @Override
     public void mouseExited(MouseEvent e) {
       isOverPopup = false;
-      closePopup(true, null);
+      hidePopup(true, null);
     }
   }
 }
