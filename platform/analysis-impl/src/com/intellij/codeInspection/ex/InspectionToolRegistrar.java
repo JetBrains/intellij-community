@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -24,7 +9,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -36,26 +21,19 @@ import java.util.function.Supplier;
  * @author max
  */
 public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
+  private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
 
-  private final List<Supplier<InspectionToolWrapper>> myInspectionToolFactories = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private boolean myInspectionComponentsLoaded;
-
-  private synchronized void ensureInitialized() {
-    if (myInspectionComponentsLoaded) {
-      return;
-    }
-
-    myInspectionComponentsLoaded = true;
+  @NotNull
+  private final NotNullLazyValue<List<Supplier<InspectionToolWrapper>>> myInspectionToolFactories = NotNullLazyValue.createValue(() -> {
     Set<InspectionToolProvider> providers = new THashSet<>();
     providers.addAll((((ComponentManagerImpl)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
-    ContainerUtil.addAll(providers, InspectionToolProvider.EXTENSION_POINT_NAME.getExtensions());
+    providers.addAll(InspectionToolProvider.EXTENSION_POINT_NAME.getExtensionList());
+
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();
     registerTools(providers, factories);
     boolean isInternal = ApplicationManager.getApplication().isInternal();
     Map<String, InspectionEP> shortNames = new THashMap<>();
-    for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
+    for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensionList()) {
       checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
         continue;
@@ -63,6 +41,7 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
 
       factories.add(() -> new LocalInspectionToolWrapper(ep));
     }
+
     for (InspectionEP ep : InspectionEP.GLOBAL_INSPECTION.getExtensions()) {
       checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
@@ -71,8 +50,8 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
 
       factories.add(() -> new GlobalInspectionToolWrapper(ep));
     }
-    myInspectionToolFactories.addAll(factories);
-  }
+    return factories;
+  });
 
   private static void checkForDuplicateShortName(InspectionEP ep, Map<String, InspectionEP> shortNames) {
     final String shortName = ep.getShortName();
@@ -122,17 +101,15 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
 
   @NotNull
   public List<InspectionToolWrapper> createTools() {
-    ensureInitialized();
-
-    List<InspectionToolWrapper> tools = new ArrayList<>(myInspectionToolFactories.size());
-    for (Supplier<InspectionToolWrapper> factory : myInspectionToolFactories) {
+    List<Supplier<InspectionToolWrapper>> inspectionToolFactories = myInspectionToolFactories.getValue();
+    List<InspectionToolWrapper> tools = new ArrayList<>(inspectionToolFactories.size());
+    for (Supplier<InspectionToolWrapper> factory : inspectionToolFactories) {
       ProgressManager.checkCanceled();
       InspectionToolWrapper toolWrapper = factory.get();
       if (toolWrapper != null && checkTool(toolWrapper) == null) {
         tools.add(toolWrapper);
       }
     }
-
     return tools;
   }
 
