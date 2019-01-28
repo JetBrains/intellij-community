@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -1570,6 +1571,76 @@ public class JBUI {
       public static Color paneBackground() {
         return JBColor.namedColor("Panel.background", 0xcdcdcd);
       }
+    }
+
+    public static class DefaultTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("DefaultTabs.inactiveUnderlineColor", new JBColor(0xABABAB, 0x7A7A7A));
+      }
+
+      @NotNull
+      public static Color defaultTabColor() {
+        return JBColor.namedColor("DefaultTabs.defaultTabColor", ToolWindow.headerBackground());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("DefaultTabs.backgroundColor", UIUtil.CONTRAST_BORDER_COLOR);
+      }
+
+      @NotNull
+      public static Color hoverOverlayColor() {
+        return JBColor.namedColor("DefaultTabs.hoverOverlayColor",
+                                  new JBColor(ColorUtil.withAlpha(Color.BLACK, .10),
+                                              ColorUtil.withAlpha(Color.BLACK, .35)));
+      }
+
+      @NotNull
+      public static Color unselectedOverlayColor() {
+        return JBColor.namedColor("DefaultTabs.unselectedOverlayColor",
+                                  new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                              ColorUtil.withAlpha(Color.BLACK, .13)));
+
+      }
+    }
+
+    public static class EditorTabs {
+      @NotNull
+      public static Color underlineColor() {
+        return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
+      }
+
+      @NotNull
+      public static Color inactiveUnderlineColor() {
+        return JBColor.namedColor("EditorTabs.inactiveUnderlineColor", DefaultTabs.inactiveUnderlineColor());
+      }
+
+      @NotNull
+      public static Color defaultTabColor() {
+        return JBColor.namedColor("EditorTabs.defaultTabColor", DefaultTabs.defaultTabColor());
+      }
+
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("EditorTabs.backgroundColor", DefaultTabs.backgroundColor());
+      }
+
+      @NotNull
+      public static Color hoverOverlayColor() {
+        return JBColor.namedColor("EditorTabs.hoverOverlayColor", DefaultTabs.hoverOverlayColor());
+      }
+
+      @NotNull
+      public static Color unselectedOverlayColor() {
+        return JBColor.namedColor("EditorTabs.unselectedOverlayColor", DefaultTabs.unselectedOverlayColor());
+      }
+
     }
 
     public static class ToolWindow {

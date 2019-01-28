@@ -39,8 +39,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -81,33 +80,68 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
       {
-        if (hasUnderlineSelection()) {
           IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
-        }
       }
+
+      private TabInfo myHoveredInfo;
+
+      @Override
+      protected boolean isActiveTab(TabInfo info) {
+        if (Utils.Companion.isFocusOwner(this)) return true;
+
+        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+        if (editorManager == null) return false;
+
+        final EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
+        VirtualFile file = window.getSelectedFile();
+        if(file == null) return false;
+
+        return file.equals(info.getObject()) && window.equals(myWindow);
+      }
+
+      @Override
+      protected void onMouseEnteredHandler(TabInfo info) {
+        if (myHoveredInfo == info) return;
+
+        myHoveredInfo = info;
+
+        repaint();
+      }
+
+      @Override
+      protected void onMouseExitedHandler(TabInfo info) {
+        if (myHoveredInfo != info) return;
+
+        myHoveredInfo = null;
+
+        repaint();
+      }
+
+      @Override
+      protected boolean isHoveredTab(TabInfo info) {
+        return info == myHoveredInfo;
+      }
+
+      @Override
+      protected JBTabPainter createTabPainter() {
+        return new JBDefaultTabPainter(JBTabPainter.Companion.getEDITOR_TAB());
+      }
+
+      boolean isOwner = false;
 
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
         return e -> {
           if (e instanceof FocusEvent) {
-            Component from = ((FocusEvent)e).getOppositeComponent();
-            Component to = ((FocusEvent)e).getComponent();
-            if (isChild(from) || isChild(to)) {
+            //TODO optimize the redrawing
+
+/*            boolean newIsOwner = Utils.Companion.isFocusOwner(myTabs);
+            if(isOwner != newIsOwner) {
+              isOwner = newIsOwner;*/
               myTabs.repaint();
-            }
+           // }
           }
           return false;
         };
-      }
-
-      private boolean isChild(@Nullable Component c) {
-        if (c == null) return false;
-        if (c == this) return true;
-        return isChild(c.getParent());
-      }
-
-      @Override
-      public boolean hasUnderlineSelection() {
-        return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
       }
 
       @Nullable

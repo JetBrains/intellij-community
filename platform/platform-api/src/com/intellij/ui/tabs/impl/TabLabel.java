@@ -27,7 +27,6 @@ import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
@@ -42,7 +41,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel implements Accessible {
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
@@ -57,9 +55,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   private final Wrapper myLabelPlaceholder = new Wrapper(false);
   protected final JBTabsImpl myTabs;
-
-  private BufferedImage myInactiveStateImage;
-  private Rectangle myLastPaintedInactiveImageBounds;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     super(false);
@@ -109,6 +104,16 @@ public class TabLabel extends JPanel implements Accessible {
       public void mouseReleased(final MouseEvent e) {
         myInfo.setPreviousSelection(null);
         handlePopup(e);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myTabs.onMouseEnteredHandler(info);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myTabs.onMouseExitedHandler(info);
       }
     });
 
@@ -257,8 +262,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     myCentered = toCenter;
   }
-  
-  
+
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {
@@ -341,9 +345,6 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   protected int getNonSelectedOffset() {
-    if (myTabs.isEditorTabs() && (myTabs.isSingleRow() || ((TableLayout)myTabs.getEffectiveLayout()).isLastRow(getInfo()))) {
-      return -myTabs.getActiveTabUnderlineHeight() / 2 + 1;
-    }
     return 1;
   }
 
@@ -365,7 +366,6 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
         break;
       case left:
       case right:
@@ -430,8 +430,6 @@ public class TabLabel extends JPanel implements Accessible {
     if (d != null && d.equals(pref)) {
       return;
     }
-
-    setInactiveStateImage(null);
 
     getLabelComponent().invalidate();
 
@@ -661,27 +659,6 @@ public class TabLabel extends JPanel implements Accessible {
 
   public void setTabEnabled(boolean enabled) {
     getLabelComponent().setEnabled(enabled);
-  }
-
-
-  @Nullable
-  public BufferedImage getInactiveStateImage(Rectangle effectiveBounds) {
-    BufferedImage img = null;
-    if (myLastPaintedInactiveImageBounds != null && myLastPaintedInactiveImageBounds.getSize().equals(effectiveBounds.getSize())) {
-      img = myInactiveStateImage;
-    }
-    else {
-      setInactiveStateImage(null);
-    }
-    myLastPaintedInactiveImageBounds = effectiveBounds;
-    return img;
-  }
-
-  public void setInactiveStateImage(@Nullable BufferedImage img) {
-    if (myInactiveStateImage != null && img != myInactiveStateImage) {
-      myInactiveStateImage.flush();
-    }
-    myInactiveStateImage = img;
   }
 
   public JComponent getLabelComponent() {
