@@ -30,6 +30,7 @@ public class SearchEverywhereUsageTriggerCollector extends ProjectUsageTriggerCo
     FUSProjectUsageTrigger.getInstance(project).trigger(SearchEverywhereUsageTriggerCollector.class, feature, context);
   }
 
+  @NotNull
   public static FUSUsageContext createContext(@Nullable String contributorID, @Nullable String shortcut) {
     return FUSUsageContext.create(contributorID, shortcut);
   }
