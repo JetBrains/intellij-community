@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.util.ArrayUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +27,10 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
     myOriginalAccessor = method;
 
     List<String> modifiers = new ArrayList<>();
-    if (method.hasModifierProperty(GrModifier.PUBLIC)) modifiers.add(GrModifier.PUBLIC);
-    if (method.hasModifierProperty(GrModifier.PROTECTED)) modifiers.add(GrModifier.PROTECTED);
-    if (method.hasModifierProperty(GrModifier.PRIVATE)) modifiers.add(GrModifier.PRIVATE);
-    if (method.hasModifierProperty(GrModifier.STATIC)) modifiers.add(GrModifier.STATIC);
+    if (method.hasModifierProperty(PsiModifier.PUBLIC)) modifiers.add(PsiModifier.PUBLIC);
+    if (method.hasModifierProperty(PsiModifier.PROTECTED)) modifiers.add(PsiModifier.PROTECTED);
+    if (method.hasModifierProperty(PsiModifier.PRIVATE)) modifiers.add(PsiModifier.PRIVATE);
+    if (method.hasModifierProperty(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
 
     setContainingClass(method.getContainingClass());
     setModifiers(ArrayUtil.toStringArray(modifiers));
@@ -50,7 +50,7 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
 
   @Override
   public int hashCode() {
-    final int isStatic = hasModifierProperty(GrModifier.STATIC) ? 1 : 0;
+    final int isStatic = hasModifierProperty(PsiModifier.STATIC) ? 1 : 0;
     final int visibilityModifier;
     visibilityModifier = getVisibilityCode();
 
@@ -59,13 +59,13 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
 
   private int getVisibilityCode() {
     int visibilityModifier;
-    if (hasModifierProperty(GrModifier.PUBLIC)) {
+    if (hasModifierProperty(PsiModifier.PUBLIC)) {
       visibilityModifier = 3;
     }
-    else if (hasModifierProperty(GrModifier.PROTECTED)) {
+    else if (hasModifierProperty(PsiModifier.PROTECTED)) {
       visibilityModifier = 2;
     }
-    else if (hasModifierProperty(GrModifier.PRIVATE)) {
+    else if (hasModifierProperty(PsiModifier.PRIVATE)) {
       visibilityModifier = 1;
     }
     else {
@@ -83,7 +83,7 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
   public boolean isEquivalentTo(PsiElement another) {
     if (!(another instanceof GrPropertyForCompletion)) return false;
     if (!((GrPropertyForCompletion)another).getName().equals(getName())) return false;
-    if (hasModifierProperty(GrModifier.STATIC) != ((GrPropertyForCompletion)another).hasModifierProperty(GrModifier.STATIC)) return false;
+    if (hasModifierProperty(PsiModifier.STATIC) != ((GrPropertyForCompletion)another).hasModifierProperty(PsiModifier.STATIC)) return false;
     if (getVisibilityCode() != ((GrPropertyForCompletion)another).getVisibilityCode()) return false;
 /*    final PsiClass containingClass = getContainingClass();
     final PsiClass anotherClass = ((GrPropertyForCompletion)another).getContainingClass();
