@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
@@ -67,7 +66,11 @@ public class StepIntersection {
                                                         @NotNull Convertor<? super V, ? extends TextRange> convertor2,
                                                         @NotNull PairConsumer<? super T, ? super V> intersectionConsumer) {
     TextRange range1 = convertor1.convert(element1);
-    int index = binarySearch(elements2, range1.getStartOffset(), value -> convertor2.convert(value).getEndOffset());
+    int index = ObjectUtils.binarySearch(0, elements2.size(), mid -> {
+      V item2 = elements2.get(mid);
+      TextRange range2 = convertor2.convert(item2);
+      return Integer.compare(range2.getEndOffset(), range1.getStartOffset());
+    });
     if (index < 0) index = -index - 1;
 
     for (int i = index; i < elements2.size(); i++) {
@@ -80,9 +83,5 @@ public class StepIntersection {
 
       if (range2.getStartOffset() > range1.getEndOffset()) break;
     }
-  }
-
-  private static <T> int binarySearch(@NotNull List<? extends T> elements, int value, @NotNull Function<? super T, Integer> convertor) {
-    return ObjectUtils.binarySearch(0, elements.size(), mid -> Integer.compare(convertor.fun(elements.get(mid)), value));
   }
 }
