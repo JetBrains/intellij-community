@@ -23,4 +23,9 @@
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
   </extensions>
+  <actions>
+    <action id="DumpUastLog" internal="true" class="com.intellij.analysis.internal.DumpUastTreeAction" text="Dump UAST tree">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
