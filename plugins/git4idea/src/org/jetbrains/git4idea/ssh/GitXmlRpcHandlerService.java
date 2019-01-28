@@ -2,8 +2,7 @@
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
@@ -18,6 +17,8 @@ import org.jetbrains.ide.BuiltInServerManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -37,6 +38,7 @@ import java.util.UUID;
  * </p>
  */
 public abstract class GitXmlRpcHandlerService<T> {
+  private static final Logger LOG = getInstance(GitXmlRpcHandlerService.class);
 
   @NotNull private final String myScriptTempFilePrefix;
   @NotNull private final String myHandlerName;
@@ -113,7 +115,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return an identifier to pass to the environment variable
    */
   @NotNull
-  public UUID registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
+  public UUID registerHandler(@NotNull T handler) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
@@ -122,12 +124,6 @@ public abstract class GitXmlRpcHandlerService<T> {
 
       final UUID key = UUID.randomUUID();
       handlers.put(key, handler);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          handlers.remove(key);
-        }
-      });
       return key;
     }
   }
@@ -165,7 +161,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   public void unregisterHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       if (handlers.remove(key) == null) {
-        throw new IllegalStateException("The handler " + key + " is not registered");
+        LOG.error("The handler " + key + " is not registered");
       }
     }
   }
