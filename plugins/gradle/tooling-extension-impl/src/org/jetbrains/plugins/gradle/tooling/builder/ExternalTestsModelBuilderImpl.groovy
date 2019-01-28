@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.SourceSetContainer
@@ -14,7 +13,6 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
-@CompileStatic
 class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   @Override
   boolean canBuild(String modelName) {
@@ -33,15 +31,17 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     for (def task : project.tasks) {
       if (task instanceof Test) {
         def test = (Test) task
-        def classFiles = getPaths(test.testClassesDirs)
+        def classFiles = getPaths(test.classpath)
         taskToClassesDirs[test] = classFiles
       }
     }
-    def sourceSetContainer = project.findProperty("sourceSets") as SourceSetContainer
+    if (!project.hasProperty("sourceSets")) return Collections.emptyList()
+    def sourceSetContainer = project.sourceSets as SourceSetContainer
     if (sourceSetContainer == null) return Collections.emptyList()
     def classesDirToSourceDirs = new LinkedHashMap<String, Set<String>>()
     for (def sourceSet : sourceSetContainer) {
-      def sourceFolders = getPaths(sourceSet.allSource.sourceDirectories)
+      def sourceDirectorySet = sourceSet.allSource
+      def sourceFolders = sourceDirectorySet.srcDirs.collect { it -> it.absolutePath }
       for (def classDirectory : getPaths(sourceSet.output)) {
         def storedSourceFolders = classesDirToSourceDirs.getOrDefault(classDirectory, new LinkedHashSet<>())
         storedSourceFolders.addAll(sourceFolders)
