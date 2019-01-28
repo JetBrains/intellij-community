@@ -19,8 +19,7 @@ import java.awt.event.HierarchyListener;
  */
 public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   @NonNls public static final String LABEL_FROM_TABBED_PANE = "JBTabbedPane.labelFromTabbedPane";
-  private int previousSelectedIndex = -1;
-  
+
   public JBTabbedPane() {
   }
 
@@ -64,7 +63,6 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
 
   @Override
   public void setSelectedIndex(int index) {
-    previousSelectedIndex = getSelectedIndex();
     super.setSelectedIndex(index);
     revalidate();
     repaint();
