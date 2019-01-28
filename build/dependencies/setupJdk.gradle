@@ -38,8 +38,8 @@ task setupJdk18(dependsOn: downloadJdk18) {
   inputs.files(downloadOutputs)
   inputs.property("jdk18OutputDir", outputDir)
   outputs.dir(outputDir)
-  fileTree(outputDir).each {
-    outputs.file(it)
+  outputs.upToDateWhen {
+    !fileTree(outputDir).isEmpty()
   }
   doLast {
     logger.info("Setting up JDK 1.8 to compile")
