@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -326,11 +327,9 @@ public class ConfigImportHelper {
       }
 
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
-      FileUtil.copyDir(oldConfigDir, newConfigDir);
-
-      // tokens must not be reused
-      FileUtil.delete(new File(newConfigDir, "user.token"));
-      FileUtil.delete(new File(newConfigDir, "user.web.token"));
+      // the filter prevents accidental overwrite of files already created by this instance (port/lock/tokens etc.)
+      FileFilter filter = child -> !(child.getParentFile() == oldConfigDir && new File(newConfigDir, child.getName()).exists());
+      FileUtil.copyDir(oldConfigDir, newConfigDir, filter);
 
       // on macOS, plugins are normally not under the config directory
       File oldPluginsDir = new File(oldConfigDir, PLUGINS);
