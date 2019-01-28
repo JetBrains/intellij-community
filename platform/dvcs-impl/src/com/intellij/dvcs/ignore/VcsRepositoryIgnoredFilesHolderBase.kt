@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsUtil
@@ -122,7 +123,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   private fun queueIgnoreUpdate(isFullRescan: Boolean, action: () -> Set<FilePath>) {
-    updateQueue.queue(object : Update(rescanIdentityName) {
+    updateQueue.queue(object : Update(ObjectUtils.sentinel(rescanIdentityName)) {
       override fun canEat(update: Update) = isFullRescan
 
       override fun run() {
