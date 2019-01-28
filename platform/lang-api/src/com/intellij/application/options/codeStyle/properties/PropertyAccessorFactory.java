@@ -65,6 +65,9 @@ class PropertyAccessorFactory {
           }
           return new BooleanAccessor(codeStyleObject, myField);
         case INT:
+          if ("WRAP_ON_TYPING".equals(myField.getName())) {
+            return new WrapOnTypingAccessor(codeStyleObject, myField);
+          }
           return new IntegerAccessor(codeStyleObject, myField);
         case STRING:
           CommaSeparatedValues annotation = myField.getAnnotation(CommaSeparatedValues.class);
