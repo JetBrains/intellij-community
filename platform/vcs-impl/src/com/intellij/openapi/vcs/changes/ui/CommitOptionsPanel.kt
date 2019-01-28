@@ -37,9 +37,13 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   private val myPerVcsOptionsPanels = mutableMapOf<AbstractVcs<*>, JPanel>()
   private val myAdditionalComponents = mutableListOf<RefreshableOnComponent>()
   private val myCheckinChangeListSpecificComponents = mutableSetOf<CheckinChangeListSpecificComponent>()
-  val isEmpty = init(vcses)
 
+  val isEmpty: Boolean get() = myAdditionalComponents.isEmpty()
   val additionalComponents: List<RefreshableOnComponent> get() = unmodifiableList(myAdditionalComponents)
+
+  init {
+    init(vcses)
+  }
 
   fun saveState() = myAdditionalComponents.forEach { it.saveState() }
 
@@ -62,7 +66,7 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
   override fun dispose() {
   }
 
-  private fun init(vcses: Collection<AbstractVcs<*>>): Boolean {
+  private fun init(vcses: Collection<AbstractVcs<*>>) {
     var hasVcsOptions = false
     val vcsCommitOptions = Box.createVerticalBox()
     for (vcs in vcses.sortedWith(VCS_COMPARATOR)) {
@@ -94,7 +98,7 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
       }
     }
 
-    if (!hasVcsOptions && !beforeVisible && !afterVisible) return true
+    if (!hasVcsOptions && !beforeVisible && !afterVisible) return
 
     val optionsBox = Box.createVerticalBox()
     if (hasVcsOptions) {
@@ -113,7 +117,6 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
     optionsBox.add(Box.createVerticalGlue())
     val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
     addToCenter(optionsPane).withBorder(JBUI.Borders.emptyLeft(10))
-    return false
   }
 
   private fun addCheckinHandlerComponent(component: RefreshableOnComponent, container: JComponent) {
