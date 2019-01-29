@@ -68,10 +68,10 @@ public class StartupUtil {
 
   private StartupUtil() { }
 
-  public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+  public static synchronized void addExternalInstanceListener(@Nullable SocketLock.CliRequestProcessor processor) {
     // method called by app after startup
     if (ourSocketLock != null) {
-      ourSocketLock.setExternalInstanceListener(consumer);
+      ourSocketLock.setExternalInstanceListener(processor);
     }
   }
 

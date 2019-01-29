@@ -12,21 +12,20 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public final class CommandLineWaitingManager {
   private static final Logger LOG = Logger.getInstance(CommandLineWaitingManager.class);
   
-  private final Map<Object, String> myFileOrProjectToTempFile = Collections.synchronizedMap(new HashMap<>());
+  private final Map<Object, CompletableFuture<CliResult>> myFileOrProjectToCallback = Collections.synchronizedMap(new HashMap<>());
   
   private CommandLineWaitingManager() {
     final MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -39,7 +38,7 @@ public final class CommandLineWaitingManager {
     });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         freeObject(project);
       }
     });
@@ -50,37 +49,37 @@ public final class CommandLineWaitingManager {
     return ServiceManager.getService(CommandLineWaitingManager.class);
   }
 
-  public static void deleteTempFile(@Nullable String tmpFile) {
-    if (tmpFile != null) {
-      FileUtil.delete(new File(tmpFile));
-    }
+  @NotNull
+  public Future<CliResult> addHookForFile(@NotNull VirtualFile file) {
+    return addHookAndNotify(file, "Command line is waiting until the file '" + file.getPath() + "' is closed");
   }
 
-  public void addHookForFile(@NotNull VirtualFile file, @NotNull String tmpFile) {
-    addHookAndNotify(file, tmpFile, "Command line is waiting until the file '" + file.getPath() + "' is closed");
+  @NotNull
+  public Future<CliResult> addHookForProject(@NotNull Project project) {
+    return addHookAndNotify(project, "Command line is waiting until the project '" + project.getName() + "' is closed");
   }
-
-  public void addHookForProject(@NotNull Project project, @NotNull String tmpFile) {
-    addHookAndNotify(project, tmpFile, "Command line is waiting until the project '" + project.getName() + "' is closed");
-  }
-
-  private void addHookAndNotify(@NotNull Object fileOrProject, 
-                                @NotNull String tmpFile,
-                                @NotNull String notificationText) {
+  
+  @NotNull
+  private Future<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
+                                             @NotNull String notificationText) {
     LOG.info(notificationText);
-    myFileOrProjectToTempFile.put(fileOrProject, tmpFile);
+
+    final CompletableFuture<CliResult> result = new CompletableFuture<>();
+    myFileOrProjectToCallback.put(fileOrProject, result);
     Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                                               "Launched from the Command Line",
                                               notificationText,
                                               NotificationType.WARNING).setImportant(true));
+    
+    return result;
   }
 
   private void freeObject(@NotNull Object fileOrProject) {
-    final String tmpFile = myFileOrProjectToTempFile.remove(fileOrProject);
-    if (tmpFile == null) {
+    final CompletableFuture<CliResult> future = myFileOrProjectToCallback.remove(fileOrProject);
+    if (future == null) {
       return;
     }
 
-    deleteTempFile(tmpFile);
+    future.complete(new CliResult(0, null));
   }
 }

@@ -33,7 +33,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,8 +332,9 @@ public class IdeaApplication {
       return true;
     }
 
+    @NotNull
     @Override
-    public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+    public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
       LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
       if (args.length > 0) {
@@ -356,15 +356,16 @@ public class IdeaApplication {
             PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
         }
-        throw new IncorrectOperationException("Can't find file:" + file);
+        return CliResult.error(1, "Can't find file:" + file);
       }
+      return CliResult.ok();
     }
 
     private static Project loadProjectFromExternalCommandLine(String[] args) {
       Project project = null;
       if (args != null && args.length > 0 && args[0] != null) {
         LOG.info("IdeaApplication.loadProject");
-        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null);
+        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null).getProject();
       }
       return project;
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -38,6 +38,7 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -53,9 +54,12 @@ public final class SocketLock {
   private static final String PATHS_EOT_RESPONSE = "---";
   private static final String OK_RESPONSE = "ok";
 
+  private static final int WRONG_TOKEN_CODE = 239;
+  private static final int LISTENER_NOT_INITIALIZED = 240;
+
   private final String myConfigPath;
   private final String mySystemPath;
-  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<>();
+  private final AtomicReference<CliRequestProcessor> myActivateListener = new AtomicReference<>();
   private String myToken;
   private BuiltInServer myServer;
 
@@ -67,8 +71,8 @@ public final class SocketLock {
     }
   }
 
-  public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
-    myActivateListener.set(consumer);
+  public void setExternalInstanceListener(@Nullable CliRequestProcessor processor) {
+    myActivateListener.set(processor);
   }
 
   public void dispose() {
@@ -218,7 +222,7 @@ public final class SocketLock {
             out.flush();
             String response = in.readUTF();
             log("read: response=%s", response);
-            if (response.equals(OK_RESPONSE)) {
+            if (response.startsWith(OK_RESPONSE)) {
               if (isShutdownCommand()) {
                 printPID(portNumber);
               }
@@ -280,16 +284,21 @@ public final class SocketLock {
     return args;
   }
 
+  @FunctionalInterface
+  public interface CliRequestProcessor {
+    Future<? extends CliResult> process(@NotNull List<String> args);
+  }
+
   private static final class MyChannelInboundHandler extends MessageDecoder {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends CliRequestProcessor> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
     MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                            @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
+                            @NotNull AtomicReference<? extends CliRequestProcessor> activateListener,
                             @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
@@ -351,6 +360,7 @@ public final class SocketLock {
               String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
               List<String> args = StringUtil.split(data, data.contains("\0") ? "\0" : "\uFFFD");
 
+              final CliResult result;
               boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
               if (!tokenOK) {
                 log(new UnsupportedOperationException("unauthorized request: " + command));
@@ -359,19 +369,19 @@ public final class SocketLock {
                   IdeBundle.message("activation.auth.title"),
                   IdeBundle.message("activation.auth.message"),
                   NotificationType.WARNING));
+                result = new CliResult(WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
               }
               else {
-                Consumer<List<String>> listener = myActivateListener.get();
+                CliRequestProcessor listener = myActivateListener.get();
                 if (listener != null) {
-                  listener.consume(args.subList(1, args.size()));
+                  result = listener.process(args.subList(1, args.size())).get();
+                }
+                else {
+                  result = new CliResult(LISTENER_NOT_INITIALIZED, "IDE has not been initialized yet");
                 }
               }
 
-              ByteBuf buffer = context.alloc().ioBuffer(4);
-              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-                out.writeUTF(OK_RESPONSE);
-              }
-              context.writeAndFlush(buffer);
+              writeResponse(context, result);
             }
             context.close();
           }
@@ -379,6 +389,19 @@ public final class SocketLock {
         }
       }
     }
+  }
+
+  private static void writeResponse(@NotNull ChannelHandlerContext context, @NotNull CliResult result) throws IOException {
+    final StringBuilder response = new StringBuilder(OK_RESPONSE).append("\0").append(result.getReturnCode());
+    if (result.getMessage() != null) {
+      response.append("\0").append(result.getMessage());
+    }
+
+    ByteBuf buffer = context.alloc().ioBuffer(response.length() + 2);
+    try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+      out.writeUTF(response.toString());
+    }
+    context.writeAndFlush(buffer);
   }
 
   @NotNull
