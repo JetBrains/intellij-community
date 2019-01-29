@@ -17,6 +17,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import java.awt.Graphics
@@ -27,6 +28,7 @@ import kotlin.properties.Delegates
 
 
 internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequestsSecurityService,
+                                             busyStateTracker: GithubPullRequestsBusyStateTracker,
                                              stateService: GithubPullRequestsStateService,
                                              iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
@@ -61,7 +63,7 @@ internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequests
                                           securityService.isRebaseMergeAllowed(),
                                           securityService.isSquashMergeAllowed(),
                                           securityService.isMergeForbiddenForProject(),
-                                          stateService.isBusy(it.number))
+                                          busyStateTracker.isBusy(it.number))
       }
     }
 
@@ -95,9 +97,9 @@ internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequests
 
     })
 
-    stateService.addPullRequestBusyStateListener(this) {
+    busyStateTracker.addPullRequestBusyStateListener(this) {
       if (it == statePanel.state?.number)
-        statePanel.state = statePanel.state?.copy(busy = stateService.isBusy(it))
+        statePanel.state = statePanel.state?.copy(busy = busyStateTracker.isBusy(it))
     }
 
     details = null

@@ -12,6 +12,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
@@ -20,11 +21,12 @@ import java.awt.BorderLayout
 
 internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
                                                  securityService: GithubPullRequestsSecurityService,
+                                                 busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                  stateService: GithubPullRequestsStateService,
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
 
-  private val detailsPanel = GithubPullRequestDetailsPanel(securityService, stateService, iconProviderFactory)
+  private val detailsPanel = GithubPullRequestDetailsPanel(securityService, busyStateTracker, stateService, iconProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
