@@ -34,7 +34,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -298,8 +297,9 @@ public final class IdeaApplication {
       return true;
     }
 
+    @NotNull
     @Override
-    public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+    public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
       LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
       if (args.length > 0) {
@@ -321,15 +321,16 @@ public final class IdeaApplication {
             PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
         }
-        throw new IncorrectOperationException("Can't find file:" + file);
+        return CliResult.error(1, "Can't find file:" + file);
       }
+      return CliResult.ok();
     }
 
     private static Project loadProjectFromExternalCommandLine(@NotNull List<String> commandLineArgs) {
       Project project = null;
       if (!commandLineArgs.isEmpty() && commandLineArgs.get(0) != null) {
         LOG.info("IdeaApplication.loadProject");
-        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null);
+        project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, null).getProject();
       }
       return project;
     }
