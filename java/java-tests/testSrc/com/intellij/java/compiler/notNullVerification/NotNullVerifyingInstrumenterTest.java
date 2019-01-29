@@ -305,6 +305,54 @@ public abstract class NotNullVerifyingInstrumenterTest {
     verifyCallThrowsException("Argument for @NotNull parameter 'param' of LocalClassImplicitParameters$Inner.<init> must not be null", instance, test.getMethod("failInner"));
   }
 
+  @Test
+  public void testNoCheckForConstant() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewObject() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewConstructorCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewArray() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForNewMultiArray() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForPrivateNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForFinalNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
+  @Test
+  public void testNoCheckForStaticNotNullMethodCall() throws Exception {
+    Class<?> test = prepareTest(true, false, AnnotationUtil.NOT_NULL);
+    assertNotNull(test);
+  }
+
   private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
@@ -329,6 +377,10 @@ public abstract class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
+    return prepareTest(withDebugInfo, true, notNullAnnotations);
+  }
+
+  private Class<?> prepareTest(boolean withDebugInfo, boolean expectInstrumented, String... notNullAnnotations) throws IOException {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile((JavaTestUtil.getJavaTestDataPath() + TEST_DATA_PATH) + testName);
     File classesDir = tempDir.newFolder("output");
@@ -352,7 +404,12 @@ public abstract class NotNullVerifyingInstrumenterTest {
         mainClass = aClass;
       }
     }
-    assertTrue("Class file not instrumented!", modified);
+    if (expectInstrumented) {
+      assertTrue("Class file not instrumented!", modified);
+    }
+    else {
+      assertFalse("Class file instrumented, but should have not!", modified);
+    }
     assertNotNull("Class " + testName + " not found!", mainClass);
     return mainClass;
   }
