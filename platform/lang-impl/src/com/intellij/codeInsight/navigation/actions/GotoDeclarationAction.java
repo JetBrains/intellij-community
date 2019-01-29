@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -87,13 +87,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           }
 
           //disable 'no declaration found' notification for keywords
-          final PsiElement elementAtCaret = file.findElementAt(offset);
-          if (elementAtCaret != null) {
-            final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
-            if (namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project)) {
-              return;
-            }
-          }
+          if (isKeywordUnderCaret(project, file, offset)) return;
         }
         chooseAmbiguousTarget(editor, offset, elements, file);
         return;
@@ -334,5 +328,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     super.update(event);
+  }
+
+  static boolean isKeywordUnderCaret(@NotNull Project project, @NotNull PsiFile file, int offset) {
+    final PsiElement elementAtCaret = file.findElementAt(offset);
+    if (elementAtCaret == null) return false;
+    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
+    return namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project);
   }
 }
