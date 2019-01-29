@@ -24,7 +24,6 @@ object ProjectFsStatsCollector {
   fun watchedRoots(project: Project, pctNonWatched: Int) {
     FUStateUsagesLogger.logStateEvent(groupId, "roots-watched", FeatureUsageData()
       .addProject(project)
-      .addData("pct-non-watched", pctNonWatched)
-      .addData("os-and-arch", SystemInfo.OS_NAME + '@' + SystemInfo.OS_ARCH))
+      .addData("pct-non-watched", pctNonWatched))
   }
 }
