@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -21,7 +22,7 @@ class ExternalTestsModelCompatibilityTestCase : GradleImportingTestCase() {
 
   @Test
   fun `test intellij tests finding`() {
-    gradleVersion
+    if (VersionComparatorUtil.compare(gradleVersion, "5.0") >= 0) return
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withJUnit("4.12")
@@ -29,15 +30,46 @@ class ExternalTestsModelCompatibilityTestCase : GradleImportingTestCase() {
         sourceSets {
           foo.java.srcDirs = ["foo-src", "foo-other-src"]
           foo.compileClasspath += sourceSets.test.runtimeClasspath
-          bar.java.srcDirs = ["bar-src", "bar-other-src"]
-          bar.compileClasspath += sourceSets.test.runtimeClasspath
         }
       """.trimIndent())
       .addPrefix("""
         task 'foo test task'(type: Test) {
+          testClassesDir = sourceSets.foo.output.classesDir
           classpath += sourceSets.foo.runtimeClasspath
         }
         task 'super foo test task'(type: Test) {
+          testClassesDir = sourceSets.foo.output.classesDir
+          classpath += sourceSets.foo.runtimeClasspath
+        }
+      """.trimIndent())
+    importProject(buildScript.generate())
+    assertTestTasks(createProjectSubFile("foo-src/package/TestCase.java", "class TestCase"),
+                    listOf(":cleanFoo test task", ":foo test task"),
+                    listOf(":cleanSuper foo test task", ":super foo test task"))
+    assertTestTasks(createProjectSubFile("foo-other-src/package/TestCase.java", "class TestCase"),
+                    listOf(":cleanFoo test task", ":foo test task"),
+                    listOf(":cleanSuper foo test task", ":super foo test task"))
+  }
+
+  @Test
+  fun `test intellij tests finding new interface`() {
+    if (VersionComparatorUtil.compare(gradleVersion, "4.0") < 0) return
+    val buildScript = GradleBuildScriptBuilderEx()
+      .withJavaPlugin()
+      .withJUnit("4.12")
+      .addPrefix("""
+        sourceSets {
+          foo.java.srcDirs = ["foo-src", "foo-other-src"]
+          foo.compileClasspath += sourceSets.test.runtimeClasspath
+        }
+      """.trimIndent())
+      .addPrefix("""
+        task 'foo test task'(type: Test) {
+          testClassesDirs = sourceSets.foo.output.classesDirs
+          classpath += sourceSets.foo.runtimeClasspath
+        }
+        task 'super foo test task'(type: Test) {
+          testClassesDirs = sourceSets.foo.output.classesDirs
           classpath += sourceSets.foo.runtimeClasspath
         }
       """.trimIndent())
