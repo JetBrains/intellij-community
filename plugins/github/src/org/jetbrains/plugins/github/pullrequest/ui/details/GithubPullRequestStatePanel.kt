@@ -8,10 +8,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
@@ -21,7 +19,8 @@ import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JLabel
 
-internal class GithubPullRequestStatePanel(private val stateService: GithubPullRequestsStateService)
+internal class GithubPullRequestStatePanel(private val securityService: GithubPullRequestsSecurityService,
+                                           private val stateService: GithubPullRequestsStateService)
   : NonOpaquePanel(VerticalFlowLayout(0, 0)) {
 
   private val stateLabel = JLabel().apply {
@@ -68,6 +67,13 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
     add(mergeButton)
     add(closeButton)
     add(reopenButton)
+  }
+
+  init {
+    isOpaque = false
+    add(stateLabel)
+    add(accessDeniedPanel)
+    add(buttonsPanel)
   }
 
   var state: GithubPullRequestStatePanel.State? by equalVetoingObservable<GithubPullRequestStatePanel.State?>(null) {
@@ -132,18 +138,16 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
       mergeButton.isVisible = false
     }
     else {
-      val busy = stateService.isBusy(state.number)
-
       reopenButton.isVisible = state.editAllowed && state.state == GithubIssueState.closed && !state.merged
-      reopenAction.isEnabled = reopenButton.isVisible && !busy
+      reopenAction.isEnabled = reopenButton.isVisible && !state.busy
 
       closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.open
-      closeAction.isEnabled = closeButton.isVisible && !busy
+      closeAction.isEnabled = closeButton.isVisible && !state.busy
 
       mergeButton.isVisible = state.editAllowed && state.state == GithubIssueState.open && !state.merged
-      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy && !state.mergeForbidden
-      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !busy && !state.mergeForbidden
-      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !busy && !state.mergeForbidden
+      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !state.busy && !state.mergeForbidden
+      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !state.busy && !state.mergeForbidden
+      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !state.busy && !state.mergeForbidden
 
       mergeButton.optionTooltipText = if (state.mergeForbidden) "Merge actions are disabled for this project" else null
 
@@ -159,31 +163,11 @@ internal class GithubPullRequestStatePanel(private val stateService: GithubPullR
     }
   }
 
-  init {
-    isOpaque = false
-    add(stateLabel)
-    add(accessDeniedPanel)
-    add(buttonsPanel)
-  }
-
   data class State(val number: Long, val state: GithubIssueState, val merged: Boolean, val mergeable: Boolean?, val rebaseable: Boolean?,
                    val editAllowed: Boolean, val currentUserIsAuthor: Boolean,
-                   val busy: Boolean,
                    val mergeAllowed: Boolean,
                    val rebaseMergeAllowed: Boolean,
                    val squashMergeAllowed: Boolean,
-                   val mergeForbidden: Boolean) {
-    companion object {
-      fun create(user: GithubAuthenticatedUser,
-                 repo: GithubRepoDetailed,
-                 details: GithubPullRequestDetailed,
-                 busy: Boolean,
-                 mergeForbidden: Boolean) = details.let {
-        State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
-              repo.permissions.isAdmin || repo.permissions.isPush, it.user == user,
-              busy,
-              repo.allowMergeCommit, repo.allowRebaseMerge, repo.allowSquashMerge, mergeForbidden)
-      }
-    }
-  }
+                   val mergeForbidden: Boolean,
+                   val busy: Boolean)
 }

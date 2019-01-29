@@ -15,12 +15,10 @@ import com.intellij.util.ui.StatusText
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
-import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.Graphics
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
@@ -28,11 +26,9 @@ import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 
-internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: GithubSharedProjectSettings,
-                                             private val stateService: GithubPullRequestsStateService,
-                                             iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                             private val accountDetails: GithubAuthenticatedUser,
-                                             private val repoDetails: GithubRepoDetailed)
+internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequestsSecurityService,
+                                             stateService: GithubPullRequestsStateService,
+                                             iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
@@ -46,7 +42,7 @@ internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: 
   private val descriptionPanel = GithubPullRequestDescriptionPanel().apply {
     border = JBUI.Borders.empty(4, 8, 8, 8)
   }
-  private val statePanel = GithubPullRequestStatePanel(stateService).apply {
+  private val statePanel = GithubPullRequestStatePanel(securityService, stateService).apply {
     border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
                                                 JBUI.Borders.empty(8))
   }
@@ -59,8 +55,13 @@ internal class GithubPullRequestDetailsPanel(private val sharedProjectSettings: 
       metaPanel.assignees = newValue?.assignees
       metaPanel.labels = newValue?.labels
       statePanel.state = newValue?.let {
-        GithubPullRequestStatePanel.State.create(accountDetails, repoDetails, it, stateService.isBusy(it.number),
-                                                 sharedProjectSettings.pullRequestMergeForbidden)
+        GithubPullRequestStatePanel.State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
+                                          securityService.isCurrentUserWithPushAccess(), securityService.isCurrentUser(it.user),
+                                          securityService.isMergeAllowed(),
+                                          securityService.isRebaseMergeAllowed(),
+                                          securityService.isSquashMergeAllowed(),
+                                          securityService.isMergeForbiddenForProject(),
+                                          stateService.isBusy(it.number))
       }
     }
 

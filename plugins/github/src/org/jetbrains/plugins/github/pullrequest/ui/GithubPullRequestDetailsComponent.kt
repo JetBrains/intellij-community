@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui.details
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,26 +9,23 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
-import org.jetbrains.plugins.github.pullrequest.ui.GithubDataLoadingComponent
-import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
 import java.awt.BorderLayout
 
-internal class GithubPullRequestDetailsComponent(sharedProjectSettings: GithubSharedProjectSettings,
-                                                 private val dataLoader: GithubPullRequestsDataLoader,
+internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
+                                                 securityService: GithubPullRequestsSecurityService,
                                                  stateService: GithubPullRequestsStateService,
-                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                                 accountDetails: GithubAuthenticatedUser,
-                                                 repoDetails: GithubRepoDetailed)
+                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
-  private val detailsPanel = GithubPullRequestDetailsPanel(sharedProjectSettings, stateService, iconProviderFactory,
-                                                           accountDetails, repoDetails)
+
+  private val detailsPanel = GithubPullRequestDetailsPanel(securityService, stateService, iconProviderFactory)
+
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
   }
