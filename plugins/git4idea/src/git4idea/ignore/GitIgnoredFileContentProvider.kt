@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.NotIgnored
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.IgnoreSettingsType.*
@@ -22,6 +24,8 @@ import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import java.io.File
 import java.lang.System.lineSeparator
 
+private val LOG = logger<GitIgnoredFileContentProvider>()
+
 open class GitIgnoredFileContentProvider(private val project: Project) : IgnoredFileContentProvider {
 
   private val gitIgnoreChecker = GitIgnoreChecker(project)
@@ -35,7 +39,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
     val content = StringBuilder()
     val lineSeparator = lineSeparator()
-    val untrackedFiles = Git.getInstance().untrackedFiles(project, ignoreFileRoot, null)
+    val untrackedFiles = getUntrackedFiles(ignoreFileRoot)
 
     for (i in ignoredFileProviders.indices) {
       val provider = ignoredFileProviders[i]
@@ -56,6 +60,15 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     }
     return content.toString()
   }
+
+  private fun getUntrackedFiles(ignoreFileRoot: VirtualFile): Set<VirtualFile> =
+    try {
+      Git.getInstance().untrackedFiles(project, ignoreFileRoot, null)
+    }
+    catch (e: VcsException) {
+      LOG.warn("Cannot get untracked files: ", e)
+      emptySet()
+    }
 
   private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileRoot: VirtualFile, untrackedFiles: Set<VirtualFile>): List<String> {
     val vcsRoot= VcsUtil.getVcsRootFor(project, ignoreFileRoot)

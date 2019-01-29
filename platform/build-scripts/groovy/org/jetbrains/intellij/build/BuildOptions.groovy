@@ -131,4 +131,9 @@ class BuildOptions {
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
+
+  /**
+   * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
+   */
+  int jdkVersion = System.getProperty("intellij.build.jdk.version", "8").toInteger()
 }

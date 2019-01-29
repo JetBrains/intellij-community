@@ -70,6 +70,6 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.vcs.log.data";
+    return "vcs.log.data";
   }
 }

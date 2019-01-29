@@ -71,6 +71,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
 
+    @NotNull
     @Override
     public GradleOrderEnumeratorHandler createHandler(@NotNull Module module) {
       for (FactoryImpl factory : EP_NAME.getExtensions()) {

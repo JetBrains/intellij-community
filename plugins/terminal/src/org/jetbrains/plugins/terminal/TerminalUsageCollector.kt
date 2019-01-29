@@ -1,22 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
-import com.intellij.internal.statistic.utils.createData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
 import java.util.*
 
-private var GROUP =  FeatureUsageGroup("statistics.terminalShell",1)
-
 class TerminalUsageTriggerCollector {
   companion object {
     @JvmStatic
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
-      FeatureUsageLogger.log(GROUP, featureId, createData(project, context))
+      FUCounterUsageLogger.getInstance().logEvent(project, "terminalShell", featureId, FeatureUsageData().addFeatureContext(context))
     }
 
     @JvmStatic

@@ -303,6 +303,10 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       if (providedName != null) {
         PsiClass[] classes = findClassByShortName(providedName, scope);
         if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
+          //extend scope for javadoc references when no classes are found in the resolve scope:
+
+          //always replacing the scope works bad for the case when multiple classes with the same FQName exist, because index return them in unpredictable order, 
+          //so class not accessible from `place` may be used instead of another accessible class
           classes = findClassByShortName(providedName, allScope());
         }
         if (!processClasses(processor, state, classes, Conditions.alwaysTrue())) return false;

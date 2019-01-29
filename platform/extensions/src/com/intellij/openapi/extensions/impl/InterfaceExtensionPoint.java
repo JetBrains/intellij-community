@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.ComponentAdapter;
 
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   public InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ExtensionsAreaImpl owner) {
@@ -20,9 +21,26 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     super(name, className, owner, pluginDescriptor);
   }
 
+  // no need to register bean extension - only InterfaceExtensionPoint registers
   @Override
   @NotNull
-  ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
+  ExtensionComponentAdapter createAndRegisterAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
+    ExtensionComponentAdapter adapter = super.createAndRegisterAdapter(extensionElement, pluginDescriptor);
+    myOwner.getPicoContainer().registerComponent((ComponentAdapter)adapter);
+    return adapter;
+  }
+
+  @Override
+  public synchronized void reset() {
+    for (Object extensionAdapter : myExtensionAdapters) {
+      myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)extensionAdapter).getComponentKey());
+    }
+    super.reset();
+  }
+
+  @Override
+  @NotNull
+  protected ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
     String implClass = extensionElement.getAttributeValue("implementation");
     if (implClass == null) {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"

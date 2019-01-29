@@ -35,14 +35,14 @@ public class ExceptionFilter implements Filter, DumbAware {
   }
 
   @Override
-  public Result applyFilter(final String line, final int textEndOffset) {
+  public Result applyFilter(@NotNull final String line, final int textEndOffset) {
     ExceptionWorker worker = new ExceptionWorker(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     myNextLineRefiner = result == null ? getRefinerFromException(line) : worker.getLocationRefiner();
     return result;
   }
 
-  private static PsiElementFilter getRefinerFromException(String line) {
+  private static PsiElementFilter getRefinerFromException(@NotNull String line) {
     String exceptionName = getExceptionFromMessage(line);
     if (exceptionName == null) return null;
     PsiElementFilter throwFilter = e -> {

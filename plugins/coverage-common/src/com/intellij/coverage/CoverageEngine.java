@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Roman.Chernyatchik
@@ -64,6 +61,17 @@ public abstract class CoverageEngine {
   public boolean wasTestDataCollected(Project project) {
     return false;
   }
+
+  /**
+   * Extract coverage data by sub set of executed tests
+   * 
+   * @param sanitizedTestNames sanitized qualified method names for which traces should be collected
+   * @param suite              suite to find corresponding traces
+   * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
+   */
+  public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) {}
+
+  protected void deleteAssociatedTraces(CoverageSuite suite) {}
 
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated

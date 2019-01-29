@@ -128,6 +128,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
     return getLibraryTypeIcon();
   }
 
+  @NotNull
   protected abstract String[] getDetectionClassNames();
 
   @Override

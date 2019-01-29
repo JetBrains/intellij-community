@@ -27,16 +27,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    @NotNull
     @Override
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
     }
 
+    @NotNull
     @Override
     public String getDescription() {
       return ProjectBundle.message("libraries.node.text.ide");
     }
 
+    @NotNull
     @Override
     public String getLibraryTableEditorTitle() {
       return ProjectBundle.message("library.configure.global.title");

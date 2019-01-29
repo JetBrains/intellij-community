@@ -178,6 +178,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new ModulesOrderEnumerator(modules);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
@@ -192,7 +193,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public Sdk getProjectSdk() {
-    return myProjectSdkName == null ? null : ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
+    return myProjectSdkName == null ? null :
+           myProjectSdkType == null ? ProjectJdkTable.getInstance().findJdk(myProjectSdkName) :
+           ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
   }
 
   @Override

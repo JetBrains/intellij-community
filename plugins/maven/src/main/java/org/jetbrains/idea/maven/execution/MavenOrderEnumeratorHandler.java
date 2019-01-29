@@ -29,6 +29,7 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
       return manager.isMavenizedModule(module);
     }
 
+    @NotNull
     @Override
     public OrderEnumerationHandler createHandler(@NotNull Module module) {
       return INSTANCE;

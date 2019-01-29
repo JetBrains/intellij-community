@@ -834,6 +834,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testlambda$command8() { doTest() }
 
+  void testlambda$command9() { doTest() }
+
+  void testlambda$command10() { doTest() }
+
+  void testlambda$command11() { doTest() }
+
+  void testlambda$command12() { doTest() }
+
   void testlambda$commandInLambda() { doTest() }
 
   void testlambda$implicitReturn1() { doTest() }

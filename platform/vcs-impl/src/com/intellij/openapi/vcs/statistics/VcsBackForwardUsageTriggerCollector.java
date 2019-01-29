@@ -5,8 +5,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.actions.BackAction;
 import com.intellij.ide.actions.ForwardAction;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsBackForwardUsageTriggerCollector {
 
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("statistics.vcs.back.forward.trigger",1);
-
   public static class Trigger implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
@@ -28,7 +25,7 @@ public class VcsBackForwardUsageTriggerCollector {
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent e) {
           if (action instanceof BackAction ||
               action instanceof ForwardAction) {
-            FeatureUsageLogger.INSTANCE.log(GROUP, getContextName(e));
+            FUCounterUsageLogger.getInstance().logEvent("vcs.back.forward.trigger", getContextName(e));
           }
         }
       });

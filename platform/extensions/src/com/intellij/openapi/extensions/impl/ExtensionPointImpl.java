@@ -16,6 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.ComponentAdapter;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -24,7 +25,7 @@ import java.util.stream.Stream;
 /**
  * @author AKireyev
  */
-@SuppressWarnings("SynchronizeOnThis")
+@SuppressWarnings({"SynchronizeOnThis", "NonPrivateFieldAccessedInSynchronizedContext"})
 public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
@@ -37,11 +38,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   private volatile T[] myExtensionsCacheAsArray;
 
-  private final ExtensionsAreaImpl myOwner;
+  protected final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
 
-  @NotNull
-  private Set<ExtensionComponentAdapter> myExtensionAdapters = Collections.emptySet(); // guarded by this
+  @NotNull protected Set<ExtensionComponentAdapter> myExtensionAdapters = Collections.emptySet(); // guarded by this
   @SuppressWarnings("unchecked")
   @NotNull
   private ExtensionPointListener<T>[] myEPListeners = ExtensionPointListener.EMPTY_ARRAY; // guarded by this
@@ -126,22 +126,16 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
-    if (myLoadedAdapters == Collections.<ExtensionComponentAdapter>emptyList()) myLoadedAdapters = new ArrayList<>();
+
+    if (myLoadedAdapters == Collections.<ExtensionComponentAdapter>emptyList()) {
+      myLoadedAdapters = new ArrayList<>();
+    }
     myLoadedAdapters.add(index, adapter);
 
     if (runNotifications) {
       clearCache();
 
       if (!adapter.isNotificationSent()) {
-        if (extension instanceof Extension) {
-          try {
-            ((Extension)extension).extensionAdded(this);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-
         notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
         adapter.setNotificationSent();
       }
@@ -241,11 +235,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       for (ExtensionComponentAdapter adapter : adapters) {
         CHECK_CANCELED.run();
         try {
-          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-          if (extension == null) {
-            LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n");
-          }
-          else if (!duplicates.add(extension)) {
+          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension(myOwner.getPicoContainer());
+          if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
                       " Prev extension: " + duplicate + ";\n" +
@@ -286,6 +277,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  // used in upsource
   public synchronized void removeUnloadableExtensions() {
     ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
     for (ExtensionComponentAdapter adapter : adapters) {
@@ -317,10 +309,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (index == -1) {
       throw new IllegalArgumentException("Extension to be removed not found: " + extension);
     }
-    final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
-    Object key = adapter.getComponentKey();
-    myOwner.getPicoContainer().unregisterComponent(key);
+    final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
+    if (adapter instanceof ComponentAdapter) {
+      Object key = ((ComponentAdapter)adapter).getComponentKey();
+      myOwner.getPicoContainer().unregisterComponent(key);
+    }
 
     processAdapters();
     unregisterExtension(extension, null);
@@ -340,7 +334,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private int getExtensionIndex(@NotNull T extension) {
     for (int i = 0; i < myLoadedAdapters.size(); i++) {
       ExtensionComponentAdapter adapter = myLoadedAdapters.get(i);
-      if (Comparing.equal(adapter.getExtension(), extension)) return i;
+      if (Comparing.equal(adapter.getExtension(myOwner.getPicoContainer()), extension)) return i;
     }
     return -1;
   }
@@ -355,15 +349,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     clearCache();
 
     notifyListenersOnRemove(extension, pluginDescriptor);
-
-    if (extension instanceof Extension) {
-      try {
-        ((Extension)extension).extensionRemoved(this);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
   }
 
   private void notifyListenersOnRemove(@NotNull T extensionObject, PluginDescriptor pluginDescriptor) {
@@ -418,7 +403,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
-          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension(myOwner.getPicoContainer());
           listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
@@ -438,7 +423,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
-          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension(myOwner.getPicoContainer());
           listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
@@ -450,7 +435,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public synchronized void reset() {
-    myOwner.removeAllComponents(myExtensionAdapters);
     myExtensionAdapters = Collections.emptySet();
     for (T extension : getExtensionList()) {
       unregisterExtension(extension);
@@ -501,11 +485,14 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       if (!myExtensionAdapters.isEmpty() && myExtensionAdapters.remove(adapter)) {
         return;
       }
-      if (myLoadedAdapters.contains(adapter)) {
-        Object key = adapter.getComponentKey();
-        myOwner.getPicoContainer().unregisterComponent(key);
 
-        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+      if (myLoadedAdapters.contains(adapter)) {
+        AreaPicoContainer picoContainer = myOwner.getPicoContainer();
+        if (adapter instanceof ComponentAdapter) {
+          picoContainer.unregisterComponent(((ComponentAdapter)adapter).getComponentKey());
+        }
+
+        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension(picoContainer);
         unregisterExtension(extension, adapter.getPluginDescriptor());
       }
     }
@@ -515,23 +502,30 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @NotNull
-  abstract ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor);
+  protected abstract ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor);
 
   @NotNull
-  protected final ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
-                                                            @NotNull Element extensionElement,
-                                                            boolean isNeedToDeserialize,
-                                                            @NotNull PluginDescriptor pluginDescriptor,
-                                                            boolean isConstructorInjectionSupported) {
+  ExtensionComponentAdapter createAndRegisterAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
+    ExtensionComponentAdapter adapter = createAdapter(extensionElement, pluginDescriptor);
+    registerExtensionAdapter(adapter);
+    return adapter;
+  }
+
+  @NotNull
+  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                             @NotNull Element extensionElement,
+                                                             boolean isNeedToDeserialize,
+                                                             @NotNull PluginDescriptor pluginDescriptor,
+                                                             boolean isConstructorInjectionSupported) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     if (isConstructorInjectionSupported) {
-      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName, myOwner.getPicoContainer(),
+      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName,
                                                                           pluginDescriptor, orderId, order,
                                                                           isNeedToDeserialize ? extensionElement : null);
     }
     else {
-      return new XmlExtensionComponentAdapter(implementationClassName, myOwner.getPicoContainer(), pluginDescriptor, orderId, order,
+      return new XmlExtensionComponentAdapter(implementationClassName, pluginDescriptor, orderId, order,
                                               isNeedToDeserialize ? extensionElement : null);
     }
   }
@@ -547,7 +541,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private static final class ObjectComponentAdapter extends ExtensionComponentAdapter {
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null, loadingOrder);
+      super(extension.getClass().getName(), null, null, loadingOrder);
 
       myComponentInstance = extension;
     }
@@ -570,6 +564,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private static boolean isInsideClassInitializer(StackTraceElement[] trace) {
+    //noinspection SpellCheckingInspection
     return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }
 }

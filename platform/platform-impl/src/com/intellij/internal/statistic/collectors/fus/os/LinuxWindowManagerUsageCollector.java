@@ -29,7 +29,7 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
 
   @NotNull
   @Override
-  public String getGroupId() { return "statistics.os.linux.wm"; }
+  public String getGroupId() { return "os.linux.wm"; }
 
   @Nullable
   @Override

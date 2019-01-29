@@ -48,6 +48,7 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
   public void testLong() { assertQuickfixNotAvailable(); }
   public void testPolyadic() { doTest(); }
   public void testStringEquality() { doTest(); }
-  public void testObjectsEquals() { doTest();}
-  public void testEnumEquals() { doTest();}
+  public void testObjectsEquals() { doTest(); }
+  public void testEnumEquals() { doTest(); }
+  public void testRelabelingBreaks() { doTest(); }
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManager;
@@ -199,7 +200,10 @@ public class PluginLogo {
 
   @NotNull
   private static String getIdForKey(@NotNull IdeaPluginDescriptor descriptor) {
-    return descriptor.getPluginId().getIdString() + (descriptor.getPath() == null ? "" : "#local");
+    return descriptor.getPluginId().getIdString() +
+           (descriptor.getPath() == null ||
+            MyPluginModel.getInstallingPlugins().contains(descriptor) ||
+            InstalledPluginsState.getInstance().wasInstalled(descriptor.getPluginId()) ? "" : "#local");
   }
 
   private static boolean tryLoadDirIcons(@NotNull String idPlugin, @NotNull LazyPluginLogoIcon lazyIcon, @NotNull File path) {

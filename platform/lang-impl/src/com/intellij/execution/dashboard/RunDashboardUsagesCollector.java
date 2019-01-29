@@ -17,7 +17,7 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.run.dashboard";
+    return "run.dashboard";
   }
 
   @NotNull

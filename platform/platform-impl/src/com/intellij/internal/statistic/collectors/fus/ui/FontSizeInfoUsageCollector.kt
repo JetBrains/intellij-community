@@ -53,7 +53,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   }
 
   override fun getGroupId(): String {
-    return "statistics.ui.fonts"
+    return "ui.fonts"
   }
 
   override fun getContext(): FUSUsageContext? {

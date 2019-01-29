@@ -30,6 +30,6 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.module.facets";
+    return "module.facets";
   }
 }

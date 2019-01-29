@@ -125,6 +125,6 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.vcs.log.ui";
+    return "vcs.log.ui";
   }
 }

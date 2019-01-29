@@ -75,7 +75,8 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
     if (profile instanceof ConfigurationWithAlternativeJre) {
       ConfigurationWithAlternativeJre appConfig = (ConfigurationWithAlternativeJre)profile;
       if (appConfig.isAlternativeJrePathEnabled()) {
-        return ProjectJdkTable.getInstance().findJdk(appConfig.getAlternativeJrePath());
+        String path = appConfig.getAlternativeJrePath();
+        return path == null ? null : ProjectJdkTable.getInstance().findJdk(path);
       }
     }
     return null;

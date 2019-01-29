@@ -392,7 +392,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
 
     @Override
-    public Module getModule(String name) {
+    public Module getModule(@NotNull String name) {
       return AbstractIdeModifiableModelsProvider.this.findIdeModule(name);
     }
 
@@ -401,6 +401,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       return AbstractIdeModifiableModelsProvider.this.getModifiableRootModel(module);
     }
 
+    @NotNull
     @Override
     public FacetModel getFacetModel(@NotNull Module module) {
       return AbstractIdeModifiableModelsProvider.this.getModifiableFacetModel(module);

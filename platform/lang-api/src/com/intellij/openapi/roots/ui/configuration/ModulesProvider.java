@@ -32,7 +32,7 @@ public interface ModulesProvider extends RootModelProvider {
       return Module.EMPTY_ARRAY;
     }
     @Override
-    public Module getModule(String name) {
+    public Module getModule(@NotNull String name) {
       return null;
     }
 
@@ -41,6 +41,7 @@ public interface ModulesProvider extends RootModelProvider {
       return ModuleRootManager.getInstance(module);
     }
 
+    @NotNull
     @Override
     public FacetModel getFacetModel(@NotNull Module module) {
       return FacetManager.getInstance(module);
@@ -48,7 +49,8 @@ public interface ModulesProvider extends RootModelProvider {
   };
 
   @Nullable
-  Module getModule(String name);
+  Module getModule(@NotNull String name);
 
+  @NotNull
   FacetModel getFacetModel(@NotNull Module module);
 }

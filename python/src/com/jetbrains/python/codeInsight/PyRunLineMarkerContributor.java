@@ -21,13 +21,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyIfStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,11 +47,10 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
 
   private static boolean isMainClauseOnTopLevel(@NotNull PsiElement element) {
     if (element.getNode().getElementType() == PyTokenTypes.IF_KEYWORD) {
-      element = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
-
-      return element != null &&
-             element.getParent() instanceof PsiFile &&
-             PyUtil.isIfNameEqualsMain(((PyIfStatement)element));
+      PyIfStatement statement = PyIfStatementNavigator.getIfStatementByIfKeyword(element);
+      return statement != null &&
+             ScopeUtil.getScopeOwner(element) instanceof PyFile &&
+             PyUtil.isIfNameEqualsMain(statement);
     }
     else {
       return false;

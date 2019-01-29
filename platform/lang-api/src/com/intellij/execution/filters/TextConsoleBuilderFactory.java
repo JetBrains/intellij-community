@@ -25,8 +25,10 @@ import org.jetbrains.annotations.NotNull;
  * @author dyoma
  */
 public abstract class TextConsoleBuilderFactory {
+  @NotNull
   public abstract TextConsoleBuilder createBuilder(@NotNull Project project);
 
+  @NotNull
   public abstract TextConsoleBuilder createBuilder(@NotNull Project project, @NotNull GlobalSearchScope scope);
 
   public static TextConsoleBuilderFactory getInstance() {

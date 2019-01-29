@@ -178,7 +178,7 @@ public interface ModuleRootModel {
    * @return the value returned by the visitor.
    * @see OrderEntry#accept(RootPolicy, Object)
    */
-  <R> R processOrder(RootPolicy<R> policy, R initialValue);
+  <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue);
 
   /**
    * Returns {@link OrderEnumerator} instance which can be used to process order entries of the module (with or without dependencies) and

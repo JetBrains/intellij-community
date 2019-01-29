@@ -19,7 +19,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl
  */
 
 class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
-  override fun getGroupId(): String = "statistics.debugger.breakpoints"
+  override fun getGroupId(): String = "debugger.breakpoints"
 
   override fun getUsages(project: Project): MutableSet<UsageDescriptor> {
     return ReadAction.compute<MutableSet<UsageDescriptor>, Exception> {

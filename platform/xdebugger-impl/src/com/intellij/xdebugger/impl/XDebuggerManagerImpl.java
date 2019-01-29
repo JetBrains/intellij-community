@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -59,6 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -379,6 +382,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       myCurrentHighlighter = e.getEditor().getMarkupModel().addLineHighlighter(getLineNumber(e),
                                                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                                myAttributes);
+      IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), this);
     }
 
     @Override
@@ -389,6 +393,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     private void removeHighlighter(@NotNull EditorMouseEvent e) {
       if (myCurrentHighlighter != null) {
         e.getEditor().getMarkupModel().removeHighlighter(myCurrentHighlighter);
+        IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(null, this);
+        myCurrentHighlighter = null;
       }
     }
 
@@ -401,11 +407,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     }
 
     @Override
-    public void mouseClicked(@NotNull EditorMouseEvent e) {
-      if (isEnabled(e)) {
+    public void mousePressed(@NotNull EditorMouseEvent e) {
+      if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
         XDebugSessionImpl session = getCurrentSession();
         if (session != null) {
           session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
+          e.consume();
         }
       }
     }

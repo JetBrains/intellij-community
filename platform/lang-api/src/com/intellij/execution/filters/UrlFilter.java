@@ -48,7 +48,7 @@ public class UrlFilter implements Filter, DumbAware {
 
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
@@ -98,6 +98,7 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
+    @NotNull
     @Override
     public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
       return new Filter[]{new UrlFilter(project)};

@@ -2,6 +2,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -14,6 +15,7 @@ public @interface State {
   /**
    * Component name.
    */
+  @NotNull
   String name();
 
   /**
@@ -25,6 +27,7 @@ public @interface State {
    *
    * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
+  @NotNull
   Storage[] storages() default {};
 
   /**

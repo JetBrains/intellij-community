@@ -24,7 +24,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -78,9 +76,11 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   }
 
   private static class MyInputValidator implements InputValidator {
+    @NotNull
     private final Project myProject;
+    @NotNull
     private final Library myLibrary;
-    MyInputValidator(Project project, Library library) {
+    MyInputValidator(@NotNull Project project, @NotNull Library library) {
       myProject = project;
       myLibrary = library;
     }
@@ -94,24 +94,19 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
     public boolean canClose(final String inputString) {
       final String oldName = myLibrary.getName();
       final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
-      if (modifiableModel == null) return false;
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         UndoableAction action = new BasicUndoableAction() {
           @Override
-          public void undo() throws UnexpectedUndoException {
+          public void undo() {
             final Library.ModifiableModel modifiableModel1 = renameLibrary(oldName);
-            if (modifiableModel1 != null) {
-              modifiableModel1.commit();
-            }
+            modifiableModel1.commit();
           }
 
           @Override
-          public void redo() throws UnexpectedUndoException {
+          public void redo() {
             final Library.ModifiableModel modifiableModel1 = renameLibrary(inputString);
-            if (modifiableModel1 != null) {
-              modifiableModel1.commit();
-            }
+            modifiableModel1.commit();
           }
         };
         UndoManager.getInstance(myProject).undoableActionPerformed(action);
@@ -120,7 +115,7 @@ public class RenameLibraryHandler implements RenameHandler, TitledHandler {
       return success.get().booleanValue();
     }
 
-    @Nullable
+    @NotNull
     private Library.ModifiableModel renameLibrary(String inputString) {
       final Library.ModifiableModel modifiableModel = myLibrary.getModifiableModel();
       modifiableModel.setName(inputString);

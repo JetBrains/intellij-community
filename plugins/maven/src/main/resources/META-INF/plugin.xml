@@ -196,6 +196,7 @@
     <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
+    <statistics.counterUsagesCollector group_id="build.maven.actions" version="1"/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>

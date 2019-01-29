@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.Arrays;
@@ -36,36 +37,6 @@ public class ExtensionPointImplTest {
     extensionPoint.unregisterExtension(new Integer(123));
     extensions = extensionPoint.getExtensions();
     assertThat(extensions).isEmpty();
-  }
-
-  @Test
-  public void testRegisterUnregisterExtension() {
-    ExtensionsAreaImpl extensionArea = buildExtensionArea();
-    final ExtensionPoint<Object> extensionPoint = new InterfaceExtensionPoint<>("an.extension.point", Object.class, extensionArea);
-
-    final boolean[] flags = new boolean[2];
-    Extension extension = new Extension() {
-      @Override
-      public void extensionAdded(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
-        flags[0] = true;
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
-        flags[1] = true;
-      }
-    };
-
-    extensionPoint.registerExtension(extension);
-    assertThat(flags[0]).describedAs("Register call is missed").isTrue();
-    assertThat(flags[1]).isFalse();
-
-    extensionPoint.unregisterExtension(extension);
-    assertThat(flags[1]).describedAs("Unregister call is missed").isTrue();
   }
 
   @Test
@@ -259,7 +230,7 @@ public class ExtensionPointImplTest {
     private boolean myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
     }
 
     public void setFire(boolean fire) {
@@ -268,12 +239,12 @@ public class ExtensionPointImplTest {
 
     @NotNull
     @Override
-    public Object getExtension() {
+    public Object getExtension(@Nullable PicoContainer container) {
       if (myFire) {
         throw new ProcessCanceledException();
       }
       else {
-        return super.getExtension();
+        return super.getExtension(container);
       }
     }
   }

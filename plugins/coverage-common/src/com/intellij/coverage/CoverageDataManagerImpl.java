@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -56,9 +54,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -240,34 +236,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   @Override
   public void removeCoverageSuite(final CoverageSuite suite) {
-    final String fileName = suite.getCoverageDataFileName();
-
-    boolean deleteTraces = suite.isTracingEnabled();
-    if (!FileUtil.isAncestor(PathManager.getSystemPath(), fileName, false)) {
-      String message = "Would you like to delete file \'" + fileName + "\' ";
-      if (deleteTraces) {
-        message += "and traces directory \'" + FileUtil.getNameWithoutExtension(new File(fileName)) + "\' ";
-      }
-      message += "on disk?";
-      if (Messages.showYesNoDialog(myProject, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.YES) {
-        deleteCachedCoverage(fileName, deleteTraces);
-      }
-    } else {
-      deleteCachedCoverage(fileName, deleteTraces);
-    }
+    suite.deleteCachedCoverageData();
 
     myCoverageSuites.remove(suite);
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
       suites = ArrayUtil.remove(suites, suite);
       chooseSuitesBundle(suites.length > 0 ? new CoverageSuitesBundle(suites) : null);
-    }
-  }
-
-  private static void deleteCachedCoverage(String coverageDataFileName, boolean deleteTraces) {
-    FileUtil.delete(new File(coverageDataFileName));
-    if (deleteTraces) {
-      FileUtil.delete(getTracesDirectory(coverageDataFileName));
     }
   }
 
@@ -503,31 +478,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     mySubCoverageIsActive = true;
     final Map<String, Set<Integer>> executionTrace = new HashMap<>();
     for (CoverageSuite coverageSuite : suite.getSuites()) {
-      final String fileName = coverageSuite.getCoverageDataFileName();
-      final File tracesDir = getTracesDirectory(fileName);
-      for (String testName : testNames) {
-        final File file = new File(tracesDir, FileUtil.sanitizeFileName(testName) + ".tr");
-        if (file.exists()) {
-          try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
-            int traceSize = in.readInt();
-            for (int i = 0; i < traceSize; i++) {
-              final String className = in.readUTF();
-              final int linesSize = in.readInt();
-              Set<Integer> lines = executionTrace.get(className);
-              if (lines == null) {
-                lines = new HashSet<>();
-                executionTrace.put(className, lines);
-              }
-              for(int l = 0; l < linesSize; l++) {
-                lines.add(in.readInt());
-              }
-            }
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      }
+      suite.getCoverageEngine().collectTestLines(testNames, coverageSuite, executionTrace);
     }
     final ProjectData projectData = new ProjectData();
     for (String className : executionTrace.keySet()) {
@@ -567,10 +518,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
     suite.setCoverageData(projectData);
     renewCoverageData(suite);
-  }
-
-  private static File getTracesDirectory(final String fileName) {
-    return new File(new File(fileName).getParentFile(), FileUtil.getNameWithoutExtension(new File(fileName)));
   }
 
   @Override

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
-  private static final String GROUP_ID = "statistics.platform.registry.application";
 
   @NotNull
   @Override
@@ -42,6 +41,6 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
   @NotNull
   @Override
   public String getGroupId() {
-    return GROUP_ID;
+    return "platform.registry.application";
   }
 }

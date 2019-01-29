@@ -201,7 +201,7 @@ public final class PythonSdkType extends SdkType {
     final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
             throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
@@ -414,7 +414,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @Nullable final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
@@ -422,11 +422,9 @@ public final class PythonSdkType extends SdkType {
       }
     }
     // TODO: Extract loading additional SDK data into a Python SDK provider
-    if (additional != null) {
-      final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
-      if (pipEnvData != null) {
-        return pipEnvData;
-      }
+    final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
+    if (pipEnvData != null) {
+      return pipEnvData;
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
   }
@@ -442,6 +440,7 @@ public final class PythonSdkType extends SdkType {
     return "Python SDK";
   }
 
+  @NotNull
   @Override
   public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
@@ -709,6 +708,13 @@ public final class PythonSdkType extends SdkType {
       // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
       final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
       if (header != null) {
+        // Binary module paths in skeleton headers of Mock SDK don't map to actual physical files.
+        // Fallback to the old heuristic for these stubs.
+        if (ApplicationManager.getApplication().isUnitTestMode() &&
+            Objects.equals(vFile.getParent(), PySdkUtil.findSkeletonsDir(pythonSdk))) {
+          return true;
+        }
+
         final String binaryPath = header.getBinaryFile();
         // XXX Assume that all pre-generated stubs belong to the interpreter's stdlib -- might change in future with PY-32229
         if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME) || binaryPath.equals(SkeletonVersionChecker.PREGENERATED)) {

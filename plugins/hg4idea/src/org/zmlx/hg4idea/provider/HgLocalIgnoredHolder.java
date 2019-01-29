@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<Hg
 
   @NotNull
   @Override
-  protected Set<VirtualFile> requestIgnored(@Nullable Collection<? extends FilePath> paths) {
+  protected Set<VirtualFile> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
     Set<VirtualFile> ignored = ContainerUtil.newHashSet();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
                      .getFiles(repository.getRoot(), paths != null ? ContainerUtil.newArrayList(paths) : null));

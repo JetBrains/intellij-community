@@ -16,30 +16,29 @@
 package com.intellij.project.model.impl.module;
 
 import com.intellij.project.model.impl.module.dependencies.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.*;
 
 /**
  * @author nik
  */
 public class JpsOrderEntryFactory {
-  public static JpsOrderEntry<?> createOrderEntry(JpsRootModel model, JpsDependencyElement dependencyElement) {
+  public static JpsOrderEntry<?> createOrderEntry(@NotNull JpsRootModel model, JpsDependencyElement dependencyElement) {
     if (dependencyElement instanceof JpsModuleSourceDependency) {
       return new JpsModuleSourceOrderEntry(model, (JpsModuleSourceDependency)dependencyElement);
     }
-    else if (dependencyElement instanceof JpsModuleDependency) {
+    if (dependencyElement instanceof JpsModuleDependency) {
       return new JpsModuleOrderEntry(model, (JpsModuleDependency)dependencyElement);
     }
-    else if (dependencyElement instanceof JpsLibraryDependency) {
+    if (dependencyElement instanceof JpsLibraryDependency) {
       return new JpsLibraryOrderEntry(model, (JpsLibraryDependency)dependencyElement);
     }
-    else if (dependencyElement instanceof JpsSdkDependency) {
+    if (dependencyElement instanceof JpsSdkDependency) {
       final JpsSdkDependency sdkDependency = (JpsSdkDependency)dependencyElement;
       if (sdkDependency.isInherited()) {
         return new JpsInheritedSdkOrderEntry(model, sdkDependency);
       }
-      else {
-        return new JpsModuleSdkOrderEntry(model, sdkDependency);
-      }
+      return new JpsModuleSdkOrderEntry(model, sdkDependency);
     }
     throw new UnsupportedOperationException();
   }

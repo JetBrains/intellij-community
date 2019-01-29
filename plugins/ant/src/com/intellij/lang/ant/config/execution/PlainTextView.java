@@ -154,7 +154,7 @@ public final class PlainTextView implements AntOutputView {
   private final class JUnitFilter implements Filter {
     @Override
     @Nullable
-    public Result applyFilter(String line, int entireLength) {
+    public Result applyFilter(@NotNull String line, int entireLength) {
       HyperlinkUtil.PlaceInfo placeInfo = HyperlinkUtil.parseJUnitMessage(myProject, line);
       if (placeInfo == null) {
         return null;
@@ -171,7 +171,7 @@ public final class PlainTextView implements AntOutputView {
 
   private final class AntMessageFilter implements Filter {
     @Override
-    public Result applyFilter(String line, int entireLength) {
+    public Result applyFilter(@NotNull String line, int entireLength) {
       int afterLineNumberIndex = line.indexOf(": "); // end of file_name_and_line_number sequence
       if (afterLineNumberIndex == -1) {
         return null;

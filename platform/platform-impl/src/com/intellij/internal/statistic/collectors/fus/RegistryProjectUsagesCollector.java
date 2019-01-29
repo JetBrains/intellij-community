@@ -10,8 +10,6 @@ import java.util.Set;
 
 
 public class RegistryProjectUsagesCollector extends ProjectUsagesCollector {
-  private static final String GROUP_ID = "statistics.platform.registry.project";
-
 
   @NotNull
   @Override
@@ -22,6 +20,6 @@ public class RegistryProjectUsagesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return GROUP_ID;
+    return "platform.registry.project";
   }
 }

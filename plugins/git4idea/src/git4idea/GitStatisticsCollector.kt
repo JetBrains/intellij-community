@@ -53,7 +53,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.semanticPresentation}")
 
   override fun getGroupId(): String {
-    return "statistics.vcs.git.settings"
+    return "vcs.git.settings"
   }
 
   private fun getRemoteServerType(remote: GitRemote): String? {

@@ -30,9 +30,7 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     def taskToClassesDirs = new LinkedHashMap<Test, Set<String>>()
     for (def task : project.tasks) {
       if (task instanceof Test) {
-        def test = (Test) task
-        def classFiles = getPaths(test.classpath)
-        taskToClassesDirs[test] = classFiles
+        taskToClassesDirs[task] = getClassesDirs(task)
       }
     }
     if (!project.hasProperty("sourceSets")) return Collections.emptyList()
@@ -67,6 +65,21 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
       testSourceMappings.add(defaultExternalTestSourceMapping)
     }
     return testSourceMappings
+  }
+
+  @SuppressWarnings("GrDeprecatedAPIUsage")
+  private static Set<String> getClassesDirs(Test test) {
+    def testClassesDirs = new LinkedHashSet()
+    if (test.hasProperty("testClassesDirs")) {
+      testClassesDirs.addAll(getPaths(test.testClassesDirs))
+    }
+    if (test.hasProperty("testClassesDir")) {
+      def testClassesDir = test.testClassesDir?.absolutePath
+      if (testClassesDir != null) {
+        testClassesDirs.add(testClassesDir)
+      }
+    }
+    return testClassesDirs
   }
 
   private static Set<String> getPaths(FileCollection files) {

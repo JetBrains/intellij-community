@@ -17,7 +17,7 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addIfDiffer
 public class VcsOptionsUsagesCollector extends ProjectUsagesCollector {
   @Override
   @NotNull
-  public String getGroupId() { return "statistics.vcs.options"; }
+  public String getGroupId() { return "vcs.options"; }
 
   @Override
   @NotNull

@@ -4,22 +4,17 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoException;
-import org.picocontainer.PicoIntrospectionException;
-import org.picocontainer.PicoVisitor;
 
 /**
  * @author Alexander Kireyev
  */
-public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
+public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   protected Object myComponentInstance;
-  protected final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
@@ -29,37 +24,24 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final LoadingOrder myOrder;
 
   public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable PicoContainer container,
                                    @Nullable PluginDescriptor pluginDescriptor,
                                    @Nullable String orderId,
                                    @NotNull LoadingOrder order) {
     myImplementationClassOrName = implementationClassName;
-    myContainer = container;
     myPluginDescriptor = pluginDescriptor;
 
     myOrderId = orderId;
     myOrder = order;
   }
 
-  @Override
-  public Object getComponentKey() {
-    return this;
-  }
-
-  @Override
-  public Class getComponentImplementation() {
-    return loadImplementationClass();
-  }
-
-  @Override
-  public Object getComponentInstance(@Nullable PicoContainer container) throws PicoException, ProcessCanceledException {
+  public Object getComponentInstance(@Nullable PicoContainer container) {
     Object instance = myComponentInstance;
     if (instance != null) {
       return instance;
     }
 
     try {
-      Class impl = loadImplementationClass();
+      Class<?> impl = getComponentImplementation();
 
       ExtensionPointImpl.CHECK_CANCELED.run();
 
@@ -90,19 +72,9 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   protected void initComponent(@NotNull Object instance) {
   }
 
-  @Override
-  public void verify(PicoContainer container) throws PicoIntrospectionException {
-    throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
-  }
-
-  @Override
-  public void accept(PicoVisitor visitor) {
-    throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
-  }
-
   @NotNull
-  public Object getExtension() {
-    return getComponentInstance(myContainer);
+  public Object getExtension(@Nullable PicoContainer container) {
+    return getComponentInstance(container);
   }
 
   @Override
@@ -121,7 +93,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @NotNull
-  private Class loadImplementationClass() {
+  public Class<?> getComponentImplementation() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       try {
@@ -135,11 +107,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
         throw new RuntimeException(e);
       }
     }
-    return (Class)implementationClassOrName;
+    return (Class<?>)implementationClassOrName;
   }
 
-  @Override
-  public String getAssignableToClassName() {
+  @NotNull
+  public final String getAssignableToClassName() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       return (String)implementationClassOrName;

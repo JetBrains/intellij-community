@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -25,19 +26,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 import static com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT;
-import static com.intellij.ide.actions.RecentLocationsAction.getBreadcrumbs;
 
 class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
 
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
+  @NotNull private final Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> myBreadcrumbsMap;
 
-  RecentLocationsRenderer(@NotNull Project project, @NotNull SpeedSearch speedSearch) {
+  RecentLocationsRenderer(@NotNull Project project,
+                          @NotNull SpeedSearch speedSearch,
+                          @NotNull Ref<Map<IdeDocumentHistoryImpl.PlaceInfo, String>> breadcrumbsMap) {
     myProject = project;
     mySpeedSearch = speedSearch;
+    myBreadcrumbsMap = breadcrumbsMap;
   }
 
   @Override
@@ -52,7 +57,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     Color defaultBackground = editor.getColorsScheme().getDefaultBackground();
-    String breadcrumbs = getBreadcrumbs(myProject, value.getInfo());
+    String breadcrumbs = myBreadcrumbsMap.get().get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     panel.add(createTitleComponent(list, mySpeedSearch, breadcrumbs, value.getInfo(), defaultBackground, selected));
 

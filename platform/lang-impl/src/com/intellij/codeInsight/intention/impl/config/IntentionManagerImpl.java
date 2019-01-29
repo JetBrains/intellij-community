@@ -13,19 +13,13 @@ import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.openapi.Disposable;
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,17 +27,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * @author dsl
- */
-public class IntentionManagerImpl extends IntentionManager {
+public final class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance(IntentionManagerImpl.class);
 
-  private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<IntentionAction> myActions;
   private final IntentionManagerSettings mySettings;
   private final AtomicReference<ScheduledFuture<?>> myScheduledFuture = new AtomicReference<>();
   private boolean myIntentionsDisabled;
@@ -51,78 +41,26 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      addIntentionExtensionPointListener();
+    List<IntentionAction> actions = new ArrayList<>();
+    actions.add(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
+    for (IntentionActionBean extension : IntentionManager.EP_INTENTION_ACTIONS.getExtensionList()) {
+      actions.add(new IntentionActionWrapper(extension, extension.getCategories()));
     }
-    else {
-      //todo temporary hack, need smarter logic:
-      // * on the first request, wait until all the initialization is finished
-      // * while waiting, check for ProcessCanceledException
-      myScheduledFuture.set(JobScheduler.getScheduler().schedule(() -> {
-        addIntentionExtensionPointListener();
-        myScheduledFuture.set(null);
-      }, 300, TimeUnit.MILLISECONDS));
-    }
-  }
-
-  private void addIntentionExtensionPointListener() {
-    EP_INTENTION_ACTIONS.getPoint(null).addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
-      @Override
-      public void extensionAdded(@NotNull final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        registerIntentionFromBean(extension);
-      }
-    });
-  }
-
-  private void registerIntentionFromBean(@NotNull final IntentionActionBean extension) {
-    final String[] categories = extension.getCategories();
-    final IntentionAction instance = createIntentionActionWrapper(extension, categories);
-    if (categories == null) {
-      addAction(instance);
-    }
-    else {
-      String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-      if (descriptionDirectoryName == null) {
-        registerIntentionAndMetaData(instance, categories);
-      }
-      else {
-        addAction(instance);
-        mySettings.registerIntentionMetaData(instance, categories, descriptionDirectoryName, extension.getMetadataClassLoader());
-      }
-    }
-  }
-
-  private static IntentionAction createIntentionActionWrapper(@NotNull IntentionActionBean intentionActionBean, String[] categories) {
-    return new IntentionActionWrapper(intentionActionBean, categories);
+    myActions = ContainerUtil.createLockFreeCopyOnWriteList(actions);
   }
 
   @Override
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category) {
-    registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
-  }
+    addAction(action);
 
-  @NotNull
-  private static String getDescriptionDirectoryName(final IntentionAction action) {
+    String descriptionDirectoryName;
     if (action instanceof IntentionActionWrapper) {
-      final IntentionActionWrapper wrapper = (IntentionActionWrapper)action;
-      return getDescriptionDirectoryName(wrapper.getImplementationClassName());
+      descriptionDirectoryName = ((IntentionActionWrapper)action).getDescriptionDirectoryName();
     }
     else {
-      return getDescriptionDirectoryName(action.getClass().getName());
+      descriptionDirectoryName = IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
     }
-  }
-
-  private static String getDescriptionDirectoryName(final String fqn) {
-    return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
-  }
-
-  public void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                           @NotNull String[] categories,
-                                           @NotNull @NonNls String descriptionDirectoryName) {
-    addAction(action);
-    mySettings.registerIntentionMetaData(action, categories, descriptionDirectoryName);
+    mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
   @Override

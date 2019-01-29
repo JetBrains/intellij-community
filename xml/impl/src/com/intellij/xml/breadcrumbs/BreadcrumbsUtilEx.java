@@ -2,7 +2,6 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,16 +20,14 @@ public class BreadcrumbsUtilEx {
   }
 
   @Nullable
-  static BreadcrumbsProvider findProvider(@NotNull Editor editor, VirtualFile file) {
-    Project project = editor.getProject();
-    return project == null ? null : findProvider(editor, findViewProvider(file, project));
+  static BreadcrumbsProvider findProvider(VirtualFile file, @Nullable Project project, @Nullable Boolean forcedShown) {
+    return project == null ? null : findProvider(findViewProvider(file, project), forcedShown);
   }
 
   @Nullable
-  public static BreadcrumbsProvider findProvider(@NotNull Editor editor, @Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findProvider(@Nullable FileViewProvider viewProvider, @Nullable Boolean forceShown) {
     if (viewProvider == null) return null;
 
-    Boolean forceShown = BreadcrumbsForceShownSettings.getForcedShown(editor);
     if (forceShown == null) {
       return findProvider(true, viewProvider);
     }

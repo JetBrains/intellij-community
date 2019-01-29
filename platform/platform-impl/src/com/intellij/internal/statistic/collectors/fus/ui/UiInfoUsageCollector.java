@@ -74,7 +74,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.info.features";
+    return "ui.info.features";
   }
 
   private static void add(Set<UsageDescriptor> set, String key, int value) {

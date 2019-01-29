@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -48,7 +49,7 @@ public class HgInitDialog extends DialogWrapper {
 
     myFileDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (HgUtil.isHgRoot(files[0])) {
           throw new ConfigurationException(HgVcsMessages.message("hg4idea.init.this.is.hg.root", files[0].getPresentableUrl()));
         }

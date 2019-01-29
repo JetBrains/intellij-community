@@ -16,7 +16,7 @@ final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
 
   @Override
   @NotNull
-  ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
+  protected ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor) {
     // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
     return doCreateAdapter(getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor, getArea() != null);
   }

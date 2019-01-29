@@ -21,7 +21,7 @@ import java.io.File
 
 fun openProjectWithSdk(projectPath: String,
                        moduleTypeId: String,
-                       sdkProducer: (Project, Module) -> Sdk?): Pair<Project?, Sdk?> {
+                       sdkProducer: (Project, Module) -> Sdk?): Pair<Project, Sdk?> {
   println("Opening project at $projectPath")
 
   val project: Project? = ProjectManager.getInstance().loadAndOpenProject(projectPath)

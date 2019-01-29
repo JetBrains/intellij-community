@@ -151,7 +151,7 @@ public class FindPopupDirectoryChooser extends JPanel {
 
   private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(FindBundle.message("find.recursively.hint"), null, AllIcons.Actions.ShowAsTree);
     }
 
     @Override

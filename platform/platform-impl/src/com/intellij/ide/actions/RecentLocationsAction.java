@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.PlaceInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -46,6 +48,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,10 +62,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONENT_KEY;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
@@ -96,15 +98,18 @@ public class RecentLocationsAction extends AnAction {
     final Ref<List<RecentLocationItem>> navigationPlaces = Ref.create();
     Collection<Editor> editorsToRelease = ContainerUtil.newArrayList();
 
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(
-      cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease)));
+    List<RecentLocationItem> items = cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease);
+    Ref<Map<PlaceInfo, String>> breadcrumbsMap = Ref.create(collectBreadcrumbs(project, items));
+
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(items));
     final JScrollPane scrollPane = ScrollPaneFactory
       .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     ListWithFilter<RecentLocationItem> listWithFilter =
-      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(project), true);
+      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(breadcrumbsMap), true);
+
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
     final SpeedSearch speedSearch = listWithFilter.getSpeedSearch();
@@ -117,7 +122,7 @@ public class RecentLocationsAction extends AnAction {
         }
       });
 
-    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch);
+    RecentLocationsRenderer renderer = new RecentLocationsRenderer(project, speedSearch, breadcrumbsMap);
     list.setCellRenderer(renderer);
     list.setEmptyText(IdeBundle.message("recent.locations.popup.empty.text"));
     list.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
@@ -150,7 +155,7 @@ public class RecentLocationsAction extends AnAction {
     Disposer.register(popup, () -> {
       Dimension contentSize = popup.getContent().getSize();
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
-      //scroll pane
+      //scroll scrollPane
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
     });
 
@@ -192,7 +197,7 @@ public class RecentLocationsAction extends AnAction {
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
       @Override
       public void showChangedLocation(boolean state) {
-        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces);
+        updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
 
         updateTitleText(title, state);
 
@@ -233,23 +238,45 @@ public class RecentLocationsAction extends AnAction {
     return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
   }
 
+  @NotNull
+  private static Map<PlaceInfo, String> collectBreadcrumbs(@NotNull Project project, @NotNull List<RecentLocationItem> items) {
+    return items.stream().map(RecentLocationItem::getInfo).collect(Collectors.toMap(id -> id, info -> getBreadcrumbs(project, info)));
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
   }
 
   @NotNull
-  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo info) {
-    Collection<Iterable<? extends Crumb>> breadcrumbs =
-      RecentLocationManager.getInstance(project).getBreadcrumbs(info, showChanged(project));
+  static String getBreadcrumbs(@NotNull Project project, @NotNull PlaceInfo placeInfo) {
+    RangeMarker rangeMarker = RecentLocationManager.getInstance(project).getPositionOffset(placeInfo, showChanged(project));
+    String fileName = placeInfo.getFile().getName();
+    if (rangeMarker == null) {
+      return fileName;
+    }
+
+    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.getFile());
+    Collection<Iterable<? extends Crumb>> breadcrumbs = ContainerUtil.emptyList();
+    if (collector != null) {
+      CollectConsumer<Iterable<? extends Crumb>> consumer = new CollectConsumer<>();
+      collector.updateCrumbs(placeInfo.getFile(),
+                             rangeMarker.getDocument(),
+                             rangeMarker.getStartOffset(),
+                             new ProgressIndicatorBase(),
+                             consumer,
+                             true);
+      breadcrumbs = consumer.getResult();
+    }
+
     if (breadcrumbs.isEmpty()) {
-      return info.getFile().getName();
+      return fileName;
     }
 
     Iterable<? extends Crumb> crumbs = ContainerUtil.getFirstItem(breadcrumbs);
 
     if (crumbs == null) {
-      return info.getFile().getName();
+      return fileName;
     }
 
     String breadcrumbsText = StringUtil.join(ContainerUtil.map(crumbs, crumb -> crumb.getText()), " > ");
@@ -294,11 +321,13 @@ public class RecentLocationsAction extends AnAction {
                                   @NotNull Collection<Editor> editorsToRelease,
                                   boolean changed,
                                   @NotNull Ref<List<RecentLocationItem>> changedPlaces,
-                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces) {
+                                  @NotNull Ref<List<RecentLocationItem>> navigationPlaces,
+                                  @NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     NameFilteringListModel<RecentLocationItem> model = (NameFilteringListModel<RecentLocationItem>)listWithFilter.getList().getModel();
     DefaultListModel<RecentLocationItem> originalModel = (DefaultListModel<RecentLocationItem>)model.getOriginalModel();
 
     List<RecentLocationItem> items = cacheAndGetItems(project, changed, changedPlaces, navigationPlaces, editorsToRelease);
+    breadcrumbsMap.set(collectBreadcrumbs(project, items));
 
     originalModel.removeAllElements();
     items.forEach(item -> originalModel.addElement(item));
@@ -368,9 +397,9 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static Function<RecentLocationItem, String> getNamer(@NotNull Project project) {
+  private static Function<RecentLocationItem, String> getNamer(@NotNull Ref<Map<PlaceInfo, String>> breadcrumbsMap) {
     return value -> {
-      String breadcrumb = getBreadcrumbs(project, value.getInfo());
+      String breadcrumb = breadcrumbsMap.get().get(value.getInfo());
       EditorEx editor = value.getEditor();
 
       return breadcrumb + " " + value.getInfo().getFile().getName() + " " + editor.getDocument().getText();
