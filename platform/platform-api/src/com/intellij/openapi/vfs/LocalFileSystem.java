@@ -79,7 +79,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     }
   }
 
-  public void removeWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
+  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     if (!watchRequests.isEmpty()) {
       replaceWatchedRoots(watchRequests, null, null);
     }
@@ -93,8 +93,12 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
+  /**
+   * Stops watching given watch requests and starts watching new paths.
+   * May do nothing and return the same set of requests when it contains exactly the same paths.
+   */
   @NotNull
-  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
+  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                         @Nullable Collection<String> recursiveRoots,
                                                         @Nullable Collection<String> flatRoots);
 

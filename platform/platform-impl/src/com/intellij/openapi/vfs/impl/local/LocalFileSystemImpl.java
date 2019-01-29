@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -263,11 +264,20 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
     flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
+
+    Set<String> recursiveWatches = new HashSet<>(), flatWatches = new HashSet<>();
+    for (LocalFileSystem.WatchRequest watch : watchRequests) {
+      (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
+    }
+    if (recursiveWatches.equals(recursiveRoots) && flatWatches.equals(flatRoots)) {
+      if (LOG.isDebugEnabled()) LOG.debug("same requests: " + recursiveRoots + " / " + flatRoots);
+      return watchRequests instanceof Set ? (Set<WatchRequest>)watchRequests : new HashSet<>(watchRequests);
+    }
 
     Set<WatchRequest> result = new HashSet<>();
     synchronized (myLock) {
