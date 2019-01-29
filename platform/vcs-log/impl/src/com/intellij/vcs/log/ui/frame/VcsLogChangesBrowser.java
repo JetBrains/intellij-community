@@ -5,6 +5,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -20,7 +21,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,8 +59,9 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
+  @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -271,6 +272,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
       AbstractVcs vcs = getVcs();
       if (vcs == null) return null;
       return vcs.getKeyInstanceMethod();
+    }
+    else if (HAS_AFFECTED_FILES.is(dataId)) {
+      return myAffectedPaths != null;
     }
     return super.getData(dataId);
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
@@ -24,8 +25,13 @@ public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
   public void update(@NotNull AnActionEvent e) {
     if (!Registry.is("vcs.folder.history.in.log")) {
       e.getPresentation().setEnabledAndVisible(false);
-    } else {
-      super.update(e);
+      return;
     }
+    Boolean hasAffectedFiles = e.getData(VcsLogChangesBrowser.HAS_AFFECTED_FILES);
+    if (hasAffectedFiles == null || !hasAffectedFiles) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    super.update(e);
   }
 }
