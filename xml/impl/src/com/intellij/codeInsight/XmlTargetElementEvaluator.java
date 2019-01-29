@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -32,12 +31,6 @@ public class XmlTargetElementEvaluator extends TargetElementEvaluatorEx2 {
     else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
       return TargetElementUtil.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
     }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
     return null;
   }
 }
