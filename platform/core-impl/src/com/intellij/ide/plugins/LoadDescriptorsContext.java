@@ -7,15 +7,20 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 final class LoadDescriptorsContext implements AutoCloseable {
+  @NotNull
   private final ExecutorService myExecutorService;
   private final PluginLoadProgressManager myPluginLoadProgressManager;
 
@@ -32,25 +37,18 @@ final class LoadDescriptorsContext implements AutoCloseable {
       myInterners = Collections.newSetFromMap(ContainerUtil.newConcurrentMap(maxThreads));
     }
     else {
-      myExecutorService = null;
+      myExecutorService = new SameThreadExecutorService();
       myInterners = new SmartList<>();
     }
 
     myThreadLocalXmlFactory = ThreadLocal.withInitial(() -> {
-      Interner<String> interner = new Interner<String>(Arrays.asList(PluginXmlFactory.CLASS_NAMES)) {
-        @NotNull
-        @Override
-        public String intern(@NotNull String name) {
-          // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-          return name.length() < 64 ? super.intern(name) : name;
-        }
-      };
-      myInterners.add(interner);
-      return new PluginXmlFactory(interner);
+      PluginXmlFactory factory = new PluginXmlFactory();
+      myInterners.add(factory.stringInterner);
+      return factory;
     });
   }
 
-  @Nullable
+  @NotNull
   ExecutorService getExecutorService() {
     return myExecutorService;
   }
@@ -67,7 +65,7 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
   @Override
   public void close() {
-    if (myExecutorService == null) {
+    if (myExecutorService instanceof SameThreadExecutorService) {
       myThreadLocalXmlFactory.remove();
       return;
     }
@@ -93,15 +91,14 @@ final class LoadDescriptorsContext implements AutoCloseable {
       "qualifiedName",
     };
 
-    private final Interner<String> stringInterner;
-
-    PluginXmlFactory(@NotNull Interner<String> stringInterner) {
-      this.stringInterner = stringInterner;
-
-      for (int i = 0; i < CLASS_NAMES.length; i++) {
-        CLASS_NAMES[i] = stringInterner.intern(CLASS_NAMES[i]);
+    private final Interner<String> stringInterner = new Interner<String>(Arrays.asList(CLASS_NAMES)) {
+      @NotNull
+      @Override
+      public String intern(@NotNull String name) {
+        // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+        return name.length() < 64 ? super.intern(name) : name;
       }
-    }
+    };
 
     @NotNull
     @Override
@@ -130,6 +127,44 @@ final class LoadDescriptorsContext implements AutoCloseable {
       else {
         return super.text(stringInterner.intern(text), parentElement);
       }
+    }
+  }
+
+  // don't want to use Guava (MoreExecutors.newDirectExecutorService()) here
+  private static final class SameThreadExecutorService extends AbstractExecutorService {
+    private volatile boolean isTerminated;
+
+    @Override
+    public void shutdown() {
+      isTerminated = true;
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return isTerminated;
+    }
+
+    @Override
+    public boolean isTerminated() {
+      return isTerminated;
+    }
+
+    @Override
+    public boolean awaitTermination(long theTimeout, @NotNull TimeUnit theUnit) {
+      shutdown();
+      return true;
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    @Override
+    public List<Runnable> shutdownNow() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+      command.run();
     }
   }
 }

@@ -3,8 +3,8 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.pico.AssignableToComponentAdapter;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -19,7 +19,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   protected Object myComponentInstance;
-  private final PicoContainer myContainer;
+  protected final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
@@ -52,7 +52,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
+  public Object getComponentInstance(@Nullable PicoContainer container) throws PicoException, ProcessCanceledException {
     Object instance = myComponentInstance;
     if (instance != null) {
       return instance;
@@ -63,7 +63,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
       ExtensionPointImpl.CHECK_CANCELED.run();
 
-      instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
+      instance = createComponent(container, impl);
       initComponent(instance);
       myComponentInstance = instance;
     }
@@ -82,6 +82,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return instance;
   }
 
+  @NotNull
+  protected Object createComponent(@Nullable PicoContainer container, @NotNull Class<?> clazz) {
+    return ReflectionUtil.newInstance(clazz);
+  }
+
   protected void initComponent(@NotNull Object instance) {
   }
 
@@ -95,6 +100,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
   }
 
+  @NotNull
   public Object getExtension() {
     return getComponentInstance(myContainer);
   }
@@ -109,11 +115,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myOrderId;
   }
 
-  public PluginId getPluginName() {
-    return myPluginDescriptor.getPluginId();
-  }
-
-  public PluginDescriptor getPluginDescriptor() {
+  @Nullable
+  public final PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 

@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variable in method 'getFoo1'" "true"
 class Test {
   private int my<caret>Foo;
 

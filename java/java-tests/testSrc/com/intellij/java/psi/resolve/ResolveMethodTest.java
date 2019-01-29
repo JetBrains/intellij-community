@@ -273,6 +273,11 @@ public class ResolveMethodTest extends LightResolveTestCase {
     assertEquals("PublicCloneable", method.getContainingClass().getName());
   }
 
+  public void testMultipleJavadocReference() {
+    PsiJavaReference ref = (PsiJavaReference)findReferenceAtCaret("method/" + getTestName(false) + ".java");
+    assertSize(3, ref.multiResolve(false));
+  }
+
   public void testMultipleInheritancePathsToMethod() {
     PsiReference ref = findReferenceAtCaret("method/" + getTestName(false) + ".java");
 

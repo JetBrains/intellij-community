@@ -11,11 +11,20 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
+      <library name="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.sonatype.nexus:nexus-indexer-artifact:1.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/nexus/nexus-indexer-artifact/1.0.1/nexus-indexer-artifact-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
       <library name="org.sonatype.nexus:nexus-indexer:3.0.4" type="repository">
-        <properties maven-id="org.sonatype.nexus:nexus-indexer:3.0.4" />
+        <properties include-transitive-deps="false" maven-id="org.sonatype.nexus:nexus-indexer:3.0.4" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/nexus/nexus-indexer/3.0.4/nexus-indexer-3.0.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/nexus/nexus-indexer-artifact/1.0.1/nexus-indexer-artifact-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

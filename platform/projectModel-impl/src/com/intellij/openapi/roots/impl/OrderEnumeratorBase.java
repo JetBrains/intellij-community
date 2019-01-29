@@ -47,7 +47,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   boolean myRecursively;
   boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
-  private Condition<OrderEntry> myCondition;
+  private Condition<? super OrderEntry> myCondition;
   RootModelProvider myModulesProvider;
   private final OrderRootsCache myCache;
 
@@ -69,54 +69,63 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return customHandlers == null ? Collections.emptyList() : customHandlers;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator productionOnly() {
     myProductionOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator compileOnly() {
     myCompileOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator runtimeOnly() {
     myRuntimeOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator withoutSdk() {
     myWithoutJdk = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator withoutLibraries() {
     myWithoutLibraries = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator withoutDepModules() {
     myWithoutDepModules = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator withoutModuleSourceEntries() {
     myWithoutModuleSourceEntries = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator recursively() {
     myRecursively = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator exportedOnly() {
     if (myRecursively) {
@@ -128,33 +137,39 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return this;
   }
 
+  @NotNull
   @Override
-  public OrderEnumerator satisfying(Condition<OrderEntry> condition) {
+  public OrderEnumerator satisfying(@NotNull Condition<? super OrderEntry> condition) {
     myCondition = condition;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderEnumerator using(@NotNull RootModelProvider provider) {
     myModulesProvider = provider;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator classes() {
     return new OrderRootsEnumeratorImpl(this, OrderRootType.CLASSES);
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator sources() {
     return new OrderRootsEnumeratorImpl(this, OrderRootType.SOURCES);
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator roots(@NotNull OrderRootType rootType) {
     return new OrderRootsEnumeratorImpl(this, rootType);
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator roots(@NotNull NotNullFunction<? super OrderEntry, ? extends OrderRootType> rootTypeProvider) {
     return new OrderRootsEnumeratorImpl(this, rootTypeProvider);
@@ -325,14 +340,14 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   }
 
   @Override
-  public void forEach(@NotNull final Processor<OrderEntry> processor) {
+  public void forEach(@NotNull final Processor<? super OrderEntry> processor) {
     forEach((entry, handlers) -> processor.process(entry));
   }
 
   protected abstract void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor);
 
   @Override
-  public void forEachLibrary(@NotNull final Processor<Library> processor) {
+  public void forEachLibrary(@NotNull final Processor<? super Library> processor) {
     forEach((entry, handlers) -> {
       if (entry instanceof LibraryOrderEntry) {
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
@@ -345,7 +360,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   }
 
   @Override
-  public void forEachModule(@NotNull final Processor<Module> processor) {
+  public void forEachModule(@NotNull final Processor<? super Module> processor) {
     forEach((orderEntry, customHandlers) -> {
       if (myRecursively && orderEntry instanceof ModuleSourceOrderEntry) {
         final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
@@ -459,7 +474,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     private R myValue;
     private final RootPolicy<R> myPolicy;
 
-    private OrderEntryProcessor(RootPolicy<R> policy, R initialValue) {
+    private OrderEntryProcessor(@NotNull RootPolicy<R> policy, R initialValue) {
       myPolicy = policy;
       myValue = initialValue;
     }

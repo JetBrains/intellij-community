@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
@@ -68,15 +70,19 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     if (candidates.isEmpty()) return;
     final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
 
+    FieldLoop:
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
-        if (ReferencesSearch.search(field, new LocalSearchScope(aClass)).anyMatch(reference -> {
+        final Query<PsiReference> references = ReferencesSearch.search(field, new LocalSearchScope(aClass));
+        final Map<PsiCodeBlock, Collection<PsiReference>> refs = new HashMap<>();
+        for (PsiReference reference : references.findAll()) {
           final PsiElement element = reference.getElement();
-          if (!(element instanceof PsiReferenceExpression)) return false;
+          if (!(element instanceof PsiReferenceExpression)) break;
           final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
-          return qualifier != null && (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null);
-        })) {
-          continue;
+          if (qualifier != null && (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null) ||
+              !groupReferenceByCodeBlocks(refs, reference)) {
+            continue FieldLoop;
+          }
         }
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
         final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
@@ -88,7 +94,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
           fixes.add(quickFix);
           return true;
         });
-        final LocalQuickFix fix = createFix();
+        final LocalQuickFix fix = createFix(refs);
         if (fix != null) {
           fixes.add(fix);
         }
@@ -97,8 +103,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  protected LocalQuickFix createFix() {
-    return new ConvertFieldToLocalQuickFix();
+  protected LocalQuickFix createFix(@NotNull Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+    return new ConvertFieldToLocalQuickFix(refs);
   }
 
   @Nullable
@@ -118,6 +124,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
+
         if (method.isConstructor()) {
           final PsiCodeBlock body = method.getBody();
           if (body != null) {
@@ -279,6 +286,50 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     return false;
   }
 
+  private static boolean groupByCodeBlocks(final Collection<? extends PsiReference> allReferences,
+                                           final Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+    for (PsiReference psiReference : allReferences) {
+      if (!groupReferenceByCodeBlocks(refs, psiReference)) return false;
+    }
+    return true;
+  }
+
+  private static boolean groupReferenceByCodeBlocks(Map<PsiCodeBlock, Collection<PsiReference>> refs, PsiReference psiReference) {
+    final PsiElement element = psiReference.getElement();
+    final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
+    if (block == null) {
+      return false;
+    }
+
+    Collection<PsiReference> references = refs.get(block);
+    if (references == null) {
+      references = new ArrayList<>();
+      if (findExistentBlock(refs, psiReference, block, references)) return true;
+      refs.put(block, references);
+    }
+    references.add(psiReference);
+    return true;
+  }
+
+  private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
+                                           PsiReference psiReference,
+                                           PsiCodeBlock block,
+                                           Collection<? super PsiReference> references) {
+    for (Iterator<PsiCodeBlock> iterator = refs.keySet().iterator(); iterator.hasNext(); ) {
+      PsiCodeBlock codeBlock = iterator.next();
+      if (PsiTreeUtil.isAncestor(codeBlock, block, false)) {
+        refs.get(codeBlock).add(psiReference);
+        return true;
+      }
+      else if (PsiTreeUtil.isAncestor(block, codeBlock, false)) {
+        references.addAll(refs.get(codeBlock));
+        iterator.remove();
+        break;
+      }
+    }
+    return false;
+  }
+
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -323,6 +374,32 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
+    private final String myName;
+
+    private ConvertFieldToLocalQuickFix(Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+      Set<PsiMethod> methods = refs.keySet().stream()
+        .filter(block -> block.getParent() instanceof PsiMethod)
+        .map(block -> (PsiMethod)block.getParent())
+        .collect(Collectors.toSet());
+
+      myName = determineName(methods, refs);
+    }
+
+    @NotNull
+    private String determineName(Set<PsiMethod> methods, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+      if (methods.isEmpty() || methods.size() != refs.size()) return getFamilyName();
+      if (methods.size() > 1) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.multiple.methods", methods.size());
+
+      final String methodName = methods.toArray(PsiMethod.EMPTY_ARRAY)[0].getName();
+      return InspectionsBundle.message("inspection.field.can.be.local.quickfix.one.method", methodName);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
     @NotNull
     @Override
     protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
@@ -341,44 +418,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
         ApplicationManager.getApplication().runWriteAction(() -> deleteSourceVariable(project, variable, lastDeclaration));
       }
       return newDeclarations;
-    }
-
-    private static boolean groupByCodeBlocks(final Collection<? extends PsiReference> allReferences, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
-      for (PsiReference psiReference : allReferences) {
-        final PsiElement element = psiReference.getElement();
-        final PsiCodeBlock block = PsiTreeUtil.getTopmostParentOfType(element, PsiCodeBlock.class);
-        if (block == null) {
-          return false;
-        }
-
-        Collection<PsiReference> references = refs.get(block);
-        if (references == null) {
-          references = new ArrayList<>();
-          if (findExistentBlock(refs, psiReference, block, references)) continue;
-          refs.put(block, references);
-        }
-        references.add(psiReference);
-      }
-      return true;
-    }
-
-    private static boolean findExistentBlock(Map<PsiCodeBlock, Collection<PsiReference>> refs,
-                                             PsiReference psiReference,
-                                             PsiCodeBlock block,
-                                             Collection<? super PsiReference> references) {
-      for (Iterator<PsiCodeBlock> iterator = refs.keySet().iterator(); iterator.hasNext(); ) {
-        PsiCodeBlock codeBlock = iterator.next();
-        if (PsiTreeUtil.isAncestor(codeBlock, block, false)) {
-          refs.get(codeBlock).add(psiReference);
-          return true;
-        }
-        else if (PsiTreeUtil.isAncestor(block, codeBlock, false)) {
-          references.addAll(refs.get(codeBlock));
-          iterator.remove();
-          break;
-        }
-      }
-      return false;
     }
 
     @Override

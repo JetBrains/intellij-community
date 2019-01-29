@@ -505,7 +505,14 @@ public class AbstractPopup implements JBPopup {
         return relativePointWithDominantRectangle(layeredPane, dominantArea);
       }
     }
-    RelativePoint location = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    RelativePoint location;
+    Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (contextComponent == myComponent) {
+      location = new RelativePoint(myComponent, new Point());
+    }
+    else {
+      location = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    }
     if (myLocateWithinScreen) {
       Point screenPoint = location.getScreenPoint();
       Rectangle rectangle = new Rectangle(screenPoint, getSizeForPositioning());

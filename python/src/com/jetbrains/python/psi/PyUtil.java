@@ -347,10 +347,12 @@ public class PyUtil {
       if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
         return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
       }
-      final PyExpression rhs = binaryExpression.getRightExpression();
-      return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
-             binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
-             rhs != null && rhs.getText().contains("__main__");
+      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression) {
+        final PyStringLiteralExpression rhs = (PyStringLiteralExpression) binaryExpression.getRightExpression();
+        return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
+               binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
+               rhs.getStringValue().equals("__main__");
+      }
     }
     return false;
   }

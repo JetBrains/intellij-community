@@ -102,6 +102,7 @@ public abstract class FacetTestCase extends PsiTestCase {
     commit(model);
   }
 
+  @NotNull
   @Override
   protected Module loadModule(@NotNull String relativePath) {
     return super.loadModule(PathManagerEx.getTestDataPath() + "/" + relativePath);

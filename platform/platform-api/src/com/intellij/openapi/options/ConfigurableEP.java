@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.AbstractBundle;
@@ -178,7 +178,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   public boolean nonDefaultProject;
 
   public boolean isAvailable() {
-    return !nonDefaultProject || !(myProject != null  && myProject.isDefault());
+    return !nonDefaultProject || !(myProject != null && myProject.isDefault());
   }
 
   /**
@@ -216,7 +216,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final AtomicNotNullLazyValue<ObjectProducer> myProducer;
+  private final AtomicNotNullLazyValue<ObjectProducer> myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
   private PicoContainer myPicoContainer;
   private Project myProject;
 
@@ -225,14 +225,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public ConfigurableEP(Project project) {
+  public ConfigurableEP(@NotNull Project project) {
     this(project.getPicoContainer(), project);
   }
 
-  protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
+  protected ConfigurableEP(@NotNull PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
-    myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
   }
 
   @NotNull

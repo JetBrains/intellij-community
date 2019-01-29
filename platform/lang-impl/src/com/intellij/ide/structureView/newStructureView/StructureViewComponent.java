@@ -157,10 +157,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     final ModelListener modelListener = () -> queueUpdate();
     myTreeModelWrapper.addModelListener(modelListener);
 
-    Disposer.register(this, () -> {
-      storeState();
-      myTreeModelWrapper.removeModelListener(modelListener);
-    });
+    Disposer.register(this, () -> myTreeModelWrapper.removeModelListener(modelListener));
 
     setContent(ScrollPaneFactory.createScrollPane(myTree));
 

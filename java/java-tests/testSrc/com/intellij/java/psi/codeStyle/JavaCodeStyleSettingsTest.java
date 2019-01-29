@@ -82,6 +82,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     javaSettings.FIELD_NAME_PREFIX = "m_";
     javaSettings.STATIC_FIELD_NAME_SUFFIX = "_s";
@@ -132,8 +133,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
-    //noinspection unchecked
-    accessor.set(value);
+    accessor.setFromString(value);
   }
 
   private static void setList(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull List<String> value) {

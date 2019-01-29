@@ -85,7 +85,7 @@ public class InspectionValidatorWrapper implements Validator {
   private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
                                                             @NotNull LocalInspectionTool inspectionTool) {
     InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
-    GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
+    GlobalInspectionContext context = inspectionManager.createNewGlobalContext();
     return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
   }
 

@@ -122,7 +122,10 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if (BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
-          LOG.debug("displayability changed");
+          boolean visible = myToolWindow.isVisible();
+          LOG.debug("displayability changed: " + visible);
+          if (!visible) return; // do nothing on hide
+          loggedRun("update file", StructureViewWrapperImpl.this::checkUpdate);
           scheduleRebuild();
         }
       }

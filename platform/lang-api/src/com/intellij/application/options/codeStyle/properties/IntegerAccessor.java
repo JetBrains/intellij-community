@@ -2,28 +2,35 @@
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public class IntegerAccessor extends ScalarPropertyAccessor<Integer> {
+public class IntegerAccessor extends CodeStylePropertyAccessor<Integer,Integer> {
   IntegerAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
 
+  @Nullable
   @Override
-  protected Integer fromExternal(@NotNull String str) {
+  protected Integer parseString(@NotNull String string) {
     try {
-      return Integer.parseInt(str);
+      return Integer.parseInt(string);
     }
     catch (NumberFormatException nfe) {
       return null;
     }
   }
 
+  @Override
+  protected Integer fromExternal(@NotNull Integer i) {
+    return i;
+  }
+
   @NotNull
   @Override
-  protected String toExternal(@NotNull Integer value) {
-    return value.toString();
+  protected Integer toExternal(@NotNull Integer value) {
+    return value;
   }
 
   @Override

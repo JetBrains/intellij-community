@@ -308,7 +308,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {
     final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
-    return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
+    return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext();
   }
 
   private class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {

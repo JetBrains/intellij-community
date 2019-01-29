@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.psi.*
@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -26,10 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType
 
 class DefaultDelegatesToProvider : GrDelegatesToProvider {
-
-  override fun getDelegatesToInfo(closableBlock: GrClosableBlock): DelegatesToInfo? {
-    return getDelegatesToInfo(closableBlock as GrFunctionalExpression)
-  }
 
   override fun getDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
     val call = getContainingCall(expression) ?: return null

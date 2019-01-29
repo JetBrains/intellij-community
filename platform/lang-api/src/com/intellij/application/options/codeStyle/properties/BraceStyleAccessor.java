@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 
-class BraceStyleAccessor extends ScalarPropertyAccessor<Integer> implements CodeStyleChoiceList {
+class BraceStyleAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
   private final static BidirectionalMap<Integer, String> BRACE_STYLE_MAP = new BidirectionalMap<>();
 
   public static final String VALUE_END_OF_LINE = "end_of_line";

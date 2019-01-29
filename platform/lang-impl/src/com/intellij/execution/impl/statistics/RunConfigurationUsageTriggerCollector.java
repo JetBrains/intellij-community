@@ -4,8 +4,7 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RunConfigurationUsageTriggerCollector {
   private static final String UNKNOWN = "UNKNOWN";
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("run.configuration.exec",1);
+  private static final String GROUP = "run.configuration.exec";
 
   public static void trigger(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull Executor executor) {
     final FeatureUsageData data = new FeatureUsageData().addProject(project);
@@ -23,7 +22,7 @@ public class RunConfigurationUsageTriggerCollector {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
       data.addData("executor", info.isSafeToReport() ? executor.getId() : UNKNOWN);
 
-      FUSCounterUsageLogger.logEvent(project, GROUP, key, data);
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, key, data);
     }
   }
 }

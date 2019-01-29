@@ -60,6 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
+import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -267,6 +269,19 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (intellijSettings != null) {
       ideModule.createChild(ProjectKeys.CONFIGURATION,
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
+    }
+
+    ProjectImportAction.AllModels models = resolverCtx.getModels();
+    ExternalTestsModel externalTestsModel = models.getExtraProject(gradleModule, ExternalTestsModel.class);
+    if (externalTestsModel != null) {
+      for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {
+        String testName = testSourceMapping.getTestName();
+        String testTaskName = testSourceMapping.getTestTaskPath();
+        String cleanTestTaskName = testSourceMapping.getCleanTestTaskPath();
+        Set<String> sourceFolders = testSourceMapping.getSourceFolders();
+        TestData testData = new TestData(GradleConstants.SYSTEM_ID, testName, testTaskName, cleanTestTaskName, sourceFolders);
+        ideModule.createChild(ProjectKeys.TEST, testData);
+      }
     }
   }
 
@@ -672,6 +687,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     result.add(BuildScriptClasspathModel.class);
     result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
+    result.add(ExternalTestsModel.class);
     result.add(IntelliJProjectSettings.class);
     result.add(IntelliJSettings.class);
     return result;

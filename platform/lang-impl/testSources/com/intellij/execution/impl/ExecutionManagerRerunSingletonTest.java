@@ -14,7 +14,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ExecutionManagerTest extends LightPlatformTestCase {
+public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
 
   private boolean myRestartRequiresConfirmation;
 

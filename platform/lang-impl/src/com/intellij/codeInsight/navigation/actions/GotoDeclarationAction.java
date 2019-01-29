@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
@@ -280,7 +281,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (result != null && result.length > 0) {
         for (PsiElement element : result) {
           if (element == null) {
-            LOG.error("Null target element is returned by " + handler.getClass().getName());
+            LOG.error(PluginManagerCore.createPluginException("Null target element is returned by 'getGotoDeclarationTargets' in " + handler.getClass().getName(), null, handler.getClass()));
             return null;
           }
         }

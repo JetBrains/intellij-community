@@ -4,12 +4,9 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,10 +82,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   @Nullable
   public String getSDKVersion(@NotNull final Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      final String path = LibrariesUtil.getGroovyHomePath(module);
-      return CachedValueProvider.Result.create(path == null ? null : getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
-    });
+    return GroovyConfigUtilsKt.getSdkVersion(module);
   }
 
   public boolean isVersionAtLeast(PsiElement psiElement, String version) {

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -71,16 +72,19 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
 
   @Nullable
   @Override
-  public TextRange[] pasteFromClipboard(@NotNull Editor editor) {
+  public TextRange[] pasteFromClipboard(@NotNull Editor editor) throws TooLargeContentException {
     Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(null);
     return transferable == null ? null : pasteTransferable(editor, transferable);
   }
 
   @Nullable
   @Override
-  public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) {
+  public TextRange[] pasteTransferable(final @NotNull Editor editor, @NotNull Transferable content) throws TooLargeContentException {
     String text = EditorModificationUtil.getStringContent(content);
     if (text == null) return null;
+
+    int textLength = text.length();
+    if (BasePasteHandler.isContentTooLarge(textLength)) throw new TooLargeContentException(textLength);
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
       CaretStateTransferableData caretData = null;

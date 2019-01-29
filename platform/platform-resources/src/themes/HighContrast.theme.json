@@ -171,7 +171,6 @@
 
     "Notification": {
       "background": "#000080",
-      "linkForeground": "#D2F53C",
 
       "errorForeground": "#FFFFFF",
       "errorBackground": "#800002",
@@ -192,6 +191,14 @@
         "errorBackground": "#800002",
         "errorBorderColor": "#E6194B"
       }
+    },
+
+    "ParameterInfo": {
+      "background": "#281A33",
+      "foreground": "#CCCCCC",
+      "currentOverloadBackground": "#450073",
+      "currentParameterForeground": "#FFFFFF",
+      "lineSeparatorColor": "#6A6173"
     },
 
     "Plugins": {

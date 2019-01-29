@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.plugins.PluginManagerCore
@@ -196,7 +197,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    deserializeConfigurationFrom(configuration, element)
+    deserializeConfigurationFrom(configuration, element, isTemplate)
 
     // must be after deserializeConfigurationFrom
     wasSingletonSpecifiedExplicitly = false
@@ -408,6 +409,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
   }
 
+  fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
+
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
     val settings = THashMap<ProgramRunner<*>, T>()
 
@@ -517,19 +520,17 @@ private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    serializeStateInto(configuration, element)
-  }
-  else {
-    configuration.writeExternal(element)
+  when (configuration) {
+    is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.writePersistent(element)
+    else -> configuration.writeExternal(element)
   }
 }
 
-fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
-  if (configuration is PersistentStateComponent<*>) {
-    deserializeAndLoadState(configuration, element)
-  }
-  else {
-    configuration.readExternal(element)
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
+  when (configuration) {
+    is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
+    is PersistentAwareRunConfiguration -> configuration.readPersistent(element, isTemplate)
+    else -> configuration.readExternal(element)
   }
 }

@@ -45,7 +45,7 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
 
   public void testFix() {
     myFixture.enableInspections(new MisspelledHeaderInspection());
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "ManifestVersion: 1.0\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, "ManifestVersion: 1.0\n");
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Change to");
     assertEquals(1, intentions.size());
     myFixture.launchAction(intentions.get(0));
@@ -56,14 +56,14 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
     MisspelledHeaderInspection inspection = new MisspelledHeaderInspection();
     inspection.CUSTOM_HEADERS.add("Custom-Header");
     myFixture.enableInspections(inspection);
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "Custom-Header: -\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
     myFixture.checkHighlighting();
   }
 
   public void testCustomHeaderFix() {
     MisspelledHeaderInspection inspection = new MisspelledHeaderInspection();
     myFixture.enableInspections(inspection);
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "Custom-Header: -\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, "Custom-Header: -\n");
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
     assertEquals(1, intentions.size());
     myFixture.launchAction(intentions.get(0));
@@ -72,7 +72,7 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
 
   private void doTest(String text, int expected) {
     myFixture.enableInspections(new MisspelledHeaderInspection());
-    myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, text + "\n");
+    myFixture.configureByText(ManifestFileType.INSTANCE, text + "\n");
     myFixture.checkHighlighting();
     assertEquals(expected, myFixture.filterAvailableIntentions("Change to").size());
   }

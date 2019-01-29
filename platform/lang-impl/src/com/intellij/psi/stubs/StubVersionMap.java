@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -224,9 +225,10 @@ class StubVersionMap {
   private static int version(Object owner) {
     if (owner instanceof IStubFileElementType) {
       IStubFileElementType elementType = (IStubFileElementType)owner;
-      if (elementType.getLanguage()  instanceof TemplateLanguage) {
-        LOG.assertTrue(elementType.getStubVersion() >= IStubFileElementType.getTemplateStubVersion(),
-                       elementType.getLanguage() + " stub version should call super.getStubVersion()");
+      if (elementType.getLanguage() instanceof TemplateLanguage &&
+          elementType.getStubVersion() < IStubFileElementType.getTemplateStubVersion()) {
+        LOG.error(PluginManagerCore.createPluginException(elementType.getLanguage() + " stub version should call super.getStubVersion()",
+                                                          null, elementType.getClass()));
       }
       return elementType.getStubVersion();
     } else {

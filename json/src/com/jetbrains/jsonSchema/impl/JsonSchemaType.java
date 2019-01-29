@@ -4,6 +4,8 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
+
 /**
  * @author Irina.Chernushina on 7/15/2015.
  */
@@ -68,12 +70,21 @@ public enum JsonSchemaType {
   }
 
   public static boolean isInteger(@NotNull String text) {
+    return getIntegerValue(text) != null;
+  }
+
+  @Nullable
+  public static Number getIntegerValue(@NotNull String text) {
     try {
-      Integer.parseInt(text);
-      return true;
+      return Integer.parseInt(text);
     }
     catch (NumberFormatException e) {
-      return false;
+      try {
+        return BigInteger.valueOf(Long.parseLong(text));
+      }
+      catch (NumberFormatException e2) {
+        return null;
+      }
     }
   }
 

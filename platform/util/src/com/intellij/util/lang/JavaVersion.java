@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -182,7 +182,8 @@ public final class JavaVersion implements Comparable<JavaVersion> {
    *   - values of Java compiler -source/-target/--release options ("$MAJOR", "1.$MAJOR")</br>
    *   - output of "{@code java -version}" (usually "java version \"$VERSION\"")<br>
    *   - a second line of the above command (something like to "Java(TM) SE Runtime Environment (build $VERSION)")<br>
-   *   - output of "{@code java --full-version}" ("java $VERSION")</p>
+   *   - output of "{@code java --full-version}" ("java $VERSION")<br>
+   *   - a line of "release" file ("JAVA_VERSION=\"$VERSION\"")</p>
    *
    * <p>See com.intellij.util.lang.JavaVersionTest for examples.</p>
    *

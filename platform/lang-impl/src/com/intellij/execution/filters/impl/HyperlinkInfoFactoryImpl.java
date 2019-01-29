@@ -33,14 +33,14 @@ public class HyperlinkInfoFactoryImpl extends HyperlinkInfoFactory {
 
   @NotNull
   @Override
-  public HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> files,
+  public HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                         int line, @NotNull Project project) {
     return new MultipleFilesHyperlinkInfo(files, line, project);
   }
 
   @NotNull
   @Override
-  public HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> files,
+  public HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                         int line,
                                                         @NotNull Project project,
                                                         @Nullable ToIntFunction<? super PsiFile> columnFinder) {

@@ -131,7 +131,7 @@ public class VcsLogUiUtil {
   public static History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
-      if (!history.isNavigatingNow()) {
+      if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
         history.pushQueryPlace();
       }
     });

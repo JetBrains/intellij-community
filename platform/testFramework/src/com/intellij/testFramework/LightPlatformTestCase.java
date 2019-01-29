@@ -119,7 +119,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase;
-  public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static SdkLeakTracker myOldSdks;
 
@@ -164,7 +163,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @TestOnly
-  public static void disposeApplication() {
+  static void disposeApplication() {
     if (ourApplication != null) {
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(ourApplication));
 
@@ -535,11 +534,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     TestRunnerUtil.replaceIdeEventQueueSafely();
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
-        ourTestThread = Thread.currentThread();
         start.run();
       }
       finally {
-        ourTestThread = null;
         try {
           Application application = ApplicationManager.getApplication();
           if (application instanceof ApplicationEx) {

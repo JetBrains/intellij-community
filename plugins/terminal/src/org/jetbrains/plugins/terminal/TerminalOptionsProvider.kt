@@ -26,11 +26,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   fun getShellPath(): String? {
-    return myState.myShellPath ?: defaultShellPath()
+    return if (myState.myShellPath.isNullOrEmpty()) defaultShellPath() else myState.myShellPath
   }
 
   fun setShellPath(shellPath: String) {
-    myState.myShellPath = shellPath
+    myState.myShellPath = if (shellPath == defaultShellPath()) null else shellPath
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -126,7 +126,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
-  private fun defaultShellPath(): String {
+  fun defaultShellPath(): String {
     val shell = System.getenv("SHELL")
     if (shell != null && File(shell).canExecute()) {
       return shell

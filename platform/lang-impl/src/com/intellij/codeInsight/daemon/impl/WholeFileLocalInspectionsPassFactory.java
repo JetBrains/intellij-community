@@ -90,7 +90,7 @@ public class WholeFileLocalInspectionsPassFactory implements TextEditorHighlight
     }
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), visibleRange, true,
-                                    new DefaultHighlightInfoProcessor()) {
+                                    new DefaultHighlightInfoProcessor(), false) {
       @NotNull
       @Override
       List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
@@ -107,18 +107,6 @@ public class WholeFileLocalInspectionsPassFactory implements TextEditorHighlight
       @Override
       protected String getPresentableName() {
         return DaemonBundle.message("pass.whole.inspections");
-      }
-
-      @NotNull
-      @Override
-      Set<PsiFile> inspectInjectedPsi(@NotNull List<? extends PsiElement> elements,
-                              boolean onTheFly,
-                              @NotNull ProgressIndicator indicator,
-                              @NotNull InspectionManager iManager,
-                              boolean inVisibleRange,
-                              @NotNull List<? extends LocalInspectionToolWrapper> wrappers, @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
-        // already inspected in LIP
-        return Collections.emptySet();
       }
 
       @Override

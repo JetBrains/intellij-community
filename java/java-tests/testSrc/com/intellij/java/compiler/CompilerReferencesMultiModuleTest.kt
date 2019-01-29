@@ -61,7 +61,7 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
 
     try {
-      kotlin.test.assertTrue { CompilerReferenceService.IS_ENABLED_KEY.asBoolean() }
+      assertTrue(CompilerReferenceService.IS_ENABLED_KEY.asBoolean())
       CompilerReferenceService.IS_ENABLED_KEY.setValue(false)
       assertOneElement(ClassInheritorsSearch.search(foo, foo.useScope, false).findAll())
     }

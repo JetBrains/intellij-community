@@ -415,6 +415,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
+    if (oldLaf instanceof TempUIThemeBasedLookAndFeelInfo) return;
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
       if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
         return;

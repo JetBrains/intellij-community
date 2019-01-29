@@ -9,6 +9,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -31,10 +32,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -52,6 +50,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -74,12 +70,17 @@ import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPE
 public class RecentLocationsAction extends AnAction {
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
-  private static final int DEFAULT_POPUP_WIDTH = JBUI.scale(700);
+  private static final int DEFAULT_WIDTH = JBUI.scale(700);
+  private static final int DEFAULT_HEIGHT = JBUI.scale(500);
+  private static final int MINIMUM_WIDTH = JBUI.scale(200);
+  private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
   private static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                  SHORTCUT_FOREGROUND_COLOR.getRed(),
                                                                  SHORTCUT_FOREGROUND_COLOR.getGreen(),
                                                                  SHORTCUT_FOREGROUND_COLOR.getBlue());
+
+  static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -97,7 +98,13 @@ public class RecentLocationsAction extends AnAction {
 
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(
       cacheAndGetItems(project, showChanged, changedPlaces, navigationPlaces, editorsToRelease)));
-    ListWithFilter<RecentLocationItem> listWithFilter = createListWithFilter(project, list);
+    final JScrollPane scrollPane = ScrollPaneFactory
+      .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+    ListWithFilter<RecentLocationItem> listWithFilter =
+      (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, scrollPane, getNamer(project), true);
     listWithFilter.setBorder(BorderFactory.createEmptyBorder());
 
     final SpeedSearch speedSearch = listWithFilter.getSpeedSearch();
@@ -136,8 +143,51 @@ public class RecentLocationsAction extends AnAction {
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(100)))
+      .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
+      .setLocateWithinScreenBounds(false)
       .createPopup();
+
+    Disposer.register(popup, () -> {
+      Dimension contentSize = popup.getContent().getSize();
+      Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
+      //scroll pane
+      DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
+    });
+
+    Dimension scrollPaneSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
+    if (scrollPaneSize == null) {
+      scrollPaneSize = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    }
+
+    scrollPane.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
+
+    scrollPane.setPreferredSize(scrollPaneSize);
+    popup.setSize(mainPanel.getPreferredSize());
+
+    popup.getContent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        scrollPane.setPreferredSize(calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent()));
+        scrollPane.revalidate();
+      }
+    });
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Dimension minSize = mainPanel.getMinimumSize();
+      JBInsets.addTo(minSize, popup.getContent().getInsets());
+      popup.setMinimumSize(minSize);
+
+      Dimension balloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
+      if (balloonFullSize == null) {
+        DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, mainPanel.getPreferredSize());
+        balloonFullSize = mainPanel.getPreferredSize();
+        JBInsets.addTo(balloonFullSize, popup.getContent().getInsets());
+      }
+      balloonFullSize.height = Integer.max(balloonFullSize.height, minSize.height);
+      balloonFullSize.width = Integer.max(balloonFullSize.width, minSize.width);
+      scrollPane.setPreferredSize(balloonFullSize);
+      popup.setSize(mainPanel.getPreferredSize());
+    });
 
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
       @Override
@@ -159,18 +209,28 @@ public class RecentLocationsAction extends AnAction {
 
     initSearchActions(project, list, popup, navigationRef);
 
-    popup.setSize(new Dimension(DEFAULT_POPUP_WIDTH, JBUI.scale(mainPanel.getPreferredSize().height)));
-
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
     list.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        popup.cancel();
+        if (!(e.getOppositeComponent() instanceof JCheckBox)) {
+          popup.cancel();
+        }
       }
     });
 
     showPopup(project, popup);
+  }
+
+  @NotNull
+  private static Dimension calcScrollPaneSize(@NotNull JScrollPane scrollPane,
+                                              @NotNull ListWithFilter<RecentLocationItem> listWithFilter,
+                                              @NotNull JPanel topPanel,
+                                              @NotNull JComponent content) {
+    Dimension contentSize = content.getSize();
+    int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
+    return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
   }
 
   @Override
@@ -308,17 +368,6 @@ public class RecentLocationsAction extends AnAction {
   }
 
   @NotNull
-  private static ListWithFilter<RecentLocationItem> createListWithFilter(@NotNull Project project,
-                                                                         @NotNull JBList<RecentLocationItem> list) {
-    final JScrollPane pane = ScrollPaneFactory
-      .createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-    pane.setBorder(BorderFactory.createEmptyBorder());
-
-    return (ListWithFilter<RecentLocationItem>)ListWithFilter.wrap(list, pane, getNamer(project), true);
-  }
-
-  @NotNull
   private static Function<RecentLocationItem, String> getNamer(@NotNull Project project) {
     return value -> {
       String breadcrumb = getBreadcrumbs(project, value.getInfo());
@@ -373,12 +422,13 @@ public class RecentLocationsAction extends AnAction {
     Document fileDocument = positionOffset.getDocument();
     int lineNumber = fileDocument.getLineNumber(positionOffset.getStartOffset());
     TextRange actualTextRange = getTrimmedRange(fileDocument, lineNumber);
+    String documentText = fileDocument.getText(actualTextRange);
     if (actualTextRange.isEmpty()) {
-      return null;
+      documentText = EMPTY_FILE_TEXT;
     }
 
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument(fileDocument.getText(actualTextRange));
+    Document editorDocument = editorFactory.createDocument(documentText);
     EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument, project);
 
     EditorGutterComponentEx gutterComponentEx = editor.getGutterComponentEx();

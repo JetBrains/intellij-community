@@ -460,8 +460,8 @@ public class RootIndex {
         }
       }
 
-      @Nullable Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
-      @Nullable Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      @Nullable Pair<VirtualFile, Collection<?>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      @Nullable Pair<VirtualFile, Collection<?>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
       result.addAll(myRootInfo.getLibraryOrderEntries(roots,
                                                       Pair.getFirst(libraryClassRootInfo),
                                                       Pair.getFirst(librarySourceRootInfo),
@@ -582,7 +582,7 @@ public class RootIndex {
   }
 
   @Nullable("returns null only if dir is under ignored folder")
-  private static List<VirtualFile> getHierarchy(VirtualFile dir, @NotNull Set<VirtualFile> allRoots, @NotNull RootInfo info) {
+  private static List<VirtualFile> getHierarchy(VirtualFile dir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = ContainerUtil.newArrayList();
     boolean hasContentRoots = false;
     while (dir != null) {
@@ -635,7 +635,7 @@ public class RootIndex {
      * root and there are no source roots on the path to the excluded root) returns {@code null}.
      */
     @Nullable
-    private VirtualFile findNearestContentRoot(@NotNull List<VirtualFile> hierarchy) {
+    private VirtualFile findNearestContentRoot(@NotNull List<? extends VirtualFile> hierarchy) {
       Collection<Module> sourceRootOwners = null;
       boolean underExcludedSourceRoot = false;
       for (VirtualFile root : hierarchy) {
@@ -674,7 +674,7 @@ public class RootIndex {
       return null;
     }
 
-    private static boolean isExcludedByPattern(VirtualFile contentRoot, List<VirtualFile> hierarchy, FileTypeAssocTable<Boolean> table) {
+    private static boolean isExcludedByPattern(@NotNull VirtualFile contentRoot, List<? extends VirtualFile> hierarchy, @NotNull FileTypeAssocTable<Boolean> table) {
       for (VirtualFile file : hierarchy) {
         if (table.findAssociatedFileType(file.getNameSequence()) != null) {
           return true;
@@ -687,7 +687,7 @@ public class RootIndex {
     }
 
     @Nullable
-    private VirtualFile findNearestContentRootForExcluded(@NotNull List<VirtualFile> hierarchy) {
+    private VirtualFile findNearestContentRootForExcluded(@NotNull List<? extends VirtualFile> hierarchy) {
       for (VirtualFile root : hierarchy) {
         if (contentRootOf.containsKey(root) || contentRootOfUnloaded.containsKey(root)) {
           return root;
@@ -700,7 +700,7 @@ public class RootIndex {
      * @return root and set of libraries that provided it
      */
     @Nullable
-    private Pair<VirtualFile, Collection<Object>> findLibraryRootInfo(@NotNull List<VirtualFile> hierarchy, boolean source) {
+    private Pair<VirtualFile, Collection<?>> findLibraryRootInfo(@NotNull List<? extends VirtualFile> hierarchy, boolean source) {
       Set<Object> librariesToIgnore = ContainerUtil.newHashSet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
@@ -727,9 +727,9 @@ public class RootIndex {
     }
 
     @NotNull
-    private static Collection<Object> findLibraryRootProducers(@NotNull Collection<Object> producers,
+    private static Collection<Object> findLibraryRootProducers(@NotNull Collection<?> producers,
                                                                @NotNull VirtualFile root,
-                                                               @NotNull Set<Object> librariesToIgnore) {
+                                                               @NotNull Set<?> librariesToIgnore) {
       Set<Object> libraries = ContainerUtil.newHashSet();
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
@@ -745,7 +745,7 @@ public class RootIndex {
     }
 
     private String calcPackagePrefix(@NotNull VirtualFile root,
-                                     @NotNull List<VirtualFile> hierarchy,
+                                     @NotNull List<? extends VirtualFile> hierarchy,
                                      VirtualFile moduleContentRoot,
                                      VirtualFile libraryClassRoot,
                                      VirtualFile librarySourceRoot) {
@@ -760,7 +760,7 @@ public class RootIndex {
     }
 
     @Nullable
-    private VirtualFile findPackageRootInfo(@NotNull List<VirtualFile> hierarchy,
+    private VirtualFile findPackageRootInfo(@NotNull List<? extends VirtualFile> hierarchy,
                                             VirtualFile moduleContentRoot,
                                             VirtualFile libraryClassRoot,
                                             VirtualFile librarySourceRoot) {
@@ -781,7 +781,7 @@ public class RootIndex {
     }
 
     @NotNull
-    private LinkedHashSet<OrderEntry> getLibraryOrderEntries(@NotNull List<VirtualFile> hierarchy,
+    private LinkedHashSet<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
                                                              @Nullable VirtualFile libraryClassRoot,
                                                              @Nullable VirtualFile librarySourceRoot,
                                                              @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
@@ -803,7 +803,7 @@ public class RootIndex {
 
 
     @Nullable
-    private ModuleSourceOrderEntry getModuleSourceEntry(@NotNull List<VirtualFile> hierarchy,
+    private ModuleSourceOrderEntry getModuleSourceEntry(@NotNull List<? extends VirtualFile> hierarchy,
                                                         @NotNull VirtualFile moduleContentRoot,
                                                         @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries) {
       Module module = contentRootOf.get(moduleContentRoot);
@@ -821,13 +821,13 @@ public class RootIndex {
 
   @NotNull
   private static Pair<DirectoryInfo, String> calcDirectoryInfo(@NotNull final VirtualFile root,
-                                                               @NotNull final List<VirtualFile> hierarchy,
+                                                               @NotNull final List<? extends VirtualFile> hierarchy,
                                                                @NotNull RootInfo info) {
     VirtualFile moduleContentRoot = info.findNearestContentRoot(hierarchy);
-    Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
+    Pair<VirtualFile, Collection<?>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
     VirtualFile librarySourceRoot = Pair.getFirst(librarySourceRootInfo);
 
-    Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
+    Pair<VirtualFile, Collection<?>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile libraryClassRoot = Pair.getFirst(libraryClassRootInfo);
 
     boolean inProject = moduleContentRoot != null ||
@@ -871,7 +871,7 @@ public class RootIndex {
   }
 
   @Nullable
-  private static Condition<VirtualFile> getLibraryExclusionPredicate(@Nullable Pair<VirtualFile, Collection<Object>> libraryRootInfo) {
+  private static Condition<VirtualFile> getLibraryExclusionPredicate(@Nullable Pair<VirtualFile, Collection<?>> libraryRootInfo) {
     Condition<VirtualFile> result = Conditions.alwaysFalse();
     if (libraryRootInfo != null) {
       for (Object library : libraryRootInfo.second) {

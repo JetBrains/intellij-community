@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -421,7 +421,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
-    if (currentSchemeName != null) {
+    if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
       myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
         currentSchemeName)) ? null : currentSchemeName;
     }
@@ -466,5 +466,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NotNull
   public SchemeManager<EditorColorsScheme> getSchemeManager() {
     return mySchemeManager;
+  }
+
+  private static final String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
+  public static boolean isTempScheme(EditorColorsScheme scheme) {
+    if (scheme == null) return false;
+
+    return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
+  }
+
+  public static void setTempScheme(EditorColorsScheme scheme) {
+    if (scheme == null) return;
+    scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, Boolean.TRUE.toString());
   }
 }

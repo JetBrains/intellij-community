@@ -47,8 +47,8 @@ task setupJdk(dependsOn: downloadJdk) {
   inputs.files(downloadOutputs)
   inputs.property("jdkOutputDir", outputDir)
   outputs.dir(outputDir)
-  fileTree(outputDir).each {
-    outputs.file(it)
+  outputs.upToDateWhen {
+    !fileTree(outputDir).isEmpty()
   }
   doLast {
     logger.info("Setting up JDK $jdkVersion to compile")

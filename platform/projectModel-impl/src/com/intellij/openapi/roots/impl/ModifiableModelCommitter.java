@@ -39,7 +39,7 @@ public class ModifiableModelCommitter {
     multiCommit(Arrays.asList(rootModels), moduleModel);
   }
 
-  public static void multiCommit(@NotNull Collection<ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
+  public static void multiCommit(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
@@ -61,7 +61,7 @@ public class ModifiableModelCommitter {
   }
 
   @NotNull
-  private static List<RootModelImpl> getSortedChangedModels(Collection<ModifiableRootModel> rootModels, ModifiableModuleModel moduleModel) {
+  private static List<RootModelImpl> getSortedChangedModels(@NotNull Collection<? extends ModifiableRootModel> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     List<RootModelImpl> result = null;
     for (ModifiableRootModel model : rootModels) {
       RootModelImpl rootModel = (RootModelImpl)model;
@@ -82,7 +82,8 @@ public class ModifiableModelCommitter {
     return result;
   }
 
-  private static DFSTBuilder<RootModelImpl> createDFSTBuilder(List<RootModelImpl> rootModels, final ModifiableModuleModel moduleModel) {
+  @NotNull
+  private static DFSTBuilder<RootModelImpl> createDFSTBuilder(@NotNull List<? extends RootModelImpl> rootModels, @NotNull ModifiableModuleModel moduleModel) {
     final Map<String, RootModelImpl> nameToModel = ContainerUtil.newHashMap();
     for (RootModelImpl rootModel : rootModels) {
       String name = rootModel.getModule().getName();

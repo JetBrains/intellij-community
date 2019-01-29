@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
@@ -24,6 +26,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import static com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT;
 import static com.intellij.ide.actions.RecentLocationsAction.getBreadcrumbs;
 
 class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
@@ -103,6 +106,14 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     editor.setBackgroundColor(backgroundColor);
     editor.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
+    if (EMPTY_FILE_TEXT.equals(editor.getDocument().getText())) {
+      editor.getMarkupModel().addRangeHighlighter(0,
+                                                  EMPTY_FILE_TEXT.length(),
+                                                  HighlighterLayer.SYNTAX,
+                                                  createLabelDisabledForegroundTextAttributes(),
+                                                  HighlighterTargetArea.EXACT_RANGE);
+    }
+
     return editor.getComponent();
   }
 
@@ -120,7 +131,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     if (!StringUtil.equals(breadcrumbText, fileName)) {
       text += " " + fileName;
       titleTextComponent.append(" ");
-      titleTextComponent.append(fileName, createLabelDisabledForegroundAttributes());
+      titleTextComponent.append(fileName, SimpleTextAttributes.fromTextAttributes(createLabelDisabledForegroundTextAttributes()));
     }
 
     if (speedSearch.matchingFragments(text) != null) {
@@ -133,10 +144,10 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   }
 
   @NotNull
-  private static SimpleTextAttributes createLabelDisabledForegroundAttributes() {
+  private static TextAttributes createLabelDisabledForegroundTextAttributes() {
     TextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     textAttributes.setForegroundColor(UIUtil.getLabelDisabledForeground());
-    return SimpleTextAttributes.fromTextAttributes(textAttributes);
+    return textAttributes;
   }
 
   @Override

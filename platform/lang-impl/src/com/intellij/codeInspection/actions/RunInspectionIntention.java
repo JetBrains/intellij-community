@@ -123,7 +123,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                           @NotNull InspectionManagerEx managerEx,
                                                           @Nullable PsiElement psiElement) {
     final InspectionProfileImpl model = createProfile(toolWrapper, managerEx, psiElement);
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext();
     inspectionContext.setExternalProfile(model);
     return inspectionContext;
   }

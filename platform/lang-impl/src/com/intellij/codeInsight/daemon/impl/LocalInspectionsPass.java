@@ -71,6 +71,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionProfileWrapper myProfileWrapper;
   private final Map<String, Set<PsiElement>> mySuppressedElements = new HashMap<>();
+  private final boolean myInspectInjectedPsi;
 
   public LocalInspectionsPass(@NotNull PsiFile file,
                               @Nullable Document document,
@@ -78,7 +79,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               int endOffset,
                               @NotNull TextRange priorityRange,
                               boolean ignoreSuppressed,
-                              @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                              @NotNull HighlightInfoProcessor highlightInfoProcessor, boolean inspectInjectedPsi) {
     super(file.getProject(), document, PRESENTABLE_NAME, file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
     assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myPriorityRange = priorityRange;
@@ -98,6 +99,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myProfileWrapper = custom == null ? new InspectionProfileWrapper(profileToUse) : custom.apply(profileToUse);
     assert myProfileWrapper != null;
     mySeverityRegistrar = myProfileWrapper.getInspectionProfile().getProfileManager().getSeverityRegistrar();
+    myInspectInjectedPsi = inspectInjectedPsi;
 
     // initial guess
     setProgressLimit(300 * 2);
@@ -340,6 +342,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                   final boolean inVisibleRange,
                                   @NotNull final List<? extends LocalInspectionToolWrapper> wrappers,
                                   @NotNull Set<? extends PsiFile> alreadyVisitedInjected) {
+    if (!myInspectInjectedPsi) return Collections.emptySet();
     Set<PsiFile> injected = new THashSet<>();
     for (PsiElement element : elements) {
       PsiFile containingFile = getFile();
@@ -541,7 +544,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                        context + "\nInspection invoked for file: " + myContext + "\n";
       LOG.error(PluginManagerCore.createPluginException(errorMessage, null, tool.getClass()));
     }
-    boolean isInjected = file != getFile();
+    boolean isInjected = myInspectInjectedPsi && file != getFile();
     if (!isInjected) {
       outInfos.add(info);
       return;

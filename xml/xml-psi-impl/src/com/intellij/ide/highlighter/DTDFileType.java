@@ -26,7 +26,7 @@ import javax.swing.*;
 public class DTDFileType extends LanguageFileType {
   public static final DTDFileType INSTANCE = new DTDFileType();
 
-  public DTDFileType() {
+  private DTDFileType() {
     super(DTDLanguage.INSTANCE);
   }
 

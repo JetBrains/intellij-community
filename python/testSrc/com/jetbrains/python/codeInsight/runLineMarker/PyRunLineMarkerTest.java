@@ -36,6 +36,11 @@ public class PyRunLineMarkerTest extends PyTestCase {
     assertEquals(0, getInfos("not_runnable.py").size());
   }
 
+  public void testIncorrectName() {
+    List<LineMarkerInfo> infos = getInfos("wrong_spelling.py");
+    assertEmpty("Should not be runnable", infos);
+  }
+
   private List<LineMarkerInfo> getInfos(String fileName) {
     myFixture.configureByFile(fileName);
     myFixture.doHighlighting();

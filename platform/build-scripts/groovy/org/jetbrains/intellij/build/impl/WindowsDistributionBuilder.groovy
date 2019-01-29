@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,8 +106,13 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     def jreSuffix = buildContext.bundledJreManager.jreSuffix()
+    def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("win", secondJreBuild) : null
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths.findAll {it != null}, "${jreSuffix}.win", winDistPath)
+      buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
+      if (secondJreDirectoryPath != null) {
+        buildWinZip([secondJreDirectoryPath], "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled.win", winDistPath)
+      }
     }
 
     if (arch != null && customizer.buildZipWithBundledOracleJre &&
@@ -126,6 +131,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       generateProductJson(productJsonDir, jreDirectoryPath64 != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
+      if (secondJreDirectoryPath != null) {
+        generateProductJson(productJsonDir, secondJreDirectoryPath != null)
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled")
+      }
     }
   }
 
@@ -264,7 +274,7 @@ IDS_VM_OPTIONS=$vmOptions
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths
-      buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+      buildContext.messages.progress("Building Windows $targetPath archive")
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
       dirs += [productJsonDir]

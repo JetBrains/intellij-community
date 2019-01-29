@@ -39,6 +39,7 @@ public class PropertiesPerformanceTest extends CodeInsightTestCase {
     return module != null ? module : super.createMainModule();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/performance/";

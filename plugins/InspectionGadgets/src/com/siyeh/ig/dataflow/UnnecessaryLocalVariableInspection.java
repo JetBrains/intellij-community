@@ -111,7 +111,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           }
         }
       }
-      if (VariableAccessUtils.localVariableIsCopy(variable)) {
+      if (VariableAccessUtils.isLocalVariableCopy(variable)) {
         registerVariableError(variable);
       }
       else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyReturned(variable)) {

@@ -6,9 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-public abstract class ScalarPropertyAccessor<T> extends CodeStylePropertyAccessor<T,String> {
+public abstract class ExternalStringAccessor<T> extends CodeStylePropertyAccessor<T,String> {
 
-  public ScalarPropertyAccessor(@NotNull Object object, @NotNull Field field) {
+  public ExternalStringAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
   }
 

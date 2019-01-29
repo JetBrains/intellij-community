@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,11 @@ class MacDmgBuilder {
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath, String secondJreArchive = null) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
+    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
     if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, (secondJreArchive != null) ? "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled" : null)
     }
     else {
       buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
@@ -114,11 +114,16 @@ class MacDmgBuilder {
     }
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath) {
-    def suffix = jreArchivePath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreSuffix = null) {
+    def suffix = (secondJreSuffix != null) ? secondJreSuffix : (jreArchivePath != null) ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
-    MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
-                                               jreArchivePath != null ? "../jdk/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java" : null)
+    if (secondJreSuffix == null) {
+      MacDistributionBuilder.generateProductJson(buildContext, productJsonDir,
+                                                 jreArchivePath != null ? "../jdk/Contents/Home/${buildContext.isBundledJreModular() ? '' : 'jre/'}bin/java" : null)
+    }
+    else {
+      MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, "../jdk/Contents/Home/bin/java")
+    }
     def installationArchives = [Pair.create(macZipPath, MacDistributionBuilder.getZipRoot(buildContext, customizer))]
     if (jreArchivePath != null) {
       installationArchives.add(Pair.create(jreArchivePath, ""))

@@ -203,7 +203,7 @@ public class RunInspectionAction extends GotoActionBase {
             public void actionPerformed(ActionEvent e) {
               InspectionToolWrapper wrapper = getToolWrapper();
               InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
-              managerEx.createNewGlobalContext(false)
+              managerEx.createNewGlobalContext()
                 .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }

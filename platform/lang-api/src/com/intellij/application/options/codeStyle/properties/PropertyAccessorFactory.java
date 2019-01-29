@@ -65,6 +65,9 @@ class PropertyAccessorFactory {
           }
           return new BooleanAccessor(codeStyleObject, myField);
         case INT:
+          if ("WRAP_ON_TYPING".equals(myField.getName())) {
+            return new WrapOnTypingAccessor(codeStyleObject, myField);
+          }
           return new IntegerAccessor(codeStyleObject, myField);
         case STRING:
           CommaSeparatedValues annotation = myField.getAnnotation(CommaSeparatedValues.class);
@@ -92,10 +95,16 @@ class PropertyAccessorFactory {
            myField.getAnnotation(Deprecated.class) == null;
   }
 
-  private static class TabCharPropertyAccessor extends BooleanAccessor {
+  private static class TabCharPropertyAccessor extends CodeStylePropertyAccessor<Boolean,String> {
 
     TabCharPropertyAccessor(@NotNull Object object, @NotNull Field field) {
       super(object, field);
+    }
+
+    @Nullable
+    @Override
+    protected String parseString(@NotNull String string) {
+      return string;
     }
 
     @Nullable

@@ -360,7 +360,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   protected static class TemplateFileType extends LanguageFileType {
     private final Language myLanguage;
 
-    public TemplateFileType(final Language language) {
+    protected TemplateFileType(final Language language) {
       super(language);
       myLanguage = language;
     }

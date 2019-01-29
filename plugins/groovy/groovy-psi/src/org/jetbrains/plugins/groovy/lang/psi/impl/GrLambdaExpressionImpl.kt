@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.CachedValueProvider.Result.create
+import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
@@ -18,23 +18,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl
 
-class GrLambdaExpressionImpl(node: ASTNode): GrExpressionImpl(node), GrLambdaExpression {
+class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaExpression {
 
   override fun getParameters(): Array<GrParameter> {
     return parameterList.parameters
   }
 
-  override fun getParameterList(): GrParameterList {
-    return findNotNullChildByClass(GrParameterListImpl::class.java)
-  }
+  override fun getParameterList(): GrParameterList = findNotNullChildByClass(GrParameterListImpl::class.java)
 
-  override fun accept(visitor: GroovyElementVisitor) {
-    visitor.visitLambdaExpression(this)
-  }
+  override fun accept(visitor: GroovyElementVisitor) = visitor.visitLambdaExpression(this)
 
-  override fun isVarArgs(): Boolean {
-    return false
-  }
+  override fun isVarArgs(): Boolean = false
 
   override fun getBody(): PsiElement? {
     val body = lastChild
@@ -42,22 +36,16 @@ class GrLambdaExpressionImpl(node: ASTNode): GrExpressionImpl(node), GrLambdaExp
   }
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
-    if (!processParameters(processor, state)) return false
-    return processClosureClassMembers(processor, state, lastParent, place)
-
+    return processParameters(processor, state) && processClosureClassMembers(processor, state, lastParent, place)
   }
 
-  override fun getAllParameters(): Array<GrParameter> {
-    return parameters
-  }
+  override fun getAllParameters(): Array<GrParameter> = parameters
 
   override fun getOwnerType(): PsiType? {
-    return CachedValuesManager.getCachedValue(this) {
-      CachedValueProvider.Result.create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT)
+    return getCachedValue(this) {
+      create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT)
     }
   }
 
-  override fun toString(): String {
-    return "Lambda expression"
-  }
+  override fun toString(): String = "Lambda expression"
 }

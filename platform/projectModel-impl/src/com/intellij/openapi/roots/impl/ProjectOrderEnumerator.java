@@ -34,7 +34,7 @@ import java.util.List;
 public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
-  public ProjectOrderEnumerator(Project project, OrderRootsCache rootsCache) {
+  public ProjectOrderEnumerator(@NotNull Project project, @NotNull OrderRootsCache rootsCache) {
     super(rootsCache);
     myProject = project;
   }
@@ -59,7 +59,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public void forEachModule(@NotNull Processor<Module> processor) {
+  public void forEachModule(@NotNull Processor<? super Module> processor) {
     processRootModules(processor);
   }
 

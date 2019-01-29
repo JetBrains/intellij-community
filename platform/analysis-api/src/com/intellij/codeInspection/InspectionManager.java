@@ -165,7 +165,15 @@ public abstract class InspectionManager {
                                                             @NotNull ProblemHighlightType highlightType,
                                                             final LocalQuickFix... fixes);
 
+  /**
+   * @deprecated use {@link #createNewGlobalContext()}
+   */
+  @Deprecated
   @NotNull
   @Contract(pure = true)
   public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
+
+  @NotNull
+  @Contract(pure = true)
+  public abstract GlobalInspectionContext createNewGlobalContext();
 }

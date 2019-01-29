@@ -334,15 +334,15 @@ public abstract class GotoActionBase extends AnAction {
       }
       else {
         seManager.setShownContributor(searchProviderID);
-        FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(evnt))
-          .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
-          .orElseGet(() -> FUSUsageContext.create(searchProviderID));
+        String shortcut = KeymapUtil.getEventCallerKeystrokeText(evnt);
+        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, shortcut);
         SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
       }
       return;
     }
 
-    SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, FUSUsageContext.create(searchProviderID));
+    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(searchProviderID, null);
+    SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, context);
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
     seManager.show(searchProviderID, searchText, evnt);

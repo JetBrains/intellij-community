@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
+import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -120,6 +121,11 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       editor.getComponent().getToolkit().beep();
     }
     if (text == null) return;
+    int textLength = text.length();
+    if (BasePasteHandler.isContentTooLarge(textLength)) {
+      BasePasteHandler.contentLengthLimitExceededMessage(textLength);
+      return;
+    }
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 

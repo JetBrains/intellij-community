@@ -6,9 +6,8 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.internal.statistic.service.fus.collectors.FUSCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -28,7 +27,7 @@ import java.util.Map;
   value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
-  private static final FeatureUsageGroup GROUP = new FeatureUsageGroup("intentions", 3);
+  private static final String GROUP = "intentions";
   private static final String DEFAULT_ID = "third.party.intention";
 
   private final State myState = new State();
@@ -52,7 +51,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
       addLanguage(language);
 
     final String id = info.isSafeToReport() ? toReportedId(clazz) : DEFAULT_ID;
-    FUSCounterUsageLogger.logEvent(GROUP, id, data);
+    FUCounterUsageLogger.getInstance().logEvent(GROUP, id, data);
   }
 
   @NotNull

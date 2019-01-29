@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert field to local variables in 2 methods" "true"
 class Test {
 
     int getFoo1() {

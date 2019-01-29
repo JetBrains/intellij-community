@@ -173,6 +173,9 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.AND)) {
       return bitwiseAnd(right);
     }
+    if (token.equals(JavaTokenType.OR)) {
+      return bitwiseOr(right, isLong);
+    }
     if (token.equals(JavaTokenType.PERC)) {
       return mod(right);
     }
@@ -240,6 +243,21 @@ public abstract class LongRangeSet {
   }
 
   /**
+   * Returns a range which represents all the possible values after applying {@code x | y} operation for
+   * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
+   * some more values.
+   *
+   * @param other other set to perform bitwise-or with
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet bitwiseOr(LongRangeSet other, boolean isLong) {
+    if (this.isEmpty() || other.isEmpty()) return empty();
+    LongRangeSet result = fromBits(getBitwiseMask().or(other.getBitwiseMask()));
+    return isLong ? result : result.intersect(Range.INT_RANGE);
+  }
+
+  /**
    * Returns a range which represents all the possible values after applying {@code x & y} operation for
    * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
    * some more values.
@@ -259,16 +277,25 @@ public abstract class LongRangeSet {
     if (right.length > 6) {
       right = splitAtZero(new long[]{right[0], right[right.length - 1]});
     }
+    BitString globalMask = getBitwiseMask().and(other.getBitwiseMask());
+    globalMask = new BitString(globalMask.myBits | ~globalMask.myMask, -1L);
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
       for (int j = 0; j < right.length; j += 2) {
-        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1]));
+        result = result.unite(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1], globalMask));
       }
     }
     return result;
   }
   
   abstract public LongRangeSet mul(LongRangeSet multiplier, boolean isLong);
+
+  BitString getBitwiseMask() {
+    if (isEmpty()) {
+      return BitString.UNSURE;
+    }
+    return BitString.fromRange(min(), max());
+  }
 
   /**
    * Returns a range which represents all the possible values after applying {@code x / y} operation for
@@ -453,9 +480,9 @@ public abstract class LongRangeSet {
     return ranges;
   }
 
-  private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo) {
+  private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo, BitString globalMask) {
     if (leftFrom == leftTo && rightFrom == rightTo) {
-      return point(leftFrom & rightFrom);
+      return point(leftFrom & rightFrom & (globalMask.myBits | ~globalMask.myMask));
     }
     if (leftFrom == leftTo && Long.bitCount(leftFrom+1) == 1) {
       return bitwiseMask(rightFrom, rightTo, leftFrom);
@@ -463,21 +490,9 @@ public abstract class LongRangeSet {
     if (rightFrom == rightTo && Long.bitCount(rightFrom+1) == 1) {
       return bitwiseMask(leftFrom, leftTo, rightFrom);
     }
-    ThreeState[] leftBits = bits(leftFrom, leftTo);
-    ThreeState[] rightBits = bits(rightFrom, rightTo);
-    ThreeState[] resultBits = new ThreeState[Long.SIZE];
-    for (int i = 0; i < Long.SIZE; i++) {
-      if (leftBits[i] == ThreeState.NO || rightBits[i] == ThreeState.NO) {
-        resultBits[i] = ThreeState.NO;
-      }
-      else if (leftBits[i] == ThreeState.UNSURE || rightBits[i] == ThreeState.UNSURE) {
-        resultBits[i] = ThreeState.UNSURE;
-      }
-      else {
-        resultBits[i] = ThreeState.YES;
-      }
-    }
-    return fromBits(resultBits);
+    BitString leftBits = BitString.fromRange(leftFrom, leftTo);
+    BitString rightBits = BitString.fromRange(rightFrom, rightTo);
+    return fromBits(leftBits.and(rightBits).and(globalMask));
   }
 
   /**
@@ -497,29 +512,31 @@ public abstract class LongRangeSet {
   }
 
   /**
-   * Creates a set which contains all the numbers satisfying the supplied bit vector.
-   * Vector format is the same as returned by {@link #bits(long, long)}. The resulting set may
+   * Creates a set which contains all the numbers satisfying the supplied BitString. The resulting set may
    * contain more values than necessary.
    *
-   * @param bits a bit vector
+   * @param bits a BitString
    * @return a new LongRangeSet
    */
-  private static LongRangeSet fromBits(ThreeState[] bits) {
-    long from = 0;
-    int i = 0;
-    while (i < Long.SIZE && bits[i] != ThreeState.UNSURE) {
-      if (bits[i] == ThreeState.YES) {
-        from = setBit(from, Long.SIZE - 1 - i);
-      }
-      i++;
+  private static LongRangeSet fromBits(BitString bits) {
+    if (bits.myMask == -1) {
+      return point(bits.myBits);
     }
-    long to = ((1L << (Long.SIZE - i)) - 1) | from;
-    int j = Long.SIZE - 1;
-    while(j > i && bits[j] != ThreeState.UNSURE) {
-      if (bits[j] == ThreeState.NO) {
-        to = clearBit(to, Long.SIZE - 1 - j);
+    long from = 0;
+    int i = Long.SIZE - 1;
+    while (i >= 0 && bits.get(i) != ThreeState.UNSURE) {
+      if (bits.get(i) == ThreeState.YES) {
+        from = setBit(from, i);
       }
-      j--;
+      i--;
+    }
+    long to = ((i == Long.SIZE - 1 ? 0 : 1L << (i + 1)) - 1) | from;
+    int j = 0;
+    while(j < i && bits.get(j) != ThreeState.UNSURE) {
+      if (bits.get(j) == ThreeState.NO) {
+        to = clearBit(to, j);
+      }
+      j++;
     }
     if(i == j) {
       return point(from).unite(point(to));
@@ -527,43 +544,18 @@ public abstract class LongRangeSet {
     long modBits = -1;
     for (int rem = 0; rem < Long.SIZE; rem++) {
       for (int pos = 0; pos < 6; pos++) {
-        ThreeState bit = bits[Long.SIZE - pos - 1];
+        ThreeState bit = bits.get(pos);
         if (bit == ThreeState.fromBoolean(!isSet(rem, pos))) {
           modBits = clearBit(modBits, rem);
           break;
         }
       }
     }
-    return from < to ? modRange(from, to, Long.SIZE, modBits) : modRange(to, from, Long.SIZE, modBits);
-  }
-
-  /**
-   * Returns a bit vector for values between from and to.
-   *
-   * @param from lower bound
-   * @param to upper bound
-   * @return an array of 64 ThreeState values (NO = zero bit for all values, YES = one bit for all values,
-   * UNSURE = both one and zero possible)
-   */
-  private static ThreeState[] bits(long from, long to) {
-    ThreeState[] bits = new ThreeState[Long.SIZE];
-    Arrays.fill(bits, ThreeState.NO);
-    while (true) {
-      int fromBit = Long.numberOfLeadingZeros(from);
-      int toBit = Long.numberOfLeadingZeros(to);
-      if (fromBit != toBit) {
-        for (int i = Math.min(fromBit, toBit); i < Long.SIZE; i++) {
-          bits[i] = ThreeState.UNSURE;
-        }
-        break;
-      }
-      if (fromBit == 64) break;
-      bits[fromBit] = ThreeState.YES;
-      int bitNumber = Long.SIZE - 1 - fromBit;
-      from = clearBit(from, bitNumber);
-      to = clearBit(to, bitNumber);
+    if (from >= 0 && to < 0) {
+      from = Long.MIN_VALUE;
+      to = Long.MAX_VALUE;
     }
-    return bits;
+    return from < to ? modRange(from, to, Long.SIZE, modBits) : modRange(to, from, Long.SIZE, modBits);
   }
 
   private static String formatNumber(long value) {
@@ -663,15 +655,6 @@ public abstract class LongRangeSet {
     if (bits == 0) return empty();
     if (mod == 1 || mod > Long.SIZE) return range(from, to);
     int intMod = (int)mod;
-    int halfMod = intMod / 2;
-    // Try to reduce mod if bits are symmetrical
-    if (intMod % 2 == 0) {
-      long rightHalf = extractBits(bits, 0, halfMod);
-      long leftHalf = extractBits(bits, halfMod, halfMod);
-      if (rightHalf == leftHalf) {
-        return modRange(from, to, halfMod, leftHalf);
-      }
-    }
     // Adjust from/to: they should point to minimal/maximal value which is actually allowed by mod bits
     long rotatedFrom = rotateRemainders(bits, intMod, remainder(from, intMod));
     from += Long.numberOfTrailingZeros(rotatedFrom);
@@ -697,6 +680,15 @@ public abstract class LongRangeSet {
           if (bits == 0) return empty();
           break;
         }
+      }
+    }
+    // Try to reduce mod if bits are symmetrical
+    if (intMod % 2 == 0) {
+      int halfMod = intMod / 2;
+      long rightHalf = extractBits(bits, 0, halfMod);
+      long leftHalf = extractBits(bits, halfMod, halfMod);
+      if (rightHalf == leftHalf) {
+        return modRange(from, to, halfMod, leftHalf);
       }
     }
     if (Long.bitCount(bits) == intMod) return range(from, to);
@@ -978,20 +970,20 @@ public abstract class LongRangeSet {
                ? range(value1, value2)
                : new RangeSet(new long[]{value1, value1, value2, value2});
       }
+      if (other instanceof ModRange) {
+        return other.unite(this);
+      }
       if (other instanceof Range) {
         if (myValue < other.min()) {
           return myValue + 1 == other.min()
                  ? range(myValue, other.max())
                  : new RangeSet(new long[]{myValue, myValue, other.min(), other.max()});
         }
-        else if (myValue > other.max()) {
+        else {
+          assert myValue > other.max();
           return myValue - 1 == other.max()
                  ? range(other.min(), myValue)
                  : new RangeSet(new long[]{other.min(), other.max(), myValue, myValue});
-        }
-        else {
-          assert other instanceof ModRange;
-          return range(other.min(), other.max());
         }
       }
       long[] longs = other.asRanges();
@@ -1619,6 +1611,17 @@ public abstract class LongRangeSet {
           }
         }
       }
+      if (other instanceof Point) {
+        long val = ((Point)other).myValue;
+        if (isSet(myBits, remainder(val, myMod))) {
+          if (val >= myFrom && val <= myTo) return this;
+          if (val < myFrom && modRange(val + 1, myFrom - 1, myMod, myBits).isEmpty() ||
+              val > myTo && modRange(myTo + 1, val - 1, myMod, myBits).isEmpty()) {
+            return modRange(Math.min(myFrom, val), Math.max(myTo, val), myMod, myBits);
+          }
+        }
+        return other.unite(range(myFrom, myTo));
+      }
       return super.unite(other);
     }
 
@@ -1655,15 +1658,25 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       LongRangeSet set = super.plus(other, isLong);
-      if (set instanceof Range && (other instanceof Point || other instanceof ModRange && ((ModRange)other).myMod == myMod &&
-                                                             Long.bitCount(((ModRange)other).myBits) == 1)) {
-        if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
-          int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
-          long bits = rotateRemainders(myBits, myMod, myMod - bit);
-          return modRange(set.min(), set.max(), myMod, bits);
+      if (other instanceof Point ||
+          other instanceof ModRange && ((ModRange)other).myMod == myMod && Long.bitCount(((ModRange)other).myBits) == 1) {
+        long[] ranges = set.asRanges();
+        LongRangeSet result = empty();
+        for (int i = 0; i < ranges.length; i += 2) {
+          result = result.unite(plus(ranges[i], ranges[i + 1], other, isLong));
         }
+        return result;
       }
       return set;
+    }
+
+    private LongRangeSet plus(long min, long max, LongRangeSet other, boolean isLong) {
+      if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
+        int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
+        long bits = rotateRemainders(myBits, myMod, myMod - bit);
+        return modRange(min, max, myMod, bits);
+      }
+      return range(min, max);
     }
 
     @NotNull
@@ -1738,6 +1751,25 @@ public abstract class LongRangeSet {
       }
       return result;
     }
+    
+    @Override
+    BitString getBitwiseMask() {
+      int knownBits = Long.numberOfTrailingZeros(myMod);
+      int powerOfTwo = 1 << knownBits;
+      long result = -1;
+      long mask = powerOfTwo - 1;
+      for (int rem = 0; rem < myMod; rem++) {
+        if (isSet(myBits, rem)) {
+          int setBits = rem % powerOfTwo;
+          if (result != -1) {
+            long diffBits = result ^ setBits;
+            mask &= ~diffBits;
+          }
+          result = setBits;
+        }
+      }
+      return new BitString(result, mask).and(super.getBitwiseMask());
+    }
 
     private long getMask() {
       return -1L >>> (Long.SIZE - myMod);
@@ -1765,6 +1797,16 @@ public abstract class LongRangeSet {
         }
       }
       myRanges = ranges;
+    }
+
+    @Override
+    BitString getBitwiseMask() {
+      BitString result = null;
+      for (int i = 0; i < myRanges.length; i += 2) {
+        BitString newBits = BitString.fromRange(myRanges[i], myRanges[i + 1]);
+        result = result == null ? newBits : result.unite(newBits);
+      }
+      return result;
     }
 
     @Override
