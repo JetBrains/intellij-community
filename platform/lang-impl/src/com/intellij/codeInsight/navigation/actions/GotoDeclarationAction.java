@@ -273,13 +273,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
       PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
       if (result != null && result.length > 0) {
-        for (PsiElement element : result) {
-          if (element == null) {
-            LOG.error(PluginManagerCore.createPluginException("Null target element is returned by 'getGotoDeclarationTargets' in " + handler.getClass().getName(), null, handler.getClass()));
-            return null;
-          }
-        }
-        return result;
+        return assertNotNullElements(result, handler.getClass()) ? result : null;
       }
     }
 
@@ -335,5 +329,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (elementAtCaret == null) return false;
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
     return namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project);
+  }
+
+  private static boolean assertNotNullElements(@NotNull PsiElement[] result, Class<?> clazz) {
+    for (PsiElement element : result) {
+      if (element == null) {
+        LOG.error(PluginManagerCore.createPluginException(
+          "Null target element is returned by 'getGotoDeclarationTargets' in " + clazz.getName(), null, clazz
+        ));
+        return false;
+      }
+    }
+    return true;
   }
 }
