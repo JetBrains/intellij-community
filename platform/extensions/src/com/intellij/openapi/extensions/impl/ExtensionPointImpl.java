@@ -242,10 +242,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         CHECK_CANCELED.run();
         try {
           @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
-          if (extension == null) {
-            LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n");
-          }
-          else if (!duplicates.add(extension)) {
+          if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
                       " Prev extension: " + duplicate + ";\n" +
