@@ -4,17 +4,14 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoIntrospectionException;
-import org.picocontainer.PicoVisitor;
 
 /**
  * @author Alexander Kireyev
  */
-public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
+public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   protected Object myComponentInstance;
@@ -37,17 +34,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     myOrder = order;
   }
 
-  @Override
-  public Object getComponentKey() {
-    return this;
-  }
-
-  @Override
-  public Class getComponentImplementation() {
-    return loadImplementationClass();
-  }
-
-  @Override
   public Object getComponentInstance(@Nullable PicoContainer container) {
     Object instance = myComponentInstance;
     if (instance != null) {
@@ -55,7 +41,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     }
 
     try {
-      Class impl = loadImplementationClass();
+      Class<?> impl = getComponentImplementation();
 
       ExtensionPointImpl.CHECK_CANCELED.run();
 
@@ -86,16 +72,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   protected void initComponent(@NotNull Object instance) {
   }
 
-  @Override
-  public void verify(PicoContainer container) throws PicoIntrospectionException {
-    throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
-  }
-
-  @Override
-  public void accept(PicoVisitor visitor) {
-    throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
-  }
-
   @NotNull
   public Object getExtension(@Nullable PicoContainer container) {
     return getComponentInstance(container);
@@ -117,7 +93,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @NotNull
-  private Class<?> loadImplementationClass() {
+  public Class<?> getComponentImplementation() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       try {
@@ -134,8 +110,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return (Class<?>)implementationClassOrName;
   }
 
-  @Override
-  public String getAssignableToClassName() {
+  @NotNull
+  public final String getAssignableToClassName() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       return (String)implementationClassOrName;

@@ -135,10 +135,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   // Used in Upsource
   @Override
   public void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
-    ExtensionPointImpl point = (ExtensionPointImpl)extensionPoint;
-    ExtensionComponentAdapter adapter = point.createAdapter(extensionElement, pluginDescriptor);
-    myPicoContainer.registerComponent(adapter);
-    point.registerExtensionAdapter(adapter);
+    ((ExtensionPointImpl)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor);
   }
 
   @NotNull
@@ -326,12 +323,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public boolean hasExtensionPoint(@NotNull ExtensionPointName<?> extensionPointName) {
     return hasExtensionPoint(extensionPointName.getName());
-  }
-
-  void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {
-    for (final Object extensionAdapter : extensionAdapters) {
-      myPicoContainer.unregisterComponent(((ExtensionComponentAdapter)extensionAdapter).getComponentKey());
-    }
   }
 
   @Override
