@@ -49,6 +49,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -141,7 +142,7 @@ public class PluginManagerCore {
       List<String> requiredPlugins = StringUtil.split(System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, ""), ",");
       try {
         boolean updateDisablePluginsList = false;
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
           String id;
           while ((id = reader.readLine()) != null) {
             id = id.trim();
@@ -188,7 +189,7 @@ public class PluginManagerCore {
       ourBrokenPluginVersions = MultiMap.createSet();
 
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
-        BufferedReader br = new BufferedReader(new InputStreamReader(PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt")));
+        BufferedReader br = new BufferedReader(new InputStreamReader(PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt"), StandardCharsets.UTF_8));
         try {
           String s;
           while ((s = br.readLine()) != null) {
@@ -242,7 +243,7 @@ public class PluginManagerCore {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(plugins, append))) {
+    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(plugins, append), StandardCharsets.UTF_8))) {
       writePluginsList(ids, writer);
     }
   }
@@ -934,34 +935,26 @@ public class PluginManagerCore {
       return;
     }
 
-    Set<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    Set<IdeaPluginDescriptorImpl> existingResults = new THashSet<>(result);
     List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(files.length);
-    boolean isParallel = files.length > 2 && context.getExecutorService() != null;
-    if (isParallel) {
-      for (File file : files) {
-        tasks.add(context.getExecutorService().submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false, context)));
-      }
+    for (File file : files) {
+      tasks.add(context.getExecutorService().submit(() -> loadDescriptor(file, PLUGIN_XML, bundled, false, context)));
     }
 
-    for (int index = 0; index < files.length; index++) {
-      IdeaPluginDescriptorImpl descriptor;
-      if (isParallel) {
-        descriptor = tasks.get(index).get();
-      }
-      else {
-        descriptor = loadDescriptor(files[index], PLUGIN_XML, bundled, false, context);
-      }
-
+    for (Future<IdeaPluginDescriptorImpl> task : tasks) {
+      IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor == null) {
         continue;
       }
 
-      if (context.getPluginLoadProgressManager() != null) {
-        context.getPluginLoadProgressManager().showProgress(descriptor);
+      if (existingResults.add(descriptor)) {
+        if (context.getPluginLoadProgressManager() != null) {
+          context.getPluginLoadProgressManager().showProgress(descriptor);
+        }
+        result.add(descriptor);
       }
-
-      int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
-      if (oldIndex >= 0) {
+      else {
+        int oldIndex = result.indexOf(descriptor);
         IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
         if (VersionComparatorUtil.compare(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
           if (isIncompatible(descriptor) && isCompatible(oldDescriptor)) {
@@ -971,9 +964,6 @@ public class PluginManagerCore {
             result.set(oldIndex, descriptor);
           }
         }
-      }
-      else {
-        result.add(descriptor);
       }
     }
   }
@@ -1079,33 +1069,17 @@ public class PluginManagerCore {
       return;
     }
 
-    List<Future<IdeaPluginDescriptorImpl>> tasks;
-    boolean isParallel = context.getExecutorService() != null;
-    if (isParallel) {
-      tasks = new ArrayList<>(urls.size());
-      for (Map.Entry<URL, String> entry : urls.entrySet()) {
-        URL url = entry.getKey();
-        tasks.add(context.getExecutorService().submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL), context)));
-      }
-    }
-    else {
-      tasks = Collections.emptyList();
+    List<Future<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(urls.size());
+    for (Map.Entry<URL, String> entry : urls.entrySet()) {
+      URL url = entry.getKey();
+      tasks.add(context.getExecutorService().submit(() -> loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL), context)));
     }
 
     // plugin projects may have the same plugins in plugin path (sandbox or SDK) and on the classpath; latter should be ignored
-    Set<IdeaPluginDescriptorImpl> found = new THashSet<>(result);
-    int index = 0;
-    for (Map.Entry<URL, String> entry : urls.entrySet()) {
-      URL url = entry.getKey();
-      IdeaPluginDescriptorImpl descriptor;
-      if (isParallel) {
-        descriptor = tasks.get(index++).get();
-      }
-      else {
-        descriptor = loadDescriptorFromResource(url, entry.getValue(), true, url.equals(platformPluginURL), context);
-      }
-
-      if (descriptor != null && found.add(descriptor)) {
+    Set<IdeaPluginDescriptorImpl> existingResults = new THashSet<>(result);
+    for (Future<IdeaPluginDescriptorImpl> task : tasks) {
+      IdeaPluginDescriptorImpl descriptor = task.get();
+      if (descriptor != null && existingResults.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (context.getPluginLoadProgressManager() != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
