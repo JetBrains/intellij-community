@@ -45,17 +45,9 @@ public class JDOMUtil {
     @NotNull
     @Override
     protected XMLInputFactory compute() {
-      XMLInputFactory factory;
-      try {
-        // otherwise wst can be used (in tests/dev run)
-        Class<?> clazz = Class.forName("com.sun.xml.internal.stream.XMLInputFactoryImpl");
-        factory = (XMLInputFactory)clazz.newInstance();
-      }
-      catch (Exception e) {
-        // ok, use random
-        factory = XMLInputFactory.newFactory();
-      }
-
+      // requests default JRE factory implementation instead of an incompatible one from the classpath
+      System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
+      XMLInputFactory factory = XMLInputFactory.newFactory();
       try {
         factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
       }
