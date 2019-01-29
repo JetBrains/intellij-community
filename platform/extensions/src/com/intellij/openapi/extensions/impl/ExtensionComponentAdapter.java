@@ -8,7 +8,6 @@ import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoException;
 import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.PicoVisitor;
 
@@ -49,7 +48,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public Object getComponentInstance(@Nullable PicoContainer container) throws PicoException, ProcessCanceledException {
+  public Object getComponentInstance(@Nullable PicoContainer container) {
     Object instance = myComponentInstance;
     if (instance != null) {
       return instance;
@@ -118,7 +117,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @NotNull
-  private Class loadImplementationClass() {
+  private Class<?> loadImplementationClass() {
     Object implementationClassOrName = myImplementationClassOrName;
     if (implementationClassOrName instanceof String) {
       try {
@@ -132,7 +131,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
         throw new RuntimeException(e);
       }
     }
-    return (Class)implementationClassOrName;
+    return (Class<?>)implementationClassOrName;
   }
 
   @Override
