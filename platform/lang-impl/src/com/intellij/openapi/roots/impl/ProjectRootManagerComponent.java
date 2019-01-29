@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
@@ -47,8 +46,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * ProjectRootManager extended with ability to watch events.
@@ -126,8 +123,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @Override
   protected void addRootsToWatch() {
     if (!myProject.isDefault()) {
-      Pair<Set<String>, Set<String>> roots = getAllRoots();
-      myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, roots.first, roots.second);
+      Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY), flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      collectWatchRoots(recursivePaths, flatPaths);
+      myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, recursivePaths, flatPaths);
     }
   }
 
@@ -184,26 +182,30 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private Pair<Set<String>, Set<String>> getAllRoots() {
+  private void collectWatchRoots(Set<String> recursivePaths, Set<String> flatPaths) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-
     String projectFilePath = myProject.getProjectFilePath();
-    File dotIdea = projectFilePath == null ? null : new File(projectFilePath).getParentFile().getAbsoluteFile();
-    if (dotIdea == null || !dotIdea.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      files.add(projectFilePath);
-      ContainerUtil.addIfNotNull(files, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());  // may not exist yet
+    if (projectFilePath != null && !Project.DIRECTORY_STORE_FOLDER.equals(new File(projectFilePath).getParentFile().getName())) {
+      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath));
+      String wsFilePath = ProjectKt.getStateStore(myProject).getWorkspaceFilePath();  // may not exist yet
+      if (wsFilePath != null) {
+        flatPaths.add(FileUtil.toSystemIndependentName(wsFilePath));
+      }
     }
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
-      if (!toWatch.isEmpty()) recursiveDirs.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+      if (!toWatch.isEmpty()) {
+        recursivePaths.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+      }
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
-      recursiveDirs.addAll(extension.getRootsToWatch());
+      Set<String> toWatch = extension.getRootsToWatch();
+      if (!toWatch.isEmpty()) {
+        recursivePaths.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
+      }
     }
 
     Disposable oldDisposable = myRootPointersDisposable;
@@ -213,9 +215,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     VirtualFilePointerContainer container =
       VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
 
-    List<String> recursiveDirUrls = ContainerUtil.map(recursiveDirs, path -> VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
-    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
-    files.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
+    List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
+    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrls, true);
+    flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
 
     // changes in files provided by this method should be watched manually because no-one's bothered to setup correct pointers for them
     for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(getProject())) {
@@ -227,12 +229,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     Disposer.dispose(oldDisposable);  // dispose after the re-creating container to keep VFPs from disposing and re-creating back
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    addRootsFromModulesTo(recursiveDirs, files);
-
-    return pair(recursiveDirs, files);
+    collectModuleWatchRoots(recursivePaths, flatPaths);
   }
 
-  private void addRootsFromModulesTo(Set<String> recursivePaths, Set<String> flatPaths) {
+  private void collectModuleWatchRoots(Set<String> recursivePaths, Set<String> flatPaths) {
     Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -297,7 +297,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @Override
   public void markRootsForRefresh() {
     Set<String> paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    addRootsFromModulesTo(paths, paths);
+    collectModuleWatchRoots(paths, paths);
 
     LocalFileSystem fs = LocalFileSystem.getInstance();
     for (String path : paths) {
