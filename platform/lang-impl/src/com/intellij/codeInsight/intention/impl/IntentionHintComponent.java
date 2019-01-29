@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -293,6 +294,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
+    if (Registry.is("always.show.intention.above.current.line", false)) return false;
     final int offset = editor.getCaretModel().getOffset();
     final VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
