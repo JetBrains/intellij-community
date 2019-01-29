@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Konstantin Bulenkov
@@ -139,27 +138,32 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       Application application = ApplicationManager.getApplication();
-      if (application != null && !application.isUnitTestMode()) {
-        long millis = System.currentTimeMillis();
-        String name = project == null ? "application" : "project";
-        AtomicLong time = new AtomicLong();
-        for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      if (application == null || application.isUnitTestMode()) {
+        return;
+      }
+
+      long millis = System.currentTimeMillis();
+      String name = project == null ? "application" : "project";
+      List<SearchTopHitProvider> providers = SearchTopHitProvider.EP_NAME.getExtensionList();
+      for (SearchTopHitProvider provider : providers) {
+        if (provider instanceof OptionsTopHitProvider && !(provider instanceof ConfigurableOptionsTopHitProvider)) {
+          cache((OptionsTopHitProvider)provider, indicator, project);
+        }
+      }
+
+      application.invokeLater(() -> {
+        long start = System.currentTimeMillis();
+        for (SearchTopHitProvider provider : providers) {
+          // process on EDT, because it creates a Swing components
           if (provider instanceof ConfigurableOptionsTopHitProvider) {
-            // process on EDT, because it creates a Swing components
-            application.invokeLater(() -> {
-              long millisOnEDT = System.currentTimeMillis();
-              cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
-              time.addAndGet(System.currentTimeMillis() - millisOnEDT);
-            });
-          }
-          else if (provider instanceof OptionsTopHitProvider) {
-            cache((OptionsTopHitProvider)provider, indicator, project);
+            cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
           }
         }
-        application.invokeLater(() -> LOG.info(time.get() + " ms spent on EDT to cache options in " + name));
-        long delta = System.currentTimeMillis() - millis;
-        LOG.info(delta + " ms spent to cache options in " + name);
-      }
+        LOG.info((System.currentTimeMillis() - start) + " ms spent on EDT to cache options in " + name);
+      });
+
+      long delta = System.currentTimeMillis() - millis;
+      LOG.info(delta + " ms spent to cache options in " + name);
     }
 
     private static void cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {

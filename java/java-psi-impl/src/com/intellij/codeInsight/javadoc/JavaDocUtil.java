@@ -197,7 +197,7 @@ public class JavaDocUtil {
         allMethods = aClass.findMethodsByName(name, true);
       }
 
-      PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, name, allMethods);
+      PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, context, name, allMethods);
 
       if (methods.length == 0) return null;
 

@@ -1,4 +1,4 @@
-1<component name="libraryTable">
+<component name="libraryTable">
   <library name="jaxb-api" type="repository">
     <properties maven-id="javax.xml.bind:jaxb-api:2.3.1">
       <exclude>

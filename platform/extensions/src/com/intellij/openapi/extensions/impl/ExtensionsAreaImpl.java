@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.Collection;
@@ -129,7 +128,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
-    String epName = extractEPName(extensionElement, extensionNs);
+    String epName = extractPointName(extensionElement, extensionNs);
     registerExtension(getExtensionPoint(epName), pluginDescriptor, extensionElement);
   }
 
@@ -143,9 +142,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @NotNull
-  public static String extractEPName(@NotNull Element extensionElement, @Nullable String ns) {
+  public static String extractPointName(@NotNull Element extensionElement, @Nullable String ns) {
     String epName = extensionElement.getAttributeValue("point");
-
     if (epName == null) {
       if (ns == null) {
         Namespace namespace = extensionElement.getNamespace();
@@ -156,10 +154,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       }
     }
     return epName;
-  }
-
-  private MutablePicoContainer internalGetPluginContainer() {
-    return myPicoContainer;
   }
 
   private void initialize() {
@@ -336,8 +330,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   void removeAllComponents(@NotNull Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
-      ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
-      internalGetPluginContainer().unregisterComponent(componentAdapter.getComponentKey());
+      myPicoContainer.unregisterComponent(((ExtensionComponentAdapter)extensionAdapter).getComponentKey());
     }
   }
 
