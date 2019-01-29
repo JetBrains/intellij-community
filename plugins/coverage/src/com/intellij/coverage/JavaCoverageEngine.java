@@ -198,7 +198,10 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   protected void deleteAssociatedTraces(CoverageSuite suite) {
     if (suite.isTracingEnabled()) {
-      FileUtil.delete(getTracesDirectory(suite));
+      File tracesDirectory = getTracesDirectory(suite);
+      if (tracesDirectory.exists()) {
+        FileUtil.delete(tracesDirectory);
+      }
     }
   }
 
@@ -581,7 +584,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       if (aClass != null) {
         String qualifiedName = ClassUtil.getJVMClassName(aClass);
         if (qualifiedName != null) {
-          return qualifiedName + "," + CoverageListener.sanitize(method.getName());
+          return qualifiedName + "," + CoverageListener.sanitize(method.getName(), qualifiedName.length());
         }
       }
     }
@@ -595,23 +598,24 @@ public class JavaCoverageEngine extends CoverageEngine {
     final List<PsiElement> elements = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (String testName : testNames) {
-      int lastIdx = testName.indexOf(",");
-      if (lastIdx <= 0) return elements;
-      PsiClass psiClass = ClassUtil.findPsiClass(psiManager, testName.substring(0, lastIdx));
-      if (psiClass != null) {
-        collectTestsByName(elements, testName, psiClass, lastIdx);
-      }
+      int index = testName.indexOf(",");
+      if (index <= 0) return elements;
+      collectTestsByName(elements, testName.substring(index + 1), testName.substring(0, index), psiManager);
     }
     return elements;
   }
 
-  private static void collectTestsByName(List<? super PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
+  private static void collectTestsByName(List<? super PsiElement> elements,
+                                         String testName,
+                                         String className,
+                                         PsiManager psiManager) {
+    PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className);
+    if (psiClass == null) return;
     TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
     if (testFramework == null) return;
-    String sanitized = testName.substring(lastIdx + 1);
     Arrays.stream(psiClass.getAllMethods())
       .filter(method -> testFramework.isTestMethod(method) && 
-                        sanitized.equals(CoverageListener.sanitize(method.getName())))
+                        testName.equals(CoverageListener.sanitize(method.getName(), className.length())))
       .forEach(elements::add);
   }
 

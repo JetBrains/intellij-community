@@ -5,10 +5,10 @@ public abstract class CoverageListener {
   private Object myProjectData;
 
   protected static String sanitize(String className, String methodName) {
-    return className + "," + sanitize(methodName);
+    return className + "," + sanitize(methodName, className.length());
   }
 
-  public static String sanitize(String name) {
+  public static String sanitize(String name, int length) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < name.length(); i++) {
       final char ch = name.charAt(i);
@@ -22,6 +22,12 @@ public abstract class CoverageListener {
         }
       }
 
+    }
+
+    int methodNameLimit = 250 - length;
+    if (result.length() >= methodNameLimit) {
+      String hash = String.valueOf(result.toString().hashCode());
+      return (methodNameLimit > hash.length() ? result.substring(0, methodNameLimit - hash.length()) : "") + hash;
     }
 
     return result.toString();

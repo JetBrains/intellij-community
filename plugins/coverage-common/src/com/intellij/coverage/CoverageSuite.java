@@ -71,7 +71,10 @@ public interface CoverageSuite extends JDOMExternalizable {
         return;
       }
     }
-    FileUtil.delete(new File(fileName));
+    File file = new File(fileName);
+    if (file.exists()) {
+      FileUtil.delete(file);
+    }
     getCoverageEngine().deleteAssociatedTraces(this);
   }
 }
