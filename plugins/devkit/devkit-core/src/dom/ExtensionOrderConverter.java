@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -125,7 +125,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     return (trimKeyword ? LoadingOrder.BEFORE_STR.trim() : LoadingOrder.BEFORE_STR).equalsIgnoreCase(str) ||
            (trimKeyword ? LoadingOrder.AFTER_STR.trim(): LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
            LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str) ||
-           LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str);
+           LoadingOrder.AFTER_STR_OLD.equalsIgnoreCase(str);
   }
 
 
