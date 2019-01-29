@@ -8,7 +8,7 @@ readonly script_dir="$(realpath "$(dirname "$0")")"
 readonly xvfb_script="$(realpath "${script_dir}/../vendor/google/testing/display/launch_xvfb.sh")"
 readonly java="$(realpath "${script_dir}/../../prebuilts/studio/jdk/linux/jre/bin/java")"
 readonly ant_jar="${script_dir}/lib/ant/lib/ant-launcher.jar"
-readonly test_groups=TEST_FRAMEWORK,PROJECT_SUPPORT,PROJECT_WIZARD,EDITING,DEFAULT,UNRELIABLE
+readonly test_groups=DEFAULT,UNRELIABLE
 
 export DISPLAY=:10
 
