@@ -255,7 +255,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
               }
             }
 
-            myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extensionElement, ns), extensionElement);
+            myExtensions.putValue(ExtensionsAreaImpl.extractPointName(extensionElement, ns), extensionElement);
           }
         }
         break;
