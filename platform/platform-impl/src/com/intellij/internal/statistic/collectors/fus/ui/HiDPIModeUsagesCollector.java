@@ -26,7 +26,7 @@ public class HiDPIModeUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.ui.hidpi.mode";
+    return "ui.hidpi.mode";
   }
 
   @NotNull

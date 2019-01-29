@@ -36,8 +36,6 @@ import java.util.stream.Collectors;
   }
 )
 public class MainMenuCollector implements PersistentStateComponent<MainMenuCollector.State> {
-  private static final String GROUP = "main.menu";
-  private static final String GENERATED_ON_RUNTIME_ITEM = "generated.on.runtime";
 
   private final State myState = new State();
 
@@ -70,7 +68,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
 
       if (!StringUtil.isEmpty(path)) {
         final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
-        FUCounterUsageLogger.getInstance().logEvent(GROUP, ConvertUsagesUtil.escapeDescriptorName(path), data);
+        FUCounterUsageLogger.getInstance().logEvent("main.menu", ConvertUsagesUtil.escapeDescriptorName(path), data);
       }
     }
     catch (Exception ignore) {
@@ -106,7 +104,7 @@ public class MainMenuCollector implements PersistentStateComponent<MainMenuColle
     }
     final String actionId = ActionManager.getInstance().getId(action);
     if (StringUtil.isEmpty(actionId)) {
-      return GENERATED_ON_RUNTIME_ITEM;
+      return "generated.on.runtime";
     }
     return action.getTemplatePresentation().getText(); //avoid user data in Action Presentation
   }

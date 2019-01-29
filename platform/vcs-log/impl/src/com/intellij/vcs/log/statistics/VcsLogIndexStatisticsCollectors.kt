@@ -44,7 +44,7 @@ class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
 
   override fun getContext(): FUSUsageContext = FUSUsageContext.OS_CONTEXT
 
-  override fun getGroupId(): String = "statistics.vcs.log.index.application"
+  override fun getGroupId(): String = "vcs.log.index.application"
 }
 
 class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
@@ -73,7 +73,7 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
 
   override fun getContext(project: Project): FUSUsageContext = FUSUsageContext.OS_CONTEXT
 
-  override fun getGroupId(): String = "statistics.vcs.log.index.project"
+  override fun getGroupId(): String = "vcs.log.index.project"
 }
 
 class VcsLogIndexCollectorState {

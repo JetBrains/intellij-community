@@ -31,7 +31,7 @@ public class LaFUsagesCollector extends ApplicationUsagesCollector {
 
   @NotNull
   @Override
-  public String getGroupId() { return "statistics.ui.look.and.feel"; }
+  public String getGroupId() { return "ui.look.and.feel"; }
 
   @Nullable
   @Override

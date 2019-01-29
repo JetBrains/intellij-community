@@ -15,7 +15,7 @@ public class DisabledPluginsUsagesCollector extends ApplicationUsagesCollector {
   @Override
   @NotNull
   public String getGroupId() {
-    return "statistics.plugins.disabled";
+    return "plugins.disabled";
   }
 
   @Override

@@ -47,7 +47,7 @@ public class ScaleInfoUsageCollector extends ApplicationUsagesCollector {
 
   @NotNull
   @Override
-  public String getGroupId() { return "statistics.ui.screen.scale"; }
+  public String getGroupId() { return "ui.screen.scale"; }
 
   @NotNull
   @Override

@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 
-private const val GROUP = "statistics.build.gradle.actions"
-
 class GradleActionsUsagesCollector {
   companion object {
     @JvmStatic
@@ -25,13 +23,13 @@ class GradleActionsUsagesCollector {
 
       val actionClassName = UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName)
 
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, actionClassName, FeatureUsageData().addFeatureContext(context))
+      FUCounterUsageLogger.getInstance().logEvent(project, "build.gradle.actions", actionClassName, FeatureUsageData().addFeatureContext(context))
     }
 
     @JvmStatic
     fun trigger(project: Project?, feature: String) {
       if (project == null) return
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, feature)
+      FUCounterUsageLogger.getInstance().logEvent(project, "build.gradle.actions", feature)
     }
   }
 }

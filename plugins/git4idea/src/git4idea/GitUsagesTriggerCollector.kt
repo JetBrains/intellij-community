@@ -4,12 +4,11 @@ package git4idea
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 
-private val GROUP = "statistics.vcs.git.usages"
 class GitUsagesTriggerCollector  {
   companion object {
     @JvmStatic
     fun reportUsage(project: Project, featureId: String) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, featureId)
+      FUCounterUsageLogger.getInstance().logEvent(project, "vcs.git.usages", featureId)
     }
   }
 }

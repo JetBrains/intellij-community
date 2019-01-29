@@ -9,13 +9,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
 import java.util.*
 
-private const val GROUP = "statistics.terminalShell"
-
 class TerminalUsageTriggerCollector {
   companion object {
     @JvmStatic
     fun trigger(project: Project, featureId: String, context: FUSUsageContext) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP, featureId, FeatureUsageData().addFeatureContext(context))
+      FUCounterUsageLogger.getInstance().logEvent(project, "terminalShell", featureId, FeatureUsageData().addFeatureContext(context))
     }
 
     @JvmStatic

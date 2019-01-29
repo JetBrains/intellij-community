@@ -6,6 +6,6 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 public class DiffUsageTriggerCollector {
 
   public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent("statistics.vcs.diff.trigger", feature);
+    FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", feature);
   }
 }

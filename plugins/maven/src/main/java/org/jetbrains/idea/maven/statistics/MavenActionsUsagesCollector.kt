@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.nullize
 
-private const val GROUP_ID = "statistics.build.maven.actions"
+private const val GROUP_ID = "build.maven.actions"
 
 class MavenActionsUsagesCollector {
   companion object {

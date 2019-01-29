@@ -4,9 +4,8 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 
 public class JsonSchemaUsageTriggerCollector {
-  private static final String GROUP = "statistics.json.schema";
 
   public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, feature);
+    FUCounterUsageLogger.getInstance().logEvent("json.schema", feature);
   }
 }

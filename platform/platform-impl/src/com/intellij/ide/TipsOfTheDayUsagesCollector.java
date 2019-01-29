@@ -4,9 +4,8 @@ package com.intellij.ide;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 
 public class TipsOfTheDayUsagesCollector  {
-  private static final String GROUP = "statistics.ui.tips";
 
   public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, feature);
+    FUCounterUsageLogger.getInstance().logEvent("ui.tips", feature);
   }
 }

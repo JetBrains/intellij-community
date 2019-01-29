@@ -16,7 +16,6 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 
 public class VcsBackForwardUsageTriggerCollector {
-  private static final String GROUP = "statistics.vcs.back.forward.trigger";
 
   public static class Trigger implements ApplicationInitializedListener {
     @Override
@@ -26,7 +25,7 @@ public class VcsBackForwardUsageTriggerCollector {
         public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent e) {
           if (action instanceof BackAction ||
               action instanceof ForwardAction) {
-            FUCounterUsageLogger.getInstance().logEvent(GROUP, getContextName(e));
+            FUCounterUsageLogger.getInstance().logEvent("vcs.back.forward.trigger", getContextName(e));
           }
         }
       });

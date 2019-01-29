@@ -5,9 +5,8 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import org.jetbrains.annotations.NotNull;
 
 public class IdeUpdateUsageTriggerCollector {
-  private static final String GROUP = "statistics.ide.self.update";
 
   public static void trigger(@NotNull String feature) {
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, feature);
+    FUCounterUsageLogger.getInstance().logEvent("ide.self.update", feature);
   }
 }

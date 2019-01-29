@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  * {
  * "groups" : [
  *   {
- *    "id" : "statistics.Productivity",
+ *    "id" : "productivity",
  *    "builds" : [{ "from" : "173.4127.37", "to": "182.124" }, { "from" : "183.12" }]
  *   },
  *   {

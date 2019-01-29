@@ -11,8 +11,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.nullize
 
-private const val GROUP = "statistics.build.tools.actions"
-
 class ExternalSystemActionsCollector {
 
   companion object {
@@ -33,8 +31,9 @@ class ExternalSystemActionsCollector {
         *additionalContextData
       )
 
-      FUCounterUsageLogger.getInstance().logEvent(
-        project, GROUP, UsageDescriptorKeyValidator.ensureProperKey(featureId), FeatureUsageData().addFeatureContext(context)
+      FUCounterUsageLogger.getInstance().logEvent(project, "build.tools.actions",
+                                                  UsageDescriptorKeyValidator.ensureProperKey(featureId),
+                                                  FeatureUsageData().addFeatureContext(context)
       )
     }
 

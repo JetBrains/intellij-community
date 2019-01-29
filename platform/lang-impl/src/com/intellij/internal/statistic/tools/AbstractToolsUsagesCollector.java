@@ -74,7 +74,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     @NotNull
     @Override
     public String getGroupId() {
-      return "statistics.enabled.bundled.tools";
+      return "enabled.bundled.tools";
     }
 
     @NotNull
@@ -89,7 +89,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     @NotNull
     @Override
     public String getGroupId() {
-      return "statistics.enabled.listed.tools";
+      return "enabled.listed.tools";
     }
 
     @NotNull
@@ -104,7 +104,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     @NotNull
     @Override
     public String getGroupId() {
-      return "statistics.disabled.bundled.tools";
+      return "disabled.bundled.tools";
     }
 
     @NotNull
@@ -119,7 +119,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     @NotNull
     @Override
     public String getGroupId() {
-      return "statistics.disabled.listed.tools";
+      return "disabled.listed.tools";
     }
 
     @NotNull

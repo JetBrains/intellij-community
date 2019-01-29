@@ -26,6 +26,6 @@ public class JdkInfoUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.jdk.user";
+    return "jdk.user";
   }
 }

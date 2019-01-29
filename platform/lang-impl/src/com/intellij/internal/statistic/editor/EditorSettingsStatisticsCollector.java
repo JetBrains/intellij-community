@@ -23,7 +23,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "statistics.editor.settings.ide";
+    return "editor.settings.ide";
   }
 
   @NotNull
@@ -121,7 +121,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     @NotNull
     @Override
     public String getGroupId() {
-      return "statistics.editor.settings.project";
+      return "editor.settings.project";
     }
 
     @NotNull

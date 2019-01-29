@@ -16,14 +16,14 @@ import com.jetbrains.python.sdk.PythonSdkType
 object PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) = getUsagesInt(project, true)
 
-  override fun getGroupId() = "statistics.python.packages.versions"
+  override fun getGroupId() = "python.packages.versions"
 }
 
 
 object PyPackageUsagesCollector : ProjectUsagesCollector() {
   override fun getUsages(project: Project) = getUsagesInt(project, false)
 
-  override fun getGroupId() = "statistics.python.packages"
+  override fun getGroupId() = "python.packages"
 }
 
 private fun getUsagesInt(project: Project, addVersion: Boolean): Set<UsageDescriptor> {

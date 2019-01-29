@@ -8,7 +8,6 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 
 public class VcsLogUsageTriggerCollector {
-  private static final String GROUP = "statistics.vcs.log.trigger";
 
   public static void triggerUsage(@NotNull AnActionEvent e) {
     String text = e.getPresentation().getText();
@@ -28,6 +27,6 @@ public class VcsLogUsageTriggerCollector {
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
     String prefix = isFromHistory ? "history." : "log.";
     String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
-    FUCounterUsageLogger.getInstance().logEvent(GROUP, feature);
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature);
   }
 }

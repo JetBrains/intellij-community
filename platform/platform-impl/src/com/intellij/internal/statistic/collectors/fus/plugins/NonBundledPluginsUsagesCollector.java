@@ -16,7 +16,7 @@ public class NonBundledPluginsUsagesCollector extends ApplicationUsagesCollector
   @Override
   @NotNull
   public String getGroupId() {
-    return "statistics.plugins.non.bundled";
+    return "plugins.non.bundled";
   }
 
   @Override

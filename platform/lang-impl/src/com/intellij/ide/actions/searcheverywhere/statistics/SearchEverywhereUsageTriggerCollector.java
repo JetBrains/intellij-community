@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SearchEverywhereUsageTriggerCollector {
-  private static final String GROUP_ID = "statistics.searchEverywhere";
 
   public static final String DIALOG_OPEN = "dialogOpen";
   public static final String TAB_SWITCHED = "tabSwitched";
@@ -20,7 +19,7 @@ public class SearchEverywhereUsageTriggerCollector {
   public static final String COMMAND_COMPLETED = "commandCompleted";
 
   public static void trigger(@NotNull Project project, @NotNull String feature, @Nullable FUSUsageContext context) {
-    FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, feature, new FeatureUsageData().addFeatureContext(context));
+    FUCounterUsageLogger.getInstance().logEvent(project, "searchEverywhere", feature, new FeatureUsageData().addFeatureContext(context));
   }
 
   @NotNull

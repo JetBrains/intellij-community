@@ -19,7 +19,7 @@ public class VcsNamesUsagesCollector extends ProjectUsagesCollector {
   @Override
   @NotNull
   public String getGroupId() {
-    return "statistics.vcs.names";
+    return "vcs.names";
   }
 
   @Override
