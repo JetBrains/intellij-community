@@ -224,11 +224,11 @@ public class StartupUtil {
 
     activity = activity.endAndStart(Phases.LOCK_SYSTEM_DIRS);
 
-    ActivationResult result = lockSystemFolders(args);
-    if (result == ActivationResult.ACTIVATED) {
+    SocketLock.ActivateStatus result = lockSystemFolders(args);
+    if (result == SocketLock.ActivateStatus.ACTIVATED) {
       System.exit(0);
     }
-    if (result != ActivationResult.STARTED) {
+    if (result != SocketLock.ActivateStatus.NO_INSTANCE) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
@@ -444,10 +444,8 @@ public class StartupUtil {
     }
   }
 
-  private enum ActivationResult { STARTED, ACTIVATED, FAILED }
-
   @NotNull
-  private static synchronized ActivationResult lockSystemFolders(@NotNull String[] args) {
+  private static synchronized SocketLock.ActivateStatus lockSystemFolders(@NotNull String[] args) {
     if (ourSocketLock != null) {
       throw new AssertionError();
     }
@@ -460,7 +458,7 @@ public class StartupUtil {
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
-      return ActivationResult.FAILED;
+      return SocketLock.ActivateStatus.CANNOT_ACTIVATE;
     }
 
     if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
@@ -471,19 +469,19 @@ public class StartupUtil {
           ourSocketLock = null;
         }
       });
-      return ActivationResult.STARTED;
+      return SocketLock.ActivateStatus.NO_INSTANCE;
     }
     if (status == SocketLock.ActivateStatus.ACTIVATED) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("Already running");
-      return ActivationResult.ACTIVATED;
+      return SocketLock.ActivateStatus.ACTIVATED;
     }
     if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
       String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
       Main.showMessage("Too Many Instances", message, true);
     }
 
-    return ActivationResult.FAILED;
+    return SocketLock.ActivateStatus.CANNOT_ACTIVATE;
   }
 
   private static void fixProcessEnvironment(Logger log) {
