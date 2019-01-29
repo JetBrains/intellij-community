@@ -959,7 +959,7 @@ parenthesized_lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl l
 lambda_parameter ::= modifier_list mb_type_element var { elementType = parameter }
 
 single_lambda_parameter_list ::= single_lambda_parameter { elementType = parameter_list }
-single_lambda_parameter ::= IDENTIFIER {
+single_lambda_parameter ::= modifier_list IDENTIFIER {
   elementType = parameter
 }
 

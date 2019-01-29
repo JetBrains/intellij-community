@@ -9,6 +9,8 @@ Groovy script
       Lambda expression
         Parameter list
           Parameter
+            Modifiers
+              <empty list>
             PsiElement(identifier)('b')
         PsiWhiteSpace(' ')
         PsiElement(->)('->')
@@ -20,6 +22,8 @@ Groovy script
       Lambda expression
         Parameter list
           Parameter
+            Modifiers
+              <empty list>
             PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(->)('->')
