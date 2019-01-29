@@ -19,7 +19,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   protected Object myComponentInstance;
-  protected final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
@@ -29,12 +28,10 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final LoadingOrder myOrder;
 
   public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable PicoContainer container,
                                    @Nullable PluginDescriptor pluginDescriptor,
                                    @Nullable String orderId,
                                    @NotNull LoadingOrder order) {
     myImplementationClassOrName = implementationClassName;
-    myContainer = container;
     myPluginDescriptor = pluginDescriptor;
 
     myOrderId = orderId;
@@ -101,8 +98,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @NotNull
-  public Object getExtension() {
-    return getComponentInstance(myContainer);
+  public Object getExtension(@Nullable PicoContainer container) {
+    return getComponentInstance(container);
   }
 
   @Override

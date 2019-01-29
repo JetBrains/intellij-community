@@ -18,12 +18,11 @@ class XmlExtensionComponentAdapter extends ExtensionComponentAdapter {
   private final Element myExtensionElement;
 
   XmlExtensionComponentAdapter(@NotNull String implementationClassName,
-                               @Nullable PicoContainer container,
                                @Nullable PluginDescriptor pluginDescriptor,
                                @Nullable String orderId,
                                @NotNull LoadingOrder order,
                                @Nullable Element extensionElement) {
-    super(implementationClassName, container, pluginDescriptor, orderId, order);
+    super(implementationClassName, pluginDescriptor, orderId, order);
     myExtensionElement = extensionElement;
   }
 
@@ -41,11 +40,10 @@ class XmlExtensionComponentAdapter extends ExtensionComponentAdapter {
 
   static final class ConstructorInjectionAdapter extends XmlExtensionComponentAdapter {
     ConstructorInjectionAdapter(@NotNull String implementationClassName,
-                                @Nullable PicoContainer container,
                                 @Nullable PluginDescriptor pluginDescriptor,
                                 @Nullable String orderId,
                                 @NotNull LoadingOrder order, @Nullable Element extensionElement) {
-      super(implementationClassName, container, pluginDescriptor, orderId, order, extensionElement);
+      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
     }
 
     @NotNull

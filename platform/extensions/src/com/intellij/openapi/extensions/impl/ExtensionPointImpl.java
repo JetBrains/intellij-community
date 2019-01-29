@@ -241,7 +241,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       for (ExtensionComponentAdapter adapter : adapters) {
         CHECK_CANCELED.run();
         try {
-          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+          @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension(myOwner.getPicoContainer());
           if (!duplicates.add(extension)) {
             T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
@@ -337,7 +337,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private int getExtensionIndex(@NotNull T extension) {
     for (int i = 0; i < myLoadedAdapters.size(); i++) {
       ExtensionComponentAdapter adapter = myLoadedAdapters.get(i);
-      if (Comparing.equal(adapter.getExtension(), extension)) return i;
+      if (Comparing.equal(adapter.getExtension(myOwner.getPicoContainer()), extension)) return i;
     }
     return -1;
   }
@@ -415,7 +415,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
-          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension(myOwner.getPicoContainer());
           listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
@@ -435,7 +435,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
-          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
+          @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension(myOwner.getPicoContainer());
           listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
@@ -502,7 +502,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         Object key = adapter.getComponentKey();
         myOwner.getPicoContainer().unregisterComponent(key);
 
-        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
+        @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension(myOwner.getPicoContainer());
         unregisterExtension(extension, adapter.getPluginDescriptor());
       }
     }
@@ -515,20 +515,20 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   abstract ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor);
 
   @NotNull
-  protected final ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
-                                                            @NotNull Element extensionElement,
-                                                            boolean isNeedToDeserialize,
-                                                            @NotNull PluginDescriptor pluginDescriptor,
-                                                            boolean isConstructorInjectionSupported) {
+  protected static ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                             @NotNull Element extensionElement,
+                                                             boolean isNeedToDeserialize,
+                                                             @NotNull PluginDescriptor pluginDescriptor,
+                                                             boolean isConstructorInjectionSupported) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     if (isConstructorInjectionSupported) {
-      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName, myOwner.getPicoContainer(),
+      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName,
                                                                           pluginDescriptor, orderId, order,
                                                                           isNeedToDeserialize ? extensionElement : null);
     }
     else {
-      return new XmlExtensionComponentAdapter(implementationClassName, myOwner.getPicoContainer(), pluginDescriptor, orderId, order,
+      return new XmlExtensionComponentAdapter(implementationClassName, pluginDescriptor, orderId, order,
                                               isNeedToDeserialize ? extensionElement : null);
     }
   }
@@ -544,7 +544,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private static final class ObjectComponentAdapter extends ExtensionComponentAdapter {
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null, loadingOrder);
+      super(extension.getClass().getName(), null, null, loadingOrder);
 
       myComponentInstance = extension;
     }

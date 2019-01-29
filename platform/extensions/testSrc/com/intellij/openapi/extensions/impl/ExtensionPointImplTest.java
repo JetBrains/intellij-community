@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.Arrays;
@@ -259,7 +260,7 @@ public class ExtensionPointImplTest {
     private boolean myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
     }
 
     public void setFire(boolean fire) {
@@ -268,12 +269,12 @@ public class ExtensionPointImplTest {
 
     @NotNull
     @Override
-    public Object getExtension() {
+    public Object getExtension(@Nullable PicoContainer container) {
       if (myFire) {
         throw new ProcessCanceledException();
       }
       else {
-        return super.getExtension();
+        return super.getExtension(container);
       }
     }
   }

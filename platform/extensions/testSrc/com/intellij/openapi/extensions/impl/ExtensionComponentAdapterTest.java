@@ -31,13 +31,12 @@ public class ExtensionComponentAdapterTest {
   public void testUnknownAttributes() throws IOException, JDOMException {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
-    DefaultPicoContainer container = new DefaultPicoContainer();
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new XmlExtensionComponentAdapter(name, container, descriptor, null, LoadingOrder.ANY, element).getComponentInstance(container);
+    new XmlExtensionComponentAdapter(name, descriptor, null, LoadingOrder.ANY, element).getComponentInstance(new DefaultPicoContainer());
   }
 
   @NotNull
   private static ExtensionComponentAdapter createAdapter(@NotNull LoadingOrder order) {
-    return new ExtensionComponentAdapter(Object.class.getName(), null, null, null, order);
+    return new ExtensionComponentAdapter(Object.class.getName(), null, null, order);
   }
 }
