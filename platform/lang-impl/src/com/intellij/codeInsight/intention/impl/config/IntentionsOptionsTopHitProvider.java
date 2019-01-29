@@ -25,10 +25,6 @@ final class IntentionsOptionsTopHitProvider extends OptionsTopHitProvider {
   @Override
   public Collection<OptionDescription> getOptions(@Nullable Project project) {
     IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-    if (settings == null) {
-      return Collections.emptyList();
-    }
-
     Collection<BooleanOptionDescription> options = new ArrayList<>();
     for (IntentionActionMetaData data : settings.getMetaData()) {
       options.add(new Option(settings, data));

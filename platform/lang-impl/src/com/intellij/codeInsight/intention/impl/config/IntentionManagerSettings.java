@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
@@ -44,6 +44,23 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   @NonNls private static final String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
+  public IntentionManagerSettings() {
+    for (IntentionActionBean extension : IntentionManager.EP_INTENTION_ACTIONS.getExtensionList()) {
+      String[] categories = extension.getCategories();
+      if (categories == null) {
+        continue;
+      }
+
+      IntentionActionWrapper instance = new IntentionActionWrapper(extension, categories);
+      String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+      if (descriptionDirectoryName == null) {
+        descriptionDirectoryName = instance.getDescriptionDirectoryName();
+      }
+      registerMetaData(new IntentionActionMetaData(instance, extension.getMetadataClassLoader(), categories, descriptionDirectoryName));
+    }
+  }
+
+  @NotNull
   public static IntentionManagerSettings getInstance() {
     return ServiceManager.getService(IntentionManagerSettings.class);
   }
@@ -58,13 +75,6 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     return intentionAction instanceof IntentionActionWrapper
            ? ((IntentionActionWrapper)intentionAction).getImplementationClassLoader()
            : intentionAction.getClass().getClassLoader();
-  }
-
-  void registerIntentionMetaData(@NotNull IntentionAction intentionAction,
-                                 @NotNull String[] category,
-                                 @NotNull String descriptionDirectoryName,
-                                 final ClassLoader classLoader) {
-    registerMetaData(new IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName));
   }
 
   public boolean isShowLightBulb(@NotNull IntentionAction action) {
@@ -90,7 +100,6 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
 
   @NotNull
   public synchronized List<IntentionActionMetaData> getMetaData() {
-    IntentionManager.getInstance(); // TODO: Hack to make IntentionManager actually register metadata here. Dependencies between IntentionManager and IntentionManagerSettings should be revised.
     return new ArrayList<>(myMetaData.values());
   }
 
@@ -118,6 +127,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   public boolean isEnabled(@NotNull IntentionAction action) {
     return !myIgnoredActions.contains(getFamilyName(action));
   }
+
   public void setEnabled(@NotNull IntentionAction action, boolean enabled) {
     if (enabled) {
       myIgnoredActions.remove(getFamilyName(action));
