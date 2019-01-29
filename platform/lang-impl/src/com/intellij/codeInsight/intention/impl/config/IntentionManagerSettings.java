@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 
 @State(name = "IntentionManagerSettings", storages = @Storage("intentionSettings.xml"))
-public class IntentionManagerSettings implements PersistentStateComponent<Element> {
+public final class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
   private static class MetaDataKey extends Pair<String, String> {
@@ -74,9 +74,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   @Override
   public void loadState(@NotNull Element element) {
     myIgnoredActions.clear();
-    List children = element.getChildren(IGNORE_ACTION_TAG);
-    for (final Object aChildren : children) {
-      Element e = (Element)aChildren;
+    for (Element e : element.getChildren(IGNORE_ACTION_TAG)) {
       myIgnoredActions.add(e.getAttributeValue(NAME_ATT));
     }
   }

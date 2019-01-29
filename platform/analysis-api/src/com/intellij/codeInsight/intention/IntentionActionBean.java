@@ -44,8 +44,7 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
 
       category = CommonBundle.message(bundle, categoryKey);
     }
-    if (category == null) return null;
-    return category.split("/");
+    return category == null ? null : category.split("/");
   }
 
   public String getDescriptionDirectoryName() {

@@ -37,10 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * @author dsl
- */
-public class IntentionManagerImpl extends IntentionManager {
+public final class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance(IntentionManagerImpl.class);
 
   private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
