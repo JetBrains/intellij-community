@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -65,10 +64,10 @@ public class StartupUtil {
 
   private StartupUtil() { }
 
-  public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+  public static synchronized void addExternalInstanceListener(@Nullable SocketLock.CliRequestProcessor processor) {
     // method called by app after startup
     if (ourSocketLock != null) {
-      ourSocketLock.setExternalInstanceListener(consumer);
+      ourSocketLock.setExternalInstanceListener(processor);
     }
   }
 

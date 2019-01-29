@@ -77,6 +77,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
@@ -150,22 +151,32 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
 
-      StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
-        LOG.info("ApplicationImpl.externalInstanceListener invocation");
-        String currentDirectory = args.isEmpty() ? null : args.get(0);
-        List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-        final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-        JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
-                       (JFrame)WindowManager.getInstance().getIdeFrame(project);
-        if (frame != null) {
-          if (frame instanceof IdeFrame) {
-            AppIcon.getInstance().requestFocus((IdeFrame)frame);
-          } else {
-            frame.toFront();
-            DialogEarthquakeShaker.shake(frame);
+      StartupUtil.addExternalInstanceListener(args -> {
+        AtomicReference<Future<? extends CliResult>> ref = new AtomicReference<>();
+        
+        invokeAndWait(() -> {
+          LOG.info("ApplicationImpl.externalInstanceListener invocation");
+          String currentDirectory = args.isEmpty() ? null : args.get(0);
+          List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
+          final CommandLineProcessor.FutureAndProject futureAndProject = 
+            CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
+
+          ref.set(futureAndProject.getFuture());
+          final Project project = futureAndProject.getProject();
+          JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
+                         (JFrame)WindowManager.getInstance().getIdeFrame(project);
+          if (frame != null) {
+            if (frame instanceof IdeFrame) {
+              AppIcon.getInstance().requestFocus((IdeFrame)frame);
+            } else {
+              frame.toFront();
+              DialogEarthquakeShaker.shake(frame);
+            }
           }
-        }
-      }));
+        });
+        
+        return ref.get();
+      });
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {

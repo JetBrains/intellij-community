@@ -5,8 +5,6 @@ import os
 import socket
 import struct
 import sys
-import tempfile
-import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
 
@@ -24,18 +22,19 @@ def print_usage(cmd):
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
 
-def generate_temp_filename():
-    filepath = None
-    try:
-        _, filepath = tempfile.mkstemp(suffix='ideapid')
-    finally:
-        return filepath
+def print_to_sock(sock, str):
+    if sys.version_info[0] >= 3: str = str.encode('utf-8')
+    sock.send(struct.pack('>h', len(str)) + str)
+
+
+def read_from_sock(sock):
+    len = struct.unpack('>h', sock.recv(2))[0]
+    return sock.recv(len).decode('utf-8')
 
 
 def process_args(argv):
     args = []
 
-    wait_filename = None
     skip_next = False
     for i, arg in enumerate(argv[1:]):
         if arg == '-h' or arg == '-?' or arg == '--help':
@@ -47,10 +46,7 @@ def process_args(argv):
             args.append(arg)
             skip_next = True
         elif arg == '-w' or arg == '--wait':
-            wait_filename = generate_temp_filename()
-            if not (wait_filename is None):
-                args.append('--wait')
-                args.append(wait_filename)
+            args.append('--wait')
         elif skip_next:
             args.append(arg)
             skip_next = False
@@ -64,7 +60,7 @@ def process_args(argv):
                     path = file_path
             args.append(os.path.abspath(path))
 
-    return args, wait_filename
+    return args
 
 
 def try_activate_instance(args):
@@ -91,30 +87,31 @@ def try_activate_instance(args):
     found = False
     while True:
         try:
-            path_len = struct.unpack('>h', s.recv(2))[0]
-            path = s.recv(path_len).decode('utf-8')
+            path = read_from_sock(s)
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
+            elif path == '---':
                 break
+
         except (socket.error, IOError):
             return False
 
     if found:
-        cmd = 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args)
-        if sys.version_info[0] >= 3: cmd = cmd.encode('utf-8')
-        encoded = struct.pack('>h', len(cmd)) + cmd
-        s.send(encoded)
-        time.sleep(0.5)  # don't close the socket immediately
-        return True
+        print_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))
+
+        response = read_from_sock(s)
+
+        spl = response.split('\0')
+        if spl[0] != 'ok':
+            print('bad response: ' + response)
+            exit(1)
+
+        if len(spl) > 2:
+            print(spl[2])
+
+        exit(int(spl[1]))
 
     return False
-
-
-def wait_until_ide_returns(wait_filename):
-    while True:
-        if not os.path.isfile(wait_filename):
-            break
-        time.sleep(0.5)
 
 
 def start_new_instance(args):
@@ -127,9 +124,6 @@ def start_new_instance(args):
         os.spawnv(os.P_NOWAIT, RUN_PATH, [bin_file] + args)
 
 
-ide_args, wait_filename = process_args(sys.argv)
+ide_args = process_args(sys.argv)
 if not try_activate_instance(ide_args):
     start_new_instance(ide_args)
-
-if not (wait_filename is None):
-    wait_until_ide_returns(wait_filename)

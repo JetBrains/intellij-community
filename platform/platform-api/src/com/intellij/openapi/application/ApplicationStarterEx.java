@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.ide.CliResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * Implementers of the interface declared via {@link com.intellij.ExtensionPoints#APPLICATION_STARTER}
@@ -31,5 +35,14 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
     return false;
   }
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) { }
+  
+  @NotNull
+  public Future<CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
+    //noinspection deprecation
+    processExternalCommandLine(args, currentDirectory);
+    return CompletableFuture.completedFuture(new CliResult(0, null));
+  }
 }

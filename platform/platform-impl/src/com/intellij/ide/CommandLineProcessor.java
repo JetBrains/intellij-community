@@ -22,6 +22,7 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,57 +31,60 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
+
+import static com.intellij.ide.CliResult.error;
+import static com.intellij.ide.CliResult.ok;
 
 /**
  * @author yole
  */
 public class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
+  private static final String WAIT_KEY = "--wait";
 
   private CommandLineProcessor() { }
 
-  @Nullable
-  private static Project doOpenFileOrProject(VirtualFile file, @Nullable String waitLockFileName) {
+  @NotNull
+  private static FutureAndProject doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
-        Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
+        final String message = "Cannot open project '" + FileUtil.toSystemDependentName(path) + "'";
+        Messages.showErrorDialog(message, "Cannot Open Project");
+        return of(error(1, message));
       }
-      else if (waitLockFileName != null) {
-        CommandLineWaitingManager.getInstance().addHookForProject(project, waitLockFileName);
-      }
-      
-      return project;
+
+      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project)
+                                    : ok());       
     }
     else {
-      return doOpenFile(file, -1, false, waitLockFileName);
+      return doOpenFile(file, -1, false, shouldWait);
     }
   }
 
-  @Nullable
-  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject, @Nullable String waitLockFileName) {
+  @NotNull
+  private static FutureAndProject doOpenFile(VirtualFile file, int line, boolean tempProject, boolean shouldWait) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
       if (project == null) {
-        Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
+        final String message = "No project found to open file in";
+        Messages.showErrorDialog(message, "Cannot Open File");
+        return of(error(1, message));
       }
-      else if (waitLockFileName != null) {
-        CommandLineWaitingManager.getInstance().addHookForFile(file, waitLockFileName);
-      }
-      
-      return project;
+
+      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
+                                    : ok());
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
-      
-      if (waitLockFileName != null) {
-        CommandLineWaitingManager.getInstance().addHookForFile(file, waitLockFileName);
-      }
-      return project;
+
+      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
+                                    : ok());
     }
   }
 
@@ -103,27 +107,28 @@ public class CommandLineProcessor {
     return projects[0];
   }
 
-  @Nullable
-  public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
+  @NotNull
+  public static FutureAndProject processExternalCommandLine(List<String> args,
+                                                            @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
     LOG.info("-----");
-    if (args.isEmpty()) return null;
+    if (args.isEmpty()) return of(ok());
 
     String command = args.get(0);
     for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
       if (command.equals(starter.getCommandName())) {
         if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+          return of(((ApplicationStarterEx)starter).processExternalCommandLineEx(ArrayUtil.toStringArray(args), currentDirectory));
         }
         else {
           String title = "Cannot execute command '" + command + "'";
           String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
           Messages.showErrorDialog(message, title);
+          return of(error(1, message));
         }
-        return null;
       }
     }
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
@@ -131,17 +136,18 @@ public class CommandLineProcessor {
         String url = URLDecoder.decode(command, "UTF-8");
         JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
         ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
+        return of(ok());
       }
       catch (UnsupportedEncodingException e) {
         LOG.error(e);
+        return of(error(1, e.getMessage()));
       }
-      return null;
     }
 
-    Project lastOpenedProject = null;
+    final boolean shouldWait = args.contains(WAIT_KEY);
+    FutureAndProject projectAndCallback = null;
     int line = -1;
     boolean tempProject = false;
-    String waitLockFileName = null;
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
@@ -168,13 +174,7 @@ public class CommandLineProcessor {
         tempProject = true;
         continue;
       }
-      if (arg.equals("--wait")) {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i == args.size()) {
-          break;
-        }
-        waitLockFileName = args.get(i);
+      if (arg.equals(WAIT_KEY)) {
         continue;
       }
 
@@ -188,29 +188,68 @@ public class CommandLineProcessor {
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
       if (line != -1 || tempProject) {
         if (file != null && !file.isDirectory()) {
-          lastOpenedProject = doOpenFile(file, line, tempProject, waitLockFileName);
+          projectAndCallback = doOpenFile(file, line, tempProject, shouldWait);
+          if (shouldWait) break;
         }
         else {
-          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
+          final String message = "Cannot find file '" + arg + "'";
+          Messages.showErrorDialog(message, "Cannot Find File");
+          return of(error(1, message));
         }
       }
       else {
         if (file != null) {
-          lastOpenedProject = doOpenFileOrProject(file, waitLockFileName);
+          projectAndCallback = doOpenFileOrProject(file, shouldWait);
+          if (shouldWait) break;
         }
         else {
-          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
+          final String message = "Cannot find file '" + arg + "'";
+          Messages.showErrorDialog(message, "Cannot Find File");
+          return of(error(1, message));
         }
       }
 
       line = -1;
       tempProject = false;
     }
-
-    if (lastOpenedProject == null) {
-      CommandLineWaitingManager.deleteTempFile(waitLockFileName);
-    }
     
-    return lastOpenedProject;
+    if (shouldWait && projectAndCallback == null) {
+      return of(error(1, "--wait must be supplied with file or project to wait for"));
+    }
+
+    return ObjectUtils.coalesce(projectAndCallback, of(ok()));
+  }
+
+  @NotNull
+  public static FutureAndProject of(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
+    return new FutureAndProject(project, future);
+  }
+
+  @NotNull
+  public static FutureAndProject of(@NotNull Future<? extends CliResult> future) {
+    return new FutureAndProject(null, future);
+  }
+  
+  public static class FutureAndProject {
+    @Nullable
+    private final Project myProject;
+    
+    @NotNull
+    private final Future<? extends CliResult> myFuture;
+
+    public FutureAndProject(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
+      myProject = project;
+      myFuture = future;
+    }
+
+    @Nullable
+    public Project getProject() {
+      return myProject;
+    }
+
+    @NotNull
+    public Future<? extends CliResult> getFuture() {
+      return myFuture;
+    }
   }
 }

@@ -319,7 +319,7 @@ public class IdeaApplication {
       Project project = null;
       if (args != null && args.length > 0 && args[0] != null) {
         LOG.info("IdeaApplication.loadProject");
-        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null);
+        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null).getProject();
       }
       return project;
     }
