@@ -26,13 +26,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,15 +40,15 @@ public class LibraryUtil {
   private LibraryUtil() {
   }
 
-  public static boolean isClassAvailableInLibrary(final Library library, final String fqn) {
+  public static boolean isClassAvailableInLibrary(@NotNull Library library, @NotNull String fqn) {
     return isClassAvailableInLibrary(library.getFiles(OrderRootType.CLASSES), fqn);
   }
 
-  public static boolean isClassAvailableInLibrary(VirtualFile[] files, final String fqn) {
+  public static boolean isClassAvailableInLibrary(@NotNull VirtualFile[] files, @NotNull String fqn) {
     return isClassAvailableInLibrary(Arrays.asList(files), fqn);
   }
 
-  public static boolean isClassAvailableInLibrary(List<? extends VirtualFile> files, final String fqn) {
+  public static boolean isClassAvailableInLibrary(@NotNull List<? extends VirtualFile> files, @NotNull String fqn) {
     for (VirtualFile file : files) {
       if (findInFile(file, new StringTokenizer(fqn, "."))) return true;
     }
@@ -56,7 +56,7 @@ public class LibraryUtil {
   }
 
   @Nullable
-  public static Library findLibraryByClass(final String fqn, @Nullable Project project) {
+  public static Library findLibraryByClass(@NotNull String fqn, @Nullable Project project) {
     if (project != null) {
       final LibraryTable projectTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
       Library library = findInTable(projectTable, fqn);
@@ -69,7 +69,7 @@ public class LibraryUtil {
   }
 
 
-  private static boolean findInFile(VirtualFile file, final StringTokenizer tokenizer) {
+  private static boolean findInFile(@NotNull VirtualFile file, @NotNull StringTokenizer tokenizer) {
     if (!tokenizer.hasMoreTokens()) return true;
     @NonNls StringBuilder name = new StringBuilder(tokenizer.nextToken());
     if (!tokenizer.hasMoreTokens()) {
@@ -80,7 +80,7 @@ public class LibraryUtil {
   }
 
   @Nullable
-  private static Library findInTable(LibraryTable table, String fqn) {
+  private static Library findInTable(@NotNull LibraryTable table, @NotNull String fqn) {
     for (Library library : table.getLibraries()) {
       if (isClassAvailableInLibrary(library, fqn)) {
         return library;
@@ -89,7 +89,8 @@ public class LibraryUtil {
     return null;
   }
 
-  public static Library createLibrary(final LibraryTable libraryTable, @NonNls final String baseName) {
+  @NotNull
+  public static Library createLibrary(@NotNull LibraryTable libraryTable, @NonNls @NotNull String baseName) {
     String name = baseName;
     int count = 2;
     while (libraryTable.getLibraryByName(name) != null) {
@@ -98,15 +99,18 @@ public class LibraryUtil {
     return libraryTable.createLibrary(name);
   }
 
-  public static VirtualFile[] getLibraryRoots(final Project project) {
+  @NotNull
+  public static VirtualFile[] getLibraryRoots(@NotNull Project project) {
     return getLibraryRoots(project, true, true);
   }
 
-  public static VirtualFile[] getLibraryRoots(final Project project, final boolean includeSourceFiles, final boolean includeJdk) {
+  @NotNull
+  public static VirtualFile[] getLibraryRoots(@NotNull Project project, final boolean includeSourceFiles, final boolean includeJdk) {
     return getLibraryRoots(ModuleManager.getInstance(project).getModules(), includeSourceFiles, includeJdk);
   }
 
-  public static VirtualFile[] getLibraryRoots(final Module[] modules, final boolean includeSourceFiles, final boolean includeJdk) {
+  @NotNull
+  public static VirtualFile[] getLibraryRoots(@NotNull Module[] modules, final boolean includeSourceFiles, final boolean includeJdk) {
     Set<VirtualFile> roots = new HashSet<>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -147,8 +151,8 @@ public class LibraryUtil {
     return result.get();
   }
 
-   @Nullable
-  public static OrderEntry findLibraryEntry(VirtualFile file, final Project project) {
+  @Nullable
+  public static OrderEntry findLibraryEntry(@NotNull VirtualFile file, @NotNull Project project) {
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {

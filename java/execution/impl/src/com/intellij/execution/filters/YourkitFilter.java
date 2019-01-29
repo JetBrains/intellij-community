@@ -47,7 +47,7 @@ public class YourkitFilter implements Filter{
   }
 
   @Override
-  public Result applyFilter(final String line, final int entireLength) {
+  public Result applyFilter(@NotNull final String line, final int entireLength) {
     if (!line.endsWith(".java\n")) {
       return null;
     }

@@ -117,7 +117,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         }
 
         @Override
-        public void pushRecursively(VirtualFile file, Project project) {
+        public void pushRecursively(@NotNull VirtualFile file, @NotNull Project project) {
           queueTasks(ContainerUtil.createMaybeSingletonList(createRecursivePushTask(file, new FilePropertyPusher[]{pusher})));
         }
       });

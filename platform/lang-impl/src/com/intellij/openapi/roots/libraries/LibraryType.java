@@ -98,11 +98,13 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
    * @return Root types to collect library files which do not belong to the project and therefore
    *         indicate that the library is external.
    */
+  @NotNull
   public OrderRootType[] getExternalRootTypes() {
     return DEFAULT_EXTERNAL_ROOT_TYPES;
   }
 
-  public static LibraryType findByKind(LibraryKind kind) {
+  @NotNull
+  public static LibraryType findByKind(@NotNull LibraryKind kind) {
     for (LibraryType type : EP_NAME.getExtensions()) {
       if (type.getKind() == kind) {
         return type;

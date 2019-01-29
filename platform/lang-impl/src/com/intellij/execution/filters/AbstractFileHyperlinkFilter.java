@@ -67,7 +67,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   @Nullable
   @Override
-  public final Result applyFilter(String line, int entireLength) {
+  public final Result applyFilter(@NotNull String line, int entireLength) {
     List<FileHyperlinkRawData> links;
     try {
       links = parse(line);

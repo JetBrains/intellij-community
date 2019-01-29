@@ -17,11 +17,13 @@ public class StateAnnotation implements State {
     storages = new Storage[]{storage};
   }
 
+  @NotNull
   @Override
   public String name() {
     return name;
   }
 
+  @NotNull
   @Override
   public Storage[] storages() {
     return storages;

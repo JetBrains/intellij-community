@@ -220,7 +220,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         }
 
         @Override
-        public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
           super.validateSelectedFiles(files);
           assert files.length == 1 : Arrays.toString(files);
           if (selectedBundle == null) {

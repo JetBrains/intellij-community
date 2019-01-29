@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency;
  * @author nik
  */
 public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDependency> implements ModuleOrderEntry {
-  public JpsModuleOrderEntry(JpsRootModel rootModel, JpsModuleDependency dependencyElement) {
+  public JpsModuleOrderEntry(@NotNull JpsRootModel rootModel, JpsModuleDependency dependencyElement) {
     super(rootModel, dependencyElement);
   }
 
@@ -41,6 +41,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
     return null;
   }
 
+  @NotNull
   @Override
   public String getModuleName() {
     return myDependencyElement.getModuleReference().getModuleName();

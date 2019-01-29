@@ -100,13 +100,13 @@ public abstract class SdkType implements SdkTypeId {
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
 
   @Nullable
-  public SdkAdditionalData loadAdditionalData(Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return null;
   }
 
   @Override
   @Nullable
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
     return loadAdditionalData(additional);
   }
 
@@ -159,7 +159,7 @@ public abstract class SdkType implements SdkTypeId {
   public FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
@@ -272,6 +272,7 @@ public abstract class SdkType implements SdkTypeId {
     return homeDir != null && homeDir.isValid();
   }
 
+  @NotNull
   public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }

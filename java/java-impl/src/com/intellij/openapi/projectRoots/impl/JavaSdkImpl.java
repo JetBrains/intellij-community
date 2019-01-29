@@ -142,6 +142,7 @@ public class JavaSdkImpl extends JavaSdk {
   @Override
   public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) { }
 
+  @NotNull
   @Override
   public Comparator<Sdk> versionComparator() {
     return (sdk1, sdk2) -> {
@@ -351,8 +352,9 @@ public class JavaSdkImpl extends JavaSdk {
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     SdkModificator sdkModificator = new SdkModificator() {
+      @NotNull
       @Override public String getName() { throw new UnsupportedOperationException(); }
-      @Override public void setName(String name) { throw new UnsupportedOperationException(); }
+      @Override public void setName(@NotNull String name) { throw new UnsupportedOperationException(); }
       @Override public String getHomePath() { throw new UnsupportedOperationException(); }
       @Override public void setHomePath(String path) { throw new UnsupportedOperationException(); }
       @Override public String getVersionString() { throw new UnsupportedOperationException(); }

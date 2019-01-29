@@ -66,7 +66,7 @@ public abstract class FileIndexBase implements FileIndex {
     return iterateContentUnderDirectory(dir, processor, null);
   }
 
-  protected boolean isTestSourcesRoot(DirectoryInfo info) {
+  protected boolean isTestSourcesRoot(@NotNull DirectoryInfo info) {
     JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
     return rootType != null && rootType.isForTests();
   }
@@ -93,7 +93,7 @@ public abstract class FileIndexBase implements FileIndex {
   }
 
   @NotNull
-  protected static VirtualFile[][] getModuleContentAndSourceRoots(Module module) {
+  protected static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
     return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
       ModuleRootManager.getInstance(module).getSourceRoots()};
   }

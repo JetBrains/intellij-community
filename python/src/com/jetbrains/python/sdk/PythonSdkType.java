@@ -201,7 +201,7 @@ public final class PythonSdkType extends SdkType {
     final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
             throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
@@ -414,7 +414,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @Nullable final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
@@ -422,11 +422,9 @@ public final class PythonSdkType extends SdkType {
       }
     }
     // TODO: Extract loading additional SDK data into a Python SDK provider
-    if (additional != null) {
-      final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
-      if (pipEnvData != null) {
-        return pipEnvData;
-      }
+    final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
+    if (pipEnvData != null) {
+      return pipEnvData;
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
   }
@@ -442,6 +440,7 @@ public final class PythonSdkType extends SdkType {
     return "Python SDK";
   }
 
+  @NotNull
   @Override
   public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);

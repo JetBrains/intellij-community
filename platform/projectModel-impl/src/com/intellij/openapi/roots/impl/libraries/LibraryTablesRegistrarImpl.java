@@ -57,6 +57,7 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     }
   }
 
+  @NotNull
   @Override
   public List<LibraryTable> getCustomLibraryTables() {
     return new SmartList<>(myLibraryTables.values());

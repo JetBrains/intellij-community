@@ -16,7 +16,9 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface PsiElementFilter {
-  boolean isAccepted(PsiElement element);
+  boolean isAccepted(@NotNull PsiElement element);
 }

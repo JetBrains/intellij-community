@@ -134,7 +134,7 @@ public class MockSdk implements Sdk, SdkModificator {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     myName = name;
   }
 

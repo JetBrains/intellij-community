@@ -124,6 +124,7 @@ public class JdkUtil {
     return new File(homePath, "modules/java.base").isDirectory();
   }
 
+  @NotNull
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     Sdk jdk = javaParameters.getJdk();
     if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
@@ -137,7 +138,7 @@ public class JdkUtil {
     return commandLine;
   }
 
-  private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
+  private static void setupCommandLine(@NotNull GeneralCommandLine commandLine, @NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     commandLine.withWorkDirectory(javaParameters.getWorkingDirectory());
 
     commandLine.withEnvironment(javaParameters.getEnv());
@@ -191,21 +192,21 @@ public class JdkUtil {
     }
   }
 
-  private static boolean isUrlClassloader(ParametersList vmParameters) {
+  private static boolean isUrlClassloader(@NotNull ParametersList vmParameters) {
     return UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"));
   }
 
-  private static boolean explicitClassPath(ParametersList vmParameters) {
+  private static boolean explicitClassPath(@NotNull ParametersList vmParameters) {
     return vmParameters.hasParameter("-cp") || vmParameters.hasParameter("-classpath") || vmParameters.hasParameter("--class-path");
   }
 
-  private static boolean explicitModulePath(ParametersList vmParameters) {
+  private static boolean explicitModulePath(@NotNull ParametersList vmParameters) {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  private static void setArgFileParams(GeneralCommandLine commandLine,
-                                       SimpleJavaParameters javaParameters,
-                                       ParametersList vmParameters,
+  private static void setArgFileParams(@NotNull GeneralCommandLine commandLine,
+                                       @NotNull SimpleJavaParameters javaParameters,
+                                       @NotNull ParametersList vmParameters,
                                        boolean dynamicVMOptions,
                                        boolean dynamicParameters) throws CantRunException {
     try {
@@ -262,7 +263,8 @@ public class JdkUtil {
   }
 
   /* https://docs.oracle.com/javase/9/tools/java.htm, "java Command-Line Argument Files" */
-  private static String quoteArg(String arg) {
+  @NotNull
+  private static String quoteArg(@NotNull String arg) {
     String specials = " #'\"\n\r\t\f";
     if (!StringUtil.containsAnyChar(arg, specials)) {
       return arg;
@@ -282,10 +284,10 @@ public class JdkUtil {
     return sb.toString();
   }
 
-  private static void setCommandLineWrapperParams(GeneralCommandLine commandLine,
-                                                  SimpleJavaParameters javaParameters,
-                                                  ParametersList vmParameters,
-                                                  Class commandLineWrapper,
+  private static void setCommandLineWrapperParams(@NotNull GeneralCommandLine commandLine,
+                                                  @NotNull SimpleJavaParameters javaParameters,
+                                                  @NotNull ParametersList vmParameters,
+                                                  @NotNull Class commandLineWrapper,
                                                   boolean dynamicVMOptions,
                                                   boolean dynamicParameters) throws CantRunException {
     try {
@@ -364,14 +366,15 @@ public class JdkUtil {
     }
   }
 
-  private static PrintWriter createOutputWriter(File vmParamsFile) throws FileNotFoundException {
+  @NotNull
+  private static PrintWriter createOutputWriter(@NotNull File vmParamsFile) throws FileNotFoundException {
     return new PrintWriter(new OutputStreamWriter(new FileOutputStream(vmParamsFile), StandardCharsets.UTF_8));
   }
 
-  private static void setClasspathJarParams(GeneralCommandLine commandLine,
-                                            SimpleJavaParameters javaParameters,
-                                            ParametersList vmParameters,
-                                            Class commandLineWrapper,
+  private static void setClasspathJarParams(@NotNull GeneralCommandLine commandLine,
+                                            @NotNull SimpleJavaParameters javaParameters,
+                                            @NotNull ParametersList vmParameters,
+                                            @NotNull Class commandLineWrapper,
                                             boolean dynamicVMOptions,
                                             boolean dynamicParameters) throws CantRunException {
     try {
@@ -425,17 +428,17 @@ public class JdkUtil {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static boolean isUserDefinedProperty(String param) {
+  private static boolean isUserDefinedProperty(@NotNull String param) {
     return param.startsWith("-D") && !(param.startsWith("-Dsun.") || param.startsWith("-Djava."));
   }
 
-  private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
+  private static void throwUnableToCreateTempFile(@NotNull IOException cause) throws CantRunException {
     throw new CantRunException("Failed to a create temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
-  private static void appendParamsEncodingClasspath(SimpleJavaParameters javaParameters,
-                                                    GeneralCommandLine commandLine,
-                                                    ParametersList vmParameters) {
+  private static void appendParamsEncodingClasspath(@NotNull SimpleJavaParameters javaParameters,
+                                                    @NotNull GeneralCommandLine commandLine,
+                                                    @NotNull ParametersList vmParameters) {
     commandLine.addParameters(vmParameters.getList());
 
     appendEncoding(javaParameters, commandLine, vmParameters);
@@ -453,7 +456,9 @@ public class JdkUtil {
     }
   }
 
-  private static void appendEncoding(SimpleJavaParameters javaParameters, GeneralCommandLine commandLine, ParametersList parametersList) {
+  private static void appendEncoding(@NotNull SimpleJavaParameters javaParameters,
+                                     @NotNull GeneralCommandLine commandLine,
+                                     @NotNull ParametersList parametersList) {
     // Value of file.encoding and charset of GeneralCommandLine should be in sync in order process's input and output be correctly handled.
     String encoding = parametersList.getPropertyValue("file.encoding");
     if (encoding == null) {
@@ -471,7 +476,8 @@ public class JdkUtil {
     }
   }
 
-  private static List<String> getMainClassParams(SimpleJavaParameters javaParameters) throws CantRunException {
+  @NotNull
+  private static List<String> getMainClassParams(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     String mainClass = javaParameters.getMainClass();
     String moduleName = javaParameters.getModuleName();
     String jarPath = javaParameters.getJarPath();

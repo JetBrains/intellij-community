@@ -23,12 +23,14 @@ public interface ClasspathStorageProvider {
     new ExtensionPointName<>("com.intellij.classpathStorageProvider");
 
   @NonNls
+  @NotNull
   String getID();
 
   @Nls
+  @NotNull
   String getDescription();
 
-  void assertCompatible(final ModuleRootModel model) throws ConfigurationException;
+  void assertCompatible(@NotNull ModuleRootModel model) throws ConfigurationException;
 
   void detach(@NotNull Module module);
 

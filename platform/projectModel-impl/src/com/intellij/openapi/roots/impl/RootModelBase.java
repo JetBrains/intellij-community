@@ -167,7 +167,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   @Override
-  public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
+  public <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue) {
     R result = initialValue;
     for (OrderEntry orderEntry : getOrderEntries()) {
       result = orderEntry.accept(policy, result);

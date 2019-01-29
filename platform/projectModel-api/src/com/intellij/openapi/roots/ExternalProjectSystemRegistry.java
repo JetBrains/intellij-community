@@ -31,7 +31,7 @@ public interface ExternalProjectSystemRegistry {
   }
 
   @NotNull
-  ProjectModelExternalSource getSourceById(String id);
+  ProjectModelExternalSource getSourceById(@NotNull String id);
 
   @Nullable
   ProjectModelExternalSource getExternalSource(@NotNull Module module);

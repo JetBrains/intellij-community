@@ -61,10 +61,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     if (myUsingCache) {
       checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();
-      if (cache != null) {
-        final int flags = myOrderEnumerator.getFlags();
-        return cache.getOrComputeRoots(myRootType, flags, this::computeRootsUrls);
-      }
+      final int flags = myOrderEnumerator.getFlags();
+      return cache.getOrComputeRoots(myRootType, flags, this::computeRootsUrls);
     }
 
     return VfsUtilCore.toVirtualFileArray(computeRoots());
@@ -76,10 +74,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     if (myUsingCache) {
       checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();
-      if (cache != null) {
-        final int flags = myOrderEnumerator.getFlags();
-        return cache.getOrComputeUrls(myRootType, flags, this::computeRootsUrls);
-      }
+      final int flags = myOrderEnumerator.getFlags();
+      return cache.getOrComputeUrls(myRootType, flags, this::computeRootsUrls);
     }
     return ArrayUtil.toStringArray(computeRootsUrls());
   }
