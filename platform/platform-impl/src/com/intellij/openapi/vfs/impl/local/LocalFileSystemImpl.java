@@ -20,9 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.*;
@@ -44,14 +42,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    WatchRequestImpl(String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(@SystemDependent String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
 
     @Override
-    @NotNull
-    public String getRootPath() {
+    public @NotNull @SystemIndependent String getRootPath() {
       return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
