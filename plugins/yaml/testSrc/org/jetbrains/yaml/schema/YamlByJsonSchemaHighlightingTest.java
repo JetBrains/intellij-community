@@ -799,4 +799,14 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTest(schema, "python: 3.50"); // validates as 'string'
     doTest(schema, "python: <warning descr=\"Schema validation: Type is not allowed. Expected one of: array, number, string.\">null</warning>");
   }
+
+  public void testExpNumberNotation() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: 2.99792458e8");
+  }
 }
