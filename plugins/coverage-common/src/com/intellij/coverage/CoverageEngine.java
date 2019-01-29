@@ -71,6 +71,8 @@ public abstract class CoverageEngine {
    */
   public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) {}
 
+  protected void deleteAssociatedTraces(CoverageSuite suite) {}
+
   /**
    * Creates coverage enabled configuration for given RunConfiguration. It is supposed that one run configuration may be associated
    * not more than one coverage engine.

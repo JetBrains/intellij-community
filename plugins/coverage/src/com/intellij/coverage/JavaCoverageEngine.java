@@ -195,6 +195,13 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
   }
 
+  @Override
+  protected void deleteAssociatedTraces(CoverageSuite suite) {
+    if (suite.isTracingEnabled()) {
+      FileUtil.delete(getTracesDirectory(suite));
+    }
+  }
+
   @NotNull
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf) {
