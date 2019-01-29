@@ -118,7 +118,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       methodSignature = null;
     }
 
-    PsiMethod[] methods = findMethods(methodSignature, name, getAllMethods(scope, this));
+    PsiMethod[] methods = findMethods(methodSignature, scope, name, getAllMethods(scope, this));
 
     if (methods.length == 0) return null;
 
@@ -203,17 +203,27 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   @NotNull
-  public static PsiMethod[] findMethods(@Nullable MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+  public static PsiMethod[] findMethods(@Nullable MethodSignature methodSignature,
+                                        @Nullable PsiElement scope,
+                                        @Nullable String name,
+                                        @NotNull PsiMethod[] allMethods) {
     List<PsiMethod> methods = new ArrayList<>();
+    List<PsiMethod> exactMethods = new ArrayList<>();
 
     for (PsiMethod method : allMethods) {
-      if (method.getName().equals(name) &&
-          (methodSignature == null || MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) {
-        methods.add(method);
+      if (!method.getName().equals(name) ||
+          methodSignature != null &&
+          !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) {
+        continue;
       }
+
+      if (scope == null || scope.equals(method.getContainingClass())) exactMethods.add(method);
+
+      methods.add(method);
     }
 
-    return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    List<PsiMethod> found = exactMethods.size() == 1 ? exactMethods : methods;
+    return found.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
