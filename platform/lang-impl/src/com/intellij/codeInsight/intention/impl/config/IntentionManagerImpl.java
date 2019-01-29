@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public final class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance(IntentionManagerImpl.class);
 
-  private final List<IntentionAction> myActions = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<IntentionAction> myActions;
   private final IntentionManagerSettings mySettings;
   private final AtomicReference<ScheduledFuture<?>> myScheduledFuture = new AtomicReference<>();
   private boolean myIntentionsDisabled;
@@ -41,10 +41,12 @@ public final class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
+    List<IntentionAction> actions = new ArrayList<>();
+    actions.add(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
     for (IntentionActionBean extension : IntentionManager.EP_INTENTION_ACTIONS.getExtensionList()) {
-      addAction(new IntentionActionWrapper(extension, extension.getCategories()));
+      actions.add(new IntentionActionWrapper(extension, extension.getCategories()));
     }
+    myActions = ContainerUtil.createLockFreeCopyOnWriteList(actions);
   }
 
   @Override
