@@ -304,6 +304,9 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/lucastheisen/jsch-nio",
                        licenseUrl: "https://github.com/lucastheisen/jsch-nio/blob/master/LICENSE"),
 
+    new LibraryLicense(name: "SshJ", libraryName: "SshJ", version: "0.27.0", license: "Apache 2.0",
+                       url: "https://github.com/hierynomus/sshj", licenseUrl: "https://github.com/hierynomus/sshj/blob/master/LICENSE"),
+
     new LibraryLicense(name: "JSON", libraryName: "json.jar", license: "JSON License", licenseUrl: "http://www.json.org/license.html",
                        url: "http://www.json.org/"),
 
