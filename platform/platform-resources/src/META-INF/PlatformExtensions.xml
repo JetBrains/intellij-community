@@ -435,6 +435,12 @@
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
 
+    <statistics.counterUsagesCollector group_id="statistics.vcs.diff.trigger" version="1"/>
+    <statistics.counterUsagesCollector group_id="statistics.vcs.back.forward.trigger" version="1"/>
+    <statistics.counterUsagesCollector group_id="statistics.ide.self.update" version="1"/>
+    <statistics.counterUsagesCollector group_id="statistics.import.old.config" version="1"/>
+    <statistics.counterUsagesCollector group_id="statistics.ui.tips" version="1"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>

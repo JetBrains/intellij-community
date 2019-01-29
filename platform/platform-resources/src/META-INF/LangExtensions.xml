@@ -954,6 +954,9 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.service.fus.collectors.KeymapUsageCollector" />
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
+    <statistics.counterUsagesCollector group_id="statistics.searchEverywhere" version="1"/>
+    <statistics.counterUsagesCollector group_id="statistics.actions.runAnything" version="1"/>
+
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 
