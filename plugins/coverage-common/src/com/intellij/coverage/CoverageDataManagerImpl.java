@@ -56,9 +56,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -503,31 +501,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     mySubCoverageIsActive = true;
     final Map<String, Set<Integer>> executionTrace = new HashMap<>();
     for (CoverageSuite coverageSuite : suite.getSuites()) {
-      final String fileName = coverageSuite.getCoverageDataFileName();
-      final File tracesDir = getTracesDirectory(fileName);
-      for (String testName : testNames) {
-        final File file = new File(tracesDir, testName + ".tr");
-        if (file.exists()) {
-          try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
-            int traceSize = in.readInt();
-            for (int i = 0; i < traceSize; i++) {
-              final String className = in.readUTF();
-              final int linesSize = in.readInt();
-              Set<Integer> lines = executionTrace.get(className);
-              if (lines == null) {
-                lines = new HashSet<>();
-                executionTrace.put(className, lines);
-              }
-              for(int l = 0; l < linesSize; l++) {
-                lines.add(in.readInt());
-              }
-            }
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      }
+      suite.getCoverageEngine().collectTestLines(testNames, coverageSuite, executionTrace);
     }
     final ProjectData projectData = new ProjectData();
     for (String className : executionTrace.keySet()) {

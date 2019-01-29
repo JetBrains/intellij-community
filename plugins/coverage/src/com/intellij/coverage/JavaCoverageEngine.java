@@ -150,12 +150,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (currentSuite == null) return null;
     final List<File> files = new ArrayList<>();
     for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
-
-      final String filePath = coverageSuite.getCoverageDataFileName();
-      final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
-
-      final File parentDir = new File(filePath).getParentFile();
-      final File tracesDir = new File(parentDir, dirName);
+      final File tracesDir = getTracesDirectory(coverageSuite);
       final File[] suiteFiles = tracesDir.listFiles();
       if (suiteFiles != null) {
         Collections.addAll(files, suiteFiles);
@@ -164,7 +159,42 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     return files.isEmpty() ? null : files.toArray(new File[0]);
   }
-  
+
+  private static File getTracesDirectory(CoverageSuite coverageSuite) {
+    final String filePath = coverageSuite.getCoverageDataFileName();
+    final String dirName = FileUtil.getNameWithoutExtension(new File(filePath).getName());
+
+    final File parentDir = new File(filePath).getParentFile();
+    return new File(parentDir, dirName);
+  }
+
+
+  @Override
+  public void collectTestLines(List<String> sanitizedTestNames,
+                               CoverageSuite suite,
+                               Map<String, Set<Integer>> executionTrace) {
+    final File tracesDir = getTracesDirectory(suite);
+    for (String testName : sanitizedTestNames) {
+      final File file = new File(tracesDir, testName + ".tr");
+      if (file.exists()) {
+        try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
+          int traceSize = in.readInt();
+          for (int i = 0; i < traceSize; i++) {
+            final String className = in.readUTF();
+            final int linesSize = in.readInt();
+            final Set<Integer> lines = executionTrace.computeIfAbsent(className, k -> new HashSet<>());
+            for(int l = 0; l < linesSize; l++) {
+              lines.add(in.readInt());
+            }
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
   @NotNull
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf) {
