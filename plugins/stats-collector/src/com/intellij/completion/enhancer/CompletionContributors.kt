@@ -24,13 +24,17 @@ internal object CompletionContributors {
   private fun contributorOrderId(contributorEP: CompletionContributorEP): String? {
     val className = contributorEP.implementationClass
     val picoContainer = Extensions.getRootArea().picoContainer
-    val adapterForFirstContributor = (picoContainer.componentAdapters)
-      .asSequence()
-      .filterIsInstance<ExtensionComponentAdapter>()
-      .filter { ReflectionUtil.isAssignable(CompletionContributorEP::class.java, it.componentImplementation) }
-      .map { it to it.getComponentInstance(picoContainer) as? CompletionContributorEP }
-      .find { it.second?.implementationClass == className }?.first
+    for (componentAdapter in picoContainer.componentAdapters) {
+      if (componentAdapter !is ExtensionComponentAdapter || !ReflectionUtil.isAssignable(CompletionContributorEP::class.java,
+                                                                                         componentAdapter.componentImplementation)) {
+        continue
+      }
 
-    return adapterForFirstContributor?.orderId
+      val extension = componentAdapter.getComponentInstance(picoContainer) as CompletionContributorEP
+      if (extension.implementationClass == className) {
+        return componentAdapter.orderId
+      }
+    }
+    return null
   }
 }
