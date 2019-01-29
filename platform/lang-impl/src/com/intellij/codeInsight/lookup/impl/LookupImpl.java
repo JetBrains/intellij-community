@@ -457,18 +457,32 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       if (myPresentableArranger != myArranger) {
         myPresentableArranger = myArranger;
 
-        boolean isCompletionArranger = myArranger instanceof CompletionLookupArrangerImpl;
-        if (!isCompletionArranger && ((CompletionLookupArrangerImpl) myArranger).getLastLookupPrefix().equals(getAdditionalPrefix())) {
-          LOG.trace("prefix doesn't match, do not clear lookup additional prefix");
-        } else{
-          myOffsets.clearAdditionalPrefix();
-        }
+        clearIfLookupAndArrangerPrefixesMatch();
+
         myPresentableArranger.prefixChanged(this);
         return true;
       }
 
       return false;
     });
+  }
+
+  //some items may have passed to myArranger from CompletionProgressIndicator for an older prefix
+  //these items won't be cleared during appending a new prefix (mayCheckReused = false)
+  //so these 'out of dated' items which were matched against an old prefix, should be now matched against the new, updated lookup prefix.
+  private void clearIfLookupAndArrangerPrefixesMatch() {
+    boolean isCompletionArranger = myArranger instanceof CompletionLookupArrangerImpl;
+    if (isCompletionArranger) {
+      final String lastLookupArrangersPrefix = ((CompletionLookupArrangerImpl)myArranger).getLastLookupPrefix();
+      if (lastLookupArrangersPrefix != null && !lastLookupArrangersPrefix.equals(getAdditionalPrefix())) {
+        LOG.trace("prefixes don't match, do not clear lookup additional prefix");
+      }
+      else {
+        myOffsets.clearAdditionalPrefix();
+      }
+    } else {
+      myOffsets.clearAdditionalPrefix();
+    }
   }
 
   private void updateListHeight(ListModel model) {
