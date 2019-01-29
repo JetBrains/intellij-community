@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.table
 
 import com.google.common.primitives.Ints
-import com.intellij.openapi.util.Pair
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.VisibleGraph
@@ -51,51 +50,55 @@ internal class Selection(private val table: VcsLogGraphTable) {
     return IntRange(visibleRows.first - 1, visibleRows.second)
   }
 
-  fun restore(newVisibleGraph: VisibleGraph<Int>, scrollToSelection: Boolean, permGraphChanged: Boolean) {
-    val toSelectAndScroll = findRowsToSelectAndScroll(newVisibleGraph)
-    if (!toSelectAndScroll.first.isEmpty) {
-      table.selectionModel.valueIsAdjusting = true
-      toSelectAndScroll.first.forEach { row ->
+  fun restore(graph: VisibleGraph<Int>, scroll: Boolean, permanentGraphChanged: Boolean) {
+    val scrollToTop = isOnTop && permanentGraphChanged
+    val commitsToRows = mapCommitsToRows(graph, scroll && !scrollToTop)
+
+    table.selectionModel.valueIsAdjusting = true
+    for (commit in selectedCommits) {
+      val row = commitsToRows[commit]
+      if (row != null) {
         table.addRowSelectionInterval(row, row)
-        true
       }
-      table.selectionModel.valueIsAdjusting = false
     }
-    if (scrollToSelection) {
-      if (isOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
+    table.selectionModel.valueIsAdjusting = false
+
+    if (scroll) {
+      if (scrollToTop) {
         scrollToRow(0, 0)
       }
-      else if (toSelectAndScroll.second != null) {
-        scrollToRow(toSelectAndScroll.second, scrollingTarget!!.topGap)
+      else if (scrollingTarget != null) {
+        val scrollingTargetRow = commitsToRows[scrollingTarget.commit]
+        if (scrollingTargetRow != null) {
+          scrollToRow(scrollingTargetRow, scrollingTarget.topGap)
+        }
       }
     }
-    // sometimes commits that were selected are now collapsed
-    // currently in this case selection disappears
-    // in the future we need to create a method in LinearGraphController that allows to calculate visible commit for our commit
-    // or answer from collapse action could return a map that gives us some information about what commits were collapsed and where
+  }
+
+  private fun mapCommitsToRows(graph: VisibleGraph<Int>, scroll: Boolean): MutableMap<Int, Int> {
+    val commits = mutableSetOf<Int>()
+    TroveUtil.addAll(commits, selectedCommits)
+    if (scroll && scrollingTarget != null) commits.add(scrollingTarget.commit)
+    return mapCommitsToRows(commits, graph)
+  }
+
+  private fun mapCommitsToRows(commits: MutableCollection<Int>, graph: VisibleGraph<Int>): MutableMap<Int, Int> {
+    val commitsToRows = mutableMapOf<Int, Int>()
+    for (row in 0 until graph.visibleCommitCount) {
+      val commit = graph.getRowInfo(row).commit
+      if (commits.remove(commit)) {
+        commitsToRows[commit] = row
+      }
+      if (commits.isEmpty()) break
+    }
+    return commitsToRows
   }
 
   private fun scrollToRow(row: Int?, delta: Int?) {
     val startRect = table.getCellRect(row!!, 0, true)
     table.scrollRectToVisible(Rectangle(startRect.x, Math.max(startRect.y - delta!!, 0),
                                         startRect.width, table.visibleRect.height))
-  }
-
-  private fun findRowsToSelectAndScroll(visibleGraph: VisibleGraph<Int>): Pair<TIntHashSet, Int> {
-    val rowsToSelect = TIntHashSet()
-    var rowToScroll: Int? = null
-    var row = 0
-    while (row < visibleGraph.visibleCommitCount && (rowsToSelect.size() < selectedCommits.size() || rowToScroll == null)) { //stop iterating if found all hashes
-      val commit = visibleGraph.getRowInfo(row).commit
-      if (selectedCommits.contains(commit)) {
-        rowsToSelect.add(row)
-      }
-      if (scrollingTarget?.commit == commit) {
-        rowToScroll = row
-      }
-      row++
-    }
-    return Pair.create(rowsToSelect, rowToScroll)
   }
 }
 
