@@ -4,7 +4,7 @@ package com.intellij.ide.actions.runAnything
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 
-private const val GROUP_ID =  "statistics.actions.runAnything"
+private const val GROUP_ID =  "actions.runAnything"
 
 class RunAnythingUsageCollector {
   companion object {

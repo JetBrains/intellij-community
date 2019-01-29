@@ -13,7 +13,7 @@ public class ImportOldConfigsUsagesCollector  {
     public void componentsInitialized() {
       final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
-        FUCounterUsageLogger.getInstance().logEvent("statistics.import.old.config", state.getType().name());
+        FUCounterUsageLogger.getInstance().logEvent("import.old.config", state.getType().name());
       }
     }
   }
