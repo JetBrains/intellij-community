@@ -72,7 +72,7 @@ public class ExceptionWorker {
   public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable PsiElementFilter elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
-    if (myInfo == null) {
+    if (myInfo == null || myProject.isDisposed()) {
       return null;
     }
 
