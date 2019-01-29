@@ -73,6 +73,7 @@ class AswbProperties extends AndroidStudioProperties {
     @Override
     Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
       [
+        "idea.case.sensitive.fs": "true",
         "idea.updates.url": "https://dl.google.com/android/aswb/patches/updates.xml",
         "idea.patches.url": "https://dl.google.com/android/aswb/patches"
       ]

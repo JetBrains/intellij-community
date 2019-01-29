@@ -57,6 +57,7 @@ class StudioTests(unittest.TestCase):
       with mac_zip.open(properties_path, "r") as properties:
         seen_properties = set()
         expected_values = {
+          "idea.case.sensitive.fs": "true",
           "idea.updates.url": "https://dl.google.com/android/aswb/patches/updates.xml",
           "idea.patches.url": "https://dl.google.com/android/aswb/patches"
         }
