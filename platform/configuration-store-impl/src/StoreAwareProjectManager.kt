@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
@@ -264,7 +265,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -273,7 +274,9 @@ fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): 
     }
     catch (e: Throwable) {
       LOG.warn(e)
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
+      AppUIUtil.invokeOnEdt {
+        Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
+      }
       return ReloadComponentStoreStatus.ERROR
     }
 
