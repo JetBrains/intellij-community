@@ -42,16 +42,9 @@ final class LoadDescriptorsContext implements AutoCloseable {
     }
 
     myThreadLocalXmlFactory = ThreadLocal.withInitial(() -> {
-      Interner<String> interner = new Interner<String>(Arrays.asList(PluginXmlFactory.CLASS_NAMES)) {
-        @NotNull
-        @Override
-        public String intern(@NotNull String name) {
-          // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-          return name.length() < 64 ? super.intern(name) : name;
-        }
-      };
-      myInterners.add(interner);
-      return new PluginXmlFactory(interner);
+      PluginXmlFactory factory = new PluginXmlFactory();
+      myInterners.add(factory.stringInterner);
+      return factory;
     });
   }
 
@@ -98,15 +91,14 @@ final class LoadDescriptorsContext implements AutoCloseable {
       "qualifiedName",
     };
 
-    private final Interner<String> stringInterner;
-
-    PluginXmlFactory(@NotNull Interner<String> stringInterner) {
-      this.stringInterner = stringInterner;
-
-      for (int i = 0; i < CLASS_NAMES.length; i++) {
-        CLASS_NAMES[i] = stringInterner.intern(CLASS_NAMES[i]);
+    private final Interner<String> stringInterner = new Interner<String>(Arrays.asList(CLASS_NAMES)) {
+      @NotNull
+      @Override
+      public String intern(@NotNull String name) {
+        // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+        return name.length() < 64 ? super.intern(name) : name;
       }
-    }
+    };
 
     @NotNull
     @Override
