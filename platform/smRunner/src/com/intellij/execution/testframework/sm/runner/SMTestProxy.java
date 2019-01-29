@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
@@ -72,6 +73,8 @@ public class SMTestProxy extends AbstractTestProxy {
   //false:: printables appear as soon as they are discovered in the output; true :: predefined test structure
   private boolean myTreeBuildBeforeStart = false;
   private CachedValue<Map<GlobalSearchScope, Ref<Location>>> myLocationMapCachedValue;
+  @Nullable
+  private TestDurationStrategy myDurationStrategyCached = null;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
     this(testName, isSuite, locationUrl, false);
@@ -413,13 +416,41 @@ public class SMTestProxy extends AbstractTestProxy {
     return true;
   }
 
+  private boolean durationShouldBeSetExplicitly() {
+    return !myIsSuite || getDurationStrategy() == TestDurationStrategy.MANUAL;
+  }
+
+  @NotNull
+  protected TestDurationStrategy getDurationStrategy() {
+    final TestDurationStrategy strategy = myDurationStrategyCached;
+    if (strategy != null) {
+      return strategy;
+    }
+    else {
+      final TestDurationStrategy parentDurationStrategy = getDurationStrategyFromParent();
+      myDurationStrategyCached = parentDurationStrategy;
+      return parentDurationStrategy;
+    }
+  }
+
+  @NotNull
+  private TestDurationStrategy getDurationStrategyFromParent() {
+    final SMTestProxy parent = getParent();
+    if (parent != null) {
+      return parent.getDurationStrategy();
+    }
+    else {
+      return TestDurationStrategy.AUTOMATIC;
+    }
+  }
+
   /**
    * Sets duration of test
    *
    * @param duration In milliseconds
    */
   public void setDuration(final long duration) {
-    if (!isSuite()) {
+    if (durationShouldBeSetExplicitly()) {
       invalidateCachedDurationForContainerSuites(duration - (myDuration != null ? myDuration : 0));
       myDurationIsCached = true;
       myDuration = (duration >= 0) ? duration : null;
@@ -883,18 +914,21 @@ public class SMTestProxy extends AbstractTestProxy {
    * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
-    if (duration >= 0) {
-      if (myDuration == null) {
-        myDuration = duration;
+    // Manual duration does not need any automatic calculation
+    if (!durationShouldBeSetExplicitly()) {
+      if (duration >= 0) {
+        if (myDuration == null) {
+          myDuration = duration;
+        }
+        else {
+          myDuration += duration;
+        }
       }
       else {
-        myDuration += duration;
+        // Invalidates duration of this suite
+        myDuration = null;
+        myDurationIsCached = false;
       }
-    }
-    else {
-      // Invalidates duration of this suite
-      myDuration = null;
-      myDurationIsCached = false;
     }
 
     // Invalidates duration of container suite
@@ -920,6 +954,8 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
     private boolean myShouldPrintOwnContentOnly = false;
+    @NotNull
+    private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
 
     public SMRootTestProxy() {
       this(false);
@@ -931,6 +967,16 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public void setTestsReporterAttached() {
       myTestsReporterAttached = true;
+    }
+
+    public void setDurationStrategy(@NotNull final TestDurationStrategy strategy) {
+      myDurationStrategy = strategy;
+    }
+
+    @NotNull
+    @Override
+    public TestDurationStrategy getDurationStrategy() {
+      return myDurationStrategy;
     }
 
     public boolean isTestsReporterAttached() {

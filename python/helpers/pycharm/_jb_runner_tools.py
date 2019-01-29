@@ -170,8 +170,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
             # testName, captureStandardOutput, flowId
             args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo": metainfo}
             if is_suite:
-                if is_parallel_mode():
-                    args["durationStrategy"] = "explicit_only"
                 self.message("testSuiteStarted", **args)
             else:
                 self.message("testStarted", **args)
@@ -203,7 +201,6 @@ class NewTeamcityServiceMessages(_old_service_messages):
             if is_suite:
                 if is_parallel_mode():
                     del args["duration"]
-                    args["durationStrategy"] = "explicit_only"
                 self.message("testSuiteFinished", **args)
             else:
                 self.message("testFinished", **args)
@@ -270,7 +267,7 @@ def jb_start_tests():
 
 
 def start_protocol():
-    properties = {"durationStrategy": "wall_time"} if is_parallel_mode() else dict()
+    properties = {"durationStrategy": "manual"} if is_parallel_mode() else dict()
     NewTeamcityServiceMessages().message('enteredTheMatrix', **properties)
 
 
