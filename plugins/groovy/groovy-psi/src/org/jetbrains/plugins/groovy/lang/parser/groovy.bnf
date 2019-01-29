@@ -1147,7 +1147,7 @@ call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argu
   elementType = argument_list
 }
 
-private non_empty_argument_list::= '(' paren_argument_list_inner ')' {
+private non_empty_argument_list::= '(' <<notApplicationArguments paren_argument_list_inner>> ')' {
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
