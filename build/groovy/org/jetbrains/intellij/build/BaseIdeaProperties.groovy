@@ -163,6 +163,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
       }
     } as Consumer<PlatformLayout>
 
+    productLayout.setPluginPublishingSpec("intellij.statsCollector", new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false))
+
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
   }
