@@ -40,36 +40,6 @@ public class ExtensionPointImplTest {
   }
 
   @Test
-  public void testRegisterUnregisterExtension() {
-    ExtensionsAreaImpl extensionArea = buildExtensionArea();
-    final ExtensionPoint<Object> extensionPoint = new InterfaceExtensionPoint<>("an.extension.point", Object.class, extensionArea);
-
-    final boolean[] flags = new boolean[2];
-    Extension extension = new Extension() {
-      @Override
-      public void extensionAdded(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
-        flags[0] = true;
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull ExtensionPoint extensionPoint1) {
-        assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
-        flags[1] = true;
-      }
-    };
-
-    extensionPoint.registerExtension(extension);
-    assertThat(flags[0]).describedAs("Register call is missed").isTrue();
-    assertThat(flags[1]).isFalse();
-
-    extensionPoint.unregisterExtension(extension);
-    assertThat(flags[1]).describedAs("Unregister call is missed").isTrue();
-  }
-
-  @Test
   public void testRegisterObject() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(new Integer(123));

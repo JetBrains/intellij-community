@@ -133,15 +133,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       clearCache();
 
       if (!adapter.isNotificationSent()) {
-        if (extension instanceof Extension) {
-          try {
-            ((Extension)extension).extensionAdded(this);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-
         notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
         adapter.setNotificationSent();
       }
@@ -352,15 +343,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     clearCache();
 
     notifyListenersOnRemove(extension, pluginDescriptor);
-
-    if (extension instanceof Extension) {
-      try {
-        ((Extension)extension).extensionRemoved(this);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
   }
 
   private void notifyListenersOnRemove(@NotNull T extensionObject, PluginDescriptor pluginDescriptor) {
@@ -567,6 +549,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private static boolean isInsideClassInitializer(StackTraceElement[] trace) {
+    //noinspection SpellCheckingInspection
     return Arrays.stream(trace).anyMatch(s -> "<clinit>".equals(s.getMethodName()));
   }
 }
