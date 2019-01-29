@@ -205,6 +205,8 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     protected ValidationInfo doValidate() {
       for (EnvironmentVariable variable : myUserTable.getEnvironmentVariables()) {
         String name = variable.getName(), value = variable.getValue();
+        if (StringUtil.isEmpty(name) && StringUtil.isEmpty(value)) continue;
+
         if (!EnvironmentUtil.isValidName(name)) return new ValidationInfo(IdeBundle.message("run.configuration.invalid.env.name", name));
         if (!EnvironmentUtil.isValidValue(value)) return new ValidationInfo(IdeBundle.message("run.configuration.invalid.env.value", name, value));
       }
@@ -216,6 +218,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       myUserTable.stopEditing();
       final Map<String, String> envs = new LinkedHashMap<>();
       for (EnvironmentVariable variable : myUserTable.getEnvironmentVariables()) {
+        if (StringUtil.isEmpty(variable.getName()) && StringUtil.isEmpty(variable.getValue())) continue;
         envs.put(variable.getName(), variable.getValue());
       }
       for (EnvironmentVariable variable : mySystemTable.getEnvironmentVariables()) {
@@ -260,7 +263,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       return myUserList
              ? super.createExtraActions()
              : new AnActionButton[]{
-               new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Diff.Revert) {
+               new AnActionButton(ActionsBundle.message("action.ChangesView.Revert.text"), AllIcons.Actions.Rollback) {
                  @Override
                  public void actionPerformed(@NotNull AnActionEvent e) {
                    stopEditing();

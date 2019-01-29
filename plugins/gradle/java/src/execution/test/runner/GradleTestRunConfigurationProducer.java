@@ -8,15 +8,17 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.TestData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -30,9 +32,11 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.TasksToRun;
 
-import java.util.List;
+import java.util.*;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExternalProjectInfo;
 import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
@@ -103,6 +107,68 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     return GradleRunnerUtil.resolveProjectPath(module);
   }
 
+
+  public static boolean hasTasksInConfiguration(VirtualFile source, Project project, ExternalSystemTaskExecutionSettings settings) {
+    List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
+    List<String> taskNames = settings.getTaskNames();
+    return tasksToRun.stream().anyMatch(taskNames::containsAll);
+  }
+
+  /**
+   * Finds any of possible tasks to run tests for specified source
+   *
+   * @param source  is a file or directory for find in source set
+   * @param project is a project with the source
+   * @return any of possible tasks to run tests for specified source
+   */
+  @NotNull
+  public static TasksToRun findTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+    List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
+    if (tasksToRun.isEmpty()) return TasksToRun.EMPTY;
+    return tasksToRun.get(0);
+  }
+
+  /**
+   * Finds all of possible tasks to run tests for specified source
+   *
+   * @param source  is a file or directory for find in source set
+   * @param project is a project with the source
+   * @return all of possible tasks to run tests for specified source
+   */
+  @NotNull
+  public static List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+    String sourcePath = source.getPath();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    Module module = projectFileIndex.getModuleForFile(source);
+    if (module == null) return Collections.emptyList();
+    List<TasksToRun> testTasks = new ArrayList<>();
+    for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
+      List<String> tasks = provider.getTasks(module, source);
+      if (!ContainerUtil.isEmpty(tasks)) {
+        String testName = StringUtil.join(tasks, " ");
+        testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+      }
+    }
+    DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.findModuleData(module, GradleConstants.SYSTEM_ID);
+    if (moduleDataNode == null) return testTasks;
+    Collection<DataNode<TestData>> testsData = ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TEST);
+    for (DataNode<TestData> testDataNode : testsData) {
+      TestData testData = testDataNode.getData();
+      Set<String> sourceFolders = testData.getSourceFolders();
+      for (String sourceFolder : sourceFolders) {
+        if (FileUtil.isAncestor(sourceFolder, sourcePath, false)) {
+          String testName = testData.getTestName();
+          String testTaskName = testData.getTestTaskName();
+          String clearTestTaskName = testData.getCleanTestTaskName();
+          List<String> tasks = ContainerUtil.newArrayList(clearTestTaskName, testTaskName);
+          testTasks.add(new TasksToRun.Impl(source, module, testName, tasks));
+        }
+      }
+    }
+    return testTasks;
+  }
+
+  @Deprecated
   @NotNull
   public static List<String> getTasksToRun(@NotNull Module module) {
     for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
@@ -117,7 +183,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (projectPath == null) return ContainerUtil.emptyList();
     final ExternalProjectInfo externalProjectInfo =
-      ExternalSystemUtil.getExternalProjectInfo(module.getProject(), GradleConstants.SYSTEM_ID, projectPath);
+      getExternalProjectInfo(module.getProject(), GradleConstants.SYSTEM_ID, projectPath);
     if (externalProjectInfo == null) return ContainerUtil.emptyList();
 
     final List<String> tasks;

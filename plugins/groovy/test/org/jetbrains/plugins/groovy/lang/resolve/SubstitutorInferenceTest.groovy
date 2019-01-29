@@ -2,20 +2,30 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiTypeParameterListOwner
+import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.util.LightProjectTest
+import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
 
 @CompileStatic
-class SubstitutorInferenceTest extends GroovyLatestTest implements TypingTest {
+class SubstitutorInferenceTest extends LightProjectTest implements TypingTest, ResolveTest {
+
+  @Override
+  LightProjectDescriptor getProjectDescriptor() {
+    GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+  }
 
   @Before
   void addClasses() {
@@ -250,6 +260,33 @@ static <T> T ppp(Producer<T> p) {}
   void 'plus assignment'() {
     def op = elementUnderCaret('new Files().files <caret>+= new File(".")', GrAssignmentExpression)
     assertSubstitutor(op.reference.advancedResolve(), 'java.io.File')
+  }
+
+  @Test
+  void 'same method nested'() {
+    def call = elementUnderCaret '''\
+static <T> T run(Closure<T> c) {}
+<caret>run(run { return { 42 } })
+''', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
+  }
+
+  @Test
+  void 'chained with'() {
+    resolveTest '''\
+class A { def aMethod() { "42" } }
+"bar".with { new A() }.with { it.<caret>aMethod() }
+''', GrMethod
+  }
+
+  @Test
+  void 'Collectors toList'() {
+    def call = elementUnderCaret '''\
+static void testCode(java.util.stream.Stream<Integer> ss) {
+  ss.collect(java.util.stream.Collectors.<caret>toList())
+}
+''', GrMethodCall
+    assertSubstitutor(call.advancedResolve(), JAVA_LANG_INTEGER)
   }
 
   private static void assertSubstitutor(GroovyResolveResult result, String... expectedTypes) {

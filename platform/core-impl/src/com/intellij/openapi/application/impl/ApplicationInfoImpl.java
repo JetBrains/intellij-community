@@ -56,7 +56,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Icon myProgressTailIcon;
   private int myProgressHeight = 2;
   private int myProgressY = 350;
-  private int myLicenseOffsetX = 115;
+  private int myLicenseOffsetX = 114;
   private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;

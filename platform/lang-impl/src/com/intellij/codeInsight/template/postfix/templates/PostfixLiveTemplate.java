@@ -10,8 +10,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -39,12 +38,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public static final String POSTFIX_TEMPLATE_ID = "POSTFIX_TEMPLATE_ID";
-  private static final FeatureUsageGroup USAGE_GROUP = new FeatureUsageGroup("completion.postfix", 1);
+  private static final String USAGE_GROUP = "completion.postfix";
   private static final Logger LOG = Logger.getInstance(PostfixLiveTemplate.class);
 
   @NotNull
@@ -240,8 +238,8 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       if (pluginInfo.getType().isSafeToReport()) {
         String templateId = provider != null ? provider.getId() + "/" + template.getId() : template.getId();
         String id = pluginInfo.getType().isDevelopedByJetBrains() ? templateId : THIRD_PARTY_PLUGIN_POSTFIX_TEMPLATE_ID;
-        Map<String, Object> data = new FeatureUsageData().addProject(context.getProject()).addPluginInfo(pluginInfo).build();
-        FeatureUsageLogger.INSTANCE.log(USAGE_GROUP, id, data);
+        FeatureUsageData data = new FeatureUsageData().addPluginInfo(pluginInfo);
+        FUCounterUsageLogger.getInstance().logEvent(context.getProject(), USAGE_GROUP, id, data);
       }
     }
     if (template.startInWriteAction()) {

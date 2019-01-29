@@ -12,6 +12,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -24,13 +25,11 @@ import java.util.stream.Stream;
  * @author AKireyev
  */
 @SuppressWarnings("SynchronizeOnThis")
-public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
+public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
-  private final AreaInstance myArea;
   private final String myName;
   private final String myClassName;
-  private final Kind myKind;
 
   private volatile List<T> myExtensionsCache;
   // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.java.net/browse/JDK-6260652),
@@ -49,24 +48,21 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   @NotNull
   private List<ExtensionComponentAdapter> myLoadedAdapters = Collections.emptyList(); // guarded by this
 
-  private Class<T> myExtensionClass;
+  @Nullable
+  protected Class<T> myExtensionClass;
 
   private static final StringInterner INTERNER = new StringInterner();
 
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
-                     @NotNull Kind kind,
                      @NotNull ExtensionsAreaImpl owner,
-                     AreaInstance area,
-                     @NotNull PluginDescriptor descriptor) {
+                     @NotNull PluginDescriptor pluginDescriptor) {
     synchronized (INTERNER) {
       myName = INTERNER.intern(name);
     }
     myClassName = className;
-    myKind = kind;
     myOwner = owner;
-    myArea = area;
-    myDescriptor = descriptor;
+    myDescriptor = pluginDescriptor;
   }
 
   @NotNull
@@ -77,7 +73,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public AreaInstance getArea() {
-    return myArea;
+    return myOwner.getAreaInstance();
   }
 
   @NotNull
@@ -86,19 +82,13 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return myClassName;
   }
 
-  @NotNull
-  @Override
-  public Kind getKind() {
-    return myKind;
-  }
-
   @Override
   public void registerExtension(@NotNull T extension) {
     registerExtension(extension, LoadingOrder.ANY);
   }
 
   @NotNull
-  public PluginDescriptor getDescriptor() {
+  final PluginDescriptor getDescriptor() {
     return myDescriptor;
   }
 
@@ -392,6 +382,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     addExtensionPointListener(listener, true, parentDisposable);
   }
 
+  @Override
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
                                                      final boolean invokeForLoadedExtensions,
                                                      @Nullable Disposable parentDisposable) {
@@ -520,6 +511,28 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
     finally {
       clearCache();
+    }
+  }
+
+  @NotNull
+  abstract ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement, @NotNull PluginDescriptor pluginDescriptor);
+
+  @NotNull
+  protected final ExtensionComponentAdapter doCreateAdapter(@NotNull String implementationClassName,
+                                                            @NotNull Element extensionElement,
+                                                            boolean isNeedToDeserialize,
+                                                            @NotNull PluginDescriptor pluginDescriptor,
+                                                            boolean isConstructorInjectionSupported) {
+    String orderId = extensionElement.getAttributeValue("id");
+    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    if (isConstructorInjectionSupported) {
+      return new XmlExtensionComponentAdapter.ConstructorInjectionAdapter(implementationClassName, myOwner.getPicoContainer(),
+                                                                          pluginDescriptor, orderId, order,
+                                                                          isNeedToDeserialize ? extensionElement : null);
+    }
+    else {
+      return new XmlExtensionComponentAdapter(implementationClassName, myOwner.getPicoContainer(), pluginDescriptor, orderId, order,
+                                              isNeedToDeserialize ? extensionElement : null);
     }
   }
 

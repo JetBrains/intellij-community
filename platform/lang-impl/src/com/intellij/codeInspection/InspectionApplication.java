@@ -144,7 +144,8 @@ public class InspectionApplication {
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      im.createNewGlobalContext(true).setExternalProfile(inspectionProfile);
+      GlobalInspectionContextImpl context = im.createNewGlobalContext();
+      context.setExternalProfile(inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -203,7 +204,7 @@ public class InspectionApplication {
           gracefulExit();
           return;
         }
-        im.createNewGlobalContext(true).launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
         logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
         if (!myErrorCodeRequired) {
           closeProject();
@@ -257,7 +258,7 @@ public class InspectionApplication {
       // convert report
       if (reportConverter != null) {
         try {
-          reportConverter.convert(resultsDataPath, myOutPath, im.createNewGlobalContext(true).getTools(), inspectionsResults);
+          reportConverter.convert(resultsDataPath, myOutPath, context.getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
           logError("\n" + e.getMessage());

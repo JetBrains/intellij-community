@@ -70,77 +70,79 @@ public class TestDataReferenceCollector {
     if (myTestDataPath == null) {
       return result;
     }
-    UMethod uMethod = (UMethod)UastContextKt.toUElement(method);
-    if (uMethod == null) {
+    return ReadAction.compute(() -> {
+      UMethod uMethod = (UMethod)UastContextKt.toUElement(method);
+      if (uMethod == null) {
+        return result;
+      }
+      uMethod.accept(new AbstractUastVisitor() {
+        @Override
+        public boolean visitCallExpression(@NotNull UCallExpression expression) {
+          String callText = expression.getMethodName();
+          if (callText == null) return true;
+
+          UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
+          if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            final PsiClass calleeContainingClass = callee.getContainingClass();
+            if (calleeContainingClass != null && myContainingClass.isInheritor(calleeContainingClass, true)) {
+              final UMethod implementation = UastContextKt.toUElement(myContainingClass.findMethodBySignature(callee, true), UMethod.class);
+              if (implementation != null) {
+                callee = implementation;
+              }
+            }
+          }
+
+          Pair<PsiMethod, Set<UExpression>> methodWithArguments = new Pair<>(callee, new HashSet<>(expression.getValueArguments()));
+          if (callee != null && proceed.add(methodWithArguments)) {
+            boolean haveAnnotatedParameters = false;
+            final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
+            for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
+              PsiParameter psiParameter = psiParameters[i];
+              final PsiModifierList modifierList = psiParameter.getModifierList();
+              if (modifierList != null && modifierList.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
+                myFoundTestDataParameters = true;
+                if (psiParameter.isVarArgs()) {
+                  processVarargCallArgument(expression, argumentMap, result);
+                }
+                else {
+                  processCallArgument(expression, argumentMap, result, i);
+                }
+                haveAnnotatedParameters = true;
+              }
+            }
+            if (expression.getReceiver() == null && !haveAnnotatedParameters) {
+              result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
+            }
+          }
+          return true;
+        }
+
+        private void processCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                         Collection<TestDataFile> result, int index) {
+          List<UExpression> arguments = expression.getValueArguments();
+          if (arguments.size() > index) {
+            handleArgument(arguments.get(index), argumentMap, result);
+          }
+        }
+
+        private void processVarargCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
+                                               Collection<TestDataFile> result) {
+          List<UExpression> arguments = expression.getValueArguments();
+          for (UExpression argument : arguments) {
+            handleArgument(argument, argumentMap, result);
+          }
+        }
+
+        private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<TestDataFile> result) {
+          UValue testDataFileValue = UEvaluationContextKt.uValueOf(argument, new TestDataEvaluatorExtension(argumentMap));
+          if (testDataFileValue instanceof UStringConstant) {
+            result.add(new TestDataFile.LazyResolved(myTestDataPath + ((UStringConstant)testDataFileValue).getValue()));
+          }
+        }
+      });
+
       return result;
-    }
-    uMethod.accept(new AbstractUastVisitor() {
-      @Override
-      public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        String callText = expression.getMethodName();
-        if (callText == null) return true;
-
-        UMethod callee = UastContextKt.toUElement(expression.resolve(), UMethod.class);
-        if (callee != null && callee.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          final PsiClass calleeContainingClass = callee.getContainingClass();
-          if (calleeContainingClass != null && myContainingClass.isInheritor(calleeContainingClass, true)) {
-            final UMethod implementation = UastContextKt.toUElement(myContainingClass.findMethodBySignature(callee, true), UMethod.class);
-            if (implementation != null) {
-              callee = implementation;
-            }
-          }
-        }
-
-        Pair<PsiMethod, Set<UExpression>> methodWithArguments = new Pair<>(callee, new HashSet<>(expression.getValueArguments()));
-        if (callee != null && proceed.add(methodWithArguments)) {
-          boolean haveAnnotatedParameters = false;
-          final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
-          for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
-            PsiParameter psiParameter = psiParameters[i];
-            final PsiModifierList modifierList = psiParameter.getModifierList();
-            if (modifierList != null && modifierList.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
-              myFoundTestDataParameters = true;
-              if (psiParameter.isVarArgs()) {
-                processVarargCallArgument(expression, argumentMap, result);
-              }
-              else {
-                processCallArgument(expression, argumentMap, result, i);
-              }
-              haveAnnotatedParameters = true;
-            }
-          }
-          if (expression.getReceiver() == null && !haveAnnotatedParameters) {
-            result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee), proceed));
-          }
-        }
-        return true;
-      }
-
-      private void processCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
-                                       Collection<TestDataFile> result, int index) {
-        List<UExpression> arguments = expression.getValueArguments();
-        if (arguments.size() > index) {
-          handleArgument(arguments.get(index), argumentMap, result);
-        }
-      }
-
-      private void processVarargCallArgument(UCallExpression expression, Map<String, Computable<UValue>> argumentMap,
-                                             Collection<TestDataFile> result) {
-        List<UExpression> arguments = expression.getValueArguments();
-        for (UExpression argument : arguments) {
-          handleArgument(argument, argumentMap, result);
-        }
-      }
-
-      private void handleArgument(UExpression argument, Map<String, Computable<UValue>> argumentMap, Collection<TestDataFile> result) {
-        UValue testDataFileValue = UEvaluationContextKt.uValueOf(argument, new TestDataEvaluatorExtension(argumentMap));
-        if (testDataFileValue instanceof UStringConstant) {
-          result.add(new TestDataFile.LazyResolved(myTestDataPath + ((UStringConstant)testDataFileValue).getValue()));
-        }
-      }
     });
-
-    return result;
   }
 
   private Map<String, Computable<UValue>> buildArgumentMap(UCallExpression expression, PsiMethod method) {

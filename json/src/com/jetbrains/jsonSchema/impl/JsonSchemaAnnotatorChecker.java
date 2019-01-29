@@ -727,11 +727,9 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private void checkString(PsiElement propValue, JsonSchemaObject schema) {
-    final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue, schema);
-    assert walker != null;
-    JsonValueAdapter adapter = walker.createValueAdapter(propValue);
-    if (adapter != null && !adapter.shouldCheckAsValue()) return;
-    final String value = StringUtil.unquoteString(walker.getNodeTextForValidation(propValue));
+    String v = getValue(propValue, schema);
+    if (v == null) return;
+    final String value = StringUtil.unquoteString(v);
     if (schema.getMinLength() != null) {
       if (value.length() < schema.getMinLength()) {
         error("String is shorter than " + schema.getMinLength(), propValue, JsonErrorPriority.LOW_PRIORITY);
@@ -760,18 +758,22 @@ class JsonSchemaAnnotatorChecker {
     }*/
   }
 
-  private void checkNumber(PsiElement propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
-    Number value;
+  @Nullable
+  private static String getValue(PsiElement propValue, JsonSchemaObject schema) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue, schema);
     assert walker != null;
     JsonValueAdapter adapter = walker.createValueAdapter(propValue);
-    if (adapter != null && !adapter.shouldCheckAsValue()) return;
-    String valueText = walker.getNodeTextForValidation(propValue);
+    if (adapter != null && !adapter.shouldCheckAsValue()) return null;
+    return walker.getNodeTextForValidation(propValue);
+  }
+
+  private void checkNumber(PsiElement propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
+    Number value;
+    String valueText = getValue(propValue, schema);
+    if (valueText == null) return;
     if (JsonSchemaType._integer.equals(schemaType)) {
-      try {
-        value = Integer.valueOf(valueText);
-      }
-      catch (NumberFormatException e) {
+      value = JsonSchemaType.getIntegerValue(valueText);
+      if (value == null) {
         error("Integer value expected", propValue,
               JsonValidationError.FixableIssueKind.TypeMismatch,
               new JsonValidationError.TypeMismatchIssueData(new JsonSchemaType[]{schemaType}), JsonErrorPriority.TYPE_MISMATCH);

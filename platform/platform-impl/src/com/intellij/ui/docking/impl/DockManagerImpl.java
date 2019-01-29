@@ -209,6 +209,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
       myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
+      myWindow.setUndecorated(true);
       myContent = content;
 
       Image previewImage = content.getPreviewImage();

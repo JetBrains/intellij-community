@@ -363,6 +363,7 @@
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">
       <action class="org.jetbrains.idea.devkit.themes.ApplyThemeAction" id="DevKit.ApplyTheme" text="Apply Theme" icon="AllIcons.Actions.Execute"/>
+      <action class="org.jetbrains.idea.devkit.themes.RollbackThemeAction" id="DevKit.RollbackTheme" text="Reset to Original Theme" icon="AllIcons.Actions.Rollback"/>
     </group>
 
   </actions>

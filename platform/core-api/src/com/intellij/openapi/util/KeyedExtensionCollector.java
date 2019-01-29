@@ -9,7 +9,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.KeyedLazyInstance;
@@ -76,7 +75,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       public void extensionPointRegistered(@NotNull ExtensionPoint extensionPoint) {
         if (extensionPoint.getName().equals(epName)) {
           //noinspection unchecked
-          ((ExtensionPointImpl)extensionPoint).addExtensionPointListener(myListener, false, null);
+          extensionPoint.addExtensionPointListener(myListener, false, null);
           myCache.clear();
           myTracker.incModificationCount();
         }

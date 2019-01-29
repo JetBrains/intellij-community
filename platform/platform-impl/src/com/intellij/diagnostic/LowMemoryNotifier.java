@@ -3,8 +3,8 @@ package com.intellij.diagnostic;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -15,13 +15,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 public class LowMemoryNotifier implements Disposable {
-  private static final FeatureUsageGroup PERFORMANCE = new FeatureUsageGroup("performance", 1);
+  private static final String PERFORMANCE = "performance";
   private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
@@ -41,10 +40,10 @@ public class LowMemoryNotifier implements Disposable {
         final long currentTime = System.currentTimeMillis();
         if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
           myPreviousLoggedUIResponse = currentTime;
-          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.latency", Collections.singletonMap("duration_ms", latencyMs));
+          FUCounterUsageLogger.getInstance().logEvent(PERFORMANCE, "ui.latency", new FeatureUsageData().addData("duration_ms", latencyMs));
         }
         if (latencyMs >= TOLERABLE_UI_LATENCY) {
-          FeatureUsageLogger.INSTANCE.log(PERFORMANCE, "ui.lagging", Collections.singletonMap("duration_ms", latencyMs));
+          FUCounterUsageLogger.getInstance().logEvent(PERFORMANCE, "ui.lagging", new FeatureUsageData().addData("duration_ms", latencyMs));
         }
       }
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.intellij.build.impl
 
@@ -70,6 +70,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       else {
         buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
       }
+      def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
+      if (secondJreBuild != null) {
+        def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
+        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled")
+      }
     }
   }
 
@@ -129,9 +134,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath, String unixDistPath) {
+  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String secondJreSuffix = null) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
+    def suffix = secondJreSuffix
+    if (suffix == null) suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]

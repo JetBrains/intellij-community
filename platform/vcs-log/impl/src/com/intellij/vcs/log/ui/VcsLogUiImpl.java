@@ -240,11 +240,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         myMainFrame.getGraphTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
-      else if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS.equals(property)) {
-      }
-      else {
-        throw new UnsupportedOperationException("Property " + property + " does not exist");
-      }
     }
 
     private void onShowLongEdgesChanged() {

@@ -637,10 +637,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     scrolledText.getViewport().setBackground(fillColor);
     textWrapper.add(scrolledText);
     content.add(textWrapper, BorderLayout.CENTER);
-
-    final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
-    north.add(new JLabel(icon), BorderLayout.NORTH);
-    content.add(north, BorderLayout.WEST);
+    if (icon != null) {
+      final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
+      north.add(new JLabel(icon), BorderLayout.NORTH);
+      content.add(north, BorderLayout.WEST);
+    }
 
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 

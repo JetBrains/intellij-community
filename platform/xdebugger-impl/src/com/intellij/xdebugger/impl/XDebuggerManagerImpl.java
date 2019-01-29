@@ -19,13 +19,27 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseListener;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.*;
@@ -39,6 +53,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,6 +149,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         }
       }
     });
+
+    if (Registry.is("debugger.run.to.cursor.gesture")) {
+      DebuggerEditorListener listener = new DebuggerEditorListener();
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(listener, myProject);
+      EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(listener, myProject);
+    }
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
@@ -329,5 +350,64 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   public void showExecutionPosition() {
     myExecutionPointHighlighter.navigateTo();
+  }
+
+  private class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+    RangeHighlighter myCurrentHighlighter;
+    final TextAttributes myAttributes;
+
+    DebuggerEditorListener() {
+      myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).clone();
+      myAttributes.setBackgroundColor(ColorUtil.softer(myAttributes.getBackgroundColor()));
+    }
+
+    boolean isEnabled(@NotNull EditorMouseEvent e) {
+      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA) {
+        return false;
+      }
+      XDebugSessionImpl session = getCurrentSession();
+      return session != null && session.isPaused() && !session.isReadOnly();
+    }
+
+    @Override
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
+      if (!isEnabled(e)) {
+        removeHighlighter(e);
+        return;
+      }
+      removeHighlighter(e);
+      myCurrentHighlighter = e.getEditor().getMarkupModel().addLineHighlighter(getLineNumber(e),
+                                                                               DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                                                                               myAttributes);
+    }
+
+    @Override
+    public void mouseExited(@NotNull EditorMouseEvent e) {
+      removeHighlighter(e);
+    }
+
+    private void removeHighlighter(@NotNull EditorMouseEvent e) {
+      if (myCurrentHighlighter != null) {
+        e.getEditor().getMarkupModel().removeHighlighter(myCurrentHighlighter);
+      }
+    }
+
+    private int getLineNumber(EditorMouseEvent event) {
+      Editor editor = event.getEditor();
+      int line = editor.yToVisualLine(event.getMouseEvent().getY());
+      int offset = ((EditorImpl)editor).visualLineStartOffset(line);
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
+      return editor.getDocument().getLineNumber(lineStartOffset);
+    }
+
+    @Override
+    public void mouseClicked(@NotNull EditorMouseEvent e) {
+      if (isEnabled(e)) {
+        XDebugSessionImpl session = getCurrentSession();
+        if (session != null) {
+          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
+        }
+      }
+    }
   }
 }

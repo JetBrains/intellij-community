@@ -56,7 +56,7 @@ class SomeClass {
 """)
 
     def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
-    def context = InspectionManager.getInstance(project).createNewGlobalContext(false)
+    def context = InspectionManager.getInstance(project).createNewGlobalContext()
     assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
   }
 

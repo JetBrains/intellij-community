@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl.config;
 
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 @State(name = "IntentionManagerSettings", storages = @Storage("intentionSettings.xml"))
 public class IntentionManagerSettings implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
+  private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
   private static class MetaDataKey extends Pair<String, String> {
     private static final StringInterner ourInterner = new WeakStringInterner();
@@ -138,7 +138,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
   }
 
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Intentions Loader");
-  
+
   private static void processMetaData(@NotNull IntentionActionMetaData metaData) {
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;

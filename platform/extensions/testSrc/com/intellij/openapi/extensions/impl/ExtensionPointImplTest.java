@@ -40,24 +40,22 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testRegisterUnregisterExtension() {
-    final AreaInstance area = new AreaInstance() {};
-    final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<>(
-      "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
-      new UndefinedPluginDescriptor());
+    ExtensionsAreaImpl extensionArea = buildExtensionArea();
+    final ExtensionPoint<Object> extensionPoint = new InterfaceExtensionPoint<>("an.extension.point", Object.class, extensionArea);
 
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
       @Override
       public void extensionAdded(@NotNull ExtensionPoint extensionPoint1) {
         assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(area);
+        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
         flags[0] = true;
       }
 
       @Override
       public void extensionRemoved(@NotNull ExtensionPoint extensionPoint1) {
         assertThat(extensionPoint1).isSameAs(extensionPoint);
-        assertThat(extensionPoint1.getArea()).isSameAs(area);
+        assertThat(extensionPoint1.getArea()).isSameAs(extensionArea.getAreaInstance());
         flags[1] = true;
       }
     };
@@ -245,11 +243,10 @@ public class ExtensionPointImplTest {
   }
 
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(Class<T> aClass) {
-    return new ExtensionPointImpl<>(
-      ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(), ExtensionPoint.Kind.INTERFACE,
-      buildExtensionArea(), null, new UndefinedPluginDescriptor());
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, buildExtensionArea());
   }
 
+  @NotNull
   private static ExtensionsAreaImpl buildExtensionArea() {
     return new ExtensionsAreaImpl(null, null, new DefaultPicoContainer());
   }
@@ -269,6 +266,7 @@ public class ExtensionPointImplTest {
       myFire = fire;
     }
 
+    @NotNull
     @Override
     public Object getExtension() {
       if (myFire) {

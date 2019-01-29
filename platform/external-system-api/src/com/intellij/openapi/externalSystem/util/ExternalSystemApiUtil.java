@@ -716,6 +716,41 @@ public class ExternalSystemApiUtil {
     return tasks;
   }
 
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ModuleData> findModuleData(@NotNull Module module,
+                                                    @NotNull ProjectSystemId systemId) {
+    String externalProjectPath = getExternalProjectPath(module);
+    if (externalProjectPath == null) return null;
+    Project project = module.getProject();
+    DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
+    if (projectNode == null) return null;
+    return find(projectNode, ProjectKeys.MODULE, node -> externalProjectPath.equals(node.getData().getLinkedExternalProjectPath()));
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static DataNode<ProjectData> findProjectData(@NotNull Project project,
+                                                      @NotNull ProjectSystemId systemId,
+                                                      @NotNull String projectPath) {
+    ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
+    if (projectInfo == null) return null;
+    return projectInfo.getExternalProjectStructure();
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public static ExternalProjectInfo findProjectInfo(@NotNull Project project,
+                                                    @NotNull ProjectSystemId systemId,
+                                                    @NotNull String projectPath) {
+    AbstractExternalSystemSettings settings = getSettings(project, systemId);
+    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+    if (linkedProjectSettings == null) return null;
+    return ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
+      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
+      .findFirst().orElse(null);
+  }
+
   /**
    * DO NOT USE THIS METHOD.
    * The method should be removed when the 'java' subsystem features will be extracted from External System API [IDEA-187832]

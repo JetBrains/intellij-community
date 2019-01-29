@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -68,7 +70,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   public PsiReference getReference() {
     final PsiClass scope = getScope();
     final PsiElement element = getNameElement();
-    if (scope == null || element == null) return new MyReference(null);
+    if (scope == null || element == null) return new MyReference(PsiElement.EMPTY_ARRAY);
 
     PsiReference psiReference = getReferenceInScope(scope, element);
     if (psiReference != null) return psiReference;
@@ -81,7 +83,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       if (psiReference != null) return psiReference;
       containingClass = classScope.getContainingClass();
     }
-    return new MyReference(null);
+    return new MyReference(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -92,7 +94,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     if (signature == null) {
       PsiField var = scope.findFieldByName(name, true);
       if (var != null) {
-        return new MyReference(var);
+        return new MyReference(new PsiElement[]{var});
       }
     }
 
@@ -116,27 +118,25 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       methodSignature = null;
     }
 
-    PsiMethod method = findMethod(methodSignature, name, getAllMethods(scope, this));
+    PsiMethod[] methods = findMethods(methodSignature, name, getAllMethods(scope, this));
 
-    if (method != null) {
-      return new MyReference(method) {
+    if (methods.length == 0) return null;
 
-        @Override
-        public void processVariants(@NotNull PsiScopeProcessor processor) {
-          super.processVariants(new DelegatingScopeProcessor(processor) {
-            @Override
-            public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-              if (element instanceof PsiMethod && name.equals(((PsiMethod)element).getName())) {
-                return super.execute(element, state);
-              }
-              return true;
+    return new MyReference(methods) {
+
+      @Override
+      public void processVariants(@NotNull PsiScopeProcessor processor) {
+        super.processVariants(new DelegatingScopeProcessor(processor) {
+          @Override
+          public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+            if (element instanceof PsiMethod && name.equals(((PsiMethod)element).getName())) {
+              return super.execute(element, state);
             }
-          });
-        }
-      };
-    }
-
-    return null;
+            return true;
+          }
+        });
+      }
+    };
   }
 
   @Override
@@ -202,16 +202,18 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return JavaResolveUtil.getContextClass(this);
   }
 
-  @Nullable
-  public static PsiMethod findMethod(@Nullable MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+  @NotNull
+  public static PsiMethod[] findMethods(@Nullable MethodSignature methodSignature, @Nullable String name, @NotNull PsiMethod[] allMethods) {
+    List<PsiMethod> methods = new ArrayList<>();
+
     for (PsiMethod method : allMethods) {
       if (method.getName().equals(name) &&
           (methodSignature == null || MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) {
-        return method;
+        methods.add(method);
       }
     }
 
-    return null;
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -222,15 +224,16 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public class MyReference implements PsiJavaReference {
-    private final PsiElement myReferredElement;
+    private final PsiElement[] myReferredElements;
 
-    public MyReference(PsiElement referredElement) {
-      myReferredElement = referredElement;
+    public MyReference(PsiElement[] referredElements) {
+      myReferredElements = referredElements;
     }
 
     @Override
     public PsiElement resolve() {
-      return myReferredElement;
+      if (myReferredElements.length == 1) return myReferredElements[0];
+      return null;
     }
 
     @Override
@@ -255,15 +258,16 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     @Override
     @NotNull
     public JavaResolveResult advancedResolve(boolean incompleteCode) {
-      return myReferredElement == null ? JavaResolveResult.EMPTY
-                                  : new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY);
+      return myReferredElements.length != 1 ? JavaResolveResult.EMPTY
+                                            : new CandidateInfo(myReferredElements[0], PsiSubstitutor.EMPTY);
     }
 
     @Override
     @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-      return myReferredElement == null ? JavaResolveResult.EMPTY_ARRAY
-                                  : new JavaResolveResult[]{new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY)};
+      return Arrays.stream(myReferredElements)
+        .map(myReferredElement -> new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY))
+        .toArray(JavaResolveResult[]::new);
     }
 
     @Override
@@ -378,7 +382,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
-      return getManager().areElementsEquivalent(resolve(), element);
+      PsiManagerEx manager = getManager();
+      for (PsiElement myReferredElement : myReferredElements) {
+        if (manager.areElementsEquivalent(element, myReferredElement)) return true;
+      }
+      return false;
     }
 
     @NotNull

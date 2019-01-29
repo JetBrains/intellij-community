@@ -44,7 +44,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     InspectionsKt.disableAllTools(profile);
     profile.enableTool(shortName, getProject());
 
-    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
     context.setExternalProfile(profile);
     configureByFile("Foo.java");
 
@@ -83,7 +83,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   }
 
   public void testJavaMethodExternalization() throws Exception {
-    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
     PsiFile file = createFile("Foo.java", "public class Foo {\n" +
                                           "    <T> void foo(T t) {\n" +
                                           "    }\n" +

@@ -197,9 +197,11 @@ public class JavaDocUtil {
         allMethods = aClass.findMethodsByName(name, true);
       }
 
-      PsiMethod found = PsiDocMethodOrFieldRef.findMethod(methodSignature, name, allMethods);
+      PsiMethod[] methods = PsiDocMethodOrFieldRef.findMethods(methodSignature, name, allMethods);
 
-      if (found == null) return null;
+      if (methods.length == 0) return null;
+
+      PsiMethod found = methods[0];
 
       int hashIndex = memberRefText.indexOf('#', rparenIndex);
       if (hashIndex != -1) {

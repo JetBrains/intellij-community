@@ -83,6 +83,7 @@ import java.util.function.Predicate;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties.getIntProperty("max.open.global.inspection.xml.files", 50);
+  private static final boolean INSPECT_INJECTED_PSI = SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true);
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
   @SuppressWarnings("StaticNonFinalField")
   @TestOnly
@@ -562,7 +563,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
 
     final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, range.getStartOffset(),
                                                                range.getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                               HighlightInfoProcessor.getEmpty());
+                                                               HighlightInfoProcessor.getEmpty(), INSPECT_INJECTED_PSI);
     try {
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
       List<LocalInspectionToolWrapper> notExternalAnnotatableLocals =
@@ -1003,7 +1004,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
             try {
               final LocalInspectionsPass pass = new LocalInspectionsPass(file, PsiDocumentManager.getInstance(getProject()).getDocument(file), range != null ? range.getStartOffset() : 0,
                                                                          range != null ? range.getEndOffset() : file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
-                                                                         HighlightInfoProcessor.getEmpty());
+                                                                         HighlightInfoProcessor.getEmpty(), true);
               Runnable runnable = () -> pass.doInspectInBatch(GlobalInspectionContextImpl.this, InspectionManager.getInstance(getProject()), lTools);
               ApplicationManager.getApplication().runReadAction(runnable);
 
