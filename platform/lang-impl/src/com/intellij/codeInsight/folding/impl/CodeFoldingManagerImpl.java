@@ -188,18 +188,19 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       return null;
     }
 
-
-    final List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, document, true);
-
     return editor -> {
       ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
       if (myProject.isDisposed() || editor.isDisposed()) return;
+      final Document foldingStateDocument = editor.getDocument();
+      final PsiFile foldingStateFile = psiDocumentManager.getPsiFile(foldingStateDocument);
+      if (foldingStateFile == null) return;
+      final List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(foldingStateFile, foldingStateDocument, true);
       final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
+      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, foldingStateFile, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                              false, false));
       initFolding(editor);
