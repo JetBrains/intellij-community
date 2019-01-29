@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assert
 import org.junit.Test
 
@@ -21,8 +21,8 @@ class ExternalTestsModelCompatibilityTestCase : GradleImportingTestCase() {
   }
 
   @Test
+  @TargetVersions("2.4 <=> 4.10.3")
   fun `test intellij tests finding`() {
-    if (VersionComparatorUtil.compare(gradleVersion, "5.0") >= 0) return
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withJUnit("4.12")
@@ -52,8 +52,8 @@ class ExternalTestsModelCompatibilityTestCase : GradleImportingTestCase() {
   }
 
   @Test
+  @TargetVersions("4.0+")
   fun `test intellij tests finding new interface`() {
-    if (VersionComparatorUtil.compare(gradleVersion, "4.0") < 0) return
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withJUnit("4.12")
