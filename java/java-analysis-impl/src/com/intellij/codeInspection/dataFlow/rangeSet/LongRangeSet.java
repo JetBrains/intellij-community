@@ -970,20 +970,20 @@ public abstract class LongRangeSet {
                ? range(value1, value2)
                : new RangeSet(new long[]{value1, value1, value2, value2});
       }
+      if (other instanceof ModRange) {
+        return other.unite(this);
+      }
       if (other instanceof Range) {
         if (myValue < other.min()) {
           return myValue + 1 == other.min()
                  ? range(myValue, other.max())
                  : new RangeSet(new long[]{myValue, myValue, other.min(), other.max()});
         }
-        else if (myValue > other.max()) {
+        else {
+          assert myValue > other.max();
           return myValue - 1 == other.max()
                  ? range(other.min(), myValue)
                  : new RangeSet(new long[]{other.min(), other.max(), myValue, myValue});
-        }
-        else {
-          assert other instanceof ModRange;
-          return range(other.min(), other.max());
         }
       }
       long[] longs = other.asRanges();
@@ -1611,6 +1611,17 @@ public abstract class LongRangeSet {
           }
         }
       }
+      if (other instanceof Point) {
+        long val = ((Point)other).myValue;
+        if (isSet(myBits, remainder(val, myMod))) {
+          if (val >= myFrom && val <= myTo) return this;
+          if (val < myFrom && modRange(val + 1, myFrom - 1, myMod, myBits).isEmpty() ||
+              val > myTo && modRange(myTo + 1, val - 1, myMod, myBits).isEmpty()) {
+            return modRange(Math.min(myFrom, val), Math.max(myTo, val), myMod, myBits);
+          }
+        }
+        return other.unite(range(myFrom, myTo));
+      }
       return super.unite(other);
     }
 
@@ -1647,15 +1658,25 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       LongRangeSet set = super.plus(other, isLong);
-      if (set instanceof Range && (other instanceof Point || other instanceof ModRange && ((ModRange)other).myMod == myMod &&
-                                                             Long.bitCount(((ModRange)other).myBits) == 1)) {
-        if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
-          int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
-          long bits = rotateRemainders(myBits, myMod, myMod - bit);
-          return modRange(set.min(), set.max(), myMod, bits);
+      if (other instanceof Point ||
+          other instanceof ModRange && ((ModRange)other).myMod == myMod && Long.bitCount(((ModRange)other).myBits) == 1) {
+        long[] ranges = set.asRanges();
+        LongRangeSet result = empty();
+        for (int i = 0; i < ranges.length; i += 2) {
+          result = result.unite(plus(ranges[i], ranges[i + 1], other, isLong));
         }
+        return result;
       }
       return set;
+    }
+
+    private LongRangeSet plus(long min, long max, LongRangeSet other, boolean isLong) {
+      if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
+        int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
+        long bits = rotateRemainders(myBits, myMod, myMod - bit);
+        return modRange(min, max, myMod, bits);
+      }
+      return range(min, max);
     }
 
     @NotNull
@@ -1737,7 +1758,7 @@ public abstract class LongRangeSet {
       int powerOfTwo = 1 << knownBits;
       long result = -1;
       long mask = powerOfTwo - 1;
-      for (int rem = 0; rem < myBits; rem++) {
+      for (int rem = 0; rem < myMod; rem++) {
         if (isSet(myBits, rem)) {
           int setBits = rem % powerOfTwo;
           if (result != -1) {

@@ -452,6 +452,7 @@ public class LongRangeSetTest {
     assertTrue(all().bitwiseOr(empty(), true).isEmpty());
     assertEquals(all(), all().bitwiseOr(all(), true));
     assertEquals("{-9223372036854775807..Long.MAX_VALUE}: odd", all().bitwiseOr(point(1), true).toString());
+    assertEquals("{-9223372036854775804..Long.MAX_VALUE-1}: <4, 6> mod 8", all().mul(point(64), true).minus(point(2), true).bitwiseOr(point(4), true).toString());
 
     checkBitwiseOr(point(1), point(2), false, "{3}");
     checkBitwiseOr(range(0, 100), point(1), false, "{1..127}: odd");
@@ -620,6 +621,8 @@ public class LongRangeSetTest {
     assertEquals(intDomain, range(Integer.MIN_VALUE, 2).plus(range(-2, Integer.MAX_VALUE), false));
     assertEquals(all(), range(Long.MIN_VALUE, 2).plus(range(-2, Long.MAX_VALUE), true));
     assertEquals(all(), range(-100, Long.MAX_VALUE).plus(all(), true));
+
+    assertEquals("{-9223372036854775745..Long.MAX_VALUE}: <63> mod 64", all().mul(point(64), true).minus(point(1), true).toString());
   }
   
   @Test
@@ -758,6 +761,10 @@ public class LongRangeSetTest {
     assertEquals("{0..16}: <0, 1> mod 5", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 5, 0b10)).toString());
     assertEquals("{0..19}: <0, 1, 3, 5, 7, 9> mod 10", modRange(0, 11, 5, 0b1).unite(modRange(11, 20, 2, 0b10)).toString());
     assertEquals("{0..100}", modRange(0, 100, 2, 0b1).unite(point(1)).toString());
+    assertEquals("{0..102}: even", modRange(0, 100, 2, 0b1).unite(point(102)).toString());
+    assertEquals("{-2..100}: even", modRange(0, 100, 2, 0b1).unite(point(-2)).toString());
+    assertEquals("{-3, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-3)).toString());
+    assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-4)).toString());
   }
   
   @Test
