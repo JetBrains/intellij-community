@@ -61,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -407,7 +408,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
-      if (isEnabled(e)) {
+      if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
         XDebugSessionImpl session = getCurrentSession();
         if (session != null) {
           session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), getLineNumber(e)), false);
