@@ -15,7 +15,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -582,5 +587,40 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("<caret>line 2");
     rightWithSelection();
     checkResultByText("<selection>l<caret></selection>ine 2");
+  }
+
+  public void testAddDifferentChild() {
+    childAddedByEditing("import b;\n");
+  }
+
+  public void testAddSameChild() {
+    childAddedByEditing("import a;\n");
+  }
+
+  private void childAddedByEditing(String textToType) {
+    final String text = "import a;\n";
+    init(text, TestFileType.JAVA);
+    PsiManager.getInstance(ourProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
+        if (isImportStatement(event.getChild())) {
+          assertEquals("Child is inserted not at typing position", text.length(), event.getChild().getTextOffset());
+        }
+      }
+    });
+    for (int i = 0; i < text.split("\n").length; i++) {
+      down();
+    }
+    type(textToType);
+    checkResultByText(String.format("%s%s", text, textToType));
+  }
+
+  /**
+   * This is only to demonstrate the issue with child addition.
+   * <p>
+   * We use class name here to avoid adding dependency on 'intellij.java.psi' module.
+   */
+  private static boolean isImportStatement(PsiElement element) {
+    return element.getClass().getName().equals("com.intellij.psi.impl.source.PsiImportStatementImpl");
   }
 }
