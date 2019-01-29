@@ -1048,7 +1048,7 @@ public class AbstractPopup implements JBPopup {
         removeActivity();
         return;
       }
-      if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
+      if ((myPreferredFocusedComponent instanceof JButton || myPreferredFocusedComponent instanceof JTextField) && myFocusable) {
         IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
       }
 
