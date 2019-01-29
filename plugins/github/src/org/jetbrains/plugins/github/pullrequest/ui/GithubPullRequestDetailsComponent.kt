@@ -16,6 +16,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
 import java.awt.BorderLayout
 
@@ -26,7 +27,9 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
 
-  private val detailsPanel = GithubPullRequestDetailsPanel(securityService, busyStateTracker, stateService, iconProviderFactory)
+  private val detailsModel = GithubPullRequestDetailsModel()
+  private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, stateService,
+                                                           iconProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
@@ -43,15 +46,17 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     loadingPanel.add(detailsPanel)
     setContent(backgroundLoadingPanel)
     Disposer.register(this, detailsPanel)
+
+    detailsModel.details = null
   }
 
   override fun reset() {
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
-    detailsPanel.details = null
+    detailsModel.details = null
   }
 
   override fun handleResult(result: GithubPullRequestDetailedWithHtml) {
-    detailsPanel.details = result
+    detailsModel.details = result
     if (!result.merged && result.state == GithubIssueState.open && result.mergeable == null) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.reloadDetails(result.number)
@@ -68,7 +73,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      if (detailsPanel.details == null) {
+      if (detailsModel.details == null) {
         detailsPanel.emptyText.clear()
         loadingPanel.startLoading()
       }

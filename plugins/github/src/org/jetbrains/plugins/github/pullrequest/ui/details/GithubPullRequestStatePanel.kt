@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -9,6 +10,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
@@ -19,9 +21,11 @@ import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JLabel
 
-internal class GithubPullRequestStatePanel(private val securityService: GithubPullRequestsSecurityService,
+internal class GithubPullRequestStatePanel(private val model: GithubPullRequestDetailsModel,
+                                           private val securityService: GithubPullRequestsSecurityService,
+                                           private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                            private val stateService: GithubPullRequestsStateService)
-  : NonOpaquePanel(VerticalFlowLayout(0, 0)) {
+  : NonOpaquePanel(VerticalFlowLayout(0, 0)), Disposable {
 
   private val stateLabel = JLabel().apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
@@ -74,9 +78,26 @@ internal class GithubPullRequestStatePanel(private val securityService: GithubPu
     add(stateLabel)
     add(accessDeniedPanel)
     add(buttonsPanel)
+
+    model.addDetailsChangedListener(this) {
+      state = model.details?.let {
+        GithubPullRequestStatePanel.State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
+                                          securityService.isCurrentUserWithPushAccess(), securityService.isCurrentUser(it.user),
+                                          securityService.isMergeAllowed(),
+                                          securityService.isRebaseMergeAllowed(),
+                                          securityService.isSquashMergeAllowed(),
+                                          securityService.isMergeForbiddenForProject(),
+                                          busyStateTracker.isBusy(it.number))
+      }
+    }
+
+    busyStateTracker.addPullRequestBusyStateListener(this) {
+      if (it == state?.number)
+        state = state?.copy(busy = busyStateTracker.isBusy(it))
+    }
   }
 
-  var state: GithubPullRequestStatePanel.State? by equalVetoingObservable<GithubPullRequestStatePanel.State?>(null) {
+  private var state: GithubPullRequestStatePanel.State? by equalVetoingObservable<GithubPullRequestStatePanel.State?>(null) {
     updateText(it)
     updateActions(it)
   }
@@ -163,11 +184,18 @@ internal class GithubPullRequestStatePanel(private val securityService: GithubPu
     }
   }
 
-  data class State(val number: Long, val state: GithubIssueState, val merged: Boolean, val mergeable: Boolean?, val rebaseable: Boolean?,
-                   val editAllowed: Boolean, val currentUserIsAuthor: Boolean,
-                   val mergeAllowed: Boolean,
-                   val rebaseMergeAllowed: Boolean,
-                   val squashMergeAllowed: Boolean,
-                   val mergeForbidden: Boolean,
-                   val busy: Boolean)
+  override fun dispose() {}
+
+  private data class State(val number: Long,
+                           val state: GithubIssueState,
+                           val merged: Boolean,
+                           val mergeable: Boolean?,
+                           val rebaseable: Boolean?,
+                           val editAllowed: Boolean,
+                           val currentUserIsAuthor: Boolean,
+                           val mergeAllowed: Boolean,
+                           val rebaseMergeAllowed: Boolean,
+                           val squashMergeAllowed: Boolean,
+                           val mergeForbidden: Boolean,
+                           val busy: Boolean)
 }

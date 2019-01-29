@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.openapi.Disposable
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -8,7 +9,6 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubIssueLabel
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -16,34 +16,14 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class GithubPullRequestMetadataPanel(private val iconsProvider: CachingGithubAvatarIconsProvider) : JPanel() {
+internal class GithubPullRequestMetadataPanel(private val model: GithubPullRequestDetailsModel,
+                                              private val iconsProvider: CachingGithubAvatarIconsProvider)
+  : JPanel(), Disposable {
+
   private val directionPanel = GithubPullRequestDirectionPanel()
-  var direction: Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?
-    get() = directionPanel.direction
-    set(value) {
-      directionPanel.direction = value
-    }
-
   private val reviewersHandle = LabeledListPanelHandle.create("No Reviewers", "Reviewers:", ::createUserLabel)
-  var reviewers: List<GithubUser>?
-    get() = reviewersHandle.list
-    set(value) {
-      reviewersHandle.list = value
-    }
-
   private val assigneesHandle = LabeledListPanelHandle.create("Unassigned", "Assignees:", ::createUserLabel)
-  var assignees: List<GithubUser>?
-    get() = assigneesHandle.list
-    set(value) {
-      assigneesHandle.list = value
-    }
-
   private val labelsHandle = LabeledListPanelHandle.create("No Labels", "Labels:", ::createLabelLabel)
-  var labels: List<GithubIssueLabel>?
-    get() = labelsHandle.list
-    set(value) {
-      labelsHandle.list = value
-    }
 
   init {
     isOpaque = false
@@ -59,6 +39,13 @@ internal class GithubPullRequestMetadataPanel(private val iconsProvider: Caching
     addListPanel(reviewersHandle)
     addListPanel(assigneesHandle)
     addListPanel(labelsHandle)
+
+    model.addDetailsChangedListener(this) {
+      directionPanel.direction = model.details?.let { it.head to it.base }
+      reviewersHandle.list = model.details?.requestedReviewers
+      assigneesHandle.list = model.details?.assignees
+      labelsHandle.list = model.details?.labels
+    }
   }
 
   private fun addListPanel(handle: LabeledListPanelHandle<*>) {
@@ -73,4 +60,6 @@ internal class GithubPullRequestMetadataPanel(private val iconsProvider: Caching
   private fun createLabelLabel(label: GithubIssueLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 1, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
   }
+
+  override fun dispose() {}
 }

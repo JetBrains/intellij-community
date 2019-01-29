@@ -15,7 +15,6 @@ import com.intellij.util.ui.StatusText
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
@@ -24,48 +23,30 @@ import java.awt.Graphics
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
 import javax.swing.JPanel
-import kotlin.properties.Delegates
 
 
-internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequestsSecurityService,
+internal class GithubPullRequestDetailsPanel(model: GithubPullRequestDetailsModel,
+                                             securityService: GithubPullRequestsSecurityService,
                                              busyStateTracker: GithubPullRequestsBusyStateTracker,
                                              stateService: GithubPullRequestsStateService,
                                              iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
-    override fun isStatusVisible() = details == null
+    override fun isStatusVisible() = model.details == null
   }
   private val iconsProvider = iconProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
 
-  private val metaPanel = GithubPullRequestMetadataPanel(iconsProvider).apply {
+  private val metaPanel = GithubPullRequestMetadataPanel(model, iconsProvider).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
-  private val descriptionPanel = GithubPullRequestDescriptionPanel().apply {
+  private val descriptionPanel = GithubPullRequestDescriptionPanel(model).apply {
     border = JBUI.Borders.empty(4, 8, 8, 8)
   }
-  private val statePanel = GithubPullRequestStatePanel(securityService, stateService).apply {
+  private val statePanel = GithubPullRequestStatePanel(model, securityService, busyStateTracker, stateService).apply {
     border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
                                                 JBUI.Borders.empty(8))
   }
-
-  var details: GithubPullRequestDetailedWithHtml?
-    by Delegates.observable<GithubPullRequestDetailedWithHtml?>(null) { _, _, newValue ->
-      descriptionPanel.description = newValue?.bodyHtml
-      metaPanel.direction = newValue?.let { it.head to it.base }
-      metaPanel.reviewers = newValue?.requestedReviewers
-      metaPanel.assignees = newValue?.assignees
-      metaPanel.labels = newValue?.labels
-      statePanel.state = newValue?.let {
-        GithubPullRequestStatePanel.State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
-                                          securityService.isCurrentUserWithPushAccess(), securityService.isCurrentUser(it.user),
-                                          securityService.isMergeAllowed(),
-                                          securityService.isRebaseMergeAllowed(),
-                                          securityService.isSquashMergeAllowed(),
-                                          securityService.isMergeForbiddenForProject(),
-                                          busyStateTracker.isBusy(it.number))
-      }
-    }
 
   init {
     layout = MigLayout(LC().flowY().fill()
@@ -97,14 +78,9 @@ internal class GithubPullRequestDetailsPanel(securityService: GithubPullRequests
 
     })
 
-    busyStateTracker.addPullRequestBusyStateListener(this) {
-      if (it == statePanel.state?.number)
-        statePanel.state = statePanel.state?.copy(busy = busyStateTracker.isBusy(it))
-    }
-
-    details = null
-
-    Disposer.register(this, iconsProvider)
+    Disposer.register(this, metaPanel)
+    Disposer.register(this, descriptionPanel)
+    Disposer.register(this, statePanel)
   }
 
   override fun getEmptyText() = emptyText
