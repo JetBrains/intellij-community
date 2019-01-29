@@ -188,8 +188,7 @@ object UpdateInstaller {
 
   private fun getJdkSuffix(): String {
     val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "Contents/jdk" else "jre64")
-    //todo[vorlov] if (!jreHome.exists()) return "-no-jdk"
-    if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) return "-no-jdk"
+    if (!jreHome.exists()) return "-no-jdk"
     val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
     val version = try {
       releaseFile.readLines().first { it.startsWith("JAVA_VERSION=") }.let { JavaVersion.parse(it) }.feature

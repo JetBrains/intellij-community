@@ -33,7 +33,6 @@ if [ $# -eq 7 ] && [ -f $7 ]; then
   if [[ $1 == *custom-jdk-bundled* ]]; then
     jdk=custom-"$jdk"
   fi
-  sed -i -e 's/NoJavaDistribution/'$jdk'/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   rm -f ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist-e
   echo "Info.plist has been modified"
   echo "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
