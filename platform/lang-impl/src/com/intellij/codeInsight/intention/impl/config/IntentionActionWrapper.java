@@ -31,12 +31,12 @@ public class IntentionActionWrapper implements IntentionAction, ShortcutProvider
   }
 
   @NotNull
-  public String getDescriptionDirectoryName() {
+  String getDescriptionDirectoryName() {
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
   @NotNull
-  public static String getDescriptionDirectoryName(@NotNull String fqn) {
+  static String getDescriptionDirectoryName(@NotNull String fqn) {
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
