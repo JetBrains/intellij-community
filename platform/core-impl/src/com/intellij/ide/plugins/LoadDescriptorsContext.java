@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,14 +81,15 @@ final class LoadDescriptorsContext implements AutoCloseable {
    */
   // don't intern CDATA - in most cases it is used for some unique large text (e.g. plugin description)
   private final static class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
+    // doesn't make sense to intern class name since it is unique
     // ouch, do we really cannot agree how to name implementation class attribute?
-    private static final String[] CLASS_NAMES = new String[]{
-      "implementation-class", "implementation", "implementationClass", "serviceImplementation", "class", "className", "beanClass",
+    private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(Arrays.asList(
+      "implementation-class", "implementation",
+      "serviceImplementation", "class", "className", "beanClass",
       "serviceInterface", "interface", "interfaceClass", "instance",
-      "qualifiedName",
-    };
+      "qualifiedName"));
 
-    private final Interner<String> stringInterner = new Interner<String>(Arrays.asList(CLASS_NAMES)) {
+    private final Interner<String> stringInterner = new Interner<String>(CLASS_NAMES) {
       @NotNull
       @Override
       public String intern(@NotNull String name) {
@@ -110,18 +108,18 @@ final class LoadDescriptorsContext implements AutoCloseable {
     @Override
     public Attribute attribute(@NotNull String name, @NotNull String value, @Nullable AttributeType type, @Nullable Namespace namespace) {
       String internedName = stringInterner.intern(name);
-      for (String s : CLASS_NAMES) {
-        if (internedName == s) {
-          return super.attribute(internedName, value, type, namespace);
-        }
+      if (CLASS_NAMES.contains(internedName)) {
+        return super.attribute(internedName, value, type, namespace);
       }
-      return super.attribute(internedName, stringInterner.intern(value), type, namespace);
+      else {
+        return super.attribute(internedName, stringInterner.intern(value), type, namespace);
+      }
     }
 
     @NotNull
     @Override
     public Text text(@NotNull String text, @NotNull Element parentElement) {
-      if (parentElement.getName() == "className" || parentElement.getName() == "implementation-class") {
+      if (CLASS_NAMES.contains(parentElement.getName())) {
         return super.text(text, parentElement);
       }
       else {
