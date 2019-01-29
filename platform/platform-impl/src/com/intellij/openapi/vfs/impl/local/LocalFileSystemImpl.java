@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.concurrency.JobScheduler;
@@ -298,51 +284,31 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<? super WatchRequest> results) {
+  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<WatchRequest> result) {
     boolean update = false;
-
-    for (String root : recursiveRoots) {
-      WatchRequestImpl request = watch(root, true);
-      if (request == null) continue;
-      boolean alreadyWatched = isAlreadyWatched(request);
-
-      request.myDominated = alreadyWatched;
-      myRootsToWatch.add(request);
-      results.add(request);
-
-      update |= !alreadyWatched;
-    }
-
-    for (String root : flatRoots) {
-      WatchRequestImpl request = watch(root, false);
-      if (request == null) continue;
-      boolean alreadyWatched = isAlreadyWatched(request);
-
-      request.myDominated = alreadyWatched;
-      myRootsToWatch.add(request);
-      results.add(request);
-
-      update |= !alreadyWatched;
-    }
-
+    for (String root : recursiveRoots) update |= watch(root, true, result);
+    for (String root : flatRoots) update |= watch(root, false, result);
     return update;
   }
 
-  @Nullable
-  private static WatchRequestImpl watch(String rootPath, boolean recursively) {
+  private boolean watch(String rootPath, boolean recursively, Set<WatchRequest> result) {
     int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) rootPath = rootPath.substring(0, index);
 
     File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
     if (!rootFile.isAbsolute()) {
       LOG.warn("Invalid path: " + rootPath);
-      return null;
+      return false;
     }
 
-    return new WatchRequestImpl(rootFile.getAbsolutePath(), recursively);
+    WatchRequestImpl request = new WatchRequestImpl(rootFile.getAbsolutePath(), recursively);
+    request.myDominated = isAlreadyWatched(request);
+    myRootsToWatch.add(request);
+    result.add(request);
+    return !request.myDominated;
   }
 
-  private boolean doRemoveWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
+  private boolean doRemoveWatchedRoots(Collection<? extends WatchRequest> watchRequests) {
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {
@@ -366,7 +332,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       if (LOG.isDebugEnabled()) {
         LOG.debug("Setting up file watcher. Recursive roots: " + recursiveRoots.size() + ", flat roots: " + flatRoots.size());
       }
-      
+
       myWatcher.setWatchRoots(recursiveRoots, flatRoots);
     }
   }

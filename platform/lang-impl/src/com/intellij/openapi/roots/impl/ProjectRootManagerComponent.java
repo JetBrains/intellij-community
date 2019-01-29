@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -48,20 +48,21 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * ProjectRootManager extended with ability to watch events.
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
+  private static final boolean LOG_CACHES_UPDATE =
+    ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
 
   private boolean myPointerChangesDetected;
   private int myInsideRefresh;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
-
-  @NotNull
-  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
-  private final boolean LOG_CACHES_UPDATE = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
+  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
@@ -183,19 +184,17 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  @NotNull
   private Pair<Set<String>, Set<String>> getAllRoots() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> recursiveDirs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> files = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
-    final String projectFilePath = myProject.getProjectFilePath();
-    final File dotIdea = projectFilePath == null ? null : new File(projectFilePath).getParentFile().getAbsoluteFile();
+    String projectFilePath = myProject.getProjectFilePath();
+    File dotIdea = projectFilePath == null ? null : new File(projectFilePath).getParentFile().getAbsoluteFile();
     if (dotIdea == null || !dotIdea.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       files.add(projectFilePath);
-      // may be not existing yet
-      ContainerUtil.addIfNotNull(files, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
+      ContainerUtil.addIfNotNull(files, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());  // may not exist yet
     }
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
@@ -204,15 +203,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
-      Set<String> toWatch = extension.getRootsToWatch();
-      recursiveDirs.addAll(toWatch);
+      recursiveDirs.addAll(extension.getRootsToWatch());
     }
 
     Disposable oldDisposable = myRootPointersDisposable;
     myRootPointersDisposable = Disposer.newDisposable();
     Disposer.register(this, myRootPointersDisposable);
-    // create container with these urls with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
-    VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
+    // create container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
+    VirtualFilePointerContainer container =
+      VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
 
     List<String> recursiveDirUrls = ContainerUtil.map(recursiveDirs, path -> VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
     ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveDirUrls, true);
@@ -225,14 +224,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     }
 
-    Disposer.dispose(oldDisposable); // dispose after the re-creating container to keep virtual file pointers from disposing and re-creating back
+    Disposer.dispose(oldDisposable);  // dispose after the re-creating container to keep VFPs from disposing and re-creating back
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
     addRootsFromModulesTo(recursiveDirs, files);
-    return Pair.create(recursiveDirs, files);
+
+    return pair(recursiveDirs, files);
   }
 
-  private void addRootsFromModulesTo(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {
+  private void addRootsFromModulesTo(Set<String> recursivePaths, Set<String> flatPaths) {
     Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
