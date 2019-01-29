@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.coverage.listeners.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
@@ -42,7 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
@@ -541,9 +542,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       PsiMethod method = (PsiMethod)element;
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
-        String qualifiedName = aClass.getQualifiedName();
+        String qualifiedName = ClassUtil.getJVMClassName(aClass);
         if (qualifiedName != null) {
-          return qualifiedName + "." + method.getName();
+          return qualifiedName + "," + CoverageListener.sanitize(method.getName());
         }
       }
     }
@@ -555,25 +556,13 @@ public class JavaCoverageEngine extends CoverageEngine {
   @NotNull
   public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
     final List<PsiElement> elements = new ArrayList<>();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+    PsiManager psiManager = PsiManager.getInstance(project);
     for (String testName : testNames) {
-      PsiClass psiClass =
-          facade.findClass(StringUtil.getPackageName(testName, '_').replaceAll("\\_", "\\."), projectScope);
-      int lastIdx = testName.lastIndexOf("_");
+      int lastIdx = testName.indexOf(",");
+      if (lastIdx <= 0) return elements;
+      PsiClass psiClass = ClassUtil.findPsiClass(psiManager, testName.substring(0, lastIdx));
       if (psiClass != null) {
         collectTestsByName(elements, testName, psiClass, lastIdx);
-      } else {
-        String className = testName;
-        while (lastIdx > 0) {
-          className = className.substring(0, lastIdx);
-          psiClass = facade.findClass(StringUtil.getPackageName(className, '_').replaceAll("\\_", "\\."), projectScope);
-          lastIdx = className.lastIndexOf("_");
-          if (psiClass != null) {
-            collectTestsByName(elements, testName, psiClass, lastIdx);
-            break;
-          }
-        }
       }
     }
     return elements;
@@ -582,8 +571,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static void collectTestsByName(List<? super PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
     TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
     if (testFramework == null) return;
-    final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(lastIdx + 1), true);
-    Arrays.stream(testsByName).filter(test -> testFramework.isTestMethod(test)).forEach(elements::add);
+    String sanitized = testName.substring(lastIdx + 1);
+    Arrays.stream(psiClass.getAllMethods())
+      .filter(method -> testFramework.isTestMethod(method) && 
+                        sanitized.equals(CoverageListener.sanitize(method.getName())))
+      .forEach(elements::add);
   }
 
 

@@ -506,7 +506,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       final String fileName = coverageSuite.getCoverageDataFileName();
       final File tracesDir = getTracesDirectory(fileName);
       for (String testName : testNames) {
-        final File file = new File(tracesDir, FileUtil.sanitizeFileName(testName) + ".tr");
+        final File file = new File(tracesDir, testName + ".tr");
         if (file.exists()) {
           try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
             int traceSize = in.readInt();
