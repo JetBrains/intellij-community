@@ -135,7 +135,7 @@ public class StartupUtil {
     if (result == SocketLock.ActivateStatus.ACTIVATED) {
       System.exit(0);
     }
-    if (result != SocketLock.ActivateStatus.NO_INSTANCE) {
+    if (result == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
@@ -310,27 +310,25 @@ public class StartupUtil {
       return SocketLock.ActivateStatus.CANNOT_ACTIVATE;
     }
 
-    if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
-      ShutDownTracker.getInstance().registerShutdownTask(() -> {
-        //noinspection SynchronizeOnThis
-        synchronized (StartupUtil.class) {
-          ourSocketLock.dispose();
-          ourSocketLock = null;
-        }
-      });
-      return SocketLock.ActivateStatus.NO_INSTANCE;
+    switch (status) {
+      case NO_INSTANCE:
+        ShutDownTracker.getInstance().registerShutdownTask(() -> {
+          //noinspection SynchronizeOnThis
+          synchronized (StartupUtil.class) {
+            ourSocketLock.dispose();
+            ourSocketLock = null;
+          }
+        });
+        break;
+      case ACTIVATED:
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("Already running");
+        break;
+      case CANNOT_ACTIVATE:
+        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
+        Main.showMessage("Too Many Instances", message, true);
     }
-    if (status == SocketLock.ActivateStatus.ACTIVATED) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Already running");
-      return SocketLock.ActivateStatus.ACTIVATED;
-    }
-    if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
-      Main.showMessage("Too Many Instances", message, true);
-    }
-
-    return SocketLock.ActivateStatus.CANNOT_ACTIVATE;
+    return status;
   }
 
   private static void fixProcessEnvironment(Logger log) {
