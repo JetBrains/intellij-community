@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
+import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Helper methods for LongRangeSet implementation
  */
@@ -85,5 +88,115 @@ class LongRangeUtil {
    */
   static long rotateRemainders(long bits, int mod, int amount) {
     return extractBits(bits, amount, Long.SIZE) | (extractBits(bits, 0, amount) << (mod - amount));
+  }
+
+  /**
+   * Represents a 64-bit value where some of bits are unknown
+   */
+  static class BitString {
+    /**
+     * Totally unknown value: any bit may have any value
+     */
+    static final BitString UNSURE = new BitString(0, 0);
+    
+    final long myBits;
+    final long myMask;
+
+    /**
+     * Constructs a partially known value
+     * @param bits value
+     * @param mask mask which specifies known bits; zeros represent unknown bits (they value in {@code bits} is ignored)
+     */
+    BitString(long bits, long mask) {
+      myBits = bits & mask;
+      myMask = mask;
+    }
+
+    /**
+     * Unites (joins) this BitString with other
+     * 
+     * @param other a BitString to join
+     * @return resulting BitString
+     */
+    @NotNull BitString unite(BitString other) {
+      long diff = myBits ^ other.myBits;
+      return new BitString(myBits, myMask & other.myMask & ~diff);
+    }
+
+    /**
+     * Returns given bit
+     * @param bit a bit number (0 = LSB)
+     * @return YES for set bit, NO for clear bit, UNSURE for unknown bit  
+     */
+    @NotNull ThreeState get(int bit) {
+      return isSet(myMask, bit) ? ThreeState.fromBoolean(isSet(myBits, bit)) : ThreeState.UNSURE;
+    }
+
+    /**
+     * Performs bitwise-and over this and other BitString
+     * @param other other operand
+     * @return result of bitwise-and
+     */
+    @NotNull BitString and(BitString other) {
+      long andBits = myBits & other.myBits;
+      // 0 & ? = ? & 0 = 0; 1 & 1 = 1; ? & 1 = 1 & ? = ? & ? = ?
+      long andMask = (myMask ^ myBits) | (other.myMask ^ other.myBits) | andBits;
+      return new BitString(andBits, andMask);
+    }
+
+    /**
+     * Performs bitwise-or over this and other BitString
+     * @param other other operand
+     * @return result of bitwise-or
+     */
+    @NotNull BitString or(BitString other) {
+      long orBits = myBits | other.myBits;
+      // 1 | ? = ? | 1 = 1; 0 | 0 = 0; ? | 0 = 0 | ? = ? | ? = ?
+      long orMask = ((myMask ^ myBits) & (other.myMask ^ other.myBits)) | orBits;
+      return new BitString(orBits, orMask);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("[");
+      for(int i=Long.SIZE-1; i>=0; i--) {
+        sb.append(isSet(myMask, i) ? isSet(myBits, i) ? '1' : '0' : '?');
+        if (i != 0 && i % 8 == 0) {
+          sb.append(".");
+        }
+      }
+      sb.append("]");
+      return sb.toString();
+    }
+
+    /**
+     * Returns a BitString for values between from and to.
+     *
+     * @param from lower bound, inclusive
+     * @param to upper bound, inclusive
+     * @return a BitString which covers at least all the values between from and to (may also cover some more values)  
+     */
+    static @NotNull BitString fromRange(long from, long to) {
+      if (from == to) {
+        return new BitString(from, -1L);
+      }
+      long bits = 0;
+      long mask = -1;
+      while (true) {
+        int fromBit = Long.SIZE - 1 - Long.numberOfLeadingZeros(from);
+        int toBit = Long.SIZE - 1 - Long.numberOfLeadingZeros(to);
+        if (fromBit != toBit) {
+          for (int i = 0; i <= Math.max(fromBit, toBit); i++) {
+            mask = clearBit(mask, i);
+          }
+          break;
+        }
+        if (fromBit == 0) break;
+        bits = setBit(bits, fromBit);
+        from = clearBit(from, fromBit);
+        to = clearBit(to, fromBit);
+      }
+      return new BitString(bits, mask);
+    }
   }
 }

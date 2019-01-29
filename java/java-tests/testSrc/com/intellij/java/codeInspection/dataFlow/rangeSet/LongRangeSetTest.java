@@ -445,6 +445,27 @@ public class LongRangeSetTest {
     checkBitwiseAnd(range(0, 100).mul(point(6), true), point(~4), "{0..1018}: <0, 2> mod 8");
     checkBitwiseAnd(range(0, 50).mul(point(6), true), range(0, 50).mul(point(20), true).plus(point(1), true), "{0..508}: <0> mod 4");
   }
+  
+  @Test
+  public void testBitwiseOr() {
+    assertTrue(empty().bitwiseOr(all(), true).isEmpty());
+    assertTrue(all().bitwiseOr(empty(), true).isEmpty());
+    assertEquals(all(), all().bitwiseOr(all(), true));
+    assertEquals("{-9223372036854775807..Long.MAX_VALUE}: odd", all().bitwiseOr(point(1), true).toString());
+
+    checkBitwiseOr(point(1), point(2), false, "{3}");
+    checkBitwiseOr(range(0, 100), point(1), false, "{1..127}: odd");
+    checkBitwiseOr(range(0, 100), point(2), false, "{2..127}: <2, 3> mod 4");
+    checkBitwiseOr(range(0, 100), point(3), false, "{3..127}: <3> mod 4");
+    checkBitwiseOr(range(0, 100).bitwiseAnd(point(12)), range(0, 100).bitwiseAnd(point(24)), false, "{0..28}: <0> mod 4");
+    checkBitwiseOr(range(0, 100).bitwiseAnd(point(4)), range(0, 100).bitwiseAnd(point(8)), false, "{0..12}: <0> mod 4");
+    checkBitwiseOr(range(-100, 100).bitwiseAnd(point(4)), point(-256), true, "{-256, -252}");
+    checkBitwiseOr(range(-100, 100).bitwiseAnd(point(~0xF)), point(-244), true, "{-244..-4}: <12> mod 16");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(4)), range(-50, 50).bitwiseAnd(point(~0xFF)), true, "{Long.MIN_VALUE..9223372036854775748}: <0, 4> mod 64");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF0)), true, "{Long.MIN_VALUE..Long.MAX_VALUE}");
+    checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF1)), true, "{Long.MIN_VALUE..Long.MAX_VALUE}");
+    checkBitwiseOr(all().bitwiseAnd(point(4)), all().bitwiseAnd(point(8)), true, "{0..12}: <0> mod 4");
+  }
 
   @Test
   public void testMod() {
@@ -790,6 +811,12 @@ public class LongRangeSetTest {
     LongRangeSet result = range1.bitwiseAnd(range2);
     assertEquals(result, range2.bitwiseAnd(range1)); // commutative
     checkBinOp(range1, range2, result, x -> true, (a, b) -> a & b, expected, "&");
+  }
+
+  void checkBitwiseOr(LongRangeSet range1, LongRangeSet range2, boolean isLong, String expected) {
+    LongRangeSet result = range1.bitwiseOr(range2, isLong);
+    assertEquals(result, range2.bitwiseOr(range1, isLong)); // commutative
+    checkBinOp(range1, range2, result, x -> true, (a, b) -> a | b, expected, "|");
   }
 
   void checkBinOp(LongRangeSet op1,
