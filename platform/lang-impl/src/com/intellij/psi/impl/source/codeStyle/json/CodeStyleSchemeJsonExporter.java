@@ -27,41 +27,57 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
   public void exportScheme(@NotNull CodeStyleScheme scheme, @NotNull OutputStream outputStream, @Nullable List<String> languageNames) {
     GsonBuilder builder = new GsonBuilder();
     builder.setPrettyPrinting();
-    builder.registerTypeHierarchyAdapter(AbstractCodeStylePropertyMapper.class, new JsonSerializer<AbstractCodeStylePropertyMapper>() {
-
-      @Override
-      public JsonElement serialize(AbstractCodeStylePropertyMapper src, Type typeOfSrc, JsonSerializationContext context) {
-        JsonObject o = new JsonObject();
-        for (String name : src.enumProperties()) {
-          CodeStylePropertyAccessor accessor = src.getAccessor(name);
-          if (accessor != null) {
-            Object externalized = accessor.get();
-            if (externalized instanceof String) {
-              o.addProperty(name, (String)externalized);
-            }
-            else if (externalized instanceof Integer) {
-              o.addProperty(name, (Integer)externalized);
-            }
-            else if (externalized instanceof Boolean) {
-              o.addProperty(name, (Boolean)externalized);
-            }
-            else if (externalized != null && accessor instanceof ValueListPropertyAccessor){
-              @SuppressWarnings("unchecked") List<String> listValues = (List<String>)externalized;
-              final JsonArray array = new JsonArray();
-              listValues.forEach(s -> array.add(s));
-              o.add(name, array);
-            }
+    builder.registerTypeAdapter(
+      CodeStyleSchemeJsonDescriptor.PropertyListHolder.class,
+      new JsonSerializer<CodeStyleSchemeJsonDescriptor.PropertyListHolder>() {
+        @Override
+        public JsonElement serialize(CodeStyleSchemeJsonDescriptor.PropertyListHolder src,
+                                     Type typeOfSrc,
+                                     JsonSerializationContext context) {
+          JsonObject o = new JsonObject();
+          for (AbstractCodeStylePropertyMapper mapper : src) {
+            JsonObject langProperties = serializeMapper(mapper);
+            o.add(
+              mapper.getLanguageDomainId(),
+              langProperties
+            );
           }
+          return o;
         }
-        return o;
-      }
-    });
+      });
     Gson gson = builder.create();
     String json = gson.toJson(new CodeStyleSchemeJsonDescriptor(scheme, languageNames));
     try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
       writer.write(json);
     }
   }
+
+  private static JsonObject serializeMapper(AbstractCodeStylePropertyMapper src) {
+    JsonObject o = new JsonObject();
+    for (String name : src.enumProperties()) {
+      CodeStylePropertyAccessor accessor = src.getAccessor(name);
+      if (accessor != null) {
+        Object externalized = accessor.get();
+        if (externalized instanceof String) {
+          o.addProperty(name, (String)externalized);
+        }
+        else if (externalized instanceof Integer) {
+          o.addProperty(name, (Integer)externalized);
+        }
+        else if (externalized instanceof Boolean) {
+          o.addProperty(name, (Boolean)externalized);
+        }
+        else if (externalized != null && accessor instanceof ValueListPropertyAccessor) {
+          @SuppressWarnings("unchecked") List<String> listValues = (List<String>)externalized;
+          final JsonArray array = new JsonArray();
+          listValues.forEach(s -> array.add(s));
+          o.add(name, array);
+        }
+      }
+    }
+    return o;
+  }
+
 
   @Override
   public String getExtension() {
