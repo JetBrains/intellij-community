@@ -133,8 +133,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
-    //noinspection unchecked
-    accessor.set(value);
+    accessor.setFromString(value);
   }
 
   private static void setList(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull List<String> value) {

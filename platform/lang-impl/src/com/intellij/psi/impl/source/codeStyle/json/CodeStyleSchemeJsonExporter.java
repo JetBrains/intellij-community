@@ -39,6 +39,12 @@ public class CodeStyleSchemeJsonExporter extends SchemeExporter<CodeStyleScheme>
             if (externalized instanceof String) {
               o.addProperty(name, (String)externalized);
             }
+            else if (externalized instanceof Integer) {
+              o.addProperty(name, (Integer)externalized);
+            }
+            else if (externalized instanceof Boolean) {
+              o.addProperty(name, (Boolean)externalized);
+            }
             else if (externalized != null && accessor instanceof ValueListPropertyAccessor){
               @SuppressWarnings("unchecked") List<String> listValues = (List<String>)externalized;
               final JsonArray array = new JsonArray();

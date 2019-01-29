@@ -95,10 +95,16 @@ class PropertyAccessorFactory {
            myField.getAnnotation(Deprecated.class) == null;
   }
 
-  private static class TabCharPropertyAccessor extends BooleanAccessor {
+  private static class TabCharPropertyAccessor extends CodeStylePropertyAccessor<Boolean,String> {
 
     TabCharPropertyAccessor(@NotNull Object object, @NotNull Field field) {
       super(object, field);
+    }
+
+    @Nullable
+    @Override
+    protected String parseString(@NotNull String string) {
+      return string;
     }
 
     @Nullable
