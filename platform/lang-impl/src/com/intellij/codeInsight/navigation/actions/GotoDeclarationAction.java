@@ -264,7 +264,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+  static PsiElement[] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -275,6 +275,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (result != null && result.length > 0) {
         return assertNotNullElements(result, handler.getClass()) ? result : null;
       }
+    }
+
+    return PsiElement.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+    PsiElement[] fromProviders = findTargetElementsFromProviders(project, editor, offset);
+    if (fromProviders == null || fromProviders.length > 0) {
+      return fromProviders;
     }
 
     int flags = TargetElementUtil.getInstance().getAllAccepted() & ~TargetElementUtil.ELEMENT_NAME_ACCEPTED;
