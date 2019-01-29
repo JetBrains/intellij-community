@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -11,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -67,7 +65,7 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
     if (hardcodedKeysClass == null) return;
 
     if (!isIncludedInHardcodedNamedColors(hardcodedKeysClass, key)) {
-      registerProblem(key, holder, expression, createFix(hardcodedKeysClass, key));
+      registerProblem(key, holder, expression, null);
     }
   }
 
@@ -122,39 +120,5 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
                            DevKitBundle.message("inspections.unregistered.named.color", key),
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                            fix);
-  }
-
-  @Nullable
-  private static LocalQuickFix createFix(@NotNull PsiClass hardcodedKeysClass, @NotNull String absentKey) {
-    PsiField field = hardcodedKeysClass.findFieldByName(FIELD_NAMED_COLORS, false);
-    if (field == null) return null;
-
-    PsiExpression initializer = field.getInitializer();
-    if (!(initializer instanceof PsiMethodCallExpression)) return null;
-
-    return new LocalQuickFix() {
-
-      @Override
-      public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-        return hardcodedKeysClass;
-      }
-
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return DevKitBundle.message("inspections.unregistered.named.color.quickfix");
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiExpressionList argumentList = ((PsiMethodCallExpression)initializer).getArgumentList();
-        PsiExpression additionalArgument = JavaPsiFacade.getElementFactory(project)
-          .createExpressionFromText("\"" + absentKey + "\"", null);
-        PsiElement addedArgument = argumentList.add(additionalArgument);
-        PsiElement newLineElement = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
-        argumentList.addAfter(newLineElement, addedArgument);
-      }
-    };
   }
 }

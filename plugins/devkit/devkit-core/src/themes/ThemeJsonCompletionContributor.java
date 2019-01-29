@@ -5,18 +5,22 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.ide.ui.UIThemeMetadata;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonReferenceExpression;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.completion.UiDefaultsHardcodedKeys;
-import org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory;
+import org.jetbrains.idea.devkit.themes.metadata.UIThemeMetadataService;
 
 import java.util.List;
 import java.util.function.Function;
@@ -89,7 +93,8 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
     return true;
   }
 
-  private static Iterable<LookupElement> getLookupElements(@NotNull String presentNamePart, boolean shouldSurroundWithQuotes) {
+  private static Iterable<LookupElement> getLookupElements(@NotNull String presentNamePart,
+                                                           boolean shouldSurroundWithQuotes) {
     Predicate<String> conditionFilter;
     Function<String, String> mapFunction;
     if (presentNamePart.startsWith("*")) {
@@ -99,26 +104,39 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
       mapFunction = key -> key.substring(presentNamePart.length() - 1); // + 1 for dot, - 2 for '*.'
     }
     else if (presentNamePart.isEmpty()) {
-      conditionFilter = s -> true;
-      mapFunction = s -> s;
+      conditionFilter = key -> true;
+      mapFunction = key -> key;
     }
     else {
-      conditionFilter = key -> key.startsWith(presentNamePart);
+      conditionFilter = key -> StringUtil.startsWithConcatenation(key, presentNamePart, ".");
       mapFunction = key -> key.substring(presentNamePart.length() + 1); // + 1 for dot
     }
-    return UiDefaultsHardcodedKeys.ALL_KEYS.stream()
-      .filter(conditionFilter)
-      .map(mapFunction)
-      .map(key -> createLookupElement(key, shouldSurroundWithQuotes))
-      .collect(Collectors.toSet());
-  }
 
-  private static LookupElement createLookupElement(@NotNull String key, boolean shouldSurroundWithQuotes) {
-    return LookupElementBuilder.create(key)
-      .withPresentableText("\"" + key + "\"")
-      .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
-  }
+    List<LookupElement> variants = new SmartList<>();
+    PairProcessor<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> processor = (themeMetadata, uiKeyMetadata) -> {
+      String key = uiKeyMetadata.getKey();
+      if (!conditionFilter.test(key)) return true;
 
+      final String completionKey = mapFunction.apply(key);
+
+      String description = uiKeyMetadata.getDescription();
+      final String source = uiKeyMetadata.getSource();
+      final String tailText = (StringUtil.isEmpty(description) ? "" : " (" + description + ")") +
+                              (StringUtil.isEmpty(source) ? "" : " in " + source);
+      final LookupElementBuilder builder =
+        LookupElementBuilder.create(completionKey)
+          .withPresentableText(key)
+          .withStrikeoutness(uiKeyMetadata.isDeprecated())
+          .withTailText(tailText, true)
+          .withTypeText("[" + ObjectUtils.chooseNotNull(themeMetadata.getName(), themeMetadata.getPluginId()) + "]")
+          .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
+
+      variants.add(builder);
+      return true;
+    };
+    UIThemeMetadataService.getInstance().processAllKeys(processor);
+    return variants;
+  }
 
   //TODO insert ': ' if necessary
   private static class MyInsertHandler implements InsertHandler<LookupElement> {

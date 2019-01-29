@@ -311,6 +311,9 @@
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
 
+    <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
+    <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
+
     <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
 
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>

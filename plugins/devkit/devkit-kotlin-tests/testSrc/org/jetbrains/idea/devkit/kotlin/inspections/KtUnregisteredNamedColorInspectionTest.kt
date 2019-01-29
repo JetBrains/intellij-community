@@ -11,7 +11,7 @@ class KtUnregisteredNamedColorInspectionTest: UnregisteredNamedColorInspectionTe
       class InspectionTest {
         fun smth() {
           JBColor.namedColor("RegisteredKey", 0xcdcdcd)
-          JBColor.<warning descr="Named color key 'NotRegisteredKey' is not registered in 'UiDefaultsHardcodedKeys'">namedColor</warning>("NotRegisteredKey", 0xcdcdcd)
+          JBColor.<warning descr="Named color key 'NotRegisteredKey' is not registered in '*.themeMetadata.json'">namedColor</warning>("NotRegisteredKey", 0xcdcdcd)
         }
       }
     """.trimIndent())

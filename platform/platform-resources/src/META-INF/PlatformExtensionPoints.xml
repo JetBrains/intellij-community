@@ -320,6 +320,9 @@
       <with attribute="id"/>
       <with attribute="path"/>
     </extensionPoint>
+    <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider">
+      <with attribute="path"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>

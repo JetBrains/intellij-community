@@ -1,0 +1,1170 @@
+{
+  "name": "JDK",
+  "fixed": true,
+  "ui": [
+    {
+      "key": "ActionButton.hoverBackground"
+    },
+    {
+      "key": "ActionButton.hoverBorderColor"
+    },
+    {
+      "key": "ActionButton.pressedBackground"
+    },
+    {
+      "key": "ActionButton.pressedBorderColor"
+    },
+    {
+      "key": "activeCaption"
+    },
+    {
+      "key": "activeCaptionBorder"
+    },
+    {
+      "key": "activeCaptionText"
+    },
+    {
+      "key": "Button.arc"
+    },
+    {
+      "key": "Button.background"
+    },
+    {
+      "key": "Button.darkShadow"
+    },
+    {
+      "key": "Button.default.borderColor"
+    },
+    {
+      "key": "Button.default.endBackground"
+    },
+    {
+      "key": "Button.default.endBorderColor"
+    },
+    {
+      "key": "Button.default.focusColor"
+    },
+    {
+      "key": "Button.default.focusedBorderColor"
+    },
+    {
+      "key": "Button.default.foreground"
+    },
+    {
+      "key": "Button.default.shadowColor"
+    },
+    {
+      "key": "Button.default.startBackground"
+    },
+    {
+      "key": "Button.default.startBorderColor"
+    },
+    {
+      "key": "Button.disabledBorderColor"
+    },
+    {
+      "key": "Button.disabledText"
+    },
+    {
+      "key": "Button.endBackground"
+    },
+    {
+      "key": "Button.endBorderColor"
+    },
+    {
+      "key": "Button.focusedBorderColor"
+    },
+    {
+      "key": "Button.foreground"
+    },
+    {
+      "key": "Button.highlight"
+    },
+    {
+      "key": "Button.light"
+    },
+    {
+      "key": "Button.paintShadow"
+    },
+    {
+      "key": "Button.select"
+    },
+    {
+      "key": "Button.shadow"
+    },
+    {
+      "key": "Button.shadowColor"
+    },
+    {
+      "key": "Button.shadowWidth"
+    },
+    {
+      "key": "Button.startBackground"
+    },
+    {
+      "key": "Button.startBorderColor"
+    },
+    {
+      "key": "CheckBox.background"
+    },
+    {
+      "key": "CheckBox.disabledText"
+    },
+    {
+      "key": "CheckBox.foreground"
+    },
+    {
+      "key": "CheckBox.select"
+    },
+    {
+      "key": "CheckBoxMenuItem.acceleratorForeground"
+    },
+    {
+      "key": "CheckBoxMenuItem.acceleratorSelectionForeground"
+    },
+    {
+      "key": "CheckBoxMenuItem.background"
+    },
+    {
+      "key": "CheckBoxMenuItem.disabledBackground"
+    },
+    {
+      "key": "CheckBoxMenuItem.disabledForeground"
+    },
+    {
+      "key": "CheckBoxMenuItem.foreground"
+    },
+    {
+      "key": "CheckBoxMenuItem.selectionBackground"
+    },
+    {
+      "key": "CheckBoxMenuItem.selectionForeground"
+    },
+    {
+      "key": "ColorChooser.background"
+    },
+    {
+      "key": "ColorChooser.foreground"
+    },
+    {
+      "key": "ColorChooser.swatchesDefaultRecentColor"
+    },
+    {
+      "key": "ComboBox.ArrowButton.background"
+    },
+    {
+      "key": "ComboBox.ArrowButton.disabledIconColor"
+    },
+    {
+      "key": "ComboBox.ArrowButton.iconColor"
+    },
+    {
+      "key": "ComboBox.ArrowButton.nonEditableBackground"
+    },
+    {
+      "key": "ComboBox.background"
+    },
+    {
+      "key": "ComboBox.buttonBackground"
+    },
+    {
+      "key": "ComboBox.buttonDarkShadow"
+    },
+    {
+      "key": "ComboBox.buttonHighlight"
+    },
+    {
+      "key": "ComboBox.buttonShadow"
+    },
+    {
+      "key": "ComboBox.disabledBackground"
+    },
+    {
+      "key": "ComboBox.disabledForeground"
+    },
+    {
+      "key": "ComboBox.foreground"
+    },
+    {
+      "key": "ComboBox.nonEditableBackground"
+    },
+    {
+      "key": "ComboBox.selectionBackground"
+    },
+    {
+      "key": "ComboBox.selectionForeground"
+    },
+    {
+      "key": "ComboBoxButton.background"
+    },
+    {
+      "key": "Component.arc"
+    },
+    {
+      "key": "Component.borderColor"
+    },
+    {
+      "key": "Component.disabledBorderColor"
+    },
+    {
+      "key": "Component.errorFocusColor"
+    },
+    {
+      "key": "Component.focusColor"
+    },
+    {
+      "key": "Component.focusedBorderColor"
+    },
+    {
+      "key": "Component.focusWidth"
+    },
+    {
+      "key": "Component.hoverIconColor"
+    },
+    {
+      "key": "Component.iconColor"
+    },
+    {
+      "key": "Component.inactiveErrorFocusColor"
+    },
+    {
+      "key": "Component.inactiveWarningFocusColor"
+    },
+    {
+      "key": "Component.infoForeground"
+    },
+    {
+      "key": "Component.warningFocusColor"
+    },
+    {
+      "key": "control"
+    },
+    {
+      "key": "controlDkShadow"
+    },
+    {
+      "key": "controlHighlight"
+    },
+    {
+      "key": "controlLtHighlight"
+    },
+    {
+      "key": "controlShadow"
+    },
+    {
+      "key": "controlText"
+    },
+    {
+      "key": "darcula.background"
+    },
+    {
+      "key": "darcula.caretForeground"
+    },
+    {
+      "key": "darcula.foreground"
+    },
+    {
+      "key": "darcula.inactiveBackground"
+    },
+    {
+      "key": "darcula.selectionBackground"
+    },
+    {
+      "key": "darcula.selectionBackgroundInactive"
+    },
+    {
+      "key": "darcula.selectionForeground"
+    },
+    {
+      "key": "darcula.selectionForegroundInactive"
+    },
+    {
+      "key": "darcula.selectionInactiveBackground"
+    },
+    {
+      "key": "darcula.selectionInactiveForeground"
+    },
+    {
+      "key": "darcula.textBackground"
+    },
+    {
+      "key": "darcula.textForeground"
+    },
+    {
+      "key": "desktop"
+    },
+    {
+      "key": "Desktop.background"
+    },
+    {
+      "key": "DesktopIcon.background"
+    },
+    {
+      "key": "DesktopIcon.borderColor"
+    },
+    {
+      "key": "DesktopIcon.borderRimColor"
+    },
+    {
+      "key": "DesktopIcon.foreground"
+    },
+    {
+      "key": "DesktopIcon.labelBackground"
+    },
+    {
+      "key": "DesktopIcon.width"
+    },
+    {
+      "key": "DragAndDrop.areaBackground"
+    },
+    {
+      "key": "DragAndDrop.areaBorderColor"
+    },
+    {
+      "key": "DragAndDrop.areaForeground"
+    },
+    {
+      "key": "EditorPane.background"
+    },
+    {
+      "key": "EditorPane.caretForeground"
+    },
+    {
+      "key": "EditorPane.foreground"
+    },
+    {
+      "key": "EditorPane.inactiveBackground"
+    },
+    {
+      "key": "EditorPane.inactiveForeground"
+    },
+    {
+      "key": "EditorPane.selectionBackground"
+    },
+    {
+      "key": "EditorPane.selectionForeground"
+    },
+    {
+      "key": "Focus.color"
+    },
+    {
+      "key": "FormattedTextField.background"
+    },
+    {
+      "key": "FormattedTextField.caretForeground"
+    },
+    {
+      "key": "FormattedTextField.foreground"
+    },
+    {
+      "key": "FormattedTextField.inactiveBackground"
+    },
+    {
+      "key": "FormattedTextField.inactiveForeground"
+    },
+    {
+      "key": "FormattedTextField.selectionBackground"
+    },
+    {
+      "key": "FormattedTextField.selectionForeground"
+    },
+    {
+      "key": "Hyperlink.linkColor"
+    },
+    {
+      "key": "inactiveCaption"
+    },
+    {
+      "key": "inactiveCaptionBorder"
+    },
+    {
+      "key": "inactiveCaptionText"
+    },
+    {
+      "key": "info"
+    },
+    {
+      "key": "infoText"
+    },
+    {
+      "key": "InternalFrame.activeTitleForeground"
+    },
+    {
+      "key": "InternalFrame.background"
+    },
+    {
+      "key": "InternalFrame.inactiveTitleForeground"
+    },
+    {
+      "key": "Label.background"
+    },
+    {
+      "key": "Label.disabledForeground"
+    },
+    {
+      "key": "Label.disabledShadow"
+    },
+    {
+      "key": "Label.foreground"
+    },
+    {
+      "key": "Label.selectedForeground"
+    },
+    {
+      "key": "Link.activeForeground"
+    },
+    {
+      "key": "Link.hoverForeground"
+    },
+    {
+      "key": "Link.pressedForeground"
+    },
+    {
+      "key": "Link.visitedForeground"
+    },
+    {
+      "key": "List.background"
+    },
+    {
+      "key": "List.dropLineColor"
+    },
+    {
+      "key": "List.foreground"
+    },
+    {
+      "key": "List.selectionBackground"
+    },
+    {
+      "key": "List.selectionForeground"
+    },
+    {
+      "key": "List.selectionInactiveBackground"
+    },
+    {
+      "key": "List.selectionInactiveForeground"
+    },
+    {
+      "key": "menu"
+    },
+    {
+      "key": "Menu.acceleratorForeground"
+    },
+    {
+      "key": "Menu.acceleratorSelectionForeground"
+    },
+    {
+      "key": "Menu.background"
+    },
+    {
+      "key": "Menu.borderColor"
+    },
+    {
+      "key": "Menu.disabledBackground"
+    },
+    {
+      "key": "Menu.disabledForeground"
+    },
+    {
+      "key": "Menu.foreground"
+    },
+    {
+      "key": "Menu.selectionBackground"
+    },
+    {
+      "key": "Menu.selectionForeground"
+    },
+    {
+      "key": "Menu.separatorColor"
+    },
+    {
+      "key": "MenuBar.background"
+    },
+    {
+      "key": "MenuBar.borderColor"
+    },
+    {
+      "key": "MenuBar.darcula.borderColor"
+    },
+    {
+      "key": "MenuBar.darcula.borderShadowColor"
+    },
+    {
+      "key": "MenuBar.disabledBackground"
+    },
+    {
+      "key": "MenuBar.disabledForeground"
+    },
+    {
+      "key": "MenuBar.foreground"
+    },
+    {
+      "key": "MenuBar.highlight"
+    },
+    {
+      "key": "MenuBar.selectionBackground"
+    },
+    {
+      "key": "MenuBar.selectionForeground"
+    },
+    {
+      "key": "MenuBar.shadow"
+    },
+    {
+      "key": "MenuItem.acceleratorForeground"
+    },
+    {
+      "key": "MenuItem.acceleratorSelectionForeground"
+    },
+    {
+      "key": "MenuItem.background"
+    },
+    {
+      "key": "MenuItem.disabledBackground"
+    },
+    {
+      "key": "MenuItem.disabledForeground"
+    },
+    {
+      "key": "MenuItem.foreground"
+    },
+    {
+      "key": "MenuItem.selectionBackground"
+    },
+    {
+      "key": "MenuItem.selectionForeground"
+    },
+    {
+      "key": "menuText"
+    },
+    {
+      "key": "OptionPane.background"
+    },
+    {
+      "key": "OptionPane.foreground"
+    },
+    {
+      "key": "OptionPane.messageForeground"
+    },
+    {
+      "key": "Panel.background"
+    },
+    {
+      "key": "Panel.foreground"
+    },
+    {
+      "key": "PasswordField.background"
+    },
+    {
+      "key": "PasswordField.capsLockIconColor"
+    },
+    {
+      "key": "PasswordField.caretForeground"
+    },
+    {
+      "key": "PasswordField.foreground"
+    },
+    {
+      "key": "PasswordField.inactiveBackground"
+    },
+    {
+      "key": "PasswordField.inactiveForeground"
+    },
+    {
+      "key": "PasswordField.selectionBackground"
+    },
+    {
+      "key": "PasswordField.selectionForeground"
+    },
+    {
+      "key": "Popup.borderColor"
+    },
+    {
+      "key": "Popup.Header.activeBackground"
+    },
+    {
+      "key": "Popup.Header.inactiveBackground"
+    },
+    {
+      "key": "Popup.inactiveBorderColor"
+    },
+    {
+      "key": "Popup.Toolbar.background"
+    },
+    {
+      "key": "Popup.Toolbar.borderColor"
+    },
+    {
+      "key": "PopupMenu.background"
+    },
+    {
+      "key": "PopupMenu.borderInsets"
+    },
+    {
+      "key": "PopupMenu.borderWidth"
+    },
+    {
+      "key": "PopupMenu.foreground"
+    },
+    {
+      "key": "PopupMenu.selectionBackground"
+    },
+    {
+      "key": "PopupMenu.selectionForeground"
+    },
+    {
+      "key": "PopupMenu.translucentBackground"
+    },
+    {
+      "key": "PopupMenuSeparator.height"
+    },
+    {
+      "key": "PopupMenuSeparator.stripeIndent"
+    },
+    {
+      "key": "PopupMenuSeparator.stripeWidth"
+    },
+    {
+      "key": "ProgressBar.background"
+    },
+    {
+      "key": "ProgressBar.foreground"
+    },
+    {
+      "key": "ProgressBar.indeterminateEndColor"
+    },
+    {
+      "key": "ProgressBar.indeterminateStartColor"
+    },
+    {
+      "key": "ProgressBar.progressColor"
+    },
+    {
+      "key": "ProgressBar.selectionBackground"
+    },
+    {
+      "key": "ProgressBar.selectionForeground"
+    },
+    {
+      "key": "ProgressBar.trackColor"
+    },
+    {
+      "key": "RadioButton.background"
+    },
+    {
+      "key": "RadioButton.darkShadow"
+    },
+    {
+      "key": "RadioButton.disabledText"
+    },
+    {
+      "key": "RadioButton.foreground"
+    },
+    {
+      "key": "RadioButton.highlight"
+    },
+    {
+      "key": "RadioButton.light"
+    },
+    {
+      "key": "RadioButton.select"
+    },
+    {
+      "key": "RadioButton.shadow"
+    },
+    {
+      "key": "RadioButtonMenuItem.acceleratorForeground"
+    },
+    {
+      "key": "RadioButtonMenuItem.acceleratorSelectionForeground"
+    },
+    {
+      "key": "RadioButtonMenuItem.background"
+    },
+    {
+      "key": "RadioButtonMenuItem.disabledBackground"
+    },
+    {
+      "key": "RadioButtonMenuItem.disabledForeground"
+    },
+    {
+      "key": "RadioButtonMenuItem.foreground"
+    },
+    {
+      "key": "RadioButtonMenuItem.selectionBackground"
+    },
+    {
+      "key": "RadioButtonMenuItem.selectionForeground"
+    },
+    {
+      "key": "scrollbar"
+    },
+    {
+      "key": "ScrollBar.background"
+    },
+    {
+      "key": "ScrollBar.foreground"
+    },
+    {
+      "key": "ScrollBar.hoverThumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.hoverThumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.hoverThumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Mac.hoverThumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.thumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Mac.thumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.trackColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.hoverThumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.hoverThumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.hoverTrackColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.thumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.thumbColor"
+    },
+    {
+      "key": "ScrollBar.Mac.Transparent.trackColor"
+    },
+    {
+      "key": "ScrollBar.thumb"
+    },
+    {
+      "key": "ScrollBar.thumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.thumbColor"
+    },
+    {
+      "key": "ScrollBar.thumbDarkShadow"
+    },
+    {
+      "key": "ScrollBar.thumbHighlight"
+    },
+    {
+      "key": "ScrollBar.thumbShadow"
+    },
+    {
+      "key": "ScrollBar.track"
+    },
+    {
+      "key": "ScrollBar.trackColor"
+    },
+    {
+      "key": "ScrollBar.trackHighlight"
+    },
+    {
+      "key": "ScrollBar.Transparent.hoverThumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Transparent.hoverThumbColor"
+    },
+    {
+      "key": "ScrollBar.Transparent.hoverTrackColor"
+    },
+    {
+      "key": "ScrollBar.Transparent.thumbBorderColor"
+    },
+    {
+      "key": "ScrollBar.Transparent.thumbColor"
+    },
+    {
+      "key": "ScrollBar.Transparent.trackColor"
+    },
+    {
+      "key": "ScrollPane.background"
+    },
+    {
+      "key": "ScrollPane.foreground"
+    },
+    {
+      "key": "Separator.background"
+    },
+    {
+      "key": "Separator.foreground"
+    },
+    {
+      "key": "Separator.highlight"
+    },
+    {
+      "key": "Separator.separatorColor"
+    },
+    {
+      "key": "Separator.shadow"
+    },
+    {
+      "key": "Slider.background"
+    },
+    {
+      "key": "Slider.focus"
+    },
+    {
+      "key": "Slider.foreground"
+    },
+    {
+      "key": "Slider.highlight"
+    },
+    {
+      "key": "Slider.shadow"
+    },
+    {
+      "key": "Slider.tickColor"
+    },
+    {
+      "key": "Spinner.background"
+    },
+    {
+      "key": "Spinner.foreground"
+    },
+    {
+      "key": "SplitPane.background"
+    },
+    {
+      "key": "SplitPane.darkShadow"
+    },
+    {
+      "key": "SplitPane.highlight"
+    },
+    {
+      "key": "SplitPane.shadow"
+    },
+    {
+      "key": "SplitPaneDivider.draggingColor"
+    },
+    {
+      "key": "StatusBar.borderColor"
+    },
+    {
+      "key": "StatusBar.bottomColor"
+    },
+    {
+      "key": "StatusBar.top2Color"
+    },
+    {
+      "key": "StatusBar.topColor"
+    },
+    {
+      "key": "TabbedPane.background"
+    },
+    {
+      "key": "TabbedPane.contentAreaColor"
+    },
+    {
+      "key": "TabbedPane.darkShadow"
+    },
+    {
+      "key": "TabbedPane.disabledForeground"
+    },
+    {
+      "key": "TabbedPane.disabledUnderlineColor"
+    },
+    {
+      "key": "TabbedPane.focus"
+    },
+    {
+      "key": "TabbedPane.focusColor"
+    },
+    {
+      "key": "TabbedPane.foreground"
+    },
+    {
+      "key": "TabbedPane.highlight"
+    },
+    {
+      "key": "TabbedPane.hoverColor"
+    },
+    {
+      "key": "TabbedPane.light"
+    },
+    {
+      "key": "TabbedPane.nonSelectedTabTitleNormalColor"
+    },
+    {
+      "key": "TabbedPane.selectedTabTitleDisabledColor"
+    },
+    {
+      "key": "TabbedPane.selectedTabTitleNormalColor"
+    },
+    {
+      "key": "TabbedPane.selectedTabTitlePressedColor"
+    },
+    {
+      "key": "TabbedPane.selectedTabTitleShadowDisabledColor"
+    },
+    {
+      "key": "TabbedPane.selectedTabTitleShadowNormalColor"
+    },
+    {
+      "key": "TabbedPane.shadow"
+    },
+    {
+      "key": "TabbedPane.underlineColor"
+    },
+    {
+      "key": "Table.background"
+    },
+    {
+      "key": "Table.dropLineColor"
+    },
+    {
+      "key": "Table.dropLineShortColor"
+    },
+    {
+      "key": "Table.focusCellBackground"
+    },
+    {
+      "key": "Table.focusCellForeground"
+    },
+    {
+      "key": "Table.foreground"
+    },
+    {
+      "key": "Table.gridColor"
+    },
+    {
+      "key": "Table.selectionBackground"
+    },
+    {
+      "key": "Table.selectionForeground"
+    },
+    {
+      "key": "Table.selectionInactiveBackground"
+    },
+    {
+      "key": "Table.selectionInactiveForeground"
+    },
+    {
+      "key": "Table.sortIconColor"
+    },
+    {
+      "key": "TableHeader.background"
+    },
+    {
+      "key": "TableHeader.focusCellBackground"
+    },
+    {
+      "key": "TableHeader.foreground"
+    },
+    {
+      "key": "text"
+    },
+    {
+      "key": "TextArea.background"
+    },
+    {
+      "key": "TextArea.caretForeground"
+    },
+    {
+      "key": "TextArea.foreground"
+    },
+    {
+      "key": "TextArea.inactiveBackground"
+    },
+    {
+      "key": "TextArea.inactiveForeground"
+    },
+    {
+      "key": "TextArea.selectionBackground"
+    },
+    {
+      "key": "TextArea.selectionForeground"
+    },
+    {
+      "key": "TextComponent.selectionBackgroundInactive"
+    },
+    {
+      "key": "TextField.background"
+    },
+    {
+      "key": "TextField.caretForeground"
+    },
+    {
+      "key": "TextField.darkShadow"
+    },
+    {
+      "key": "TextField.disabledBackground"
+    },
+    {
+      "key": "TextField.foreground"
+    },
+    {
+      "key": "TextField.highlight"
+    },
+    {
+      "key": "TextField.inactiveBackground"
+    },
+    {
+      "key": "TextField.inactiveForeground"
+    },
+    {
+      "key": "TextField.light"
+    },
+    {
+      "key": "TextField.selectionBackground"
+    },
+    {
+      "key": "TextField.selectionForeground"
+    },
+    {
+      "key": "TextField.shadow"
+    },
+    {
+      "key": "textHighlight"
+    },
+    {
+      "key": "textHighlightText"
+    },
+    {
+      "key": "textInactiveText"
+    },
+    {
+      "key": "TextPane.background"
+    },
+    {
+      "key": "TextPane.caretForeground"
+    },
+    {
+      "key": "TextPane.foreground"
+    },
+    {
+      "key": "TextPane.inactiveBackground"
+    },
+    {
+      "key": "TextPane.inactiveForeground"
+    },
+    {
+      "key": "TextPane.selectionBackground"
+    },
+    {
+      "key": "TextPane.selectionForeground"
+    },
+    {
+      "key": "textText"
+    },
+    {
+      "key": "TitledBorder.titleColor"
+    },
+    {
+      "key": "ToggleButton.background"
+    },
+    {
+      "key": "ToggleButton.darkShadow"
+    },
+    {
+      "key": "ToggleButton.disabledText"
+    },
+    {
+      "key": "ToggleButton.foreground"
+    },
+    {
+      "key": "ToggleButton.highlight"
+    },
+    {
+      "key": "ToggleButton.light"
+    },
+    {
+      "key": "ToggleButton.shadow"
+    },
+    {
+      "key": "ToolBar.background"
+    },
+    {
+      "key": "ToolBar.borderHandleColor"
+    },
+    {
+      "key": "ToolBar.darkShadow"
+    },
+    {
+      "key": "ToolBar.floatingForeground"
+    },
+    {
+      "key": "ToolBar.foreground"
+    },
+    {
+      "key": "ToolBar.highlight"
+    },
+    {
+      "key": "ToolBar.light"
+    },
+    {
+      "key": "ToolBar.shadow"
+    },
+    {
+      "key": "ToolTip.background"
+    },
+    {
+      "key": "ToolTip.foreground"
+    },
+    {
+      "key": "ToolTip.infoForeground"
+    },
+    {
+      "key": "Tree.background"
+    },
+    {
+      "key": "Tree.dropLineColor"
+    },
+    {
+      "key": "Tree.foreground"
+    },
+    {
+      "key": "Tree.hash"
+    },
+    {
+      "key": "Tree.line"
+    },
+    {
+      "key": "Tree.rowHeight"
+    },
+    {
+      "key": "Tree.selectionBackground"
+    },
+    {
+      "key": "Tree.selectionForeground"
+    },
+    {
+      "key": "Tree.selectionInactiveBackground"
+    },
+    {
+      "key": "Tree.selectionInactiveForeground"
+    },
+    {
+      "key": "Tree.textBackground"
+    },
+    {
+      "key": "Tree.textForeground"
+    },
+    {
+      "key": "Viewport.background"
+    },
+    {
+      "key": "Viewport.foreground"
+    },
+    {
+      "key": "window"
+    },
+    {
+      "key": "windowBorder"
+    },
+    {
+      "key": "windowText"
+    }
+  ]
+}
