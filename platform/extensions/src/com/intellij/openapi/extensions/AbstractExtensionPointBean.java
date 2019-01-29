@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-/**
- * @author peter
- */
 public abstract class AbstractExtensionPointBean implements PluginAware {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
 
@@ -53,8 +50,8 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   @NotNull
-  public final <T> T instantiate(final String className, @NotNull final PicoContainer container) throws ClassNotFoundException {
-    return instantiate(this.findClass(className), container);
+  public final <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
+    return instantiate(findClass(className), container);
   }
 
   @NotNull
@@ -68,5 +65,4 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
                                   final boolean allowNonPublicClasses) {
     return (T)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses).getComponentInstance(container);
   }
-
 }
