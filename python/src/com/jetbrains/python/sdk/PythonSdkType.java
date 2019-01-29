@@ -709,6 +709,13 @@ public final class PythonSdkType extends SdkType {
       // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
       final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
       if (header != null) {
+        // Binary module paths in skeleton headers of Mock SDK don't map to actual physical files.
+        // Fallback to the old heuristic for these stubs.
+        if (ApplicationManager.getApplication().isUnitTestMode() &&
+            Objects.equals(vFile.getParent(), PySdkUtil.findSkeletonsDir(pythonSdk))) {
+          return true;
+        }
+
         final String binaryPath = header.getBinaryFile();
         // XXX Assume that all pre-generated stubs belong to the interpreter's stdlib -- might change in future with PY-32229
         if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME) || binaryPath.equals(SkeletonVersionChecker.PREGENERATED)) {
