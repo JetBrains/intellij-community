@@ -282,7 +282,6 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
         assertEquals(N, events.size());
-        assertFalse(temp.allChildrenLoaded());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
       })
