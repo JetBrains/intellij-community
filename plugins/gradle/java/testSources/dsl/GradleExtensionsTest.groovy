@@ -4,14 +4,25 @@ package org.jetbrains.plugins.gradle.dsl
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 @CompileStatic
 class GradleExtensionsTest extends GradleHighlightingBaseTest implements ResolveTest {
+
+  @Test
+  void "project level extension property"() {
+    doTest("ext") {
+      def ref = elementUnderCaret(GrReferenceExpression)
+      assert ref.resolve() instanceof GroovyProperty
+      assert ref.type.equalsToText("org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
+    }
+  }
 
   @Test
   void "project level extension call type"() {
