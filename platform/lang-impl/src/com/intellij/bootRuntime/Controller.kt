@@ -2,6 +2,7 @@
 package com.intellij.bootRuntime
 
 import com.intellij.bootRuntime.BundleState.*
+import com.intellij.bootRuntime.bundles.Local
 import com.intellij.bootRuntime.bundles.Runtime
 import com.intellij.bootRuntime.command.Command
 import com.intellij.bootRuntime.command.CommandFactory
@@ -37,5 +38,10 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
       UNINSTALLED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
       INSTALLED -> listOf(produce(UNINSTALL, runtime), produce(DELETE, runtime))
     }
+  }
+
+  fun add(local: Local) {
+    model.bundles.add(local)
+    model.selectedBundle = local
   }
 }
