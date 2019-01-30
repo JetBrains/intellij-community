@@ -848,13 +848,13 @@
 
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
-    <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
+    <toolWindow id="Project" anchor="right" icon="AllIcons.Toolwindows.ToolWindowProject" secondary="true"
                 factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
+    <toolWindow id="Structure" anchor="right" icon="AllIcons.Toolwindows.ToolWindowStructure"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-    <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
+    <toolWindow id="Favorites" anchor="right" icon="AllIcons.Toolwindows.ToolWindowFavorites"
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
     <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
                 factoryClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"
