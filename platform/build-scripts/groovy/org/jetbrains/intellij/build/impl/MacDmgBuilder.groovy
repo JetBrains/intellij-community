@@ -53,7 +53,7 @@ class MacDmgBuilder {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
     if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, (secondJreArchive != null) ? "-jdk${buildContext.bundledJreManager.getSecondJreVersion()}-bundled" : null)
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, (secondJreArchive != null) ? "-jre${buildContext.bundledJreManager.getSecondJreVersion()}" : null)
     }
     else {
       buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
