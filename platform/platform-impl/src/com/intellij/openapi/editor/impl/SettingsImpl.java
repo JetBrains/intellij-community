@@ -73,7 +73,6 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
-  private final Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
@@ -333,7 +332,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   * @deprecated use {@link EditorKind}
    */
   @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
@@ -643,8 +642,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAllSoftWrapsShown() {
-    return myIsAllSoftWrapsShown != null ? myIsWhitespacesShown.booleanValue()
-                                      : EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+    return EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
   }
 
   @Override
@@ -704,6 +702,7 @@ public class SettingsImpl implements EditorSettings {
     myShowIntentionBulb = show; 
   }
 
+  @Override
   public void setLanguage(@Nullable Language language) {
     myLanguage = language;
   }
