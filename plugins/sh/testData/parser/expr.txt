@@ -761,3 +761,17 @@ BASH_FILE
                       PsiWhiteSpace(' ')
                       PsiElement(done)('done')
             PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          PsiElement(assignment_word)('values')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              PsiElement(word)('indx')
+            PsiElement(])(']')
+          PsiElement(=)('=')
+          PsiElement(int)('1')

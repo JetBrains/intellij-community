@@ -311,49 +311,57 @@ public class BashParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (assignment_word | word | variable) '=' [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
+  // (assignment_word | w | variable) array_expression? '=' [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
   public static boolean assignment_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, ASSIGNMENT_COMMAND, "<assignment command>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, ASSIGNMENT_COMMAND, "<assignment command>");
     r = assignment_command_0(b, l + 1);
+    r = r && assignment_command_1(b, l + 1);
     r = r && consumeToken(b, EQ);
-    r = r && assignment_command_2(b, l + 1);
+    r = r && assignment_command_3(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // assignment_word | word | variable
+  // assignment_word | w | variable
   private static boolean assignment_command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command_0")) return false;
     boolean r;
     r = consumeToken(b, ASSIGNMENT_WORD);
-    if (!r) r = consumeToken(b, WORD);
+    if (!r) r = w(b, l + 1);
     if (!r) r = variable(b, l + 1);
     return r;
   }
 
+  // array_expression?
+  private static boolean assignment_command_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_1")) return false;
+    array_expression(b, l + 1);
+    return true;
+  }
+
   // [assignment_list | <<parseUntilSpace (literal | composed_var)>>]
-  private static boolean assignment_command_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_command_2")) return false;
-    assignment_command_2_0(b, l + 1);
+  private static boolean assignment_command_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_3")) return false;
+    assignment_command_3_0(b, l + 1);
     return true;
   }
 
   // assignment_list | <<parseUntilSpace (literal | composed_var)>>
-  private static boolean assignment_command_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_command_2_0")) return false;
+  private static boolean assignment_command_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = assignment_list(b, l + 1);
-    if (!r) r = parseUntilSpace(b, l + 1, assignment_command_2_0_1_0_parser_);
+    if (!r) r = parseUntilSpace(b, l + 1, assignment_command_3_0_1_0_parser_);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // literal | composed_var
-  private static boolean assignment_command_2_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "assignment_command_2_0_1_0")) return false;
+  private static boolean assignment_command_3_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_command_3_0_1_0")) return false;
     boolean r;
     r = literal(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
@@ -2893,9 +2901,9 @@ public class BashParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  static final Parser assignment_command_2_0_1_0_parser_ = new Parser() {
+  static final Parser assignment_command_3_0_1_0_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
-      return assignment_command_2_0_1_0(b, l + 1);
+      return assignment_command_3_0_1_0(b, l + 1);
     }
   };
   static final Parser command_recover_parser_ = new Parser() {
