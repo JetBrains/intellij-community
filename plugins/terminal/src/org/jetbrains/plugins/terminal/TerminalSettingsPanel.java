@@ -129,7 +129,8 @@ public class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Comparing.equal(myShellPathField.getText(), myOptionsProvider.getShellPath())
+    return !Comparing.equal(TerminalOptionsProvider.getInstance().getEffectiveShellPath(myShellPathField.getText()),
+                            myOptionsProvider.getShellPath())
            || !Comparing.equal(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
