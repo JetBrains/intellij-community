@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.CliResult;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.concurrent.Future;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,11 +34,12 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     return false;
   }
 
+  @NotNull
   @Override
-  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
-      return;
+      return CliResult.error(1, getUsageMessage());
     }
     try {
       processCommand(args, currentDirectory);
@@ -45,10 +48,12 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
       Messages.showMessageDialog(String.format("Error showing %s: %s", getCommandName(), e.getMessage()),
                                  StringUtil.toTitleCase(getCommandName()),
                                  Messages.getErrorIcon());
+      return CliResult.error(1, String.format("Error showing %s: %s", getCommandName(), e.getMessage()));
     }
     finally {
       saveAll();
     }
+    return CliResult.ok();
   }
 
   protected static void saveAll() {

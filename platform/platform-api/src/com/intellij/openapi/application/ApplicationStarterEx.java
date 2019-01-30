@@ -19,7 +19,6 @@ import com.intellij.ide.CliResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 /**
@@ -43,6 +42,6 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   public Future<CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
     //noinspection deprecation
     processExternalCommandLine(args, currentDirectory);
-    return CompletableFuture.completedFuture(new CliResult(0, null));
+    return CliResult.ok();
   }
 }
