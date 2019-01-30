@@ -8,17 +8,18 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
-class GrClosableSignatureImpl implements GrSignature {
+class GrFunctionalExpressionSignature implements GrSignature {
 
-  private final GrClosableBlock myBlock;
+  @NotNull
+  private final GrFunctionalExpression myExpression;
 
-  GrClosableSignatureImpl(GrClosableBlock block) {
-    myBlock = block;
+  GrFunctionalExpressionSignature(@NotNull GrFunctionalExpression expression) {
+    myExpression = expression;
   }
 
   @NotNull
@@ -30,7 +31,7 @@ class GrClosableSignatureImpl implements GrSignature {
   @NotNull
   @Override
   public GrClosureParameter[] getParameters() {
-    GrParameter[] parameters = myBlock.getAllParameters();
+    GrParameter[] parameters = myExpression.getAllParameters();
 
     return ContainerUtil.map(parameters, parameter -> createClosureParameter(parameter), new GrClosureParameter[parameters.length]);
   }
@@ -42,19 +43,19 @@ class GrClosableSignatureImpl implements GrSignature {
 
   @Override
   public int getParameterCount() {
-    return myBlock.getAllParameters().length;
+    return myExpression.getAllParameters().length;
   }
 
   @Override
   public boolean isVarargs() {
-    GrParameter last = ArrayUtil.getLastElement(myBlock.getAllParameters());
+    GrParameter last = ArrayUtil.getLastElement(myExpression.getAllParameters());
     return last != null && last.getType() instanceof PsiArrayType;
   }
 
   @Nullable
   @Override
   public PsiType getReturnType() {
-    return myBlock.getReturnType();
+    return myExpression.getReturnType();
   }
 
   @Override
@@ -64,6 +65,6 @@ class GrClosableSignatureImpl implements GrSignature {
 
   @Override
   public boolean isValid() {
-    return myBlock.isValid();
+    return myExpression.isValid();
   }
 }

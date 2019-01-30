@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -91,8 +92,8 @@ public class GrClosureSignatureUtil {
   }
 
   @NotNull
-  public static GrSignature createSignature(final GrClosableBlock block) {
-    return new GrClosableSignatureImpl(block);
+  public static GrSignature createSignature(@NotNull GrFunctionalExpression expression) {
+    return new GrFunctionalExpressionSignature(expression);
   }
 
   @NotNull
@@ -109,11 +110,6 @@ public class GrClosureSignatureUtil {
   public static GrSignature removeParam(final GrSignature signature, int i) {
     final GrClosureParameter[] newParams = ArrayUtil.remove(signature.getParameters(), i);
     return new GrClosureSignatureWithNewParameters(signature, newParams);
-  }
-
-  @NotNull
-  public static GrSignature createSignatureWithErasedParameterTypes(final GrClosableBlock closure) {
-    return new GrClosableSignatureWithErasedParameters(closure);
   }
 
   @NotNull
@@ -575,10 +571,9 @@ public class GrClosureSignatureUtil {
       signature = createSignature((PsiMethod)element, substitutor, eraseArgs);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
     }
-    else if (element instanceof GrClosableBlock) {
-      signature =
-        eraseArgs ? createSignatureWithErasedParameterTypes((GrClosableBlock)element) : createSignature(((GrClosableBlock)element));
-      parameters = ((GrClosableBlock)element).getAllParameters();
+    else if (element instanceof GrFunctionalExpression) {
+      signature = createSignature(((GrFunctionalExpression)element));
+      parameters = ((GrFunctionalExpression)element).getAllParameters();
     }
     else {
       return null;
@@ -933,9 +928,9 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  public static GrMethodCall findCall(@NotNull GrClosableBlock closure) {
-    PsiElement parent = closure.getParent();
-    if (parent instanceof GrMethodCall && ArrayUtil.contains(closure, ((GrMethodCall)parent).getClosureArguments())) {
+  public static GrMethodCall findCall(@NotNull GrFunctionalExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof GrMethodCall && ArrayUtil.contains(expression, ((GrMethodCall)parent).getClosureArguments())) {
       return (GrMethodCall)parent;
     }
 
