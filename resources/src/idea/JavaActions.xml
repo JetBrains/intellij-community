@@ -340,13 +340,7 @@
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
-    <action id="TypeHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"
-            use-shortcut-of="TypeHierarchy">
-      <add-to-group group-id="TypeHierarchyPopupMenu" anchor="first"/>
-    </action>
-
-    <group id="JavaMethodHierarchyPopupMenu" name="JavaMethodHierarchyPopupMenu">
+    <group id="JavaMethodHierarchyPopupMenu">
       <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction"
               use-shortcut-of="ImplementMethods"/>
       <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction"
@@ -354,18 +348,6 @@
       <separator/>
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
-
-    <action id="MethodHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"
-            use-shortcut-of="MethodHierarchy">
-      <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
-    </action>
-
-    <action id="CallHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction"
-            use-shortcut-of="CallHierarchy">
-      <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
-    </action>
 
     <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>

@@ -692,19 +692,30 @@
     <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type"
             class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"
             use-shortcut-of="TypeHierarchy"/>
+    <action id="MethodHierarchy.BaseOnThisMethod" text="Base on This Method"
+            class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction"
+            use-shortcut-of="MethodHierarchy"/>
+    <action id="CallHierarchy.BaseOnThisMethod" text="Base on This Method"
+            class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction"
+            use-shortcut-of="CallHierarchy"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
 
     <group id="TypeHierarchyPopupMenu">
+      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
       <reference ref="TypeHierarchy.Class"/>
       <reference ref="TypeHierarchy.Subtypes"/>
       <reference ref="TypeHierarchy.Supertypes"/>
       <separator/>
     </group>
 
-    <group id="MethodHierarchyPopupMenu"/>
-    <group id="CallHierarchyPopupMenu" />
+    <group id="MethodHierarchyPopupMenu">
+      <reference ref="MethodHierarchy.BaseOnThisMethod"/>
+    </group>
+    <group id="CallHierarchyPopupMenu">
+      <reference ref="CallHierarchy.BaseOnThisMethod"/>
+    </group>
 
     <group>
       <add-to-group group-id="TypeHierarchyPopupMenu"/>
