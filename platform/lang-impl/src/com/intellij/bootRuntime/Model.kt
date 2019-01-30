@@ -24,7 +24,7 @@ enum class BundleState {
   }
 }
 
-class Model(var selectedBundle: Runtime, val bundles:List<Runtime>) {
+class Model(var selectedBundle: Runtime, val bundles:MutableList<Runtime>) {
 
   fun updateBundle(newBundle:Runtime) {
     selectedBundle = newBundle

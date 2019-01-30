@@ -1,17 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime
 
+import com.intellij.bootRuntime.bundles.Local
 import com.intellij.bootRuntime.bundles.Runtime
-import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.ui.dialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
 import java.awt.GridLayout
+import java.io.File
 import javax.swing.*
 
 /**
@@ -21,18 +26,17 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
   var actions:List<Action> = emptyList()
 
+  var bundles:MutableList<Runtime> = mutableListOf()
+
   override fun actionPerformed(e: AnActionEvent) {
 
-    val localBundles = RuntimeLocationsFactory().localBundles(e.project!!)
-    val bintrayBundles = RuntimeLocationsFactory().bintrayBundles(e.project!!)
-
+    bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
+    bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
 
     // todo change to dsl
     val southPanel = ActionPanel()
 
-    val controller = Controller(e.project!!, southPanel, Model(localBundles.get(0), localBundles + bintrayBundles))
-
-
+    val controller = Controller(e.project!!, southPanel, Model(bundles[0], bundles))
 
     val repositoryUrlFieldSpinner = JLabel(AnimatedIcon.Default())
     repositoryUrlFieldSpinner.isVisible = false
@@ -41,8 +45,25 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
     val myRuntimeUrlComboboxModel = CollectionComboBoxModel<Runtime>()
 
+    val runtimeCompletionProvider = RuntimeCompletionProvider(bundles)
+
+    val comboboxWithBrowserButton = ComponentWithBrowseButton(combobox) {
+      val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      val chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, e.project, WindowManager.getInstance().suggestParentWindow(e.project))
+      chooser.choose(LocalFileSystem.getInstance().findFileByIoFile(File("~"))) {
+        file -> file.first()?.let{f ->
+        val local = Local(e.project!!, File(f.path))
+        myRuntimeUrlComboboxModel.add(local)
+        bundles.add(local)
+        runtimeCompletionProvider.setItems(bundles)
+        controller.add(local)
+        combobox.selectedItem = local
+      }
+      }
+    }
+
     val myRuntimeUrlField = TextFieldWithAutoCompletion<Runtime>(e.project,
-                                                                 RuntimeCompletionProvider(localBundles + bintrayBundles),
+                                                                 runtimeCompletionProvider,
                                                                  false,
                                                                  "")
 
@@ -50,20 +71,17 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
     combobox.editor = ComboBoxCompositeEditor.
       withComponents<Any,TextFieldWithAutoCompletion<Runtime>>(myRuntimeUrlField, repositoryUrlFieldSpinner)
 
-
-    localBundles.let{ bundle -> myRuntimeUrlComboboxModel.add(bundle) }
-    bintrayBundles.let{ bundle -> myRuntimeUrlComboboxModel.add(bundle)}
+    bundles.let{ bundle -> myRuntimeUrlComboboxModel.add(bundle) }
 
     combobox.model = myRuntimeUrlComboboxModel
 
     // todo change to dsl
     val centralPanel = JPanel(GridLayout(1,1))
-    centralPanel.add(combobox)
+    centralPanel.add(comboboxWithBrowserButton)
 
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
-        localBundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
-        bintrayBundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
+        bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
       }
     })
 

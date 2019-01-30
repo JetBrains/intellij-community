@@ -30,6 +30,7 @@ fun dialog(title: String,
       contentPanel.add(eastPanel, BorderLayout.EAST)
 
       pack()
+      setLocationRelativeTo(owner)
       isVisible = true
     }
   }
