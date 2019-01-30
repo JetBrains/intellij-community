@@ -19,6 +19,9 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * NOTE: Assumes that values computed by different threads are equal and interchangeable
+ * and readers should be ready to get different instances on different invocations of the {@link #getValue()}
+ *
  * @author peter
  */
 public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
