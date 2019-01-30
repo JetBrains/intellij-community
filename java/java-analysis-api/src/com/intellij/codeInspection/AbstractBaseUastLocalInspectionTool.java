@@ -20,7 +20,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   private final Class<? extends UElement>[] myUElementsTypesHint;
 
   protected AbstractBaseUastLocalInspectionTool() {
-    this(UFile.class, UClass.class, UMethod.class, UField.class);
+    this(UFile.class, UClass.class, UField.class, UMethod.class);
   }
 
   protected AbstractBaseUastLocalInspectionTool(Class<? extends UElement>... uElementsTypesHint) {
