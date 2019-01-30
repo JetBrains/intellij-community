@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
@@ -94,6 +95,17 @@ public class GradleBuildSrcProjectsResolver {
         String rootPath = includedBuildsPaths.get(path);
         buildClasspathNodesMap.putValue(rootPath != null ? rootPath : projectPath, scriptClasspathDataNode);
       }
+    }
+
+    List<String> jvmOptions = ContainerUtil.newSmartList();
+    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+    // to avoid spawning of the second gradle daemon
+    BuildEnvironment mainBuildEnvironment = myResolverContext.getModels().getBuildEnvironment();
+    if (mainBuildEnvironment != null) {
+      jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
+    }
+    if (myMainBuildExecutionSettings != null) {
+      jvmOptions.addAll(myMainBuildExecutionSettings.getJvmArguments());
     }
 
     for (String buildPath : buildClasspathNodesMap.keySet()) {
