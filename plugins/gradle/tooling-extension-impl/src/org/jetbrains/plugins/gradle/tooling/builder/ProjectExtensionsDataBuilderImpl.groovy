@@ -64,7 +64,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
             ? convention.schema.keySet().asList() as List<String>
             : extractKeysViaReflection(convention)
 
-      for (name in keyList) {
+      keyList.each { name ->
         def value = convention.findByName(name)
 
         if (value == null) return
