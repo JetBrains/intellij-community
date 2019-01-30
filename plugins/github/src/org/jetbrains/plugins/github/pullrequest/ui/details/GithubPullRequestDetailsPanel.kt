@@ -17,6 +17,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import java.awt.Graphics
@@ -28,6 +29,7 @@ import javax.swing.JPanel
 internal class GithubPullRequestDetailsPanel(model: GithubPullRequestDetailsModel,
                                              securityService: GithubPullRequestsSecurityService,
                                              busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                             metadataService: GithubPullRequestsMetadataService,
                                              stateService: GithubPullRequestsStateService,
                                              iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
@@ -37,7 +39,7 @@ internal class GithubPullRequestDetailsPanel(model: GithubPullRequestDetailsMode
   }
   private val iconsProvider = iconProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
 
-  private val metaPanel = GithubPullRequestMetadataPanel(model, iconsProvider).apply {
+  private val metaPanel = GithubPullRequestMetadataPanel(model, securityService, busyStateTracker, metadataService, iconsProvider).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
   private val descriptionPanel = GithubPullRequestDescriptionPanel(model).apply {

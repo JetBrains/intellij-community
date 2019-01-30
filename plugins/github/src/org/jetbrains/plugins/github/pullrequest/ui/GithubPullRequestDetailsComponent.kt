@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsModel
@@ -23,12 +24,13 @@ import java.awt.BorderLayout
 internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
                                                  securityService: GithubPullRequestsSecurityService,
                                                  busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                                 metadataService: GithubPullRequestsMetadataService,
                                                  stateService: GithubPullRequestsStateService,
                                                  iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
 
   private val detailsModel = GithubPullRequestDetailsModel()
-  private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, stateService,
+  private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
                                                            iconProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
@@ -62,6 +64,8 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
         dataLoader.reloadDetails(result.number)
       }
     }
+    validate()
+    repaint()
   }
 
   override fun handleError(error: Throwable) {

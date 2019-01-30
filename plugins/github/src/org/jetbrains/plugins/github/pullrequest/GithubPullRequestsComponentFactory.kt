@@ -25,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
@@ -73,13 +74,16 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
     private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
 
+    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager, dataLoader, busyStateTracker,
+                                                                        requestExecutor,
+                                                                        avatarIconsProviderFactory, account.server, repoDetails.fullPath)
     private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, dataLoader, busyStateTracker, requestExecutor,
                                                                   account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, stateService,
+    private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
                                                             avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
