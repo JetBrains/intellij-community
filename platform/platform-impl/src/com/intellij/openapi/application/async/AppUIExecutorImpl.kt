@@ -7,8 +7,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.async.ConstrainedExecution.ExpirableContextConstraint
-import com.intellij.openapi.application.async.ConstrainedExecution.SimpleContextConstraint
+import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -30,7 +29,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun dispatchLater(block: Runnable) =
     ApplicationManager.getApplication().invokeLater(block, modality)
 
-  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : SimpleContextConstraint {
+  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ SimpleConstraintDispatcher(object : ContextConstraint {
     override val isCorrectContext: Boolean
       get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
@@ -46,7 +45,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   override fun later(): AppUIExecutor {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
-    return withConstraint(object : SimpleContextConstraint {
+    return withConstraint(object : ContextConstraint {
       @Volatile
       var usedOnce = false
 
@@ -70,11 +69,11 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 
   override fun withDocumentsCommitted(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint {
+    return withConstraint(object : ContextConstraint {
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
-      override fun scheduleExpirable(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
       }
 
@@ -83,11 +82,11 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 
   override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(object : ExpirableContextConstraint {
+    return withConstraint(object : ContextConstraint {
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun scheduleExpirable(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         DumbService.getInstance(project).runWhenSmart(runnable)
       }
 
@@ -97,7 +96,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
     val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : SimpleContextConstraint {
+    return withConstraint(object : ContextConstraint {
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
@@ -113,7 +112,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 
   override fun inUndoTransparentAction(): AppUIExecutor {
-    return withConstraint(object : SimpleContextConstraint {
+    return withConstraint(object : ContextConstraint {
       override val isCorrectContext: Boolean
         get() = CommandProcessor.getInstance().isUndoTransparentActionInProgress
 
@@ -126,7 +125,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 
   override fun inWriteAction(): AppUIExecutor {
-    return withConstraint(object : SimpleContextConstraint {
+    return withConstraint(object : ContextConstraint {
       override val isCorrectContext: Boolean
         get() = ApplicationManager.getApplication().isWriteAccessAllowed
 

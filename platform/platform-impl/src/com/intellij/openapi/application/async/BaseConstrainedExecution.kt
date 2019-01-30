@@ -3,7 +3,7 @@ package com.intellij.openapi.application.async
 
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.async.BaseConstrainedExecution.CompositeDispatcher
-import com.intellij.openapi.application.async.ConstrainedExecution.*
+import com.intellij.openapi.application.async.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.*
 import kotlin.coroutines.Continuation
@@ -44,7 +44,7 @@ import kotlin.coroutines.CoroutineContext
  * So, the [CompositeDispatcher.dispatch] starts checking the chain of constraints, one by one, rescheduling and restarting itself for each
  * unsatisfied constraint ([CompositeDispatcher.retryDispatch]), until at some point *all* of the constraints are satisfied *at once*.
  *
- * This ultimately ends up with either [SimpleContextConstraint.schedule] or [ExpirableContextConstraint.scheduleExpirable] being called
+ * This ultimately ends up with either [ContextConstraint.schedule] or [ContextConstraint.schedule] being called
  * one by one for every constraint of the chain that needs to be scheduled. Finally, the continuation runnable is called, executing the
  * task, or resuming the coroutine in the properly arranged context.
 
@@ -65,7 +65,7 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
 
   protected abstract fun cloneWith(dispatchers: Array<CoroutineDispatcher>): E
 
-  override fun withConstraint(constraint: SimpleContextConstraint): E =
+  override fun withConstraint(constraint: ContextConstraint): E =
     cloneWith(dispatchers + SimpleConstraintDispatcher(constraint))
 
   internal open class CompositeDispatcher(val dispatchers: Array<CoroutineDispatcher>) : CoroutineDispatcher() {
@@ -93,10 +93,9 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
     override fun toString() = constraint.toString()
   }
 
-  /** @see SimpleContextConstraint */
-  internal class SimpleConstraintDispatcher(constraint: SimpleContextConstraint) : ConstraintDispatcher(constraint) {
+  internal class SimpleConstraintDispatcher(constraint: ContextConstraint) : ConstraintDispatcher(constraint) {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-      (constraint as SimpleContextConstraint).schedule(block)
+      constraint.schedule(block)
     }
   }
 

@@ -63,9 +63,9 @@ fun AppUIExecutor.inUndoTransparentAction() =
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
 
-fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.SimpleContextConstraint): AppUIExecutor =
+fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint)
-fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ExpirableContextConstraint, parentDisposable: Disposable): AppUIExecutor =
+fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint, parentDisposable)
 
 /**
