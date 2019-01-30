@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Describes a filetype.
+ * <p/>
+ * Must be registered via {@link com.intellij.openapi.fileTypes.FileTypeFactory}. If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
+ * can be used for non-static mapping.
+ * <p/>
+ * Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.
+ *
  * @see com.intellij.openapi.fileTypes.StdFileTypes
  * @see com.intellij.openapi.fileTypes.FileTypes
  */
@@ -32,6 +39,7 @@ public interface FileType extends Scheme {
 
   /**
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
+   *
    * @return The file type name.
    */
   @Override
@@ -41,6 +49,7 @@ public interface FileType extends Scheme {
 
   /**
    * Returns the user-readable description of the file type.
+   *
    * @return The file type description.
    */
 
@@ -49,7 +58,8 @@ public interface FileType extends Scheme {
 
   /**
    * Returns the default extension for files of the type.
-   * @return The extension, not including the leading '.'.
+   *
+   * @return The extension, <em>not</em> including the leading '.'.
    */
 
   @NotNull
@@ -58,34 +68,37 @@ public interface FileType extends Scheme {
 
   /**
    * Returns the icon used for showing files of the type.
-   * @return The icon instance, or null if no icon should be shown.
+   *
+   * @return The icon instance, or {@code null} if no icon should be shown.
    */
 
   @Nullable
   Icon getIcon();
 
   /**
-   * Returns true if files of the specified type contain binary data. Used for source control, to-do items scanning and other purposes.
-   * @return true if the file is binary, false if the file is plain text.
+   * Returns {@code true} if files of the specified type contain binary data. Used for source control, to-do items scanning and other purposes.
+   *
+   * @return {@code true} if the file is binary, {@code false} if the file is plain text.
    */
   boolean isBinary();
 
   /**
-   * Returns true if the specified file type is read-only. Read-only file types are not shown in the "File Types" settings dialog,
+   * Returns {@code true} if the specified file type is read-only. Read-only file types are not shown in the "File Types" settings dialog,
    * and users cannot change the extensions associated with the file type.
-   * @return true if the file type is read-only, false otherwise.
+   *
+   * @return {@code true} if the file type is read-only, {@code false} otherwise.
    */
 
   boolean isReadOnly();
 
   /**
    * Returns the character set for the specified file.
-   * @param file The file for which the character set is requested.
+   *
+   * @param file    The file for which the character set is requested.
+   * @param content File content.
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
-
   @Nullable
   @NonNls
   String getCharset(@NotNull VirtualFile file, @NotNull byte[] content);
-
 }
