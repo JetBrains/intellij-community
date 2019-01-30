@@ -48,9 +48,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       myWatchRecursively = watchRecursively;
     }
 
-    @NotNull
     @Override
-    public @SystemIndependent String getRootPath() {
+    public @NotNull @SystemIndependent String getRootPath() {
       return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
@@ -271,8 +270,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
     flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
 
-    Set<String> recursiveWatches = new HashSet<>();
-    Set<String> flatWatches = new HashSet<>();
+    Set<String> recursiveWatches = new HashSet<>(), flatWatches = new HashSet<>();
     for (LocalFileSystem.WatchRequest watch : watchRequests) {
       (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
     }
@@ -295,12 +293,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<? super WatchRequest> result) {
     boolean update = false;
-    for (String root : recursiveRoots) {
-      update |= watch(root, true, result);
-    }
-    for (String root : flatRoots) {
-      update |= watch(root, false, result);
-    }
+    for (String root : recursiveRoots) update |= watch(root, true, result);
+    for (String root : flatRoots) update |= watch(root, false, result);
     return update;
   }
 
