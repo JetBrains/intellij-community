@@ -11,3 +11,12 @@ class Test<T> {
     new Test<String><error descr="Cannot resolve constructor 'Test(java.lang.String)'">("")</error>;
   }
 }
+
+class Test1 {
+  static <X> void m(X arg) {}
+  static void m(String arg) {}
+
+  {
+    Test1.<String>m(" ");
+  }
+}
