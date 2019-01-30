@@ -20,6 +20,10 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.list;
+import static org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.mergeJvmArgs;
 import static org.junit.Assert.assertEquals;
 
 public class GradleExecutionHelperTest {
@@ -47,5 +51,25 @@ public class GradleExecutionHelperTest {
     );
 
     assertEquals(obfuscatedArgs, expectedArgs);
+  }
+
+  @Test
+  public void testMergeJvmArgs() {
+    assertOrderedEquals(mergeJvmArgs(list("-X:foo"), emptyList()), list("-X:foo"));
+    assertOrderedEquals(mergeJvmArgs(emptyList(), list("-X:foo")), list("-X:foo"));
+    assertOrderedEquals(mergeJvmArgs(list("-Dp=val"), list("-Dp=newVal")), list("-Dp=newVal"));
+
+    assertOrderedEquals(
+      mergeJvmArgs(list("-X:foo"), list("-Dp=v")),
+      list("-X:foo", "-Dp=v"));
+
+    assertOrderedEquals(
+      mergeJvmArgs(list("-X:foo", "-Foo", "bar=001", "-Foo", "baz=002"), list("-Dp=v", "-Foo", "bar=003", "-Foo", "baz=002")),
+      list("-X:foo", "-Foo", "bar=003", "-Foo", "baz=002", "-Dp=v"));
+
+
+    List<String> jvmArgs = mergeJvmArgs(null, list("-Xmx256"), list("-Xmx512"));
+    assertDoesntContain(jvmArgs, "-Xmx256");
+    assertContainsElements(jvmArgs, "-Xmx512");
   }
 }

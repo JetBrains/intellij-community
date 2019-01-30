@@ -136,12 +136,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   /**
    * @return VM options to use for the gradle daemon process (if any)
-   * @deprecated use {@link #getVmOptions()}
+   * @deprecated use {@link #getJvmArguments()}
    */
   @Deprecated
   @Nullable
   public String getDaemonVmOptions() {
-    return ParametersListUtil.join(ContainerUtilRt.newArrayList(getVmOptions()));
+    return ParametersListUtil.join(getJvmArguments());
   }
 
   @Nullable
