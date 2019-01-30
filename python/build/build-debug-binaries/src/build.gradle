@@ -17,8 +17,8 @@ envs {
   zipRepository = new URL("http://repo.labs.intellij.net/pycharm/python-archives-windows/")
   shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
 
-  python "python26_64", "2.6.6", "64"
-  virtualenv "py26_64", "python26_64", ["cython"]
+//  python "python26_64", "2.6.6", "64"
+//  virtualenv "py26_64", "python26_64", ["cython"]
 
   python "python27_64", "2.7.15", "64"
   virtualenv "py27_64", "python27_64", ["cython"]
@@ -36,8 +36,8 @@ envs {
   virtualenv "py37_64", "python37_64", ["cython"]
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    python "python26_32", "2.6.6", "32"
-    virtualenv "py26_32", "python26_32", ["cython"]
+//    python "python26_32", "2.6.6", "32"
+//    virtualenv "py26_32", "python26_32", ["cython"]
 
     python "python27_32", "2.7.15", "32"
     virtualenv "py27_32", "python27_32", ["cython"]
