@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,6 +31,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
@@ -63,6 +65,7 @@ interface GlobalMenuLib extends Library {
 
   void reorderMenuItem(Pointer parent, Pointer item, int position);
   void removeMenuItem(Pointer parent, Pointer item);
+  void showMenuItem(Pointer item);
 
   void setItemLabel(Pointer item, String label);
   void setItemEnabled(Pointer item, boolean isEnabled);
@@ -208,6 +211,37 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       if (myIsDisposed)
         ourInstances.remove(myXid);
     };
+
+    if (SystemInfo.isKDE) {
+      // root menu items doesn't catch mnemonic shortcuts (in KDE), so process them inside IDE
+      IdeEventQueue.getInstance().addDispatcher(e -> {
+        if (!(e instanceof KeyEvent))
+          return false;
+
+        final KeyEvent event = (KeyEvent)e;
+        if (!event.isAltDown())
+          return false;
+
+        final Component src = event.getComponent();
+        final Window wndParent = src instanceof Window ? (Window)src : SwingUtilities.windowForComponent(src);
+        final char eventChar = Character.toUpperCase(event.getKeyChar());
+
+        for (GlobalMenuLinux gml: ourInstances.values()) {
+          if (gml.myFrame == wndParent) {
+            for (MenuItemInternal root : gml.myRoots) {
+              if (eventChar == root.mnemonic) {
+                ourLib.showMenuItem(root.nativePeer);
+                return false;
+              }
+            }
+            return false;
+          }
+        }
+
+        return false;
+      }, this);
+    }
+
     ourInstances.put(myXid, this);
   }
 
@@ -652,6 +686,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     String txt;
     String originTxt;
+    char mnemonic;
     boolean isEnabled = true;
     boolean isChecked = false;
     byte[] iconPngBytes;
@@ -714,7 +749,19 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     void setLabelFromSwingPeer(@NotNull JMenuItem peer) {
       // exec at EDT
       originTxt = peer.getText();
-      txt = _buildMnemonicLabel(peer);
+      txt = originTxt != null ? originTxt : "";
+      mnemonic = 0;
+
+      if (originTxt != null && !originTxt.isEmpty()) {
+        final int mnemonicCode = peer.getMnemonic();
+        final int mnemonicIndex = peer.getDisplayedMnemonicIndex();
+        if (mnemonicIndex >= 0 && mnemonicIndex < originTxt.length() && Character.toUpperCase(originTxt.charAt(mnemonicIndex)) == mnemonicCode) {
+          final StringBuilder res = new StringBuilder(originTxt);
+          res.insert(mnemonicIndex, '_');
+          txt = res.toString();
+          mnemonic = (char)mnemonicCode;
+        }
+      }
     }
 
     void updateNative() {
@@ -898,27 +945,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
       return true;
     }
-  }
-
-  private static String _buildMnemonicLabel(JMenuItem jmenuitem) {
-    String text = jmenuitem.getText();
-    final int mnemonicCode = jmenuitem.getMnemonic();
-    final int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
-    if (text == null)
-      text = "";
-    final int index;
-    if (mnemonicIndex >= 0 && mnemonicIndex < text.length() && Character.toUpperCase(text.charAt(mnemonicIndex)) == mnemonicCode) {
-      index = mnemonicIndex;
-    } else {
-      // Mnemonic mismatch index
-      index = -1;
-      // LOG.error("Mnemonic code " + mnemonicCode + " mismatch index " + mnemonicIndex + " with txt: " + text);
-    }
-
-    final StringBuilder res = new StringBuilder(text);
-    if(index != -1)
-      res.insert(index, '_');
-    return res.toString();
   }
 
   private static Object _getPeerField(@NotNull Component object) {
