@@ -1,0 +1,214 @@
+<keymap name="Sublime Text OSX" parent="Mac OS X 10.5+" version="1" disable-mnemonics="false">
+  <!--FILE-->
+  <action id="OpenFile">
+    <keyboard-shortcut first-keystroke="meta o"/>
+  </action>
+  <action id="OverrideMethods"/>
+  <action id="NewElement">
+    <keyboard-shortcut first-keystroke="meta n"/>
+  </action>
+  <action id="GotoClass"/>
+  <action id="GotoChangedFile"/>
+  <action id="ReopenClosedTab">
+    <keyboard-shortcut first-keystroke="meta shift t"/>
+  </action>
+  <action id="GotoTest"/>
+  <action id="CloseContent">
+    <keyboard-shortcut first-keystroke="meta w"/>
+  </action>
+  <action id="EditorUnSelectWord"/>
+  <!--END FILE-->
+  <!--EDIT-->
+  <action id="$Redo">
+    <keyboard-shortcut first-keystroke="meta y"/>
+  </action>
+  <action id="MoveLineUp">
+    <keyboard-shortcut first-keystroke="meta shift UP"/>
+  </action>
+  <action id="MoveLineDown">
+    <keyboard-shortcut first-keystroke="meta shift DOWN"/>
+  </action>
+  <action id="EditorDeleteLine">
+    <keyboard-shortcut first-keystroke="meta shift k"/>
+  </action>
+  <action id="$Paste">
+    <keyboard-shortcut first-keystroke="meta shift V"/>
+  </action>
+  <action id="EditorPasteSimple">
+    <keyboard-shortcut first-keystroke="meta V"/>
+  </action>
+  <action id="PasteMultiple">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta v"/>
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="v"/>
+  </action>
+  <action id="EditorIndentLineOrSelection">
+    <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
+  </action>
+  <action id="EditorCodeBlockEnd"/>
+  <action id="EditorCodeBlockEndWithSelection"/>
+  <action id="EditorUnindentSelection">
+    <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
+  <action id="EditorCodeBlockStart"/>
+  <action id="EditorCodeBlockStartWithSelection"/>
+  <action id="EditorDuplicate">
+    <keyboard-shortcut first-keystroke="meta shift d"/>
+  </action>
+  <action id="EditorJoinLines">
+    <keyboard-shortcut first-keystroke="meta j"/>
+  </action>
+  <action id="InsertLiveTemplate"/>
+  <action id="EditorStartNewLine">
+    <keyboard-shortcut first-keystroke="meta ENTER"/>
+  </action>
+  <action id="ViewSource"/>
+  <action id="EditorStartNewLineBefore">
+    <keyboard-shortcut first-keystroke="meta shift ENTER"/>
+  </action>
+  <action id="EditorCompleteStatement"/>
+  <action id="EditorDeleteToLineEnd">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta k"/>
+  </action>
+  <action id="EditorDeleteToLineStart">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta BACK_SPACE"/>
+  </action>
+  <action id="Vcs.UpdateProject"/>
+  <action id="ExpandAllRegions">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta j"/>
+  </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+  </action>
+  <action id="ExpandRegion">
+    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+  </action>
+  <action id="EditorToggleCase">
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta u"/>
+    <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta l"/>
+  </action>
+  <action id="EditorContextInfo"/>
+  <action id="Resume"/>
+  <action id="CompileDirty"/>
+  <action id="EditorSplitLine">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
+  </action>
+  <!--END EDIT-->
+  <!--SELECTION-->
+  <action id="EditorSelectWord">
+    <keyboard-shortcut first-keystroke="meta l"/>
+    <keyboard-shortcut first-keystroke="meta shift a"/>
+    <keyboard-shortcut first-keystroke="meta shift j"/>
+  </action>
+  <action id="SmartTypeCompletion"/>
+  <action id="SelectNextOccurrence">
+    <keyboard-shortcut first-keystroke="meta d"/>
+  </action>
+  <!--END SELECTION-->
+  <!--FIND-->
+  <action id="Find">
+    <keyboard-shortcut first-keystroke="meta f"/>
+  </action>
+  <action id="FindNext">
+    <keyboard-shortcut first-keystroke="f3"/>
+  </action>
+  <action id="FindPrevious">
+    <keyboard-shortcut first-keystroke="shift f3"/>
+  </action>
+  <action id="IncrementalSearch">
+    <keyboard-shortcut first-keystroke="meta i"/>
+  </action>
+  <action id="ImplementMethods"/>
+  <action id="Replace">
+    <keyboard-shortcut first-keystroke="meta alt f"/>
+  </action>
+  <action id="TypeHierarchy"/>
+  <action id="MethodHierarchy"/>
+  <action id="SelectAllOccurrences">
+    <keyboard-shortcut first-keystroke="alt f3"/>
+  </action>
+  <!--END FIND-->
+  <!--VIEW-->
+  <action id="ToggleFullScreen">
+    <keyboard-shortcut first-keystroke="f11"/>
+  </action>
+  <action id="ToggleDistractionFreeMode">
+    <keyboard-shortcut first-keystroke="shift f11"/>
+  </action>
+  <action id="ShowBookmarks"/>
+  <action id="Move"/>
+  <action id="ChangeSignature"/>
+  <action id="ChangeTypeSignature"/>
+  <!--END VIEW-->
+  <!--GOTO-->
+  <action id="GotoFile">
+    <keyboard-shortcut first-keystroke="meta p"/>
+  </action>
+  <action id="ParameterInfo"/>
+  <action id="FileStructurePopup">
+    <keyboard-shortcut first-keystroke="meta r"/>
+  </action>
+  <action id="GotoSymbol">
+    <keyboard-shortcut first-keystroke="meta shift r"/>
+  </action>
+  <action id="ReplaceInPath"/>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="f12"/>
+    <mouse-shortcut keystroke="button2"/>
+    <mouse-shortcut keystroke="shift meta button1"/>
+  </action>
+  <action id="JumpToLastWindow"/>
+  <action id="FindUsages">
+    <keyboard-shortcut first-keystroke="shift f12"/>
+  </action>
+  <action id="RestoreDefaultLayout"/>
+  <action id="Back">
+    <keyboard-shortcut first-keystroke="meta SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="meta MINUS"/>
+    <mouse-shortcut keystroke="button4"/>
+  </action>
+  <action id="CollapseAll"/>
+  <action id="Forward">
+    <keyboard-shortcut first-keystroke="alt shift SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="alt shift MINUS"/>
+    <mouse-shortcut keystroke="button5"/>
+  </action>
+  <action id="EditorScrollToCenter"/>
+  <action id="ToggleBookmark">
+    <keyboard-shortcut first-keystroke="meta f2"/>
+  </action>
+  <action id="Stop"/>
+  <action id="GotoNextBookmark">
+    <keyboard-shortcut first-keystroke="f2"/>
+  </action>
+  <action id="GotoNextError"/>
+  <action id="GotoPreviousBookmark">
+    <keyboard-shortcut first-keystroke="shift f2"/>
+  </action>
+  <action id="GotoPreviousError"/>
+  <action id="StopBackgroundProcesses"/>
+  <!--END GOTO-->
+  <!--TOOLS-->
+  <action id="GotoAction">
+    <keyboard-shortcut first-keystroke="shift meta p"/>
+  </action>
+  <action id="Compile">
+    <keyboard-shortcut first-keystroke="meta b"/>
+  </action>
+  <action id="GotoTypeDeclaration"/>
+  <action id="StartStopMacroRecording">
+    <keyboard-shortcut first-keystroke="meta q"/>
+  </action>
+  <action id="QuickJavaDoc"/>
+  <action id="PlaybackLastMacro">
+    <keyboard-shortcut first-keystroke="meta shift q"/>
+  </action>
+  <!--END TOOLS-->
+
+  <action id="EditorAddOrRemoveCaret">
+    <mouse-shortcut keystroke="meta button1"/>
+  </action>
+  <action id="EditorChooseLookupItemCompleteStatement"/>
+  <action id="NextOccurence"/>
+  <action id="PreviousOccurence"/>
+</keymap>
