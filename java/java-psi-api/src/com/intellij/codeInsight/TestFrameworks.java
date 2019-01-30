@@ -38,6 +38,10 @@ public abstract class TestFrameworks {
 
   public abstract boolean isTestMethod(PsiMethod method);
 
+  public boolean isTestMethod(PsiMethod method, boolean checkAbstract) {
+    return isTestMethod(method);
+  }
+
   public boolean isTestOrConfig(PsiClass psiClass) {
     return isTestClass(psiClass) || hasConfigMethods(psiClass);
   }
