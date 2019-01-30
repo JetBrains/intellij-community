@@ -1,0 +1,24 @@
+/*
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.idea.statistics
+
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
+
+
+open class KotlinStatisticsTrigger {
+    companion object {
+        private val VERSION = PluginManager.getPlugin(PluginId.getId("org.jetbrains.kotlin"))?.version ?: "undefined"
+
+        public fun trigger(trigger: KotlinEventTrigger, event: String) {
+            val context = FeatureUsageData().addFeatureContext(FUSUsageContext.create(VERSION));
+            FUCounterUsageLogger.getInstance().logEvent(trigger.GROUP_ID, event, context);
+        }
+    }
+}
