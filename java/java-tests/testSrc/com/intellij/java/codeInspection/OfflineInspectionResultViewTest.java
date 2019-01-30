@@ -143,10 +143,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "       -f()\n" +
                                            "        -D\n" +
                                            "         -b()\n" +
+                                           "          Variable 'r' is never used.\n" +
                                            "          -anonymous (Runnable)\n" +
                                            "           -run()\n" +
                                            "            Variable 'i' is never used.\n" +
-                                           "          Variable 'r' is never used.\n" +
                                            "       -ff()\n" +
                                            "        Variable 'a' is never used.\n" +
                                            "        Variable 'd' is never used.\n" +
@@ -186,10 +186,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "       -f()\n" +
                                            "        -D\n" +
                                            "         -b()\n" +
+                                           "          Variable 'r' is never used.\n" +
                                            "          -anonymous (Runnable)\n" +
                                            "           -run()\n" +
                                            "            Variable 'i' is never used.\n" +
-                                           "          Variable 'r' is never used.\n" +
                                            "       -ff()\n" +
                                            "        Variable 'a' is never used.\n" +
                                            "        Variable 'd' is never used.\n" +
@@ -222,10 +222,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "     -f()\n" +
                                            "      -D\n" +
                                            "       -b()\n" +
+                                           "        Variable 'r' is never used.\n" +
                                            "        -anonymous (Runnable)\n" +
                                            "         -run()\n" +
                                            "          Variable 'i' is never used.\n" +
-                                           "        Variable 'r' is never used.\n" +
                                            "     -ff()\n" +
                                            "      Variable 'a' is never used.\n" +
                                            "      Variable 'd' is never used.\n" +
@@ -254,10 +254,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "     -f()\n" +
                                            "      -D\n" +
                                            "       -b()\n" +
+                                           "        Variable 'r' is never used.\n" +
                                            "        -anonymous (Runnable)\n" +
                                            "         -run()\n" +
                                            "          Variable 'i' is never used.\n" +
-                                           "        Variable 'r' is never used.\n" +
                                            "     -ff()\n" +
                                            "      Variable 'a' is never used.\n" +
                                            "      Variable 'd' is never used.\n" +

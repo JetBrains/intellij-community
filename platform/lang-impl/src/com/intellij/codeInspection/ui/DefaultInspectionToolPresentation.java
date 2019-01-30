@@ -461,50 +461,11 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   @Nullable
-  public IntentionAction findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor, final String hint) {
+  public QuickFix findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
+                                 RefEntity entity,
+                                 final String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
-    if (!(tool instanceof GlobalInspectionTool)) return null;
-    final QuickFix fix = ((GlobalInspectionTool)tool).getQuickFix(hint);
-    if (fix == null) {
-      return null;
-    }
-    if (problemDescriptor instanceof ProblemDescriptor) {
-      final ProblemDescriptor descriptor = new ProblemDescriptorImpl(((ProblemDescriptor)problemDescriptor).getStartElement(),
-                                                                     ((ProblemDescriptor)problemDescriptor).getEndElement(),
-                                                                     problemDescriptor.getDescriptionTemplate(),
-                                                                     new LocalQuickFix[]{(LocalQuickFix)fix},
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false);
-      return QuickFixWrapper.wrap(descriptor, 0);
-    }
-    return new IntentionAction() {
-      @Override
-      @NotNull
-      public String getText() {
-        return fix.getName();
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return fix.getFamilyName();
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        //noinspection unchecked
-        fix.applyFix(project, problemDescriptor); //todo check type consistency
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+    return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
 
   private static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
@@ -527,7 +488,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       VirtualFile file = d.getContainingFile();
       if (file != null) {
         LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
-                       "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+                              "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
       }
     });
   }

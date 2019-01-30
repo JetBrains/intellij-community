@@ -5,10 +5,10 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -77,7 +77,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void cleanup();
   @Nullable
-  IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
+  QuickFix findQuickFixes(@NotNull CommonProblemDescriptor descriptor,
+                          RefEntity entity,
+                          String hint);
   @NotNull
   HTMLComposerImpl getComposer();
 
