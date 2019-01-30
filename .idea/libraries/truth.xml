@@ -3,10 +3,12 @@
     <properties maven-id="com.google.truth:truth:0.42" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/truth/truth/0.42/truth-0.42.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/truth/truth/0.42/truth-0.42-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/java-diff-utils/diffutils/1.3.0/diffutils-1.3.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

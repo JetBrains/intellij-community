@@ -34,8 +34,16 @@ java_library(
 java_library(
     name = "truth",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar",
+        "//prebuilts/tools/common/m2/repository/com/googlecode/java-diff-utils/diffutils/1.3.0:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.42:jar",
+        "//prebuilts/tools/common/m2/repository/com/googlecode/java-diff-utils/diffutils/1.3.0:jar",
+    ],
 )
 
 # managed by go/iml_to_build
