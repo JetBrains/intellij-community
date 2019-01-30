@@ -44,6 +44,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 
+  /** When set to false, makes {@link #closeAllAnnotations()} a no-op and hides the corresponding context menu action. */
   public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
 
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
