@@ -85,7 +85,7 @@ class DirectoryPathMatcher {
     }
     processProjectFilesUnder(nonMatchingRoots, sub -> {
       if (!sub.isDirectory()) return false;
-      if (!containsChar(sub.getName(), c)) return true; //go deeper
+      if (!containsChar(sub.getNameSequence(), c)) return true; //go deeper
 
       String fullName = myModel.getFullName(sub);
       if (fullName == null) return true;
@@ -162,8 +162,8 @@ class DirectoryPathMatcher {
     }
   }
 
-  private static boolean containsChar(String name, char c) {
-    return StringUtil.indexOfIgnoreCase(name, c, 0) >= 0;
+  private static boolean containsChar(CharSequence name, char c) {
+    return StringUtil.indexOf(name, c, 0, name.length(), false) >= 0;
   }
 
   @NotNull
