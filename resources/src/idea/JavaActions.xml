@@ -226,6 +226,10 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
 
+      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction" text="Step Out Of Code Block">
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="StepOut"/>
+      </action>
+
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">

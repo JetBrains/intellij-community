@@ -297,7 +297,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     stepOut(StepRequest.STEP_LINE);
   }
 
-  public void stepOver(boolean ignoreBreakpoints, int stepSize) {
+  public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd = null;
     for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensionList()) {
@@ -305,10 +305,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
       if (cmd != null) break;
     }
     if (cmd == null) {
-      cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+      cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
     }
     setSteppingThrough(cmd.getContextThread());
     resumeAction(cmd, Event.STEP);
+  }
+
+  public void stepOver(boolean ignoreBreakpoints, int stepSize) {
+    stepOver(ignoreBreakpoints, null, stepSize);
   }
 
   public void stepOver(boolean ignoreBreakpoints) {
