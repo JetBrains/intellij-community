@@ -254,6 +254,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     if (allChanged) {
       LOG.debug(String.format("GitUntrackedFilesHolder: total refresh is needed, marking %s recursively dirty", myRoot));
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
+      rescanIgnoredFiles();
       synchronized (LOCK) {
         myReady = false;
       }
@@ -292,13 +293,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   private boolean gitignoreChanged(@NotNull String path) {
     // TODO watch file stored in core.excludesfile
-    boolean gitIgnoreChanged = path.endsWith(GitRepositoryFiles.GITIGNORE);
-    boolean excludeChanged = myRepositoryFiles.isExclude(path);
-
-    if(gitIgnoreChanged || excludeChanged){
-      rescanIgnoredFiles();
-    }
-    return gitIgnoreChanged || excludeChanged;
+    return path.endsWith(GitRepositoryFiles.GITIGNORE) || myRepositoryFiles.isExclude(path);
   }
 
   private void rescanIgnoredFiles() { //TODO move to ignore manager
