@@ -9,7 +9,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * @author eldar
  */
-interface AsyncExecution<E : AsyncExecution<E>> {
+interface ConstrainedExecution<E : ConstrainedExecution<E>> {
   /**
    * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
    * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].

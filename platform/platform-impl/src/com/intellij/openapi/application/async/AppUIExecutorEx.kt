@@ -3,7 +3,7 @@ package com.intellij.openapi.application.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.ExpirableAsyncExecutionSupport.Companion.cancelJobOnDisposal
+import com.intellij.openapi.application.async.ExpirableConstrainedExecution.Companion.cancelJobOnDisposal
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * @author eldar
  */
-interface AppUIExecutorEx : AppUIExecutor, AsyncExecution<AppUIExecutorEx> {
+interface AppUIExecutorEx : AppUIExecutor, ConstrainedExecution<AppUIExecutorEx> {
 
   override fun execute(command: Runnable) {
     // Note, that launch() is different from async() used by submit():
@@ -63,9 +63,9 @@ fun AppUIExecutor.inUndoTransparentAction() =
 fun AppUIExecutor.inWriteAction() =
   (this as AppUIExecutorEx).inWriteAction()
 
-fun AppUIExecutor.withConstraint(constraint: AsyncExecution.SimpleContextConstraint): AppUIExecutor =
+fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.SimpleContextConstraint): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint)
-fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ExpirableContextConstraint, parentDisposable: Disposable): AppUIExecutor =
+fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ExpirableContextConstraint, parentDisposable: Disposable): AppUIExecutor =
   (this as AppUIExecutorEx).withConstraint(constraint, parentDisposable)
 
 /**
@@ -73,7 +73,7 @@ fun AppUIExecutor.withConstraint(constraint: AsyncExecution.ExpirableContextCons
  * Contains: [ContinuationInterceptor] + [CoroutineExceptionHandler] + [CoroutineName].
  */
 fun AppUIExecutor.coroutineDispatchingContext(): CoroutineContext =
-  (this as AsyncExecution<*>).coroutineDispatchingContext()
+  (this as ConstrainedExecution<*>).coroutineDispatchingContext()
 
 
 @Throws(CancellationException::class)

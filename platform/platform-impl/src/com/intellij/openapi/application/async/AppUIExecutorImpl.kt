@@ -7,8 +7,8 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.async.AsyncExecution.ExpirableContextConstraint
-import com.intellij.openapi.application.async.AsyncExecution.SimpleContextConstraint
+import com.intellij.openapi.application.async.ConstrainedExecution.ExpirableContextConstraint
+import com.intellij.openapi.application.async.ConstrainedExecution.SimpleContextConstraint
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -23,7 +23,7 @@ import kotlinx.coroutines.Runnable
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
                                                      dispatchers: Array<CoroutineDispatcher>,
                                                      expirableHandles: Set<Expiration>)
-  : ExpirableAsyncExecutionSupport<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
+  : ExpirableConstrainedExecution<AppUIExecutorEx>(dispatchers, expirableHandles), AppUIExecutorEx {
 
   override fun composeDispatchers() = dispatchers.singleOrNull() ?: RescheduleAttemptLimitAwareDispatcher(dispatchers, ::dispatchLater)
 

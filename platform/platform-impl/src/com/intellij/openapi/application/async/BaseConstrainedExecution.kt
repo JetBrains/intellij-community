@@ -2,8 +2,8 @@
 package com.intellij.openapi.application.async
 
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.async.AsyncExecution.*
-import com.intellij.openapi.application.async.BaseAsyncExecutionSupport.CompositeDispatcher
+import com.intellij.openapi.application.async.BaseConstrainedExecution.CompositeDispatcher
+import com.intellij.openapi.application.async.ConstrainedExecution.*
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.*
 import kotlin.coroutines.Continuation
@@ -50,7 +50,7 @@ import kotlin.coroutines.CoroutineContext
 
  * @author eldar
  */
-abstract class BaseAsyncExecutionSupport<E : AsyncExecution<E>>(protected val dispatchers: Array<CoroutineDispatcher>) : AsyncExecution<E> {
+abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected val dispatchers: Array<CoroutineDispatcher>) : ConstrainedExecution<E> {
   private val myCoroutineDispatchingContext: CoroutineContext by lazy {
     val continuationInterceptor = createContinuationInterceptor()
     val coroutineName = CoroutineName("${javaClass.simpleName}($continuationInterceptor)")

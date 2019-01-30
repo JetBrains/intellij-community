@@ -155,7 +155,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     var scheduled = false
 
     val executor = AppUIExecutor.onUiThread()
-      .withConstraint(object : AsyncExecution.SimpleContextConstraint {
+      .withConstraint(object : ConstrainedExecution.SimpleContextConstraint {
 
         override val isCorrectContext: Boolean
           get() = scheduled
@@ -186,7 +186,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     }.also { Disposer.register(testRootDisposable, it) }
 
     val executor = AppUIExecutor.onUiThread()
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
+      .withConstraint(object : ConstrainedExecution.ExpirableContextConstraint {
         override val isCorrectContext: Boolean
           get() = scheduled
 
@@ -255,7 +255,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
+      .withConstraint(object : ConstrainedExecution.ExpirableContextConstraint {
         override val isCorrectContext: Boolean
           get() = scheduled
 
@@ -418,7 +418,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
     val uiExecutor = AppUIExecutor.onUiThread()
     val executor = uiExecutor
-      .withConstraint(object : AsyncExecution.ExpirableContextConstraint {
+      .withConstraint(object : ConstrainedExecution.ExpirableContextConstraint {
         override val isCorrectContext: Boolean
           get() = outerScheduled
 
@@ -437,7 +437,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         override fun toString() = "test outer"
       }, constraintDisposable)
-      .withConstraint(object : AsyncExecution.SimpleContextConstraint {
+      .withConstraint(object : ConstrainedExecution.SimpleContextConstraint {
         override val isCorrectContext: Boolean
           get() = innerScheduled
 

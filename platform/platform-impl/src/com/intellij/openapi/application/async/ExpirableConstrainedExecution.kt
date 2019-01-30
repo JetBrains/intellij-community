@@ -3,8 +3,8 @@ package com.intellij.openapi.application.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeaklyReferencedDisposable
-import com.intellij.openapi.application.async.AsyncExecution.ExpirableContextConstraint
-import com.intellij.openapi.application.async.ExpirableAsyncExecutionSupport.*
+import com.intellij.openapi.application.async.ConstrainedExecution.ExpirableContextConstraint
+import com.intellij.openapi.application.async.ExpirableConstrainedExecution.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.*
@@ -22,7 +22,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * ## Implementation notes: ##
  *
- * Note: please, read the docs for [BaseAsyncExecutionSupport] first.
+ * Note: please, read the docs for [BaseConstrainedExecution] first.
  *
  * This subclass of AsyncExecutionSupport adds a notion of [Expiration] - something that might expire at some point, and can cause
  * a coroutine to be cancelled.
@@ -50,9 +50,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author eldar
  */
-internal abstract class ExpirableAsyncExecutionSupport<E : AsyncExecution<E>>(dispatchers: Array<CoroutineDispatcher>,
-                                                                              private val expirationSet: Set<Expiration>)
-  : BaseAsyncExecutionSupport<E>(dispatchers) {
+internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E>>(dispatchers: Array<CoroutineDispatcher>,
+                                                                                   private val expirationSet: Set<Expiration>)
+  : BaseConstrainedExecution<E>(dispatchers) {
 
   /** Must schedule the runnable and return immediately. */
   protected abstract fun dispatchLater(block: Runnable)

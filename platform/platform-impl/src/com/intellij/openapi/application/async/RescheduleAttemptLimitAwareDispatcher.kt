@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
 internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<CoroutineDispatcher>,
                                                      private val dispatchLater: (Runnable) -> Unit,
                                                      private val myLimit: Int = 3000)
-  : BaseAsyncExecutionSupport.CompositeDispatcher(dispatchers) {
+  : BaseConstrainedExecution.CompositeDispatcher(dispatchers) {
   private var myAttemptCount: Int = 0
 
   private val myLogLimit: Int = 30
@@ -28,7 +28,7 @@ internal class RescheduleAttemptLimitAwareDispatcher(dispatchers: Array<Coroutin
     if (checkHaveMoreRescheduleAttempts(causeDispatcher)) {
       super.dispatch(context, block)
     }
-    else BaseAsyncExecutionSupport.run {
+    else BaseConstrainedExecution.run {
       try {
         processUncaughtException(TooManyRescheduleAttemptsException(myLastDispatchers))
       }
