@@ -23,7 +23,7 @@ public class PresentationTest extends LightPlatformTestCase {
   private final int[] indeces = new int[]{-1, 0, 1, 26, 8, -1, -1, -1, -1, -1, 5, 2, 20};
   private final String[] fullMenuTexts = new String[]{"No mnemonic", "_First char", "S_econd char",
     "Pre-last and not unique ch_ar", "Last cha_r", "Too late", "Do_uble", "Dou&ble", "Complete double_",
-    "Complete double&", "Repea_te_d", "Re_peate&d", "Run 'test_1' with Co_verage"};
+    "Complete double&", "Repea_te_d", "Re_peate&d", "Run 'test_1' with Coverage"};
 
   public void testPresentationSetText() {
     for (int i = 0; i < inputTextsUnderscores.length; i++) {

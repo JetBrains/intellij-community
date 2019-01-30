@@ -15,14 +15,14 @@ public class CoverageExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return "Run with Co_verage";
+    return "Run with Coverage";
   }
 
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
     final String name = configurationName != null ? escapeMnemonicsInConfigurationName(shortenNameIfNeed(configurationName)) : null;
-    return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Co_verage";
+    return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Coverage";
   }
 
 
