@@ -852,6 +852,7 @@
 
       <group id="FeatureUsage.Internal" popup="true" compact="true" text="Feature Usages Statistics">
         <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
+        <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction" text="Clean Up Event Log"/>
         <action internal="true" id="RecordStateCollectors" class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction" text="Record State Collectors to Event Log"/>
       </group>
 
