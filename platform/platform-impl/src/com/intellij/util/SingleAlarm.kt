@@ -30,7 +30,7 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
   @JvmOverloads
   fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
     if (isEmpty) {
-      addRequest(if (forceRun) 0 else delay)
+      _addRequest(task, if (forceRun) 0 else delay.toLong(), modalityState)
     }
   }
 
@@ -40,13 +40,8 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
 
   fun cancelAndRequest() {
     if (!isDisposed) {
-      cancel()
-      addRequest(delay)
+      cancelAllAndAddRequest(task, delay, modalityState)
     }
-  }
-
-  private fun addRequest(delay: Int) {
-    _addRequest(task, delay.toLong(), modalityState)
   }
 }
 
