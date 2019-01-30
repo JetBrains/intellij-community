@@ -91,7 +91,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       .addToLeft(createTitleTextComponent(project, list, speedSearch, placeInfo, breadcrumb, selected))
       .addToCenter(createTitledSeparator(background));
 
-    title.setBorder(BorderFactory.createEmptyBorder(index == 0 ? 0 : 17, 8, 0, 0));
+    title.setBorder(BorderFactory.createEmptyBorder(index == 0 ? 5 : 15, 8, 6, 0));
     title.setBackground(background);
 
     return title;
