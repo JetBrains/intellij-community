@@ -37,6 +37,7 @@ public abstract class CachingSimpleNode extends SimpleNode {
   public final SimpleNode[] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
+      if (myChildren == null) throw new NullPointerException("no children from " + getClass());
       onChildrenBuilt();
     }
 
