@@ -153,7 +153,6 @@ public class RecentLocationsAction extends AnAction {
       .createPopup();
 
     Disposer.register(popup, () -> {
-      Dimension contentSize = popup.getContent().getSize();
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
       //scroll scrollPane
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
@@ -340,7 +339,6 @@ public class RecentLocationsAction extends AnAction {
     JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     mainPanel.add(topPanel);
     mainPanel.add(listWithFilter);
-    mainPanel.setBorder(BorderFactory.createEmptyBorder());
     return mainPanel;
   }
 
@@ -349,7 +347,11 @@ public class RecentLocationsAction extends AnAction {
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+    Dimension size = topPanel.getPreferredSize();
+    size.height = JBUI.scale(29);
+    topPanel.setPreferredSize(size);
+    topPanel.setBorder(JBUI.Borders.empty(5, 8));
     topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
@@ -367,11 +369,11 @@ public class RecentLocationsAction extends AnAction {
     CheckboxAction action = new RecentLocationsCheckboxAction(project);
     CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
     action.registerCustomShortcutSet(set, listWithFilter);
-    action.getTemplatePresentation().setText("<html>" +
-                                             IdeBundle.message("recent.locations.title.text") +
-                                             " <font color=\"" + SHORTCUT_HEX_COLOR + "\">" +
-                                             KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>" +
-                                             "</html>");
+    action.getTemplatePresentation().setText("<html>"
+                                             + "<strong>" + IdeBundle.message("recent.locations.title.text") + "</strong>"
+                                             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                                             + KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>"
+                                             + "</html>");
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());

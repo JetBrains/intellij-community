@@ -2,6 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.RecentLocationsAction.RecentLocationItem;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -10,17 +13,21 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +66,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     Color defaultBackground = editor.getColorsScheme().getDefaultBackground();
     String breadcrumbs = myBreadcrumbsMap.get().get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
-    panel.add(createTitleComponent(list, mySpeedSearch, breadcrumbs, value.getInfo(), defaultBackground, selected));
+    panel.add(createTitleComponent(myProject, list, mySpeedSearch, breadcrumbs, value.getInfo(), defaultBackground, selected, index));
 
     String text = editor.getDocument().getText();
     if (!StringUtil.isEmpty(text)) {
@@ -70,18 +77,21 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   }
 
   @NotNull
-  private static JComponent createTitleComponent(@NotNull JList<? extends RecentLocationItem> list,
+  private static JComponent createTitleComponent(@NotNull Project project,
+                                                 @NotNull JList<? extends RecentLocationItem> list,
                                                  @NotNull SpeedSearch speedSearch,
-                                                 @NotNull String breadcrumb,
+                                                 @Nullable String breadcrumb,
                                                  @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
                                                  @NotNull Color background,
-                                                 boolean selected) {
+                                                 boolean selected,
+                                                 int index) {
     JComponent title = JBUI.Panels
       .simplePanel()
-      .addToLeft(createTitleTextComponent(list, speedSearch, placeInfo, breadcrumb, selected))
+      .withBorder(JBUI.Borders.empty())
+      .addToLeft(createTitleTextComponent(project, list, speedSearch, placeInfo, breadcrumb, selected))
       .addToCenter(createTitledSeparator(background));
 
-    title.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 0));
+    title.setBorder(BorderFactory.createEmptyBorder(index == 0 ? 0 : 17, 8, 0, 0));
     title.setBackground(background);
 
     return title;
@@ -90,7 +100,6 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   @NotNull
   private static TitledSeparator createTitledSeparator(@NotNull Color background) {
     TitledSeparator titledSeparator = new TitledSeparator();
-    titledSeparator.setBorder(BorderFactory.createEmptyBorder());
     titledSeparator.setBackground(background);
     return titledSeparator;
   }
@@ -109,13 +118,13 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     editor.setBackgroundColor(backgroundColor);
-    editor.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+    editor.setBorder(JBUI.Borders.emptyLeft(5));
 
     if (EMPTY_FILE_TEXT.equals(editor.getDocument().getText())) {
       editor.getMarkupModel().addRangeHighlighter(0,
                                                   EMPTY_FILE_TEXT.length(),
                                                   HighlighterLayer.SYNTAX,
-                                                  createLabelDisabledForegroundTextAttributes(),
+                                                  createEmptyTextForegroundTextAttributes(),
                                                   HighlighterTargetArea.EXACT_RANGE);
     }
 
@@ -123,33 +132,81 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   }
 
   @NotNull
-  private static SimpleColoredComponent createTitleTextComponent(@NotNull JList<? extends RecentLocationItem> list,
+  private static SimpleColoredComponent createTitleTextComponent(@NotNull Project project,
+                                                                 @NotNull JList<? extends RecentLocationItem> list,
                                                                  @NotNull SpeedSearch speedSearch,
                                                                  @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
-                                                                 @NotNull String breadcrumbText,
+                                                                 @Nullable String breadcrumbText,
                                                                  boolean selected) {
     SimpleColoredComponent titleTextComponent = new SimpleColoredComponent();
-    titleTextComponent.append(breadcrumbText);
 
-    String text = breadcrumbText;
     String fileName = placeInfo.getFile().getName();
-    if (!StringUtil.equals(breadcrumbText, fileName)) {
-      text += " " + fileName;
-      titleTextComponent.append(" ");
-      titleTextComponent.append(fileName, SimpleTextAttributes.fromTextAttributes(createLabelDisabledForegroundTextAttributes()));
+    String text = fileName;
+    titleTextComponent.append(fileName, SimpleTextAttributes.fromTextAttributes(createLabelForegroundTextAttributes()));
+
+    if (StringUtil.isNotEmpty(breadcrumbText) && !StringUtil.equals(breadcrumbText, fileName)) {
+      text += " " + breadcrumbText;
+      titleTextComponent.append("  ");
+      titleTextComponent.append(breadcrumbText, SimpleTextAttributes.fromTextAttributes(createBreadcrumbsTextAttributes()));
     }
+
+    Icon icon = fetchIcon(project, placeInfo);
+
+    if (icon != null) {
+      titleTextComponent.setIcon(icon);
+      titleTextComponent.setIconTextGap(4);
+    }
+
+    titleTextComponent.setBorder(JBUI.Borders.empty());
 
     if (speedSearch.matchingFragments(text) != null) {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, titleTextComponent, false, selected);
     }
 
-    titleTextComponent.setBorder(BorderFactory.createEmptyBorder());
-
     return titleTextComponent;
   }
 
+  @Nullable
+  private static Icon fetchIcon(@NotNull Project project, @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo) {
+    Icon icon = null;
+    PsiFile file = PsiManager.getInstance(project).findFile(placeInfo.getFile());
+    if (file != null) {
+      ItemPresentation presentation = file.getPresentation();
+      if (presentation != null) {
+        icon = presentation.getIcon(false);
+      }
+    }
+
+    if (icon == null) {
+      Language language = LanguageUtil.getFileLanguage(placeInfo.getFile());
+      if (language != null) {
+        final LanguageFileType fileType = language.getAssociatedFileType();
+        if (fileType != null) {
+          icon = fileType.getIcon();
+        }
+      }
+    }
+
+    return icon;
+  }
+
   @NotNull
-  private static TextAttributes createLabelDisabledForegroundTextAttributes() {
+  private static TextAttributes createLabelForegroundTextAttributes() {
+    TextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
+    textAttributes.setFontType(Font.BOLD);
+    textAttributes.setForegroundColor(UIUtil.getLabelTextForeground());
+    return textAttributes;
+  }
+
+  @NotNull
+  private static TextAttributes createBreadcrumbsTextAttributes() {
+    TextAttributes textAttributes = SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES.toTextAttributes();
+    textAttributes.setFontType(Font.BOLD);
+    return textAttributes;
+  }
+
+  @NotNull
+  private static TextAttributes createEmptyTextForegroundTextAttributes() {
     TextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     textAttributes.setForegroundColor(UIUtil.getLabelDisabledForeground());
     return textAttributes;
