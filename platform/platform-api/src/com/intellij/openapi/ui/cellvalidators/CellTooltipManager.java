@@ -36,6 +36,7 @@ public final class CellTooltipManager {
 
   private ComponentPopupBuilder popupBuilder;
   private JBPopup               cellPopup;
+  private Point                 cellLocation;
   private Dimension             popupSize;
   private boolean               isOverPopup;
   private boolean               isClosing;
@@ -93,6 +94,14 @@ public final class CellTooltipManager {
           hidePopup(false, () -> showPopup(e));
         } else if (!isShowing()) {
           showPopup(e);
+        } else { // Move popup to new location
+          Point location = cellComponentProvider.getCellRect(e).getLocation();
+          if (!location.equals(cellLocation)) {
+            cellLocation = location;
+            Point point = new Point(cellLocation.x + JBUI.scale(40), cellLocation.y - JBUI.scale(6) - popupSize.height);
+            SwingUtilities.convertPointToScreen(point, cellComponentProvider.getOwner());
+            cellPopup.setLocation(point);
+          }
         }
       } else {
         validationInfo = null;
@@ -107,8 +116,7 @@ public final class CellTooltipManager {
 
   private void showPopup(MouseEvent e) {
     cellPopup = popupBuilder.createPopup();
-
-    Point cellLocation = cellComponentProvider.getCellRect(e).getLocation();
+    cellLocation = cellComponentProvider.getCellRect(e).getLocation();
     Point point = new Point(cellLocation.x + JBUI.scale(40), cellLocation.y - JBUI.scale(6) - popupSize.height);
     cellPopup.show(new RelativePoint(cellComponentProvider.getOwner(), point));
   }

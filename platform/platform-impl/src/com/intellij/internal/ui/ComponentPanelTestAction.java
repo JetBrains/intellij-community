@@ -283,7 +283,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       // Install custom tooltip manager for displaying error/warning tooltips
       new CellTooltipManager(getDisposable()).
-        //withCellComponentProvider(CellComponentProvider.forTable(table)).
         withCellComponentProvider(CellComponentProvider.forTable(table)).
         withHyperlinkListener(hyperlinkListener).installOn(table);
 
@@ -316,7 +315,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       col.setCellEditor(new DefaultCellEditor(cellEditor));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
         bindToEditorSize(cellEditor::getPreferredSize).
-        withCellValidator(value ->
+        withCellValidator((value, row, column) ->
                             value == null ? new ValidationInfo("Null value") :
                             ALLOWED_VALUES.contains(value.toString()) ? null :
                             validationInfoGenerator.apply(value.toString(), null)));
@@ -347,7 +346,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           }
         }
       }).bindToEditorSize(rightEditor::getPreferredSize).
-        withCellValidator(value -> {
+        withCellValidator((value, row, column) -> {
           if (value == null) return NULL_VALUE_ERROR;
           else {
             try {

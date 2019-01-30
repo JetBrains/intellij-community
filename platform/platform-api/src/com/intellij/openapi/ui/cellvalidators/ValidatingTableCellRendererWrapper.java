@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ValidatingTableCellRendererWrapper extends CellRendererPanel implements TableCellRenderer {
@@ -20,7 +19,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
   private final JLabel iconLabel = new JLabel();
 
   private Supplier<? extends Dimension> editorSizeSupplier = () -> JBUI.emptySize();
-  private Function<Object, ValidationInfo> cellValidator;
+  private TableCellValidator cellValidator;
 
   public ValidatingTableCellRendererWrapper(TableCellRenderer delegate) {
     this.delegate = delegate;
@@ -38,7 +37,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     return this;
   }
 
-  public ValidatingTableCellRendererWrapper withCellValidator(@NotNull Function<Object, ValidationInfo> cellValidator) {
+  public ValidatingTableCellRendererWrapper withCellValidator(@NotNull TableCellValidator cellValidator) {
     this.cellValidator = cellValidator;
     return this;
   }
@@ -55,7 +54,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     JComponent delegateRenderer = (JComponent)delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
     if (cellValidator != null) {
-      ValidationInfo result = cellValidator.apply(value);
+      ValidationInfo result = cellValidator.validate(value, row, column);
       iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
       putClientProperty(CELL_VALIDATION_PROPERTY, result);
     }

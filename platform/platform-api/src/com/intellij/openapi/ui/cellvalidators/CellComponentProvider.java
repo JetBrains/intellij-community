@@ -32,10 +32,12 @@ public abstract class CellComponentProvider<C extends JComponent> {
   }
 
   /**
-   * Convenient classes with standard implementations.
+   * Convenient classes with standard implementations. Don't use the class directly.
+   * It can either be created with {@link CellComponentProvider#forTable(JTable)} method or
+   * be extended.
    */
-  private static class TableProvider extends CellComponentProvider<JTable> {
-    private TableProvider(@NotNull JTable owner) {
+  public static class TableProvider extends CellComponentProvider<JTable> {
+    protected TableProvider(@NotNull JTable owner) {
       super(owner);
     }
 
