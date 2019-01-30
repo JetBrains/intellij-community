@@ -28,8 +28,8 @@ public class LockSupportTest {
     SocketLock lock1 = new SocketLock(path1 + "/c", path1 + "/s");
     SocketLock lock2 = new SocketLock(path2 + "/c", path2 + "/s");
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock());
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock());
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock().getActivateStatus());
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock().getActivateStatus());
     }
     finally {
       lock1.dispose();
@@ -41,7 +41,7 @@ public class LockSupportTest {
   public void testLock() throws Exception {
     SocketLock lock = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock());
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock().getActivateStatus());
     }
     finally {
       lock.dispose();
@@ -52,13 +52,13 @@ public class LockSupportTest {
   public void testTwoLocks() throws Exception {
     List<SocketLock> toClose = new ArrayList<>();
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c1", "s1").lock());
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c2", "s2").lock());
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c3", "s3").lock());
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c1", "s1").lock().getActivateStatus());
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c2", "s2").lock().getActivateStatus());
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, createLock(toClose, tempDir.getRoot(), "c3", "s3").lock().getActivateStatus());
 
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c1", "s1").lock());
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c2", "s2").lock());
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c3", "s3").lock());
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c1", "s1").lock().getActivateStatus());
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c2", "s2").lock().getActivateStatus());
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, createLock(toClose, tempDir.getRoot(), "c3", "s3").lock().getActivateStatus());
     }
     finally {
       toClose.forEach(SocketLock::dispose);
@@ -77,11 +77,11 @@ public class LockSupportTest {
     SocketLock lock1 = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
     SocketLock lock2 = new SocketLock(tempDir.getRoot().getPath() + "/c", tempDir.getRoot().getPath() + "/s");
 
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock());
-    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock());
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock().getActivateStatus());
+    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock().getActivateStatus());
 
     lock1.dispose();
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock());
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock().getActivateStatus());
     lock2.dispose();
   }
 

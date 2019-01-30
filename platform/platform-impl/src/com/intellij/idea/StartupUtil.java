@@ -9,6 +9,7 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
+import com.intellij.ide.CliResult;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -214,11 +215,16 @@ public class StartupUtil {
 
     activity = activity.endAndStart(Phases.LOCK_SYSTEM_DIRS);
 
-    SocketLock.ActivateStatus result = lockSystemFolders(args);
-    if (result == SocketLock.ActivateStatus.ACTIVATED) {
-      System.exit(0);
+    SocketLock.ActivateStatusAndResponse result = lockSystemFolders(args);
+    if (result.getActivateStatus() == SocketLock.ActivateStatus.ACTIVATED) {
+      final CliResult cliOutput = Objects.requireNonNull(result.getResponse());
+      if (cliOutput.getMessage() != null) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println(cliOutput.getMessage());
+      }
+      System.exit(cliOutput.getReturnCode());
     }
-    if (result == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
+    if (result.getActivateStatus() == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
@@ -420,23 +426,23 @@ public class StartupUtil {
   }
 
   @NotNull
-  private static synchronized SocketLock.ActivateStatus lockSystemFolders(@NotNull String[] args) {
+  private static synchronized SocketLock.ActivateStatusAndResponse lockSystemFolders(@NotNull String[] args) {
     if (ourSocketLock != null) {
       throw new AssertionError();
     }
 
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
-    SocketLock.ActivateStatus status;
+    SocketLock.ActivateStatusAndResponse status;
     try {
       status = ourSocketLock.lock(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
-      return SocketLock.ActivateStatus.CANNOT_ACTIVATE;
+      return SocketLock.ActivateStatusAndResponse.emptyResponse(SocketLock.ActivateStatus.CANNOT_ACTIVATE);
     }
 
-    switch (status) {
+    switch (status.getActivateStatus()) {
       case NO_INSTANCE:
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           //noinspection SynchronizeOnThis
