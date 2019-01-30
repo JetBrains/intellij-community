@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.android.tools:sdk-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.android.tools:sdk-common:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/sdk-common/26.3.0/sdk-common-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
