@@ -125,6 +125,11 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 2000);
   }
 
+  public void testManyUUIDs() {
+    final String text = StringUtil.repeat("asdasd ee3aaabc-98cb-47cf-a732-00f55f65975d ", 1000000);
+    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 3000);
+  }
+
   private static void doSplitterPerformanceTest(String text, Splitter splitter, int expectedTime) {
     PlatformTestUtil.startPerformanceTest("long word for spelling", expectedTime, () -> {
       try{
