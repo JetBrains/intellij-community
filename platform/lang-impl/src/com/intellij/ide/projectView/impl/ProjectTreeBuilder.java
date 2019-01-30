@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -136,9 +137,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private PsiElement findPsi(@NotNull VirtualFile vFile) {
-    if (!vFile.isValid()) return null;
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    return vFile.isDirectory() ? psiManager.findDirectory(vFile) : psiManager.findFile(vFile);
+    return PsiUtilCore.findFileSystemItem(myProject, vFile);
   }
 
   private class MyProblemListener implements ProblemListener {

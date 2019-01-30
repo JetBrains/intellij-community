@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -119,7 +119,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
         if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
-          return vFile.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(vFile) : PsiManager.getInstance(myProject).findFile(vFile);
+          return PsiUtilCore.findFileSystemItem(myProject, vFile);
         }
       }
     }

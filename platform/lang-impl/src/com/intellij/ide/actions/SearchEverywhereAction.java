@@ -86,6 +86,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -1125,11 +1126,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Nullable
     private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected) {
       if (myProject != null && value instanceof VirtualFile) {
-        PsiManager psiManager = PsiManager.getInstance(myProject);
-        VirtualFile virtualFile = (VirtualFile)value;
-        value = !virtualFile.isValid() ? virtualFile :
-                virtualFile.isDirectory() ? psiManager.findDirectory(virtualFile) :
-                psiManager.findFile(virtualFile);
+        value = PsiUtilCore.findFileSystemItem(myProject, (VirtualFile)value);
       }
 
       if (value instanceof PsiElement) {
