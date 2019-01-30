@@ -72,7 +72,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   }
 
   @NotNull
-  private Set<String> getWhitelistedGroups() {
+  protected Set<String> getWhitelistedGroups() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
