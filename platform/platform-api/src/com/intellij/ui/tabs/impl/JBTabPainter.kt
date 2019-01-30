@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.util.ui.JBUI
+import com.jetbrains.rd.swing.fillRect
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -86,7 +87,4 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
     g.color = if(active) theme.underline else theme.inactiveUnderline
     g.fillRect(underline)
   }
-
-
-  fun Graphics2D.fillRect(rect: Rectangle) = this@fillRect.fillRect(rect.x, rect.y, rect.width, rect.height)
 }

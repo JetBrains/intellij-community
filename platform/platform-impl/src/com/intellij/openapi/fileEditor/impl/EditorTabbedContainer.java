@@ -83,8 +83,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       }
 
-      private TabInfo myHoveredInfo;
-
       @Override
       protected boolean isActiveTab(TabInfo info) {
         if (Utils.Companion.isFocusOwner(this)) return true;
@@ -97,29 +95,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if(file == null) return false;
 
         return file.equals(info.getObject()) && window.equals(myWindow);
-      }
-
-      @Override
-      protected void onMouseEnteredHandler(TabInfo info) {
-        if (myHoveredInfo == info) return;
-
-        myHoveredInfo = info;
-
-        repaint();
-      }
-
-      @Override
-      protected void onMouseExitedHandler(TabInfo info) {
-        if (myHoveredInfo != info) return;
-
-        myHoveredInfo = null;
-
-        repaint();
-      }
-
-      @Override
-      protected boolean isHoveredTab(TabInfo info) {
-        return info == myHoveredInfo;
       }
 
       @Override

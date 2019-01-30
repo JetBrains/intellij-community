@@ -8,14 +8,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.Gray;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
@@ -23,12 +26,13 @@ import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
-import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
+import com.jetbrains.rd.util.lifetime.Lifetime;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +44,6 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -48,6 +51,8 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static com.intellij.ui.tabs.impl.UtilsKt.getTabLabelUnderMouse;
+import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
@@ -170,6 +175,9 @@ public class JBTabsImpl extends JComponent
   private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
 
+  Lifetime lifetime = createLifetime(this);
+  private TabLabel tabLabelAtMouse;
+
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
   }
@@ -204,6 +212,13 @@ public class JBTabsImpl extends JComponent
 
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
+
+    getTabLabelUnderMouse(this).advise(lifetime, label -> {
+      tabLabelAtMouse = label;
+      repaint();
+
+      return Unit.INSTANCE;
+    });
 
     myPopupListener = new PopupMenuListener() {
       @Override
@@ -347,6 +362,10 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+
+  protected boolean isHoveredTab(TabLabel label) {
+    return label != null && label == tabLabelAtMouse;
   }
 
   public boolean isEditorTabs() {
@@ -537,6 +556,11 @@ public class JBTabsImpl extends JComponent
     return 20;
   }
 
+
+  /**
+   * TODO use {@link RdIdeaKt#childAtMouse(com.intellij.openapi.wm.IdeGlassPane, java.awt.Container)}
+   */
+  @Deprecated
   class TabActionsAutoHideListener extends MouseMotionAdapter implements Weighted {
 
     private TabLabel myCurrentOverLabel;
@@ -2799,18 +2823,6 @@ public class JBTabsImpl extends JComponent
 
   public int getTabVGap() {
     return JBUI.scale(1);
-  }
-
-  protected void updateHover() {
-
-  }
-
-  protected void onMouseEnteredHandler(TabInfo info) {
-
-  }
-
-  protected void onMouseExitedHandler(TabInfo info) {
-
   }
 
   @Override
