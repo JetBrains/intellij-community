@@ -73,23 +73,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         try {
           if (!myProject.isDisposed()) {
             long contributorStarted = System.currentTimeMillis();
-            final TIntHashSet filter = new TIntHashSet(1000);
-            myContributorToItsSymbolsMap.put(contributor, filter);
-            if (contributor instanceof ChooseByNameContributorEx) {
-              ((ChooseByNameContributorEx)contributor).processNames(s -> {
-                if (nameProcessor.process(s)) {
-                  filter.add(s.hashCode());
-                }
-                return true;
-              }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
-            } else {
-              String[] names = contributor.getNames(myProject, checkBoxState);
-              for (String element : names) {
-                if (nameProcessor.process(element)) {
-                  filter.add(element.hashCode());
-                }
-              }
-            }
+            processContributorNames(contributor, checkBoxState, nameProcessor);
 
             if (LOG.isDebugEnabled()) {
               LOG.debug(contributor + " for " + (System.currentTimeMillis() - contributorStarted));
@@ -115,6 +99,28 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     if (LOG.isDebugEnabled()) {
       LOG.debug("processNames(): "+(finish-start)+"ms;");
     }
+  }
+
+  public void processContributorNames(@NotNull ChooseByNameContributor contributor,
+                                      boolean checkBoxState,
+                                      @NotNull Processor<? super String> nameProcessor) {
+    TIntHashSet filter = new TIntHashSet(1000);
+    if (contributor instanceof ChooseByNameContributorEx) {
+      ((ChooseByNameContributorEx)contributor).processNames(s -> {
+        if (nameProcessor.process(s)) {
+          filter.add(s.hashCode());
+        }
+        return true;
+      }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
+    } else {
+      String[] names = contributor.getNames(myProject, checkBoxState);
+      for (String element : names) {
+        if (nameProcessor.process(element)) {
+          filter.add(element.hashCode());
+        }
+      }
+    }
+    myContributorToItsSymbolsMap.put(contributor, filter);
   }
 
   IdFilter getIdFilter(boolean withLibraries) {

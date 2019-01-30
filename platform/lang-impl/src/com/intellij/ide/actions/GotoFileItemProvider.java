@@ -2,8 +2,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
@@ -19,12 +21,14 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +79,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     String sanitized = getSanitizedPattern(pattern, myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
     NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
-    myModel.processNames(grouper::processName, true);
+    processNames(grouper::processName);
 
     Ref<Boolean> hasSuggestions = Ref.create(false);
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
@@ -92,6 +96,23 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       }
     }
     return true;
+  }
+
+  /**
+   * Invoke contributors directly, as multithreading isn't of much value in Goto File,
+   * and filling {@link ContributorsBasedGotoByModel#myContributorToItsSymbolsMap} is expensive for the default contributor.
+   */
+  private void processNames(Processor<String> nameProcessor) {
+    List<ChooseByNameContributor> contributors = DumbService.getDumbAwareExtensions(myProject, ChooseByNameContributor.FILE_EP_NAME);
+    for (ChooseByNameContributor contributor : contributors) {
+      if (contributor instanceof DefaultFileNavigationContributor) {
+        FilenameIndex.processAllFileNames(nameProcessor,
+                                          FindSymbolParameters.searchScopeFor(myProject, true),
+                                          IdFilter.getProjectIdFilter(myProject, true));
+      } else {
+        myModel.processContributorNames(contributor, true, nameProcessor);
+      }
+    }
   }
 
   @NotNull
@@ -216,11 +237,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       ProgressManager.checkCanceled();
       int position = findMatchStartingPosition(name, namePattern);
       if (position < namePattern.length()) {
-        List<String> list = candidateNames.get(position);
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (list) { // names can be processed concurrently
-          list.add(name);
-        }
+        candidateNames.get(position).add(name);
       }
       return true;
     }
