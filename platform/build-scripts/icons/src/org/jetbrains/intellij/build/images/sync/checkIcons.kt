@@ -41,7 +41,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
   }
   syncDevRepo(context)
-  if (!context.iconsSyncRequired() && !context.devSyncRequired()) {
+  if (!context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired()) {
     if (isUnderTeamCity() && isPreviousBuildFailed()) {
       context.doFail("No changes are found")
     }
