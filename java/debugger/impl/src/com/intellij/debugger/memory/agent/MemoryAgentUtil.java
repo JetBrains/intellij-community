@@ -32,12 +32,12 @@ public class MemoryAgentUtil {
 
     ParametersList parametersList = parameters.getVMParametersList();
     if (parametersList.getParameters().stream().anyMatch(x -> x.contains("memory_agent"))) return;
-    File extractedAgent = null;
+    boolean isInDebugMode = Registry.is("debugger.memory.agent.debug");
+    File agentFile = null;
     String errorMessage = null;
     long start = System.currentTimeMillis();
     try {
-      extractedAgent = ApplicationManager.getApplication()
-        .executeOnPooledThread(() -> new AgentExtractor().extract()).get(1, TimeUnit.SECONDS);
+      agentFile = getAgentFile(isInDebugMode);
     }
     catch (InterruptedException e) {
       errorMessage = "Interrupted";
@@ -49,7 +49,7 @@ public class MemoryAgentUtil {
     catch (TimeoutException e) {
       errorMessage = "Timeout";
     }
-    if (errorMessage != null || extractedAgent == null) {
+    if (errorMessage != null || agentFile == null) {
       LOG.warn("Could not extract agent: " + errorMessage);
       return;
     }
@@ -57,7 +57,7 @@ public class MemoryAgentUtil {
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
     String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent", null);
     String args = "";
-    if (Registry.is("debugger.memory.agent.debug")) {
+    if (isInDebugMode) {
       args = "5";// Enable debug messages
     }
     path += "=" + args;
@@ -98,5 +98,17 @@ public class MemoryAgentUtil {
         return agent;
       }
     });
+  }
+
+  private static File getAgentFile(boolean isInDebugMode) throws InterruptedException, ExecutionException, TimeoutException {
+    if (isInDebugMode) {
+      String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();
+      if (!debugAgentPath.isEmpty()) {
+        return new File(debugAgentPath);
+      }
+    }
+
+    return ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> new AgentExtractor().extract()).get(1, TimeUnit.SECONDS);
   }
 }
