@@ -125,9 +125,6 @@
 
     <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
-    <group id="TypeHierarchyPopupMenu">
-    </group>
-
     <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>
     </action>

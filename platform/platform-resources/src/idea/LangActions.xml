@@ -696,6 +696,42 @@
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
     <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
 
+    <group id="TypeHierarchyPopupMenu">
+      <reference ref="TypeHierarchy.Class"/>
+      <reference ref="TypeHierarchy.Subtypes"/>
+      <reference ref="TypeHierarchy.Supertypes"/>
+      <separator/>
+    </group>
+
+    <group id="MethodHierarchyPopupMenu"/>
+    <group id="CallHierarchyPopupMenu" />
+
+    <group>
+      <add-to-group group-id="TypeHierarchyPopupMenu"/>
+      <add-to-group group-id="MethodHierarchyPopupMenu"/>
+      <add-to-group group-id="CallHierarchyPopupMenu"/>
+
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
+
     <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
     <group id="DebugMainMenu">
       <separator/>
