@@ -220,19 +220,35 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myAdditionalLinesCount = additionalLinesCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
     return myAdditionalColumnsCount;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setAdditionalColumnsCount(int value) {
     myAdditionalColumnsCount = value;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
 
+  /**
+   * @deprecated Not used, to be removed in version 2020.1.
+   */
+  @Deprecated
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     myLineMarkerAreaShown = lineMarkerAreaShown;
   }
