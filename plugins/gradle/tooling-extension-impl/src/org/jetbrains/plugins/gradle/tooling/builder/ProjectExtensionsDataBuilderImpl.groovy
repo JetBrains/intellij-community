@@ -64,18 +64,18 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
             ? convention.schema.keySet().asList() as List<String>
             : extractKeysViaReflection(convention)
 
-      keyList.each { name ->
+      for (name in keyList) {
         def value = convention.findByName(name)
 
-        if (value == null) return
-        if (name == 'idea') return
+        if (value == null) continue
+        if (name == 'idea') continue
 
         def rootTypeFqn = getType(value)
         def namedObjectTypeFqn = null as String
         if (value instanceof NamedDomainObjectCollection) {
           def objectCollection = (NamedDomainObjectCollection)value
-          if(!objectCollection.isEmpty()) {
-            namedObjectTypeFqn = getType(objectCollection.find{true})
+          if (!objectCollection.isEmpty()) {
+            namedObjectTypeFqn = getType(objectCollection.find { true })
           }
         }
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))
