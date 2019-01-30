@@ -873,6 +873,16 @@ public class FSRecords {
     });
   }
 
+  static boolean mayHaveChildren(int id) {
+    return readAndHandleErrors(() -> {
+      try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
+        if (input == null) return true;
+        final int count = DataInputOutputUtil.readINT(input);
+        return count != 0;
+      }
+    });
+  }
+
   public static class NameId {
     @NotNull
     public static final NameId[] EMPTY_ARRAY = new NameId[0];
