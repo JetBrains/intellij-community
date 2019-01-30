@@ -66,4 +66,9 @@ public final class TargetAction extends DumbAwareAction {
       }
     }
   }
+
+  @Override
+  public String getTemplateText() {
+    return "Ant Target";
+  }
 }

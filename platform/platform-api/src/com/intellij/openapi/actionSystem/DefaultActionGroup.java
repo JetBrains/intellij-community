@@ -411,4 +411,20 @@ public class DefaultActionGroup extends ActionGroup {
       super("cannot add an action twice: " + action);
     }
   }
+
+  /**
+   * Creates an action group with specified template text. It is necessary to redefine template text if group contains
+   * user specific data such as Project name, file name, etc
+   * @param templateText template text which will be used in statistics
+   * @return action group
+   */
+  public static DefaultActionGroup createUserDataAwareGroup(String templateText) {
+    return new DefaultActionGroup() {
+      @Nullable
+      @Override
+      public String getTemplateText() {
+        return templateText;
+      }
+    };
+  }
 }
