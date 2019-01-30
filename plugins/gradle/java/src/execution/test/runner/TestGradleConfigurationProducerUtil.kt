@@ -76,33 +76,37 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   if (testRunConfigurations.size > 1) {
     unorderedParameters.add("--continue")
   }
+  setFrom(taskSettings, unorderedParameters)
+  return true
+}
 
+private fun ExternalSystemTaskExecutionSettings.setFrom(taskSettings: List<Pair<String, List<String>>>, unorderedParameters: List<String>) {
   val hasTasksAfterTaskWithArguments = taskSettings.dropWhile { it.second.isEmpty() }.size > 1
   if (hasTasksAfterTaskWithArguments) {
     val joiner = StringJoiner(" ")
     for ((task, arguments) in taskSettings) {
-      joiner.add(task)
-      for (argument in arguments) {
-        joiner.add(argument)
+      when {
+        task.contains(' ') -> joiner.add("'$task'")
+        else -> joiner.add(task)
       }
+      joiner.addAll(arguments)
     }
-    for (argument in unorderedParameters) {
-      joiner.add(argument)
-    }
+    joiner.addAll(unorderedParameters)
     taskNames = emptyList()
     scriptParameters = joiner.toString()
   }
   else {
-    val arguments = taskSettings.lastOrNull()?.second ?: emptyList()
     val joiner = StringJoiner(" ")
-    for (argument in arguments) {
-      joiner.add(argument)
-    }
-    for (argument in unorderedParameters) {
-      joiner.add(argument)
-    }
+    joiner.addAll(taskSettings.lastOrNull()?.second ?: emptyList())
+    joiner.addAll(unorderedParameters)
     taskNames = taskSettings.map { it.first }
     scriptParameters = joiner.toString()
   }
-  return true
 }
+
+private fun StringJoiner.addAll(elements: Iterable<String>) = apply {
+  for (element in elements) {
+    add(element)
+  }
+}
+
