@@ -77,4 +77,8 @@ public class PointlessBitwiseExpression {
       int c = <warning descr="'i & i' can be replaced with 'i'">i &  i</warning>; // i
       int d = <warning descr="'i | i' can be replaced with 'i'">i |  i</warning>; // i
     }
+    
+    void testChar(int value) {
+        int res = value & '\uFFFF';
+    }
 }

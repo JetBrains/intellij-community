@@ -301,26 +301,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     else {
       value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
     }
-    if (value == null) {
-      return false;
-    }
-    if (value instanceof Integer &&
-        ((Integer)value).intValue() == 0xffffffff) {
-      return true;
-    }
-    if (value instanceof Long &&
-        ((Long)value).longValue() == 0xffffffffffffffffL) {
-      return true;
-    }
-    if (value instanceof Short &&
-        ((Short)value).shortValue() == (short)0xffff) {
-      return true;
-    }
-    if (value instanceof Character &&
-        ((Character)value).charValue() == (char)0xffff) {
-      return true;
-    }
-    return value instanceof Byte &&
-           ((Byte)value).byteValue() == (byte)0xff;
+    return (value instanceof Integer || value instanceof Short || value instanceof Byte) && ((Number)value).intValue() == -1 ||
+           value instanceof Long && ((Long)value).longValue() == 0xffffffffffffffffL;
   }
 }
