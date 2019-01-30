@@ -56,6 +56,20 @@ fun addNewElementsToIgnoreBlock(project: Project,
   return ignoreFilePsi
 }
 
+fun addNewElements(project: Project, ignoreFile: VirtualFile, vararg newEntries: IgnoredFileDescriptor): PsiFile? {
+  val ignoreFilePsi = ignoreFile.findIgnorePsi(project) ?: return null
+  val psiFactory = PsiFileFactory.getInstance(project) as PsiFileFactoryImpl
+  invokeAndWaitIfNeeded {
+    runUndoTransparentWriteAction {
+      addNewElements(ignoreFilePsi,
+                     newEntries.map {
+                       it.toPsiElement(psiFactory, ignoreFilePsi)
+                     })
+    }
+  }
+  return ignoreFilePsi
+}
+
 private fun updateIgnoreBlock(psiParserFacade: PsiParserFacade,
                               ignoreFilePsi: PsiFile,
                               ignoredGroupDescription: String,
@@ -75,6 +89,15 @@ private fun updateIgnoreBlock(psiParserFacade: PsiParserFacade,
       lastElementInBlock = ignoreFilePsi.addAfter(newEntry, lastElementInBlock)
     }
     replacementCandidate = replacementCandidate.nextIgnoreGroupElement()
+  }
+}
+
+private fun addNewElements(ignoreFilePsi: PsiFile, newEntries: List<PsiElement>) {
+  with(ignoreFilePsi) {
+    if (!lastChild.isNewLine()) {
+      add(createNewline())
+    }
+    newEntries.forEach { add(it); add(createNewline()) }
   }
 }
 
