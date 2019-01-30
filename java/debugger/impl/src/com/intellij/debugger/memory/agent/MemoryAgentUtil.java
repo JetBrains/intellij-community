@@ -27,7 +27,6 @@ public class MemoryAgentUtil {
 
   public static void addMemoryAgent(JavaParameters parameters) {
     if (!Registry.is("debugger.enable.memory.agent")) {
-
       return;
     }
 
@@ -56,7 +55,12 @@ public class MemoryAgentUtil {
     }
 
     LOG.info("Memory agent extracting took " + (System.currentTimeMillis() - start) + " ms");
-    String path = JavaExecutionUtil.handleSpacesInAgentPath(extractedAgent.getAbsolutePath(), "debugger-memory-agent", null);
+    String path = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "debugger-memory-agent", null);
+    String args = "";
+    if (Registry.is("debugger.memory.agent.debug")) {
+      args = "5";// Enable debug messages
+    }
+    path += "=" + args;
     parametersList.add("-agentpath:" + path);
   }
 
