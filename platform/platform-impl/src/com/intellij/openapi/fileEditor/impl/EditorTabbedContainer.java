@@ -83,7 +83,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       }
 
-      @Override
+/*      @Override
       protected boolean isActiveTab(TabInfo info) {
         if (Utils.Companion.isFocusOwner(this)) return true;
 
@@ -95,7 +95,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if(file == null) return false;
 
         return file.equals(info.getObject()) && window.equals(myWindow);
-      }
+      }*/
 
       @Override
       protected JBTabPainter createTabPainter() {

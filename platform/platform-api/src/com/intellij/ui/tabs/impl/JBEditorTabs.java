@@ -128,8 +128,20 @@ public class JBEditorTabs extends JBTabsImpl {
     final TabLabel label = myInfo2Label.get(info);
     if (label == null) return;
 
+    /*Insets border = getTabsBorder().getEffectiveBorder();
+    switch (getPosition()) {
+      case top: border.bottom = 0;
+      case bottom: border.top = 0;
+      case left: border.right = 0;
+      case right: border.left = 0;
+    }
+
+    Rectangle rect = fixedBounds(label.getBounds(), border);*/
+
     Rectangle rect = fixedBounds(label.getBounds());
     final Color tabColor = label.getInfo().getTabColor();
+
+
     tabPainter.paintSelectedTab(g2d, rect, tabColor, getPosition(), isActiveTab(info), isHoveredTab(label));
   }
 
@@ -137,6 +149,7 @@ public class JBEditorTabs extends JBTabsImpl {
   private Rectangle fixedBounds(Rectangle effectiveBounds) {
     return fixedBounds(effectiveBounds, getTabsBorder().getEffectiveBorder());
   }
+
   private Rectangle fixedBounds(Rectangle effectiveBounds, Insets insets) {
     int _x = effectiveBounds.x + insets.left;
     int _y = effectiveBounds.y + insets.top;

@@ -11,6 +11,7 @@ import java.awt.Rectangle
 interface JBTabPainter {
   companion object {
     val EDITOR_TAB = TabTheme(thickness = JBUI.scale(3))
+    val TOOLWINDOW_TAB = TabTheme(defaultTabColor = null)
   }
 
   @Deprecated("You should move the painting logic to an implementation of this interface")
@@ -24,7 +25,7 @@ interface JBTabPainter {
 
 class TabTheme(
   val background: Color = JBUI.CurrentTheme.EditorTabs.backgroundColor(),
-  val defaultTabColor: Color = JBUI.CurrentTheme.EditorTabs.defaultTabColor(),
+  val defaultTabColor: Color? = JBUI.CurrentTheme.EditorTabs.defaultTabColor(),
   val underline: Color = JBUI.CurrentTheme.EditorTabs.underlineColor(),
   val inactiveUnderline: Color = JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
   val hoverOverlayColor: Color = JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
@@ -43,7 +44,7 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   }
 
   override fun fillBeforeAfterTabs(g: Graphics2D, before: Rectangle, after: Rectangle) {
-    g.color = theme.defaultTabColor
+    g.color = theme.defaultTabColor ?: return
 /*    val rect = Rectangle(before.x, before.y, after.x+after.width, after.y+after.height)
     g.fillRect(rect.x, rect.y, rect.width, rect.height)*/
 
@@ -52,8 +53,11 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   }
 
   override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, hovered: Boolean) {
-    g.color = tabColor ?: theme.defaultTabColor
-    g.fillRect(rect)
+    val background = tabColor ?: theme.defaultTabColor
+    if(background != null) {
+      g.color = background
+      g.fillRect(rect)
+    }
 
     if(hovered) {
       g.color = theme.hoverOverlayColor
@@ -67,8 +71,11 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
   }
 
   override fun paintSelectedTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, position: JBTabsPosition, active: Boolean, hovered: Boolean) {
-    g.color = tabColor ?: theme.defaultTabColor
-    g.fillRect(rect)
+    val background = tabColor ?: theme.defaultTabColor
+    if(background != null) {
+      g.color = background
+      g.fillRect(rect)
+    }
 
     if(hovered) {
       g.color = theme.hoverOverlayColor
@@ -78,8 +85,11 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
     val thickness = theme.thickness
 
     val underline = when(position) {
-      JBTabsPosition.bottom -> Rectangle(rect.x, rect.y, rect.width, thickness)
-      JBTabsPosition.top -> Rectangle(rect.x, rect.y + rect.height - thickness, rect.width, thickness)
+      /**
+       * TODO
+       */
+      JBTabsPosition.bottom -> Rectangle(rect.x, rect.y - 1, rect.width, thickness)
+      JBTabsPosition.top -> Rectangle(rect.x, rect.y + rect.height - thickness + 1, rect.width, thickness)
       JBTabsPosition.left -> Rectangle(rect.x + rect.width - thickness, rect.y, thickness, rect.height)
       else -> Rectangle(rect.x, rect.y, thickness, rect.height)
     }

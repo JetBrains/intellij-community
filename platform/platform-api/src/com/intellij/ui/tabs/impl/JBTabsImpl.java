@@ -2822,6 +2822,9 @@ public class JBTabsImpl extends JComponent
   }
 
   public int getTabVGap() {
+    /**
+     * TODO use borders instead of layout vGap
+     */
     return JBUI.scale(1);
   }
 
