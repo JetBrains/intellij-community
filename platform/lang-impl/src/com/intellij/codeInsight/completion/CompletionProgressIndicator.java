@@ -448,6 +448,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
+
+    myArranger.setLastLookupPrefix(myLookup.getAdditionalPrefix());
+
     //noinspection NonAtomicOperationOnVolatileField
     myCount++; // invoked from a single thread
 
