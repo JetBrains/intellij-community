@@ -22,7 +22,7 @@ def print_usage(cmd):
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
 
-def print_to_sock(sock, str):
+def write_to_sock(sock, str):
     if sys.version_info[0] >= 3: str = str.encode('utf-8')
     sock.send(struct.pack('>h', len(str)) + str)
 
@@ -30,6 +30,22 @@ def print_to_sock(sock, str):
 def read_from_sock(sock):
     len = struct.unpack('>h', sock.recv(2))[0]
     return sock.recv(len).decode('utf-8')
+
+
+def read_sequence_from_sock(sock):
+    result = []
+    while True:
+        try:
+            str = read_from_sock(sock)
+            if str == '---':
+                break
+            result.append(str)
+
+        except (socket.error, IOError) as e:
+            print "I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e)
+            traceback.print_exception(*sys.exc_info())
+            return result
+    return result
 
 
 def process_args(argv):
@@ -78,38 +94,28 @@ def try_activate_instance(args):
         return False
 
     s = socket.socket()
-    s.settimeout(0.3)
+    s.settimeout(1.0)
     try:
         s.connect(('127.0.0.1', port))
     except (socket.error, IOError):
         return False
 
-    found = False
-    while True:
-        try:
-            path = read_from_sock(s)
-            if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
-                found = True
-            elif path == '---':
-                break
-
-        except (socket.error, IOError):
-            return False
+    paths = read_sequence_from_sock(s)
+    found = CONFIG_PATH in paths
 
     if found:
-        print_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))
+        write_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))
 
-        response = read_from_sock(s)
-
-        spl = response.split('\0')
-        if spl[0] != 'ok':
+        s.settimeout(None)
+        response = read_sequence_from_sock(s)
+        if response[0] != 'ok':
             print('bad response: ' + response)
             exit(1)
 
-        if len(spl) > 2:
-            print(spl[2])
+        if len(response) > 2:
+            print(response[2])
 
-        exit(int(spl[1]))
+        exit(int(response[1]))
 
     return False
 
