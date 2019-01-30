@@ -422,7 +422,7 @@ public class ReflectionUtil {
         return t;
       }
 
-      ExceptionUtil.rethrow(e);
+      ExceptionUtilRt.rethrow(e);
     }
 
     // error will be thrown
