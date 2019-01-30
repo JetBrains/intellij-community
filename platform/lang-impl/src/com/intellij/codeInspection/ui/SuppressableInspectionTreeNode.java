@@ -5,12 +5,14 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
   @NotNull
   private final InspectionToolPresentation myPresentation;
+  private final long myCreationModCount;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile String myPresentableName;
   private volatile Boolean myValid;
@@ -32,11 +35,15 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   SuppressableInspectionTreeNode(@NotNull InspectionToolPresentation presentation, @NotNull InspectionTreeNode parent) {
     super(parent);
     myPresentation = presentation;
+    myCreationModCount = getModCount();
   }
 
   void nodeAdded() {
     dropProblemCountCaches();
-    ReadAction.run(() -> myValid = calculateIsValid());
+    ReadAction.run(() -> {
+      long count = getModCount();
+      myValid = count == myCreationModCount ? !(this instanceof OfflineProblemDescriptorNode) : calculateIsValid();
+    });
     //force calculation
     getProblemLevels();
   }
@@ -222,5 +229,9 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     synchronized (NodeState.INTERNER) {
       return NodeState.INTERNER.intern(state);
     }
+  }
+
+  private long getModCount() {
+    return PsiManager.getInstance(myPresentation.getContext().getProject()).getModificationTracker().getModificationCount();
   }
 }
