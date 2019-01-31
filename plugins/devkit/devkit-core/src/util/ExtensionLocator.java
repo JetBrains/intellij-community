@@ -1,158 +1,126 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.devkit.util;
+package org.jetbrains.idea.devkit.util
 
-import com.intellij.lang.jvm.JvmClass;
-import com.intellij.lang.jvm.util.JvmClassUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.SmartList;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.util.JvmClassUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.UsageSearchContext
+import com.intellij.psi.util.ClassUtil
+import com.intellij.psi.xml.XmlTag
+import com.intellij.util.SmartList
+import com.intellij.util.xml.DomUtil
+import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.dom.ExtensionPoint
 
-import java.util.List;
-import java.util.function.BiFunction;
+fun locateExtensionsByClass(project: Project, clazz: JvmClass): ExtensionLocator {
+  return ExtensionByClassLocator(project, clazz)
+}
 
-public abstract class ExtensionLocator {
-  @NotNull
-  public abstract List<ExtensionCandidate> findCandidates();
+fun locateExtensionsByPsiClass(psiClass: PsiClass): ExtensionLocator {
+  return ExtensionByPsiClassLocator(psiClass)
+}
 
-  @NotNull
-  public static ExtensionLocator byClass(@NotNull Project project, @NotNull JvmClass clazz) {
-    return new ExtensionByClassLocator(project, clazz);
-  }
+fun locateExtensionsByExtensionPoint(extensionPoint: ExtensionPoint): ExtensionLocator {
+  return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, null)
+}
 
-  public static ExtensionLocator byPsiClass(@NotNull PsiClass psiClass) {
-    return new ExtensionByPsiClassLocator(psiClass);
-  }
+fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extensionId: String): ExtensionLocator {
+  return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
+}
 
-  public static ExtensionLocator byExtensionPoint(@NotNull ExtensionPoint extensionPoint) {
-    return new ExtensionByExtensionPointLocator(extensionPoint, null);
-  }
-
-  public static ExtensionLocator byExtensionPointAndId(@NotNull ExtensionPoint extensionPoint, @NotNull String extensionId) {
-    return new ExtensionByExtensionPointLocator(extensionPoint, extensionId);
-  }
-
-
-  private static class ExtensionByClassLocator extends ExtensionLocator {
-    private final Project myProject;
-    private final JvmClass myClazz;
-
-    ExtensionByClassLocator(@NotNull Project project, @NotNull JvmClass clazz) {
-      myProject = project;
-      myClazz = clazz;
-    }
-
-    @NotNull
-    @Override
-    public List<ExtensionCandidate> findCandidates() {
-      return findCandidatesByClassName(JvmClassUtil.getJvmClassName(myClazz), myProject);
-    }
-  }
-
-  private static class ExtensionByPsiClassLocator extends ExtensionLocator {
-    private final PsiClass myPsiClass;
-
-    ExtensionByPsiClassLocator(PsiClass psiClass) {
-      myPsiClass = psiClass;
-    }
-
-    @Override
-    @NotNull
-    public List<ExtensionCandidate> findCandidates() {
-      return findCandidatesByClassName(ClassUtil.getJVMClassName(myPsiClass), myPsiClass.getProject());
-    }
-  }
-
-  private static class ExtensionByExtensionPointLocator extends ExtensionLocator {
-    private final ExtensionPoint myExtensionPoint;
-    private final String myExtensionId;
-
-    private ExtensionByExtensionPointLocator(@NotNull ExtensionPoint extensionPoint, @Nullable String extensionId) {
-      myExtensionPoint = extensionPoint;
-      myExtensionId = extensionId;
-    }
-
-    @NotNull
-    @Override
-    public List<ExtensionCandidate> findCandidates() {
-      XmlTag epTag = myExtensionPoint.getXmlTag();
-
-      // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
-      // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-      String epNameToSearch = StringUtil.substringAfterLast(myExtensionPoint.getEffectiveQualifiedName(), ".");
-
-      List<ExtensionCandidate> result = new SmartList<>();
-      processExtensionDeclarations(epNameToSearch, epTag.getProject(), false, (extension, tag) -> {
-        ExtensionPoint ep = extension.getExtensionPoint();
-        if (ep == null) return true;
-
-        if (StringUtil.equals(ep.getEffectiveQualifiedName(), myExtensionPoint.getEffectiveQualifiedName())
-            && (myExtensionId == null || myExtensionId.equals(extension.getId().getStringValue()))) {
-          result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
-          return myExtensionId == null; // stop after the first found candidate if ID is specified
-        }
-        return true;
-      });
-      return result;
-    }
-  }
-
-
-  private static void processExtensionDeclarations(@Nullable String name,
-                                                   @NotNull Project project,
-                                                   boolean strictMatch,
-                                                   @NotNull BiFunction<? super Extension, ? super XmlTag, Boolean> callback) {
-    if (name == null) return;
-    GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
-
-    PsiSearchHelper.getInstance(project).processElementsWithWord((element, offsetInElement) -> {
-      if (!(element instanceof XmlTag)) {
-        return true;
+private fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean, callback: (Extension, XmlTag) -> Boolean) {
+  val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
+  PsiSearchHelper.getInstance(project).processElementsWithWord(
+    { element, offsetInElement ->
+      if (element !is XmlTag) {
+        return@processElementsWithWord true
       }
-      PsiElement elementAtOffset = element.findElementAt(offsetInElement);
+
+      val elementAtOffset = element.findElementAt(offsetInElement)
       if (elementAtOffset == null) {
-        return true;
+        return@processElementsWithWord true
       }
 
-      String foundText = elementAtOffset.getText();
+      val foundText = elementAtOffset.text
       if (!strictMatch && !StringUtil.contains(foundText, name)) {
-        return true;
+        return@processElementsWithWord true
       }
       if (strictMatch && !StringUtil.equals(foundText, name)) {
-        return true;
+        return@processElementsWithWord true
       }
 
-      XmlTag tag = (XmlTag)element;
-      DomElement dom = DomUtil.getDomElement(tag);
-      if (!(dom instanceof Extension)) {
-        return true;
-      }
+      val dom = DomUtil.getDomElement(element) as? Extension ?: return@processElementsWithWord true
+      callback(dom, element)
+    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
+}
 
-      return callback.apply((Extension)dom, tag);
-    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+private fun findCandidatesByClassName(jvmClassName: String, project: Project): List<ExtensionCandidate> {
+  val result = SmartList<ExtensionCandidate>()
+  val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
+  processExtensionDeclarations(jvmClassName, project, true) { extension, tag ->
+    if (extension.extensionPoint != null) {
+      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
+    }
+    // continue processing
+    true
+  }
+  return result
+}
+
+class ExtensionByExtensionPointLocator : ExtensionLocator {
+  private val project: Project
+  private val pointQualifiedName: String
+  private val extensionId: String?
+
+  constructor(project: Project, extensionPoint: ExtensionPoint, extensionId: String?) {
+    this.project = project
+    pointQualifiedName = extensionPoint.effectiveQualifiedName
+    this.extensionId = extensionId
   }
 
-  private static List<ExtensionCandidate> findCandidatesByClassName(@Nullable String jvmClassName, @NotNull Project project) {
-    List<ExtensionCandidate> result = new SmartList<>();
-    processExtensionDeclarations(jvmClassName, project, true, (extension, tag) -> {
-      if (extension.getExtensionPoint() != null) {
-        result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
+  constructor(project: Project, extensionPointQualifiedName: String, extensionId: String?) {
+    this.project = project
+    pointQualifiedName = extensionPointQualifiedName
+    this.extensionId = extensionId
+  }
+
+  override fun findCandidates(): List<ExtensionCandidate> {
+    // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
+    // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
+    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return emptyList()
+
+    val result = SmartList<ExtensionCandidate>()
+    val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
+    processExtensionDeclarations(epNameToSearch, project, false) { extension, tag ->
+      val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
+
+      if (StringUtil.equals(ep.effectiveQualifiedName, pointQualifiedName) && (extensionId == null || extensionId == extension.id.stringValue)) {
+        result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
+        // stop after the first found candidate if ID is specified
+        return@processExtensionDeclarations extensionId == null
       }
-      return true; // continue processing
-    });
-    return result;
+      true
+    }
+    return result
+  }
+}
+
+sealed class ExtensionLocator {
+  abstract fun findCandidates(): List<ExtensionCandidate>
+}
+
+private class ExtensionByClassLocator(private val project: Project, private val clazz: JvmClass) : ExtensionLocator() {
+  override fun findCandidates(): List<ExtensionCandidate> {
+    return findCandidatesByClassName(JvmClassUtil.getJvmClassName(clazz) ?: return emptyList(), project)
+  }
+}
+
+private class ExtensionByPsiClassLocator(private val psiClass: PsiClass) : ExtensionLocator() {
+  override fun findCandidates(): List<ExtensionCandidate> {
+    return findCandidatesByClassName(ClassUtil.getJVMClassName(psiClass) ?: return emptyList(), psiClass.project)
   }
 }
