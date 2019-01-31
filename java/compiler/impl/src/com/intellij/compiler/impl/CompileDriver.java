@@ -581,8 +581,8 @@ public class CompileDriver {
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
     try {
-      CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
-      if (tasks.length > 0) {
+      List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
+      if (tasks.size() > 0) {
         progressIndicator.setText(
           CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {

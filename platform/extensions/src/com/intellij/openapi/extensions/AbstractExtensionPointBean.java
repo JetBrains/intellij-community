@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -64,5 +65,31 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
                                   @NotNull final PicoContainer container,
                                   final boolean allowNonPublicClasses) {
     return (T)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses).getComponentInstance(container);
+  }
+
+  @NotNull
+  protected <T> T instantiateWithPicoContainerOnlyIfNeeded(@Nullable String implementationClass, @NotNull PicoContainer picoContainer)
+    throws ClassNotFoundException {
+    if (implementationClass == null) {
+      throw new RuntimeException("implementation class is not specified, " +
+                                 "plugin id: " +
+                                 (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
+                                 "Check if 'implementationClass' attribute is specified");
+    }
+
+
+    Class<T> clazz = findClass(implementationClass);
+    try {
+      return ReflectionUtil.newInstance(clazz);
+    }
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof NoSuchMethodException) {
+        LOG.error("Bean extension class constructor must not have parameters: " + implementationClass);
+        return instantiate(clazz, picoContainer, true);
+      }
+      else {
+        throw e;
+      }
+    }
   }
 }
