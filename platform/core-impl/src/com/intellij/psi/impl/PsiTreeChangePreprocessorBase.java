@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
-
   protected final PsiManager myPsiManager;
 
   public PsiTreeChangePreprocessorBase(@NotNull PsiManager psiManager) {
