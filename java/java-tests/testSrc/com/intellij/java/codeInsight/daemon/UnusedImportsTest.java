@@ -92,6 +92,14 @@ public class UnusedImportsTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(true,false, false);
   }
 
+  public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    myFixture.addClass("package a; public class A {\n" +
+                       " public static void foo(Object o) {}\n" +
+                       " public static void foo(String s) {}\n" +
+                       "}");
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting(true, false, false);
