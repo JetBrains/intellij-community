@@ -166,9 +166,10 @@ public final class MainRunner {
 
   // Called via reflection from WindowsCommandLineProcessor.processWindowsLauncherCommandLine
   @SuppressWarnings("unused")
-  public static void processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
+  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
     if (LISTENER != null) {
-      LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
+      return LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
     }
+    return 1;
   }
 }
