@@ -12,11 +12,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
@@ -68,6 +70,11 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean acceptsEmptyRoot() {
+    return true;
+  }
+
+  @Override
   public PsiElement findElementToCheck(@NotNull PsiElement element) {
     PsiElement current = element;
     while (current != null && !(current instanceof PsiFile)) {
@@ -87,7 +94,8 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Nullable
   @Override
   public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
-    return element instanceof YAMLValue ? YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element) : null;
+    return element instanceof YAMLValue ? YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element)
+                                        : (element instanceof YAMLDocument ? new YamlEmptyObjectAdapter(element) : null);
   }
 
   @Override
@@ -229,7 +237,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         assert property instanceof YAMLKeyValue;
         YAMLValue value = ((YAMLKeyValue)property).getValue();
         if (value == null) return null;
-        return adjustValue(property);
+        return adjustValue(value);
       }
 
       @NotNull
@@ -249,16 +257,30 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return ((YAMLKeyValue)property).getName();
       }
 
+      private YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
+        if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
+          PsiElement prev = element.getPrevSibling();
+          prev = prev == null ? null : prev.getPrevSibling();
+          if (prev instanceof YAMLKeyValue && ((YAMLKeyValue)prev).getValue() == null) {
+            return (YAMLKeyValue)prev;
+          }
+        }
+        return null;
+      }
+
       @NotNull
       @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value) {
-        return myGenerator.createYamlKeyValue(name, StringUtil.unquoteString(value));
+      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+        YAMLKeyValue keyValue = myGenerator.createYamlKeyValue(name, StringUtil.unquoteString(value));
+        return element instanceof YAMLDocument || findPrecedingKeyValueWithNoValue(element) != null
+               ? myGenerator.createDummyYamlWithText(keyValue.getText()).getDocuments().get(0).getFirstChild()
+               : keyValue;
       }
 
       @Override
-      public boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement) {
-        if (newElement instanceof YAMLKeyValue) {
-          newElement.getParent().addAfter(myGenerator.createEol(), newElement);
+      public boolean ensureComma(PsiElement self, PsiElement newElement) {
+        if (newElement instanceof YAMLKeyValue && self instanceof YAMLKeyValue) {
+          self.getParent().addAfter(myGenerator.createEol(), self);
         }
         return false;
       }
@@ -278,6 +300,33 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       @Override
       public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
         return initialElement instanceof YAMLValue && initialElement != element;
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
+        if (type == null) return "";
+        if (type == JsonSchemaType._object) return " ";
+        if (type == JsonSchemaType._array) return " - ";
+        return type.getDefaultValue();
+      }
+
+      @Override
+      public PsiElement adjustNewProperty(PsiElement element) {
+        if (element instanceof YAMLMapping) return element.getFirstChild();
+        return element;
+      }
+
+      @Override
+      public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
+        YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
+        assert keyValue != null: "Should come here only for YAMLKeyValue with no value and a following indent";
+        keyValue.addBefore(myGenerator.createEol(), null);
+        keyValue.addBefore(myGenerator.createIndent(element.getTextLength()), null);
+        PsiElement prev = element.getPrevSibling();
+        if (prev != null) prev.delete();
+        element.delete();
+        return keyValue;
       }
     };
   }

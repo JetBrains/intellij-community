@@ -4,6 +4,7 @@ package org.jetbrains.yaml.schema;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
@@ -11,6 +12,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 
 import java.util.Collection;
@@ -71,6 +73,16 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
 
   @Nullable
   public static JsonValueAdapter createEmptyValueAdapter(@NotNull PsiElement context, boolean pinSelf) {
+    if (context instanceof YAMLKeyValue && ((YAMLKeyValue)context).getValue() == null) {
+      PsiElement next = PsiTreeUtil.skipWhitespacesForward(context);
+      if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.EOL) {
+        next = PsiTreeUtil.skipWhitespacesForward(next);
+        if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.INDENT && !(PsiTreeUtil.skipWhitespacesForward(next) instanceof YAMLKeyValue)) {
+          // potentially empty object after newline+indent
+          return new YamlEmptyObjectAdapter(next);
+        }
+      }
+    }
     PsiElement nextSibling = context.getNextSibling();
     PsiElement nodeToHighlight = PsiUtilCore.getElementType(nextSibling) == TokenType.WHITE_SPACE
                                  ? nextSibling

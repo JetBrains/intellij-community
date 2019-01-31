@@ -844,4 +844,45 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                 "  <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">-</warning>\n" +
                 "  - a");
   }
+
+  public void testEmptyFile() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
+  }
+
+  public void testEmptyValueBetweenProps() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        },\n" +
+           "        \"yyy\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"zzz\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "  zzz: 0\n" +
+                "  yyy:<warning descr=\"Schema validation: Type is not allowed. Expected: string.\">  </warning>\n" +
+                "  xxx: 0");
+  }
 }

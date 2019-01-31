@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLValue;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import javax.swing.*;
@@ -54,9 +55,9 @@ public class YamlJsonSchemaHighlightingInspection extends LocalInspectionTool {
     List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
     if (documents.size() != 1) return PsiElementVisitor.EMPTY_VISITOR;
 
-    PsiElement root = documents.get(0).getTopLevelValue();
-    if (root == null) return PsiElementVisitor.EMPTY_VISITOR;
-
+    YAMLDocument document = documents.get(0);
+    YAMLValue topLevelValue = document.getTopLevelValue();
+    PsiElement root = topLevelValue == null ? document : topLevelValue;
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
     VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
     if (!service.isApplicableToFile(virtualFile)) return PsiElementVisitor.EMPTY_VISITOR;
