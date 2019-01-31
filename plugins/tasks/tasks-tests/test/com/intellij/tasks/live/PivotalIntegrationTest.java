@@ -1,0 +1,48 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.tasks.live;
+
+import com.intellij.tasks.Task;
+import com.intellij.tasks.pivotal.PivotalTrackerRepository;
+import com.intellij.tasks.pivotal.PivotalTrackerRepositoryType;
+import com.intellij.util.containers.ContainerUtil;
+
+public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrackerRepository> {
+  private static final String INTEGRATION_TESTS_PROJECT_ID = "2243263";
+  private static final String STARTED_STORY_ID = "163682205";
+
+  @Override
+  protected PivotalTrackerRepository createRepository() throws Exception {
+    final PivotalTrackerRepository repository = new PivotalTrackerRepository(new PivotalTrackerRepositoryType());
+    repository.setPassword(System.getProperty("tasks.tests.pivotal.tracker.token"));
+    repository.setProjectId(INTEGRATION_TESTS_PROJECT_ID);
+    return repository;
+  }
+
+  public void testFetchingAllStories() throws Exception {
+    final Task[] tasks = myRepository.getIssues("", 0, 10, false);
+    assertContainsElements(ContainerUtil.map(tasks, Task::getSummary), "Started story");
+  }
+
+  public void testFetchingWithFilteringStoriesByQuery() throws Exception {
+    final Task[] tasks = myRepository.getIssues("matching query", 0, 10, false);
+    assertOneElement(tasks);
+    assertEquals("Story matching query", tasks[0].getSummary());
+  }
+
+  public void testFetchingClosedStories() throws Exception {
+    final Task[] openTasks = myRepository.getIssues("", 0, 10, false);
+    assertDoesntContain(ContainerUtil.map(openTasks, Task::getSummary), "Finished story");
+
+    final Task[] allTasks = myRepository.getIssues("", 0, 10, true);
+    assertContainsElements(ContainerUtil.map(allTasks, Task::getSummary), "Finished story");
+  }
+
+  public void testFetchingSingleStory() throws Exception {
+    final Task task = myRepository.findTask(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID);
+    assertNotNull(task);
+    assertEquals(STARTED_STORY_ID, task.getNumber());
+    assertEquals("#" + STARTED_STORY_ID, task.getPresentableId());
+    assertEquals(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID, task.getId());
+    assertEquals("Started story", task.getSummary());
+  }
+}
