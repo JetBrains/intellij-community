@@ -38,6 +38,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -241,7 +242,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void addSdk() {
-    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), sdk -> addCreatedSdk(sdk, true));
+    PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myProjectSdksModel.getSdks()), sdk -> addCreatedSdk(sdk, true));
   }
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
