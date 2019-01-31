@@ -20,7 +20,7 @@
     </linearGradient>
   </defs>
   <g fill="none" fill-rule="evenodd">
-    <use fill="#FFF" xlink:href="#checkboxindeterminateselecteddisabled-a"/>
+    <use fill="#F1F1F1" xlink:href="#checkboxindeterminateselecteddisabled-a"/>
     <use fill="#000" filter="url(#checkboxindeterminateselecteddisabled-b)" xlink:href="#checkboxindeterminateselecteddisabled-a"/>
     <use fill="#000" filter="url(#checkboxindeterminateselecteddisabled-c)" xlink:href="#checkboxindeterminateselecteddisabled-d"/>
     <use fill="#B2B2B2" xlink:href="#checkboxindeterminateselecteddisabled-d"/>
