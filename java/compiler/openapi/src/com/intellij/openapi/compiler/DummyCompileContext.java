@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -91,7 +92,7 @@ public class DummyCompileContext implements CompileContext {
   @Override
   @NotNull
   public ProgressIndicator getProgressIndicator() {
-    return null;
+    return DumbProgressIndicator.INSTANCE;
   }
 
   @Override
