@@ -71,7 +71,7 @@ private fun findCandidatesByClassName(jvmClassName: String, project: Project): L
   return result
 }
 
-class ExtensionByExtensionPointLocator : ExtensionLocator {
+internal class ExtensionByExtensionPointLocator : ExtensionLocator {
   private val project: Project
   private val pointQualifiedName: String
   private val extensionId: String?
@@ -88,20 +88,27 @@ class ExtensionByExtensionPointLocator : ExtensionLocator {
     this.extensionId = extensionId
   }
 
-  override fun findCandidates(): List<ExtensionCandidate> {
+   fun processCandidates(processor: (XmlTag) -> Boolean) {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return emptyList()
-    val result = SmartList<ExtensionCandidate>()
-    val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
+    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
     processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
       if (ep.effectiveQualifiedName == pointQualifiedName && (extensionId == null || extensionId == extension.id.stringValue)) {
-        result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
         // stop after the first found candidate if ID is specified
-        return@processExtensionDeclarations extensionId == null
+        processor(tag) && extensionId == null
       }
-      true
+      else {
+        true
+      }
+    }
+  }
+
+  override fun findCandidates(): List<ExtensionCandidate> {
+    val result = SmartList<ExtensionCandidate>()
+    val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
+    processCandidates {
+      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
     }
     return result
   }
