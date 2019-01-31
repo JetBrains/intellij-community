@@ -2,7 +2,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -55,7 +55,7 @@ class RangesAssert {
       buffer.append('\n');
     }
 
-    Throwable t = problematicLanguageClass != null ? PluginManagerCore.createPluginException("", null, problematicLanguageClass) : null;
+    Throwable t = problematicLanguageClass != null ? PluginException.createByClass("", null, problematicLanguageClass) : null;
     LOG.error(messageBuffer.toString(), t, AttachmentFactory.createContext(buffer));
   }
 }

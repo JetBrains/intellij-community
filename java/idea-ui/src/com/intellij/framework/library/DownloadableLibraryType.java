@@ -15,7 +15,7 @@
  */
 package com.intellij.framework.library;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -117,7 +117,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   @NotNull
   public Icon getLibraryTypeIcon() {
     if (myIcon == null) {
-      throw PluginManagerCore.createPluginException("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
+      throw PluginException.createByClass("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
     }
     return myIcon;
   }

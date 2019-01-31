@@ -2,7 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,7 +85,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         throw e;
       }
       catch (Exception e) {
-        Logger.getInstance(JsonSchemaService.class).error(PluginManagerCore.createPluginException(e.getMessage(), e, factory.getClass()));
+        PluginException.logPluginError(Logger.getInstance(JsonSchemaService.class), e.getMessage(), e, factory.getClass());
       }
     }
     return providers;

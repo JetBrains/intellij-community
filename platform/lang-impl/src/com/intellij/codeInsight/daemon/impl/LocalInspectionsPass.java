@@ -13,7 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -542,7 +542,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                        "' (" + tool.getClass() +
                        ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
                        context + "\nInspection invoked for file: " + myContext + "\n";
-      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, tool.getClass()));
+      PluginException.logPluginError(LOG, errorMessage, null, tool.getClass());
     }
     boolean isInjected = myInspectInjectedPsi && file != getFile();
     if (!isInjected) {
