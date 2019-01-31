@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -39,6 +38,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.ui.cellvalidators.ValidationUtils.StatefulValidatingEditor;
 
 public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
   private final ListTableModel<UrlInfo> myModel = new ListTableModel<UrlInfo>() {
@@ -137,10 +138,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    JTextField cellEditor = new JTextField();
-    cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
-
-    DefaultCellEditor editor = new DefaultCellEditor(cellEditor);
+    DefaultCellEditor editor = new StatefulValidatingEditor(myDisposable);
     editor.setClickCountToStart(1);
     myTable.setDefaultEditor(Object.class, editor);
 
@@ -163,7 +161,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
           return attributes;
         }
       }).
-      bindToEditorSize(cellEditor::getPreferredSize).
+      bindToEditorSize(editor.getComponent()::getPreferredSize).
       withCellValidator((value, row, column) -> {
         if (row >= 0 && row < myModel.getRowCount()) {
           UrlInfo info = myModel.getRowValue(row);

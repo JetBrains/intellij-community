@@ -92,9 +92,11 @@ public final class CellTooltipManager {
           });
 
           hidePopup(false, () -> showPopup(e));
-        } else if (!isShowing()) {
+        }
+        else if (!isShowing()) {
           showPopup(e);
-        } else { // Move popup to new location
+        }
+        else if (!isClosing) { // Move popup to new location
           Point location = cellComponentProvider.getCellRect(e).getLocation();
           if (!location.equals(cellLocation)) {
             cellLocation = location;

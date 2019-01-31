@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
 import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
 import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
+import com.intellij.openapi.ui.cellvalidators.ValidationUtils;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -291,21 +292,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ExtendableTextComponent.Extension browseExtension =
         ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
                                                  "Open file", () -> System.out.println("Table browse clicked"));
-      ExtendableTextComponent.Extension errorExtension =
-        ExtendableTextComponent.Extension.create(AllIcons.General.BalloonError, null, null);
       cellEditor.addExtension(browseExtension);
 
       cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
 
       new ComponentValidator(getDisposable()).withValidator(() -> {
         boolean isAllowed = ALLOWED_VALUES.contains(cellEditor.getText());
-        if (isAllowed) {
-          cellEditor.removeExtension(errorExtension);
-        }
-        else if (cellEditor.getClientProperty("JComponent.outline") == null) {
-          cellEditor.addExtension(errorExtension);
-        }
-
+        ValidationUtils.setErrorExtension(cellEditor, !isAllowed);
         return isAllowed ? null : validationInfoGenerator.apply(cellEditor.getText(), cellEditor);
       }).withHyperlinkListener(hyperlinkListener).
         andRegisterOnDocumentListener(cellEditor).
