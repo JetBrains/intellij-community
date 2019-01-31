@@ -133,17 +133,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   private String askGenericInput(@NotNull String description) {
-    return askUser(() -> {
-      String knownAnswer = myAuthenticationGate.getSavedInput(description);
-      if (knownAnswer != null) {
-        return knownAnswer;
-      }
-      String answer = Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null);
-      if (answer != null) {
-        myAuthenticationGate.saveInput(description, answer);
-      }
-      return answer;
-    });
+    return askUser(() -> Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null));
   }
 
   @Nullable
