@@ -184,7 +184,7 @@ public class RegistryValue {
     }
 
     myChangedSinceStart = true;
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '"');
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
   public void setValue(boolean value, Disposable parentDisposable) {
