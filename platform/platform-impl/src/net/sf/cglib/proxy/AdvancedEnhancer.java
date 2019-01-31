@@ -878,7 +878,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
           $Label constructed = e.make_label();
           e.load_this();
           e.getfield(CONSTRUCTED_FIELD);
-          e.if_jump(e.NE, constructed);
+          e.if_jump(CodeEmitter.NE, constructed);
           e.load_this();
           e.load_args();
           e.super_invoke();
@@ -957,7 +957,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     $Label end = e.make_label();
     e.load_local(me);
     e.getfield(BOUND_FIELD);
-    e.if_jump(e.NE, end);
+    e.if_jump(CodeEmitter.NE, end);
     e.load_local(me);
     e.push(1);
     e.putfield(BOUND_FIELD);
