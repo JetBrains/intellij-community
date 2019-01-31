@@ -53,6 +53,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     }
   }
 
+  public static void show(@Nullable Project project,
+                          @Nullable Module module,
+                          @NotNull Sdk[] existingSdks,
+                          @NotNull NullableConsumer<? super Sdk> sdkAddedCallback) {
+    new PythonSdkDetailsStep(project, module, null, existingSdks, sdkAddedCallback).createLocalSdk();
+  }
+
   public PythonSdkDetailsStep(@Nullable final Project project,
                               @Nullable final Module module,
                               @Nullable final DialogWrapper showAllDialog,

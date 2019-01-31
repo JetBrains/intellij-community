@@ -115,7 +115,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          addSdk(button);
+          addSdk();
           updateOkButton();
         }
       })
@@ -240,10 +240,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     return rootManager.getSdk();
   }
 
-  private void addSdk(AnActionButton button) {
-    PythonSdkDetailsStep
-      .show(myProject, myModule, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
-            null, sdk -> addCreatedSdk(sdk, true));
+  private void addSdk() {
+    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), sdk -> addCreatedSdk(sdk, true));
   }
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {

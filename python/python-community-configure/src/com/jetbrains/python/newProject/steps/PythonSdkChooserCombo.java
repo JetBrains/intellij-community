@@ -73,7 +73,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     //noinspection unchecked
     final JComboBox<Sdk> comboBox = getComboBox();
     final Sdk oldSelectedSdk = (Sdk)comboBox.getSelectedItem();
-    PythonSdkDetailsStep.show(project, module, sdks, null, this, getButton().getLocationOnScreen(), myNewProjectPath, sdk -> {
+    PythonSdkDetailsStep.show(project, module, sdks, sdk -> {
       if (sdk == null) return;
       final ProjectSdksModel projectSdksModel = interpreterList.getModel();
       if (projectSdksModel.findSdk(sdk) == null) {

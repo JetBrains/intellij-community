@@ -240,11 +240,7 @@ public final class PythonSdkType extends SdkType {
                                  @NotNull final JComponent parentComponent,
                                  @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
-    final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-    if (pointerInfo == null) return;
-    final Point point = pointerInfo.getLocation();
-    PythonSdkDetailsStep
-      .show(project, null, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
+    PythonSdkDetailsStep.show(project, null, sdkModel.getSdks(), sdk -> {
         if (sdk != null) {
           sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);
