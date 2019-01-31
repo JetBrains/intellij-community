@@ -41,13 +41,13 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   @NotNull
   @Override
-  public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return CliResult.error(1, getUsageMessage());
     }
     try {
-      processCommand(args, currentDirectory);
+      return processCommand(args, currentDirectory);
     }
     catch (Exception e) {
       String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
@@ -57,7 +57,6 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     finally {
       saveAll();
     }
-    return CliResult.ok();
   }
 
   protected static void saveAll() {
@@ -71,7 +70,8 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  @NotNull
+  protected abstract Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {

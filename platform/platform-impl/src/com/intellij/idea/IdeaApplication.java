@@ -334,7 +334,7 @@ public class IdeaApplication {
 
     @NotNull
     @Override
-    public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+    public Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
       LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
       if (args.length > 0) {

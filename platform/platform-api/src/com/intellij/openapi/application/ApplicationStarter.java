@@ -75,7 +75,7 @@ public interface ApplicationStarter {
 
   /** @see #canProcessExternalCommandLine */
   @NotNull
-  default Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  default Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
   }
 }
