@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -94,7 +95,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private final SchemeManager<TemplateGroup> mySchemeManager;
 
   private State myState = new State();
-  private final Set<Pair<String, String>> myStatisticsSafeTemplates = new HashSet<>();
+  private final Map<Pair<String, String>, PluginInfo> myPredefinedTemplates = new HashMap<>();
 
   static final class ShortcutConverter extends Converter<Character> {
     @NotNull
@@ -185,7 +186,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
-        TemplateGroup group = readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        TemplateGroup readGroup = parseTemplateGroup(element, element.getAttributeValue("group"), getClass().getClassLoader());
+        TemplateGroup group = readGroup == null ? null : mergeParsedGroup(element, false, false, readGroup);
         if (group != null) {
           group.setModified(false);
         }
@@ -485,26 +487,31 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
-      if (group != null) {
-        if (group.getReplace() != null) {
-          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-            removeTemplate(template);
+      Element element = JDOMUtil.load(inputStream);
+      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), provider.getClass().getClassLoader());
+      if (defGroup != null) {
+        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(provider.getClass());
+        for (TemplateImpl template : defGroup.getElements()) {
+          String key = template.getKey();
+          String groupName = template.getGroupName();
+          if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
+            myPredefinedTemplates.put(Pair.create(key, groupName), info);
           }
         }
-        if (PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport()) {
-          for (TemplateImpl template : group.getElements()) {
-            myStatisticsSafeTemplates.add(Pair.create(template.getKey(), template.getGroupName()));
+
+        TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
+        if (group != null && group.getReplace() != null) {
+          for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+            removeTemplate(template);
           }
         }
       }
     }
   }
 
-  public boolean isStatisticsSafeTemplate(String key, String groupName) {
-    return StringUtil.isNotEmpty(key) &&
-           StringUtil.isNotEmpty(groupName) &&
-           myStatisticsSafeTemplates.contains(Pair.create(key, groupName));
+  @Nullable
+  public PluginInfo findPluginForPredefinedTemplate(TemplateImpl template) {
+    return myPredefinedTemplates.get(Pair.create(template.getKey(), template.getGroupName()));
   }
 
   private static String getDefaultTemplateName(String defTemplate) {
@@ -512,7 +519,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Nullable
-  private TemplateGroup readTemplateFile(@NotNull Element element, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, @NotNull ClassLoader classLoader) {
+  private static TemplateGroup parseTemplateGroup(@NotNull Element element, @NonNls String defGroupName, @NotNull ClassLoader classLoader) {
     if (!TEMPLATE_SET.equals(element.getName())) {
       LOG.error("Ignore invalid template scheme: " + JDOMUtil.writeElement(element));
       return null;
@@ -525,18 +532,27 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
     TemplateGroup result = new TemplateGroup(groupName, element.getAttributeValue("REPLACE"));
 
-    Map<String, TemplateImpl> created = new LinkedHashMap<>();
-
     for (Element child : element.getChildren(TEMPLATE)) {
-      TemplateImpl template;
       try {
-        template = readTemplateFromElement(groupName, child, classLoader);
+        result.addElement(readTemplateFromElement(groupName, child, classLoader));
       }
       catch (Exception e) {
         LOG.warn("failed to load template " + element.getAttributeValue(NAME), e);
-        continue;
       }
+    }
+    return result;
+  }
 
+  @Nullable
+  private TemplateGroup mergeParsedGroup(@NotNull Element element,
+                                         boolean isDefault,
+                                         boolean registerTemplate,
+                                         TemplateGroup parsedGroup) {
+    TemplateGroup result = new TemplateGroup(parsedGroup.getName(), element.getAttributeValue("REPLACE"));
+
+    Map<String, TemplateImpl> created = new LinkedHashMap<>();
+
+    for (TemplateImpl template : parsedGroup.getElements()) {
       if (isDefault) {
         myDefaultTemplates.put(TemplateKey.keyOf(template), template);
       }
