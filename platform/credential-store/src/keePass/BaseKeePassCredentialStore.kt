@@ -25,7 +25,7 @@ internal abstract class BaseKeePassCredentialStore : CredentialStore {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     if (credentials == null) {
-      db.rootGroup.getGroup(ROOT_GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
+      db.rootGroup.getGroup(ROOT_GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName.nullize())
     }
     else {
       val group = db.rootGroup.getOrCreateGroup(ROOT_GROUP_NAME)
