@@ -106,7 +106,7 @@ public class AgentLoader {
     }
 
     @Override
-    public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference) {
+    public ReferringObjectsProvider findGcRoots(@NotNull ObjectReference reference, int limit) {
       throw new UnsupportedOperationException();
     }
   }
