@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.execution.Location
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
 
 object GradleExecutionSettingsUtil {
 
@@ -53,8 +55,13 @@ object GradleExecutionSettingsUtil {
   }
 
   @JvmStatic
+  fun createTestFilterFrom(psiClass: PsiClass, methodName: String?, hasSuffix: Boolean): String {
+    return createTestFilterFromMethod(psiClass.getRuntimeQualifiedName(), methodName, hasSuffix)
+  }
+
+  @JvmStatic
   fun createTestFilterFrom(aClass: PsiClass, psiMethod: PsiMethod, hasSuffix: Boolean): String {
-    return createTestFilterFromMethod(aClass.getRuntimeQualifiedName(), psiMethod.name, hasSuffix)
+    return createTestFilterFrom(aClass, psiMethod.name, hasSuffix)
   }
 
   @JvmStatic
