@@ -65,7 +65,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);

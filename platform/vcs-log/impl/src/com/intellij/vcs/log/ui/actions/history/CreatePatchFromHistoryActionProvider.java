@@ -74,7 +74,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUsageTriggerCollector.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);

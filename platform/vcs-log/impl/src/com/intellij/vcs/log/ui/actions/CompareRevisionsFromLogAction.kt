@@ -36,7 +36,7 @@ open class CompareRevisionsFromLogAction : DumbAwareAction() {
     val handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER)
     val filePath = getFilePath(e)!!
 
-    VcsLogUsageTriggerCollector.triggerUsage(e)
+    VcsLogUsageTriggerCollector.triggerUsage(e, this)
 
     val commits = log.selectedCommits
     if (commits.size == 2) {
