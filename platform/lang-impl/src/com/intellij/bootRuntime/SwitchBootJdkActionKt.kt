@@ -85,6 +85,8 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
       }
     })
 
+    combobox.selectedItem = bundles[0];
+
     dialog(
       title = "Switch Boot Runtime",
       owner = WindowManager.getInstance().suggestParentWindow(e.project),
