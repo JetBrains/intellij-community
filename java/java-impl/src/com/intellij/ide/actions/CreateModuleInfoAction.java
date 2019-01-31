@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -9,6 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -45,10 +46,16 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
       PsiDirectory target = getTargetDirectory(ctx, view);
-      e.getPresentation().setEnabled(
-        target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null);
+      boolean isActionAvailable =
+        target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null;
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        e.getPresentation().setVisible(isActionAvailable);
+      }
+      else {
+        e.getPresentation().setVisible(true);
+        e.getPresentation().setEnabled(isActionAvailable);
+      }
     }
   }
 
