@@ -64,6 +64,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   public static <T> T instantiate(@NotNull final Class<T> aClass,
                                   @NotNull final PicoContainer container,
                                   final boolean allowNonPublicClasses) {
+    //noinspection unchecked
     return (T)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses).getComponentInstance(container);
   }
 
