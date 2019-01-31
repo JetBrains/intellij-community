@@ -304,7 +304,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     // Instant run
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/installer") {
-      fileset(dir: "$root/bazel-genfiles/tools/base/deploy/installer/android")
+      fileset(dir: "$root/bazel-genfiles/tools/base/deploy/installer/android-installer")
     }
 
     // Native debugger.
