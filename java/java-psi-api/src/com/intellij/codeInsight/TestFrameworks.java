@@ -38,6 +38,13 @@ public abstract class TestFrameworks {
 
   public abstract boolean isTestMethod(PsiMethod method);
 
+  /**
+   * Checks method on the possibility to run as a test
+   *
+   * @param method        method element to check
+   * @param checkAbstract the fact that an abstract class is a test or not, if false then is test
+   * @return the result of checking
+   */
   public boolean isTestMethod(PsiMethod method, boolean checkAbstract) {
     return isTestMethod(method);
   }

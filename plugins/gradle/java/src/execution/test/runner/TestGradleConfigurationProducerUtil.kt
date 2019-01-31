@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,6 +11,24 @@ import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findTestsTaskToRun
 import java.util.*
 
+fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
+  testTasksToRun: List<Map<String, List<String>>>,
+  containingClasses: Iterable<PsiClass>,
+  createFilter: (PsiClass) -> String
+): Boolean {
+  return applyTestConfiguration(project, containingClasses, { it }, { it, _ -> createFilter(it) }) { source ->
+    testTasksToRun.mapNotNull { it[source.path] }
+  }
+}
+
+fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
+  containingClasses: Iterable<PsiClass>,
+  createFilter: (PsiClass) -> String
+): Boolean {
+  return applyTestConfiguration(project, containingClasses, { it }, { it, _ -> createFilter(it) })
+}
 
 fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
@@ -34,6 +53,17 @@ fun ExternalSystemTaskExecutionSettings.applyTestConfiguration(
 
 fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   project: Project,
+  testTasksToRun: List<Map<String, List<String>>>,
+  tests: Iterable<T>,
+  findSourceElement: (T) -> E?,
+  createFilter: (E, T) -> String): Boolean {
+  return applyTestConfiguration(project, tests, findSourceElement, createFilter) { source ->
+    testTasksToRun.mapNotNull { it[source.path] }
+  }
+}
+
+fun <E : PsiElement, T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
+  project: Project,
   tests: Iterable<T>,
   findPsiClass: (T) -> PsiClass?,
   createFilter: (PsiClass, T) -> String): Boolean {
@@ -51,16 +81,18 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
 ): Boolean {
   val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
   val testRunConfigurations = LinkedHashMap<String, Pair<VirtualFile, MutableList<String>>>()
+  var module: Module? = null
   for (test in tests) {
     val psiClass = findPsiClass(test) ?: return false
     val psiFile = psiClass.containingFile ?: return false
     val virtualFile = psiFile.virtualFile
-    val module = projectFileIndex.getModuleForFile(virtualFile) ?: return false
-    externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
+    module = projectFileIndex.getModuleForFile(virtualFile) ?: return false
     if (!GradleRunnerUtil.isGradleModule(module)) return false
     val (_, arguments) = testRunConfigurations.getOrPut(module.name) { Pair(virtualFile, ArrayList()) }
     arguments.add(createFilter(psiClass, test))
   }
+  if (module == null) return false
+  externalProjectPath = GradleRunnerUtil.resolveProjectPath(module) ?: return false
   val taskSettings = ArrayList<Pair<String, List<String>>>()
   val unorderedParameters = ArrayList<String>()
   for ((source, arguments) in testRunConfigurations.values) {

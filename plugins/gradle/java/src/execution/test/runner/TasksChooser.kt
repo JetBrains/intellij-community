@@ -21,9 +21,13 @@ abstract class TasksChooser {
 
   protected abstract fun choosesTasks(tasks: List<Map<String, List<String>>>)
 
-  fun runTaskChoosing(context: ConfigurationContext, vararg elements: PsiElement) {
+  fun runTaskChoosing(context: ConfigurationContext, elements: Iterable<PsiElement>) {
     val sources = elements.map { it.containingFile?.virtualFile ?: error("Can not find source file for $it") }
     runTaskChoosing(context.dataContext, sources, context.project)
+  }
+
+  fun runTaskChoosing(context: ConfigurationContext, vararg elements: PsiElement) {
+    return runTaskChoosing(context, elements.asIterable())
   }
 
   private fun runTaskChoosing(context: DataContext, sources: List<VirtualFile>, project: Project) {
