@@ -666,9 +666,6 @@
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterTypeUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
-
-    <!-- Status Bar -->
-    <statusBarWidgetProvider implementation="com.jetbrains.python.sdk.PySdkStatusBarWidgetProvider"/>
   </extensions>
 
   <extensionPoints>
