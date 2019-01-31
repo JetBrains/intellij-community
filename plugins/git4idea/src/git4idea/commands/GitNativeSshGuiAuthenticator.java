@@ -26,6 +26,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable private String myLastAskedKeyPath = null;
   @Nullable private String myLastAskedUserName = null;
+  @Nullable private String myLastAskedConfirmationInput = null;
 
   GitNativeSshGuiAuthenticator(@NotNull Project project,
                                @NotNull GitAuthenticationGate authenticationGate,
@@ -111,7 +112,8 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
                                           SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
 
       String knownAnswer = myAuthenticationGate.getSavedInput(message);
-      if (knownAnswer != null) {
+      if (knownAnswer != null && myLastAskedConfirmationInput == null) {
+        myLastAskedConfirmationInput = knownAnswer;
         return knownAnswer;
       }
 
