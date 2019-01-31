@@ -47,7 +47,13 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                          PyClassNameIndex.KEY,
                          parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
                          // TODO: implement autocompletion for inner classes
-                         PyUtil::isTopLevel,
+                         (cls -> {
+                           PyClass enclosingClass = PyUtil.getContainingClassOrSelf(element);
+                           if (enclosingClass != null && enclosingClass.getName() != null) {
+                             return !enclosingClass.getName().equals(cls.getName()) && PyUtil.isTopLevel(cls);
+                           }
+                           return PyUtil.isTopLevel(cls);
+                         }),
                          PyClass.class,
                          createClassElementHandler(originalFile));
 
