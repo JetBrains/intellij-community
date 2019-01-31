@@ -10,7 +10,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -34,7 +33,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -70,6 +72,7 @@ import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.COMPONE
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends AnAction {
+  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final String SHOW_RECENT_CHANGED_LOCATIONS = "SHOW_RECENT_CHANGED_LOCATIONS";
   private static final int DEFAULT_WIDTH = JBUI.scale(700);
@@ -86,7 +89,7 @@ public class RecentLocationsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.locations");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(RECENT_LOCATIONS_ACTION_ID);
     Project project = getEventProject(e);
     if (project == null) {
       return;
@@ -153,7 +156,6 @@ public class RecentLocationsAction extends AnAction {
       .createPopup();
 
     Disposer.register(popup, () -> {
-      Dimension contentSize = popup.getContent().getSize();
       Dimension scrollPaneSize = calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent());
       //scroll scrollPane
       DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, scrollPaneSize, project);
@@ -175,23 +177,6 @@ public class RecentLocationsAction extends AnAction {
         scrollPane.setPreferredSize(calcScrollPaneSize(scrollPane, listWithFilter, topPanel, popup.getContent()));
         scrollPane.revalidate();
       }
-    });
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Dimension minSize = mainPanel.getMinimumSize();
-      JBInsets.addTo(minSize, popup.getContent().getInsets());
-      popup.setMinimumSize(minSize);
-
-      Dimension balloonFullSize = DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project);
-      if (balloonFullSize == null) {
-        DimensionService.getInstance().setSize(LOCATION_SETTINGS_KEY, mainPanel.getPreferredSize());
-        balloonFullSize = mainPanel.getPreferredSize();
-        JBInsets.addTo(balloonFullSize, popup.getContent().getInsets());
-      }
-      balloonFullSize.height = Integer.max(balloonFullSize.height, minSize.height);
-      balloonFullSize.width = Integer.max(balloonFullSize.width, minSize.width);
-      scrollPane.setPreferredSize(balloonFullSize);
-      popup.setSize(mainPanel.getPreferredSize());
     });
 
     project.getMessageBus().connect(popup).subscribe(ShowRecentChangedLocationListener.TOPIC, new ShowRecentChangedLocationListener() {
@@ -235,7 +220,9 @@ public class RecentLocationsAction extends AnAction {
                                               @NotNull JComponent content) {
     Dimension contentSize = content.getSize();
     int speedSearchHeight = listWithFilter.getSize().height - scrollPane.getSize().height;
-    return new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    Dimension dimension = new Dimension(contentSize.width, contentSize.height - topPanel.getSize().height - speedSearchHeight);
+    JBInsets.removeFrom(dimension, content.getInsets());
+    return dimension;
   }
 
   @NotNull
@@ -340,7 +327,6 @@ public class RecentLocationsAction extends AnAction {
     JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     mainPanel.add(topPanel);
     mainPanel.add(listWithFilter);
-    mainPanel.setBorder(BorderFactory.createEmptyBorder());
     return mainPanel;
   }
 
@@ -349,7 +335,11 @@ public class RecentLocationsAction extends AnAction {
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+    Dimension size = topPanel.getPreferredSize();
+    size.height = JBUI.scale(29);
+    topPanel.setPreferredSize(size);
+    topPanel.setBorder(JBUI.Borders.empty(5, 8));
     topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
@@ -365,13 +355,13 @@ public class RecentLocationsAction extends AnAction {
                                            @NotNull AnActionEvent e,
                                            boolean changed) {
     CheckboxAction action = new RecentLocationsCheckboxAction(project);
-    CustomShortcutSet set = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta L" : "control L");
-    action.registerCustomShortcutSet(set, listWithFilter);
-    action.getTemplatePresentation().setText("<html>" +
-                                             IdeBundle.message("recent.locations.title.text") +
-                                             " <font color=\"" + SHORTCUT_HEX_COLOR + "\">" +
-                                             KeymapUtil.getShortcutsText(set.getShortcuts()) + "</font>" +
-                                             "</html>");
+    ShortcutSet shortcuts = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
+    action.registerCustomShortcutSet(shortcuts, listWithFilter);
+    action.getTemplatePresentation().setText("<html>"
+                                             + IdeBundle.message("recent.locations.title.text")
+                                             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                                             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
+                                             + "</html>");
 
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, e.getDataContext());
     JComponent checkbox = action.createCustomComponent(action.getTemplatePresentation());

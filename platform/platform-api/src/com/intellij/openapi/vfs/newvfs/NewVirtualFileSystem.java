@@ -118,4 +118,12 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    */
   @Nullable
   public abstract FileAttributes getAttributes(@NotNull VirtualFile file);
+
+  /**
+   * @return true if this file is a directory which contains some children.
+   * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
+   */
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    return file.getChildren().length != 0;
+  }
 }

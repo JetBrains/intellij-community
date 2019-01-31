@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public final class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
-  private static class MetaDataKey extends Pair<String, String> {
+  private static final class MetaDataKey extends Pair<String, String> {
     private static final StringInterner ourInterner = new WeakStringInterner();
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
       super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
@@ -137,7 +137,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     }
   }
 
-  public synchronized void registerMetaData(@NotNull IntentionActionMetaData metaData) {
+  private synchronized void registerMetaData(@NotNull IntentionActionMetaData metaData) {
     MetaDataKey key = new MetaDataKey(metaData.myCategory, metaData.getFamily());
     if (!myMetaData.containsKey(key)){
       processMetaData(metaData);

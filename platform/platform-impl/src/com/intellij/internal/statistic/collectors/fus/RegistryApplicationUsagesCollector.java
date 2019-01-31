@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
       .collect(Collectors.toSet());
 
     Set<UsageDescriptor> experiments = Arrays.stream(Experiments.EP_NAME.getExtensions())
+      .filter(f -> PluginInfoDetectorKt.getPluginInfo(f.getClass()).isDevelopedByJetBrains())
       .filter(f -> Experiments.isFeatureEnabled(f.id))
       .map(f -> new UsageDescriptor(f.id))
       .collect(Collectors.toSet());

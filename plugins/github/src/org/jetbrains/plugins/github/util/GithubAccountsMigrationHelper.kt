@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -80,7 +80,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
               val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
                 executorFactory.create(password).execute(progressManager.progressIndicator,
                                                          GithubApiRequests.CurrentUser.get(server)).login
-              }, "Accessing Github", true, project)
+              }, "Accessing GitHub", true, project)
               val account = GithubAccountManager.createAccount(accountName, server)
               registerAccount(account, password)
             }

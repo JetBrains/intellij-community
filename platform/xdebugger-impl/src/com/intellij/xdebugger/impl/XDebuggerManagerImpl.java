@@ -392,7 +392,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     private void removeHighlighter(@NotNull EditorMouseEvent e) {
       if (myCurrentHighlighter != null) {
-        e.getEditor().getMarkupModel().removeHighlighter(myCurrentHighlighter);
+        myCurrentHighlighter.dispose();
         IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(null, this);
         myCurrentHighlighter = null;
       }

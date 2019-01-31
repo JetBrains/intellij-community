@@ -56,6 +56,10 @@ public class Messages {
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
     }
+    if (newValue == null) {
+      ourTestImplementation = TestDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestDialog to null: default implementation was restored instead");
+    }
     TestDialog oldValue = ourTestImplementation;
     ourTestImplementation = newValue;
     return oldValue;
@@ -66,6 +70,10 @@ public class Messages {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
+    }
+    if (newValue == null) {
+      ourTestInputImplementation = TestInputDialog.DEFAULT;
+      throw new IllegalArgumentException("Attempt to set TestInputDialog to null: default implementation was restored instead");
     }
     TestInputDialog oldValue = ourTestInputImplementation;
     ourTestInputImplementation = newValue;

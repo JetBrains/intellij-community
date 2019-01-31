@@ -89,7 +89,10 @@ public class MavenResourceFileProcessor {
       writer = encoding != null ? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);
     }
     catch (FileNotFoundException e) {
-      FileUtil.createIfDoesntExist(outputFile);
+      final File parentFile = outputFile.getParentFile();
+      if (parentFile == null || !parentFile.mkdirs() && !outputFile.setWritable(true)) {
+        throw e; // all possible problem resolutions failed, so rethrow the error
+      }
       writer = encoding != null ? new PrintWriter(outputFile, encoding) : new PrintWriter(outputFile);
     }
     try {

@@ -1537,7 +1537,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final int myStepSize;
 
     StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
-      super(suspendContext);
+      super(suspendContext, null);
       myStepSize = stepSize;
     }
 
@@ -1557,16 +1557,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private class StepIntoCommand extends StepCommand {
     private final boolean myForcedIgnoreFilters;
-    private final MethodFilter mySmartStepFilter;
     @Nullable
     private final StepIntoBreakpoint myBreakpoint;
     private final int myStepSize;
 
     StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
                            int stepSize) {
-      super(suspendContext);
+      super(suspendContext, methodFilter);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
-      mySmartStepFilter = methodFilter;
       myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
         null;
@@ -1578,10 +1576,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = getContextThread();
-      final RequestHint hint = mySmartStepFilter != null?
-                               new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
-                               new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
-      hint.setResetIgnoreFilters(mySmartStepFilter != null && !mySession.shouldIgnoreSteppingFilters());
+      final RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, myMethodFilter);
+      hint.setResetIgnoreFilters(myMethodFilter != null && !mySession.shouldIgnoreSteppingFilters());
       if (myForcedIgnoreFilters) {
         try {
           mySession.setIgnoreStepFiltersFlag(stepThread.frameCount());
@@ -1607,13 +1603,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final boolean myIsIgnoreBreakpoints;
     private final int myStepSize;
 
-    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
-      super(suspendContext);
+    public StepOverCommand(SuspendContextImpl suspendContext,
+                           boolean ignoreBreakpoints,
+                           @Nullable MethodFilter methodFilter,
+                           int stepSize) {
+      super(suspendContext, methodFilter);
       myIsIgnoreBreakpoints = ignoreBreakpoints;
       myStepSize = stepSize;
     }
 
-    protected int getStepSize() {
+    public StepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
+      this(suspendContext, ignoreBreakpoints, null, stepSize);
+    }
+
+    protected int getStepDepth() {
       return StepRequest.STEP_OVER;
     }
 
@@ -1627,7 +1630,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // need this hint while stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,
       // from which the java code was generated
-      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_OVER);
+      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, myMethodFilter);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
       hint.setIgnoreFilters(myIsIgnoreBreakpoints || mySession.shouldIgnoreSteppingFilters());
       return hint;
@@ -1646,7 +1649,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       startWatchingMethodReturn(stepThread);
 
-      doStep(suspendContext, stepThread, myStepSize, getStepSize(), hint);
+      doStep(suspendContext, stepThread, myStepSize, getStepDepth(), hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
@@ -1660,7 +1663,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final boolean myIgnoreBreakpoints;
 
     private RunToCursorCommand(SuspendContextImpl suspendContext, @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
-      super(suspendContext);
+      super(suspendContext, null);
       myIgnoreBreakpoints = ignoreBreakpoints;
       myRunToCursorBreakpoint =
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addRunToCursorBreakpoint(position, ignoreBreakpoints);
@@ -1702,8 +1705,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private abstract class StepCommand extends ResumeCommand {
-    StepCommand(SuspendContextImpl suspendContext) {
+    @Nullable
+    protected final MethodFilter myMethodFilter;
+
+    StepCommand(SuspendContextImpl suspendContext, @Nullable MethodFilter filter) {
       super(suspendContext);
+      myMethodFilter = filter;
     }
 
     @Override
@@ -2125,7 +2132,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
-    return new StepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
+    return createStepOverCommand(suspendContext, ignoreBreakpoints, null, StepRequest.STEP_LINE);
+  }
+
+  @NotNull
+  public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext,
+                                             boolean ignoreBreakpoints,
+                                             @Nullable MethodFilter methodFilter,
+                                             int stepSize) {
+    return new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
   }
 
   @NotNull

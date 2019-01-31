@@ -48,9 +48,6 @@ sealed class GithubApiRequest<T>(val url: String) {
       inline fun <reified T> json(url: String, acceptMimeType: String? = null): Get<T> =
         Json(url, T::class.java, acceptMimeType)
 
-      inline fun <reified T> jsonList(url: String, acceptMimeType: String? = null): Get<List<T>> =
-        JsonList(url, T::class.java, acceptMimeType)
-
       inline fun <reified T> jsonPage(url: String, acceptMimeType: String? = null): Get<GithubResponsePage<T>> =
         JsonPage(url, T::class.java, acceptMimeType)
 
@@ -133,6 +130,8 @@ sealed class GithubApiRequest<T>(val url: String) {
 
     companion object {
       inline fun <reified T> json(url: String, body: Any? = null): Put<T> = Json(url, body, T::class.java)
+
+      inline fun <reified T> jsonList(url: String, body: Any): Put<List<T>> = JsonList(url, T::class.java, body)
     }
 
     open class Json<T>(url: String, body: Any?, clazz: Class<T>) : Put<T>(body?.let { GithubApiContentHelper.toJson(it) },
@@ -142,6 +141,17 @@ sealed class GithubApiRequest<T>(val url: String) {
       private val typeToken = TypeToken.get(clazz)
 
       override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+    }
+
+    open class JsonList<T>(url: String, clazz: Class<T>, body: Any?)
+      : Put<List<T>>(body?.let { GithubApiContentHelper.toJson(it) },
+                     GithubApiContentHelper.JSON_MIME_TYPE,
+                     url,
+                     GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+
+      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+
+      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, typeToken)
     }
   }
 
@@ -163,10 +173,23 @@ sealed class GithubApiRequest<T>(val url: String) {
     }
   }
 
-  open class Delete(url: String) : GithubApiRequest<Unit>(url) {
-    override val acceptMimeType: String? = null
+  abstract class Delete<T> @JvmOverloads constructor(override val body: String?,
+                                                     override val bodyMimeType: String,
+                                                     url: String,
+                                                     override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
 
-    override fun extractResult(response: GithubApiResponse) {}
+    companion object {
+      inline fun <reified T> json(url: String, body: Any? = null): Delete<T> = Json(url, body, T::class.java)
+    }
+
+    open class Json<T>(url: String, body: Any? = null, clazz: Class<T>) : Delete<T>(body?.let { GithubApiContentHelper.toJson(it) },
+                                                                                    GithubApiContentHelper.JSON_MIME_TYPE,
+                                                                                    url,
+                                                                                    GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+      private val typeToken = TypeToken.get(clazz)
+
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+    }
   }
 
   companion object {

@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -166,5 +167,22 @@ public abstract class DebuggerAction extends AnAction {
       }
       session.rebuildViews();
     }
+  }
+
+  public static boolean isInJavaSession(AnActionEvent e) {
+    XDebugSession session = getSession(e);
+    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
+  }
+
+  @Nullable
+  public static XDebugSession getSession(AnActionEvent e) {
+    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    if (session == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        session = XDebuggerManager.getInstance(project).getCurrentSession();
+      }
+    }
+    return session;
   }
 }

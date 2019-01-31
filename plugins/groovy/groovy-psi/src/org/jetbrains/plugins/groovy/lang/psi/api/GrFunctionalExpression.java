@@ -14,4 +14,7 @@ public interface GrFunctionalExpression extends GrExpression, GrParameterListOwn
 
   @Nullable
   PsiType getOwnerType();
+
+  @Nullable
+  PsiType getReturnType();
 }

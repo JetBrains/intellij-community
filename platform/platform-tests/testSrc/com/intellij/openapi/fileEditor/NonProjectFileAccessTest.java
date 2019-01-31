@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
@@ -106,6 +107,17 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(copiedNonProject[0], true);
 
     typeAndCheck(nonProjectFile, false); // original is still locked
+  }
+
+  public void testDoNotLockExcludedFiles() throws Exception {
+    VirtualFile excludedFile = WriteAction.computeAndWait(() -> {
+      VirtualFile excludedDir = ModuleRootManager.getInstance(myModule).getContentRoots()[0].createChildDirectory(this, "excluded");
+      PsiTestUtil.addExcludedRoot(myModule, excludedDir);
+
+      return createFileExternally(new File(excludedDir.getPath()));
+    });
+
+    typeAndCheck(excludedFile, true);
   }
 
   public void testAccessToProjectSystemFiles() {

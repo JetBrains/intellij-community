@@ -64,6 +64,10 @@ open class FeatureUsageFileEventLogger(private val sessionId: String,
     return writer.getFiles()
   }
 
+  override fun cleanup() {
+    writer.cleanup()
+  }
+
   override fun dispose() {
     dispose(writer)
   }

@@ -21,8 +21,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.util.TroveUtil
 import gnu.trove.TIntHashSet
-
-import java.awt.*
+import java.awt.Rectangle
 import javax.swing.JTable
 
 internal class Selection(private val table: VcsLogGraphTable) {
@@ -36,18 +35,26 @@ internal class Selection(private val table: VcsLogGraphTable) {
     TroveUtil.addAll(selectedCommits, selectedRowsToCommits.values)
 
     val visibleRows = getVisibleRows(table)
-    isOnTop = visibleRows.first == 0
+    if (visibleRows == null) {
+      isOnTop = false
+      scrollingTarget = null
+    }
+    else {
+      isOnTop = visibleRows.first == 0
 
-    val visibleRow = selectedRowsToCommits.values.find { visibleRows.contains(it) } ?: visibleRows.first
-    val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
-    scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
+      val visibleRow = selectedRowsToCommits.values.find { visibleRows.contains(it) } ?: visibleRows.first
+      val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
+      scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
+    }
   }
 
   private fun getTopGap(row: Int) = table.getCellRect(row, 0, false).y - table.visibleRect.y
 
-  private fun getVisibleRows(table: JTable): IntRange {
+  private fun getVisibleRows(table: JTable): IntRange? {
     val visibleRows = ScrollingUtil.getVisibleRows(table)
-    return IntRange(visibleRows.first - 1, visibleRows.second)
+    val range = IntRange(visibleRows.first - 1, visibleRows.second)
+    if (range.isEmpty() || range.first < 0) return null
+    return range
   }
 
   fun restore(graph: VisibleGraph<Int>, scroll: Boolean, permanentGraphChanged: Boolean) {

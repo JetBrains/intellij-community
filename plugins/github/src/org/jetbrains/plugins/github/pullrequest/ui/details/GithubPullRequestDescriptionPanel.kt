@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.openapi.Disposable
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBUI
@@ -8,9 +9,9 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.Font
 
-internal class GithubPullRequestDescriptionPanel : NonOpaquePanel() {
-  var description: String? by equalVetoingObservable<String?>(
-    null) {
+internal class GithubPullRequestDescriptionPanel(private val model: GithubPullRequestDetailsModel) : NonOpaquePanel(), Disposable {
+
+  private var description: String? by equalVetoingObservable<String?>(null) {
     //'!it.isNullOrEmpty()' causes Kotlin compiler to fail here (KT-28847)
     isVisible = it != null && !it.isEmpty()
     htmlPanel.update()
@@ -33,5 +34,11 @@ internal class GithubPullRequestDescriptionPanel : NonOpaquePanel() {
 
   init {
     setContent(htmlPanel)
+
+    model.addDetailsChangedListener(this) {
+      description = model.details?.bodyHtml
+    }
   }
+
+  override fun dispose() {}
 }

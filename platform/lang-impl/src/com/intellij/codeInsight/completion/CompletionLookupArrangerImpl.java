@@ -52,6 +52,8 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
+  private String myLastLookupPrefix;
+
   /**
    * If false, the lookup arranger will generate enough items to fill the visible area of the list and fill the rest with "Loading..."
    * items. If true, it will produce up to {@link #myLimit} items and truncate the list afterwards.
@@ -423,6 +425,12 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return context;
   }
 
+  void setLastLookupPrefix(String lookupPrefix) {
+    myLastLookupPrefix = lookupPrefix;
+  }
+  public String getLastLookupPrefix() {
+    return myLastLookupPrefix;
+  }
 
   @Override
   public LookupArranger createEmptyCopy() {

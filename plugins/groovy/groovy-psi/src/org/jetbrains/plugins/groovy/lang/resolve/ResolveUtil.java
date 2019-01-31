@@ -129,7 +129,7 @@ public class ResolveUtil {
         if (!scope.processDeclarations(processor, state, lastParent, place)) return false;
       }
 
-      if (scope instanceof GrTypeDefinition || scope instanceof GrClosableBlock) {
+      if (scope instanceof GrTypeDefinition) {
         if (!processStaticImports(processor, place.getContainingFile(), state, place)) return false;
       }
     }
@@ -142,7 +142,7 @@ public class ResolveUtil {
 
   static void issueLevelChangeEvents(PsiScopeProcessor processor, PsiElement run) {
     processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
-    if (run instanceof GrClosableBlock && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor)) ||
+    if (run instanceof GrFunctionalExpression && GrClosableBlock.OWNER_NAME.equals(getNameHint(processor)) |
         run instanceof PsiClass && !(run instanceof PsiAnonymousClass) ||
         run instanceof GrMethod && run.getParent() instanceof GroovyFile) {
       processor.handleEvent(DECLARATION_SCOPE_PASSED, run);
@@ -184,13 +184,13 @@ public class ResolveUtil {
       }
     }
 
-    if (scope instanceof GrClosableBlock) {
+    if (scope instanceof GrFunctionalExpression) {
       ResolveState _state = state.put(ClassHint.RESOLVE_CONTEXT, scope);
 
-      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
+      PsiClass superClass = getLiteralSuperClass((GrFunctionalExpression)scope);
       if (superClass != null && !processClassDeclarations(superClass, processor, _state, null, place)) return false;
 
-      if (!processNonCodeMembers(GrClosureType.create(((GrClosableBlock)scope), false), processor, place, _state)) return false;
+      if (!processNonCodeMembers(GrClosureType.create((GrFunctionalExpression)scope, false), processor, place, _state)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -432,8 +432,8 @@ public class ResolveUtil {
 
     while (run != null) {
       ProgressManager.checkCanceled();
-      if (run instanceof GrClosableBlock) {
-        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+      if (run instanceof GrFunctionalExpression) {
+        PsiClass superClass = getLiteralSuperClass((GrFunctionalExpression)run);
         if (superClass != null && !GdkMethodUtil.processCategoryMethods(run, processor, state, superClass)) return false;
       }
 
@@ -449,7 +449,7 @@ public class ResolveUtil {
   }
 
   @Nullable
-  private static PsiClass getLiteralSuperClass(GrClosableBlock closure) {
+  private static PsiClass getLiteralSuperClass(GrFunctionalExpression closure) {
     PsiClassType type;
     if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
       type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());

@@ -48,7 +48,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
                                                   private val project: Project? = null,
                                                   parent: Component? = null,
                                                   private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
-                                                  title: String = "Log In to Github",
+                                                  title: String = "Log In to GitHub",
                                                   private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
@@ -215,7 +215,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
         //language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
         //language=HTML
-        text = "<html>Password is not saved and used only to <br>acquire Github token. <a href=''>Enter token</a></html>"
+        text = "<html>Password is not saved and used only to <br>acquire GitHub token. <a href=''>Enter token</a></html>"
         addHyperlinkListener { e ->
           if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
             applyUi(tokenUi)
@@ -254,7 +254,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
                                         { notBlank(passwordField, "Password cannot be empty") })
 
     override fun getSouthPanel() = JBUI.Panels.simplePanel()
-      .addToCenter(LinkLabel.create("Sign up for Github", Runnable { BrowserUtil.browse("https://github.com") }))
+      .addToCenter(LinkLabel.create("Sign up for GitHub", Runnable { BrowserUtil.browse("https://github.com") }))
       .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
     override fun createExecutor(): GithubApiRequestExecutor.WithBasicAuth {
@@ -263,7 +263,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
         invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
                                    "Authentication Code",
-                                   "Github Two-Factor Authentication",
+                                   "GitHub Two-Factor Authentication",
                                    null)
         }
       })

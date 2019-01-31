@@ -30,8 +30,13 @@ public class EnumComboBoxModel<E extends Enum<E>> extends AbstractListModel<E> i
   private E mySelected;
 
   public EnumComboBoxModel(@NotNull Class<E> en) {
-    myList = new ArrayList<>(EnumSet.allOf(en));
+    myList = new ArrayList<>(createEnumSet(en));
     mySelected = myList.get(0);
+  }
+
+  @NotNull
+  protected EnumSet<E> createEnumSet(@NotNull Class<E> en) {
+    return EnumSet.allOf(en);
   }
 
   @Override

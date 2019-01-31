@@ -264,7 +264,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests,
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
@@ -291,14 +291,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<WatchRequest> result) {
+  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<? super WatchRequest> result) {
     boolean update = false;
     for (String root : recursiveRoots) update |= watch(root, true, result);
     for (String root : flatRoots) update |= watch(root, false, result);
     return update;
   }
 
-  private boolean watch(String rootPath, boolean recursively, Set<WatchRequest> result) {
+  private boolean watch(String rootPath, boolean recursively, Set<? super WatchRequest> result) {
     int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) rootPath = rootPath.substring(0, index);
 

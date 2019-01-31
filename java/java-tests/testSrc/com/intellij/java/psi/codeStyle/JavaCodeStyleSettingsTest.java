@@ -90,8 +90,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    String expected = loadExpected(j2eeProviderExists() ? "j2ee.json" : "json");
-    assertEquals(expected, outputStream.toString());
+    compareWithExpected(outputStream.toString(), j2eeProviderExists() ? "j2ee.json" : "json");
   }
 
   private static boolean j2eeProviderExists() {

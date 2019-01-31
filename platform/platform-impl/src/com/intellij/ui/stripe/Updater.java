@@ -143,73 +143,52 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   public int findNextIndex(int current) {
-    int count = myPainter.getErrorStripeCount();
-    int foundIndex = -1;
-    int foundLayer = 0;
-    if (0 <= current && current < count) {
-      current++;
-      for (int index = current; index < count; index++) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
-      for (int index = 0; index < current; index++) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
+    SearchResult result = new SearchResult();
+    int max = myPainter.getErrorStripeCount() - 1;
+    if (0 <= current && current < max) {
+      result.updateForward(myPainter, current + 1, max);
+      result.updateForward(myPainter, 0, current);
     }
-    else {
-      for (int index = 0; index < count; index++) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
+    else if (0 <= max) {
+      result.updateForward(myPainter, 0, max);
     }
-    return foundIndex;
+    return result.index;
   }
 
   public int findPreviousIndex(int current) {
-    int count = myPainter.getErrorStripeCount();
-    int foundIndex = -1;
-    int foundLayer = 0;
-    if (0 <= current && current < count) {
-      current--;
-      for (int index = count - 1; index >= 0; index++) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
-      for (int index = current - 1; index >= 0; index++) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
+    SearchResult result = new SearchResult();
+    int max = myPainter.getErrorStripeCount() - 1;
+    if (0 < current && current <= max) {
+      result.updateBackward(myPainter, current - 1, 0);
+      result.updateBackward(myPainter, max, current);
     }
-    else {
-      for (int index = count - 1; index >= 0; index--) {
-        int layer = getLayer(index);
-        if (layer > foundLayer) {
-          foundIndex = index;
-          foundLayer = layer;
-        }
-      }
+    else if (0 <= max) {
+      result.updateBackward(myPainter, max, 0);
     }
-    return foundIndex;
+    return result.index;
   }
 
-  private int getLayer(int index) {
-    ErrorStripe stripe = myPainter.getErrorStripe(index);
-    return stripe == null ? -1 : stripe.getLayer();
+  private static final class SearchResult {
+    int layer = 0;
+    int index = -1;
+
+    void updateForward(ErrorStripePainter painter, int index, int max) {
+      while (index <= max) update(painter, index++);
+    }
+
+    void updateBackward(ErrorStripePainter painter, int index, int min) {
+      while (min <= index) update(painter, index--);
+    }
+
+    void update(ErrorStripePainter painter, int index) {
+      ErrorStripe stripe = painter.getErrorStripe(index);
+      if (stripe != null) {
+        int layer = stripe.getLayer();
+        if (layer > this.layer) {
+          this.layer = layer;
+          this.index = index;
+        }
+      }
+    }
   }
 }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.internal.statistic.eventLog.EventLogStatisticsService.send;
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
@@ -78,7 +79,8 @@ public class SendEventLogAction extends AnAction {
     @NotNull
     @Override
     public LogEventFilter getEventFilter() {
-      return LogEventTrueFilter.INSTANCE;
+      final Set<String> whitelist = getWhitelistedGroups();
+      return new LogEventWhitelistFilter(whitelist);
     }
 
     @Override

@@ -80,4 +80,10 @@ public class ToolAction extends AnAction implements DumbAware {
       tool.execute(e, new HackyDataContext(context), executionId, processListener);
     }
   }
+
+  @Nullable
+  @Override
+  public String getTemplateText() {
+    return "External Tool";
+  }
 }

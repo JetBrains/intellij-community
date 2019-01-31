@@ -8,7 +8,7 @@ import com.intellij.psi.PsiWildcardType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer;
 
 /**
@@ -17,12 +17,12 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousPar
 public class GradleClosureAsAnonymousParameterEnhancer extends ClosureAsAnonymousParameterEnhancer {
   @Nullable
   @Override
-  protected PsiType getClosureParameterType(@NotNull GrClosableBlock closure, int index) {
+  protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
 
-    PsiFile file = closure.getContainingFile();
+    PsiFile file = expression.getContainingFile();
     if (file == null || !FileUtilRt.extensionEquals(file.getName(), GradleConstants.EXTENSION)) return null;
 
-    PsiType psiType = super.getClosureParameterType(closure, index);
+    PsiType psiType = super.getClosureParameterType(expression, index);
     if (psiType instanceof PsiWildcardType) {
       PsiWildcardType wildcardType = (PsiWildcardType)psiType;
       if (wildcardType.isSuper() && wildcardType.getBound() != null &&

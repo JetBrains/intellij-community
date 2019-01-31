@@ -55,7 +55,7 @@ public class RequestHint {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  protected RequestHint(final ThreadReferenceProxyImpl stepThread,
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
                       final SuspendContextImpl suspendContext,
                       @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
                       @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,

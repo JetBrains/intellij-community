@@ -22,6 +22,7 @@ package com.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -38,7 +39,7 @@ import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(100);
+  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(Registry.intValue("ide.icons.deferrerCacheSize"));
   private long myLastClearTimestamp;
 
   public IconDeferrerImpl(@NotNull MessageBus bus) {
@@ -83,19 +84,20 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
 
     synchronized (LOCK) {
-      Icon result = myIconsCache.get(param);
-      if (result == null) {
-        final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
-          synchronized (LOCK) {
-            // check if our results is not outdated yet
-            if (started == myLastClearTimestamp) {
-              myIconsCache.put(key, autoUpdatable ? source : r);
-            }
-          }
-        }, autoUpdatable);
-        myIconsCache.put(param, result);
+      Icon cached = myIconsCache.get(param);
+      if (cached != null) {
+        return cached;
       }
+      final long started = myLastClearTimestamp;
+      Icon result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
+        synchronized (LOCK) {
+          // check if our results is not outdated yet
+          if (started == myLastClearTimestamp) {
+            myIconsCache.put(key, autoUpdatable ? source : r);
+          }
+        }
+      }, autoUpdatable);
+      myIconsCache.put(param, result);
 
       return result;
     }

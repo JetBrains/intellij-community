@@ -2,9 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,19 +18,12 @@ public class HiDPIModeUsagesCollector extends ApplicationUsagesCollector {
   @Override
   public Set<UsageDescriptor> getUsages() {
     String mode = UIUtil.isJreHiDPIEnabled() ? "per_monitor_dpi" : "system_dpi";
-    String os = SystemInfo.isWindows ? "Windows" : SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac" : "UnknownOS";
-    return Collections.singleton(new UsageDescriptor(os + "." + mode, 1));
+    return Collections.singleton(new UsageDescriptor(mode, 1, new FeatureUsageData().addOS()));
   }
 
   @NotNull
   @Override
   public String getGroupId() {
     return "ui.hidpi.mode";
-  }
-
-  @NotNull
-  @Override
-  public FUSUsageContext getContext() {
-    return FUSUsageContext.OS_CONTEXT;
   }
 }

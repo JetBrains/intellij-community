@@ -220,13 +220,9 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     List<PsiFileSystemItem> sourceFiles = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      if (vFile != null) {
-        final PsiFileSystemItem psiFile = vFile.isDirectory()
-                                          ? PsiManager.getInstance(myProject).findDirectory(vFile)
-                                          : PsiManager.getInstance(myProject).findFile(vFile);
-        if (psiFile != null) {
-          sourceFiles.add(psiFile);
-        }
+      PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(myProject, vFile);
+      if (psiFile != null) {
+        sourceFiles.add(psiFile);
       }
     }
     return sourceFiles.toArray(new PsiFileSystemItem[0]);

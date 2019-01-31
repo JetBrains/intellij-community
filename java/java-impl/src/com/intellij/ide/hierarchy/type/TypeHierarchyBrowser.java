@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
+import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -72,6 +75,12 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
+  protected boolean isApplicableElementForBaseOn(@NotNull PsiElement element) {
+    return element instanceof PsiClass &&
+           !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)element).getQualifiedName());
+  }
+
+  @Override
   protected Comparator<NodeDescriptor> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
@@ -104,18 +113,5 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
       return ((PsiClass)psiElement).getQualifiedName();
     }
     return "";
-  }
-
-  public static class BaseOnThisTypeAction extends TypeHierarchyBrowserBase.BaseOnThisTypeAction {
-    @Override
-    protected boolean isEnabled(@NotNull final HierarchyBrowserBaseEx browser, @NotNull final PsiElement psiElement) {
-      return super.isEnabled(browser, psiElement) && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)psiElement).getQualifiedName());
-    }
-  }
-
-  @NotNull
-  @Override
-  protected TypeHierarchyBrowserBase.BaseOnThisTypeAction createBaseOnThisAction() {
-    return new BaseOnThisTypeAction();
   }
 }

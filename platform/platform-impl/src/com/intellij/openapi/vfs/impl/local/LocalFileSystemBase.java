@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -742,5 +746,23 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
+  }
+
+  @Override
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    return hasChildren(Paths.get(file.getPath()));
+  }
+
+  /**
+   * @return true if {@code path} represents a directory which has children.
+   */
+  public static boolean hasChildren(@NotNull Path path) {
+    // make sure to not load all children
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+      return stream.iterator().hasNext();
+    }
+    catch (IOException | SecurityException e) {
+      return true;
+    }
   }
 }
