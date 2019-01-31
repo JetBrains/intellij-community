@@ -64,34 +64,16 @@ private fun findExtensionsByClassName(project: Project, className: String): List
 
 internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag, ExtensionPoint) -> Boolean) {
   processExtensionDeclarations(className, project, true) { extension, tag ->
-    val point = extension.extensionPoint
-    if (point == null) {
-      true
-    }
-    else {
-      processor(tag, point)
-    }
+    extension.extensionPoint?.let { processor(tag, it) } ?: true
   }
 }
 
-internal class ExtensionByExtensionPointLocator : ExtensionLocator {
-  private val project: Project
-  private val pointQualifiedName: String
-  private val extensionId: String?
+internal class ExtensionByExtensionPointLocator(private val project: Project,
+                                                extensionPoint: ExtensionPoint,
+                                                private val extensionId: String?) : ExtensionLocator() {
+  private val pointQualifiedName = extensionPoint.effectiveQualifiedName
 
-  constructor(project: Project, extensionPoint: ExtensionPoint, extensionId: String?) {
-    this.project = project
-    pointQualifiedName = extensionPoint.effectiveQualifiedName
-    this.extensionId = extensionId
-  }
-
-  constructor(project: Project, pointQualifiedName: String, extensionId: String? = null) {
-    this.project = project
-    this.pointQualifiedName = pointQualifiedName
-    this.extensionId = extensionId
-  }
-
-   fun processCandidates(processor: (XmlTag) -> Boolean) {
+  private fun processCandidates(processor: (XmlTag) -> Boolean) {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
     val epNameToSearch = if (pointQualifiedName == "com.intellij.compiler.task") "compiler.task" else StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return

@@ -41,7 +41,8 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       if (!isReferencedByExtension(aClass, manager.project)) {
         return null
       }
-    } else if (javaPsi.name == "VcsConfigurableEP") {
+    }
+    else if (javaPsi.name == "VcsConfigurableEP") {
       // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
       return null
     }
