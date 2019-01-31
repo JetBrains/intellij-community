@@ -185,20 +185,7 @@ public class GitMergeUtil {
     GitFileRevision last = new GitFileRevision(project, path, new GitRevisionNumber(":" + theirsRevision(isReversed)));
 
     MergeData mergeData = new MergeData();
-    try {
-      mergeData.ORIGINAL = original.loadContent();
-    }
-    catch (Exception ex) {
-      /// unable to load original revision, use the current instead
-      /// This could happen in case if rebasing.
-      try {
-        mergeData.ORIGINAL = file.contentsToByteArray();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
-      }
-    }
+    mergeData.ORIGINAL = loadOriginalContent(original, file);
     mergeData.CURRENT = loadRevisionCatchingErrors(current);
     mergeData.LAST = loadRevisionCatchingErrors(last);
 
@@ -296,6 +283,23 @@ public class GitMergeUtil {
     catch (VcsException e) {
       LOG.error("Couldn't resolve the HEAD in " + root, e);
       return null;
+    }
+  }
+
+  private static byte[] loadOriginalContent(@NotNull GitFileRevision revision, @NotNull VirtualFile file) {
+    try {
+      return revision.loadContent();
+    }
+    catch (Exception ex) {
+      /// unable to load original revision, use the current instead
+      /// This could happen in case if rebasing.
+      try {
+        return file.contentsToByteArray();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return ArrayUtil.EMPTY_BYTE_ARRAY;
+      }
     }
   }
 
