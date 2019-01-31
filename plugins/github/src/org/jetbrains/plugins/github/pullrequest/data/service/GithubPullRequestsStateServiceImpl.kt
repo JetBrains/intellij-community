@@ -191,9 +191,9 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
         } ?: throw ProcessCanceledException()
 
         indicator.text2 = "Merging"
-        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.merge(details,
-                                                                                      commitMessage.first, commitMessage.second,
-                                                                                      details.head.sha))
+        requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.squashMerge(details,
+                                                                                            commitMessage.first, commitMessage.second,
+                                                                                            details.head.sha))
       }
 
       override fun onSuccess() {
