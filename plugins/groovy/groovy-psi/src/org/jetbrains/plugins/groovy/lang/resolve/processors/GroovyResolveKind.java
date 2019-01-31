@@ -31,4 +31,5 @@ public enum GroovyResolveKind {
   }
 
   public static final Key<Hint> HINT_KEY = Key.create("groovy.resolve.kind.hint");
+  public static final Hint EMPTY_HINT = it -> false;
 }

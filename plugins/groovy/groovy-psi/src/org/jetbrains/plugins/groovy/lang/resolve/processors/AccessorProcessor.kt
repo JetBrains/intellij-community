@@ -28,6 +28,7 @@ class AccessorProcessor(
   init {
     nameHint(accessorName)
     elementClassHint(ElementClassHint.DeclarationKind.METHOD)
+    hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.EMPTY_HINT)
   }
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
