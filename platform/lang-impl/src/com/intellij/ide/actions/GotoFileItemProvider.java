@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -39,6 +40,7 @@ import java.util.*;
 * @author peter
 */
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoFileItemProvider");
   private final Project myProject;
   private final GotoFileModel myModel;
 
@@ -54,21 +56,29 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                 boolean everywhere,
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull Processor<Object> consumer) {
-    PsiFileSystemItem absolute = getFileByAbsolutePath(pattern);
-    if (absolute != null && !consumer.process(absolute)) {
-      return true;
-    }
+    long start = System.currentTimeMillis();
+    try {
+      PsiFileSystemItem absolute = getFileByAbsolutePath(pattern);
+      if (absolute != null && !consumer.process(absolute)) {
+        return true;
+      }
 
 
-    if (pattern.startsWith("./") || pattern.startsWith(".\\")) {
-      pattern = pattern.substring(1);
-    }
+      if (pattern.startsWith("./") || pattern.startsWith(".\\")) {
+        pattern = pattern.substring(1);
+      }
 
-    if (!processItemsForPattern(base, pattern, everywhere, consumer, indicator)) {
-      return false;
+      if (!processItemsForPattern(base, pattern, everywhere, consumer, indicator)) {
+        return false;
+      }
+      String fixed = FixingLayoutMatcher.fixLayout(pattern);
+      return fixed == null || processItemsForPattern(base, fixed, everywhere, consumer, indicator);
     }
-    String fixed = FixingLayoutMatcher.fixLayout(pattern);
-    return fixed == null || processItemsForPattern(base, fixed, everywhere, consumer, indicator);
+    finally {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Goto File \"" + pattern + "\" took " + (System.currentTimeMillis() - start) + " ms");
+      }
+    }
   }
 
   private boolean processItemsForPattern(@NotNull ChooseByNameBase base,
