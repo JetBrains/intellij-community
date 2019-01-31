@@ -39,7 +39,7 @@ public abstract class ApplicationStarterEx implements ApplicationStarter {
   public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) { }
   
   @NotNull
-  public Future<CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<? extends CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
     //noinspection deprecation
     processExternalCommandLine(args, currentDirectory);
     return CliResult.ok();

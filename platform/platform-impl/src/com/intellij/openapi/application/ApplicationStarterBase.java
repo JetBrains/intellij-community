@@ -36,13 +36,13 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   @NotNull
   @Override
-  public Future<CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<? extends CliResult> processExternalCommandLineEx(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return CliResult.error(1, getUsageMessage());
     }
     try {
-      processCommand(args, currentDirectory);
+      return processCommand(args, currentDirectory);
     }
     catch (Exception e) {
       Messages.showMessageDialog(String.format("Error showing %s: %s", getCommandName(), e.getMessage()),
@@ -53,7 +53,6 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     finally {
       saveAll();
     }
-    return CliResult.ok();
   }
 
   protected static void saveAll() {
@@ -67,7 +66,8 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
 
   public abstract String getUsageMessage();
 
-  protected abstract void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  @NotNull
+  protected abstract Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
 
   @Override
   public void premain(String[] args) {
