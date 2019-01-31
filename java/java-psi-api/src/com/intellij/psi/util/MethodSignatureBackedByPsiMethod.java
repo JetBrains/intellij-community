@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,8 +77,13 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
-    
-    assert substitutor.isValid();
+
+    try {
+      substitutor.ensureValid();
+    }
+    catch (Throwable e) {
+      throw PluginException.createByClass(e.getMessage(), e, method.getClass());
+    }
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = PsiType.createArray(parameters.length);
