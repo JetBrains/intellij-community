@@ -89,7 +89,11 @@ public class YamlArrayAdapter implements JsonArrayValueAdapter {
     List<JsonValueAdapter> adapters = ContainerUtil.newArrayListWithCapacity(items.size());
     for (YAMLSequenceItem item: items) {
       YAMLValue value = item.getValue();
-      if (value == null) continue;
+      if (value == null) {
+        JsonValueAdapter emptyAdapter = YamlPropertyAdapter.createEmptyValueAdapter(item.getFirstChild(), true);
+        if (emptyAdapter != null) adapters.add(emptyAdapter);
+        continue;
+      }
       adapters.add(YamlPropertyAdapter.createValueAdapterByType(value));
     }
     return adapters;

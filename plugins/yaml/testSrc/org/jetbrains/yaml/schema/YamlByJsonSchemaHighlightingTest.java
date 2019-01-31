@@ -826,4 +826,22 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "  }\n" +
            "}", "x: ");
   }
+
+  public void testEmptyValueInArray() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\",\n" +
+           "      \"items\": {\n" +
+           "        \"type\": \"string\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "versionAsStringArray:\n" +
+                "  -<warning descr=\"Schema validation: Type is not allowed. Expected: string.\"> </warning>\n" +
+                "  <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">-</warning>\n" +
+                "  - a");
+  }
 }

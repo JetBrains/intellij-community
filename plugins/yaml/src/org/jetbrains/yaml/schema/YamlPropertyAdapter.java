@@ -38,10 +38,9 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @Override
   public Collection<JsonValueAdapter> getValues() {
     YAMLValue value = myProperty.getValue();
-    if (value != null) return Collections.singletonList(createValueAdapterByType(value));
-    PsiElement nextSibling = myProperty.getNextSibling();
-    PsiElement nodeToHighlight = PsiUtilCore.getElementType(nextSibling) == TokenType.WHITE_SPACE ? nextSibling : myProperty.getLastChild();
-    return nodeToHighlight == null ? ContainerUtil.emptyList() : Collections.singletonList(new YamlEmptyValueAdapter(nodeToHighlight));
+    return value != null
+           ? Collections.singletonList(createValueAdapterByType(value))
+           : ContainerUtil.createMaybeSingletonList(createEmptyValueAdapter(myProperty, false));
   }
 
   @NotNull
@@ -68,5 +67,14 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
     if (value instanceof YAMLMapping) return new YamlObjectAdapter((YAMLMapping) value);
     if (value instanceof YAMLSequence) return new YamlArrayAdapter((YAMLSequence) value);
     return new YamlGenericValueAdapter(value);
+  }
+
+  @Nullable
+  public static JsonValueAdapter createEmptyValueAdapter(@NotNull PsiElement context, boolean pinSelf) {
+    PsiElement nextSibling = context.getNextSibling();
+    PsiElement nodeToHighlight = PsiUtilCore.getElementType(nextSibling) == TokenType.WHITE_SPACE
+                                 ? nextSibling
+                                 : (pinSelf ? context : context.getLastChild());
+    return nodeToHighlight == null ? null : new YamlEmptyValueAdapter(nodeToHighlight);
   }
 }
