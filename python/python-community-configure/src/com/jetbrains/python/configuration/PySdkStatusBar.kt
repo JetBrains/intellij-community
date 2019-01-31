@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.sdk
+package com.jetbrains.python.configuration
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.AnAction
@@ -23,6 +23,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.text.trimMiddle
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.*
 
 class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
@@ -57,7 +58,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   override fun createPopup(context: DataContext): ListPopup? {
     val group = DefaultActionGroup()
 
-    val moduleSdksByTypes = groupModuleSdksByTypes(PythonSdkType.getAllSdks(), module) {
+    val moduleSdksByTypes = groupModuleSdksByTypes(PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks(project), module) {
       PythonSdkType.isInvalid(it) ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
@@ -73,6 +74,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
     group.add(InterpreterSettingsAction())
+    group.add(AddInterpreterAction())
 
     val currentSdk = PythonSdkType.findPythonSdk(module)
     return JBPopupFactory.getInstance().createActionGroupPopup(
@@ -122,5 +124,19 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
   private inner class InterpreterSettingsAction : AnAction("Interpreter Settings...") {
     override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.ConfigureInterpreterFix.showProjectInterpreterDialog(project!!)
+  }
+
+  private inner class AddInterpreterAction : AnAction("Add Interpreter...") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val model = PyConfigurableInterpreterList.getInstance(project).model
+
+      PythonSdkDetailsStep.show(project, module, model.sdks) {
+        if (it != null && model.findSdk(it.name) == null) {
+          model.addSdk(it)
+          model.apply()
+        }
+      }
+    }
   }
 }
