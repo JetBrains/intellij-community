@@ -85,25 +85,36 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
       }
     }
 
+
+  interface Expiration {
+    val isExpired: Boolean
+
+    /** The caller must ensure the returned handle is properly disposed. */
+    fun invokeOnExpiration(handler: Runnable): Handle
+
+    interface Handle {
+      fun unregisterHandler()
+    }
+  }
+
   /**
    * Capable of invoking a handler whenever something expires -
    * either a Disposable (see [DisposableExpiration]), or another job (see [JobExpiration]).
    */
-  internal abstract class Expiration {
+  internal abstract class AbstractExpiration : Expiration {
     protected abstract val job: Job
 
-    open val isExpired: Boolean
+    override val isExpired: Boolean
       get() = job.isCancelled
 
-    /** The caller must ensure the returned handle is properly disposed. */
-    fun invokeOnExpiration(handler: CompletionHandler): DisposableHandle =
-      job.invokeOnCompletion(handler)
+    override fun invokeOnExpiration(handler: Runnable): Expiration.Handle =
+      job.invokeOnCompletion { handler.run() }.toHandlerRegistration()
   }
 
-  internal class JobExpiration(override val job: Job) : Expiration()
+  internal class JobExpiration(override val job: Job) : AbstractExpiration()
 
   /**
-   * An ExpirableHandle isolates interactions with a Disposable and the Disposer, using
+   * DisposableExpiration isolates interactions with a Disposable and the Disposer, using
    * an expirable supervisor job that gets cancelled whenever the Disposable is disposed.
    *
    * A supervisor Job is easier to interact with because of using homogeneous Job API to setup
@@ -111,14 +122,14 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
    * performance considerations: two lock-free Job.invokeOnCompletion calls vs. multiple
    * synchronized Disposer calls per each launched coroutine.
    *
-   * The ExpirableHandle itself is a lightweight thing w.r.t. creating it until it's supervisor Job
+   * The DisposableExpiration itself is a lightweight thing w.r.t. creating it until it's supervisor Job
    * is really used, because registering a child Disposable within the Disposer tree happens lazily.
    *
    * The whole thing ultimately aims to be a proxy between a set of disposables that come from
    * [expireWith] and [withConstraint], and each individual coroutine job that must be cancelled
    * once any of the disposables is expired.
    */
-  internal class DisposableExpiration(private val disposable: Disposable) : Expiration() {
+  internal class DisposableExpiration(private val disposable: Disposable) : AbstractExpiration() {
     /**
      * Does not have children or a parent. Unlike the regular parent-children job relation,
      * having coroutine jobs attached to the supervisor job doesn't imply waiting of any kind,
@@ -161,7 +172,7 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       val runOnce = RunOnce()
 
-      val jobDisposableHandle = expiration.invokeOnExpiration {
+      val expirationHandle = expiration.invokeOnExpiration(Runnable {
         runOnce {
           if (!context[Job]!!.isCancelled) { // TODO[eldar] relying on the order of invocations of CompletionHandlers
             LOG.warn("Must have already been cancelled through the expirableHandle")
@@ -170,11 +181,11 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
           // Implementation of a completion handler must be fast and lock-free.
           dispatchLater(block)  // invokeLater, basically
         }
-      }
+      })
       if (runOnce.isActive) {
         constraint.schedule(Runnable {
           runOnce {
-            jobDisposableHandle.dispose()
+            expirationHandle.unregisterHandler()
             block.run()
           }
         })
@@ -191,11 +202,19 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
       }
     }
 
+    internal fun DisposableHandle.toHandlerRegistration(): Expiration.Handle {
+      return object : Expiration.Handle {
+        override fun unregisterHandler() {
+          dispose()
+        }
+      }
+    }
+
     internal fun Expiration.cancelJobOnExpiration(job: Job) {
-      invokeOnExpiration {
+      invokeOnExpiration(Runnable {
         job.cancel()
-      }.also { handle ->
-        job.invokeOnCompletion { handle.dispose() }
+      }).also { registration ->
+        job.invokeOnCompletion { registration.unregisterHandler() }
       }
     }
 
