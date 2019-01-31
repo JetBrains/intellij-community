@@ -57,7 +57,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
 
   @NotNull
   public static <T> T instantiate(@NotNull final Class<T> aClass, @NotNull final PicoContainer container) {
-    return instantiate(aClass, container, false);
+    return instantiate(aClass, container, true);
   }
 
   @NotNull
