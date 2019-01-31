@@ -85,7 +85,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(file, formatted);
     }
-    return formatted;
+    final TextRange range = formatted.getTextRange();
+    return ExternalFormatProcessor.formatInternalWhitespaces(formatted,
+                                                             range.getStartOffset(),
+                                                             range.getEndOffset());
   }
 
   private static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted) {
