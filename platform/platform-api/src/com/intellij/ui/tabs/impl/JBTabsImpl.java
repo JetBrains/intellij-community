@@ -22,6 +22,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -175,6 +176,16 @@ public class JBTabsImpl extends JComponent
   private boolean myAlwaysPaintSelectedTab;
   private int myFirstTabOffset;
 
+  protected final JBTabPainter tabPainter = createTabPainter();
+
+  protected JBTabPainter createTabPainter() {
+    return JBTabPainter.getInstance(null);
+  }
+
+  public JBTabPainter getTabPainter() {
+    return tabPainter;
+  }
+
   Lifetime lifetime = createLifetime(this);
   private TabLabel tabLabelAtMouse;
 
@@ -215,7 +226,7 @@ public class JBTabsImpl extends JComponent
 
     getTabLabelUnderMouse(this).advise(lifetime, label -> {
       tabLabelAtMouse = label;
-      repaint();
+      updateTabs();
 
       return Unit.INSTANCE;
     });
@@ -366,6 +377,10 @@ public class JBTabsImpl extends JComponent
 
   protected boolean isHoveredTab(TabLabel label) {
     return label != null && label == tabLabelAtMouse;
+  }
+
+  protected boolean isActiveTabs() {
+    return Utils.Companion.isFocusOwner(this);
   }
 
   public boolean isEditorTabs() {
@@ -617,18 +632,12 @@ public class JBTabsImpl extends JComponent
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
-      updateTab(() -> {
         final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
         changed.set(changed.get().booleanValue() || changes);
-        return changes;
-      }, eachInfo);
     }
 
-    if (changed.get().booleanValue()) {
-      if (validateNow) {
-        validate();
-        paintImmediately(0, 0, getWidth(), getHeight());
-      }
+    if (changed.get()) {
+      updateTabs();
     }
   }
 
@@ -876,6 +885,12 @@ public class JBTabsImpl extends JComponent
     if (!isEnabled()) {
       return ActionCallback.REJECTED;
     }
+
+    TabLabel label = myInfo2Label.get(info);
+    if(label != null) {
+      setComponentZOrder(label, 0);
+    }
+
     if (mySelectionChangeHandler != null) {
       return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
         @NotNull
@@ -1156,32 +1171,16 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateIcon(final TabInfo tabInfo) {
-    updateTab(() -> {
-      myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-      return true;
-    }, tabInfo);
+    myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+    updateTabs();
   }
 
   private void updateColor(final TabInfo tabInfo) {
-    updateTab(() -> {
-      repaint();
-      return true;
-    }, tabInfo);
+    updateTabs();
   }
 
-  private void updateTab(Computable<Boolean> update, TabInfo info) {
-    final TabLabel label = myInfo2Label.get(info);
-    Boolean changes = update.compute();
-    if (label.getRootPane() != null) {
-      if (label.isValid()) {
-        if (changes) {
-          label.repaint();
-        }
-      }
-      else {
-        revalidateAndRepaint(false);
-      }
-    }
+  public void updateTabs() {
+    repaint();
   }
 
   void revalidateAndRepaint(final boolean layoutNow) {
@@ -1228,12 +1227,11 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateText(final TabInfo tabInfo) {
-    updateTab(() -> {
-      final TabLabel label = myInfo2Label.get(tabInfo);
-      label.setText(tabInfo.getColoredText());
-      label.setToolTipText(tabInfo.getTooltipText());
-      return true;
-    }, tabInfo);
+    final TabLabel label = myInfo2Label.get(tabInfo);
+    label.setText(tabInfo.getColoredText());
+    label.setToolTipText(tabInfo.getTooltipText());
+
+    updateTabs();
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -1652,8 +1650,6 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-    g2d.setColor(getBackground());
-    g2d.fill(clip);
   }
 
   @Override
@@ -1678,9 +1674,8 @@ public class JBTabsImpl extends JComponent
       if (compBounds.contains(clip) && !compBounds.intersects(clip)) return;
     }
 
-
     if (!isStealthModeEffective() && !isHideTabs()) {
-      paintNonSelectedTabs(g2d);
+      myLastPaintedSelection = getSelectedInfo();
     }
 
     config.setAntialiasing(false);
@@ -1703,22 +1698,6 @@ public class JBTabsImpl extends JComponent
     return myInfo2Label.get(getSelectedInfo());
   }
 
-  private void paintNonSelectedTabs(final Graphics2D g2d) {
-    TabInfo selected = getSelectedInfo();
-
-    for (int eachRow = 0; eachRow < myLastLayoutPass.getRowCount(); eachRow++) {
-      for (int eachColumn = myLastLayoutPass.getColumnCount(eachRow) - 1; eachColumn >= 0; eachColumn--) {
-        final TabInfo each = myLastLayoutPass.getTabAt(eachRow, eachColumn);
-        if (getSelectedInfo() == each) {
-          continue;
-        }
-        doPaintInactive(g2d, each);
-      }
-    }
-
-    myLastPaintedSelection = selected;
-  }
-
   protected List<TabInfo> getVisibleInfos() {
     if (!isAlphabeticalMode()) {
       return myVisibleInfos;
@@ -1731,13 +1710,6 @@ public class JBTabsImpl extends JComponent
 
   protected LayoutPassInfo getLastLayoutPass() {
     return myLastLayoutPass;
-  }
-
-  protected void doPaintInactive(Graphics2D g2d,
-                                 TabInfo info) {}
-
-  protected void doPaintSelected(Graphics2D g2d,
-                                 TabInfo info) {
   }
 
   public static int getSelectionTabVShift() {
@@ -1781,12 +1753,6 @@ public class JBTabsImpl extends JComponent
   @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
-
-    final TabLabel selected = getSelectedLabel();
-    if (selected != null) {
-      doPaintSelected((Graphics2D)g, getSelectedInfo());
-      selected.paintImage(g);
-    }
 
     mySingleRowLayout.myMoreIcon.paintIcon(this, g);
   }
@@ -2821,13 +2787,6 @@ public class JBTabsImpl extends JComponent
     return 0;
   }
 
-  public int getTabVGap() {
-    /**
-     * TODO use borders instead of layout vGap
-     */
-    return JBUI.scale(1);
-  }
-
   @Override
   public String toString() {
     return "JBTabs visible=" + myVisibleInfos + " selected=" + mySelectedInfo;
@@ -3303,7 +3262,7 @@ public class JBTabsImpl extends JComponent
   }
 
   /**
-   * @deprecated You should move the painting logic to an implementation of {@link JBTabPainter} interface }
+   * @deprecated unused. You should move the painting logic to an implementation of {@link JBTabPainter} interface }
    */
   @Deprecated
   public int getActiveTabUnderlineHeight() {

@@ -14,9 +14,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
-import com.intellij.ui.tabs.impl.JBTabPainter;
 import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
@@ -266,7 +265,7 @@ class TabContentLayout extends ContentLayout {
     }
   }
 
-  private JBTabPainter tabPainter = new JBDefaultTabPainter(JBTabPainter.Companion.getTOOLWINDOW_TAB());
+  private JBTabPainter tabPainter = JBTabPainter.getInstance(JBTabPainter.PainterType.TOOL_WINDOW);
 
   @Override
   public void paintComponent(Graphics g) {

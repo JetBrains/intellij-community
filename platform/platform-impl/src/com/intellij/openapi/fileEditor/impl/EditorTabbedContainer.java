@@ -39,6 +39,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -84,7 +85,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
 
 /*      @Override
-      protected boolean isActiveTab(TabInfo info) {
+      protected boolean isActiveTabs(TabInfo info) {
         if (Utils.Companion.isFocusOwner(this)) return true;
 
         FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
@@ -99,7 +100,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
       @Override
       protected JBTabPainter createTabPainter() {
-        return new JBDefaultTabPainter(JBTabPainter.Companion.getEDITOR_TAB());
+        return JBTabPainter.getInstance(JBTabPainter.PainterType.EDITOR);
       }
 
       boolean isOwner = false;
@@ -107,13 +108,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
         return e -> {
           if (e instanceof FocusEvent) {
-            //TODO optimize the redrawing
-
-/*            boolean newIsOwner = Utils.Companion.isFocusOwner(myTabs);
-            if(isOwner != newIsOwner) {
-              isOwner = newIsOwner;*/
-              myTabs.repaint();
-           // }
+              myTabs.updateTabs();
           }
           return false;
         };
