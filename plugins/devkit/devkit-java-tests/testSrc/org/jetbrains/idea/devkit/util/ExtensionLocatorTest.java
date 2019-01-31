@@ -82,8 +82,7 @@ public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
   }
 
 
-  private void verifyLocator(ExtensionLocator locator, int expectedExtensionCount) {
-    List<ExtensionCandidate> candidates = locator.findCandidates();
+  private void verifyLocator(List<ExtensionCandidate> candidates, int expectedExtensionCount) {
     assertSize(expectedExtensionCount, candidates);
 
     for (int i = 0; i < expectedExtensionCount; i++) {

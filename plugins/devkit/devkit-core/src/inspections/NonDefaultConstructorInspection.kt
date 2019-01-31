@@ -1,23 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiParameterList
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
-import org.jetbrains.idea.devkit.util.ExtensionByExtensionPointLocator
+import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 import org.jetbrains.uast.UClass
 
 internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
-    if (!javaPsi.isPhysical || javaPsi.classKind != JvmClassKind.CLASS) {
+    if (!javaPsi.isPhysical || javaPsi.classKind != JvmClassKind.CLASS ||
+        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) ||
+        PsiUtil.isAbstractClass(javaPsi)) {
       return null
     }
 
@@ -30,7 +33,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     // fast path - check by qualified name
     if (!isExtensionBean(aClass)) {
       // slow path - check using index
-      if (!isRegisteredIntentionAction(aClass, manager)) {
+      if (!isReferencedByExtension(aClass, manager.project)) {
         return null
       }
     }
@@ -55,11 +58,10 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 }
 
 // cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
-private fun isRegisteredIntentionAction(aClass: UClass, manager: InspectionManager): Boolean {
-  val qualifiedName = aClass.qualifiedName
+private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
   var isFound = false
-  ExtensionByExtensionPointLocator(manager.project, IntentionManager.EP_INTENTION_ACTIONS.name).processCandidates { tag ->
-    if (qualifiedName == tag.getSubTagText("className")) {
+  processExtensionsByClassName(project, clazz.qualifiedName ?: return false) { tag ->
+    if (tag.name == "className" || tag.subTags.any { it.name == "className" } || tag.attributes.any { it.name.startsWith("implementation") }) {
       isFound = true
     }
     !isFound
@@ -89,8 +91,7 @@ private fun isAllowedParameters(list: PsiParameterList): Boolean {
 
 private val interfacesToCheck = THashSet<String>(listOf(
   "com.intellij.codeInsight.daemon.LineMarkerProvider",
-  "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory",
-  "com.intellij.openapi.compiler.CompileTask"
+  "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"
 ))
 
 private val classesToCheck = THashSet<String>(listOf(

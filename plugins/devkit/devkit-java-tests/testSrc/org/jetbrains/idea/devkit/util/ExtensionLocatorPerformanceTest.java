@@ -19,7 +19,6 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensions
 
 @SkipSlowTestLocally
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
-
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
@@ -32,7 +31,7 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     PsiClass psiClass = myFixture.addClass(generateJavaClassText(randomMethodNames));
 
     PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", 2000, () -> {
-      List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass).findCandidates();
+      List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass);
       assertSize(1, result);
     }).attempts(1).assertTiming();
   }

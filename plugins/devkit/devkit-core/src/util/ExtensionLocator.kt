@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util
 
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.util.JvmClassUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
@@ -16,16 +14,12 @@ import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 
-fun locateExtensionsByClass(project: Project, clazz: JvmClass): ExtensionLocator {
-  return ExtensionByClassLocator(project, clazz)
+fun locateExtensionsByPsiClass(psiClass: PsiClass): List<ExtensionCandidate> {
+  return findExtensionsByClassName(psiClass.project, ClassUtil.getJVMClassName(psiClass) ?: return emptyList())
 }
 
-fun locateExtensionsByPsiClass(psiClass: PsiClass): ExtensionLocator {
-  return ExtensionByPsiClassLocator(psiClass)
-}
-
-fun locateExtensionsByExtensionPoint(extensionPoint: ExtensionPoint): ExtensionLocator {
-  return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, null)
+fun locateExtensionsByExtensionPoint(extensionPoint: ExtensionPoint): List<ExtensionCandidate> {
+  return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, null).findCandidates()
 }
 
 fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extensionId: String): ExtensionLocator {
@@ -58,17 +52,25 @@ private fun processExtensionDeclarations(name: String, project: Project, strictM
     }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
 }
 
-private fun findCandidatesByClassName(jvmClassName: String, project: Project): List<ExtensionCandidate> {
+private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
   val result = SmartList<ExtensionCandidate>()
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
-  processExtensionDeclarations(jvmClassName, project, true) { extension, tag ->
-    if (extension.extensionPoint != null) {
-      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
-    }
-    // continue processing
+  processExtensionsByClassName(project, className) {
+    result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
     true
   }
   return result
+}
+
+internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag) -> Boolean) {
+  processExtensionDeclarations(className, project, true) { extension, tag ->
+    if (extension.extensionPoint == null) {
+      true
+    }
+    else {
+      processor(tag)
+    }
+  }
 }
 
 internal class ExtensionByExtensionPointLocator : ExtensionLocator {
@@ -91,7 +93,7 @@ internal class ExtensionByExtensionPointLocator : ExtensionLocator {
    fun processCandidates(processor: (XmlTag) -> Boolean) {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
+    val epNameToSearch = if (pointQualifiedName == "com.intellij.compiler.task") "compiler.task" else StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
     processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
       if (ep.effectiveQualifiedName == pointQualifiedName && (extensionId == null || extensionId == extension.id.stringValue)) {
@@ -116,16 +118,4 @@ internal class ExtensionByExtensionPointLocator : ExtensionLocator {
 
 sealed class ExtensionLocator {
   abstract fun findCandidates(): List<ExtensionCandidate>
-}
-
-private class ExtensionByClassLocator(private val project: Project, private val clazz: JvmClass) : ExtensionLocator() {
-  override fun findCandidates(): List<ExtensionCandidate> {
-    return findCandidatesByClassName(JvmClassUtil.getJvmClassName(clazz) ?: return emptyList(), project)
-  }
-}
-
-private class ExtensionByPsiClassLocator(private val psiClass: PsiClass) : ExtensionLocator() {
-  override fun findCandidates(): List<ExtensionCandidate> {
-    return findCandidatesByClassName(ClassUtil.getJVMClassName(psiClass) ?: return emptyList(), psiClass.project)
-  }
 }

@@ -41,7 +41,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   @NotNull
   @Override
   public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
-    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element); // avoid 'IntellijIdeaRulezzz' placeholder
+    // avoid 'IntellijIdeaRulezzz' placeholder
+    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
     String orderValue = ElementManipulators.getValueText(originalElement);
     if (StringUtil.isEmpty(orderValue)) {
       return PsiReference.EMPTY_ARRAY;
@@ -65,7 +66,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
           return Collections.emptyList();
         }
 
-        String idSubPart = null; // second one, after keyword subpart
+        // second one, after keyword sub-part
+        String idSubPart = null;
         if (subParts.size() == 2) {
           idSubPart = subParts.get(1);
         }
@@ -204,8 +206,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
-      ExtensionLocator epLocator = locateExtensionsByExtensionPoint(extensionPoint);
-      List<ExtensionCandidate> candidates = epLocator.findCandidates();
+      List<ExtensionCandidate> candidates = locateExtensionsByExtensionPoint(extensionPoint);
       Project project = getElement().getProject();
       DomManager domManager = DomManager.getDomManager(project);
 

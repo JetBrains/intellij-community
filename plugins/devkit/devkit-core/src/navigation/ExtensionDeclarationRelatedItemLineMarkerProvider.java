@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
-import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 
 import javax.swing.*;
@@ -30,8 +29,7 @@ public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends Dev
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,
                          @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
-    ExtensionLocator locator = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
-    List<ExtensionCandidate> targets = locator.findCandidates();
+    List<ExtensionCandidate> targets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
     if (targets.isEmpty()) {
       return;
     }

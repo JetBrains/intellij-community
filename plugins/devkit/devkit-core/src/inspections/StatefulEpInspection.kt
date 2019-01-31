@@ -13,11 +13,12 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.SmartPointerManager
+import com.intellij.util.SmartList
 import org.jetbrains.idea.devkit.util.ExtensionCandidate
-import org.jetbrains.idea.devkit.util.locateExtensionsByClass
+import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 
 class StatefulEpInspection : DevKitJvmInspection() {
-
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): DefaultJvmElementVisitor<Boolean?> = object : DefaultJvmElementVisitor<Boolean?> {
 
     override fun visitField(field: JvmField): Boolean? {
@@ -49,35 +50,39 @@ class StatefulEpInspection : DevKitJvmInspection() {
       return false
     }
   }
+}
 
-  companion object {
-    private val localQuickFixFqn = LocalQuickFix::class.java.canonicalName
-    private val projectComponentFqn = ProjectComponent::class.java.canonicalName
+private val localQuickFixFqn = LocalQuickFix::class.java.canonicalName
+private val projectComponentFqn = ProjectComponent::class.java.canonicalName
 
-    private fun findEpCandidates(project: Project, clazz: JvmClass): Collection<ExtensionCandidate> {
-      val name = clazz.name ?: return emptyList()
-      return locateExtensionsByClass(project, clazz).findCandidates().filter { candidate ->
-        val forClass = candidate.pointer.element?.getAttributeValue("forClass")
-        forClass == null || !forClass.contains(name)
-      }
+private fun findEpCandidates(project: Project, clazz: JvmClass): Collection<ExtensionCandidate> {
+  val name = clazz.name ?: return emptyList()
+  val result = SmartList<ExtensionCandidate>()
+  val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
+  processExtensionsByClassName(project, name) {
+    val forClass = it.getAttributeValue("forClass")
+    if (forClass == null || !forClass.contains(name)) {
+      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
     }
-
-    private fun isProjectFieldAllowed(field: JvmField, clazz: JvmClass, targets: Collection<ExtensionCandidate>): Boolean {
-      val finalField = field.hasModifier(JvmModifier.FINAL)
-      if (finalField) return true
-
-      val isProjectEP = targets.any { candidate ->
-        val name = candidate.pointer.element?.name
-        "projectService" == name || "projectConfigurable" == name
-      }
-      if (isProjectEP) return true
-
-      return isInheritor(clazz, projectComponentFqn)
-    }
-
-    private fun message(what: String, quickFix: Boolean): String {
-      val where = if (quickFix) "quick fix" else "extension"
-      return "Don't use $what as a field in $where"
-    }
+    true
   }
+  return result
+}
+
+private fun isProjectFieldAllowed(field: JvmField, clazz: JvmClass, targets: Collection<ExtensionCandidate>): Boolean {
+  val finalField = field.hasModifier(JvmModifier.FINAL)
+  if (finalField) return true
+
+  val isProjectEP = targets.any { candidate ->
+    val name = candidate.pointer.element?.name
+    "projectService" == name || "projectConfigurable" == name
+  }
+  if (isProjectEP) return true
+
+  return isInheritor(clazz, projectComponentFqn)
+}
+
+private fun message(what: String, quickFix: Boolean): String {
+  val where = if (quickFix) "quick fix" else "extension"
+  return "Don't use $what as a field in $where"
 }

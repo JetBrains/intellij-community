@@ -27,14 +27,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
-import org.jetbrains.idea.devkit.util.*;
+import org.jetbrains.idea.devkit.util.ExtensionCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
+import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
 import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
 class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
-
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
@@ -139,8 +141,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomElement extensionPointDomElement = manager.getDomElement(extensionPointCandidate.pointer.getElement());
       if (!(extensionPointDomElement instanceof ExtensionPoint)) return;
 
-      final ExtensionLocator locator = ExtensionLocatorKt.locateExtensionsByExtensionPoint((ExtensionPoint)extensionPointDomElement);
-      for (ExtensionCandidate candidate : locator.findCandidates()) {
+      for (ExtensionCandidate candidate : ExtensionLocatorKt.locateExtensionsByExtensionPoint((ExtensionPoint)extensionPointDomElement)) {
         final XmlTag element = candidate.pointer.getElement();
         final DomElement domElement = manager.getDomElement(element);
         if (domElement instanceof Extension) {
