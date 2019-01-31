@@ -143,7 +143,7 @@ public class RecentLocationManager implements ProjectComponent {
 
         int offset = editor.logicalPositionToOffset(logicalPosition);
         getItems(isChanged).put(changePlace, new PlaceInfoPersistentItem(editor.getDocument().createRangeMarker(offset, offset),
-                                                                                   editor.getColorsScheme()));
+                                                                         editor.getColorsScheme()));
       }
 
       @Override
@@ -177,9 +177,12 @@ public class RecentLocationManager implements ProjectComponent {
     }
 
     Collection<Integer> lines = ((TextEditorState)navigationState).getCaretLines();
-    Integer line = ContainerUtil.getFirstItem(lines);
-
     Collection<Integer> caretColumns = ((TextEditorState)navigationState).getCaretColumns();
+    if (lines == null || caretColumns == null) {
+      return null;
+    }
+
+    Integer line = ContainerUtil.getFirstItem(lines);
     Integer column = ContainerUtil.getFirstItem(caretColumns);
 
     return line != null && column != null ? new LogicalPosition(line, column) : null;
