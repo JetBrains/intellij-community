@@ -28,7 +28,8 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
                                     new PyIsNonePostfixTemplate(),
                                     new PyIsNotNonePostfixTemplate(),
                                     new PyPrintPostfixTemplate(),
-                                    new PyMainPostfixTemplate());
+                                    new PyMainPostfixTemplate(),
+                                    new PyLenPostfixTemplate());
   }
 
   @Override
