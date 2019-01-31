@@ -22,7 +22,8 @@ import org.jetbrains.uast.getLanguagePlugin
 internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
-    if (javaPsi.classKind != JvmClassKind.CLASS ||
+    // Groovy from test data - ignore it
+    if (javaPsi.language.id == "Groovy" || javaPsi.classKind != JvmClassKind.CLASS ||
         PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) ||
         PsiUtil.isAbstractClass(javaPsi)) {
       return null
@@ -40,6 +41,9 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       if (!isReferencedByExtension(aClass, manager.project)) {
         return null
       }
+    } else if (javaPsi.name == "VcsConfigurableEP") {
+      // VcsConfigurableEP extends ConfigurableEP but used directly, for now just ignore it as hardcoded exclusion
+      return null
     }
 
     var errors: MutableList<ProblemDescriptor>? = null
@@ -85,12 +89,15 @@ private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
   return isFound
 }
 
+// todo can we use attribute `with` to avoid hardcoding?
+private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
+
 // problem - tag
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
 //                         implementationClass="com.intellij.psi.css.impl.CssTokenImpl$Manipulator"/>
 // will be found for `com.intellij.psi.css.impl.CssTokenImpl`, but we need to ignore `forClass` and check that we have exact match for implementation attribute
 private fun checkAttributes(tag: XmlTag, qualifiedNamed: String): Boolean {
-  if (tag.name == "modelFacade") {
+  if (ignoredTagNames.contains(tag.name)) {
     // DbmsExtension passes Dbms instance directly, doesn't need to check
     return false
   }
