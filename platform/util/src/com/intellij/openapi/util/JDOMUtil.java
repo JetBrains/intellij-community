@@ -48,11 +48,13 @@ public class JDOMUtil {
       // requests default JRE factory implementation instead of an incompatible one from the classpath
       System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
       XMLInputFactory factory = XMLInputFactory.newFactory();
-      try {
-        factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
-      }
-      catch (Exception e) {
-        getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+      if (!SystemInfo.isIbmJvm) {
+        try {
+          factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+        }
+        catch (Exception e) {
+          getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+        }
       }
       factory.setProperty(XMLInputFactory.IS_COALESCING, true);
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
