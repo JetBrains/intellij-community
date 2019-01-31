@@ -8,6 +8,8 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +77,14 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       if (searchOutsideRootModel) break;
     }
 
-    return new ProjectAndLibrariesScope(myProject, searchOutsideRootModel);
+    return new ProjectAndLibrariesScope(myProject, searchOutsideRootModel) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        DirectoryInfo info = ((ProjectFileIndexImpl)myProjectFileIndex).getInfoForFileOrDirectory(file);
+        return info.isInProject(file) &&
+               (info.getModule() != null || info.hasLibraryClassRoot() || info.isInLibrarySource(file));
+      }
+    };
   }
 
   @NotNull

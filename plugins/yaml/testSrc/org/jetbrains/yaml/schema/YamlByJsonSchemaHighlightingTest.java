@@ -809,4 +809,80 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "  }\n" +
            "}", "x: 2.99792458e8");
   }
+
+  public void testTreatEmptyValueAsNull() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x:<warning descr=\"Schema validation: Type is not allowed. Expected: number.\"> </warning>");
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"null\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: ");
+  }
+
+  public void testEmptyValueInArray() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\",\n" +
+           "      \"items\": {\n" +
+           "        \"type\": \"string\"\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "versionAsStringArray:\n" +
+                "  -<warning descr=\"Schema validation: Type is not allowed. Expected: string.\"> </warning>\n" +
+                "  <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">-</warning>\n" +
+                "  - a");
+  }
+
+  public void testEmptyFile() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
+  }
+
+  public void testEmptyValueBetweenProps() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        },\n" +
+           "        \"yyy\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"zzz\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "  zzz: 0\n" +
+                "  yyy:<warning descr=\"Schema validation: Type is not allowed. Expected: string.\">  </warning>\n" +
+                "  xxx: 0");
+  }
 }

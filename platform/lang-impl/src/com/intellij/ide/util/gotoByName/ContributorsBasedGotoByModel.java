@@ -2,7 +2,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
@@ -191,7 +191,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
             if (item == null) {
-              LOG.error(PluginManagerCore.createPluginException("null item from contributor " + contributor + " for name " + name, null, contributor.getClass()));
+              PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
               continue;
             }
 

@@ -89,6 +89,11 @@ public class TreeBackedLighterAST extends LighterAST {
     }
 
     @Override
+    public int getTextLength() {
+      return myNode.getTextLength();
+    }
+
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (!(o instanceof NodeWrapper)) return false;

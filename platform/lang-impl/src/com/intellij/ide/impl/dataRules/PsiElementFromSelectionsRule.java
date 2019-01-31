@@ -16,7 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +34,7 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
     if (!(data instanceof Object[])) {
       String errorMessage = "Value for data key 'PlatformDataKeys.SELECTED_ITEMS' must be of type Object[], but " + data.getClass() +
                             " is returned by " + dataProvider.getClass();
-      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, dataProvider.getClass()));
+      PluginException.logPluginError(LOG, errorMessage, null, dataProvider.getClass());
       return null;
     }
 

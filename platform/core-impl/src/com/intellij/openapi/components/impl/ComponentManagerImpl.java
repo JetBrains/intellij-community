@@ -409,7 +409,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
         String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
-        LOG.error(PluginManagerCore.createPluginException(errorMessage, null, instance.getClass()));
+        PluginException.logPluginError(LOG, errorMessage, null, instance.getClass());
       }
     }
     else {

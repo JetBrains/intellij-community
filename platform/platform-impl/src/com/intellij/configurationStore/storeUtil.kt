@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -127,7 +128,7 @@ fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): Sta
 
 fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State {
   return getStateSpec(componentClass)
-         ?: throw PluginManagerCore.createPluginException("No @State annotation found in $componentClass", null, componentClass)
+         ?: throw PluginException.createByClass("No @State annotation found in $componentClass", null, componentClass)
 }
 
 fun getStateSpec(originalClass: Class<*>): State? {

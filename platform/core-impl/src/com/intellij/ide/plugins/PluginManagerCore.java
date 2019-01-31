@@ -342,8 +342,7 @@ public class PluginManagerCore {
   }
 
   /**
-   * Creates an exception caused by a problem in a plugin's code.
-   * @param pluginClass a problematic class which caused the error
+   * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
   @NotNull
   public static PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause,

@@ -2,7 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -717,7 +717,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                             "; file name:" + file.getName() +
                             "; type:" + file.getFileType() +
                             "; lang:" + file.getLanguage();
-      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, file.getLanguage().getClass()));
+      PluginException.logPluginError(LOG, errorMessage, null, file.getLanguage().getClass());
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
@@ -727,7 +727,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         diffLog.doActualPsiChange(file);
 
         if (oldFileNode.getTextLength() != document.getTextLength()) {
-          LOG.error(PluginManagerCore.createPluginException("PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass()));
+          PluginException.logPluginError(LOG, "PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass());
         }
       }
       finally {
