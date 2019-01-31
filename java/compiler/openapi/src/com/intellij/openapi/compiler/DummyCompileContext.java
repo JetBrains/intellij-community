@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,19 +28,39 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DummyCompileContext implements CompileContext {
-  protected DummyCompileContext() {
+  private final Project myProject;
+
+  /**
+   * @deprecated use {@link #create(Project)} instead
+   */
+  @Deprecated
+  public DummyCompileContext() {
+    this(ProjectManager.getInstance().getDefaultProject());
   }
 
-  private static final DummyCompileContext OUR_INSTANCE = new DummyCompileContext();
+  protected DummyCompileContext(Project project) {
+    myProject = project;
+  }
 
+  /**
+   * @deprecated use {@link #create(Project)} instead
+   * @return
+   */
+  @Deprecated
   @NotNull
   public static DummyCompileContext getInstance() {
-    return OUR_INSTANCE;
+    return new DummyCompileContext(ProjectManager.getInstance().getDefaultProject());
   }
 
+  @NotNull
+  public static DummyCompileContext create(@NotNull Project project) {
+    return new DummyCompileContext(project);
+  }
+
+  @NotNull
   @Override
   public Project getProject() {
-    return null;
+    return myProject;
   }
 
   @Override
