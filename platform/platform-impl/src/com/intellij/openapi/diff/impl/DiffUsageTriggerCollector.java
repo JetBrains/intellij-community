@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DiffUsageTriggerCollector {
 
-  public static void trigger(@NotNull String feature) {
+  private static void trigger(@NotNull String feature) {
     FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", feature);
   }
 
