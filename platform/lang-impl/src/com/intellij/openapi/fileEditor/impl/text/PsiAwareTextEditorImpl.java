@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +70,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       if (psiFile != null && psiFile.isValid()) {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
-      EditorNotifications.getInstance(myProject).updateNotifications(myFile);
     };
   }
 

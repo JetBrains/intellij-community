@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,8 +23,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,14 +47,8 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
 
   private final Set<FileType> supportedFileTypes;
 
-  public ConfigureGroovyLibraryNotificationProvider(Project project, final EditorNotifications notifications) {
+  public ConfigureGroovyLibraryNotificationProvider(Project project) {
     myProject = project;
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        notifications.updateAllNotifications();
-      }
-    });
 
     supportedFileTypes = new HashSet<>();
     supportedFileTypes.add(GroovyFileType.GROOVY_FILE_TYPE);

@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,6 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     super.setUp();
 
     setProjectSdk(IdeaTestUtil.getMockJdk17());
-    new SdkSetupNotificationProvider(getProject(), EditorNotifications.getInstance(getProject()));
   }
 
   @Override
