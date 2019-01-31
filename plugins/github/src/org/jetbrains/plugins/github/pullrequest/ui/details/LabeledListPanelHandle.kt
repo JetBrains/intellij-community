@@ -18,6 +18,8 @@ import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObserv
 import java.awt.Cursor
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -40,6 +42,15 @@ internal abstract class LabeledListPanelHandle<T>(private val model: GithubPullR
                                            ActionListener { (::editList)() }).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     isVisible = securityService.isCurrentUserWithPushAccess()
+    isFocusable = true
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent) {
+        if (e.keyCode == KeyEvent.VK_ENTER || e.keyCode == KeyEvent.VK_SPACE) {
+          doClick()
+          e.consume()
+        }
+      }
+    })
   }
 
   private fun resizeSquareIcon(icon: Icon): Icon {
