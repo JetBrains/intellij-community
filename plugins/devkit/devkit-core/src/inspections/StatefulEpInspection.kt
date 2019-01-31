@@ -59,10 +59,10 @@ private fun findEpCandidates(project: Project, clazz: JvmClass): Collection<Exte
   val name = clazz.name ?: return emptyList()
   val result = SmartList<ExtensionCandidate>()
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
-  processExtensionsByClassName(project, name) {
-    val forClass = it.getAttributeValue("forClass")
+  processExtensionsByClassName(project, name) { tag, _ ->
+    val forClass = tag.getAttributeValue("forClass")
     if (forClass == null || !forClass.contains(name)) {
-      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
+      result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
     }
     true
   }

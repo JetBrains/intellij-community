@@ -55,20 +55,21 @@ private fun processExtensionDeclarations(name: String, project: Project, strictM
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
   val result = SmartList<ExtensionCandidate>()
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
-  processExtensionsByClassName(project, className) {
-    result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))
+  processExtensionsByClassName(project, className) { tag, _ ->
+    result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
     true
   }
   return result
 }
 
-internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag) -> Boolean) {
+internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag, ExtensionPoint) -> Boolean) {
   processExtensionDeclarations(className, project, true) { extension, tag ->
-    if (extension.extensionPoint == null) {
+    val point = extension.extensionPoint
+    if (point == null) {
       true
     }
     else {
-      processor(tag)
+      processor(tag, point)
     }
   }
 }

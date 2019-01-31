@@ -10,15 +10,19 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import gnu.trove.THashSet
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.convert
+import org.jetbrains.uast.getLanguagePlugin
 
 internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
-    if (!javaPsi.isPhysical || javaPsi.classKind != JvmClassKind.CLASS ||
+    if (javaPsi.classKind != JvmClassKind.CLASS ||
         PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) ||
         PsiUtil.isAbstractClass(javaPsi)) {
       return null
@@ -39,7 +43,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
     }
 
     var errors: MutableList<ProblemDescriptor>? = null
-    for (method in constructors) {
+    loop@ for (method in constructors) {
       val parameters = method.parameterList
       if (parameters.isEmpty || isAllowedParameters(parameters)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
@@ -49,7 +53,13 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
       if (errors == null) {
         errors = SmartList()
       }
-      errors.add(manager.createProblemDescriptor(method ?: continue,
+
+      // kotlin is not physical, but here only physical is expected, so, convert to uast element and use sourcePsi
+      val anchorElement = when {
+        method.isPhysical -> method
+        else -> aClass.getLanguagePlugin().convert<UMethod>(method, aClass).sourcePsi ?: continue@loop
+      }
+      errors.add(manager.createProblemDescriptor(anchorElement,
                                                  "Bean extension class should not have constructor with parameters", true,
                                                  ProblemHighlightType.ERROR, isOnTheFly))
     }
@@ -60,13 +70,34 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase() {
 // cannot check com.intellij.codeInsight.intention.IntentionAction by class qualified name because not all IntentionAction used as IntentionActionBean
 private fun isReferencedByExtension(clazz: UClass, project: Project): Boolean {
   var isFound = false
-  processExtensionsByClassName(project, clazz.qualifiedName ?: return false) { tag ->
-    if (tag.name == "className" || tag.subTags.any { it.name == "className" } || tag.attributes.any { it.name.startsWith("implementation") }) {
+  val qualifiedNamed = clazz.qualifiedName ?: return false
+  processExtensionsByClassName(project, qualifiedNamed) { tag, point ->
+    // check only bean extensions
+    if (point.beanClass.value == null) {
+      return@processExtensionsByClassName true
+    }
+
+    if (tag.name == "className" || tag.subTags.any { it.name == "className" } || checkAttributes(tag, qualifiedNamed)) {
       isFound = true
     }
     !isFound
   }
   return isFound
+}
+
+// problem - tag
+//<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
+//                         implementationClass="com.intellij.psi.css.impl.CssTokenImpl$Manipulator"/>
+// will be found for `com.intellij.psi.css.impl.CssTokenImpl`, but we need to ignore `forClass` and check that we have exact match for implementation attribute
+private fun checkAttributes(tag: XmlTag, qualifiedNamed: String): Boolean {
+  if (tag.name == "modelFacade") {
+    // DbmsExtension passes Dbms instance directly, doesn't need to check
+    return false
+  }
+
+  return tag.attributes.any {
+    it.name.startsWith("implementation") && it.value == qualifiedNamed
+  }
 }
 
 private fun isAllowedParameters(list: PsiParameterList): Boolean {
