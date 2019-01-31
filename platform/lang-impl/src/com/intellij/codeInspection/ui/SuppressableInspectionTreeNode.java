@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
   @NotNull
   private final InspectionToolPresentation myPresentation;
-  private final long myCreationModCount;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile String myPresentableName;
   private volatile Boolean myValid;
@@ -35,15 +34,11 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   SuppressableInspectionTreeNode(@NotNull InspectionToolPresentation presentation, @NotNull InspectionTreeNode parent) {
     super(parent);
     myPresentation = presentation;
-    myCreationModCount = getModCount();
   }
 
   void nodeAdded() {
     dropProblemCountCaches();
-    ReadAction.run(() -> {
-      long count = getModCount();
-      myValid = count == myCreationModCount ? !(this instanceof OfflineProblemDescriptorNode) : calculateIsValid();
-    });
+    ReadAction.run(() -> myValid = calculateIsValid());
     //force calculation
     getProblemLevels();
   }
@@ -229,9 +224,5 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     synchronized (NodeState.INTERNER) {
       return NodeState.INTERNER.intern(state);
     }
-  }
-
-  private long getModCount() {
-    return PsiManager.getInstance(myPresentation.getContext().getProject()).getModificationTracker().getModificationCount();
   }
 }
