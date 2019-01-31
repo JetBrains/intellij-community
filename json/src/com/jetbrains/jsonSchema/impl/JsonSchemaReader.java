@@ -408,9 +408,9 @@ public class JsonSchemaReader {
   private static MyReader createRequired() {
     return (element, object, queue) -> {
       if (element instanceof JsonArray) {
-        object.setRequired(((JsonArray)element).getValueList().stream()
+        object.setRequired(ContainerUtil.newLinkedHashSet(((JsonArray)element).getValueList().stream()
                              .filter(notEmptyString())
-                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toSet()));
+                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toList())));
       }
     };
   }

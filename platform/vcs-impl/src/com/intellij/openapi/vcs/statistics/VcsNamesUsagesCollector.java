@@ -3,8 +3,9 @@ package com.intellij.openapi.vcs.statistics;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,15 +33,18 @@ public class VcsNamesUsagesCollector extends ProjectUsagesCollector {
   public static Set<UsageDescriptor> getDescriptors(@NotNull Project project) {
     Set<UsageDescriptor> usages = new HashSet<>();
 
-    AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    List<String> vcsNames = ContainerUtil.map(activeVcss, AbstractVcs::getName);
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    AbstractVcs[] activeVcss = vcsManager.getAllActiveVcss();
+
+    List<String> vcsNames = ContainerUtil.map(activeVcss, vcs -> {
+      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(vcs.getClass());
+      if (pluginInfo.isDevelopedByJetBrains()) return vcs.getName();
+      if (pluginInfo.isSafeToReport()) return "third.party." + pluginInfo.getId();
+      return "third.party.other";
+    });
 
     for (String vcs : vcsNames) {
       usages.add(new UsageDescriptor(vcs, 1));
-    }
-
-    if (vcsNames.size() > 1) {
-      usages.add(new UsageDescriptor(StringUtil.join(ContainerUtil.sorted(vcsNames), ","), 1));
     }
 
     return usages;

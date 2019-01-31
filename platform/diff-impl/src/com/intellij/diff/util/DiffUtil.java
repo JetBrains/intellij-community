@@ -833,23 +833,14 @@ public class DiffUtil {
     int totalLines = getLineCount(document);
     BitSet lines = new BitSet(totalLines + 1);
 
-    if (editor instanceof EditorEx) {
-      int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
-      if (editor.getCaretModel().getOffset() != expectedCaretOffset) {
-        Caret caret = editor.getCaretModel().getPrimaryCaret();
-        appendSelectedLines(editor, lines, caret, expectedCaretOffset);
-        return lines;
-      }
-    }
-
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      appendSelectedLines(editor, lines, caret, -1);
+      appendSelectedLines(editor, lines, caret);
     }
 
     return lines;
   }
 
-  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret, int expectedCaretOffset) {
+  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret) {
     Document document = editor.getDocument();
     int totalLines = getLineCount(document);
 
@@ -860,16 +851,8 @@ public class DiffUtil {
       if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
     }
     else {
-      int offset;
-      VisualPosition visualPosition;
-      if (expectedCaretOffset == -1) {
-        offset = caret.getOffset();
-        visualPosition = caret.getVisualPosition();
-      }
-      else {
-        offset = expectedCaretOffset;
-        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
-      }
+      int offset = caret.getOffset();
+      VisualPosition visualPosition = caret.getVisualPosition();
 
       Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
       lines.set(pair.first.line, Math.max(pair.second.line, pair.first.line + 1));

@@ -84,7 +84,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getEventProject(e) != null);
-    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+    if (ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setText("Module...");
     }
   }

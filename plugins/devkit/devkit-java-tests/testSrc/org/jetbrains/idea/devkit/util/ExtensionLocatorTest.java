@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,6 +25,9 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
 
 @TestDataPath("$CONTENT_ROOT/testData/util/extensionLocator")
 public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
@@ -60,8 +61,8 @@ public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(StringUtil.isNotEmpty(namedEp.getName().getStringValue()));
     assertTrue(StringUtil.isNotEmpty(qualifiedNamedEp.getQualifiedName().getStringValue()));
 
-    verifyLocator(ExtensionLocator.byExtensionPoint(namedEp), 2);
-    verifyLocator(ExtensionLocator.byExtensionPoint(qualifiedNamedEp), 2);
+    verifyLocator(locateExtensionsByExtensionPoint(namedEp), 2);
+    verifyLocator(locateExtensionsByExtensionPoint(qualifiedNamedEp), 2);
   }
 
   public void testByPsiClass() {
@@ -74,15 +75,14 @@ public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
     PsiClass myList1PsiClass = javaPsiFacade.findClass("SomeClass.MyList1", GlobalSearchScope.allScope(getProject()));
     PsiClass myList2PsiClass = javaPsiFacade.findClass("SomeClass.MyList2", GlobalSearchScope.allScope(getProject()));
 
-    verifyLocator(ExtensionLocator.byPsiClass(arrayListPsiClass), 2);
-    verifyLocator(ExtensionLocator.byPsiClass(linkedListPsiClass), 1);
-    verifyLocator(ExtensionLocator.byPsiClass(myList1PsiClass), 1);
-    verifyLocator(ExtensionLocator.byPsiClass(myList2PsiClass), 0);
+    verifyLocator(locateExtensionsByPsiClass(arrayListPsiClass), 2);
+    verifyLocator(locateExtensionsByPsiClass(linkedListPsiClass), 1);
+    verifyLocator(locateExtensionsByPsiClass(myList1PsiClass), 1);
+    verifyLocator(locateExtensionsByPsiClass(myList2PsiClass), 0);
   }
 
 
-  private void verifyLocator(ExtensionLocator locator, int expectedExtensionCount) {
-    List<ExtensionCandidate> candidates = locator.findCandidates();
+  private void verifyLocator(List<ExtensionCandidate> candidates, int expectedExtensionCount) {
     assertSize(expectedExtensionCount, candidates);
 
     for (int i = 0; i < expectedExtensionCount; i++) {

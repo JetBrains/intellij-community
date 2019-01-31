@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -39,6 +38,7 @@ import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -98,6 +98,7 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   private JCheckBox    myShowWhitespacesModificationsInLSTGutterCheckBox;
   private JCheckBox    myCbKeepTrailingSpacesOnCaretLine;
   private JTextField   myRecentLocationsLimitField;
+  private JBTextField  mySoftWrapFileMasks;
 
   private static final String ACTIVE_COLOR_SCHEME = ApplicationBundle.message("combobox.richcopy.color.scheme.active");
   private static final UINumericRange RECENT_FILES_RANGE = new UINumericRange(50, 1, 500);
@@ -109,6 +110,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     if (SystemInfo.isMac) {
       myCbEnableWheelFontChange.setText(ApplicationBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos"));
     }
+
+    mySoftWrapFileMasks.getEmptyText().setText(ApplicationBundle.message("soft.wraps.file.masks.empty.text"));
 
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
@@ -167,7 +170,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     // Virtual space
 
-    myCbUseSoftWrapsAtEditor.setSelected(editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR));
+    myCbUseSoftWrapsAtEditor.setSelected(editorSettings.isUseSoftWraps());
+    mySoftWrapFileMasks.setText(editorSettings.getSoftWrapFileMasks());
     myCbUseCustomSoftWrapIndent.setSelected(editorSettings.isUseCustomSoftWrapIndent());
     myCustomSoftWrapIndent.setText(Integer.toString(editorSettings.getCustomSoftWrapIndent()));
     myCbShowSoftWrapsOnlyOnCaretLine.setSelected(!editorSettings.isAllSoftWrapsShown());
@@ -261,7 +265,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
 
     // Virtual space
 
-    editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtEditor.isSelected(), SoftWrapAppliancePlaces.MAIN_EDITOR);
+    editorSettings.setUseSoftWraps(myCbUseSoftWrapsAtEditor.isSelected());
+    editorSettings.setSoftWrapFileMasks(mySoftWrapFileMasks.getText());
     editorSettings.setUseCustomSoftWrapIndent(myCbUseCustomSoftWrapIndent.isSelected());
     editorSettings.setCustomSoftWrapIndent(getCustomSoftWrapIndent());
     editorSettings.setAllSoftwrapsShown(!myCbShowSoftWrapsOnlyOnCaretLine.isSelected());
@@ -449,7 +454,8 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
     isModified |= isModified(myCbHighlightIdentifierUnderCaret, codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET);
 
     // Virtual space
-    isModified |= isModified(myCbUseSoftWrapsAtEditor, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR));
+    isModified |= isModified(myCbUseSoftWrapsAtEditor, editorSettings.isUseSoftWraps());
+    isModified |= !mySoftWrapFileMasks.getText().equals(editorSettings.getSoftWrapFileMasks());
     isModified |= isModified(myCbUseCustomSoftWrapIndent, editorSettings.isUseCustomSoftWrapIndent());
     isModified |= editorSettings.getCustomSoftWrapIndent() != getCustomSoftWrapIndent();
     isModified |= isModified(myCbShowSoftWrapsOnlyOnCaretLine, !editorSettings.isAllSoftWrapsShown());
@@ -542,22 +548,12 @@ public class EditorOptionsPanel extends CompositeConfigurable<ErrorOptionsProvid
   }
 
   private void initSoftWrapsSettingsProcessing() {
-    ItemListener listener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        updateSoftWrapSettingsRepresentation();
-      }
-    };
-    myCbUseSoftWrapsAtEditor.addItemListener(listener);
-    myCbUseCustomSoftWrapIndent.addItemListener(listener);
+    myCbUseCustomSoftWrapIndent.addItemListener(e -> updateSoftWrapSettingsRepresentation());
   }
 
   private void updateSoftWrapSettingsRepresentation() {
-    boolean softWrapsEnabled = myCbUseSoftWrapsAtEditor.isSelected();
-    myCbUseCustomSoftWrapIndent.setEnabled(softWrapsEnabled);
-    myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
-    myCustomSoftWrapIndentLabel.setEnabled(myCustomSoftWrapIndent.isEnabled());
-    myCbShowSoftWrapsOnlyOnCaretLine.setEnabled(softWrapsEnabled);
+    myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isSelected());
+    myCustomSoftWrapIndentLabel.setEnabled(myCbUseCustomSoftWrapIndent.isSelected());
   }
 
   private void initVcsSettingsProcessing() {

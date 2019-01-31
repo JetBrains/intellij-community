@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -70,7 +70,7 @@ private fun getTypeFromPropertyCall(element: PsiElement?, expression: GrMethodCa
   return GrClosureSignatureUtil.getReturnType(type.signatures, argumentTypes, expression)
 }
 
-private fun PsiType?.devoid(context: PsiElement): PsiType? {
+fun PsiType?.devoid(context: PsiElement): PsiType? {
   return if (this == PsiType.VOID && !PsiUtil.isCompileStatic(context)) PsiType.NULL else this
 }
 

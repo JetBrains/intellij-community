@@ -164,6 +164,15 @@ class RefCountHolder {
     if (resolveScope instanceof PsiImportStatementBase) {
       registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
     }
+    else if (refElement == null && ref instanceof PsiJavaReference) {
+      for (JavaResolveResult result : ((PsiJavaReference)ref).multiResolve(true)) {
+        resolveScope = result.getCurrentFileResolveScope();
+        if (resolveScope instanceof PsiImportStatementBase) {
+          registerImportStatement(ref, (PsiImportStatementBase)resolveScope);
+          break;
+        }
+      }
+    }
   }
 
   private void registerImportStatement(@NotNull PsiReference ref, @NotNull PsiImportStatementBase importStatement) {

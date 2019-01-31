@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTypesUtil.getPsiClass
 import com.intellij.psi.util.PsiUtil.substituteTypeParameter
@@ -14,12 +15,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 class CategoryMemberContributor : NonCodeMembersContributor() {
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
-    if (!processor.shouldProcessMethods()) return
+    if (!shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return
 
     for (parent in place.parents()) {
       if (parent is GrMember) break

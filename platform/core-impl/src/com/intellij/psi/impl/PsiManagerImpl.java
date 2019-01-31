@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -344,7 +344,7 @@ public class PsiManagerImpl extends PsiManagerEx {
         preprocessor.treeChanged(event);
       }
       boolean enableOutOfCodeBlockTracking = ((PsiModificationTrackerImpl)myModificationTracker).isEnableCodeBlockTracker();
-      for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP_NAME.getExtensions(myProject)) {
+      for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP.getExtensions(myProject)) {
         if (!enableOutOfCodeBlockTracking && preprocessor instanceof PsiTreeChangePreprocessorBase) continue;
         try {
           preprocessor.treeChanged(event);
@@ -354,7 +354,7 @@ public class PsiManagerImpl extends PsiManagerEx {
         }
       }
       if (!enableOutOfCodeBlockTracking) {
-        for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP_NAME.getExtensions(myProject)) {
+        for (PsiTreeChangePreprocessor preprocessor : PsiTreeChangePreprocessor.EP.getExtensions(myProject)) {
           if (!(preprocessor instanceof PsiTreeChangePreprocessorBase)) continue;
           try {
             ((PsiTreeChangePreprocessorBase)preprocessor).onOutOfCodeBlockModification(event);

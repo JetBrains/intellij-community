@@ -81,7 +81,8 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) continue;
 
-      List<T> elements = ContainerUtil.skipNulls(elementsConvertor.apply(file));
+      List<T> apply = elementsConvertor.apply(file);
+      List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
       if (ContainerUtil.isEmpty(elements)) continue;
 
       BitSet changedLines = getChangedLines(project, document, change);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -106,16 +106,14 @@ public abstract class CompilerManager {
   public abstract boolean isCompilableFileType(@NotNull FileType type);
 
   /**
-   * Registers a compiler task that will be executed before the compilation.
-   *
-   * @param task the task to register.
+   * Registers a compiler task that will be executed before the compilation. Consider using {@code compiler.task} extension point instead
+   * (see {@link CompileTask} for details), this way you won't need to call this method during project's initialization.
    */
   public abstract void addBeforeTask(@NotNull CompileTask task);
 
   /**
-   * Registers a compiler task  that will be executed after the compilation.
-   *
-   * @param task the task to register.
+   * Registers a compiler task  that will be executed after the compilation. Consider using {@code compiler.task} extension point instead
+   * (see {@link CompileTask} for details), this way you won't need to call this method during project's initialization.
    */
   public abstract void addAfterTask(@NotNull CompileTask task);
 
@@ -125,7 +123,16 @@ public abstract class CompilerManager {
    * @return all tasks to be executed before compilation.
    */
   @NotNull
-  public abstract CompileTask[] getBeforeTasks();
+  public abstract List<CompileTask> getBeforeTasks();
+
+  /**
+   * @deprecated Use {@link #getAfterTaskList}
+   */
+  @Deprecated
+  @NotNull
+  public CompileTask[] getAfterTasks() {
+    return getAfterTaskList().toArray(new CompileTask[0]);
+  }
 
   /**
    * Returns the list of all tasks to be executed after compilation.
@@ -133,7 +140,7 @@ public abstract class CompilerManager {
    * @return all tasks to be executed after compilation.
    */
   @NotNull
-  public abstract CompileTask[] getAfterTasks();
+  public abstract List<CompileTask> getAfterTaskList();
 
   /**
    * Compile a set of files.

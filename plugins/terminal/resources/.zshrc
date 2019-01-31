@@ -47,7 +47,7 @@ then
 fi
 
 function override_jb_variables {
-  for VARIABLE in $(env)
+  env | while read VARIABLE
   do
     NAME=${VARIABLE%%=*}
     if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]

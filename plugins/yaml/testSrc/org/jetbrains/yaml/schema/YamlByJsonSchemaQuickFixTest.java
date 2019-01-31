@@ -48,4 +48,69 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "}", "a: 5\n<warning>b: 6</warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
                                                                                          "c: 7");
   }
+
+  public void testEmptyFile() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"array\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "<warning></warning>", "Add missing property 'versionAsStringArray'", "versionAsStringArray:\n" +
+                                                                   "  - ");
+  }
+
+  public void testEmptyObject() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"array\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "<warning>  </warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
+                                                                       "  xxx:\n" +
+                                                                       "    - ");
+  }
+
+  public void testEmptyObjectMultipleProps() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"versionAsStringArray\": {\n" +
+           "      \"type\": \"object\",\n" +
+           "      \"properties\": {\n" +
+           "        \"xxx\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        },\n" +
+           "        \"yyy\": {\n" +
+           "          \"type\": \"string\"\n" +
+           "        },\n" +
+           "        \"zzz\": {\n" +
+           "          \"type\": \"number\"\n" +
+           "        }\n" +
+           "      },\n" +
+           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"required\": [\"versionAsStringArray\"]\n" +
+           "}", "versionAsStringArray:\n" +
+                "<warning>  </warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
+                                                                                      "  xxx: 0\n" +
+                                                                                      "  yyy:\n" +
+                                                                                      "  zzz: 0");
+  }
 }

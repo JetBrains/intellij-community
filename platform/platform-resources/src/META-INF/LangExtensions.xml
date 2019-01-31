@@ -957,6 +957,8 @@
     <statistics.counterUsagesCollector group_id="searchEverywhere" version="1"/>
     <statistics.counterUsagesCollector group_id="actions.runAnything" version="1"/>
 
+    <applicationService serviceImplementation="com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable" />
+
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,9 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
       return Collections.emptySet();
     }
     final BuildNumber build = ApplicationInfo.getInstance().getBuild();
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+    Set<String> groups =
+      FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+    return groups != null ? groups : Collections.emptySet();
   }
   @Nullable
   public String getDictionaryServiceUrl() {

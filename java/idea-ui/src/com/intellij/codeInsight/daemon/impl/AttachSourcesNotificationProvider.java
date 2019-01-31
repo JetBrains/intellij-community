@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -18,7 +17,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.ui.Messages;
@@ -59,14 +61,14 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   private final Project myProject;
 
+  @Deprecated // todo remove when Scala removes its usage
   public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
-    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        notifications.updateAllNotifications();
-      }
-    });
+  }
+
+  @SuppressWarnings("unused")
+  public AttachSourcesNotificationProvider(Project project) {
+    myProject = project;
   }
 
   @NotNull

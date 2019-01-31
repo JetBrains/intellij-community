@@ -33,11 +33,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.openapi.vcs.impl.PartialChangesUtil;
+import com.intellij.ui.InplaceButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -505,15 +504,13 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class ExcludeAllCheckboxPanel extends JPanel {
-    private final ThreeStateCheckBox myCheckbox;
+    private final InplaceButton myCheckbox;
 
     private ExcludeAllCheckboxPanel() {
-      myCheckbox = new ThreeStateCheckBox();
-      myCheckbox.setFocusable(false);
-      myCheckbox.addActionListener(e -> toggleState());
-
-      add(myCheckbox);
+      myCheckbox = new InplaceButton(null, AllIcons.Diff.GutterCheckBox, e -> toggleState());
+      myCheckbox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       myCheckbox.setVisible(false);
+      add(myCheckbox);
 
       getEditor2().getGutterComponentEx().addComponentListener(new ComponentAdapter() {
         @Override
@@ -561,15 +558,32 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     public void refresh() {
-      PartialLocalLineStatusTracker tracker = getPartialTracker();
-      if (tracker != null && tracker.isValid()) {
-        ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-        myCheckbox.setState(PartialChangesUtil.convertExclusionState(exclusionState));
+      Icon icon = getIcon();
+      if (icon != null) {
+        myCheckbox.setIcon(icon);
         myCheckbox.setVisible(true);
       }
       else {
-        myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
         myCheckbox.setVisible(false);
+      }
+    }
+
+    @Nullable
+    private Icon getIcon() {
+      PartialLocalLineStatusTracker tracker = getPartialTracker();
+      if (tracker == null || !tracker.isValid()) return null;
+
+      ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
+      switch (exclusionState) {
+        case ALL_INCLUDED:
+          return AllIcons.Diff.GutterCheckBoxSelected;
+        case ALL_EXCLUDED:
+          return AllIcons.Diff.GutterCheckBox;
+        case PARTIALLY:
+          return AllIcons.Diff.GutterCheckBoxIndeterminate;
+        case NO_CHANGES:
+        default:
+          return null;
       }
     }
   }

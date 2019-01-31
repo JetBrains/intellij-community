@@ -2,23 +2,30 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.facet.frameworks.SettingsConnectionService;
+import com.intellij.internal.statistic.persistence.ApprovedGroupsCacheConfigurable;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.Collections.emptySet;
 
 public class EventLogExternalSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";
+  private static final long ACCEPTED_CACHE_AGE_MS = TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS);
+  private static final long DONT_REQUIRE_UPDATE_AGE_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 
   public static EventLogExternalSettingsService getInstance() {
     return new EventLogExternalSettingsService();
@@ -56,13 +63,28 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @NotNull
   public Set<String> getApprovedGroups() {
-    return getWhitelistedGroups();
+    return getApprovedGroups(ApprovedGroupsCacheConfigurable.getInstance());
+  }
+
+  @NotNull
+  public Set<String> getApprovedGroups(ApprovedGroupsCacheConfigurable cache) {
+    BuildNumber currentBuild = getCurrentBuild();
+    Date currentDate = new Date();
+    Set<String> cachedGroups = cache.getCachedGroups(currentDate, DONT_REQUIRE_UPDATE_AGE_MS, currentBuild);
+    if (cachedGroups != null) return cachedGroups;
+
+    Set<String> groups = getWhitelistedGroups();
+    if (groups != null) {
+      return cache.cacheGroups(currentDate, groups, currentBuild);
+    } else {
+      return ObjectUtils.notNull(cache.getCachedGroups(currentDate, ACCEPTED_CACHE_AGE_MS), emptySet());
+    }
   }
 
   @Override
   @NotNull
   public LogEventFilter getEventFilter() {
-    final Set<String> whitelist = getWhitelistedGroups();
+    final Set<String> whitelist = ObjectUtils.notNull(getWhitelistedGroups(), emptySet());
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
   }
 
@@ -71,18 +93,18 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
     return false;
   }
 
-  @NotNull
+  @Nullable
   protected Set<String> getWhitelistedGroups() {
     final String approvedGroupsServiceUrl = getSettingValue(APPROVED_GROUPS_SERVICE);
     if (approvedGroupsServiceUrl == null) {
-      return Collections.emptySet();
+      return null;
     }
     final String productUrl = approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getReportedBuild());
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(productUrl, getCurrentBuild());
   }
 
   @NotNull
-  private static BuildNumber getReportedBuild() {
+  private static BuildNumber getCurrentBuild() {
     return BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
   }
 }

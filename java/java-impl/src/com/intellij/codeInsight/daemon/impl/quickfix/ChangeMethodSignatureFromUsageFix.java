@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
@@ -316,7 +317,14 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         PsiExpression expression = expressions[i];
         PsiType bareParamType = parameter.getType();
         if (!bareParamType.isValid()) {
-          PsiUtil.ensureValidType(bareParamType, parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid());
+          try {
+            PsiUtil.ensureValidType(bareParamType);
+          }
+          catch (Throwable e) {
+            throw PluginException.createByClass(
+              parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid(),
+              e, parameter.getClass());
+          }
         }
         PsiType paramType = substitutor.substitute(bareParamType);
         PsiUtil.ensureValidType(paramType);
@@ -328,7 +336,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         else {
           if (PsiPolyExpressionUtil.isPolyExpression(expression)) return null;
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
-          if (exprType == null) return null;
+          if (exprType == null || PsiType.VOID.equals(exprType)) return null;
           if (exprType instanceof PsiDisjunctionType) {
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
@@ -404,7 +412,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (varargParam != null && pi >= parameters.length) return false;
         if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
         PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
-        if (exprType == null) return false;
+        if (exprType == null || PsiType.VOID.equals(exprType)) return false;
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }

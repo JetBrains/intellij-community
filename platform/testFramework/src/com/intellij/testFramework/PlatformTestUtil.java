@@ -23,10 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -137,7 +134,7 @@ public class PlatformTestUtil {
   }
 
   public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull BaseExtensionPointName name,
                                            @NotNull T t,
                                            @NotNull Disposable parentDisposable) {
     ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());

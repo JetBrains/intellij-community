@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
@@ -45,7 +44,6 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     ScrollingUtil.installActions(this)
-    Disposer.register(this, avatarIconsProvider)
   }
 
   override fun getToolTipText(event: MouseEvent): String? {

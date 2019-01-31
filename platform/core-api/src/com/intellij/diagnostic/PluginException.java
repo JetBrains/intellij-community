@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link com.intellij.openapi.diagnostic.Logger#error(Throwable)}
  * method and reported to JetBrains by user, they may be automatically attributed to corresponding plugins.
  *
- * <p> If the problem is caused by a class, use {@link com.intellij.ide.plugins.PluginManagerCore#createPluginException} to create
+ * <p> If the problem is caused by a class, use {@link #createByClass} to create
  * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
  * to get the plugin ID.
  */
@@ -57,5 +58,21 @@ public class PluginException extends RuntimeException {
   public String getMessage() {
     String message = super.getMessage();
     return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
+  }
+
+  /**
+   * Creates an exception caused by a problem in a plugin's code.
+   * @param pluginClass a problematic class which caused the error
+   */
+  public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
+  }
+
+  /**
+   * Log an error caused by a problem in a plugin's code.
+   * @param pluginClass a problematic class which caused the error
+   */
+  public static void logPluginError(@NotNull Logger logger, @NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
+    logger.error(createByClass(errorMessage, cause, pluginClass));
   }
 }

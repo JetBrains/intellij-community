@@ -40,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
@@ -183,6 +184,8 @@ public class RecentLocationsAction extends AnAction {
       @Override
       public void showChangedLocation(boolean state) {
         updateModel(project, listWithFilter, editorsToRelease, state, changedPlaces, navigationPlaces, breadcrumbsMap);
+
+        FocusManagerImpl.getInstance().requestFocus(list, false);
 
         updateTitleText(title, state);
 

@@ -359,16 +359,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
       final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
 
-      if (severity != null) {
-        SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
-        HighlightInfoType type = descriptor instanceof ProblemDescriptor
-                                 ? ProblemDescriptorUtil
-                                   .highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
-                                 : ProblemDescriptorUtil
-                                   .getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
-        problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
-        problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
-      }
+      SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
+      HighlightInfoType type = descriptor instanceof ProblemDescriptor
+                               ? ProblemDescriptorUtil
+                                 .highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
+                               : ProblemDescriptorUtil
+                                 .getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
+      problemClassElement.setAttribute("severity", type.getSeverity(psiElement).getName());
+      problemClassElement.setAttribute("attribute_key", type.getAttributesKey().getExternalName());
 
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {

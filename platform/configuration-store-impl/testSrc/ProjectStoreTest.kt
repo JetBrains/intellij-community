@@ -75,7 +75,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       LocalFileSystem.getInstance().findFileByPath(project.basePath!!)!!.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
+      (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 

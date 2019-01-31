@@ -149,7 +149,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
-    long duration = runAndMeasure(extension);
+    long duration = TimeoutUtil.runAndGetExecutionTime(() -> extension.runActivity(myProject));
 
     Application app = ApplicationManager.getApplication();
     if (duration > 100 && !app.isUnitTestMode()) {
@@ -159,12 +159,6 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
       LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
     }
-  }
-
-  private long runAndMeasure(StartupActivity extension) {
-    long start = System.currentTimeMillis();
-    extension.runActivity(myProject);
-    return System.currentTimeMillis() - start;
   }
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish

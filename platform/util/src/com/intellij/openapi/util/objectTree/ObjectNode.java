@@ -17,10 +17,8 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,30 +140,12 @@ final class ObjectNode<T> {
           exceptions.add(e);
         }
         removeFromObjectTree();
-
-        handleExceptions(exceptions);
       }
 
       @Override
       public void beforeTreeExecution(@NotNull ObjectNode<T> parent) {
       }
     });
-  }
-
-  private static void handleExceptions(List<Throwable> exceptions) {
-    if (!exceptions.isEmpty()) {
-      for (Throwable exception : exceptions) {
-        if (!(exception instanceof ProcessCanceledException)) {
-          LOG.error(exception);
-        }
-      }
-
-      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
-      if (pce != null) {
-        throw pce;
-      }
-      exceptions.clear();
-    }
   }
 
   void removeFromObjectTree() {

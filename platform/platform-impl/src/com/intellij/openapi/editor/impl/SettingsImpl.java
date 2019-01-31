@@ -12,12 +12,15 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +76,6 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace              = null;
   private Boolean myIsRefrainFromScrolling                = null;
   private Boolean myUseSoftWraps                          = null;
-  private final Boolean myIsAllSoftWrapsShown                   = null;
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
@@ -333,7 +335,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   * @deprecated use {@link EditorKind}
    */
   @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
@@ -625,8 +627,24 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isUseSoftWraps() {
-    return myUseSoftWraps != null ? myUseSoftWraps.booleanValue()
-                                  : EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
+    if (myUseSoftWraps != null) return myUseSoftWraps.booleanValue();
+
+    boolean softWrapsEnabled = EditorSettingsExternalizable.getInstance().isUseSoftWraps(mySoftWrapAppliancePlace);
+    if (!softWrapsEnabled || mySoftWrapAppliancePlace != SoftWrapAppliancePlaces.MAIN_EDITOR || myEditor == null) return softWrapsEnabled;
+
+    String masks = EditorSettingsExternalizable.getInstance().getSoftWrapFileMasks();
+    if (masks.trim().equals("*")) return true;
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    return file != null && fileNameMatches(file.getName(), masks);
+  }
+
+  private static boolean fileNameMatches(@NotNull String fileName, @NotNull String globPatterns) {
+    for (String p : globPatterns.split(";")) {
+      String pTrimmed = p.trim();
+      if (!pTrimmed.isEmpty() && PatternUtil.fromMask(pTrimmed).matcher(fileName).matches()) return true;
+    }
+    return false;
   }
 
   @Override
@@ -643,8 +661,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isAllSoftWrapsShown() {
-    return myIsAllSoftWrapsShown != null ? myIsWhitespacesShown.booleanValue()
-                                      : EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+    return EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
   }
 
   @Override
@@ -704,6 +721,7 @@ public class SettingsImpl implements EditorSettings {
     myShowIntentionBulb = show; 
   }
 
+  @Override
   public void setLanguage(@Nullable Language language) {
     myLanguage = language;
   }

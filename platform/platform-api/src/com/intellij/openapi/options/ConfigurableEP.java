@@ -271,7 +271,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       return null;
     }
     try {
-      return instantiate(findClass(treeRendererClass), myPicoContainer, true);
+      return instantiate(findClass(treeRendererClass), myPicoContainer);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
@@ -350,7 +350,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     @Override
     protected Object createElement() {
       try {
-        return instantiate(myType, myContainer, true);
+        return instantiate(myType, myContainer);
       }
       catch (ProcessCanceledException exception) {
         throw exception;

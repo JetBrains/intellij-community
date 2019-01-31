@@ -1414,6 +1414,10 @@ public class AllIcons {
     /**
      * 12x12
      */
+    public static final Icon GutterCheckBoxIndeterminate = IconLoader.getIcon("/diff/gutterCheckBoxIndeterminate.svg");
+    /**
+     * 12x12
+     */
     public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.svg");
     /**
      * 16x16

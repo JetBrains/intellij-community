@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.util.SmartList
@@ -15,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.AccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GenericAccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class AccessorProcessor(
@@ -25,19 +23,12 @@ class AccessorProcessor(
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
 
-  @Deprecated("don't use this constructor")
-  constructor(
-    propertyName: String,
-    propertyKind: PropertyKind,
-    arguments: () -> Array<PsiType?>?,
-    place: PsiElement
-  ) : this(propertyName, propertyKind, arguments()?.map { JustTypeArgument(it) }, place)
-
   private val accessorName = propertyKind.getAccessorName(propertyName)
 
   init {
     nameHint(accessorName)
     elementClassHint(ElementClassHint.DeclarationKind.METHOD)
+    hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.EMPTY_HINT)
   }
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {

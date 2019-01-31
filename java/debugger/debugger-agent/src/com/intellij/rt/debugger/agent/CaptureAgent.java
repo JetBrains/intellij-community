@@ -168,7 +168,7 @@ public class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      if (className != null) {
+      if (className != null && classBeingRedefined == null) { // we do not support redefinition or retransform
         List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
         if (classPoints != null) {
           try {

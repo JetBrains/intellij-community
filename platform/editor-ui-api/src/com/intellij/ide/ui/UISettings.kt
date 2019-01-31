@@ -577,9 +577,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
 
-    if (state.fontSize != UISettingsState.defFontSize) {
-      fontSize = state.fontSize
-      state.fontSize = UISettingsState.defFontSize
+    if (state.fontSize != 0) {
+      fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
+      state.fontSize = 0
     }
     if (state.fontScale != 0f) {
       fontScale = state.fontScale

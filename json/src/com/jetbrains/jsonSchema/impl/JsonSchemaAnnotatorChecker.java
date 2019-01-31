@@ -300,7 +300,7 @@ class JsonSchemaAnnotatorChecker {
     if (object.shouldCheckIntegralRequirements()) {
       final Set<String> required = schema.getRequired();
       if (required != null) {
-        HashSet<String> requiredNames = ContainerUtil.newHashSet(required);
+        HashSet<String> requiredNames = ContainerUtil.newLinkedHashSet(required);
         requiredNames.removeAll(set);
         if (!requiredNames.isEmpty()) {
           JsonValidationError.MissingMultiplePropsIssueData data = createMissingPropertiesData(schema, requiredNames);

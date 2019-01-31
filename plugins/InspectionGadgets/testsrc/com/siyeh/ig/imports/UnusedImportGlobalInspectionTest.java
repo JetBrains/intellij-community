@@ -83,6 +83,21 @@ public class UnusedImportGlobalInspectionTest extends LightCodeInsightFixtureTes
            "}}");
   }
 
+  
+  public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    myFixture.addClass("package a; public class A {\n" +
+                       " public static void foo(Object o) {}\n" +
+                       " public static void foo(String s) {}\n" +
+                       "}");
+    doTest("import static a.A.foo;\n" +
+           "class Test {\n" +
+           "     {\n" +
+           "          foo(<error descr=\"Cannot resolve method 'unresolvedMethodCall()'\">unresolvedMethodCall</error>());\n" +
+           "     }\n" +
+           "}");
+  }
+
+  
   public void testNoHighlightingInInvalidCode() {
     myFixture.configureByText("a.java",
                               "import<EOLError></EOLError>\n" +

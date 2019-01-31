@@ -8,9 +8,9 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
@@ -344,9 +344,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   private static boolean assertNotNullElements(@NotNull PsiElement[] result, Class<?> clazz) {
     for (PsiElement element : result) {
       if (element == null) {
-        LOG.error(PluginManagerCore.createPluginException(
+        PluginException.logPluginError(LOG,
           "Null target element is returned by 'getGotoDeclarationTargets' in " + clazz.getName(), null, clazz
-        ));
+        );
         return false;
       }
     }

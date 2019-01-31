@@ -17,6 +17,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,7 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
@@ -150,21 +154,38 @@ public final class ObjectTree<T> {
         }
       }
       else {
+        SmartList<Throwable> exceptions = new SmartList<Throwable>();
         ObjectNode<T> parent;
         synchronized (treeLock) {
           parent = node.getParent();
         }
-        node.execute(action, new SmartList<Throwable>());
+        node.execute(action, exceptions);
         if (parent != null) {
           synchronized (treeLock) {
             parent.removeChild(node);
           }
         }
+        handleExceptions(exceptions);
       }
     }
     finally {
       if (needTrace) {
         ourTopmostDisposeTrace.remove();
+      }
+    }
+  }
+
+  private static void handleExceptions(List<Throwable> exceptions) {
+    if (!exceptions.isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (!(exception instanceof ProcessCanceledException)) {
+          LOG.error(exception);
+        }
+      }
+
+      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+      if (pce != null) {
+        throw pce;
       }
     }
   }
