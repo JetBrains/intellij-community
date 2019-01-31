@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.idea.devkit.util.ExtensionCandidate
-import org.jetbrains.idea.devkit.util.ExtensionLocator
+import org.jetbrains.idea.devkit.util.locateExtensionsByClass
 
 class StatefulEpInspection : DevKitJvmInspection() {
 
@@ -56,7 +56,7 @@ class StatefulEpInspection : DevKitJvmInspection() {
 
     private fun findEpCandidates(project: Project, clazz: JvmClass): Collection<ExtensionCandidate> {
       val name = clazz.name ?: return emptyList()
-      return ExtensionLocator.byClass(project, clazz).findCandidates().filter { candidate ->
+      return locateExtensionsByClass(project, clazz).findCandidates().filter { candidate ->
         val forClass = candidate.pointer.element?.getAttributeValue("forClass")
         forClass == null || !forClass.contains(name)
       }

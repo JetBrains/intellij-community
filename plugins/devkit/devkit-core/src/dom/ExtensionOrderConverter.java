@@ -22,7 +22,6 @@ import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +30,10 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPoint;
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByExtensionPointAndId;
 
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
@@ -174,7 +173,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         return null;
       }
 
-      ExtensionLocator epAndIdLocator = ExtensionLocator.byExtensionPointAndId(extensionPoint, myReferencedId);
+      ExtensionLocator epAndIdLocator = locateExtensionsByExtensionPointAndId(extensionPoint, myReferencedId);
       List<ExtensionCandidate> candidates = epAndIdLocator.findCandidates();
       if (candidates.isEmpty()) {
         return null;
@@ -205,7 +204,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
-      ExtensionLocator epLocator = ExtensionLocator.byExtensionPoint(extensionPoint);
+      ExtensionLocator epLocator = locateExtensionsByExtensionPoint(extensionPoint);
       List<ExtensionCandidate> candidates = epLocator.findCandidates();
       Project project = getElement().getProject();
       DomManager domManager = DomManager.getDomManager(project);

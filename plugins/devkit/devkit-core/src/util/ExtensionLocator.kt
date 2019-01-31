@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.lang.jvm.JvmClass
@@ -82,9 +82,9 @@ class ExtensionByExtensionPointLocator : ExtensionLocator {
     this.extensionId = extensionId
   }
 
-  constructor(project: Project, extensionPointQualifiedName: String, extensionId: String?) {
+  constructor(project: Project, pointQualifiedName: String, extensionId: String? = null) {
     this.project = project
-    pointQualifiedName = extensionPointQualifiedName
+    this.pointQualifiedName = pointQualifiedName
     this.extensionId = extensionId
   }
 
@@ -92,13 +92,11 @@ class ExtensionByExtensionPointLocator : ExtensionLocator {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
     val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return emptyList()
-
     val result = SmartList<ExtensionCandidate>()
     val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
-    processExtensionDeclarations(epNameToSearch, project, false) { extension, tag ->
+    processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
-
-      if (StringUtil.equals(ep.effectiveQualifiedName, pointQualifiedName) && (extensionId == null || extensionId == extension.id.stringValue)) {
+      if (ep.effectiveQualifiedName == pointQualifiedName && (extensionId == null || extensionId == extension.id.stringValue)) {
         result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
         // stop after the first found candidate if ID is specified
         return@processExtensionDeclarations extensionId == null
