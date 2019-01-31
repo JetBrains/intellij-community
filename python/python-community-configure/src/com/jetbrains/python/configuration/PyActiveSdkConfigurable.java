@@ -221,7 +221,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                               : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
 
     PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
-                              myDetailsButton.getLocationOnScreen(), null, myAddSdkCallback);
+                              myDetailsButton.getLocationOnScreen(), myAddSdkCallback);
   }
 
   @Override
