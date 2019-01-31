@@ -13,8 +13,15 @@ object GcRootsPathsParser : ResultParser<ReferringObjectsProvider> {
       if (value.length() != 2) throw UnexpectedValueFormatException("Array must represent 2 values: objects and backward references")
       val values = ObjectReferencesParser.parse(value.getValue(0))
       val backwardReferences = BackwardReferencesParser.parse(value.getValue(1))
+      value.fillWithNulls()
       return MemoryAgentReferringObjectProvider(values, backwardReferences)
     }
     throw UnexpectedValueFormatException("Array of arrays is expected")
+  }
+
+  private fun ArrayReference.fillWithNulls() {
+    for (i in 0 until length()) {
+      this.setValue(i, null)
+    }
   }
 }
