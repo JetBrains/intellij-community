@@ -181,7 +181,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
         List<String> argsList = Arrays.asList(args);
         LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        if (argsList.isEmpty()) return;
+        if (argsList.isEmpty()) return 0;
         ModalityState state = getDefaultModalityState();
         for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
           if (starter.canProcessExternalCommandLine() &&
@@ -190,7 +190,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
             state = getAnyModalityState();
           }
         }
-        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
+        AtomicReference<Future<? extends CliResult>> ref = new AtomicReference<>();
+        invokeAndWait(() -> ref.set(CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory).getFuture()), state);
+        try {
+          final CliResult result = ref.get().get();
+          return result.getReturnCode();
+        }
+        catch (Exception e) {
+          return 1;
+        }
       };
     }
 
