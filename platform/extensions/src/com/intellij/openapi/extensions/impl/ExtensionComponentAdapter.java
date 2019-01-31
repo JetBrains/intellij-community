@@ -58,8 +58,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     }
 
     if (instance instanceof PluginAware) {
-      PluginAware pluginAware = (PluginAware)instance;
-      pluginAware.setPluginDescriptor(myPluginDescriptor);
+      ((PluginAware)instance).setPluginDescriptor(myPluginDescriptor);
     }
     return instance;
   }
