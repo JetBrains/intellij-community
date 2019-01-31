@@ -65,14 +65,17 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     return myAppendDefaultChildren;
   }
 
+  @Override
   public String getUniqueId() {
     return UNIQUE_ID;
   }
 
+  @Override
   public EnumerationChildrenRenderer clone() {
     return (EnumerationChildrenRenderer)super.clone();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -90,6 +93,7 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
 
@@ -109,6 +113,7 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     }
   }
 
+  @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     NodeManager nodeManager = builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
@@ -134,10 +139,12 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     }
   }
 
+  @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return ((ValueDescriptor) node.getDescriptor()).getDescriptorEvaluation(context);
   }
 
+  @Override
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return myChildren.size() > 0 ||
            (myAppendDefaultChildren && DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor));

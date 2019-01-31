@@ -81,6 +81,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$elvis2() throws Throwable { doTest() }
 
+  void testconditional$elvisNlBeforeOperator() { doTest() }
+
   void testconditional$ternaryQuestionOnly() { doTest() }
 
   void testconditional$ternaryWithoutElse() { doTest() }
@@ -88,6 +90,14 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testconditional$ternaryWithoutThen() { doTest() }
 
   void testconditional$ternaryWithoutThenElse() { doTest() }
+
+  void testconditional$ternaryNLBeforeColon() { doTest() }
+
+  void testconditional$ternaryNLBeforeElse() { doTest() }
+
+  void testconditional$ternaryNLBeforeQuestion() { doTest() }
+
+  void testconditional$ternaryNLBeforeThen() { doTest() }
 
   void testerrors$err_final() throws Throwable { doTest() }
 
@@ -177,11 +187,33 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testmapLiteral() throws Throwable { doTest() }
 
+  void testmapKeys() { doTest() }
+
+  void testnamedArgumentKeys() { doTest() }
+
+  void testexpressionlabelWithoutExpression() { doTest() }
+
   void testnew$arr_decl() throws Throwable { doTest() }
 
   void testnew$emptyTypeArgs() { doTest() }
 
   void testnew$noArgumentList() { doTest() }
+
+  void testnew$emptyArrayInitializer() { doTest() }
+
+  void testnew$arrayInitializer() { doTest() }
+
+  void testnew$arrayInitializerTrailingComma() { doTest() }
+
+  void testnew$nestedArrayInitializer() { doTest() }
+
+  void testnew$noInitializer() { doTest() }
+
+  void testnew$noClosingBrace() { doTest() }
+
+  void testnew$closureAfterArrayDeclaration() { doTest() }
+
+  void testnew$closureAfterArrayInitializer() { doTest() }
 
 //  public void testnew$new1() throws Throwable { doTest(); }
   void testanonymous$anonymous() throws Throwable { doTest() }
@@ -237,6 +269,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testparenthed$paren6() throws Throwable { doTest() }
 
   void testparenthed$capitalNamedArgument() { doTest() }
+
+  void testparenthed$capitalListArgument() { doTest() }
 
   void testpath$method$ass4() throws Throwable { doTest() }
 
@@ -296,8 +330,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testpath$path2() throws Throwable { doTest() }
 
-  void testpath$path3() throws Throwable { doTest() }
-
   void testpath$path4() throws Throwable { doTest() }
 
   void testpath$path5() throws Throwable { doTest() }
@@ -309,8 +341,6 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path8() throws Throwable { doTest() }
 
   void testpath$path9() throws Throwable { doTest() }
-
-  void testpath$path10() throws Throwable { doTest() }
 
   void testpath$regexp() { doTest() }
 
@@ -336,9 +366,15 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testreferences$ref10() { doTest() }
 
+  void testreferences$ref11() { doTest() }
+
+  void testreferences$ref12() { doTest() }
+
   void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }
+
+  void testreferences$dots() { doTest() }
 
   void testregex$chen() throws Throwable { doTest() }
 
@@ -456,6 +492,18 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$afterNewLine() { doTest() }
 
+  void testregex$afterDollarSlashyString() { doTest() }
+
+  void testregex$afterDoubleQuotedString() { doTest() }
+
+  void testregex$afterSingleQuotedString() { doTest() }
+
+  void testregex$afterSlashyString() { doTest() }
+
+  void testregex$afterTripleSingleQuotedString() { doTest() }
+
+  void testregex$afterTripleDoubleQuotedString() { doTest() }
+
   void testrelational$eq1() throws Throwable { doTest() }
 
   void testrelational$inst0() throws Throwable { doTest() }
@@ -524,6 +572,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testtypecast$noExpression() { doTest() }
 
+  void testtypecast$parenthesizedOperand() { doTest() }
+
+  void testtypecast$parenthesizedQualifier() { doTest() }
+
+  void testtypecast$parenthesizedOperandError() { doTest() }
+
+  void testtypecast$nested() { doTest() }
+
+  void testtypecast$vsMethodCall() { doTest() }
+
   void testtypecast$conditional() throws Throwable { doTest() }
 
   void testAtHang() throws Throwable { doTest() }
@@ -551,6 +609,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testbinary$elvisAssignNewLine() { doTest() }
 
   void testbinary$elvisAssignWithoutRValue() { doTest() }
+
+  void testbinary$assignmentError() { doTest() }
 
   void testcommandExpr$closureArg() { doTest() }
 
@@ -607,6 +667,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$keywords() { doTest() }
 
   void testcommandExpr$literalInvoked() { doTest() }
+
+  void testcommandExpr$literalInvokedWithUnfinishedLiteral() { doTest() }
+
+  void testcommandExpr$slashyInvoked() { doTest() }
 
   void testcommandExpr$safeIndex() { doTest() }
 
@@ -669,4 +733,130 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 
   void testindex$safeIndexNewLineBeforeQ() { doTest() }
+
+  void testnl$binary() { doTest() }
+
+  void testnl$cast() { doTest() }
+
+  void testnl$index() { doTest() }
+
+  void testnl$postfixDec() { doTest() }
+
+  void testnl$postfixInc() { doTest() }
+
+  void testnl$unary() { doTest() }
+
+  void testlambda$parenthesizedAdd() { doTest() }
+
+  void testlambda$standalone1() { doTest() }
+
+  void testlambda$standalone2() { doTest() }
+
+  void testlambda$standalone3() { doTest() }
+
+  void testlambda$standalone4() { doTest() }
+
+  void testlambda$standalone5() { doTest() }
+
+  void testlambda$standalone6() { doTest() }
+
+  void testlambda$standalone7() { doTest() }
+
+  void testlambda$standalone8() { doTest() }
+
+  void testlambda$standalone9() { doTest() }
+
+  void testlambda$standalone10() { doTest() }
+
+  void testlambda$standalone11() { doTest() }
+
+  void testlambda$standalone12() { doTest() }
+
+  void testlambda$closureLike() { doTest() }
+
+  void testlambda$nestedLambda() { doTest() }
+
+  void testlambda$nestedLambda2() { doTest() }
+
+  void testlambda$nestedLambda3() { doTest() }
+
+  void testlambda$nestedLambda4() { doTest() }
+
+  void testlambda$nestedLambda5() { doTest() }
+
+  void testlambda$nestedLambda6() { doTest() }
+
+  void testlambda$assign1() { doTest() }
+
+  void testlambda$assign2() { doTest() }
+
+  void testlambda$assign3() { doTest() }
+
+  void testlambda$assign4() { doTest() }
+
+  void testlambda$methodCall1() { doTest() }
+
+  void testlambda$methodCall2() { doTest() }
+
+  void testlambda$methodCall3() { doTest() }
+
+  void testlambda$methodCall4() { doTest() }
+
+  void testlambda$methodCall5() { doTest() }
+
+  void testlambda$methodCall6() { doTest() }
+
+  void testlambda$methodCall7() { doTest() }
+
+  void testlambda$methodCall8() { doTest() }
+
+  void testlambda$methodCall9() { doTest() }
+
+  void testlambda$methodCall10() { doTest() }
+
+  void testlambda$methodCall11() { doTest() }
+
+  void testlambda$methodCall12() { doTest() }
+
+  void testlambda$command1() { doTest() }
+
+  void testlambda$command2() { doTest() }
+
+  void testlambda$command3() { doTest() }
+
+  void testlambda$command4() { doTest() }
+
+  void testlambda$command5() { doTest() }
+
+  void testlambda$command6() { doTest() }
+
+  void testlambda$command7() { doTest() }
+
+  void testlambda$command8() { doTest() }
+
+  void testlambda$command9() { doTest() }
+
+  void testlambda$command10() { doTest() }
+
+  void testlambda$command11() { doTest() }
+
+  void testlambda$command12() { doTest() }
+
+  void testlambda$commandInLambda() { doTest() }
+
+  void testlambda$implicitReturn1() { doTest() }
+
+  void testlambda$implicitReturn2() { doTest() }
+
+  void testlambda$implicitReturn3() { doTest() }
+
+  void testlambda$implicitReturn4() { doTest() }
+
+  void testlambda$return1() { doTest() }
+
+  void testlambda$return2() { doTest() }
+
+  void testlambda$return3() { doTest() }
+
+  void testlambda$return4() { doTest() }
 }

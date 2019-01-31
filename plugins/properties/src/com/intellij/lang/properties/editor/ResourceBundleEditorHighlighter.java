@@ -16,6 +16,7 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.InspectedPropertyProblems;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorInspection;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
@@ -65,7 +66,9 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     @Override
     public void collectInformation(@NotNull ProgressIndicator progress) {
       InspectionProfile profileToUse = InspectionProfileManager.getInstance().getCurrentProfile();
-      final PsiFile containingFile = myEditor.getResourceBundle().getDefaultPropertiesFile().getContainingFile();
+      ResourceBundle rb = myEditor.getResourceBundle();
+      if (!rb.isValid()) return;
+      final PsiFile containingFile = rb.getDefaultPropertiesFile().getContainingFile();
       final InspectionVisitorWrapper[] visitors =
         Arrays.stream(profileToUse.getInspectionTools(containingFile))
           .filter(t -> profileToUse.isToolEnabled(HighlightDisplayKey.find(t.getShortName()), containingFile))
@@ -74,22 +77,22 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
           .map(ResourceBundleEditorInspection.class::cast)
           .map(i -> {
             final HighlightDisplayKey key = HighlightDisplayKey.find(((InspectionProfileEntry)i).getShortName());
-            return new InspectionVisitorWrapper(i.buildPropertyGroupVisitor(myEditor.getResourceBundle()),
+            return new InspectionVisitorWrapper(i.buildPropertyGroupVisitor(rb),
                                                 profileToUse.getErrorLevel(key, containingFile).getSeverity(),
                                                 key);
           })
           .toArray(InspectionVisitorWrapper[]::new);
 
-      final List<PropertiesFile> files = myEditor.getResourceBundle().getPropertiesFiles();
-      final Project project = myEditor.getResourceBundle().getProject();
+      final List<PropertiesFile> files = rb.getPropertiesFiles();
+      final Project project = rb.getProject();
 
       final StructureViewModel model = myEditor.getStructureViewComponent().getTreeModel();
       final Queue<TreeElement> queue = new Queue<>(1);
       queue.addLast(model.getRoot());
       while (!queue.isEmpty()) {
         final TreeElement treeElement = queue.pullFirst();
-        if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
-          IProperty property = ((ResourceBundlePropertyStructureViewElement)treeElement).getProperty();
+        if (treeElement instanceof PropertyStructureViewElement) {
+          IProperty property = ((PropertyStructureViewElement)treeElement).getProperty();
           if (property == null) continue;
           final String key = property.getKey();
           if (key == null) continue;
@@ -113,7 +116,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                 }
               }
             }
-            ((ResourceBundlePropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
+            ((PropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
                                               ? null
                                               : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[0]),
                                                                               highlightTypes));

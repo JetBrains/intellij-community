@@ -223,7 +223,6 @@ public abstract class BuildProperties extends CompositeGenerator {
    */
   @NonNls
   public static String convertName(@NonNls final String name) {
-    //noinspection HardCodedStringLiteral
     return name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase();
   }
 

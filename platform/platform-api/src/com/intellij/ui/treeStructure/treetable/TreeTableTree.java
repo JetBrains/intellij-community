@@ -50,6 +50,7 @@ public class TreeTableTree extends Tree {
     return myTreeTable;
   }
 
+  @Override
   public void updateUI() {
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
@@ -65,6 +66,7 @@ public class TreeTableTree extends Tree {
     return UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF();
   }
 
+  @Override
   public void setRowHeight(int rowHeight) {
     if (rowHeight > 0) {
       super.setRowHeight(rowHeight);
@@ -74,10 +76,12 @@ public class TreeTableTree extends Tree {
     }
   }
 
+  @Override
   public void setBounds(int x, int y, int w, int h) {
     super.setBounds(x, 0, w, myTreeTable.getHeight());
   }
 
+  @Override
   public void paint(Graphics g) {
     putClientProperty("JTree.lineStyle", "None");
     Graphics g1 = g.create();
@@ -89,6 +93,7 @@ public class TreeTableTree extends Tree {
     }
   }
 
+  @Override
   public void setBorder(Border border) {
     super.setBorder(border);
     myBorder = border;
@@ -113,9 +118,11 @@ public class TreeTableTree extends Tree {
     myCellFocused = focused;
   }
 
+  @Override
   public void setCellRenderer(final TreeCellRenderer x) {
     super.setCellRenderer(
         new TreeCellRenderer() {
+          @Override
           public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                         boolean selected, boolean expanded,
                                                         boolean leaf, int row, boolean hasFocus) {

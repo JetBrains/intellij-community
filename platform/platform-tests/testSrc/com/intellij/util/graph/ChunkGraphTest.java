@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Eugene Zhuravlev
- * @since Sep 27, 2004
  */
 public class ChunkGraphTest extends GraphTestCase {
   @Test

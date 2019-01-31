@@ -112,10 +112,10 @@ public class JavaCompilerElementRetriever {
     @Nullable
     private final TIntHashSet myAnonymousIndices;
     @NotNull
-    private final Collection<InternalNameMatcher> myClassNameMatchers;
+    private final Collection<? extends InternalNameMatcher> myClassNameMatchers;
 
     private ClassMatcher(@Nullable TIntHashSet anonymousIndices,
-                         @NotNull Collection<InternalNameMatcher> nameMatchers) {
+                         @NotNull Collection<? extends InternalNameMatcher> nameMatchers) {
       myAnonymousIndices = anonymousIndices;
       myClassNameMatchers = nameMatchers;
     }
@@ -145,7 +145,7 @@ public class JavaCompilerElementRetriever {
       return result.toArray(PsiClass.EMPTY_ARRAY);
     }
 
-    private static boolean match(PsiClass psiClass, Collection<InternalNameMatcher> matchers) {
+    private static boolean match(PsiClass psiClass, Collection<? extends InternalNameMatcher> matchers) {
       for (InternalNameMatcher matcher : matchers) {
         if (matcher.matches(psiClass)) {
           //qualified name is unique among file's classes

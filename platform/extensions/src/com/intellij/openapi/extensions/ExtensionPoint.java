@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 public interface ExtensionPoint<T> {
   @NotNull
@@ -15,8 +18,17 @@ public interface ExtensionPoint<T> {
 
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
+  /**
+   * Prefer to use {@link #getExtensionList()}.
+   */
   @NotNull
   T[] getExtensions();
+
+  @NotNull
+  List<T> getExtensionList();
+
+  @NotNull
+  Stream<T> extensions();
 
   boolean hasAnyExtensions();
 
@@ -36,15 +48,14 @@ public interface ExtensionPoint<T> {
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   void reset();
 
   @NotNull
   Class<T> getExtensionClass();
-
-  @NotNull
-  Kind getKind();
 
   @NotNull
   String getClassName();

@@ -150,7 +150,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }

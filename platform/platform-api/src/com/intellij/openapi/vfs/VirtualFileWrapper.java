@@ -30,7 +30,6 @@ import java.io.IOException;
  *
  * @author Konstantin Bulenkov
  * @see com.intellij.openapi.vfs.VirtualFile
- * @since 9.0
  */
 public class VirtualFileWrapper {
   private final File myFile;

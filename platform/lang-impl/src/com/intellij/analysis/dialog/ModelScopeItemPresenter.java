@@ -28,7 +28,7 @@ public interface ModelScopeItemPresenter {
   boolean isApplicable(ModelScopeItem model);
 
   @NotNull
-  static List<ModelScopeItemView> createOrderedViews(List<ModelScopeItem> models) {
+  static List<ModelScopeItemView> createOrderedViews(List<? extends ModelScopeItem> models) {
     List<ModelScopeItemView> result = new ArrayList<>();
     for (ModelScopeItemPresenter presenter : EP_NAME.getExtensions()) {
       for (ModelScopeItem model : models) {

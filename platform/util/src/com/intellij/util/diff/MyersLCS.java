@@ -39,11 +39,11 @@ class MyersLCS {
   private final int[] VForward;
   private final int[] VBackward;
 
-  public MyersLCS(int[] first, int[] second) {
+  MyersLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length, new BitSet(first.length), new BitSet(second.length));
   }
 
-  public MyersLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
+  MyersLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
     myFirst = first;
     mySecond = second;
     myStart1 = start1;

@@ -24,8 +24,6 @@ import java.util.logging.Logger;
 
 /**
  * A wrapper which uses either IDE logging subsystem (if available) or java.util.logging.
- *
- * @since 12.0
  */
 public abstract class LoggerRt {
   private interface Factory {

@@ -2,7 +2,13 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiLiteralUtil {
@@ -102,5 +108,39 @@ public class PsiLiteralUtil {
     integer <<= bitsInRadix;
     integer |= lastDigit;
     return integer;
+  }
+
+  /**
+   * Converts passed character literal (like 'a') to string literal (like "a").
+   *
+   * @param charLiteral character literal to convert.
+   * @return resulting string literal
+   */
+  @NotNull
+  public static String stringForCharLiteral(@NotNull String charLiteral) {
+    if ("'\"'".equals(charLiteral)) {
+      return "\"\\\"\"";
+    }
+    else if ("'\\''".equals(charLiteral)) {
+      return "\"'\"";
+    }
+    else {
+      return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
+             '\"';
+    }
+  }
+
+  /**
+   * Returns true if given literal expression is invalid and reusing its text representation
+   * in refactorings/quick-fixes may result in parse errors.
+   *
+   * @param expression a literal expression to check
+   * @return true if the literal text cannot be safely used to build refactored expression
+   */
+  public static boolean isUnsafeLiteral(PsiLiteralExpression expression) {
+    PsiElement literal = expression.getFirstChild();
+    assert literal instanceof PsiJavaToken : literal;
+    IElementType type = ((PsiJavaToken)literal).getTokenType();
+    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL) && expression.getValue() == null;
   }
 }

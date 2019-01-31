@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,12 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
+  /**
+   * Writes a boolean option field. Does NOT write when the field has the default value.
+   * @param node  the xml element node the field is written to.
+   * @param property  the name of the field
+   * @param defaultValueToIgnore  the default value. When the field has this value it is NOT written.
+   */
   protected void writeBooleanOption(@NotNull Element node, @NotNull @NonNls String property, boolean defaultValueToIgnore) {
     final Boolean value = ReflectionUtil.getField(this.getClass(), this, boolean.class, property);
     assert value != null;
@@ -119,6 +125,11 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
   }
 
+  /**
+   * Writes fields even if they have a default value.
+   * @param node  the xml element node the fields are written to.
+   * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
+   */
   protected void defaultWriteSettings(@NotNull Element node, final String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
       @Override
@@ -165,9 +176,9 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     final NumberFormat formatter = NumberFormat.getIntegerInstance();
     formatter.setParseIntegerOnly(true);
     final JFormattedTextField valueField = new JFormattedTextField(formatter);
-    Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
+    final Object value = ReflectionUtil.getField(getClass(), this, null, fieldName);
     valueField.setValue(value);
-    valueField.setColumns(2);
+    valueField.setColumns(4);
 
     // hack to work around text field becoming unusably small sometimes when using GridBagLayout
     valueField.setMinimumSize(valueField.getPreferredSize());
@@ -176,7 +187,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     final Document document = valueField.getDocument();
     document.addDocumentListener(new DocumentAdapter() {
       @Override
-      public void textChanged(DocumentEvent evt) {
+      public void textChanged(@NotNull DocumentEvent evt) {
         try {
           valueField.commitEdit();
           final Number number = (Number)valueField.getValue();

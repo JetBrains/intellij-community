@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -145,7 +143,8 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
 
-      if (!enumConst) {
+      // IDEA-204310 - avoid backtracking later on for lambdas (causes spurious imports)
+      if (!enumConst && (!lambda || DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS))) {
         String enclosing = null;
 
         if (!lambda && constructor != null) {
@@ -282,7 +281,7 @@ public class NewExprent extends Exprent {
           boolean firstParam = true;
           for (int i = start; i < parameters.size(); i++) {
             if (mask == null || mask.get(i) == null) {
-              Exprent expr = InvocationExprent.unboxIfNeeded(parameters.get(i));
+              Exprent expr = parameters.get(i);
               VarType leftType = constructor.getDescriptor().params[i];
 
               if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL && probablySyntheticParameter(leftType.value)) {
@@ -293,7 +292,7 @@ public class NewExprent extends Exprent {
                 buf.append(", ");
               }
 
-              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, tracer);
+              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, true, tracer);
 
               firstParam = false;
             }

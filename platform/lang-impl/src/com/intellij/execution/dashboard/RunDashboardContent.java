@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
@@ -47,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -56,9 +56,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
@@ -90,7 +89,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private final List<RunDashboardGrouper> myGroupers;
+  private final List<? extends RunDashboardGrouper> myGroupers;
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
@@ -102,7 +101,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
   private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
-  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<RunDashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<? extends RunDashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -141,19 +140,19 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
       @Override
-      public void contentAdded(ContentManagerEvent event) {
+      public void contentAdded(@NotNull ContentManagerEvent event) {
         onContentAdded(event.getContent());
       }
 
       @Override
-      public void contentRemoved(ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         myContentActions.remove(content);
         updateContentToolbar(myContentManager.getSelectedContent());
       }
 
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (ContentManagerEvent.ContentOperation.add != event.getOperation()) {
           return;
         }
@@ -197,25 +196,21 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         return nodeDescriptor.getValue();
       }
     });
-    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return RunDashboardContent.this;
-        }
-        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
-        }
-        Content content = myContentManager.getSelectedContent();
-        if (content != null && content.getComponent() != null) {
-          DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
-          if (dataProvider != null) {
-            return dataProvider.getData(dataId);
-          }
-        }
-        return null;
+    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (KEY.getName().equals(dataId)) {
+        return RunDashboardContent.this;
       }
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
+      }
+      Content content = myContentManager.getSelectedContent();
+      if (content != null && content.getComponent() != null) {
+        DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
+        if (dataProvider != null) {
+          return dataProvider.getData(dataId);
+        }
+      }
+      return null;
     });
     new DoubleClickListener() {
       @Override
@@ -256,6 +251,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void setTreeVisible(boolean visible) {
     myTreePanel.setVisible(visible);
     myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+    if (!visible && myContentManager.getContentCount() > 0) {
+      showContentPanel();
+    }
   }
 
   private void updateContentToolbar(Content content) {
@@ -266,9 +264,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentActionGroup.addSeparator();
 
     if (actions != null) {
-      myContentActionGroup.addAll(actions.stream()
-                                    .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
-                                    .collect(Collectors.toList()));
+      myContentActionGroup.addAll(
+        ContainerUtil.filter(actions, action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction)));
     }
   }
 
@@ -299,6 +296,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
           // Invoke content selection change later after currently selected content lost a focus.
           SwingUtilities.invokeLater(() -> {
             if (myContentManager.isDisposed() || myContentManager.getIndexOfContent(toSelect) == -1) return;
+
+            // Selected node may changed, we do not need to select content if it doesn't correspond currently selected node.
+            if (myLastSelection instanceof RunDashboardNode) {
+              if (toSelect != ((RunDashboardNode)myLastSelection).getContent()) return;
+            }
 
             myContentManager.removeContentManagerListener(myContentManagerListener);
             myContentManager.setSelectedContent(toSelect);
@@ -335,14 +337,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onContentSelectionChanged(Content content) {
-    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
-      @Override
-      public boolean visit(@NotNull RunDashboardNode node) {
-        if (node.getContent() == content) {
-          myBuilder.select(node);
-        }
-        return false;
+    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, (TreeVisitor<RunDashboardNode>)node -> {
+      if (node.getContent() == content) {
+        myBuilder.select(node);
       }
+      return false;
     }));
     showContentPanel();
   }
@@ -377,6 +376,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void setupBuilder() {
     RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
+      // unique class to simplify search through the logs
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
         return super.isAutoExpandNode(nodeDescriptor) ||
@@ -392,10 +392,17 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     JPanel toolBarPanel = new JPanel(new BorderLayout());
 
     ActionManager actionManager = ActionManager.getInstance();
-    myDashboardContentActions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
-    AnAction stopAction = actionManager.getAction(RUN_DASHBOARD_STOP_ACTION_ID);
-    stopAction.registerCustomShortcutSet(this, null);
-    myDashboardContentActions.add(stopAction);
+    AnAction registeredActions = actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR);
+    if (registeredActions instanceof DefaultActionGroup) {
+      for (AnAction action : ((DefaultActionGroup)registeredActions).getChildren(null)) {
+        if (RUN_DASHBOARD_STOP_ACTION_ID.equals(actionManager.getId(action))) {
+          // Register shortcut set on the component in order to override global stop action.
+          action.registerCustomShortcutSet(this, null);
+          break;
+        }
+      }
+    }
+    myDashboardContentActions.add(registeredActions);
     myContentActionGroup.add(myDashboardContentActions);
     ActionToolbar contentActionsToolBar = actionManager.createActionToolbar(PLACE_TOOLBAR, myContentActionGroup, false);
     toolBarPanel.add(contentActionsToolBar.getComponent(), BorderLayout.CENTER);
@@ -419,7 +426,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     treeGroup.addSeparator();
     List<RunDashboardGrouper> groupers =
-      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+      ContainerUtil.filter(myGroupers, grouper -> !grouper.getRule().isAlwaysEnabled());
     if (!groupers.isEmpty()) {
       treeGroup.add(new GroupByActionGroup(groupers));
     }
@@ -449,6 +456,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
         revalidate();
         repaint();
+
+        if (showConfigurations) {
+          IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+        }
       }
 
       myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
@@ -458,12 +469,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         // Remove nodes not presented in the tree from collapsed node values set.
         // Children retrieving is quick since grouping and run configuration nodes are already constructed.
         Set<Object> nodes = new HashSet<>();
-        myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
-          @Override
-          public boolean visit(@NotNull AbstractTreeNode node) {
-            nodes.add(node.getValue());
-            return false;
-          }
+        myBuilder.accept(AbstractTreeNode.class, (TreeVisitor<AbstractTreeNode>)node -> {
+          nodes.add(node.getValue());
+          return false;
         });
         myCollapsedTreeNodeValues.retainAll(nodes);
       });
@@ -521,7 +529,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
-    GroupByActionGroup(List<RunDashboardGrouper> groupers) {
+    GroupByActionGroup(List<? extends RunDashboardGrouper> groupers) {
       super(ExecutionBundle.message("run.dashboard.group.by.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
 
@@ -553,12 +561,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myGrouper.isEnabled();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
     }
@@ -572,12 +580,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
         add(new ToggleAction(status.getName()) {
           @Override
-          public boolean isSelected(AnActionEvent e) {
+          public boolean isSelected(@NotNull AnActionEvent e) {
             return myStatusFilter.isVisible(status);
           }
 
           @Override
-          public void setSelected(AnActionEvent e, boolean state) {
+          public void setSelected(@NotNull AnActionEvent e, boolean state) {
             if (state) {
               myStatusFilter.show(status);
             }

@@ -42,4 +42,11 @@ public class SphinxDocstringTest extends PyTestCase {
     assertEquals("Exc3 description", docstring.getRaisedExceptionDescription("Exc3"));
     assertEquals("Exc4 description", docstring.getRaisedExceptionDescription("Exc4"));
   }
+
+  // PY-31148
+  public void testDescriptionOfParamCombinedWithType() {
+    final SphinxDocString docstring = createSphinxDocstring(":param int param1: description");
+    assertEquals("int", docstring.getParamType("param1"));
+    assertEquals("description", docstring.getParamDescription("param1"));
+  }
 }

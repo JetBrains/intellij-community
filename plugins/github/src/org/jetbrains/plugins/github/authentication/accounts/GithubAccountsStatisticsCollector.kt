@@ -6,21 +6,19 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.plugins.github.api.GithubApiUtil
-
-private const val GROUP_ID = "statistics.vcs.github"
+import org.jetbrains.plugins.github.api.GithubServerPath
 
 class GithubAccountsStatisticsCollector internal constructor(private val accountManager: GithubAccountManager)
   : ApplicationUsagesCollector() {
 
   override fun getUsages(): Set<UsageDescriptor> {
     val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
-      !StringUtil.equalsIgnoreCase(it.server.host, GithubApiUtil.DEFAULT_GITHUB_HOST)
+      !StringUtil.equalsIgnoreCase(it.server.host, GithubServerPath.DEFAULT_HOST)
     }
 
     return setOf(getCountingUsage("github.accounts.count", accountManager.accounts.size, listOf(0, 1, 2)),
                  getBooleanUsage("github.accounts.not.default.host", hasAccountsWithNonDefaultHost))
   }
 
-  override fun getGroupId(): String = GROUP_ID
+  override fun getGroupId(): String = "vcs.github"
 }

@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author konstantin.aleev
@@ -60,7 +59,7 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
    * @return List of target nodes for this action.
    */
   @NotNull
-  protected List<T> getTargetNodes(AnActionEvent e) {
+  protected List<T> getTargetNodes(@NotNull AnActionEvent e) {
     C content = getTreeContent(e);
     if (content == null) {
       return Collections.emptyList();
@@ -93,15 +92,14 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
     return treeBuilder.getSelectedElements();
   }
 
-  protected abstract C getTreeContent(AnActionEvent e);
+  protected abstract C getTreeContent(@NotNull AnActionEvent e);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     C content = getTreeContent(e);
     if (content == null) return;
 
-    List<T> verifiedTargetNodes = getTargetNodes(e).stream().filter(node -> isVisible4(node) && isEnabled4(node))
-      .collect(Collectors.toList());
+    List<T> verifiedTargetNodes = ContainerUtil.filter(getTargetNodes(e), node -> isVisible4(node) && isEnabled4(node));
     doActionPerformed(content, e, verifiedTargetNodes);
   }
 
@@ -124,11 +122,11 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
   protected void updatePresentation(@NotNull Presentation presentation, @Nullable T node) {
   }
 
-  protected void doActionPerformed(@NotNull C content, AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, List<T> nodes) {
     nodes.forEach(node -> doActionPerformed(content, e, node));
   }
 
-  protected void doActionPerformed(@NotNull C content, AnActionEvent e, T node) {
+  protected void doActionPerformed(@NotNull C content, @NotNull AnActionEvent e, T node) {
     doActionPerformed(node);
   }
 

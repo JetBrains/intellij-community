@@ -14,6 +14,7 @@ import java.io.File;
  * @author yole
  */
 public class PlatformProjectCheckoutListener implements CheckoutListener {
+  @Override
   public boolean processCheckedOutDirectory(final Project project, final File directory) {
     final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
     if (dir != null) {

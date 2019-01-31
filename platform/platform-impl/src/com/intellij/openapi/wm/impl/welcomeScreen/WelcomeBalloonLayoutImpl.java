@@ -48,16 +48,16 @@ import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   private static final String TYPE_KEY = "Type";
 
-  private final Consumer<List<NotificationType>> myListener;
-  private final Computable<Point> myButtonLocation;
+  private final Consumer<? super List<NotificationType>> myListener;
+  private final Computable<? extends Point> myButtonLocation;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
                                   @NotNull Insets insets,
-                                  @NotNull Consumer<List<NotificationType>> listener,
-                                  @NotNull Computable<Point> buttonLocation) {
+                                  @NotNull Consumer<? super List<NotificationType>> listener,
+                                  @NotNull Computable<? extends Point> buttonLocation) {
     super(parent, insets);
     myListener = listener;
     myButtonLocation = buttonLocation;
@@ -197,7 +197,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private static class BalloonPanel extends NonOpaquePanel {
-    public BalloonPanel() {
+    BalloonPanel() {
       super(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {
@@ -210,7 +210,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
             height += size.height;
           }
           height += count - 1;
-          return new Dimension(width + JBUI.scale(32), height);
+          return new Dimension(Math.max(width + JBUI.scale(32), BalloonLayoutConfiguration.MaxWidth()), height);
         }
 
         @Override

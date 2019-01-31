@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -88,6 +74,7 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     myParamCheckBox.setVisible(false);
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return myCommonOptionsForm;
   }
@@ -95,6 +82,7 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
   private void initComponents() {
 
     final ActionListener testTypeListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         setTestType(getTestType());
       }
@@ -102,12 +90,14 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     addTestTypeListener(testTypeListener);
 
     myPatternCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myPatternTextField.setEnabled(myPatternCheckBox.isSelected());
       }
     });
 
     myParamCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myParamTextField.setEnabled(myParamCheckBox.isSelected());
       }
@@ -122,19 +112,23 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     myTestFunctionRB.addActionListener(testTypeListener);
   }
 
+  @Override
   public String getClassName() {
     return myTestClassTextField.getText().trim();
   }
 
+  @Override
   public void setClassName(String className) {
     myTestClassTextField.setText(className);
   }
 
 
+  @Override
   public String getPattern() {
     return myPatternTextField.getText().trim();
   }
 
+  @Override
   public void setPattern(String pattern) {
     myPatternTextField.setText(pattern);
   }
@@ -159,30 +153,37 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     myCommonOptionsForm.setAddSourceRoots(addSourceRoots);
   }
 
+  @Override
   public String getFolderName() {
     return toSystemIndependentName(myTestFolderTextField.getText().trim());
   }
 
+  @Override
   public void setFolderName(String folderName) {
     myTestFolderTextField.setText(FileUtil.toSystemDependentName(folderName));
   }
 
+  @Override
   public String getScriptName() {
     return toSystemIndependentName(myTestScriptTextField.getText().trim());
   }
 
+  @Override
   public void setScriptName(@NotNull String scriptName) {
     myTestScriptTextField.setText(FileUtil.toSystemDependentName(scriptName));
   }
 
+  @Override
   public String getMethodName() {
     return myTestMethodTextField.getText().trim();
   }
 
+  @Override
   public void setMethodName(String methodName) {
     myTestMethodTextField.setText(methodName);
   }
 
+  @Override
   public TestType getTestType() {
     if (myAllInFolderRB.isSelected()) {
       return TestType.TEST_FOLDER;
@@ -222,7 +223,8 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
       rb.setSelected(true);
     }
   }
-  
+
+  @Override
   public void setTestType(TestType testType) {
     setSelectedIfNeeded(testType == TestType.TEST_FOLDER, myAllInFolderRB);
     setSelectedIfNeeded(testType == TestType.TEST_SCRIPT, myTestScriptRB);

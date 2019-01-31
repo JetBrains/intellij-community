@@ -25,6 +25,7 @@ public class VerticalBox extends Box {
     setOpaque(false);
   }
 
+  @Override
   public Component add(Component comp) {
     ((JComponent) comp).setAlignmentX(0f);
     return super.add(comp);

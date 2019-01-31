@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.formatting.IndentInfo;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,6 @@ public class JDComment {
     }
 
     StringBuilder sb = new StringBuilder();
-    int start = sb.length();
 
     if (!isNull(myDescription)) {
       sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
@@ -126,12 +126,15 @@ public class JDComment {
       sb.append(tagDescription);
     }
 
-    if (sb.length() == start) return null;
-
-    // if it ends with a blank line delete that
-    int nlen = sb.length() - prefix.length() - 1;
-    if (sb.substring(nlen, sb.length()).equals(prefix + "\n")) {
-      sb.delete(nlen, sb.length());
+    if (sb.length() > prefix.length()) {
+      // if it ends with a blank line delete that
+      int nlen = sb.length() - prefix.length() - 1;
+      if (sb.substring(nlen, sb.length()).equals(prefix + "\n")) {
+        sb.delete(nlen, sb.length());
+      }
+    }
+    else if (sb.length() == 0 && !StringUtil.isEmpty(myEndLine)) {
+      sb.append('\n').append('*').append('\n');
     }
 
     if (myMultiLineComment && myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS

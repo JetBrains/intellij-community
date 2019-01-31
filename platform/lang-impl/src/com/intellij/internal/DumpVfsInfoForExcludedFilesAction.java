@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -39,7 +41,7 @@ public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
@@ -48,9 +50,7 @@ public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
       Collections.addAll(excludeRoots, ModuleRootManager.getInstance(module).getExcludeRootUrls());
     }
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
-      for (VirtualFile file : policy.getExcludeRootsForProject()) {
-        excludeRoots.add(file.getUrl());
-      }
+      ContainerUtil.addAll(excludeRoots, policy.getExcludeUrlsForProject());
     }
 
     if (excludeRoots.isEmpty()) {

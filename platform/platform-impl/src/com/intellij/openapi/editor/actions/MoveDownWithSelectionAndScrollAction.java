@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveDownWithSelectionAndScrollAction extends EditorAction {
   public MoveDownWithSelectionAndScrollAction() {
@@ -28,9 +30,18 @@ public class MoveDownWithSelectionAndScrollAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
+    private Handler() {
+      super(true);
+    }
+
     @Override
-    public void execute(@NotNull Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, 1, true);
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (caret == editor.getCaretModel().getPrimaryCaret()) {
+        EditorActionUtil.moveCaretRelativelyAndScroll(editor, 0, 1, true);
+      }
+      else {
+        editor.getCaretModel().moveCaretRelatively(0, 1, true, false, false);
+      }
     }
   }
 }

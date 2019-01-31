@@ -101,7 +101,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
                                                           goalsComboBox != null ? goalsComboBox : goalsEditor);
 
     workDirectoryField.addBrowseFolderListener(
-      RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
+      RunnerBundle.message("maven.select.working.directory"), "", myProject,
       new MavenPomFileChooserDescriptor(myProject));
   }
 
@@ -146,10 +146,12 @@ public class MavenEditGoalDialog extends DialogWrapper {
     workDirectoryField.setText(mavenProject == null ? "" : mavenProject.getDirectory());
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return goalsComboBox;
   }

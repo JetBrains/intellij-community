@@ -154,6 +154,7 @@ public abstract class PsiNameHelper {
   }
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
+  @NotNull
   private static String removeWhitespace(@NotNull String referenceText) {
     boolean needsChange = false;
     for (int i = 0; i < referenceText.length(); i++) {
@@ -170,9 +171,9 @@ public abstract class PsiNameHelper {
 
   /**
    * Obtains text of all type parameter values in a reference.
-   * They go in left-to-right order: {@code A<List<String&gt, B<Integer>>} yields
-   * {@code ["List<String&gt", "B<Integer>"]}. Parameters of the outer reference are ignored:
-   * {@code A<List<String&gt>.B<Integer>} yields {@code ["Integer"]}
+   * They go in left-to-right order: {@code A<List<String>, B<Integer>>} yields
+   * {@code ["List<String>", "B<Integer>"]}. Parameters of the outer reference are ignored:
+   * {@code A<List<String>>.B<Integer>} yields {@code ["Integer"]}
    *
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
@@ -274,7 +275,7 @@ public abstract class PsiNameHelper {
     return appendAnnotations(sb, Arrays.asList(annotations), canonical);
   }
 
-  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<PsiAnnotation> annotations, boolean canonical) {
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull List<? extends PsiAnnotation> annotations, boolean canonical) {
     boolean updated = false;
     for (PsiAnnotation annotation : annotations) {
       if (canonical) {

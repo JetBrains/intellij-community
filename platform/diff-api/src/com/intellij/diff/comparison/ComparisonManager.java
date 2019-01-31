@@ -73,6 +73,16 @@ public abstract class ComparisonManager {
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   /**
+   * Compare three texts by-line (LEFT - BASE - RIGHT)
+   * Do not actually skip "ignored" changes, but keep them from forming merge conflicts.
+   */
+  public abstract List<MergeLineFragment> mergeLines(@NotNull CharSequence text1,
+                                                     @NotNull CharSequence text2,
+                                                     @NotNull CharSequence text3,
+                                                     @NotNull ComparisonPolicy policy,
+                                                     @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
+  /**
    * Compare two texts by-word
    */
   @NotNull

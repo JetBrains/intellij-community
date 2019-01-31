@@ -27,10 +27,6 @@ public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[]{new StaticInheritanceInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igtest/inheritance/staticInheritance/";

@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -37,7 +37,7 @@ import java.util.List;
 
 public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     Presentation p = e.getPresentation();
@@ -69,6 +69,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     if(project == null) return;
+    MavenActionsUsagesCollector.trigger(project, this, e);
     final List<File> files = getFiles(e);
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 
@@ -91,7 +92,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     }
 
     for (VirtualFile each : virtualFiles) {
-      new OpenFileDescriptor(project, each).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, each, -1).navigate(true);
     }
   }
 

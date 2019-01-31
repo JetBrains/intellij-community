@@ -52,11 +52,12 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   @Nullable
   @Override
   protected String getElementText(@NotNull Object row) {
-    return myComponent.getModel().getShortDetails((Integer)row).getSubject();
+    return myComponent.getModel().getCommitMetadata((Integer)row).getSubject();
   }
 
   @Override
-  protected void selectElement(@NotNull Object row, @NotNull String selectedText) {
+  protected void selectElement(@Nullable Object row, @NotNull String selectedText) {
+    if (row == null) return;
     myComponent.jumpToRow((Integer)row);
   }
 

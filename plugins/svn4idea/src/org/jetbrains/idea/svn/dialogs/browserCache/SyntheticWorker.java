@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
@@ -28,9 +28,9 @@ public class SyntheticWorker {
   }
 
   public void removeSelf() {
-    final String parentUrl;
+    final Url parentUrl;
     try {
-      parentUrl = removePathTail(myUrl).toString();
+      parentUrl = removePathTail(myUrl);
     }
     catch (SvnBindException e) {
       return;
@@ -50,16 +50,14 @@ public class SyntheticWorker {
   }
 
   public void addSyntheticChildToSelf(final Url newUrl, final Url repositoryUrl, final String name, final boolean isDir) {
-    final String currentUrlAsString = myUrl.toString();
-
-    final List<DirectoryEntry> children = myCache.getChildren(currentUrlAsString);
+    final List<DirectoryEntry> children = myCache.getChildren(myUrl);
     if (children == null) {
       return;
     }
     children.add(createSyntheticEntry(newUrl, repositoryUrl, name, isDir));
 
     sort(children, DirectoryEntry.CASE_INSENSITIVE_ORDER);
-    myCache.put(currentUrlAsString, children);
+    myCache.put(myUrl, children);
   }
 
   public void copyTreeToSelf(final RepositoryTreeNode node) {
@@ -81,9 +79,10 @@ public class SyntheticWorker {
   private static class Remover implements NotNullFunction<RepositoryTreeNode, Object> {
     private final SvnRepositoryCache myCache = SvnRepositoryCache.getInstance();
 
+    @Override
     @NotNull
     public Object fun(final RepositoryTreeNode repositoryTreeNode) {
-      myCache.remove(repositoryTreeNode.getURL().toString());
+      myCache.remove(repositoryTreeNode.getURL());
       return Boolean.FALSE;
     }
   }
@@ -97,9 +96,10 @@ public class SyntheticWorker {
       myNewParentUrl = newParentUrl;
     }
 
+    @Override
     @NotNull
     public Object fun(final RepositoryTreeNode repositoryTreeNode) {
-      final List<DirectoryEntry> children = myCache.getChildren(repositoryTreeNode.getURL().toString());
+      final List<DirectoryEntry> children = myCache.getChildren(repositoryTreeNode.getURL());
       if (children == null) {
         return Boolean.FALSE;
       }
@@ -109,7 +109,7 @@ public class SyntheticWorker {
         for (DirectoryEntry child : children) {
           newChildren.add(createSyntheticEntry(convertUrl(child.getUrl()), child.getRepositoryRoot(), child.getName(), child.isDirectory()));
         }
-        myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
+        myCache.put(convertUrl(repositoryTreeNode.getURL()), newChildren);
       }
       catch (SvnBindException ignored) {
       }

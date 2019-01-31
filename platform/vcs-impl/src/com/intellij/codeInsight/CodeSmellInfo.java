@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The information about a single problem found during pre-checkin code analysis.
- *
- * @since 5.1
  * @see com.intellij.openapi.vcs.CodeSmellDetector#findCodeSmells(java.util.List)
  * @see com.intellij.openapi.vcs.CodeSmellDetector#showCodeSmellErrors(java.util.List)
  */

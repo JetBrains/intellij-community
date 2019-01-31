@@ -37,7 +37,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -46,7 +45,7 @@ import java.io.IOException;
  * @author max
  */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
-  public JavaClassElementType(@NotNull String id) {
+  JavaClassElementType(@NotNull String id) {
     super(id);
   }
 
@@ -60,15 +59,16 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (node instanceof EnumConstantInitializerElement) {
       return new PsiEnumConstantInitializerImpl(node);
     }
-    else if (node instanceof AnonymousClassElement) {
+    if (node instanceof AnonymousClassElement) {
       return new PsiAnonymousClassImpl(node);
     }
 
     return new PsiClassImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiClassStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiClassStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
@@ -77,6 +77,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     boolean isAnnotation = false;
     boolean isInQualifiedNew = false;
     boolean hasDeprecatedAnnotation = false;
+    boolean hasDocComment = false;
 
     String qualifiedName = null;
     String name = null;
@@ -93,6 +94,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     for (final LighterASTNode child : tree.getChildren(node)) {
       final IElementType type = child.getTokenType();
       if (type == JavaDocElementType.DOC_COMMENT) {
+        hasDocComment = true;
         isDeprecatedByComment = RecordUtil.isDeprecatedByDocComment(tree, child);
       }
       else if (type == JavaElementType.MODIFIER_LIST) {
@@ -129,17 +131,18 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (isAnonymous) {
       final LighterASTNode parent = tree.getParent(node);
       if (parent != null && parent.getTokenType() == JavaElementType.NEW_EXPRESSION) {
-        isInQualifiedNew = (LightTreeUtil.firstChildOfType(tree, parent, JavaTokenType.DOT) != null);
+        isInQualifiedNew = LightTreeUtil.firstChildOfType(tree, parent, JavaTokenType.DOT) != null;
       }
     }
 
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
-                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false);
+                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
     return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
   }
 
-  public static JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst) {
+  @NotNull
+  private static JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst) {
     return enumConst
            ? JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER
            : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;

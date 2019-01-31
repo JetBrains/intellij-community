@@ -21,15 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return MavenPropertiesVirtualFileSystem.PROPERTIES_FILES;
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;

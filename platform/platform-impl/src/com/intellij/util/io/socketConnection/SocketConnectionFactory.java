@@ -29,14 +29,14 @@ public class SocketConnectionFactory {
   }
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
-    SocketConnection<Request, Response> createServerConnection(int defaultPort, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<>(defaultPort, attempts, factory);
+    SocketConnection<Request, Response> createServerConnection(int defaultPort, @Nullable InetAddress bindAddress, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<>(defaultPort, bindAddress, attempts, factory);
   }
 
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>
-    SocketConnection<Request, Response> createServerConnection(int defaultPort, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new ServerSocketConnectionImpl<>(defaultPort, 1, factory);
+    SocketConnection<Request, Response> createServerConnection(int defaultPort, @Nullable InetAddress bindAddress, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<>(defaultPort, bindAddress, 1, factory);
   }
 
   public static <Request extends AbstractRequest, Response extends AbstractResponse>

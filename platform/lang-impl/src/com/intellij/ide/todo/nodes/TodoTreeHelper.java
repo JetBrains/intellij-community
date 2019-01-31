@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -46,7 +47,7 @@ public class TodoTreeHelper {
     myProject = project;
   }
 
-  public void addPackagesToChildren(ArrayList<AbstractTreeNode> children,
+  public void addPackagesToChildren(ArrayList<? super AbstractTreeNode> children,
                                     Module module,
                                     TodoTreeBuilder builder) {
     addDirsToChildren(collectContentRoots(module), children, builder);
@@ -62,8 +63,8 @@ public class TodoTreeHelper {
     return roots;
   }
 
-  protected void addDirsToChildren(List<VirtualFile> roots,
-                                   ArrayList<AbstractTreeNode> children,
+  protected void addDirsToChildren(List<? extends VirtualFile> roots,
+                                   ArrayList<? super AbstractTreeNode> children,
                                    TodoTreeBuilder builder) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile dir : roots) {
@@ -127,7 +128,7 @@ public class TodoTreeHelper {
           }
           // Add directories
           final PsiDirectory _dir = psiFile.getContainingDirectory();
-          if (skipDirectory(_dir)){
+          if (_dir == null || skipDirectory(_dir)){
             continue;
           }
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, builder);
@@ -169,6 +170,11 @@ public class TodoTreeHelper {
     }
     return null;
   }
+  
+  public boolean contains(ProjectViewNode node, Object element) {
+    return false;
+  }
+
 
   public Project getProject() {
     return myProject;

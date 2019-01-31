@@ -17,6 +17,7 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.usages.UsageTargetUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class UsageTargetsRule implements GetDataRule {
   @Override
   @Nullable
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     return UsageTargetUtil.findUsageTargets(dataProvider);
   }
 }

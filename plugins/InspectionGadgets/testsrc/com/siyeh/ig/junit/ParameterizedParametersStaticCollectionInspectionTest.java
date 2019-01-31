@@ -1,38 +1,50 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class ParameterizedParametersStaticCollectionInspectionTest extends IGInspectionTestCase {
+public class ParameterizedParametersStaticCollectionInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected String getBasePath() {
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/parameterized";
+  }
+
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.addClass("package org.junit.runner;\n" +
+                       "public @interface RunWith {\n" +
+                       "    Class value();\n" +
+                       "}\n");
+    myFixture.addClass("package org.junit.runners;\n" +
+                       "public class Parameterized {" +
+                       "    public @interface Parameters {\n" +
+                       "        String name() default \"{index}\";\n" +
+                       "    }" +
+                       "} ");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  private void doTest() {
+    myFixture.enableInspections(new ParameterizedParametersStaticCollectionInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
   public void testCreatemethod() {
     doTest();
   }
 
-  public void testWrongsignature() {
-    doTest();
-  }
+  public void testWrongsignature() { doTest(); }
+  public void testWrongsignature1() { doTest(); }
+  public void testWrongsignature2() { doTest(); }
 
-  private void doTest() {
-    doTest(getRelativeTestPath() + getTestName(true), new ParameterizedParametersStaticCollectionInspection());
-  }
-
-
-  private String getRelativeTestPath() {
-    return "com/siyeh/igtest/junit/parameterized/";
-  }
 }

@@ -58,12 +58,12 @@ public class ImportModuleAction extends AnAction {
   private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     doImport(getEventProject(e));
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(getEventProject(e) != null);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,15 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    EditorSettingsExternalizable.getInstance().loadState(oldSettings);
-    super.tearDown();
+    try {
+      EditorSettingsExternalizable.getInstance().loadState(oldSettings);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void doTest(@NonNls String before, @NonNls String after) {
@@ -75,6 +82,16 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
   public void testDoStripModifiedOnCurrentLineIfCaretWouldNotJump() {
     doTest("xxx\n   222<caret>    \nyyy",
            "xxx\n   222<caret>\nyyy");
+  }
+  public void testDoNotStripModifiedOnCurrentLastLine() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setEnsureNewLineAtEOF(true);
+
+    configureFromFileText("x.txt", "xxx\n        <caret>");
+    type(' ');
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx\n         <caret>\n");
   }
 
   public void testStrippingWithMultipleCarets() {

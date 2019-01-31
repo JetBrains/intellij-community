@@ -25,13 +25,14 @@ final class RemoveParser extends DefaultEntryParser {
 
 	// Setup ==================================================================
 
-	public RemoveParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	RemoveParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		super(eventManager, cvsFileSystem);
 	}
 
 	// Implemented ============================================================
 
-	public void gotEntry(FileObject fileObject, Entry entry) {
+	@Override
+        public void gotEntry(FileObject fileObject, Entry entry) {
 		if (entry != null && !entry.isRemoved()) {
 			return;
 		}

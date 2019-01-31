@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class CloseAction extends AnAction implements DumbAware {
   private RunContentDescriptor myContentDescriptor;
@@ -41,7 +42,11 @@ public class CloseAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
+  }
+
+  public void perform() {
     final RunContentDescriptor contentDescriptor = getContentDescriptor();
     if (contentDescriptor == null) {
       return;
@@ -62,7 +67,7 @@ public class CloseAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myContentDescriptor != null);
   }
 }

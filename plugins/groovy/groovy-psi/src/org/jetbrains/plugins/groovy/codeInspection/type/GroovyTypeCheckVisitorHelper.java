@@ -1,26 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
-import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -31,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -79,20 +73,6 @@ public class GroovyTypeCheckVisitorHelper {
     return false;
   }
 
-  public static boolean isSpockTimesOperator(GrBinaryExpression call) {
-    if (call.getOperationTokenType() == GroovyTokenTypes.mSTAR && PsiUtil.isExpressionStatement(call)) {
-      GrExpression operand = call.getLeftOperand();
-      if (operand instanceof GrLiteral && TypesUtil.isNumericType(operand.getType())) {
-        PsiClass aClass = PsiUtil.getContextClass(call);
-        if (InheritanceUtil.isInheritor(aClass, false, SpockUtils.SPEC_CLASS_NAME)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public static boolean isOperatorWithSimpleTypes(GrBinaryExpression binary, GroovyResolveResult result) {
     if (result.getElement() != null && result.isApplicable()) {
       return false;
@@ -116,9 +96,9 @@ public class GroovyTypeCheckVisitorHelper {
     if (args == null) return LocalQuickFix.EMPTY_ARRAY;
 
     final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
-    final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
-    for (GrClosureSignature closureSignature : signatures) {
-      final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
+    final List<GrSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(Collections.singletonList(signature));
+    for (GrSignature closureSignature : signatures) {
+      final GrClosureSignatureUtil.MapResultWithError map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
         closureSignature, argumentTypes, id, argumentList, 255
       );
       if (map != null) {

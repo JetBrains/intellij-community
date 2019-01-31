@@ -24,7 +24,7 @@ public class SingleElementTree extends CollectionTree {
     super(Collections.singletonList(value), traceElements, evaluationContext);
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         final TreePath path = node.getPath();
         if (path.getPathCount() == 2) {
           ApplicationManager.getApplication().invokeLater(() -> expandPath(path));

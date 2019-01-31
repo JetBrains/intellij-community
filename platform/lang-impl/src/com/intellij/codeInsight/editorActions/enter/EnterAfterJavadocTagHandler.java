@@ -35,7 +35,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 1/20/11 12:32 PM
  */
 public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
@@ -181,7 +180,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     // Try to find closing tag at or after the given offset.
     for (int i = offset; i < endOffset; i++) {
       char c = text.charAt(i);
-      if (c == '<' && i < endOffset && text.charAt(i + 1) == '/' && startTag != null 
+      if (c == '<' && i < endOffset - 2 && text.charAt(i + 1) == '/' && startTag != null
           && CharArrayUtil.regionMatches(text, i + 2, endOffset, startTag)) 
       {
         endTagStartOffset = i;

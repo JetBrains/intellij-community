@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,7 @@ import java.util.List;
 
 class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
+    @Override
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
@@ -49,7 +51,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
 
   private final Callback myCallback;
 
-  public ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
+  ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
     super(project, sourceClass, selectedMembers, ExtractSuperclassHandler.REFACTORING_NAME);
     myCallback = callback;
     init();
@@ -59,6 +61,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     return myContainmentVerifier;
   }
 
+  @Override
   protected String getClassNameLabelText() {
     return isExtractSuperclass()
            ? RefactoringBundle.message("superclass.name")
@@ -72,6 +75,8 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
+  @NotNull
+  @Override
   protected String getEntityName() {
     return RefactoringBundle.message("ExtractSuperClass.superclass");
   }
@@ -81,6 +86,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     return RefactoringBundle.message("extract.superclass.from");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.superclass"),

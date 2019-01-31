@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/30/2014
  */
 public class MavenSourceFoldersModuleExtension extends ModuleExtension {
 
@@ -81,6 +80,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
     }
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(boolean writable) {
     return new MavenSourceFoldersModuleExtension();

@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
@@ -39,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -46,7 +34,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   static {
     if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
@@ -106,7 +94,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isAbsolute(@NotNull String path) {
-    return new File(path).isAbsolute();
+    return !path.isEmpty() && new File(path).isAbsolute();
   }
 
   public static boolean exists(@Nullable String path) {
@@ -186,43 +174,6 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  /**
-   * @param removeProcessor parent, child
-   */
-  public static <T> Collection<T> removeAncestors(final Collection<T> files,
-                                                  final Convertor<T, String> convertor,
-                                                  final PairProcessor<T, T> removeProcessor) {
-    if (files.isEmpty()) return files;
-    final TreeMap<String, T> paths = new TreeMap<String, T>();
-    for (T file : files) {
-      final String path = convertor.convert(file);
-      assert path != null;
-      final String canonicalPath = toCanonicalPath(path);
-      paths.put(canonicalPath, file);
-    }
-    final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
-    final List<T> result = new ArrayList<T>(ordered.size());
-    result.add(ordered.get(0).getValue());
-    for (int i = 1; i < ordered.size(); i++) {
-      final Map.Entry<String, T> entry = ordered.get(i);
-      final String child = entry.getKey();
-      boolean parentNotFound = true;
-      for (int j = i - 1; j >= 0; j--) {
-        // possible parents
-        final String parent = ordered.get(j).getKey();
-        if (parent == null) continue;
-        if (startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
-          parentNotFound = false;
-          break;
-        }
-      }
-      if (parentNotFound) {
-        result.add(entry.getValue());
-      }
-    }
-    return result;
-  }
-
   @Nullable
   public static File findAncestor(@NotNull File f1, @NotNull File f2) {
     File ancestor = f1;
@@ -273,7 +224,6 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return loadTextAndClose(new InputStreamReader(stream));
   }
 
@@ -359,7 +309,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static Future<Void> asyncDelete(@NotNull Collection<File> files) {
+  public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
@@ -485,7 +435,6 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
     final FileOutputStream fos = openOutputStream(toFile);
@@ -570,7 +519,7 @@ public class FileUtil extends FileUtilRt {
 
   /**
    * Copies content of {@code fromDir} to {@code toDir}.
-   * It's equivalent to "cp -r fromDir/* toDir" unix command.
+   * It's equivalent to "cp --dereference -r fromDir/* toDir" unix command.
    *
    * @param fromDir source directory
    * @param toDir   destination directory
@@ -636,12 +585,34 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
+    return findSequentFile(parentFolder, filePrefix, extension, new Condition<File>() {
+      @Override
+      public boolean value(File file) {
+        return !file.exists();
+      }
+    });
+  }
+
+  /**
+   * Checks sequentially files with names filePrefix.extension, filePrefix1.extension, e.t.c
+   * and returns the first file which conforms to the provided condition.
+   *
+   * @param parentFolder the parent folder of the file to be returned
+   * @param filePrefix the prefix of the file to be returned
+   * @param extension the extension of the file to be returned
+   * @param condition the check of the file to be returned
+   */
+  @NotNull
+  public static File findSequentFile(@NotNull File parentFolder,
+                                     @NotNull String filePrefix,
+                                     @NotNull String extension,
+                                     @NotNull Condition<? super File> condition) {
     int postfix = 0;
     String ext = extension.isEmpty() ? "" : '.' + extension;
     File candidate = new File(parentFolder, filePrefix + ext);
-    while (candidate.exists()) {
+    while (!condition.value(candidate)) {
       postfix++;
-      candidate = new File(parentFolder, filePrefix + Integer.toString(postfix) + ext);
+      candidate = new File(parentFolder, filePrefix + postfix + ext);
     }
     return candidate;
   }
@@ -1023,6 +994,7 @@ public class FileUtil extends FileUtilRt {
    *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
+  @Deprecated
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
@@ -1058,14 +1030,14 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
-  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> outFiles) {
+  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<? super File> outFiles) {
     collectMatchedFiles(root, root, pattern, outFiles);
   }
 
   private static void collectMatchedFiles(@NotNull File absoluteRoot,
                                           @NotNull File root,
                                           @NotNull Pattern pattern,
-                                          @NotNull List<File> files) {
+                                          @NotNull List<? super File> files) {
     final File[] dirs = root.listFiles();
     if (dirs == null) return;
     for (File dir : dirs) {
@@ -1201,7 +1173,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     return sanitizeFileName(name, strict, "_");
   }
-  
+
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
     StringBuilder result = null;
@@ -1308,7 +1280,7 @@ public class FileUtil extends FileUtilRt {
     }
   });
 
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
   }
 
@@ -1316,8 +1288,8 @@ public class FileUtil extends FileUtilRt {
    * @see FileUtil#fileTraverser(File)
    */
   @Deprecated
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
-                                                @Nullable final Processor<File> directoryFilter) {
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor,
+                                                @Nullable final Processor<? super File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();
     queue.add(root);
     while (!queue.isEmpty()) {
@@ -1429,8 +1401,13 @@ public class FileUtil extends FileUtilRt {
     return path.startsWith("/");
   }
 
-  public static boolean isWindowsAbsolutePath(@NotNull String pathString) {
-    return pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':';
+  public static boolean isWindowsAbsolutePath(@NotNull String path) {
+    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
+    if (ok && path.length() > 2) {
+      char separatorChar = path.charAt(2);
+      ok = separatorChar == '/' || separatorChar == '\\';
+    }
+    return ok;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -1652,14 +1629,20 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean isJarOrZip(@NotNull File file) {
-    if (file.isDirectory()) {
-      return false;
-    }
-    final String name = file.getName();
-    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+    return isJarOrZip(file, true);
   }
 
-  public static boolean visitFiles(@NotNull File root, @NotNull Processor<File> processor) {
+  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
+    if (isCheckIsDirectory && file.isDirectory()) {
+      return false;
+    }
+
+    // do not use getName to avoid extra String creation (File.getName() calls substring)
+    final String path = file.getPath();
+    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
+  }
+
+  public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
     }
@@ -1714,5 +1697,15 @@ public class FileUtil extends FileUtilRt {
     FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
     FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
     return !(attributes.equals(upper) && attributes.equals(lower));
+  }
+
+  @NotNull
+  public static String getUrl(@NotNull File file) {
+    try {
+      return file.toURI().toURL().toExternalForm();
+    }
+    catch (MalformedURLException e) {
+      return "file://" + file.getAbsolutePath();
+    }
   }
 }

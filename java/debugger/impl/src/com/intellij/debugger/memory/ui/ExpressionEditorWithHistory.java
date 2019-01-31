@@ -39,12 +39,12 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
 
     new AnAction("InstancesWindow.ShowHistory") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         showHistory();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(LookupManager.getActiveLookup(getEditor()) == null);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), getComponent(), parentDisposable);

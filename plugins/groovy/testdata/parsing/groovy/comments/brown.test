@@ -54,7 +54,7 @@ Groovy script
             Arguments
               PsiElement(()('(')
               Literal
-                PsiElement(string)(''*'')
+                PsiElement(single quoted string)(''*'')
               PsiElement())(')')
       PsiWhiteSpace('\n')
       PsiElement(&&)('&&')
@@ -70,7 +70,7 @@ Groovy script
           Arguments
             PsiElement(()('(')
             Literal
-              PsiElement(string)(''*'')
+              PsiElement(single quoted string)(''*'')
             PsiElement())(')')
     PsiElement())(')')
     PsiWhiteSpace(' ')

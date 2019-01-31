@@ -31,7 +31,7 @@ public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 
   @Nullable
-  Stub buildStubTree(FileContent fileContent);
+  Stub buildStubTree(@NotNull FileContent fileContent);
 
   int getStubVersion();
 }

@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "array",
+      "not": {
+        "items": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "additionalItems": {
+          "type": "boolean"
+        },
+        "minItems":  7
+      }
+    }
+  }
+}
+

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -78,7 +64,7 @@ import java.util.List;
 public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
-  private TextFieldWithBrowseButton myOutputDirectoryField;    
+  private TextFieldWithBrowseButton myOutputDirectoryField;
   private JPanel myEditorPanel;
   private JPanel myErrorPanelPlace;
   private ThreeStateCheckBox myShowContentCheckBox;
@@ -116,7 +102,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         queueValidation();
       }
     });
@@ -234,7 +220,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
     labelPanel.add(new JLabel("Available Elements "));
     final HyperlinkLabel link = new HyperlinkLabel("");
-    link.setIcon(AllIcons.General.Help_small);
+    link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
@@ -567,7 +553,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   private class MyDataProvider implements TypeSafeDataProvider {
     @Override
-    public void calcData(DataKey key, DataSink sink) {
+    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
       if (ARTIFACTS_EDITOR_KEY.equals(key)) {
         sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
       }

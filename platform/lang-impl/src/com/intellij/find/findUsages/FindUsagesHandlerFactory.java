@@ -31,4 +31,14 @@ public abstract class FindUsagesHandlerFactory {
 
   @Nullable
   public abstract FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages);
+  
+  public enum OperationMode {
+    HIGHLIGHT_USAGES,
+    USAGES_WITH_DEFAULT_OPTIONS,
+    DEFAULT
+  }
+  
+  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
+    return createFindUsagesHandler(element, operationMode == OperationMode.HIGHLIGHT_USAGES);
+  }
 }

@@ -20,6 +20,7 @@ package com.intellij.refactoring.util.occurrences;
  */
 public class NotInThisCallFilter extends NotInSuperOrThisCallFilterBase {
   public static final NotInThisCallFilter INSTANCE = new NotInThisCallFilter();
+  @Override
   protected String getKeywordText() {
     return "this";
   }

@@ -65,8 +65,9 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
   }
 
+  @NotNull
   @Override
-  public PsiFieldStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
 
     boolean isDeprecatedByComment = false;
@@ -137,7 +138,6 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   @Override
   public void indexStub(@NotNull PsiFieldStub stub, @NotNull IndexSink sink) {
     String name = stub.getName();
-    //noinspection Duplicates
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.FIELDS, name);
       if (RecordUtil.isStaticNonPrivateMember(stub)) {

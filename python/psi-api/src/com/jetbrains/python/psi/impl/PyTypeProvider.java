@@ -45,7 +45,7 @@ public interface PyTypeProvider {
   Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context);
 
   @Nullable
-  Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context);
+  Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context);
 
   @Nullable
   PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);

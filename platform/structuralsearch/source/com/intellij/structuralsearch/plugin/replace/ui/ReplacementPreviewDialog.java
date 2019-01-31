@@ -87,10 +87,12 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.strucuturalsearch.plugin.replace.ReplacementPreviewDialog";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JComponent centerPanel = new JPanel( new BorderLayout() );
 
@@ -117,6 +119,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     return centerPanel;
   }
 
+  @Override
   public void dispose() {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(replacement.getDocument());
     if (file != null) {

@@ -82,7 +82,7 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer<SidePanelItem>(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
-      CellRendererPane myValidationParent = new CellRendererPane();
+      final CellRendererPane myValidationParent = new CellRendererPane();
       {
         mySeparatorComponent.setCaptionCentered(false);
         myList.add(myValidationParent);
@@ -195,7 +195,7 @@ public class SidePanel extends JPanel {
     private final Place myPlace;
     private final String myText;
 
-    public SidePanelItem(Place place, String text) {
+    SidePanelItem(Place place, String text) {
       myPlace = place;
       myText = text;
     }

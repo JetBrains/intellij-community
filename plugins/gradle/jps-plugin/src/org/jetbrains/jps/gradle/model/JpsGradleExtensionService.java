@@ -29,7 +29,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public abstract class JpsGradleExtensionService {
   @Nullable
@@ -44,8 +43,15 @@ public abstract class JpsGradleExtensionService {
   @Nullable
   public abstract JpsGradleModuleExtension getExtension(@NotNull JpsModule module);
 
+  /**
+   * @deprecated use {@link #getOrCreateExtension(JpsModule, String)} instead
+   */
+  @Deprecated
   @NotNull
   public abstract JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, Element rootElement);
+
+  @NotNull
+  public abstract JpsGradleModuleExtension getOrCreateExtension(@NotNull JpsModule module, @Nullable String moduleType);
 
   public abstract void setProductionOnTestDependency(@NotNull JpsDependencyElement dependency, boolean value);
 

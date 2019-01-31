@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
@@ -37,7 +23,7 @@ class DocumentationBuilderKit {
   public final static @NonNls String BR = "<br>";
 
   @NotNull
-  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;
+  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXmlEntities;
 
   @NotNull
   static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));
@@ -59,7 +45,7 @@ class DocumentationBuilderKit {
     return new ChainIterable<>("<" + tag + ">").add(content).addItem("</" + tag + ">");
   }
 
-  static ChainIterable<String> wrapInTag(String tag, List<Pair<String, String>> attributes, Iterable<String> content) {
+  static ChainIterable<String> wrapInTag(String tag, List<? extends Pair<String, String>> attributes, Iterable<String> content) {
     if (attributes.size() == 0) {
       return wrapInTag(tag, content);
     } else {
@@ -97,6 +83,7 @@ class DocumentationBuilderKit {
       return result;
     }
 
+    @Override
     public Iterable<String> apply(Iterable<String> contents) {
       return wrapInTag(myTag, myAttributes, contents);
     }

@@ -29,6 +29,7 @@ public class LwIntroListModelProperty extends LwIntrospectedProperty {
     super(name, propertyClassName);
   }
 
+  @Override
   public Object read(Element element) throws Exception {
     final List list = element.getChildren(UIFormXmlConstants.ELEMENT_ITEM, element.getNamespace());
     String[] result = new String[list.size()];

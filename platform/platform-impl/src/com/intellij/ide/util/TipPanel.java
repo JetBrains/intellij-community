@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +30,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
-  private final List<TipAndTrickBean> myTips = ContainerUtil.newArrayList();
+  private List<TipAndTrickBean> myTips = Collections.emptyList();
 
   public TipPanel() {
     setLayout(new BorderLayout());
@@ -64,8 +48,10 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     myPoweredByLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
 
     add(myPoweredByLabel, BorderLayout.SOUTH);
+  }
 
-    Collections.addAll(myTips, Extensions.getExtensions(TipAndTrickBean.EP_NAME));
+  public void setTips(@NotNull List<TipAndTrickBean> list) {
+    myTips = list;
   }
 
   @Override

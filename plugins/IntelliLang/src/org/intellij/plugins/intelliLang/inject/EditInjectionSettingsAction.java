@@ -40,16 +40,19 @@ import java.util.Collections;
 public class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
   public static final String EDIT_INJECTION_TITLE = "Language Injection Settings";
 
+  @Override
   @NotNull
   public String getText() {
     return EDIT_INJECTION_TITLE;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Edit Injection Settings";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
@@ -58,6 +61,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     return support != null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
@@ -79,6 +83,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -59,7 +59,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     if (myFileInfo != null) {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
         @Override
-        public void fileDownloaded(final VirtualFile localFile) {
+        public void fileDownloaded(@NotNull final VirtualFile localFile) {
           ApplicationManager.getApplication().invokeLater(() -> {
             HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
             FileDocumentManager.getInstance().reloadFiles(file);

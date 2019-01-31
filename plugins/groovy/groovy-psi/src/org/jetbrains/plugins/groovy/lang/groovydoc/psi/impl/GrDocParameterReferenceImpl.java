@@ -31,6 +31,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocParameterReference";
   }
@@ -108,7 +109,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ASTNode node = getNode();
     ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceNameFromText(newElementName).getNode();
     assert newNameNode != null;
@@ -123,7 +124,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (!(element instanceof GrParameter || element instanceof GrTypeParameter)) return false;
     return getManager().areElementsEquivalent(element, resolve());
   }

@@ -2,11 +2,17 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author vlan
@@ -81,5 +87,18 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
     myFixture.configureFromTempProjectFile("a.py");
     configureInspection();
+  }
+
+  // PY-30803
+  public void testPipEnvEnvironmentMarkers() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final VirtualFile pipFileLock = myFixture.findFileInTempDir("Pipfile.lock");
+    assertNotNull(pipFileLock);
+    final PyPackageManager packageManager = PyPackageManager.getInstance(getProjectDescriptor().getSdk());
+    final List<PyRequirement> requirements = PipenvKt.getPipFileLockRequirements(pipFileLock, packageManager);
+    final List<String> names = StreamEx.of(requirements).map(PyRequirement::getName).toList();
+    assertNotEmpty(names);
+    assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
+    assertDoesntContain(names, "pathlib2");
   }
 }

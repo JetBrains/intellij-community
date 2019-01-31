@@ -88,7 +88,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration, AppEngineServerConfiguration> {
     private final Project myProject;
 
-    public AppEngineDeploymentConfigurator(Project project) {
+    AppEngineDeploymentConfigurator(Project project) {
       myProject = project;
     }
 
@@ -114,7 +114,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   private static class AppEngineServerConnector extends ServerConnector<DummyDeploymentConfiguration> {
     private final AppEngineServerConfiguration myConfiguration;
 
-    public AppEngineServerConnector(AppEngineServerConfiguration configuration) {
+    AppEngineServerConnector(AppEngineServerConfiguration configuration) {
       myConfiguration = configuration;
     }
 
@@ -127,7 +127,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   private static class AppEngineRuntimeInstance extends ServerRuntimeInstance<DummyDeploymentConfiguration> {
     private final AppEngineServerConfiguration myConfiguration;
 
-    public AppEngineRuntimeInstance(AppEngineServerConfiguration configuration) {
+    AppEngineRuntimeInstance(AppEngineServerConfiguration configuration) {
       myConfiguration = configuration;
     }
 

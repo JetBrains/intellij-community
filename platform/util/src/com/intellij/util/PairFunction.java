@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 /**
+ * Please use {@link java.util.function.BiFunction}
  * @author max
  */
 public interface PairFunction<Arg1, Arg2, ResultType> {

@@ -31,6 +31,7 @@ public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFa
     myThreadDump = threadDump;
   }
 
+  @Override
   public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
     return new ThreadDumpPanel(myProject, consoleView, toolbarActions, myThreadDump);
   }

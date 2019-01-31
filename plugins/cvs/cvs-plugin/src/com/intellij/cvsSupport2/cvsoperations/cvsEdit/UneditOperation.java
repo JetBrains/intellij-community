@@ -16,9 +16,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.Watch;
@@ -34,6 +33,7 @@ public class UneditOperation extends CvsOperationOnFiles{
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     UneditCommand result = new UneditCommand();
     result.setTemporaryWatch(Watch.TALL);
@@ -41,11 +41,13 @@ public class UneditOperation extends CvsOperationOnFiles{
     return result;
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setCheckedOutFilesReadOnly(myMakeNewFilesReadOnly);
   }
 
+  @Override
   protected String getOperationName() {
     return "unedit";
   }

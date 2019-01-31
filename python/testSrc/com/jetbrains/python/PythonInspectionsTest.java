@@ -228,6 +228,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyArgumentEqualDefaultInspection.class);
   }
 
+  public void testPyArgumentEqualDefaultInspectionPy3() {
+    doHighlightingTest(PyArgumentEqualDefaultInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyNonAsciiCharInspection() {    //PY-5868
     doHighlightingTest(PyNonAsciiCharInspection.class);
   }
@@ -264,5 +268,19 @@ public class PythonInspectionsTest extends PyTestCase {
 
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.checkHighlighting(true, false, true);
+  }
+
+  // PY-32364
+  public void testAddEncodingInDisabledPy3() {
+    final PyMandatoryEncodingInspection inspection = new PyMandatoryEncodingInspection();
+    inspection.myAllPythons = false;
+    doHighlightingTest(inspection, LanguageLevel.PYTHON34);
+  }
+
+  // PY-32364
+  public void testAddEncodingInEnabledPy3() {
+    final PyMandatoryEncodingInspection inspection = new PyMandatoryEncodingInspection();
+    inspection.myAllPythons = true;
+    doHighlightingTest(inspection, LanguageLevel.PYTHON34);
   }
 }

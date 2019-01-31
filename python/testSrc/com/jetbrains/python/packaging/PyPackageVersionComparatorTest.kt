@@ -42,6 +42,10 @@ class PyPackageVersionComparatorTest : PyTestCase() {
     check(normalize("1.2a1"),
           normalize("1.2a1"),
           normalize("1.2a2"))
+
+    check(normalize("1.2a2"),
+          normalize("1.2a2"),
+          normalize("1.2a10"))
   }
 
   fun testDev() {

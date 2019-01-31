@@ -79,7 +79,7 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull List<VariableData> datum, PsiElement[] elements, SearchScope scope) {
+  public void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, PsiElement[] elements, SearchScope scope) {
     Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
     for (VariableData data : datum) {
       if (myDeleted.contains(data.variable)) continue;
@@ -215,6 +215,7 @@ public class ParametersFolder {
   private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope, final List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
+
     List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
@@ -281,7 +282,7 @@ public class ParametersFolder {
 
   private static boolean isAncestor(PsiElement expression, PsiElement[] scopeElements) {
     for (PsiElement scopeElement : scopeElements) {
-      if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
+      if (PsiTreeUtil.isAncestor(expression, scopeElement, false)) {
         return true;
       }
     }

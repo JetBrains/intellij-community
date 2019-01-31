@@ -35,12 +35,12 @@ Groovy script
           PsiWhiteSpace(' ')
           Additive expression
             Literal
-              PsiElement(string)(''1'')
+              PsiElement(single quoted string)(''1'')
             PsiWhiteSpace(' ')
             PsiElement(+)('+')
             PsiWhiteSpace(' ')
             Literal
-              PsiElement(string)(''0'')
+              PsiElement(single quoted string)(''0'')
       PsiElement(new line)('\n  ')
       ASSERT statement
         PsiElement(assert)('assert')
@@ -53,29 +53,29 @@ Groovy script
           PsiWhiteSpace(' ')
           Additive expression
             Literal
-              PsiElement(string)(''1'')
+              PsiElement(single quoted string)(''1'')
             PsiWhiteSpace(' ')
             PsiElement(+)('+')
             PsiWhiteSpace(' ')
             Literal
-              PsiElement(string)(''1'')
+              PsiElement(single quoted string)(''1'')
       PsiElement(new line)('\n  ')
       ASSERT statement
         PsiElement(assert)('assert')
         PsiWhiteSpace(' ')
         Relational expression
           Literal
-            PsiElement(string)(''x1'')
+            PsiElement(single quoted string)(''x1'')
           PsiWhiteSpace(' ')
           PsiElement(==)('==')
           PsiWhiteSpace(' ')
           Additive expression
             Literal
-              PsiElement(string)(''x'')
+              PsiElement(single quoted string)(''x'')
             PsiWhiteSpace(' ')
             PsiElement(+)('+')
             PsiWhiteSpace(' ')
             Literal
-              PsiElement(string)(''1'')
+              PsiElement(single quoted string)(''1'')
       PsiElement(new line)('\n')
       PsiElement(})('}')

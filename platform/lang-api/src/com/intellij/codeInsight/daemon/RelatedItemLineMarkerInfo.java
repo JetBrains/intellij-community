@@ -32,13 +32,13 @@ import java.util.List;
  * @author nik
  */
 public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLineMarkerInfo<T> {
-  private final NotNullLazyValue<Collection<? extends GotoRelatedItem>> myTargets;
+  private final NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> myTargets;
 
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,
                                    @NotNull GutterIconRenderer.Alignment alignment,
-                                   @NotNull NotNullLazyValue<Collection<? extends GotoRelatedItem>> targets) {
+                                   @NotNull NotNullLazyValue<? extends Collection<? extends GotoRelatedItem>> targets) {
     super(element, range, icon, updatePass, tooltipProvider, navHandler, alignment);
     myTargets = targets;
   }

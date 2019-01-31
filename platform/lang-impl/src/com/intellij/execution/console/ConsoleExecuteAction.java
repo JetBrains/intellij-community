@@ -41,12 +41,11 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   final ConsoleExecuteActionHandler myExecuteActionHandler;
   private final Condition<LanguageConsoleView> myEnabledCondition;
 
-  @SuppressWarnings("UnusedDeclaration")
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.alwaysTrue());
   }
 
-  ConsoleExecuteAction(@NotNull LanguageConsoleView console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleView> enabledCondition) {
+  ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleView> enabledCondition) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
@@ -78,7 +77,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
       Lookup lookup = LookupManager.getActiveLookup(editor);
       // we should check getCurrentItem() also - fast typing could produce outdated lookup, such lookup reports isCompletion() true
       enabled = lookup == null || !lookup.isCompletion() || lookup.getCurrentItem() == null ||
-                (lookup instanceof LookupImpl && ((LookupImpl)lookup).getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED);
+                lookup instanceof LookupImpl && ((LookupImpl)lookup).getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED;
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -108,14 +107,14 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     myExecuteActionHandler.addToCommandHistoryAndExecute(myConsoleView, text);
   }
 
-  public static abstract class ConsoleExecuteActionHandler {
+  public abstract static class ConsoleExecuteActionHandler {
 
     private boolean myAddToHistory = true;
     final boolean myPreserveMarkup;
 
     boolean myUseProcessStdIn;
 
-    public ConsoleExecuteActionHandler(boolean preserveMarkup) {
+    ConsoleExecuteActionHandler(boolean preserveMarkup) {
       myPreserveMarkup = preserveMarkup;
     }
 

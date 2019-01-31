@@ -31,13 +31,13 @@ public class HighlightMessageUtil {
   }
 
   @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, PsiSubstitutor substitutor) {
+  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor) {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT;
     return getSymbolName(symbol, substitutor, options);
   }
 
   @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, PsiSubstitutor substitutor, int parameterOptions) {
+  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor, int parameterOptions) {
     String symbolName = null;
 
     if (symbol instanceof PsiClass) {

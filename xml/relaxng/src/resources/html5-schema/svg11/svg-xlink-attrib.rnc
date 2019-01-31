@@ -29,10 +29,10 @@ grammar {
         [ a:defaultValue = "simple" ]
         attribute xlink:type { string "simple" }?,
         (
-        attribute xlink:href { URI.datatype }
-        |
-        attribute href { URI.datatype }
-        )?,
+        attribute xlink:href { URI.datatype }?
+        &
+        attribute href { URI.datatype }?
+        ),
         attribute xlink:role { URI.datatype }?,
         attribute xlink:arcrole { URI.datatype }?,
         attribute xlink:title { text }?,
@@ -45,10 +45,10 @@ grammar {
         [ a:defaultValue = "simple" ]
         attribute xlink:type { string "simple" }?,
         (
-        attribute xlink:href { URI.datatype }
-        |
-        attribute href { URI.datatype }
-        )?,
+        attribute xlink:href { URI.datatype }?
+        &
+        attribute href { URI.datatype }?
+        ),
         attribute xlink:role { URI.datatype }?,
         attribute xlink:arcrole { URI.datatype }?,
         attribute xlink:title { text }?,
@@ -61,10 +61,10 @@ grammar {
         [ a:defaultValue = "simple" ]
         attribute xlink:type { string "simple" }?,
         (
-        attribute xlink:href { URI.datatype }
-        |
-        attribute href { URI.datatype }
-        )?,
+        attribute xlink:href { URI.datatype }?
+        &
+        attribute href { URI.datatype }?
+        ),
         attribute xlink:role { URI.datatype }?,
         attribute xlink:arcrole { URI.datatype }?,
         attribute xlink:title { text }?,
@@ -77,10 +77,10 @@ grammar {
         [ a:defaultValue = "simple" ]
         attribute xlink:type { string "simple" }?,
         (
-        attribute xlink:href { URI.datatype }
-        |
-        attribute href { URI.datatype }
-        )?,
+        attribute xlink:href { URI.datatype }?
+        &
+        attribute href { URI.datatype }?
+        ),
         attribute xlink:role { URI.datatype }?,
         attribute xlink:arcrole { URI.datatype }?,
         attribute xlink:title { text }?,

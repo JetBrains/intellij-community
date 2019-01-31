@@ -1,29 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.anim.dom.SVGDOMImplementation;
-import org.apache.batik.anim.dom.SVGOMAnimatedLength;
-import org.apache.batik.anim.dom.SVGOMRectElement;
+import org.apache.batik.anim.dom.*;
+import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.SVGAbstractTranscoder;
@@ -32,6 +17,7 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -39,14 +25,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
@@ -55,79 +40,42 @@ import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
  */
 public class SVGLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
+  private static SvgColorPatcher ourColorPatcher = null;
 
-  private final TranscoderInput input;
-  private final Size size;
-  private BufferedImage img;
+  public static final int ICON_DEFAULT_SIZE = 16;
 
-  private static class Size {
-    final float width;
-    final float height;
-
-    static final int FALLBACK_SIZE = 16;
-
-    Size(float width, float height) {
-      this.width = width;
-      this.height = height;
-    }
-
-    Size scale(double scale) {
-      return new Size((float)(width * scale), (float)(height * scale));
-    }
-
+  public static final NotNullValue<Double> ICON_MAX_SIZE = new NotNullValue<Double>() {
     @NotNull
-    public static Size parse(@NotNull Document document) {
-      Float width = parseSize(document, "width");
-      Float height = parseSize(document, "height");
-      if (width != null && height != null) {
-        return new Size(width, height);
+    @Override
+    public Double initialize() {
+      double maxSize = Integer.MAX_VALUE;
+      if (!GraphicsEnvironment.isHeadless()) {
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        AffineTransform tx = device.getDefaultConfiguration().getDefaultTransform();
+        maxSize = (int)Math.max(bounds.width * tx.getScaleX(), bounds.height * tx.getScaleY());
       }
-      Size viewBox = parseViewBox(document);
-      if (viewBox != null) {
-        return viewBox;
-      }
-      return new Size(FALLBACK_SIZE, FALLBACK_SIZE);
+      return maxSize;
     }
+  };
 
-    @Nullable
-    private static Float parseSize(@NotNull Document document, @NotNull String sizeName) {
-      String value = document.getDocumentElement().getAttribute(sizeName);
-      if (value.endsWith("px")) {
-        try {
-          return Float.parseFloat(value.substring(0, value.length() - 2));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      return null;
-    }
-
-    @Nullable
-    private static Size parseViewBox(@NotNull Document document) {
-      String value = document.getDocumentElement().getAttribute("viewBox");
-      if (value == null || value.isEmpty()) {
-        return null;
-      }
-      List<String> values = new ArrayList<String>(4);
-      for (String token : StringUtil.tokenize(value, ", ")) {
-        values.add(token);
-      }
-
-      if (values.size() == 4) {
-        try {
-          return new Size(Float.parseFloat(values.get(2)),
-                          Float.parseFloat(values.get(3)));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-      LOG.warn("SVG file " + ObjectUtils.notNull(document.getBaseURI(), "") +
-               " 'viewBox' expected in format: 'x y width height' or 'x, y, width, height'");
-      return null;
-    }
-  }
+  private final TranscoderInput myTranscoderInput;
+  private final double myScale;
+  private final double myOverridenWidth;
+  private final double myOverridenHeight;
+  private BufferedImage myImage;
 
   private class MyTranscoder extends ImageTranscoder {
+    protected MyTranscoder() {
+      width = ICON_DEFAULT_SIZE;
+      height = ICON_DEFAULT_SIZE;
+    }
+
+    @Override
+    protected void setImageSize(float docWidth, float docHeight) {
+      super.setImageSize((float)(docWidth * myScale), (float)(docHeight * myScale));
+    }
+
     @Override
     public BufferedImage createImage(int w, int h) {
       //noinspection UndesirableClassUsage
@@ -136,7 +84,7 @@ public class SVGLoader {
 
     @Override
     public void writeImage(BufferedImage img, TranscoderOutput output) {
-      SVGLoader.this.img = img;
+      SVGLoader.this.myImage = img;
     }
 
     @Override
@@ -148,6 +96,11 @@ public class SVGLoader {
           return createFallbackPlaceholder();
         }
       };
+    }
+
+    @Override
+    public BridgeContext createBridgeContext(SVGOMDocument doc) {
+      return super.createBridgeContext(doc);
     }
   }
 
@@ -168,18 +121,73 @@ public class SVGLoader {
     }
   }
 
+  /**
+   * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   */
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
+    try {
+      double s = ctx.getScale(PIX_SCALE);
+      return new SVGLoader(url, stream, width * s, height * s, 1).createImage();
+    }
+    catch (TranscoderException ex) {
+      throw new IOException(ex);
+    }
+  }
+
+  /**
+   * Loads a HiDPI-aware image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   */
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx, double width, double height) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx, width, height);
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
+  }
+
+  /**
+   * Loads a HiDPI-aware image of the size specified in the svg file.
+   */
   public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
     BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
     //noinspection unchecked
     return (T)ImageUtil.ensureHiDPI(image, ctx);
   }
 
-  public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
-    SVGLoader loader = new SVGLoader(url, stream, scale);
-    return Couple.of((int)loader.size.width, (int)loader.size.height);
+  @SuppressWarnings("SSBasedInspection")
+  public static Dimension2D getDocumentSize(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
+    // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
+    StringBuilder builder = new StringBuilder(100);
+    byte[] bytes = new byte[3];
+    boolean checkClosingBracket = false;
+    int ch;
+    while((ch = stream.read()) != -1) {
+      builder.append((char)ch);
+      if (ch == '<') {
+        if (stream.read(bytes, 0, 3) == -1) {
+          break;
+        }
+        String str = new String(bytes);
+        builder.append(str);
+        checkClosingBracket = "svg".equals(str);
+      }
+      else if (checkClosingBracket && ch == '>') {
+        return new SVGLoader(url, new ByteArrayInputStream(builder.append("</svg>").toString().getBytes()), scale).getDocumentSize();
+      }
+    }
+    return new Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
+  }
+
+  public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, ctx.getScale(PIX_SCALE));
+    Dimension2D size = loader.getDocumentSize();
+    return Math.min(ICON_MAX_SIZE.get() / size.getWidth(), ICON_MAX_SIZE.get() / size.getHeight());
   }
 
   private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
+    this(url, stream, -1, -1, scale);
+  }
+
+  private SVGLoader(@Nullable URL url, InputStream stream, double width, double height, double scale) throws IOException {
     Document document;
     String uri = null;
     try {
@@ -196,16 +204,45 @@ public class SVGLoader {
     if (document == null) {
       throw new IOException("document not created");
     }
-    input = new TranscoderInput(document);
-    size = Size.parse(document).scale(scale);
+    patchColors(document);
+    myTranscoderInput = new TranscoderInput(document);
+    myOverridenWidth = width;
+    myOverridenHeight = height;
+    myScale = scale;
+  }
+
+  private static void patchColors(Document document) {
+    if (ourColorPatcher != null) {
+      ourColorPatcher.patchColors(document.getDocumentElement());
+    }
+  }
+
+  public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
+    ourColorPatcher = colorPatcher;
+    IconLoader.clearCache();
   }
 
   private BufferedImage createImage() throws TranscoderException {
-    MyTranscoder r = new MyTranscoder();
-    r.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(size.width));
-    r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
-    r.transcode(input, null);
-    return img;
+    MyTranscoder transcoder = new MyTranscoder();
+    if (myOverridenWidth != -1) {
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverridenWidth));
+    }
+    if (myOverridenHeight != -1) {
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(myOverridenHeight));
+    }
+    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, new Float(ICON_MAX_SIZE.get()));
+    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, new Float(ICON_MAX_SIZE.get()));
+    transcoder.transcode(myTranscoderInput, null);
+    return myImage;
+  }
+
+  private Dimension2D getDocumentSize() {
+    SVGOMDocument document = (SVGOMDocument)myTranscoderInput.getDocument();
+    BridgeContext ctx = new MyTranscoder().createBridgeContext(document);
+    new GVTBuilder().build(ctx, document);
+    Dimension2D size = ctx.getDocumentSize();
+    size.setSize(size.getWidth() * myScale, size.getHeight() * myScale);
+    return size;
   }
 
   @NotNull
@@ -225,11 +262,15 @@ public class SVGLoader {
     }
   }
 
+  public interface SvgColorPatcher {
+    void patchColors(Element svg);
+  }
+
   /**
    * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
    */
   private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
-    public MySAXSVGDocumentFactory(String parser) {
+    MySAXSVGDocumentFactory(String parser) {
       super(parser);
       implementation = new MySVGDOMImplementation();
     }

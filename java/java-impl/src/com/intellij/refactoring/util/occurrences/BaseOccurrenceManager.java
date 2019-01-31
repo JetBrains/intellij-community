@@ -15,9 +15,7 @@
  */
 package com.intellij.refactoring.util.occurrences;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -36,6 +34,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     myFilter = filter;
   }
 
+  @Override
   public PsiExpression[] getOccurrences() {
     if(myOccurrences == null) {
       myOccurrences = findOccurrences();
@@ -64,10 +63,12 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
 
   protected abstract PsiExpression[] findOccurrences();
 
+  @Override
   public boolean isInFinalContext() {
     return needToDeclareFinal(myOccurrences);
   }
 
+  @Override
   public PsiElement getAnchorStatementForAll() {
     if(myAnchorStatement == null) {
       myAnchorStatement = getAnchorStatementForAllInScope(null);
@@ -75,19 +76,25 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     return myAnchorStatement;
 
   }
+  @Override
   public PsiElement getAnchorStatementForAllInScope(PsiElement scope) {
-    return RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurrences, scope);
+    PsiElement anchor = RefactoringUtil.getAnchorElementForMultipleExpressions(myOccurrences, scope);
+    return anchor instanceof PsiField && !(anchor instanceof PsiEnumConstant) ? ((PsiField)anchor).getInitializer() : anchor;
   }
 
   private static boolean needToDeclareFinal(PsiExpression[] occurrences) {
     PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
       final PsiElement data = occurrence.getUserData(ElementToWorkOn.PARENT);
+      PsiElement element = data != null ? data : occurrence;
       if (scopeToDeclare == null) {
-        scopeToDeclare = data != null ? data : occurrence;
+        scopeToDeclare = element;
       }
       else {
-        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, data != null ? data : occurrence);
+        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, element);
+      }
+      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class, true, PsiStatement.class) != null) {
+        return true;
       }
     }
     if(scopeToDeclare == null) {

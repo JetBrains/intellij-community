@@ -1,9 +1,10 @@
-// "Convert to local" "true"
+// "Convert field to local variables in 2 methods" "true"
 class Test {
   private int my<caret>Foo;
 
   int getFoo1() {
-    myFoo = 1;
+    myFoo//c1
+      = 1;
     return myFoo;
   }
 

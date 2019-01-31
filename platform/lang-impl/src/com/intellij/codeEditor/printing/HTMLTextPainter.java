@@ -4,6 +4,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,10 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
 
 public class HTMLTextPainter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.HTMLTextPainter");
+
   private int myOffset = 0;
   private final EditorHighlighter myHighlighter;
   private final String myText;
@@ -70,6 +74,26 @@ public class HTMLTextPainter {
     myCurrentMethodSeparator = 0;
   }
 
+  private HTMLTextPainter(@NotNull PsiElement context, @NotNull String codeFragment) {
+    myProject = context.getProject();
+    myPsiFile = context.getContainingFile();
+    if (myPsiFile == null) {
+      throw new IllegalArgumentException("Bad context: no container file");
+    }
+
+    htmlStyleManager = new HtmlStyleManager(true);
+    myPrintLineNumbers = false;
+    myHighlighter = HighlighterFactory.createHighlighter(myProject, myPsiFile.getFileType());
+
+    myText = codeFragment;
+    myHighlighter.setText(myText);
+    mySegmentEnd = myText.length();
+    myFileName = "fragment";
+
+    myDocument = null;
+    myCurrentMethodSeparator = 0;
+  }
+
   @NotNull
   public PsiFile getPsiFile() {
     return myPsiFile;
@@ -104,7 +128,7 @@ public class HTMLTextPainter {
 
     int referenceEnd = -1;
     if (isStandalone) {
-      writeHeader(writer, isStandalone ? new File(myFileName).getName() : null);
+      writeHeader(writer, new File(myFileName).getName());
     }
     else {
       ensureStyles();
@@ -132,7 +156,12 @@ public class HTMLTextPainter {
             writer.write(closeTag);
             closeTag = null;
           }
-          writer.write(c);
+          if (c == '\n') {
+            writeLineSeparatorAndNumber(writer, hStart);
+          }
+          else {
+            writer.write(c);
+          }
         }
         else {
           break;
@@ -271,19 +300,24 @@ public class HTMLTextPainter {
           writeChar(writer, " ");
         }
 
-        LineMarkerInfo marker = getMethodSeparator(i + 1);
-        if (marker == null) {
-          writer.write('\n');
-        }
-        else {
-          writer.write("<hr class=\"" + htmlStyleManager.getSeparatorClassName(marker.separatorColor) + "\">");
-        }
-        writeLineNumber(writer);
+        writeLineSeparatorAndNumber(writer, i);
       }
       else {
-        writeChar(writer, String.valueOf(c));
+        writer.write(c);
+        myColumn++;
       }
     }
+  }
+
+  private void writeLineSeparatorAndNumber(@NotNull Writer writer, int i) throws IOException {
+    LineMarkerInfo marker = getMethodSeparator(i + 1);
+    if (marker == null) {
+      writer.write('\n');
+    }
+    else {
+      writer.write("<hr class=\"" + htmlStyleManager.getSeparatorClassName(marker.separatorColor) + "\">");
+    }
+    writeLineNumber(writer);
   }
 
   private void writeChar(Writer writer, String s) throws IOException {
@@ -347,5 +381,30 @@ public class HTMLTextPainter {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Converts the code fragment to HTML with in-line styles.
+   * The information about language, project and markup settings is getting
+   * from {@code context} parameter.
+   *
+   * The code tokens in HTML are highlighted by lexer-based highlighter.
+   * There is no formatting activity in this call.
+   *
+   * @param context the element that provide information about language, project and markup settings
+   * @param codeFragment the code fragment that need to be converted to HTML
+   * @return the HTML fragment in {@code pre}-tag container
+   */
+  @NotNull
+  public static String convertCodeFragmentToHTMLFragmentWithInlineStyles(@NotNull PsiElement context, @NotNull String codeFragment) {
+    try {
+      StringWriter writer = new StringWriter();
+      new HTMLTextPainter(context, codeFragment).paint(null, writer, false);
+      return writer.toString();
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return String.format("<pre>%s</pre>\n", codeFragment);
+    }
   }
 }

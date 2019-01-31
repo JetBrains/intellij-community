@@ -17,7 +17,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * What to do if there's only one element in completion lookup? Should IDEA show lookup or just insert this element? Call
@@ -55,20 +54,11 @@ public enum AutoCompletionPolicy {
     return new PolicyDecorator(element, this);
   }
 
-  /**
-   * @deprecated use direct call {@link LookupElement#getAutoCompletionPolicy()} instead
-   */
-  @Nullable
-  @Deprecated
-  public static AutoCompletionPolicy getPolicy(LookupElement element) {
-    return element.getAutoCompletionPolicy();
-  }
-
   private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
     public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 
-    public PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
+    PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {
       super(element);
       myPolicy = policy;
     }

@@ -10,6 +10,7 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,7 @@ public class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     if (frame != null && frame.isVisible()) {
       frame.dispose();
       frame = null;
@@ -91,7 +92,7 @@ public class TestTextFieldAction extends DumbAwareAction {
           new ExtendableTextComponent.Extension() {
             @Override
             public Icon getIcon(boolean hovered) {
-              return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
+              return hovered ? AllIcons.General.ContextHelp : AllIcons.General.Locate;
             }
 
             @Override
@@ -105,16 +106,25 @@ public class TestTextFieldAction extends DumbAwareAction {
             }
           },
           new ExtendableTextComponent.Extension() {
-            private final Icon icon = new AnimatedIcon.Grey();
+            private final Icon icon = new AnimatedIcon.FS();
 
             @Override
             public Icon getIcon(boolean hovered) {
-              return icon;
+              return !hovered ? icon : AllIcons.Process.FS.Step_passive;
             }
 
             @Override
             public String getTooltip() {
               return "Refresh";
+            }
+          },
+          new ExtendableTextComponent.Extension() {
+            private final Icon fading = new AnimatedIcon.Fading(AllIcons.Ide.FatalError);
+            private final Icon blinking = new AnimatedIcon.Blinking(AllIcons.Ide.FatalError);
+
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return hovered ? fading : blinking;
             }
           },
           new ExtendableTextComponent.Extension() {
@@ -128,7 +138,7 @@ public class TestTextFieldAction extends DumbAwareAction {
                 icon.setForeground(getBackground());
                 return icon;
               }
-              return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+              return hovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
             }
 
             @Override
@@ -195,7 +205,7 @@ public class TestTextFieldAction extends DumbAwareAction {
       update(field -> center.add(field, gbc));
     }
 
-    private void update(Consumer<JTextField> consumer) {
+    private void update(Consumer<? super JTextField> consumer) {
       fields.forEach(consumer);
       center.revalidate();
       center.repaint();

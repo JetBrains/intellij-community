@@ -24,6 +24,7 @@ public class StringProperty extends ValueProperty<String> {
     super(name, defaultValue);
   }
 
+  @Override
   public boolean areEqual(String value1, String value2) {
     return Comparing.strEqual(value1, value2, true);
   }

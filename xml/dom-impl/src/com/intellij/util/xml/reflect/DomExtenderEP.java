@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -50,8 +51,8 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       try {
         myDomClass = findClass(domClassName);
       }
-      catch (Exception e) {
-        LOG.error(e);
+      catch (Throwable e) {
+        LOG.error(new PluginException(e, getPluginId()));
         return registrar;
       }
     }
@@ -65,8 +66,8 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       try {
         myExtender = instantiate(extenderClassName, project.getPicoContainer());
       }
-      catch (Exception e) {
-        LOG.error(e);
+      catch (Throwable e) {
+        LOG.error(new PluginException(e, getPluginId()));
         return registrar;
       }
     }

@@ -7,11 +7,11 @@ public class ChainedEquality
         boolean foo = fooBaz();
         boolean bar = fooBaz();
         boolean barangus = fooBaz();
-        if(foo == bar == barangus)
+        if(<warning descr="Chained equality comparison 'foo == bar == barangus'">foo == bar == barangus</warning>)
         {
             System.out.println("");
         }
-        if (foo != bar == barangus)
+        if (<warning descr="Chained equality comparison 'foo != bar == barangus'">foo != bar == barangus</warning>)
         {
             System.out.println("");
         }
@@ -23,6 +23,6 @@ public class ChainedEquality
     }
 
     boolean boo(boolean a, boolean b, boolean c, boolean d, boolean e) {
-        return a != b != c  == d != e;
+        return <warning descr="Chained equality comparison 'a != b != c == d != e'">a != b != c  == d != e</warning>;
     }
 }

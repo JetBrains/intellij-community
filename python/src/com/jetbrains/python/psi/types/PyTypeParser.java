@@ -326,7 +326,7 @@ public class PyTypeParser {
     @NotNull private final PsiElement myAnchor;
     @NotNull private final TypeEvalContext myContext;
 
-    public MakeSimpleType(@NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+    MakeSimpleType(@NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
       myAnchor = anchor;
       myContext = context;
     }

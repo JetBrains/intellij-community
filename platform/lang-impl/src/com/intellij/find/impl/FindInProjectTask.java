@@ -75,11 +75,11 @@ class FindInProjectTask {
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(ContainerUtil.newTroveSet());
-  private final Set<VirtualFile> myFilesToScanInitially;
+  private final Set<? extends VirtualFile> myFilesToScanInitially;
   private final AtomicLong myTotalFilesSize = new AtomicLong();
   private final String myStringToFindInIndices;
 
-  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
     myProject = project;
     myFilesToScanInitially = filesToScanInitially;
@@ -108,7 +108,7 @@ class FindInProjectTask {
     TooManyUsagesStatus.createFor(myProgress);
   }
 
-  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<UsageInfo> consumer) {
+  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> consumer) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
@@ -153,7 +153,7 @@ class FindInProjectTask {
     }
   }
 
-  private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
+  private static void logStats(@NotNull Collection<? extends VirtualFile> otherFiles, long time) {
     Map<String, Long> extensionToCount = otherFiles.stream()
       .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
     String topExtensions = extensionToCount
@@ -170,7 +170,7 @@ class FindInProjectTask {
 
   private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
-                             @NotNull final Processor<UsageInfo> consumer) {
+                             @NotNull final Processor<? super UsageInfo> consumer) {
     AtomicInteger occurrenceCount = new AtomicInteger();
     AtomicInteger processedFileCount = new AtomicInteger();
 
@@ -255,7 +255,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
-      private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
+      private final Set<VirtualFile> myFiles = new CompactVirtualFileSet();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -270,7 +270,7 @@ class FindInProjectTask {
             }
 
             if (skipIndexed && isCoveredByIndex(virtualFile) &&
-                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile))) {
+                (fileIndex.isInContent(virtualFile) || fileIndex.isInLibrary(virtualFile))) {
               return;
             }
 
@@ -385,7 +385,7 @@ class FindInProjectTask {
       return Collections.emptySet();
     }
 
-    final Set<VirtualFile> resultFiles = new LinkedHashSet<>();
+    final Set<VirtualFile> resultFiles = new CompactVirtualFileSet();
     for(VirtualFile file:myFilesToScanInitially) {
       if (myFileMask.value(file)) {
         resultFiles.add(file);
@@ -407,9 +407,7 @@ class FindInProjectTask {
 
       if (!keys.isEmpty()) {
         final List<VirtualFile> hits = new ArrayList<>();
-        ApplicationManager.getApplication().runReadAction(() -> {
-          FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
-        });
+        FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {
@@ -452,7 +450,7 @@ class FindInProjectTask {
       }
     }
     VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
-    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null) {
+    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null || sourceVirtualFile.getFileType().isBinary()) {
       return null;
     }
 

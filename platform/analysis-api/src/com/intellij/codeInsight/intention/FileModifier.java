@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
- *
- * @since 171.*
  * @author peter
  */
 public interface FileModifier extends WriteActionAware {

@@ -6,7 +6,6 @@ import com.intellij.application.options.codeStyle.CodeStyleSettingsPanelFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public class CodeStyleConfigurableWrapper
   @Override
   public JComponent createComponent() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel;
   }
@@ -104,15 +103,17 @@ public class CodeStyleConfigurableWrapper
     return getConfigurableId(getDisplayName());
   }
 
+  @NotNull
+  @Override
+  public Class<?> getOriginalClass() {
+    return myProvider.getClass();
+  }
+
   @Override
   public void disposeUIResources() {
     if (myPanel != null) {
       myPanel.disposeUIResources();
     }
-  }
-
-  public boolean isPanelModified(CodeStyleScheme scheme) {
-    return myPanel != null && myPanel.isModified(scheme);
   }
 
   public boolean isPanelModified() {
@@ -128,7 +129,7 @@ public class CodeStyleConfigurableWrapper
   @Override
   public Set<String> processListOptions() {
     if (myPanel == null) {
-      myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
+      myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel.processListOptions();
   }

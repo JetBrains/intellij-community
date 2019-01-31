@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.Application;
@@ -33,12 +19,12 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentMultiMap;
@@ -53,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status;
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -247,7 +234,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  public static boolean processExecutors(PsiType psiType, PsiElement place, final PsiScopeProcessor processor, ResolveState state) {
+  public static boolean processExecutors(PsiType psiType,
+                                         PsiElement place,
+                                         PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor) {
     if (insideAnnotation(place)) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
@@ -257,7 +246,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
     for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
-      if (!script.processExecutor(processor, psiType, place, placeFile, state, typeText)) {
+      if (!script.processExecutor(psiType, place, placeFile, typeText, processor)) {
         return false;
       }
     }
@@ -280,12 +269,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static List<VirtualFile> getGdslFiles(final Project project) {
     final List<VirtualFile> result = ContainerUtil.newArrayList();
-    result.addAll(getBundledGdslFiles());
+    result.addAll(bundledGdslFiles.getValue());
     result.addAll(getProjectGdslFiles(project));
     return result;
   }
 
-  private static List<VirtualFile> getBundledGdslFiles() {
+  private static final NotNullLazyValue<List<VirtualFile>> bundledGdslFiles = NotNullLazyValue.createValue(() -> {
     final List<VirtualFile> result = ContainerUtil.newArrayList();
     for (File file : getBundledScriptFolders()) {
       if (file.exists()) {
@@ -303,7 +292,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
     }
     return result;
-  }
+  });
 
   private static List<VirtualFile> getProjectGdslFiles(Project project) {
     final List<VirtualFile> result = ContainerUtil.newArrayList();
@@ -454,7 +443,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
     };
 
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (filesInProcessing) { //ensure that only one thread calculates dsl executor
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);

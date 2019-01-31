@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -12,12 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.EqualityCheck;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -26,8 +22,17 @@ public class EqualsToEqualityFix extends InspectionGadgetsFix {
 
   private final boolean myNegated;
 
-  public EqualsToEqualityFix(boolean negated) {
+  private EqualsToEqualityFix(boolean negated) {
     myNegated = negated;
+  }
+
+  @Nullable
+  public static EqualsToEqualityFix buildFix(PsiMethodCallExpression expressionToFix, boolean negated) {
+    if (ExpressionUtils.isVoidContext(expressionToFix)) {
+      // replacing top level equals() call will produce red code
+      return null;
+    }
+    return new EqualsToEqualityFix(negated);
   }
 
   @Nls

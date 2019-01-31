@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,12 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static java.util.Collections.emptyList;
 
 /**
  * @author Konstantin Bulenkov
@@ -41,9 +40,10 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   @NotNull
   public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
 
+  @NotNull
   private Collection<OptionDescription> getCachedOptions(@Nullable Project project) {
-    ComponentManager manager = project != null ? project : getApplication();
-    if (manager == null || manager.isDisposed()) return emptyList();
+    ComponentManager manager = project != null ? project : ApplicationManager.getApplication();
+    if (manager == null || manager.isDisposed()) return Collections.emptyList();
 
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
     if (cache == null) cache = new CachedOptions(manager);
@@ -53,21 +53,17 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
   @Override
   public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {
-    if (!pattern.startsWith("#")) return;
+    if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) return;
     pattern = pattern.substring(1);
     final List<String> parts = StringUtil.split(pattern, " ");
 
-    if (parts.size() == 0) {
+    if (parts.isEmpty()) {
       return;
     }
 
     String id = parts.get(0);
     if (getId().startsWith(id) || pattern.startsWith(" ")) {
-      if (pattern.startsWith(" ")) {
-        pattern = pattern.trim();
-      } else {
-        pattern = pattern.substring(id.length()).trim().toLowerCase();
-      }
+      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim().toLowerCase();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       for (OptionDescription option : getCachedOptions(project)) {
         if (matcher.matches(option.getOption())) {
@@ -105,7 +101,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
   private static final class CachedOptions implements Disposable {
     private static final Key<CachedOptions> KEY = Key.create("cached top hits");
-    private final ConcurrentHashMap<Class<?>, Collection<OptionDescription>> map = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Collection<OptionDescription>> map = new ConcurrentHashMap<>();
     private final ComponentManager manager;
 
     private CachedOptions(ComponentManager manager) {
@@ -141,28 +137,33 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
-      Application application = getApplication();
-      if (application != null && !application.isUnitTestMode()) {
-        long millis = System.currentTimeMillis();
-        String name = project == null ? "application" : "project";
-        AtomicLong time = new AtomicLong();
-        for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isUnitTestMode()) {
+        return;
+      }
+
+      long millis = System.currentTimeMillis();
+      String name = project == null ? "application" : "project";
+      List<SearchTopHitProvider> providers = SearchTopHitProvider.EP_NAME.getExtensionList();
+      for (SearchTopHitProvider provider : providers) {
+        if (provider instanceof OptionsTopHitProvider && !(provider instanceof ConfigurableOptionsTopHitProvider)) {
+          cache((OptionsTopHitProvider)provider, indicator, project);
+        }
+      }
+
+      application.invokeLater(() -> {
+        long start = System.currentTimeMillis();
+        for (SearchTopHitProvider provider : providers) {
+          // process on EDT, because it creates a Swing components
           if (provider instanceof ConfigurableOptionsTopHitProvider) {
-            // process on EDT, because it creates a Swing components
-            application.invokeLater(() -> {
-              long millisOnEDT = System.currentTimeMillis();
-              cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
-              time.addAndGet(System.currentTimeMillis() - millisOnEDT);
-            });
-          }
-          else if (provider instanceof OptionsTopHitProvider) {
-            cache((OptionsTopHitProvider)provider, indicator, project);
+            cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
           }
         }
-        application.invokeLater(() -> LOG.info(time.get() + " ms spent on EDT to cache options in " + name));
-        long delta = System.currentTimeMillis() - millis;
-        LOG.info(delta + " ms spent to cache options in " + name);
-      }
+        LOG.info((System.currentTimeMillis() - start) + " ms spent on EDT to cache options in " + name);
+      });
+
+      long delta = System.currentTimeMillis() - millis;
+      LOG.info(delta + " ms spent to cache options in " + name);
     }
 
     private static void cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {

@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
+import org.jetbrains.java.decompiler.util.TextUtil;
+
 public class Instruction implements CodeConstants {
   public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands) {
     if (opcode >= opc_ifeq && opcode <= opc_if_acmpne ||
@@ -55,6 +57,26 @@ public class Instruction implements CodeConstants {
            !(opcode >= opc_ireturn && opcode <= opc_return) &&
            opcode != opc_athrow &&
            opcode != opc_jsr && opcode != opc_tableswitch && opcode != opc_lookupswitch;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder res = new StringBuilder();
+    if (wide) res.append("@wide ");
+    res.append("@").append(TextUtil.getInstructionName(opcode));
+
+    int len = operandsCount();
+    for (int i = 0; i < len; i++) {
+      int op = operands[i];
+      if (op < 0) {
+        res.append(" -").append(Integer.toHexString(-op));
+      }
+      else {
+        res.append(" ").append(Integer.toHexString(op));
+      }
+    }
+
+    return res.toString();
   }
 
   @Override

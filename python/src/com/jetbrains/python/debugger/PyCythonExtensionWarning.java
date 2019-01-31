@@ -73,7 +73,7 @@ public class PyCythonExtensionWarning {
     return new DumbAwareAction("Install") {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         compileCythonExtension(project);
         notification.expire();
       }
@@ -84,7 +84,7 @@ public class PyCythonExtensionWarning {
     return new DumbAwareAction("How does it work") {
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         HelpManager.getInstance().invokeHelp("Cython_Speedups");
       }
     };

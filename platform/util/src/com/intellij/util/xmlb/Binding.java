@@ -36,7 +36,7 @@ public abstract class Binding {
   }
 
   @Nullable
-  public static Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
+  public static Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }

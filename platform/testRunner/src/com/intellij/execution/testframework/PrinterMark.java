@@ -22,6 +22,7 @@ package com.intellij.execution.testframework;
 
 public class PrinterMark implements Printable {
 
+  @Override
   public void printOn(final Printer printer) {
 
     printer.mark();

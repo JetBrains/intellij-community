@@ -41,7 +41,7 @@ public class TagNameVariantCollector {
 
   public static List<XmlElementDescriptor> getTagDescriptors(final XmlTag element,
                                                              final Collection<String> namespaces,
-                                                             @Nullable List<String> nsInfo) {
+                                                             @Nullable List<? super String> nsInfo) {
 
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = element.getNamespacePrefix().isEmpty() ? null : element.getNamespace();
@@ -102,11 +102,11 @@ public class TagNameVariantCollector {
 
   private static void processVariantsInNamespace(final String namespace,
                                                  final XmlTag element,
-                                                 final List<XmlElementDescriptor> variants,
+                                                 final List<? super XmlElementDescriptor> variants,
                                                  final XmlElementDescriptor elementDescriptor,
                                                  final String elementNamespace,
                                                  final Map<String, XmlElementDescriptor> descriptorsMap,
-                                                 final Set<XmlNSDescriptor> visited,
+                                                 final Set<? super XmlNSDescriptor> visited,
                                                  XmlTag parent,
                                                  final XmlExtension extension) {
     if(descriptorsMap.containsKey(namespace)){

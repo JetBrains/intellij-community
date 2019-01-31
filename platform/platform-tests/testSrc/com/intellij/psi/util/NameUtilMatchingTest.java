@@ -51,6 +51,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("nt", "NameUtilTest");
     assertMatches("repl map", "ReplacePathToMacroMap");
     assertMatches("replmap", "ReplacePathToMacroMap");
+    assertMatches("CertificateEx", "CertificateEncodingException");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
   
@@ -429,8 +430,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("smart8co", "smart18completion");
   }
 
-  public void testMatchOnlyAdjacentDigits() {
+  public void testDoNotAllowDigitsBetweenMatchingDigits() {
     assertDoesntMatch("*012", "001122");
+    assertMatches("012", "0a1_22");
   }
 
   public void testSpecialSymbols() {
@@ -665,7 +667,7 @@ public class NameUtilMatchingTest extends TestCase {
 
   public void testMatchingAllOccurrences() {
     String text = "some text";
-    MinusculeMatcher matcher = new AllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
+    MinusculeMatcher matcher = AllOccurrencesMatcher.create("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
     UsefulTestCase.assertOrderedEquals(matcher.matchingFragments(text),
                         new TextRange(3, 4), new TextRange(6, 7));
   }

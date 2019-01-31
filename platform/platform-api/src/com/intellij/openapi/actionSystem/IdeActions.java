@@ -22,6 +22,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_TEXT_END = "EditorTextEnd";
   @NonNls String ACTION_EDITOR_FORWARD_PARAGRAPH = "EditorForwardParagraph";
   @NonNls String ACTION_EDITOR_BACKWARD_PARAGRAPH = "EditorBackwardParagraph";
+  @NonNls String ACTION_EDITOR_FORWARD_PARAGRAPH_WITH_SELECTION = "EditorForwardParagraphWithSelection";
+  @NonNls String ACTION_EDITOR_BACKWARD_PARAGRAPH_WITH_SELECTION = "EditorBackwardParagraphWithSelection";
   @NonNls String ACTION_EDITOR_TEXT_START_WITH_SELECTION = "EditorTextStartWithSelection";
   @NonNls String ACTION_EDITOR_TEXT_END_WITH_SELECTION = "EditorTextEndWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_LINE_START = "EditorLineStart";
@@ -57,6 +59,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
   @NonNls String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION= "EditorCreateRectangularSelection";
   @NonNls String ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG= "EditorAddRectangularSelectionOnMouseDrag";
+  @NonNls String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG = "EditorCreateRectangularSelectionOnMouseDrag";
   @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
   @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
   @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION= "EditorToggleStickySelection";
@@ -86,7 +89,6 @@ public interface IdeActions {
   @NonNls String ACTION_SHOW_INTENTION_ACTIONS = "ShowIntentionActions";
   @NonNls String ACTION_CODE_COMPLETION = "CodeCompletion";
   @NonNls String ACTION_SMART_TYPE_COMPLETION = "SmartTypeCompletion";
-  @Deprecated @NonNls String ACTION_CLASS_NAME_COMPLETION = "ClassNameCompletion";
   @NonNls String ACTION_HIPPIE_COMPLETION = "HippieCompletion";
   @NonNls String ACTION_HIPPIE_BACKWARD_COMPLETION = "HippieBackwardCompletion";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM = "EditorChooseLookupItem";
@@ -221,8 +223,6 @@ public interface IdeActions {
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
   @NonNls String GROUP_EDITOR = "EditorActions";
 
-  @Deprecated @NonNls String GROUP_DEBUGGER = "DebuggerActions";
-  
   @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
 
   @NonNls String ACTION_REFRESH = "Refresh";
@@ -318,7 +318,8 @@ public interface IdeActions {
 
   String ACTION_RECENT_FILES = "RecentFiles";
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
-  
+  String ACTION_RUN_ANYTHING = "RunAnything";
+
   String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
   String ACTION_SWITCHER = "Switcher";
 

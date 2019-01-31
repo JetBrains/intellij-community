@@ -18,10 +18,9 @@ import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
  */
 public class PyEnvSufficiencyTest extends PyEnvTestCase {
   private static final List<String> BASE_TAGS =
-    ImmutableList.<String>builder().add("python3", "django", "jython", "ipython", "ipython011", "ipython012", "nose", "pytest").build();
+    ImmutableList.<String>builder().add("python3", "django",  "ipython",  "nose", "pytest").build();
 
   @Test
-  @Staging
   public void testSufficiency() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SETTINGS.isEnvConfiguration()) {
       checkStaging();

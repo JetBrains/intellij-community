@@ -20,12 +20,8 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class WrapExpressionFixTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected LanguageLevel getLanguageLevel() {
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_6;
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

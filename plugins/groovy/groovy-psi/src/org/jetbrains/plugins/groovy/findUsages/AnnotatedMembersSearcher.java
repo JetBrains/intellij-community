@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
@@ -94,9 +95,9 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
       boolean accepted = ReadAction.compute(() -> {
         if (AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
           PsiModifierList list = candidate.getModifierList();
-          if (list != null) {
-            for (PsiAnnotation annotation : list.getAnnotations()) {
-              if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
+          if (list instanceof GrModifierList) {
+            for (PsiAnnotation annotation : ((GrModifierList)list).getRawAnnotations()) {
+              if ((p.isApproximate() || annotation.hasQualifiedName(annotationFQN)) && !consumer.process(candidate)) {
                 return false;
               }
             }

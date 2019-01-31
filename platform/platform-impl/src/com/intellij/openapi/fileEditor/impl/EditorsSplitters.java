@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -49,9 +50,10 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
@@ -73,6 +75,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
+
+    setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
+    PropertyChangeListener l = e -> {
+      String propName = e.getPropertyName();
+      if ("Editor.background".equals(propName) || "Editor.foreground".equals(propName) || "Editor.shortcutForeground".equals(propName)) {
+        repaint();
+      }
+    };
+
+    UIManager.getDefaults().addPropertyChangeListener(l);
+    Disposer.register(manager.getProject(), () -> UIManager.getDefaults().removePropertyChangeListener(l));
+
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -231,11 +245,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         // clear empty splitters
         for (EditorWindow window : getWindows()) {
-          if (window.getEditors().length == 0) {
-            for (EditorWindow sibling : window.findSiblings()) {
-              sibling.unsplit(false);
-            }
-          }
+          if (window.getTabCount() == 0) window.removeFromSplitter();
         }
       });
     }
@@ -259,7 +269,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static int countFiles(Element element) {
     Integer value = new ConfigTreeReader<Integer>() {
       @Override
-      protected Integer processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable Integer context) {
+      protected Integer processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable Integer context) {
         return fileElements.size();
       }
 
@@ -400,7 +410,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       VirtualFile file = getCurrentFile();
       if (file != null) {
-        ioFile = new File(file.getPresentableUrl());
+        ioFile = file instanceof LightVirtualFileBase ? null : new File(file.getPresentableUrl());
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
 
@@ -453,10 +463,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return 0;
   }
 
-  protected void afterFileClosed(VirtualFile file) {
+  protected void afterFileClosed(@NotNull VirtualFile file) {
   }
 
-  protected void afterFileOpen(VirtualFile file) {
+  protected void afterFileOpen(@NotNull VirtualFile file) {
   }
 
   @Nullable
@@ -801,7 +811,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     @Nullable
-    abstract T processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable T context);
+    abstract T processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable T context);
     @Nullable
     abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
   }
@@ -809,7 +819,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private class UIBuilder extends ConfigTreeReader<JPanel> {
 
     @Override
-    protected JPanel processFiles(@NotNull List<Element> fileElements, Element parent, final JPanel context) {
+    protected JPanel processFiles(@NotNull List<? extends Element> fileElements, Element parent, final JPanel context) {
       final Ref<EditorWindow> windowRef = new Ref<>();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> windowRef.set(context == null ? createEditorWindow() : findWindowWith(context)));
       final EditorWindow window = windowRef.get();

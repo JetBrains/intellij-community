@@ -18,7 +18,7 @@ class XObjectValue implements Value {
   private String myTypeString;
   private Object myValue;
 
-  public XObjectValue(XObject value) {
+  XObjectValue(XObject value) {
     try {
       if (value != null) {
         myTypeString = value.getTypeString().replaceAll("#", "");

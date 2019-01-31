@@ -52,12 +52,11 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   @Nullable
   protected static VirtualFile findDir(@Nullable String baseDir) {
-    if (baseDir == null) {
+    if (StringUtil.isEmpty(baseDir)) {
       return null;
     }
     return ReadAction.compute(() -> {
-      String path = FileUtil.toSystemIndependentName(baseDir);
-      VirtualFile dir = LocalFileFinder.findFile(path);
+      VirtualFile dir = LocalFileFinder.findFile(baseDir);
       return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
     });
   }
@@ -68,7 +67,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   @Nullable
   @Override
-  public final Result applyFilter(String line, int entireLength) {
+  public final Result applyFilter(@NotNull String line, int entireLength) {
     List<FileHyperlinkRawData> links;
     try {
       links = parse(line);
@@ -143,7 +142,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     private final int myDocumentColumn;
     private Ref<VirtualFile> myFileRef;
 
-    public MyFileHyperlinkInfo(@NotNull File ioFile, int documentLine, int documentColumn) {
+    MyFileHyperlinkInfo(@NotNull File ioFile, int documentLine, int documentColumn) {
       myIoFile = ioFile;
       myDocumentLine = documentLine;
       myDocumentColumn = documentColumn;

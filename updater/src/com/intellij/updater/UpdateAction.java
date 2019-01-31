@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -41,7 +28,10 @@ public class UpdateAction extends BaseUpdateAction {
       FileType type = getFileType(newerFile);
       if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
       writeFileType(patchOutput, type);
-      writeDiff(olderFile, newerFile, patchOutput);
+      try (BufferedInputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
+           BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
+        writeDiff(olderFileIn, newerFileIn, patchOutput);
+      }
 
       patchOutput.closeEntry();
     }
@@ -51,8 +41,7 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
 
-    //in case no backup is required
-    File source = backupDir == null ? toFile : getSource(backupDir);
+    File source = mandatoryBackup() ? getSource(Objects.requireNonNull(backupDir)) : toFile;
     if (!isMove()) {
       try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {

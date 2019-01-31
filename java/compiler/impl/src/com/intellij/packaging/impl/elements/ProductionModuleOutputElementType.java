@@ -35,11 +35,13 @@ public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBa
     super("module-output", CompilerBundle.message("element.type.name.module.output"));
   }
 
+  @Override
   @NotNull
   public ProductionModuleOutputPackagingElement createEmpty(@NotNull Project project) {
     return new ProductionModuleOutputPackagingElement(project);
   }
 
+  @Override
   protected ModuleOutputPackagingElementBase createElement(@NotNull Project project, @NotNull ModulePointer pointer) {
     return new ProductionModuleOutputPackagingElement(project, pointer);
   }

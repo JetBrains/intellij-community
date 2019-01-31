@@ -5,7 +5,7 @@ import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -58,6 +59,7 @@ import com.intellij.util.*
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
+import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.io.*
 import com.intellij.util.ref.GCUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -68,7 +70,6 @@ import java.util.concurrent.CountDownLatch
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 12, 2007
  */
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
@@ -134,13 +135,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("X"), "a.java")
 
       index.update("b.java", "y", null)
       assertDataEquals(index.getFilesByWord("y"), "b.java")
       index.update("c.java", "Y", null)
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
     }
     finally {
@@ -275,7 +274,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull findClass("Foo")
     VfsUtil.saveText(vFile, "class x {}")
     document.insertString(0, "class a {}")
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assertNotNull findClass("Foo")
   }
 
@@ -355,7 +354,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
 
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
 
@@ -374,7 +373,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
 
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
 
@@ -415,7 +414,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
   
@@ -469,7 +468,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -493,9 +492,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void "test no index stamp update when no change"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project)
+    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
 
     VfsUtil.saveText(vFile, "Foo class")
+    assertTrue(!((VirtualFileSystemEntry)vFile).isFileIndexed())
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
 
     VfsUtil.saveText(vFile, "class Foo2 {}")
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
@@ -661,7 +663,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(clazz)
     def stubTreeHash = psiFile.getStubTree().hashCode()
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     def stubTree = psiFile.getStubTree()
     assertNotNull(stubTree)
     assertEquals(stubTreeHash, stubTree.hashCode())
@@ -922,7 +924,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       MapIndexStorage<String, String> storage = assertInstanceOf(index, MapReduceIndex.class).getStorage()
-      def map = storage.getIndexMap()
+      PersistentHashMap<String, UpdatableValueContainer<String>> map = storage.getIndexMap()
       assertTrue(map.getReadOnly())
       assertTrue(map.getValueStorage().isReadOnly())
     } finally {
@@ -950,7 +952,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
         eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, true))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, true, false))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector

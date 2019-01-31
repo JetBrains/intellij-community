@@ -48,7 +48,6 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     myVcsManager.registerVcs(myVcs);
     myVcsManager.setDirectoryMapping("", myVcs.getName());
     myVcsManager.setDirectoryMapping(myModuleRootFile.getAbsolutePath(), myVcs.getName());
-    myVcsManager.updateActiveVcss();
 
     myClManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
@@ -87,6 +86,9 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
       myVcsManager.unregisterVcs(myVcs);
 
       UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();

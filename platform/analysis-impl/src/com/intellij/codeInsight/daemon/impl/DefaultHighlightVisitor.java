@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
@@ -21,7 +7,6 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -65,7 +50,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
     myCachedAnnotators = cachedAnnotators;
-    myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
+    myErrorFilters = HighlightErrorFilter.EP_NAME.getExtensions(project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
   }
@@ -117,10 +102,6 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode, myCachedAnnotators);
   }
 
-  @Override
-  public int order() {
-    return 2;
-  }
 
   private void runAnnotators(PsiElement element) {
     List<Annotator> annotators = myCachedAnnotators.get(element.getLanguage().getID());
@@ -151,20 +132,20 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
+    HighlightInfo info = createInfoWithoutFixes(element);
+    if (info != null) {
+      for(ErrorQuickFixProvider provider: ErrorQuickFixProvider.EP_NAME.getExtensionList()) {
+        provider.registerErrorQuickFix(element, info);
+      }
+    }
+    return info;
+  }
+
+  private static HighlightInfo createInfoWithoutFixes(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      final HighlightInfo info = builder.create();
-      if (info != null) {
-        for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
-          provider.registerErrorQuickFix(element, info);
-        }
-      }
-      return info;
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(errorDescription).create();
     }
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
@@ -172,32 +153,24 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     FileViewProvider viewProvider = containingFile.getViewProvider();
     PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
-    HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      info = builder.create();
+      builder.descriptionAndTooltip(errorDescription);
+      return builder.create();
+    }
+    int start;
+    int end;
+    if (offset > 0) {
+      start = offset/* - 1*/;
+      end = offset;
     }
     else {
-      int start;
-      int end;
-      if (offset > 0) {
-        start = offset/* - 1*/;
-        end = offset;
-      }
-      else {
-        start = offset;
-        end = offset < fileLength ? offset + 1 : offset;
-      }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
-      if (errorDescription != null) {
-        builder.descriptionAndTooltip(errorDescription);
-      }
-      builder.endOfLine();
-      info = builder.create();
+      start = offset;
+      end = offset < fileLength ? offset + 1 : offset;
     }
-    return info;
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end);
+    builder.descriptionAndTooltip(errorDescription);
+    builder.endOfLine();
+    return builder.create();
   }
 }

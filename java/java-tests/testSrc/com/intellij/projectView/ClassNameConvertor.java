@@ -34,7 +34,7 @@ class ClassNameConvertor implements TreeStructureProvider {
 
   private final Project myProject;
 
-  public ClassNameConvertor(Project project) {
+  ClassNameConvertor(Project project) {
     myProject = project;
   }
 
@@ -71,7 +71,7 @@ class ClassNameConvertor implements TreeStructureProvider {
           }
 
           @Override
-          public void update(PresentationData presentation) {
+          public void update(@NotNull PresentationData presentation) {
           }
 
         };

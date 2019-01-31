@@ -28,8 +28,6 @@ public class LambdaCanBeMethodCallInspectionTest extends LightQuickFixParameteri
     return new LocalInspectionTool[]{new LambdaCanBeMethodCallInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/lambda2methodCall";

@@ -12,8 +12,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.util.loadElement
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -88,7 +88,9 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
         return ValidationInfo("Please paste something here", textArea)
       }
 
-      try { loadElement(completeUpdateInfoXml(text)) }
+      try {
+        JDOMUtil.load(completeUpdateInfoXml(text))
+      }
       catch (e: Exception) {
         return ValidationInfo(e.message ?: "Error: ${e.javaClass.name}", textArea)
       }
@@ -104,7 +106,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     internal fun patchFilePath() = fileField.field.text.nullize(nullizeSpaces = true)
 
     private fun completeUpdateInfoXml(text: String) =
-      when (loadElement(text).name) {
+      when (JDOMUtil.load(text).name) {
         "products" -> text
         "channel" -> {
           val productName = ApplicationNamesInfo.getInstance().fullProductName

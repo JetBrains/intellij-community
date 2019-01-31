@@ -41,6 +41,7 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   void testImplementExtensionMethods() { doTest(true) }
 
   void testOverrideExtensionMethods() { doTest(false) }
+  void testMultipleSuperMethodsThroughGenerics() { doTest(true) }
 
   void testDoNotImplementExtensionMethods() { doTest(true) }
 

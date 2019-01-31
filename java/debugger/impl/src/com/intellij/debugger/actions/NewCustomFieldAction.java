@@ -25,7 +25,8 @@ public class NewCustomFieldAction extends XDebuggerTreeActionBase {
     CustomFieldInplaceEditor.editNew(node);
   }
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     boolean enabled = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {

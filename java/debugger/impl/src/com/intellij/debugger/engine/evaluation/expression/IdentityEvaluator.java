@@ -29,6 +29,7 @@ public class IdentityEvaluator implements Evaluator {
     myValue = value;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     return myValue;
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.util.Collections;
@@ -39,16 +40,19 @@ public class EclipseCompiler implements BackendCompiler {
     return EclipseCompilerTool.findEcjJarFile() != null;
   }
 
+  @Override
   @NotNull
   public String getId() { // used for externalization
     return JavaCompilers.ECLIPSE_ID;
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return CompilerBundle.message("compiler.eclipse.name");
   }
 
+  @Override
   @NotNull
   public Configurable createConfigurable() {
     return new EclipseCompilerConfigurable(myProject, EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
@@ -58,5 +62,11 @@ public class EclipseCompiler implements BackendCompiler {
   @Override
   public Set<FileType> getCompilableFileTypes() {
     return Collections.singleton(StdFileTypes.JAVA);
+  }
+
+  @NotNull
+  @Override
+  public CompilerOptions getOptions() {
+    return EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
   }
 }

@@ -28,7 +28,6 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 /**
  * @author Vladislav.Soroka
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleFindUsagesTest extends GradleImportingTestCase {
 
   /**
@@ -61,10 +60,10 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     createProjectSubFile("app/build.gradle", "def foo = new org.buildsrc.BuildSrcClass().sayHello()");
 
     importProject();
-    assertModules("multiproject", "app",
-                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test");
+    assertModules("multiproject", "multiproject.app",
+                  "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test");
 
-    Module buildSrcModule = getModule("multiproject_buildSrc_main");
+    Module buildSrcModule = getModule("multiproject.buildSrc.main");
     assertNotNull(buildSrcModule);
     assertUsages("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule), 1);
     assertUsages("org.buildsrc.BuildSrcClass", "sayHello", GlobalSearchScope.moduleScope(buildSrcModule), 1);
@@ -103,29 +102,31 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
                                              "def foo2 = new org.buildsrc.BuildSrcAdditionalClass()");
 
     importProject();
-    assertModules("multiproject", "app",
-                  "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
-                  "multiproject_buildSrcSubProject", "multiproject_buildSrcSubProject_main", "multiproject_buildSrcSubProject_test");
+    assertModules("multiproject", "multiproject.app",
+                  "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test",
+                  "multiproject.buildSrc.buildSrcSubProject", "multiproject.buildSrc.buildSrcSubProject.main", "multiproject.buildSrc.buildSrcSubProject.test");
 
     assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.BuildSrcAdditionalClass", 1));
 
     importProjectUsingSingeModulePerGradleProject();
-    assertModules("multiproject", "app",
-                  "multiproject_buildSrc",
-                  "multiproject_buildSrcSubProject");
+    assertModules("multiproject", "multiproject.app",
+                  "multiproject.buildSrc",
+                  "multiproject.buildSrc.buildSrcSubProject");
 
     assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.buildsrc.BuildSrcAdditionalClass", 1));
   }
 
   @Test
-  public void testIncludedBuildSrcClassesUsages() throws Exception {
+  public void testIncludedBuildSrcClassesUsages_nonQN() throws Exception {
     createProjectWithIncludedBuildAndBuildSrcModules();
+    // check for non-qualified module names
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
 
     importProject();
     assertModules("multiproject", "app",
                   "multiproject_buildSrc", "multiproject_buildSrc_main", "multiproject_buildSrc_test",
                   "gradle-plugin", "gradle-plugin_test", "gradle-plugin_main",
-                  "my.included_buildSrc", "my.included_buildSrc_main", "my.included_buildSrc_test");
+                  "gradle-plugin_buildSrc", "gradle-plugin_buildSrc_main", "gradle-plugin_buildSrc_test");
 
     assertUsages("org.buildsrc.BuildSrcClass", 2);
     assertUsages("org.included.buildsrc.IncludedBuildSrcClass", 1);
@@ -133,13 +134,16 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testIncludedBuildSrcClassesUsages_merged() throws Exception {
+  public void testIncludedBuildSrcClassesUsages_merged_nonQN() throws Exception {
     createProjectWithIncludedBuildAndBuildSrcModules();
+    // check for non-qualified module names
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
+
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "app",
                   "multiproject_buildSrc",
                   "gradle-plugin",
-                  "my.included_buildSrc");
+                  "gradle-plugin_buildSrc");
     assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
     assertUsages("org.included.IncludedBuildClass", 2);
   }
@@ -147,13 +151,11 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @Test
   public void testIncludedBuildSrcClassesUsages_qualified_names() throws Exception {
     createProjectWithIncludedBuildAndBuildSrcModules();
-    // check for qualified module names
-    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(true);
     importProject();
     assertModules("multiproject", "multiproject.app",
                   "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test",
-                  "my.included.gradle-plugin", "my.included.gradle-plugin.test", "my.included.gradle-plugin.main",
-                  "my.included.buildSrc", "my.included.buildSrc.main", "my.included.buildSrc.test");
+                  "gradle-plugin", "gradle-plugin.test", "gradle-plugin.main",
+                  "gradle-plugin.buildSrc", "gradle-plugin.buildSrc.main", "gradle-plugin.buildSrc.test");
     assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
     assertUsages("org.included.IncludedBuildClass", 2);
   }
@@ -166,8 +168,8 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     importProjectUsingSingeModulePerGradleProject();
     assertModules("multiproject", "multiproject.app",
                   "multiproject.buildSrc",
-                  "my.included.gradle-plugin",
-                  "my.included.buildSrc");
+                  "gradle-plugin",
+                  "gradle-plugin.buildSrc");
     assertUsages(pair("org.buildsrc.BuildSrcClass", 2), pair("org.included.buildsrc.IncludedBuildSrcClass", 1));
     assertUsages("org.included.IncludedBuildClass", 2);
   }

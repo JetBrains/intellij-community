@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
@@ -30,6 +29,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.UIUtil;
+import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
@@ -67,14 +67,14 @@ class LineMarkerInfoHelper {
 
 
   @NotNull
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                 PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                             PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
   }
 
   @NotNull
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                    PsiElement element) {
+  static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                                  PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
   }
 
@@ -83,7 +83,7 @@ class LineMarkerInfoHelper {
                                                                                   PsiElement element, String popup,
                                                                                   NullableFunction<PointableCandidate, String> namer) {
     return NavigationGutterIconBuilder
-      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitIcons.Gutter.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(targets)
       .setPopupTitle(popup)
       .setNamer(namer)
@@ -93,7 +93,7 @@ class LineMarkerInfoHelper {
 
   @NotNull
   private static NullableFunction<PointableCandidate, String> createNamer(String tooltipPatternPropertyName,
-                                                                          NotNullFunction<XmlTag, String> nameProvider) {
+                                                                          NotNullFunction<? super XmlTag, String> nameProvider) {
     return target -> {
       XmlTag tag = target.pointer.getElement();
       if (tag == null) {

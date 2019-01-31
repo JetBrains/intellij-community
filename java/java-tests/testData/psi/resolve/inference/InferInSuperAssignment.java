@@ -5,6 +5,6 @@ class C {
     <T> B<T> f() {return null;}
 
     void bar () {
-        A<String> a = <ref>f();
+        A<String> a = <caret>f();
     }
 }

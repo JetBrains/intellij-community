@@ -9,7 +9,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -64,7 +63,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
     });
@@ -95,7 +94,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
         PsiFile clsFile = PsiManager.getInstance(myProject).findFile(file);
         boolean hasNonLightAction = false;
-        for (AttachSourcesProvider each : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
+        for (AttachSourcesProvider each : EXTENSION_POINT_NAME.getExtensionList()) {
           for (AttachSourcesProvider.AttachSourcesAction action : each.getActions(libraries, clsFile)) {
             if (hasNonLightAction) {
               if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {
@@ -140,8 +139,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
     else {
       panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
-        FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        if (sourceFile.isValid()) {
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
+          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        }
       });
     }
 
@@ -199,7 +200,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
     private final VirtualFile myClassFile;
 
-    public AttachJarAsSourcesAction(VirtualFile classFile) {
+    AttachJarAsSourcesAction(VirtualFile classFile) {
       myClassFile = classFile;
     }
 
@@ -250,7 +251,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     private final Project myProject;
     private final JComponent myParentComponent;
 
-    public ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
+    ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
       myProject = project;
       myParentComponent = parentComponent;
     }

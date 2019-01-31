@@ -15,11 +15,17 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.simple.BracesTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TailTypes {
   public static final TailType CALL_RPARENTH = new RParenthTailType(){
@@ -124,11 +130,36 @@ public class TailTypes {
       return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
     }
   };
+  private static final String ARROW = " -> ";
+  public static final TailType CASE_ARROW = new TailType() {
+    @Override
+    public int processTail(Editor editor, int tailOffset) {
+      Document document = editor.getDocument();
+      document.insertString(tailOffset, ARROW);
+      return moveCaret(editor, tailOffset, ARROW.length());
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull InsertionContext context) {
+      Document document = context.getDocument();
+      CharSequence chars = document.getCharsSequence();
+      int offset = CharArrayUtil.shiftForward(chars, context.getTailOffset(), " \n\t");
+      return !CharArrayUtil.regionMatches(chars, offset, "->");
+    }
+
+    @Override
+    public String toString() {
+      return "CASE_ARROW";
+    }
+  };
   private static final TailType BRACES = new BracesTailType();
   public static final TailType FINALLY_LBRACE = BRACES;
   public static final TailType TRY_LBRACE = BRACES;
   public static final TailType DO_LBRACE = BRACES;
 
+  public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
+    return SwitchUtils.isRuleFormatSwitch(block) ? CASE_ARROW : TailType.CASE_COLON;
+  }
 
 
   private TailTypes() {}

@@ -8,7 +8,7 @@ public class Collect {
     List<Person> names = new ArrayList<>();
     for(int i = 0; i<persons.size(); i = i + 1) {
       Person p = persons.get(i);
-      names.<caret>add(p);
+      (names).<caret>add(p);
     }
   }
 }

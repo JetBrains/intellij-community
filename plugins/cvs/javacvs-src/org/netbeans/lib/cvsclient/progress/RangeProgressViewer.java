@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress;
 
 import org.netbeans.lib.cvsclient.util.BugLog;
@@ -42,7 +43,8 @@ public final class RangeProgressViewer
 
 	// Implemented ============================================================
 
-	public void setProgress(double value) {
+	@Override
+        public void setProgress(double value) {
 		double boundedValue = (1.0 - value) * lowerBound + value * upperBound;
 		parentProgressViewer.setProgress(boundedValue);
 	}

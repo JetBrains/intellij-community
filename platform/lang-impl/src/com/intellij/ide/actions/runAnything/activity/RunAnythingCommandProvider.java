@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything.activity;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -18,7 +19,9 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,7 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
   public final String AD_DELETE_COMMAND_TEXT =
     IdeBundle.message("run.anything.ad.command.delete", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
 
+  @Override
   public void execute(@NotNull DataContext dataContext, @NotNull String value) {
     VirtualFile workDirectory = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
     Executor executor = dataContext.getData(RunAnythingAction.EXECUTOR_KEY);
@@ -55,10 +59,17 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
     dataContext = RunAnythingCommandCustomizer.customizeContext(dataContext);
 
     GeneralCommandLine initialCommandLine =
-      new GeneralCommandLine(commandString).withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+      new GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        .withWorkDirectory(workDirectory.getPath());
+
     GeneralCommandLine commandLine = RunAnythingCommandCustomizer.customizeCommandLine(dataContext, workDirectory, initialCommandLine);
     try {
-      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, commandString))
+      RunAnythingRunProfile runAnythingRunProfile = new RunAnythingRunProfile(
+        Registry.is("run.anything.use.pty", false) ? new PtyCommandLine(commandLine) : commandLine,
+        commandString
+      );
+      ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
                                  .dataContext(dataContext)
                                  .buildAndExecute();
     }

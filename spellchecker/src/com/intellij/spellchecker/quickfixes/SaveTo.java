@@ -46,6 +46,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     myLevel = level;
   }
 
+  @Override
   @NotNull
   public String getName() {
     final String dictionary = myLevel != DictionaryLevel.NOT_SPECIFIED ? myLevel.getName() + DICTIONARY : DOTS;
@@ -53,12 +54,14 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     return SpellCheckerBundle.message("save.0.to.1", word, dictionary);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     final String dictionary = myLevel != DictionaryLevel.NOT_SPECIFIED ? myLevel.getName() + DICTIONARY : DOTS;
     return SpellCheckerBundle.message("save.0.to.1", "", dictionary);
   }
 
+  @Override
   @NotNull
   public Anchor getPopupActionAnchor() {
     return Anchor.LAST;
@@ -69,6 +72,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     return false;
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     DataManager.getInstance()
                .getDataContextFromFocusAsync()
@@ -99,6 +103,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     return DictionaryLevel.PROJECT == level ? SAVE_TO_PROJECT_FIX : SAVE_TO_APP_FIX;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
   }

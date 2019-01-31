@@ -24,7 +24,7 @@ class A {
 
   private static void test2(Sub[] operands) {
     operands[0].doSmth();
-    if (<warning descr="Condition 'operands[0] instanceof Base' is always 'true'">operands[0] instanceof Base</warning>) {
+    if (<warning descr="Condition 'operands[0] instanceof Base' is redundant and can be replaced with a null check">operands[0] instanceof Base</warning>) {
       System.out.println("always");
     }
   }

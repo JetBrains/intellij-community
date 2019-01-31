@@ -50,46 +50,20 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         }
       }
 
-      return directory ?: currentProjectFolder()
+      return directory ?: getDefaultWorkingDirectory()
     }
 
-
-  private fun currentProjectFolder(): String? {
-    val projectRootManager = ProjectRootManager.getInstance(project)
-
-    val roots = projectRootManager.contentRoots
-    if (roots.size == 1) {
-      roots[0].canonicalPath
-    }
-    val baseDir = project.baseDir
-    return baseDir?.canonicalPath
+  private fun getDefaultWorkingDirectory(): String? {
+    val roots = ProjectRootManager.getInstance(project).contentRoots
+    @Suppress("DEPRECATION")
+    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
+    return dir?.canonicalPath
   }
-
-  val defaultShellPath: String
-    get() {
-      val shell = System.getenv("SHELL")
-
-      if (shell != null && File(shell).canExecute()) {
-        return shell
-      }
-
-      if (SystemInfo.isUnix) {
-        if (File("/bin/bash").exists()) {
-          return "/bin/bash"
-        }
-        else {
-          return "/bin/sh"
-        }
-      }
-      else {
-        return "cmd.exe"
-      }
-    }
 
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
 
-
+    @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
       return ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
     }
@@ -97,7 +71,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
 }
 
-// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a reciever for
+// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a receiver for
 // to property to apply
 class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S, val default: () -> String?) {
   operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {
@@ -108,6 +82,3 @@ class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S,
     prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }
-
-
-

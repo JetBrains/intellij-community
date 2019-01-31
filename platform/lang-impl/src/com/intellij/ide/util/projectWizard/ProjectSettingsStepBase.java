@@ -178,7 +178,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected void registerValidators() {
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         checkValid();
       }
     };

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ReflectionUtilRt;
 import gnu.trove.THashMap;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
@@ -59,9 +59,9 @@ public class MavenModelConverter {
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
                                         List<String> testSources,
-                                        Collection<Artifact> dependencies,
-                                        Collection<DependencyNode> dependencyTree,
-                                        Collection<Artifact> extensions,
+                                        Collection<? extends Artifact> dependencies,
+                                        Collection<? extends DependencyNode> dependencyTree,
+                                        Collection<? extends Artifact> extensions,
                                         File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
@@ -128,7 +128,7 @@ public class MavenModelConverter {
     return patterns == null ? Collections.<String>emptyList() : patterns;
   }
 
-  public static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
+  public static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
     if (repositories == null) return new ArrayList<MavenRemoteRepository>();
 
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
@@ -149,7 +149,7 @@ public class MavenModelConverter {
            : null;
   }
 
-  public static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts,
+  public static List<MavenArtifact> convertArtifacts(Collection<? extends Artifact> artifacts,
                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                      File localRepository) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
@@ -162,7 +162,7 @@ public class MavenModelConverter {
   }
 
   public static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
-                                                               Collection<DependencyNode> nodes,
+                                                               Collection<? extends DependencyNode> nodes,
                                                                Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                                File localRepository) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
@@ -301,7 +301,7 @@ public class MavenModelConverter {
     return result;
   }
 
-  public static List<MavenProfile> convertProfiles(Collection<Profile> profiles) {
+  public static List<MavenProfile> convertProfiles(Collection<? extends Profile> profiles) {
     if (profiles == null) return Collections.emptyList();
     List<MavenProfile> result = new ArrayList<MavenProfile>();
     for (Profile each : profiles) {
@@ -358,7 +358,7 @@ public class MavenModelConverter {
   }
 
   private static void doConvert(Object object, String prefix, Map<String, String> result) throws IllegalAccessException {
-    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+    for (Field each : ReflectionUtilRt.collectFields(object.getClass())) {
       Class<?> type = each.getType();
       if (shouldSkip(type)) continue;
 

@@ -69,7 +69,7 @@ public abstract class HintUpdateSupply {
       CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component)));
   }
 
-  public static void installHintUpdateSupply(@NotNull final JComponent component, final Function<Object, PsiElement> provider) {
+  public static void installHintUpdateSupply(@NotNull final JComponent component, final Function<Object, ? extends PsiElement> provider) {
     HintUpdateSupply supply = new HintUpdateSupply(component) {
       @Nullable
       @Override

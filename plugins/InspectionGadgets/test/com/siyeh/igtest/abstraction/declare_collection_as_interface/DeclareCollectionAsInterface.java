@@ -80,3 +80,11 @@ public class DeclareCollectionAsInterface
     }
   }
 }
+
+class Labeling<T> {
+  private Map<T, HashSet<Integer>> myLabels;
+
+  void addLabel(T node, HashSet<Integer> label){ // no warning on 'HashSet'
+    myLabels.put<error descr="'put(T, java.util.HashSet<java.lang.Integer>)' in 'java.util.Map' cannot be applied to '(java.util.HashSet<java.lang.Integer>, T)'">(label, node)</error>;
+  }
+}

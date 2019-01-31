@@ -37,8 +37,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +61,6 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   private final AtomicBoolean isBuildStartEventProcessed = new AtomicBoolean();
   private final List<BuildEvent> myAfterStartEvents = ContainerUtil.createConcurrentList();
   private final ViewManager myViewManager;
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("BuildView later invocator");
 
   public BuildView(Project project, BuildDescriptor buildDescriptor, String selectionStateKey, ViewManager viewManager) {
     this(project, null, buildDescriptor, selectionStateKey, viewManager);
@@ -82,7 +81,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if (event instanceof StartBuildEvent) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         onStartBuild((StartBuildEvent)event);
@@ -114,7 +113,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       String eventViewName = BuildTreeConsoleView.class.getName();
       BuildTreeConsoleView eventView = getView(eventViewName, BuildTreeConsoleView.class);
       if (eventView != null) {
-        myLaterInvocator.offer(() -> eventView.onEvent(event));
+        EdtExecutorService.getInstance().execute(() -> eventView.onEvent(event));
       }
     }
   }
@@ -175,7 +174,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     delegateToConsoleView(view -> view.print(text, contentType));
   }
 
-  private void delegateToConsoleView(Consumer<ConsoleView> viewConsumer) {
+  private void delegateToConsoleView(Consumer<? super ConsoleView> viewConsumer) {
     ExecutionConsole console = getConsoleView();
     if (console instanceof ConsoleView) {
       viewConsumer.consume((ConsoleView)console);
@@ -183,7 +182,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
   }
 
   @Nullable
-  private <R> R getConsoleViewValue(Function<ConsoleView, R> viewConsumer) {
+  private <R> R getConsoleViewValue(Function<? super ConsoleView, ? extends R> viewConsumer) {
     ExecutionConsole console = getConsoleView();
     if (console instanceof ConsoleView) {
       return viewConsumer.apply((ConsoleView)console);
@@ -271,7 +270,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
     }
     final DefaultActionGroup consoleActionGroup = new DefaultActionGroup() {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         String eventViewName = BuildTreeConsoleView.class.getName();
         e.getPresentation().setVisible(!BuildView.this.isViewEnabled(eventViewName));
@@ -318,7 +317,10 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
+    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      return getConsoleView();
+    }
     Object data = super.getData(dataId);
     if (data != null) return data;
     StartBuildEvent startBuildEvent = myStartBuildEventRef.get();

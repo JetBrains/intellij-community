@@ -50,6 +50,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     return "module:" + getModuleName();
   }
 
+  @Override
   protected String getDirectoryAntProperty(ArtifactAntGenerationContext generationContext) {
     return generationContext.getModuleOutputPath(myModulePointer.getModuleName());
   }
@@ -64,6 +65,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     return rootModel.getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE));

@@ -24,30 +24,33 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"ConstantConditions"})
 public class XPathEmbeddedContentImpl extends XPathElementImpl implements XmlTagChild {
     public XPathEmbeddedContentImpl(ASTNode node) {
         super(node);
     }
 
+    @Override
     public XmlTag getParentTag() {
         final PsiElement parent = getParent();
         if(parent instanceof XmlTag) return (XmlTag)parent;
         return null;
     }
 
+    @Override
     public XmlTagChild getNextSiblingInTag() {
         PsiElement nextSibling = getNextSibling();
         if(nextSibling instanceof XmlTagChild) return (XmlTagChild)nextSibling;
         return null;
     }
 
+    @Override
     public XmlTagChild getPrevSiblingInTag() {
         final PsiElement prevSibling = getPrevSibling();
         if(prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
         return null;
     }
 
+    @Override
     @SuppressWarnings({"RawUseOfParameterizedType"})
     public boolean processElements(PsiElementProcessor processor, PsiElement place) {
         // TODO

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
@@ -57,5 +58,20 @@ internal class BareGitTest {
 
     assertThat(data).hasSize(1)
     assertThat(data.get("Mac OS X from RubyMine.xml")).isEqualTo(SAMPLE_FILE_CONTENT)
+  }
+
+  @Test
+  fun `processChildren not-master branch`() {
+    val clonePath = tempDirManager.newPath()
+    val repository = cloneBare("https://github.com/pronskiy/PhpStorm-Live-Templates-Craft-CMS.git", clonePath)
+
+    val filePath = "templates"
+    val data = THashSet<String>()
+    repository.processChildren(filePath) { name, _ ->
+      data.add(name)
+      true
+    }
+
+    assertThat(data).isNotEmpty
   }
 }

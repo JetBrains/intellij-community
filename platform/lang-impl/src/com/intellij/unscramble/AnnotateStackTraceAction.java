@@ -78,13 +78,13 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean isShown = myEditor.getGutter().isAnnotationsShown();
     e.getPresentation().setEnabled(!isShown && !myIsLoading);
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     myIsLoading = true;
 
     ProgressManager.getInstance().run(new Task.Backgroundable(myEditor.getProject(), "Getting File History", true) {
@@ -214,7 +214,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     @NotNull private final Date myDate;
     @NotNull private final String myMessage;
 
-    public LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
+    LastRevision(@NotNull VcsRevisionNumber number, @NotNull String author, @NotNull Date date, @NotNull String message) {
       myNumber = number;
       myAuthor = author;
       myDate = date;
@@ -260,7 +260,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
     private Date myNewestDate = null;
     private int myMaxDateLength = 0;
 
-    public MyActiveAnnotationGutter(@NotNull Project project,
+    MyActiveAnnotationGutter(@NotNull Project project,
                                     @NotNull EditorHyperlinkSupport hyperlinks,
                                     @NotNull ProgressIndicator indicator) {
       myProject = project;

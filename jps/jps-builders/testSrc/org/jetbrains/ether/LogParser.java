@@ -32,8 +32,7 @@ public class LogParser {
 
     long totalTime = 0L;
     int totalFileCount = 0;
-    final BufferedReader reader = new BufferedReader(new FileReader(new File(logPath)));
-    try {
+    try (BufferedReader reader = new BufferedReader(new FileReader(new File(logPath)))) {
       String line = reader.readLine();
       while (line != null) {
         if (line.contains(COMPILING_START_STR)) {
@@ -65,9 +64,6 @@ public class LogParser {
         line = reader.readLine();
       }
     }
-    finally {
-      reader.close();
-    }
 
     long millis = totalTime % 1000;
     long seconds = totalTime / 1000;
@@ -89,7 +85,7 @@ public class LogParser {
     final int minutes = Integer.parseInt(line.substring(MINUTES_START, MINUTES_START + 2));
     final int seconds = Integer.parseInt(line.substring(SECONDS_START, SECONDS_START + 2));
     final int millis = Integer.parseInt(line.substring(MILLIS_START, MILLIS_START + 3));
-    return millis + seconds * 1000 + minutes * 60000 + hours * 3600000;
+    return millis + seconds * 1000L + minutes * 60000L + hours * 3600000L;
   }
 
 }

@@ -27,7 +27,7 @@ public class JavacOutputParser implements BuildOutputParser {
   private static final String WARNING_PREFIX = "warning:"; // default value
 
   @Override
-  public boolean parse(@NotNull String line, @NotNull BuildOutputInstantReader reader, @NotNull Consumer<MessageEvent> messageConsumer) {
+  public boolean parse(@NotNull String line, @NotNull BuildOutputInstantReader reader, @NotNull Consumer<? super MessageEvent> messageConsumer) {
     int colonIndex1 = line.indexOf(COLON);
     if (colonIndex1 == 1) { // drive letter
       colonIndex1 = line.indexOf(COLON, colonIndex1 + 1);

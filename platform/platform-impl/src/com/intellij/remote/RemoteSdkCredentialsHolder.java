@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.intellij.remote.ext.CredentialsManager;
@@ -21,7 +22,14 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   public static String constructSshCredentialsSdkFullPath(@NotNull RemoteSdkCredentials cred) {
-    return getCredentialsString(cred) + cred.getInterpreterPath();
+    StringBuilder builder = new StringBuilder();
+    if (cred.isRunAsRootViaSudo()) {
+      builder.append("sudo+");
+    }
+    return builder
+      .append(getCredentialsString(cred))
+      .append(cred.getInterpreterPath())
+      .toString();
   }
 
   /**
@@ -75,6 +83,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     myRemoteSdkProperties.setHelpersPath(helpersPath);
   }
 
+  @Override
   public String getDefaultHelpersName() {
     return myRemoteSdkProperties.getDefaultHelpersName();
   }
@@ -153,6 +162,16 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   @Override
   public void setValid(boolean valid) {
     myRemoteSdkProperties.setValid(valid);
+  }
+
+  @Override
+  public boolean isRunAsRootViaSudo() {
+    return myRemoteSdkProperties.isRunAsRootViaSudo();
+  }
+
+  @Override
+  public void setRunAsRootViaSudo(boolean runAsRootViaSudo) {
+    myRemoteSdkProperties.setRunAsRootViaSudo(runAsRootViaSudo);
   }
 
   public static boolean isRemoteSdk(@Nullable String path) {
@@ -237,6 +256,8 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
            ", myInterpreterPath='" +
            getInterpreterPath() +
            '\'' +
+           ", isRunAsRootViaSudo=" +
+           isRunAsRootViaSudo() +
            ", myHelpersPath='" +
            getHelpersPath() +
            '\'' +

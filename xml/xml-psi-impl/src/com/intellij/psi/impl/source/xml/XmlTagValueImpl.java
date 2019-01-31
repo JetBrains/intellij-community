@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -182,7 +181,7 @@ public class XmlTagValueImpl implements XmlTagValue{
       }
     }, tag);
 
-    XmlTagChild[] tagChildren = ContainerUtil.toArray(bodyElements, new XmlTagChild[bodyElements.size()]);
+    XmlTagChild[] tagChildren = bodyElements.toArray(XmlTagChild.EMPTY_ARRAY);
     return new XmlTagValueImpl(tagChildren, tag);
   }
 }

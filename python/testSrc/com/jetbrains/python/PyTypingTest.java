@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,15 @@ public class PyTypingTest extends PyTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    setLanguageLevel(null);
-    super.tearDown();
+    try {
+      setLanguageLevel(null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testClassType() {
@@ -1398,6 +1405,23 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = D.factory()");
+  }
+
+  // PY-31004
+  public void testRecursiveTypeAliasInAnotherFile() {
+    doMultiFileStubAwareTest("Union[list, int]",
+                             "from other import MyType\n" +
+                             "\n" +
+                             "expr: MyType = ...");
+  }
+
+  // PY-31146
+  public void testNoneTypeInAnotherFile() {
+    doMultiFileStubAwareTest("(int) -> None",
+                             "from other import MyType\n" +
+                             "\n" +
+                             "expr: MyType = ...\n" +
+                             "\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

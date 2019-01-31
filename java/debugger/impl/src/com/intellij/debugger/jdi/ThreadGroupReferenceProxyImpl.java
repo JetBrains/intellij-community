@@ -26,6 +26,7 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     super(virtualMachineProxy, threadGroupReference);
   }
 
+  @Override
   public ThreadGroupReference getThreadGroupReference() {
     return (ThreadGroupReference)getObjectReference();
   }
@@ -67,6 +68,7 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     return StreamEx.of(getThreadGroupReference().threadGroups()).map(getVirtualMachineProxy()::getThreadGroupReferenceProxy).toList();
   }
 
+  @Override
   public void clearCaches() {
 //    myIsParentGroupCached = false;
 //    myName = null;

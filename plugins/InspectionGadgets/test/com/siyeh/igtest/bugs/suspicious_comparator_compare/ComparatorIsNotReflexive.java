@@ -21,11 +21,17 @@ class ComparatorIsNotReflexive implements Comparator<Integer> {
     return <warning descr="Comparator does not return 0 for equal elements">-1</warning>;
   }
 
-  Comparator<String> lambda = (a, b) -> <warning descr="Comparator does not return 0 for equal elements">a.length() > b.length() ? 1 : -1</warning>;
+  Comparator<String> lambda = (a, b) -> a.length() > b.length() ? 1 : <warning descr="Comparator does not return 0 for equal elements">-1</warning>;
+
+  Comparator<String> lambda2 = (a, b) -> a.length() > b.length() ? 1 :
+                                         (a.length() < b.length() ? 0 : <warning descr="Comparator does not return 0 for equal elements">-1</warning>);
+
+  Comparator<String> lambda3 = (a, b) -> (a.length() > b.length() ? 0 :
+                                         <warning descr="Comparator does not return 0 for equal elements">Math.random() > 0.5 ? (-1) : (1)</warning>);
 
   Comparator<byte[]> arrayComparator = (b1, b2) -> {
     if(b1.length != b2.length) return 0; // typo: == was intended
-    return <warning descr="Comparator does not return 0 for equal elements">b1.length > b2.length ? 1 : -1</warning>;
+    return b1.length > b2.length ? 1 : <warning descr="Comparator does not return 0 for equal elements">-1</warning>;
   };
 
   Comparator<String> cmp = (a,b) -> test();

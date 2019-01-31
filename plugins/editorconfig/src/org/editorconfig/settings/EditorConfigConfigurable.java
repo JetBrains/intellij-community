@@ -4,6 +4,7 @@ import com.intellij.application.options.GeneralCodeStyleOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -15,6 +16,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.editorconfig.Utils;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,23 +32,29 @@ public class EditorConfigConfigurable extends CodeStyleSettingsProvider implemen
   @Nullable
   @Override
   public JComponent createComponent() {
-    myEnabled = new JBCheckBox("Enable EditorConfig support");
+    myEnabled = new JBCheckBox(EditorConfigBundle.message("config.enable"));
     final JPanel result = new JPanel();
     result.setLayout(new BoxLayout(result, BoxLayout.LINE_AXIS));
     final JPanel panel = new JPanel(new VerticalFlowLayout());
-    result.setBorder(IdeBorderFactory.createTitledBorder("EditorConfig", false));
+    result.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("config.title"), false));
     panel.add(myEnabled);
-    final JLabel warning = new JLabel("EditorConfig may override the IDE code style settings");
+    final JLabel warning = new JLabel(EditorConfigBundle.message("config.warning"));
     warning.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     warning.setBorder(JBUI.Borders.emptyLeft(20));
     panel.add(warning);
     panel.setAlignmentY(Component.TOP_ALIGNMENT);
     result.add(panel);
-    final JButton export = new JButton("Export");
+    final JButton export = new JButton(EditorConfigBundle.message("config.export"));
+    // export.setVisible(EditorConfigExportProviderEP.shouldShowExportButton());
     export.addActionListener((event) -> {
       final Component parent = UIUtil.findUltimateParent(result);
+
       if (parent instanceof IdeFrame) {
-        Utils.export(((IdeFrame)parent).getProject());
+        Project project = ((IdeFrame) parent).getProject();
+        if (project != null) {
+          if (EditorConfigExportProviderEP.tryExportViaProviders(project)) return;
+          Utils.export(project);
+        }
       }
     });
     export.setAlignmentY(Component.TOP_ALIGNMENT);

@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.facet.Facet;
@@ -23,16 +25,14 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -50,19 +50,18 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
-import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -90,8 +89,6 @@ public class DaemonListeners implements Disposable {
   private final UndoManager myUndoManager;
   private final ProjectLevelVcsManager myProjectLevelVcsManager;
   private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-  private final FileStatusManager myFileStatusManager;
-  @NotNull private final ActionManager myActionManager;
   private final TooltipController myTooltipController;
   private final ErrorStripeUpdateManager myErrorStripeUpdateManager;
 
@@ -99,6 +96,7 @@ public class DaemonListeners implements Disposable {
 
   private volatile boolean cutOperationJustHappened;
   private final DaemonCodeAnalyzer.DaemonListener myDaemonEventPublisher;
+  private List<Editor> myActiveEditors = Collections.emptyList();
 
   private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
@@ -111,17 +109,10 @@ public class DaemonListeners implements Disposable {
                          @NotNull final EditorTracker editorTracker,
                          @NotNull EditorFactory editorFactory,
                          @NotNull PsiDocumentManager psiDocumentManager,
-                         @NotNull CommandProcessor commandProcessor,
-                         @NotNull EditorColorsManager editorColorsManager,
                          @NotNull final Application application,
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
-                         @NotNull ActionManagerEx actionManagerEx,
-                         @NotNull VirtualFileManager virtualFileManager,
-                         @SuppressWarnings("UnusedParameters") // for dependency order
-                         @NotNull final NamedScopeManager namedScopeManager,
-                         @SuppressWarnings("UnusedParameters") // for dependency order
-                         @NotNull final DependencyValidationManager dependencyValidationManager,
+                         @NotNull ActionManagerEx actionManager,
                          @NotNull final FileDocumentManager fileDocumentManager,
                          @NotNull final PsiManager psiManager,
                          @NotNull final FileEditorManager fileEditorManager,
@@ -129,7 +120,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager,
                          @NotNull ErrorStripeUpdateManager stripeUpdateManager) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
@@ -138,8 +128,6 @@ public class DaemonListeners implements Disposable {
     myUndoManager = undoManager;
     myProjectLevelVcsManager = projectLevelVcsManager;
     myVcsDirtyScopeManager = vcsDirtyScopeManager;
-    myFileStatusManager = fileStatusManager;
-    myActionManager = actionManagerEx;
     myTooltipController = tooltipController;
     myErrorStripeUpdateManager = stripeUpdateManager;
 
@@ -151,19 +139,20 @@ public class DaemonListeners implements Disposable {
     MessageBus messageBus = myProject.getMessageBus();
     myDaemonEventPublisher = messageBus.syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC);
     if (project.isDefault()) return;
-    MessageBusConnection connection = messageBus.connect(this);
 
+    MessageBusConnection connection = messageBus.connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         stopDaemon(false, "App closing");
       }
     });
+
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
     eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
-      public void beforeDocumentChange(final DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull final DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
@@ -177,7 +166,7 @@ public class DaemonListeners implements Disposable {
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         final Editor editor = e.getEditor();
         if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) &&
             worthBothering(editor.getDocument(), editor.getProject())) {
@@ -192,32 +181,26 @@ public class DaemonListeners implements Disposable {
         }
       }
     }, this);
-
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(myTooltipController), this);
 
-    EditorTrackerListener editorTrackerListener = new EditorTrackerListener() {
-      private List<Editor> myActiveEditors = Collections.emptyList();
-      @Override
-      public void activeEditorsChanged(@NotNull List<Editor> editors) {
-        List<Editor> activeEditors = editorTracker.getActiveEditors();
-        if (myActiveEditors.equals(activeEditors)) {
-          return;
-        }
-        myActiveEditors = activeEditors;
-        stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
-        if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
-          // editor appear in modal context, re-enable the daemon
-          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-        }
-        for (Editor editor : activeEditors) {
-          myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
-        }
+    editorTracker.addEditorTrackerListener(this, __ -> {
+      List<Editor> activeEditors = editorTracker.getActiveEditors();
+      if (myActiveEditors.equals(activeEditors)) {
+        return;
       }
-    };
-    editorTracker.addEditorTrackerListener(editorTrackerListener, this);
+      myActiveEditors = activeEditors;
+      stopDaemon(true, "Active editor change");  // do not stop daemon if idea loses/gains focus
+      if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
+        // editor appear in modal context, re-enable the daemon
+        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+      }
+      for (Editor editor : activeEditors) {
+        myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
+      }
+    });
 
-    EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -240,17 +223,16 @@ public class DaemonListeners implements Disposable {
         // mem leak after closing last editor otherwise
         UIUtil.invokeLaterIfNeeded(IntentionsUI.getInstance(myProject)::invalidate);
       }
-    };
-    editorFactory.addEditorFactoryListener(editorFactoryListener, this);
+    }, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
-    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory,connection, daemonCodeAnalyzer.getFileStatusMap());
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory, connection, daemonCodeAnalyzer.getFileStatusMap());
     Disposer.register(this, changeHandler);
     psiManager.addPsiTreeChangeListener(changeHandler, changeHandler);
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
@@ -268,45 +250,63 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
-    connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(CommandListener.TOPIC, new MyCommandListener(actionManager));
 
-    commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
-    todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
+
+    connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyTodoListener());
     todoConfiguration.colorSettingsChanged();
-    actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
-    virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
+
+    connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener(actionManager));
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        String propertyName = event.getPropertyName();
-        if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          stopDaemonAndRestartAllFiles("Virtual file name changed");
-          VirtualFile virtualFile = event.getFile();
-          PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
-          if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
-            Document document = fileDocumentManager.getCachedDocument(virtualFile);
-            if (document != null) {
-              // highlight markers no more
-              //todo clear all highlights regardless the pass id
-
-              // Here color scheme required for TextEditorFields, as far as I understand this
-              // code related to standard file editors, which always use Global color scheme,
-              // thus we can pass null here.
-              final EditorColorsScheme editorColorScheme = null;
-
-              UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
-                                                             Collections.emptyList(),
-                                                             editorColorScheme,
-                                                             Pass.UPDATE_ALL);
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean isDaemonShouldBeStopped = false;
+        for (VFileEvent event : events) {
+          if (event instanceof VFilePropertyChangeEvent) {
+            VFilePropertyChangeEvent e = (VFilePropertyChangeEvent)event;
+            String propertyName = e.getPropertyName();
+            if (VirtualFile.PROP_NAME.equals(propertyName)) {
+              fileRenamed(e);
+            }
+            if (!isDaemonShouldBeStopped && !propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+              isDaemonShouldBeStopped = true;
             }
           }
         }
-        if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+
+        if (isDaemonShouldBeStopped) {
           stopDaemon(true, "Virtual file property change");
         }
       }
-    }, this);
+
+      private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
+        stopDaemonAndRestartAllFiles("Virtual file name changed");
+        VirtualFile virtualFile = event.getFile();
+        PsiFile psiFile = !virtualFile.isValid() ? null : ((PsiManagerEx)psiManager).getFileManager().getCachedPsiFile(virtualFile);
+        if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
+          return;
+        }
+
+        Document document = fileDocumentManager.getCachedDocument(virtualFile);
+        if (document == null) {
+          return;
+        }
+
+        // highlight markers no more
+        //todo clear all highlights regardless the pass id
+
+        // Here color scheme required for TextEditorFields, as far as I understand this
+        // code related to standard file editors, which always use Global color scheme,
+        // thus we can pass null here.
+        UpdateHighlightersUtil.setHighlightersToEditor(myProject, document, 0, document.getTextLength(),
+                                                       Collections.emptyList(),
+                                                       null,
+                                                       Pass.UPDATE_ALL);
+      }
+    });
 
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
       RangeHighlighter highlighter = e.getHighlighter();
@@ -317,7 +317,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    ModalityStateListener modalityStateListener = entering -> {
+    ModalityStateListener modalityStateListener = __ -> {
       // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
       boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
       stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
@@ -325,7 +325,7 @@ public class DaemonListeners implements Disposable {
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
 
-    messageBus.connect().subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
+    connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
     if (RefResolveService.ENABLED) {
       RefResolveService resolveService = RefResolveService.getInstance(project);
@@ -358,6 +358,8 @@ public class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("facet changed: " + facet.getName());
       }
     });
+
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (__, ___) -> updateStatusBar());
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -404,7 +406,8 @@ public class DaemonListeners implements Disposable {
     CHANGED, UNCHANGED, NOT_SURE
   }
 
-  private Result vcsThinksItChanged(VirtualFile virtualFile) {
+  @NotNull
+  private Result vcsThinksItChanged(@NotNull VirtualFile virtualFile) {
     AbstractVcs activeVcs = myProjectLevelVcsManager.getVcsFor(virtualFile);
     if (activeVcs == null) return Result.NOT_SURE;
 
@@ -412,12 +415,12 @@ public class DaemonListeners implements Disposable {
     boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Collections.singletonList(path)).isEmpty();
     if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
 
-    FileStatus status = myFileStatusManager.getStatus(virtualFile);
+    FileStatus status = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
     if (status == FileStatus.UNKNOWN) return Result.NOT_SURE;
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
   }
 
-  private class MyApplicationListener extends ApplicationAdapter {
+  private class MyApplicationListener implements ApplicationListener {
     private boolean myDaemonWasRunning;
 
     @Override
@@ -434,10 +437,14 @@ public class DaemonListeners implements Disposable {
   }
 
   private class MyCommandListener implements CommandListener {
-    private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    private final String myCutActionName;
+
+    private MyCommandListener(@NotNull ActionManager actionManager) {
+      myCutActionName = actionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+    }
 
     @Override
-    public void commandStarted(CommandEvent event) {
+    public void commandStarted(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -450,7 +457,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Nullable
-    private Document extractDocumentFromCommand(CommandEvent event) {
+    private Document extractDocumentFromCommand(@NotNull CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
@@ -465,7 +472,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void commandFinished(CommandEvent event) {
+    public void commandFinished(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -489,6 +496,9 @@ public class DaemonListeners implements Disposable {
     public void propertyChange(@NotNull PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles("Todo patterns changed");
+      }
+      else if (TodoConfiguration.PROP_MULTILINE.equals(evt.getPropertyName())) {
+        stopDaemonAndRestartAllFiles("Todo multi-line detection changed");
       }
     }
   }
@@ -533,16 +543,20 @@ public class DaemonListeners implements Disposable {
     });
   }
 
-  private class MyAnActionListener extends AnActionListener.Adapter {
-    private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+  private class MyAnActionListener implements AnActionListener {
+    private final AnAction escapeAction;
+
+    private MyAnActionListener(@NotNull ActionManager actionManager) {
+      escapeAction = actionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    }
 
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 
     @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
@@ -552,7 +566,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private static class MyEditorMouseListener extends EditorMouseAdapter {
+  private static class MyEditorMouseListener implements EditorMouseListener {
     @NotNull
     private final TooltipController myTooltipController;
 
@@ -561,7 +575,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseExited(EditorMouseEvent e) {
+    public void mouseExited(@NotNull EditorMouseEvent e) {
       if (!myTooltipController.shouldSurvive(e.getMouseEvent())) {
         DaemonTooltipUtil.cancelTooltips();
       }
@@ -570,13 +584,13 @@ public class DaemonListeners implements Disposable {
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (Registry.is("ide.disable.editor.tooltips")) {
         return;
       }
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
-      if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) return;
+      if (EditorMouseHoverPopupControl.arePopupsDisabled(editor)) return;
 
       boolean shown = false;
       try {
@@ -590,8 +604,10 @@ public class DaemonListeners implements Disposable {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
+          if (editor.getInlayModel().getElementAt(e.getMouseEvent().getPoint()) != null) return;
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
-          if (info == null || info.getDescription() == null) {
+          if (info == null || info.getDescription() == null ||
+              info.getHighlighter() != null && FoldingUtil.isHighlighterFolded(editor, info.getHighlighter())) {
             IdeTooltipManager.getInstance().hideCurrent(e.getMouseEvent());
             return;
           }
@@ -607,7 +623,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseDragged(EditorMouseEvent e) {
+    public void mouseDragged(@NotNull EditorMouseEvent e) {
       myTooltipController.cancelTooltips();
     }
   }

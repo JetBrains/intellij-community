@@ -3,8 +3,12 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.ApplicationManager
 
 internal fun List<IntentionAction>.groupActionsByType(): List<IntentionAction> {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    return this
+  }
   val groupableActions = filterIsInstance<JvmGroupIntentionAction>()
   val result = minus(groupableActions).toMutableList()
   val typeActions = groupableActions.groupBy { it.actionGroup }

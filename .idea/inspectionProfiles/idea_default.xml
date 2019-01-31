@@ -291,6 +291,7 @@
       <option name="m_reportAllNonLibraryCalls" value="false" />
       <option name="callCheckString" value="java.io.File,.*,java.io.InputStream,read|skip|available|markSupported,java.io.Writer,read|skip|ready|markSupported,java.lang.Boolean,.*,java.lang.Byte,.*,java.lang.Character,.*,java.lang.Double,.*,java.lang.Float,.*,java.lang.Integer,.*,java.lang.Long,.*,java.lang.Math,.*,java.lang.Object,equals|hashCode|toString,java.lang.Short,.*,java.lang.StrictMath,.*,java.lang.String,.*,java.math.BigInteger,.*,java.math.BigDecimal,.*,java.net.InetAddress,.*,java.net.URI,.*,java.util.UUID,.*,java.util.regex.Matcher,pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd,java.util.regex.Pattern,.*,com.intellij.openapi.util.LowMemoryWatcher,register,com.intellij.codeInsight.FileModificationService,preparePsiElementForWrite" />
     </inspection_tool>
+    <inspection_tool class="ImplicitDefaultCharsetUsage" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ImplicitTypeConversion" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="BITS" value="1720" />
       <option name="FLAG_EXPLICIT_CONVERSION" value="true" />
@@ -486,6 +487,7 @@
       <scope name="runtime.classes" level="ERROR" enabled="true" />
     </inspection_tool>
     <inspection_tool class="LambdaUnfriendlyMethodOverload" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LiftReturnOrAssignment" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="LocalVariableName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="[a-z][A-Za-z\d_]*" />
     </inspection_tool>
@@ -503,6 +505,11 @@
     <inspection_tool class="MinMaxValuesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MinitestFrameworkSupportInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MisorderedAssertEqualsParameters" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MissingDeprecatedAnnotation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MissingOverrideAnnotation" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreObjectMethods" value="true" />
+      <option name="ignoreAnonymousClassMethods" value="false" />
+    </inspection_tool>
     <inspection_tool class="MisspelledCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MisspelledEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MisspelledHashcode" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -555,6 +562,9 @@
       <option name="ignoreRequiredObsoleteCollectionTypes" value="false" />
     </inspection_tool>
     <inspection_tool class="OctalIntegerJS" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PackageName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="namePattern" value="[a-z_][a-z\d_]*(\.[a-z_][a-zA-Z\d_]*)*" />
+    </inspection_tool>
     <inspection_tool class="PageflowModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PagesModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -572,6 +582,7 @@
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
     <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_index_required" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -793,6 +804,62 @@
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.exists" text="Files.exists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.notExists" text="Files.notExists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isDirectory" text="Files.isDirectory($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isDirectory()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isRegularFile" text="Files.isRegularFile($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isFile()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.filter()" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.map()" text="$f$.stream().map($m$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="ContainerUtil.map($f$, $m$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.map(a)" text="Arrays.stream($f$).map($m$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.map($f$, $m$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+        <constraint name="m" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Suppressed exceptions are ignored" text="try {&#10;  $TryStatement$;&#10;} &#10;finally {&#10;  $s1$;&#10;  super.tearDown();&#10;  $s2$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="try {&#10;  $TryStatement$;&#10;} &#10;catch (Throwable e) {&#10;  addSuppressedException(e);&#10;}&#10;finally {&#10;  $s1$; super.tearDown(); $s2$;&#10;}">
+        <constraint name="__context__" script="com.intellij.psi.PsiTryStatement ts = com.intellij.psi.util.PsiTreeUtil.getParentOfType(__context__, com.intellij.psi.PsiTryStatement.class, false); return ts != null &amp;&amp; ts.getCatchSections().length == 0" within="" contains="" />
+        <constraint name="TryStatement" maxCount="2147483647" within="" contains="" />
+        <constraint name="s1" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="s2" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Too convoluted &quot;register(()-&gt;dispose())&quot; (wastes memory)" text="Disposer.register($myRoot$, () -&gt; Disposer.dispose($myFolder2$));" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="Disposer.register($myRoot$, $myFolder2$);">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="myRoot" within="" contains="" />
+        <constraint name="myFolder2" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplifyable immutable array" text="Collections.unmodifiableList(Arrays.asList($c$))" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.immutableList($c$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="c" maxCount="32000" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="anonymous scheduled thread pools are discouraged" text="Executors.newSingleThreadScheduledExecutor()" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ConcurrencyUtil.newSingleScheduledThreadExecutor()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="anonymous thread pools are discouraged" text="Executors.newSingleThreadExecutor()" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ConcurrencyUtil.newSingleThreadExecutor()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -926,6 +993,7 @@
     <inspection_tool class="UnreachableCodeJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnresolvedReference" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="UnsortedPropertiesFile" enabled="false" level="INFO" enabled_by_default="false" />
+    <inspection_tool class="UnstableApiUsage" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnterminatedStatementJS" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSemicolonAtEndOfBlock" value="true" />
     </inspection_tool>

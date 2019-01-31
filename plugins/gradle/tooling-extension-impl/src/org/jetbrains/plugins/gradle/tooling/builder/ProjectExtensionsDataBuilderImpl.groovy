@@ -18,7 +18,8 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import groovy.transform.CompileStatic
 import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
-import org.gradle.api.internal.plugins.DefaultConvention
+import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 @CompileStatic
 class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
@@ -47,7 +47,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
     }
 
-    def conventions = project.extensions as DefaultConvention
+    def conventions = project.extensions
     conventions.extraProperties.properties.each { name, value ->
       if(name == 'extraModelBuilder' || name.contains('.')) return
       String typeFqn = getType(value)
@@ -56,21 +56,37 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     }
 
     for (it in conventions.findAll()) {
-      def convention = it as DefaultConvention
-      convention.asMap.each { name, value ->
-        if(name == 'idea') return
+      def convention = it as ExtensionContainer
+      List<String> keyList =
+        GradleVersion.current() >= GradleVersion.version("4.5")
+          ? convention.extensionsSchema.collect { it["name"] as String }
+          : GradleVersion.current() >= GradleVersion.version("3.5")
+            ? convention.schema.keySet().asList() as List<String>
+            : extractKeysViaReflection(convention)
+
+      for (name in keyList) {
+        def value = convention.findByName(name)
+
+        if (value == null) continue
+        if (name == 'idea') continue
+
         def rootTypeFqn = getType(value)
         def namedObjectTypeFqn = null as String
         if (value instanceof NamedDomainObjectCollection) {
           def objectCollection = (NamedDomainObjectCollection)value
-          if(!objectCollection.isEmpty()) {
-            namedObjectTypeFqn = getType(objectCollection.find{true})
+          if (!objectCollection.isEmpty()) {
+            namedObjectTypeFqn = getType(objectCollection.find { true })
           }
         }
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))
       }
     }
     return result
+  }
+
+  private List<String> extractKeysViaReflection(ExtensionContainer convention) {
+    def m = convention.class.getMethod("getAsMap")
+    return (m.invoke(convention) as Map<String, Object>).keySet().asList() as List<String>
   }
 
   @Override

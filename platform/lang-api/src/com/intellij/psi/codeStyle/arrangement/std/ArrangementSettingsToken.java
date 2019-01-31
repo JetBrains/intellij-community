@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * I.e. third-party developers can create their own instances of this class and implement {@link ArrangementStandardSettingsAware}.
  * 
  * @author Denis Zhdanov
- * @since 3/6/13 12:38 PM
  */
 public class ArrangementSettingsToken implements Comparable<ArrangementSettingsToken> {
 

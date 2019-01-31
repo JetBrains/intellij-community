@@ -387,6 +387,7 @@ public class MavenProjectImporter {
     }
     else {
       postTasks.add(new MavenProjectsProcessorTask() {
+        @Override
         public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
           throws MavenProcessCanceledException {
           indicator.setText("Refreshing files...");
@@ -493,6 +494,7 @@ public class MavenProjectImporter {
 
   private void deleteExistingImlFile(final String path) {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+      @Override
       public void run() {
         try {
           VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
@@ -530,6 +532,7 @@ public class MavenProjectImporter {
         return myMavenProjectToModuleName.containsKey(project);
       }
 
+      @Override
       public void visit(MavenProject each) {
         depth++;
 
@@ -548,6 +551,7 @@ public class MavenProjectImporter {
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : ArrayUtil.toStringArray(groups));
       }
 
+      @Override
       public void leave(MavenProject each) {
         if (shouldCreateGroup(each)) {
           groups.pop();

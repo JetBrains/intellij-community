@@ -27,20 +27,23 @@ import com.intellij.ide.projectView.impl.nodes.StructureViewModuleNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ModuleStructurePane extends ProjectViewPane {
+  @NotNull
   private final Module myModule;
 
-  public ModuleStructurePane(Module module) {
+  public ModuleStructurePane(@NotNull Module module) {
     super(module.getProject());
     myModule = module;
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new StructureViewModuleNode(project, myModule, settings);
       }
     };

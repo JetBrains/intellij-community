@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
 public abstract class ProjectTaskRunner {
 
@@ -46,6 +45,10 @@ public abstract class ProjectTaskRunner {
   }
 
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
+
+  public boolean canRun(@SuppressWarnings("unused") @NotNull Project project, @NotNull ProjectTask projectTask) {
+    return canRun(projectTask);
+  }
 
   @Nullable
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,

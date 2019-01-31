@@ -338,11 +338,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         String prefix = indexString + new String(spaces) + "  ";
         append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
       }
-      else if (UIUtil.isUnderGTKLookAndFeel()) {
-        // Fix GTK background
-        Color background = selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
-        UIUtil.changeBackGround(this, background);
-      }
+
       String text = value.getShortText(previewChars);
       append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);

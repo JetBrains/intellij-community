@@ -19,21 +19,27 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -50,6 +56,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                      PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                      PyElementTypes.LIST_COMP_EXPRESSION,
                                                      PyElementTypes.TUPLE_EXPRESSION);
+
+  private static final Logger LOG = Logger.getInstance(PythonFoldingBuilder.class);
+  private static final boolean ourUnderGuiTests = System.getenv("GUI_TESTS_RUN") != null;
 
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
@@ -138,25 +147,27 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
-    IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION
-        || elType == PyElementTypes.CLASS_DECLARATION
-        || ifFoldBlocks(node, elType)) {
-      ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-      if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
+    final TextRange nodeRange = node.getTextRange();
+    if (nodeRange.isEmpty()) {
+      return;
+    }
+
+    final IElementType elType = node.getTreeParent().getElementType();
+    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || ifFoldBlocks(node, elType)) {
+      final ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
+      final int nodeEnd = nodeRange.getEndOffset();
+      if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
         final CharSequence chars = node.getChars();
-        int nodeStart = node.getTextRange().getStartOffset();
-        int endOffset = node.getTextRange().getEndOffset();
-        while(endOffset > colon.getStartOffset()+2 && endOffset > nodeStart && Character.isWhitespace(chars.charAt(endOffset - nodeStart - 1))) {
-          endOffset--;
+        final int nodeStart = nodeRange.getStartOffset();
+        final int foldStart = colon.getStartOffset() + 1;
+        int foldEnd = nodeEnd;
+        while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
+          foldEnd--;
         }
-        descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, endOffset)));
+        descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
       }
-      else {
-        TextRange range = node.getTextRange();
-        if (range.getStartOffset() < range.getEndOffset() - 1) { // only for ranges at least 1 char wide
-          descriptors.add(new FoldingDescriptor(node, range));
-        }
+      else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
+        descriptors.add(new FoldingDescriptor(node, nodeRange));
       }
     }
   }
@@ -208,6 +219,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
       if (stringLiteralExpression.isDocString()) {
+        // XXX Remove when it becomes clear why PIEAE happens
+        checkStringElementsValidityInGuiTests(stringLiteralExpression);
         final String stringValue = stringLiteralExpression.getStringValue().trim();
         final String[] lines = LineTokenizer.tokenize(stringValue, true);
         if (lines.length > 2 && lines[1].trim().length() == 0) {
@@ -219,6 +232,26 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
     }
     return "...";
+  }
+
+  private static void checkStringElementsValidityInGuiTests(@NotNull PyStringLiteralExpression pyString) {
+    if (!ourUnderGuiTests) {
+      return;
+    }
+    try {
+      pyString.getStringElements().forEach(PsiUtilCore::ensureValid);
+    }
+    catch (PsiInvalidElementAccessException e) {
+      LOG.warn(StringUtil.join(e.getAttachments(), a -> {
+        try {
+          return a.getName() + "\n" + StreamUtil.readText(a.openContentStream(), CharsetToolkit.UTF8);
+        }
+        catch (IOException ignored) {
+          return "<corrupted stacktrace>";
+        }
+      }, "\n\n"), e);
+      throw e;
+    }
   }
 
   private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {

@@ -49,6 +49,7 @@ abstract class WindowsDistributionCustomizer {
 
   /**
    * If {@code true} a Zip archive containing the installation with bundled Oracle JRE will be produced
+   * @deprecated artifacts with bundled Oracle JRE shouldn't be produced anymore
    */
   boolean buildZipWithBundledOracleJre = false
 

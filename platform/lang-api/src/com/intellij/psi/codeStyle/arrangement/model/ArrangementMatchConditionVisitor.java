@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/12 1:20 PM
  */
 public interface ArrangementMatchConditionVisitor {
 

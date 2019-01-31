@@ -216,7 +216,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     return textArea;
   }
 
-  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<VcsFileRevision> selectedRevisionConsumer,
+  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<? super VcsFileRevision> selectedRevisionConsumer,
                                    final boolean showComments) {
     ColumnInfo[] columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
     for(VcsFileRevision revision: revisions) {
@@ -316,7 +316,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   private static class TreeNodeAdapter extends DefaultMutableTreeNode {
     private final TreeItem<VcsFileRevision> myRevision;
 
-    public TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
+    TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
       if (parent != null) {
         parent.add(this);
       }

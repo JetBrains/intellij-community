@@ -35,11 +35,13 @@ public class HgGlobalStatusDialog extends DialogWrapper {
     outputTextArea.append(text);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPanel;
   }

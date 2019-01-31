@@ -615,20 +615,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
-  /**
-   * @deprecated This method will be removed in 2018.3.
-   */
-  @Nullable
-  @Deprecated
-  public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
-    for (PyTargetExpression attr : attrs) {
-      if (name.equals(attr.getName())) {
-        return PyUtil.strListValue(attr.findAssignedValue());
-      }
-    }
-    return null;
-  }
-
   @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
     final StubElement stub = getStub();

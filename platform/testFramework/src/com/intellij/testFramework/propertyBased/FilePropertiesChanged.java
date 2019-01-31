@@ -25,13 +25,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FilePropertiesChanged extends ActionOnFile {
 
-  public FilePropertiesChanged(PsiFile file) {
+  public FilePropertiesChanged(@NotNull PsiFile file) {
     super(file);
   }
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    env.logMessage(toString());
+    env.logMessage("FilePropertiesChanged " + getVirtualFile().getPath());
     PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(getVirtualFile(), Conditions.alwaysTrue());
   }
 

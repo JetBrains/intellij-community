@@ -28,7 +28,6 @@ import java.util.Arrays;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Sep 23, 2010 12:04:52 PM
  */
 public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy {
 

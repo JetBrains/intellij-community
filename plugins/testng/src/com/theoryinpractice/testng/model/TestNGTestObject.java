@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -171,12 +170,7 @@ public abstract class TestNGTestObject {
     if (methods != null && methods.length > 0) {
       final Set<PsiClass> containingClasses = new LinkedHashSet<>();
       for (final PsiMethod method : methods) {
-        containingClasses.add(ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return method.getContainingClass();
-          }
-        }));
+        containingClasses.add(ReadAction.compute(() -> method.getContainingClass()));
       }
       psiClasses = containingClasses.toArray(PsiClass.EMPTY_ARRAY);
     } else {
@@ -281,7 +275,7 @@ public abstract class TestNGTestObject {
   }
 
   private static class UnknownTestNGTestObject extends TestNGTestObject {
-    public UnknownTestNGTestObject(TestNGConfiguration config) {
+    UnknownTestNGTestObject(TestNGConfiguration config) {
       super(config);
     }
 

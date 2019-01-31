@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * plugin.dtd:project-components interface.
- */
 public interface ProjectComponents extends DomElement {
 
   @NotNull

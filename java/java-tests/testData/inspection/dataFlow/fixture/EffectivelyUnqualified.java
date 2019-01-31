@@ -1,5 +1,5 @@
 abstract class Foo {
-  protected String bar;
+  protected Object bar;
 }
 
 class FF extends Foo {

@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
@@ -13,7 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.SmartList;
@@ -22,7 +23,7 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.NonNls;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,14 +33,14 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
@@ -68,10 +69,18 @@ public class PyPIPackageUtil {
         LOG.debug("Searching for versions of package '" + key + "' in additional repositories");
         final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
         for (String repository : repositories) {
-          final List<String> versions = parsePackageVersionsFromArchives(composeSimpleUrl(key, repository));
-          if (!versions.isEmpty()) {
-            LOG.debug("Found versions " + versions + " in " + repository);
-            return Collections.unmodifiableList(versions);
+          try {
+            final String packageUrl = StringUtil.trimEnd(repository, "/") + "/" + key;
+            final List<String> versions = parsePackageVersionsFromArchives(packageUrl, key);
+            if (!versions.isEmpty()) {
+              LOG.debug("Found versions " + versions + "of " + key + " at " + repository);
+              return Collections.unmodifiableList(versions);
+            }
+          }
+          catch (HttpRequests.HttpStatusException e) {
+            if (e.getStatusCode() != 404) {
+              LOG.debug("Cannot access " + e.getUrl() + ": " + e.getMessage());
+            }
           }
         }
         return Collections.emptyList();
@@ -80,10 +89,14 @@ public class PyPIPackageUtil {
 
   /**
    * Contains cached packages taken from additional repositories.
-   * 
-   * @see #getAdditionalPackages() 
    */
-  private volatile List<RepoPackage> myAdditionalPackages = null;
+  protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
+    new CacheLoader<String, List<RepoPackage>>() {
+      @Override
+      public List<RepoPackage> load(@NotNull String key) throws Exception {
+        return getPackagesFromAdditionalRepository(key);
+      }
+    });
 
   /**
    * Contains cached package information retrieved through PyPI's JSON API.
@@ -135,70 +148,34 @@ public class PyPIPackageUtil {
     return builder.build(); 
   }
 
-  @NotNull
-  private static Pair<String, String> splitNameVersion(@NotNull String pyPackage) {
-    final int dashInd = pyPackage.lastIndexOf("-");
-    if (dashInd >= 0 && dashInd+1 < pyPackage.length()) {
-      final String name = pyPackage.substring(0, dashInd);
-      final String version = pyPackage.substring(dashInd+1);
-      if (StringUtil.containsAlphaCharacters(version)) {
-        return Pair.create(pyPackage, null);
-      }
-      return Pair.create(name, version);
-    }
-    return Pair.create(pyPackage, null);
-  }
-
   public static boolean isPyPIRepository(@Nullable String repository) {
     return repository != null && repository.startsWith(PYPI_HOST);
   }
 
   @NotNull
-  public List<RepoPackage> getAdditionalPackages() {
-    return myAdditionalPackages != null ? Collections.unmodifiableList(myAdditionalPackages) : Collections.emptyList();
+  public List<RepoPackage> getAdditionalPackages(@NotNull List<String> repositories) {
+    return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
-  @NotNull
-  public List<RepoPackage> loadAndGetAdditionalPackages(boolean alwaysRefresh) throws IOException {
-    if (myAdditionalPackages == null || alwaysRefresh) {
-      final Set<RepoPackage> uniquePackages = new TreeSet<>();
-      for (String url : PyPackageService.getInstance().additionalRepositories) {
-        uniquePackages.addAll(getPackagesFromAdditionalRepository(url));
+  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+    if (alwaysRefresh) {
+      for (String url : repositories) {
+        myAdditionalPackages.refresh(url);
       }
-      myAdditionalPackages = new ArrayList<>(uniquePackages);
     }
-    return Collections.unmodifiableList(myAdditionalPackages);
+    else {
+      for (String url : repositories) {
+        getCachedValueOrRethrowIO(myAdditionalPackages, url);
+      }
+    }
   }
 
   @NotNull
   private static List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
-    final List<RepoPackage> result = new ArrayList<>();
-    final boolean simpleIndex = url.endsWith("simple/");
-    final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
-
-    for (String pyPackage : packagesList) {
-      if (simpleIndex) {
-        final Pair<String, String> nameVersion = splitNameVersion(StringUtil.trimTrailing(pyPackage, '/'));
-        result.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
-      }
-      else {
-        try {
-          final Pattern repositoryPattern = Pattern.compile(url + "([^/]*)/([^/]*)$");
-          final Matcher matcher = repositoryPattern.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
-          if (matcher.find()) {
-            final String packageName = matcher.group(1);
-            final String packageVersion = matcher.group(2);
-            if (!packageName.contains(" ")) {
-              result.add(new RepoPackage(packageName, url, packageVersion));
-            }
-          }
-        }
-        catch (UnsupportedEncodingException e) {
-          LOG.warn(e.getMessage());
-        }
-      }
-    }
-    return result;
+    return parsePyPIListFromWeb(url)
+      .stream()
+      .map(s -> new RepoPackage(s, url, null))
+      .collect(Collectors.toList());
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -272,9 +249,9 @@ public class PyPIPackageUtil {
     try {
       return cache.get(key);
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException|UncheckedExecutionException e) {
       final Throwable cause = e.getCause();
-      throw (cause instanceof IOException ? (IOException)cause: new IOException("Unexpected non-IO error", cause));
+      throw (cause instanceof IOException ? (IOException)cause : new IOException("Unexpected non-IO error", cause));
     }
   }
 
@@ -301,7 +278,8 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl) throws IOException {
+  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
+                                                               @NotNull String packageName) throws IOException {
     return HttpRequests.request(archivesUrl).userAgent(getUserAgent()).connect(request -> {
       final List<String> versions = new ArrayList<>();
       final Reader reader = request.getReader();
@@ -316,11 +294,14 @@ public class PyPIPackageUtil {
         @Override
         public void handleText(@NotNull char[] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
-            String packageVersion = String.valueOf(data);
-            final String suffix = ".tar.gz";
-            if (!packageVersion.endsWith(suffix)) return;
-            packageVersion = StringUtil.trimEnd(packageVersion, suffix);
-            versions.add(splitNameVersion(packageVersion).second);
+            final String artifactName = String.valueOf(data);
+            final String version = extractVersionFromArtifactName(artifactName, packageName);
+            if (version != null) {
+              versions.add(version);
+            }
+            else {
+              LOG.debug("Could not extract version from " + artifactName + " at " + archivesUrl);
+            }
           }
         }
       }, true);
@@ -329,89 +310,73 @@ public class PyPIPackageUtil {
     });
   }
 
-  @NotNull
-  private static String composeSimpleUrl(@NonNls @NotNull String packageName, @NotNull String rep) {
-    String suffix = "";
-    final String repository = StringUtil.trimEnd(rep, "/");
-    if (!repository.endsWith("+simple") && !repository.endsWith("/simple")) {
-      suffix = "/+simple";
+  @Nullable
+  private static String extractVersionFromArtifactName(@NotNull String artifactName, @NotNull String packageName) {
+    final String withoutExtension;
+    // Contains more than one dot and thus should be handled separately
+    if (artifactName.endsWith(".tar.gz")) {
+      withoutExtension = StringUtil.trimEnd(artifactName, ".tar.gz");
     }
-    suffix += "/" + packageName;
-    return repository + suffix;
+    else {
+      withoutExtension = FileUtil.getNameWithoutExtension(artifactName);
+    }
+    final String packageNameWithUnderscores = packageName.replace('-', '_');
+    final String suffix;
+    if (withoutExtension.startsWith(packageName)) {
+      suffix = StringUtil.trimStart(withoutExtension, packageName);
+    }
+    else if (withoutExtension.startsWith(packageNameWithUnderscores)) {
+      suffix = StringUtil.trimStart(withoutExtension, packageNameWithUnderscores);
+    }
+    else {
+      return null;
+    }
+    // StringUtil.split excludes empty parts by default effectively stripping a leading dash
+    final String version = ContainerUtil.getFirstItem(StringUtil.split(suffix, "-"));
+    if (StringUtil.isNotEmpty(version)) {
+      return version;
+    }
+    return null;
   }
 
   public void updatePyPICache() throws IOException {
     final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
-    final List<String> decodedNames = parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true));
-    PyPIPackageCache.reload(decodedNames);
+    PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
     service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
-  private static List<String> parsePyPIList(@NotNull List<String> packages) {
-    final List<String> decodedNames = new ArrayList<>();
-    for (String pyPackage : packages) {
-      try {
-        final String packageName = URLDecoder.decode(pyPackage, "UTF-8");
-        if (!packageName.contains(" ")) {
-          decodedNames.add(packageName);
-        }
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.warn(e.getMessage());
-      }
-    }
-    return decodedNames;
-  }
-
-  @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) throws IOException {
+  private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.debug("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
-        boolean inTable = false;
         HTML.Tag myTag;
 
         @Override
         public void handleStartTag(@NotNull HTML.Tag tag, @NotNull MutableAttributeSet set, int i) {
           myTag = tag;
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-
-            if (inTable && "a".equals(tag.toString())) {
-              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
-            }
-          }
         }
 
         @Override
         public void handleText(@NotNull char[] data, int pos) {
-          if (isSimpleIndex) {
-            if (myTag != null && "a".equals(myTag.toString())) {
-              packages.add(String.valueOf(data));
-            }
+          if (myTag != null && "a".equals(myTag.toString())) {
+            packages.add(String.valueOf(data));
           }
         }
 
         @Override
-        public void handleEndTag(@NotNull HTML.Tag tag, int i) {
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-          }
+        public void handleEndTag(@NotNull HTML.Tag t, int pos) {
+          myTag = null;
         }
       }, true);
       return packages;
     });
   }
 
-  public void loadAndGetPackages() throws IOException {
+  public void loadPackages() throws IOException {
     // This lock is solely to prevent multiple threads from updating
     // the mammoth cache of PyPI packages simultaneously.
     synchronized (myPyPIPackageCacheUpdateLock) {

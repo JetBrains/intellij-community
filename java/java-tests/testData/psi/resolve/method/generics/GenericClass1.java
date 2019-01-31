@@ -4,6 +4,6 @@ interface Foo extends Comparable {
 
 class User {
     void foo (Foo foo) {
-        foo.<ref>compareTo(foo);
+        foo.<caret>compareTo(foo);
     }
 }

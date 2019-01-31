@@ -45,7 +45,7 @@ public class I18nizeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeAction");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean active = getHandler(e) != null;
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(active);
@@ -154,7 +154,7 @@ public class I18nizeAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();
     assert project != null;

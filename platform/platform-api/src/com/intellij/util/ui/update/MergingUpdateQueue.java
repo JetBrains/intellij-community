@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
@@ -51,7 +50,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final TreeMap<Integer, Map<Update, Update>> myScheduledUpdates = ContainerUtil.newTreeMap();
+  private final Map<Integer, Map<Update, Update>> myScheduledUpdates = ContainerUtil.newTreeMap();
 
   private final Alarm myWaiterForMerge;
 
@@ -141,7 +140,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
+  private static Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
     return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
@@ -401,10 +400,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    Map<Update, Update> updates = myScheduledUpdates.get(update.getPriority());
-    if (updates == null) {
-      myScheduledUpdates.put(update.getPriority(), updates = ContainerUtil.newLinkedHashMap());
-    }
+    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> ContainerUtil.newLinkedHashMap());
     final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
@@ -429,7 +425,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     myWaiterForMerge.cancelAllRequests();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
   public String toString() {
     synchronized (myScheduledUpdates) {
       return myName + " active=" + myActive + " scheduled=" + getAllScheduledUpdates().size();

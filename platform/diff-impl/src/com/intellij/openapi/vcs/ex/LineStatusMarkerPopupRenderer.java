@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -24,10 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -70,13 +65,19 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Override
-  protected boolean canDoAction(@NotNull Range range, MouseEvent e) {
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
     return isInsideMarkerArea(e);
   }
 
   @Override
-  protected void doAction(@NotNull Editor editor, @NotNull Range range, @NotNull MouseEvent e) {
-    showHint(editor, range, e);
+  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
+    Range range = ranges.get(0);
+    if (ranges.size() > 1) {
+      scrollAndShow(editor, range);
+    }
+    else {
+      showHint(editor, range, e);
+    }
   }
 
 
@@ -147,7 +148,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     LightweightHint hint = new LightweightHint(popupPanel);
     HintListener closeListener = new HintListener() {
-      public void hintHidden(final EventObject event) {
+      @Override
+      public void hintHidden(@NotNull final EventObject event) {
         Disposer.dispose(disposable);
       }
     };
@@ -178,7 +180,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       });
 
     if (!hint.isVisible()) {
-      closeListener.hintHidden(null);
+      closeListener.hintHidden(new EventObject(hint));
     }
   }
 
@@ -190,9 +192,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     final CharSequence vcsContent = getVcsContent(range);
     final CharSequence currentContent = getCurrentContent(range);
 
-    return BackgroundTaskUtil.tryComputeFast(indicator -> {
-      return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
-    }, 200);
+    return BackgroundTaskUtil.tryComputeFast(
+      indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
   }
 
   private void installMasterEditorHighlighters(@NotNull Editor editor,
@@ -211,14 +212,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
     }
 
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        for (RangeHighlighter highlighter : highlighters) {
-          highlighter.dispose();
-        }
-      }
-    });
+    Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
   }
 
   @Nullable
@@ -245,13 +239,18 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     field.setFontInheritedFromLAF(false);
 
     field.addSettingsProvider(uEditor -> {
+      uEditor.setVerticalScrollbarVisible(true);
+      uEditor.setHorizontalScrollbarVisible(true);
+
       uEditor.setRendererMode(true);
       uEditor.setBorder(null);
 
       uEditor.setColorsScheme(editor.getColorsScheme());
       uEditor.setBackgroundColor(backgroundColor);
+      uEditor.getSettings().setCaretRowShown(false);
 
-      DiffUtil.setEditorCodeStyle(myTracker.getProject(), uEditor, fileType);
+      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
+      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
 
       uEditor.setHighlighter(fragmentedHighlighter);
 
@@ -312,10 +311,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @Nullable private final JComponent myEditorComponent;
     @NotNull private final Editor myEditor;
 
-    public PopupPanel(@NotNull Editor editor,
-                      @NotNull ActionToolbar toolbar,
-                      @Nullable JComponent editorComponent,
-                      @Nullable JComponent additionalInfo) {
+    PopupPanel(@NotNull Editor editor,
+               @NotNull ActionToolbar toolbar,
+               @Nullable JComponent editorComponent,
+               @Nullable JComponent additionalInfo) {
       super(new BorderLayout());
       setOpaque(false);
 
@@ -369,6 +368,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
           transferEvent(e, editor);
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
           transferEvent(e, editor);
         }
@@ -423,13 +423,13 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Range newRange = myTracker.findRange(myRange);
       e.getPresentation().setEnabled(newRange != null && !myEditor.isDisposed() && isEnabled(myEditor, newRange));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       Range newRange = myTracker.findRange(myRange);
       if (newRange != null) actionPerformed(myEditor, newRange);
     }
@@ -553,12 +553,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (!myTracker.isValid()) return;
       VcsApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 

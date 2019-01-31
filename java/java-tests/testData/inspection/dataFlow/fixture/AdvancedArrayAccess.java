@@ -108,7 +108,7 @@ class AdvancedArrayAccess {
 
   void testMethodQualifier() {
     if(getData()[0] == null) {
-      System.out.println(getData()[0].<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>());
+      System.out.println(getData()[0].<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
     }
   }
 
@@ -128,27 +128,27 @@ class AdvancedArrayAccess {
   void testLocalRewritten() {
     String[] arr = {"foo", "bar", "baz"};
     arr[0] = "qux";
-    String result = "";
+    int result = 0;
     if(<warning descr="Condition 'arr[1].equals(\"bar\")' is always 'true'">arr[1].equals("bar")</warning>) {
-      result = "yes";
+      result = 1;
     }
     if(<warning descr="Condition 'arr[2].equals(\"bar\")' is always 'false'">arr[2].equals("bar")</warning>) {
-      result = "yes";
+      result = 1;
     }
     if(<warning descr="Condition 'arr[0].equals(\"foo\")' is always 'false'">arr[0].equals("foo")</warning>) {
-      result = "no";
+      result = 2;
     }
     System.out.println(result);
     arr = new String[] {"bar", "baz", "foo"};
     arr[2] = "qux";
     if(<warning descr="Condition 'arr[1].equals(\"bar\")' is always 'false'">arr[1].equals("bar")</warning>) {
-      result = "no";
+      result = 2;
     }
     if(<warning descr="Condition 'arr[2].equals(\"qux\")' is always 'true'">arr[2].equals("qux")</warning>) {
-      <warning descr="Variable is already assigned to this value">result</warning> = "yes";
+      <warning descr="Variable is already assigned to this value">result</warning> = 1;
     }
     if(<warning descr="Condition 'arr[0].equals(\"bar\")' is always 'true'">arr[0].equals("bar")</warning>) {
-      result = "no";
+      result = 2;
     }
     System.out.println(result);
   }
@@ -193,5 +193,29 @@ class AdvancedArrayAccess {
     if(<warning descr="Condition 'x[2] == 2' is always 'true'">x[2] == 2</warning>) {
       System.out.println("Always");
     }
+  }
+
+  int[] getArray() {
+    return new int[0];
+  }
+
+  void testInitializerWrong() {
+    getArray() = <error descr="Array initializer is not allowed here">{1,2,3}</error>;
+  }
+
+  void testLongInitializer() {
+    int[] arr = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    arr[0] = 1;
+    if(<warning descr="Condition 'arr[20] == 20' is always 'true'">arr[20] == 20</warning>) {}
+    if(<warning descr="Condition 'arr[31] == 31' is always 'true'">arr[31] == 31</warning>) {}
+    // Too long initializers aren't tracked for mutable arrays
+    if(arr[32] == 32) {}
+    if(arr[33] == 33) {}
+    int[] arr2 = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40};
+    if(<warning descr="Condition 'arr2[20] == 20' is always 'true'">arr2[20] == 20</warning>) {}
+    if(<warning descr="Condition 'arr2[31] == 31' is always 'true'">arr2[31] == 31</warning>) {}
+    // ..but tracked for immutable arrays
+    if(<warning descr="Condition 'arr2[32] == 32' is always 'true'">arr2[32] == 32</warning>) {}
+    if(<warning descr="Condition 'arr2[33] == 33' is always 'true'">arr2[33] == 33</warning>) {}
   }
 }

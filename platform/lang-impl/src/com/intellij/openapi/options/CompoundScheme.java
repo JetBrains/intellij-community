@@ -101,7 +101,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
     return result;
   }
 
-   void resetFrom(@NotNull CompoundScheme<E> template) {
+   void resetFrom(@NotNull CompoundScheme<? extends E> template) {
     myElements.clear();
     myElements.ensureCapacity(template.myElements.size());
     for (E element : template.myElements) {
@@ -137,7 +137,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
     }
 
     @NotNull
-    public List<T> apply(@NotNull final List<T> copiedSchemes, @Nullable BiConsumer<T, T> changedConsumer) {
+    public List<T> apply(@NotNull final List<T> copiedSchemes, @Nullable BiConsumer<? super T, ? super T> changedConsumer) {
       copiedToOriginal.retainEntries(new TObjectObjectProcedure<T, T>() {
         @Override
         public boolean execute(T copied, T original) {

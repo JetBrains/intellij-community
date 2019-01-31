@@ -36,6 +36,7 @@ public class PropertiesStubElementImpl <T extends StubElement> extends StubBased
     super(node);
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return PropertiesLanguage.INSTANCE;

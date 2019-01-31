@@ -27,7 +27,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
   private ComboBox myProjectComboBox;
 
 
-  public GitlabRepositoryEditor(Project project, GitlabRepository repository, Consumer<GitlabRepository> changeListener) {
+  public GitlabRepositoryEditor(Project project, GitlabRepository repository, Consumer<? super GitlabRepository> changeListener) {
     super(project, repository, changeListener);
     myPasswordLabel.setText("Token:");
 

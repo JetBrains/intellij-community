@@ -143,8 +143,13 @@ public class AccessibleContextUtil {
   /**
    * @deprecated use {@link #setParent(Component, Component)} instead
    */
+  @Deprecated
   public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
     setParent((Component)component, newParent);
+  }
+
+  public static @Nullable String combineAccessibleStrings(@Nullable String s1, @Nullable String s2) {
+    return combineAccessibleStrings(s1, " ", s2);
   }
 
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator, @Nullable String s2) {

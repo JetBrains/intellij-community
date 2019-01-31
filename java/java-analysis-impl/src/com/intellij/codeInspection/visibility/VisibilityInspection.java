@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -165,10 +166,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @EntryPointWithVisibilityLevel.VisibilityLevelResult
-    int minLevel = EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID;
+    int minLevel = getMinVisibilityLevel(refElement);
     //ignore entry points.
     if (refElement.isEntry()) {
-      minLevel = getMinVisibilityLevel(refElement);
       if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
     }
 
@@ -247,7 +247,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static CommonProblemDescriptor[] createDescriptions(RefElement refElement, String access,
                                                               @NotNull InspectionManager manager,
                                                               @NotNull GlobalInspectionContext globalContext) {
-    final PsiElement element = refElement.getElement();
+    final PsiElement element = refElement.getPsiElement();
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
       final String message;
@@ -290,7 +290,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
   private int getMinVisibilityLevel(@NotNull RefJavaElement refElement) {
-    PsiElement element = refElement.getElement();
+    PsiElement element = refElement.getPsiElement();
     if (element instanceof PsiMember) {
       return getMinVisibilityLevel((PsiMember)element);
     }
@@ -367,6 +367,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (refMethod.isAbstract() && (refMethod.getDerivedMethods().isEmpty() || refMethod.getAccessModifier() == PsiModifier.PRIVATE)) return false;
 
       for (RefMethod refOverride : refMethod.getDerivedMethods()) {
+        if (accessModifier == PsiModifier.PRIVATE) return false;
         if (!isAccessibleFrom(refOverride, to, accessModifier)) return false;
       }
 
@@ -422,7 +423,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     RefClass toOwner = refUtil.getOwnerClass(to);
 
     if (accessModifier == PsiModifier.PROTECTED) {
-      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isUsedQualifiedOutsidePackage()) {
+      if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isProtectedAccessForbidden()) {
         return false;
       }
       return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)
@@ -432,7 +433,8 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     if (accessModifier == PsiModifier.PRIVATE) {
       if (SUGGEST_PRIVATE_FOR_INNERS) {
-        final PsiClass fromTopLevelElement = fromTopLevel != null ? fromTopLevel.getElement() : null;
+        //TODO
+        final PsiClass fromTopLevelElement = fromTopLevel != null ? (PsiClass)fromTopLevel.getPsiElement() : null;
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getExtendsList())) return false;
         if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getImplementsList())) return false;
         if (fromTopLevelElement != null && isInAnnotations(to, fromTopLevelElement)) return false;
@@ -445,8 +447,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
       if (fromTopLevel == toOwner) {
         if (from instanceof RefClass && to instanceof RefClass) {
-          final PsiClass fromClass = ((RefClass)from).getElement();
-          LOG.assertTrue(fromClass != null);
+          PsiClass fromClass = ((RefClass)from).getUastElement().getJavaPsi();
           if (isInExtendsList(to, fromClass.getExtendsList())) return false;
           if (isInExtendsList(to, fromClass.getImplementsList())) return false;
         }
@@ -461,7 +462,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static boolean isInAnnotations(final RefJavaElement to, @NotNull final PsiClass fromTopLevelElement) {
     final PsiModifierList modifierList = fromTopLevelElement.getModifierList();
     if (modifierList == null) return false;
-    final PsiElement toElement = to.getElement();
+    final PsiElement toElement = to.getPsiElement();
 
     final boolean [] resolved = {false};
     modifierList.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -484,7 +485,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
         if (parameterList != null) {
           for (PsiType type : parameterList.getTypeArguments()) {
-            if (extendsList.getManager().areElementsEquivalent(PsiUtil.resolveClassInType(type), to.getElement())) {
+            if (extendsList.getManager().areElementsEquivalent(PsiUtil.resolveClassInType(type), to.getPsiElement())) {
               return true;
             }
           }
@@ -555,16 +556,16 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
               final RefMethod defaultConstructor = refClass.getDefaultConstructor();
               if (entryPointsManager.isAddNonJavaEntries() && defaultConstructor != null) {
-                final PsiClass psiClass = refClass.getElement();
+                final PsiClass psiClass = ObjectUtils.tryCast(refClass.getPsiElement(), PsiClass.class);
                 String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
                 if (qualifiedName != null) {
                   final Project project = manager.getProject();
                   PsiSearchHelper.getInstance(project)
-                    .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
-                      entryPointsManager.addEntryPoint(defaultConstructor, false);
-                      ignoreElement(processor, defaultConstructor);
-                      return false;
-                    }, GlobalSearchScope.projectScope(project));
+                                 .processUsagesInNonJavaFiles(qualifiedName, (file, startOffset, endOffset) -> {
+                                   entryPointsManager.addEntryPoint(defaultConstructor, false);
+                                   ignoreElement(processor, defaultConstructor);
+                                   return false;
+                                 }, GlobalSearchScope.projectScope(project));
                 }
               }
             }

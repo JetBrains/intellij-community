@@ -25,10 +25,12 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract boolean isInUpdate();
 
   @NotNull
-  public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes);
+  public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
+
+  public abstract boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData);
 
   /**
    * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)

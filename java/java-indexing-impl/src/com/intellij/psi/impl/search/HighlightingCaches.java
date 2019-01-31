@@ -35,7 +35,7 @@ class HighlightingCaches {
 
   private final List<Map<?,?>> allCaches = ContainerUtil.createConcurrentList();
 
-  public HighlightingCaches(@NotNull Project project) {
+  HighlightingCaches(@NotNull Project project) {
     project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {

@@ -1,42 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Methods in this class are used to equip long background processes which take read actions with a special listener
+ * Most methods in this class are used to equip long background processes which take read actions with a special listener
  * that fires when a write action is about to begin, and cancels corresponding progress indicators to avoid blocking the UI.
  * These processes should be ready to get {@link ProcessCanceledException} at any moment.
  * Processes may want to react on cancellation event by restarting the activity, see
@@ -45,8 +31,6 @@ import java.util.concurrent.Executor;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorUtils");
-
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
@@ -78,7 +62,7 @@ public class ProgressIndicatorUtils {
    * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    */
-  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
+  public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action,
                                                                @Nullable ProgressIndicator progressIndicator) {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     runWithWriteActionPriority(() -> result.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
@@ -87,15 +71,15 @@ public class ProgressIndicatorUtils {
   }
 
   /**
-   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending, 
-   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or 
-   * {@link ProgressIndicator#checkCanceled()} often enough). 
+   * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending,
+   * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or
+   * {@link ProgressIndicator#checkCanceled()} often enough).
    * It returns {@code true} if action was executed successfully. It returns {@code false} if the action was not
    * executed successfully, i.e. if:
    * <ul>
    * <li>write action was in progress when the method was called</li>
    * <li>write action was pending when the method was called</li>
-   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated 
+   * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
    * If caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
@@ -115,7 +99,7 @@ public class ProgressIndicatorUtils {
       return false;
     }
 
-    ApplicationAdapter listener = new ApplicationAdapter() {
+    ApplicationListener listener = new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
         cancelProcess(progressIndicator);
@@ -170,7 +154,7 @@ public class ProgressIndicatorUtils {
         future.complete(null);
         return;
       }
-      final ApplicationAdapter listener = new ApplicationAdapter() {
+      final ApplicationListener listener = new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (!progressIndicator.isCanceled()) {
@@ -259,5 +243,21 @@ public class ProgressIndicatorUtils {
       throw new IllegalStateException("Mustn't be called from EDT");
     }
     application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+  }
+
+  @Nullable
+  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computable) {
+    ProgressManager.checkCanceled();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
+    try {
+      return ProgressManager.getInstance().runProcess(computable, progress);
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    finally {
+      cancelProgress.cancel(false);
+    }
   }
 }

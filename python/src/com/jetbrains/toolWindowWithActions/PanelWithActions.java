@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Who will serialize panel?
+@SuppressWarnings({"SerializableClassInSecureContext"}) // Who will serialize panel?
 final class PanelWithActions extends JPanel {
   private PanelWithActions() {
 
@@ -102,13 +102,13 @@ final class PanelWithActions extends JPanel {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setText(PyBundle.message("windowWithActions.closeWindow"));
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       super.actionPerformed(e);
       for (final Runnable closeListener : myCloseListeners) {
         closeListener.run();

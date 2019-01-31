@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   private JCheckBox myUseCustomConfigurationDirectory;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;
-  private JCheckBox myLockOnDemand;
   private JBCheckBox myRunUnderTerminal;
   private TextFieldWithBrowseButton myCommandLineClient;
 
@@ -66,16 +64,15 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   @Override
   public void reset(@NotNull SvnConfiguration configuration) {
     String path = configuration.getConfigurationDirectory();
-    if (configuration.isUseDefaultConfiguation() || path == null) {
+    if (configuration.isUseDefaultConfiguration() || path == null) {
       path = USER_CONFIGURATION_PATH.getValue().toString();
     }
     myConfigurationDirectoryText.setText(path);
-    myUseCustomConfigurationDirectory.setSelected(!configuration.isUseDefaultConfiguation());
+    myUseCustomConfigurationDirectory.setSelected(!configuration.isUseDefaultConfiguration());
 
     boolean enabled = myUseCustomConfigurationDirectory.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryText.setEditable(enabled);
-    myLockOnDemand.setSelected(configuration.isUpdateLockOnDemand());
 
     myRunUnderTerminal.setSelected(configuration.isRunUnderTerminal());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
@@ -84,10 +81,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public boolean isModified(@NotNull SvnConfiguration configuration) {
-    if (configuration.isUseDefaultConfiguation() == myUseCustomConfigurationDirectory.isSelected()) {
-      return true;
-    }
-    if (configuration.isUpdateLockOnDemand() != myLockOnDemand.isSelected()) {
+    if (configuration.isUseDefaultConfiguration() == myUseCustomConfigurationDirectory.isSelected()) {
       return true;
     }
     if (configuration.isRunUnderTerminal() != myRunUnderTerminal.isSelected()) return true;
@@ -103,7 +97,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     configuration.setConfigurationDirParameters(!myUseCustomConfigurationDirectory.isSelected(), myConfigurationDirectoryText.getText());
 
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);
-    configuration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     boolean reloadWorkingCopies = !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
@@ -115,18 +108,5 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
-  }
-
-  private void createUIComponents() {
-    myLockOnDemand = new JCheckBox() {
-      @Override
-      public JToolTip createToolTip() {
-        JToolTip toolTip = new JToolTip() {{
-          setUI(new MultiLineTooltipUI());
-        }};
-        toolTip.setComponent(this);
-        return toolTip;
-      }
-    };
   }
 }

@@ -60,7 +60,7 @@ class MemoryResource extends Resource {
   }
 
   @NotNull
-  public static MemoryResource load(URL baseUrl,
+  static MemoryResource load(URL baseUrl,
                                     @NotNull ZipFile zipFile,
                                     @NotNull ZipEntry entry,
                                     @Nullable Map<Attribute, String> attributes) throws IOException {

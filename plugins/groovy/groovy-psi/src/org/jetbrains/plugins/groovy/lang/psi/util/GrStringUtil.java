@@ -15,12 +15,15 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+
+import java.util.Locale;
 
 /**
  * @author Maxim.Medvedev
@@ -188,17 +191,16 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          buffer.append("\\/");
-          break;
-        default:
-          if (Character.isISOControl(ch) || ch == '$') {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        buffer.append("\\/");
+      }
+      else {
+        if (Character.isISOControl(ch) || ch == '$') {
+          appendUnicode(buffer, ch);
+        }
+        else {
+          buffer.append(ch);
+        }
       }
     }
   }
@@ -213,26 +215,24 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          if (idx + 1 < length && str.charAt(idx + 1) == '$') {
-            appendUnicode(buffer, '/');
-            appendUnicode(buffer, '$');
-            break;
-          }
-        default:
-          if (Character.isISOControl(ch)) {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        if (idx + 1 < length && str.charAt(idx + 1) == '$') {
+          appendUnicode(buffer, '/');
+          appendUnicode(buffer, '$');
+          continue;
+        }
+      }
+      if (Character.isISOControl(ch)) {
+        appendUnicode(buffer, ch);
+      }
+      else {
+        buffer.append(ch);
       }
     }
   }
 
   private static void appendUnicode(StringBuilder buffer, char ch) {
-    String hexCode = Integer.toHexString(ch).toUpperCase();
+    String hexCode = Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
     while (paddingCount-- > 0) {
@@ -596,7 +596,7 @@ public class GrStringUtil {
   public static TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
-    if (elementType != GroovyTokenTypes.mSTRING_LITERAL && elementType != GroovyTokenTypes.mGSTRING_LITERAL) return null;
+    if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;
 
     String text = element.getText();
     String startQuote = getStartQuote(text);

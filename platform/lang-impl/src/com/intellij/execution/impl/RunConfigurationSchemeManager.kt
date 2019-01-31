@@ -10,9 +10,9 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.attribute
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
@@ -23,7 +23,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
-    ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.filterIsInstance(RunConfigurationConverter::class.java)
   }
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
@@ -43,7 +43,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     }
   }
 
-  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
+  override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<in String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
     val element = readData(settings, dataHolder)
     manager.addConfiguration(element, settings, isCheckRecentsLimit = false)
@@ -65,15 +65,21 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
       settings.readExternal(element, isShared)
     }
     catch (e: InvalidDataException) {
-      RunManagerImpl.LOG.error(e)
+      LOG.error(e)
     }
 
     var elementAfterStateLoaded: Element? = element
-    try {
-      elementAfterStateLoaded = writeScheme(settings)
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot compute digest for RC using state after load", e)
+
+    if (!settings.needsToBeMigrated()) {
+      try {
+        elementAfterStateLoaded = writeScheme(settings)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Cannot compute digest for RC using state after load", e)
+      }
     }
 
     // very important to not write file with only changed line separators
@@ -120,12 +126,12 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     val result = super.writeScheme(scheme) ?: return null
     if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
-        .attribute("name", "ProjectRunConfigurationManager")
+        .setAttribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
     }
     else if (scheme.isTemplate) {
       val factory = scheme.factory
-      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+      if (factory != UnknownConfigurationType.getInstance() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
         return null
       }
     }

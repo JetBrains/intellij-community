@@ -42,7 +42,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                result.addElement(LookupElementBuilder.create("__metaclass__ = "));
              }
@@ -56,14 +56,14 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
-                                           ProcessingContext context,
+                                           @NotNull ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                result.addElement(LookupElementBuilder.create("metaclass="));
              }
            });
   }
 
-  public static FilterPattern hasLanguageLevel(@NotNull final Processor<LanguageLevel> processor) {
+  public static FilterPattern hasLanguageLevel(@NotNull final Processor<? super LanguageLevel> processor) {
     return new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {

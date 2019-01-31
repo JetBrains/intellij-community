@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/13/2016
  */
 public abstract class AbstractBuildTask extends AbstractProjectTask implements BuildTask {
   private final boolean myIsIncrementalBuild;

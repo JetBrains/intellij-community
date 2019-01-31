@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull
 
 /**
  * @author Vladislav.Soroka
- * @since 5/19/2016
  */
 @CompileStatic
 class SourceSetCachedFinder {

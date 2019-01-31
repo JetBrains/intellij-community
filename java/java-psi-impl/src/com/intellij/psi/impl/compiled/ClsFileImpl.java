@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,6 +51,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
@@ -308,17 +308,14 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    //noinspection deprecation
-    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
-      if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
-        try {
-          PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
-          if (navigationElement != null) {
-            return navigationElement;
-          }
-        }
-        catch (IndexNotReadyException ignore) { }
+    for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
+      try {
+        @SuppressWarnings({"deprecation", "ScheduledForRemoval"}) PsiElement navigationElement =
+          navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
+          navigationPolicy.getNavigationElement(this);
+        if (navigationElement != null) return navigationElement;
       }
+      catch (IndexNotReadyException ignore) { }
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {
@@ -337,6 +334,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
         mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
           VirtualFile file = getVirtualFile();
+          AstLoadingFilter.assertTreeLoadingAllowed(file);
+
           PsiClass[] classes = getClasses();
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + JavaFileType.DOT_DEFAULT_EXTENSION;
 
@@ -358,7 +357,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
             });
           }
           catch (InvalidMirrorException e) {
-            //noinspection ThrowableResultOfMethodCallIgnored
             LOG.error(file.getUrl(), internalDecompiler ? e : wrapException(e, file));
           }
 
@@ -403,6 +401,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     return (PsiFile)getMirror();
   }
 
+  @Nullable
+  public PsiFile getCachedMirror() {
+    TreeElement mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
+    return mirrorTreeElement == null ? null : (PsiFile)mirrorTreeElement.getPsi();
+  }
+
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
@@ -412,6 +416,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiFile:" + getName();
@@ -509,7 +514,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   @Override
   public boolean isContentsLoaded() {
-    return myStub != null;
+    return getCachedMirror() != null;
   }
 
   @Override
@@ -520,7 +525,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       StubTree stubTree = SoftReference.dereference(myStub);
       myStub = null;
       if (stubTree != null) {
-        //noinspection unchecked
         ((PsiFileStubImpl)stubTree.getRoot()).clearPsi("cls onContentReload");
       }
     }
@@ -594,7 +598,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   static class FileContentPair extends Pair<VirtualFile, byte[]> {
-    public FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
+    FileContentPair(@NotNull VirtualFile file, @NotNull byte[] content) {
       super(file, content);
     }
 
@@ -629,7 +633,13 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
     @Override
     public void accept(FileContentPair innerClass, StubBuildingVisitor<FileContentPair> visitor) {
-      new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      try {
+        new ClassReader(innerClass.second).accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+      } catch (Exception e) {  // workaround for bug in skipping annotations when first parameter of inner class is dropped (IDEA-204145) 
+        VirtualFile file = innerClass.first;
+        if (LOG.isDebugEnabled()) LOG.debug(String.valueOf(file), e);
+        else LOG.info(file + ": " + e.getMessage());
+      }
     }
   };
 

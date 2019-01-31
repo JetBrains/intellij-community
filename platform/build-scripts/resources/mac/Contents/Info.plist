@@ -76,9 +76,6 @@
       <dict>
         @@idea_properties@@
 
-        <key>idea.java.redist</key>
-        <string>NoJavaDistribution</string>
-
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
       </dict>

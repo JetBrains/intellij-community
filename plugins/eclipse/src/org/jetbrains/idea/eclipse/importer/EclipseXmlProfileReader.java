@@ -79,8 +79,7 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
         }
       }
     }
-    else //noinspection StatementWithEmptyBody
-      if (PROFILES_TAG.equals(qName)) {
+    else if (PROFILES_TAG.equals(qName)) {
       // Ignore
     }
     else {
@@ -89,7 +88,7 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
   }
   
   private static class NonEclipseXmlFileException extends Exception {
-    public NonEclipseXmlFileException(String message) {
+    NonEclipseXmlFileException(String message) {
       super(message);
     }
   }

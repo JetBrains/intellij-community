@@ -136,35 +136,35 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     return myProxyManager.getProxy();
   }
 
+  @NotNull
+  public final String getFormattedTestTree() {
+    return getFormattedTestTree(getTestProxy());
+  }
+
   /**
    * @return Test tree using poorman's graphics
    */
   @NotNull
-  public final String getFormattedTestTree() {
+  public static String getFormattedTestTree(@NotNull final SMTestProxy proxy) {
     final StringBuilder builder = new StringBuilder("Test tree:\n");
-
-    final SMRootTestProxy proxy = getTestProxy();
-    if (proxy.wasTerminated()) {
-      return "Test terminated";
-    }
     formatLevel(proxy, 0, builder);
-
     return builder.toString();
   }
 
   private static void formatLevel(@NotNull final SMTestProxy test, final int level, @NotNull final StringBuilder builder) {
     builder.append(StringUtil.repeat(".", level));
     builder.append(test.getName());
-    if (test.isLeaf()) {
-      if (test.wasTerminated()) {
-        builder.append("[T]");
-      } else if (test.isPassed()) {
-        builder.append("(+)");
-      } else if (test.isIgnored()) {
-        builder.append("(~)");
-      } else {
-        builder.append("(-)");
-      }
+    if (test.wasTerminated()) {
+      builder.append("[T]");
+    }
+    else if (test.isPassed()) {
+      builder.append("(+)");
+    }
+    else if (test.isIgnored()) {
+      builder.append("(~)");
+    }
+    else {
+      builder.append("(-)");
     }
     builder.append('\n');
     for (SMTestProxy child : test.getChildren()) {
@@ -227,7 +227,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       return null;
     }
 
-    assert getFailedTestsCount() > 0: String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
+    assert getFailedTestsCount() > 0 : String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
     final Logger logger = Logger.getInstance(PyAbstractTestProcessRunner.class);
     logger.info(String.format("Starting iteration %s", myCurrentRerunStep));
 

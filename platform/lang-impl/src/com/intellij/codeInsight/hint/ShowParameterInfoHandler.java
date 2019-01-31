@@ -50,6 +50,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   /**
    * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
    */
+  @Deprecated
   public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
     invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
@@ -142,8 +143,9 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   @Nullable
   public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
     Set<ParameterInfoHandler> handlers = new THashSet<>();
+    DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {
-      handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }
     if (handlers.isEmpty()) return null;
     return handlers.toArray(new ParameterInfoHandler[0]);

@@ -34,7 +34,7 @@ import java.awt.image.BufferedImage;
 public class ImageComponentUI extends ComponentUI {
     private BufferedImage pattern;
 
-    private ImageComponentUI(JComponent c) {
+    public ImageComponentUI(JComponent c) {
         c.addPropertyChangeListener(evt -> {
             String name = evt.getPropertyName();
             if (ImageComponent.TRANSPARENCY_CHESSBOARD_BLACK_COLOR_PROP.equals(name) ||
@@ -108,6 +108,7 @@ public class ImageComponentUI extends ComponentUI {
         RenderingHints oldHints = g2d.getRenderingHints();
 
         BufferedImage image = document.getValue(ic.getZoomFactor());
+        if (image == null) return;
 
         if (size.width > image.getWidth() && size.height > image.getHeight()) {
             // disable any kind of source image manipulation when resizing

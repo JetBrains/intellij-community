@@ -37,7 +37,7 @@ import java.util.Collections;
 /**
  * @author maxim
  */
-public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
+public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver, HtmlLikeFile {
   public HtmlFileImpl(FileViewProvider provider) {
     this(provider, XmlElementType.HTML_FILE);
   }
@@ -46,6 +46,7 @@ public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver {
     super(provider, type);
   }
 
+  @Override
   public String toString() {
 
     return "HtmlFile:" + getName();

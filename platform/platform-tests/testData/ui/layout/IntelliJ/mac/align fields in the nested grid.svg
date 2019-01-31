@@ -23,16 +23,16 @@
         <path d="M0 0 L0 15 L108 15 L108 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M0 0 L0 16 L21 16 L21 0 Z"/>
+        <path d="M0 0 L0 16 L16 16 L16 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="7">
-        <path d="M0 0 L0 27 L321 27 L321 0 Z"/>
+        <path d="M0 0 L0 27 L326 27 L326 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="8">
-        <path d="M-1 -1 L-1 26 L320 26 L320 -1 Z"/>
+        <path d="M-1 -1 L-1 26 L325 26 L325 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="9">
-        <path d="M317 4 L317 23 L4 23 L4 4 ZM0 0 L0 27 L321 27 L321 0 Z"/>
+        <path d="M322 4 L322 23 L4 23 L4 4 ZM0 0 L0 27 L326 27 L326 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="10">
         <path d="M0 0 L0 15 L61 15 L61 0 Z"/>
@@ -57,17 +57,17 @@
     <g font-family="sans-serif" font-weight="bold" transform="translate(26,60)">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#5)" stroke="none">Master Password:</text>
     </g>
-    <g font-family="sans-serif" font-weight="bold" transform="translate(459,29)">
-      <image x="0" y="0" clip-path="url(#6)" width="21" xlink:href="../../../../../../icons/src/general/gear.png" height="16" preserveAspectRatio="none"/>
+    <g font-family="sans-serif" font-weight="bold" transform="translate(464,29)">
+      <image x="0" y="0" clip-path="url(#6)" width="16" xlink:href="../../../../../../icons/src/general/gearPlain.svg" height="16" preserveAspectRatio="none"/>
     </g>
     <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(137,23)" stroke="rgb(236,236,236)">
-      <rect x="0" width="321" height="27" y="0" clip-path="url(#7)" stroke="none"/>
+      <rect x="0" width="326" height="27" y="0" clip-path="url(#7)" stroke="none"/>
     </g>
     <g fill="white" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(138,24)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#8)" width="313" rx="0" ry="0" height="19" stroke="none"/>
+      <rect x="3" y="3" clip-path="url(#8)" width="318" rx="0" ry="0" height="19" stroke="none"/>
     </g>
     <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(137,23)" stroke="rgb(188,188,188)">
-      <path d="M3 3 L318 3 L318 24 L3 24 L3 3 ZM4 4 L317 4 L317 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#9)" stroke="none"/>
+      <path d="M3 3 L323 3 L323 24 L3 24 L3 3 ZM4 4 L322 4 L322 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#9)" stroke="none"/>
     </g>
     <g font-family="sans-serif" font-weight="bold" transform="translate(26,29)">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#10)" stroke="none">Database:</text>

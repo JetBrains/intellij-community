@@ -15,9 +15,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +42,7 @@ public class SelectDateDialog extends DialogWrapper {
     pack();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

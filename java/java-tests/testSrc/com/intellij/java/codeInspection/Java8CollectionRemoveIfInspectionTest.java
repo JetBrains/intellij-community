@@ -27,10 +27,6 @@ public class Java8CollectionRemoveIfInspectionTest extends LightQuickFixParamete
     return new LocalInspectionTool[]{new Java8CollectionRemoveIfInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/java8CollectionRemoveIf";

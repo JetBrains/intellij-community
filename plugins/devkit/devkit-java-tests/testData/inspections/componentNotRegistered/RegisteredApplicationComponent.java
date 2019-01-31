@@ -1,9 +1,9 @@
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 
 public class RegisteredApplicationComponent
-  implements ApplicationComponent {
+  implements BaseComponent {
 
   public static class InnerStaticClassApplicationContext
-    implements ApplicationComponent {
+    implements BaseComponent {
   }
 }

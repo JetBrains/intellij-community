@@ -19,6 +19,7 @@ public class AssertFocused extends AbstractCommand {
     super(text, line);
   }
 
+  @Override
   protected Promise<Object> _execute(final PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
     final Map<String, String> expected = new LinkedHashMap<>();
@@ -87,7 +88,7 @@ public class AssertFocused extends AbstractCommand {
       untested.put(eachKey, actual.get(eachKey));
     }
 
-    StringBuffer untestedText = new StringBuffer();
+    StringBuilder untestedText = new StringBuilder();
     for (String each : untested.keySet()) {
       if (untestedText.length() > 0) {
         untestedText.append(",");

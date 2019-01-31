@@ -1,12 +1,6 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <title>interface</title>
-  <g>
-    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
-      <circle cx="8" cy="8" r="7" fill="#74bd59"/>
-    </g>
-    <polygon points="9 6 8 5 8 11 9 10 9 6" fill="#231f20" opacity="0.3"/>
-    <polygon points="10 6 9 6 8 5 10 5 10 6" fill="#231f20" opacity="0.7"/>
-    <polygon points="6 5 6 6 7 6 7 10 6 10 6 11 8 11 8 5 6 5" fill="#231f20" opacity="0.7"/>
-    <polygon points="10 11 8 11 9 10 10 10 10 11" fill="#231f20" opacity="0.7"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#62B543" fill-opacity=".6" d="M15,8 C15,11.866 11.866,15 8,15 C4.134,15 1,11.866 1,8 C1,4.134 4.134,1 8,1 C11.866,1 15,4.134 15,8"/>
+    <polygon fill="#231F20" fill-rule="nonzero" points="8.6 10 8.6 6 10 6 10 5 6 5 6 6 7.4 6 7.4 10 6 10.007 6 11 10 11 10 10" opacity=".7"/>
   </g>
 </svg>

@@ -20,7 +20,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
   protected final String myUrl;
   private final OrderRootType myRootType;
 
-  public ItemElement(@NotNull OrderRootTypeElement parent, @NotNull String url, @NotNull OrderRootType rootType, final boolean isJarDirectory,
+  ItemElement(@NotNull OrderRootTypeElement parent, @NotNull String url, @NotNull OrderRootType rootType, final boolean isJarDirectory,
                      boolean isValid) {
     super(parent);
     myUrl = url;

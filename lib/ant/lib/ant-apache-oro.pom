@@ -27,19 +27,19 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.9.4</version>
+    <version>1.10.5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-apache-oro</artifactId>
-  <version>1.9.4</version>
+  <version>1.10.5</version>
   <name>Apache Ant + Apache Oro</name>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.9.4</version>
+      <version>1.10.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -47,6 +47,12 @@
       <artifactId>oro</artifactId>
       <version>2.0.8</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>

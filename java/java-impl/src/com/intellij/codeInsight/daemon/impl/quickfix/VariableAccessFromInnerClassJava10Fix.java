@@ -159,7 +159,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     final @NotNull PsiLocalVariable myVariable;
     final @NotNull String name;
 
-    public DeclarationInfo(boolean isBefore,
+    DeclarationInfo(boolean isBefore,
                            @NotNull PsiStatement statementToReplace,
                            @NotNull PsiAnonymousClass anonymousClass,
                            @NotNull PsiNewExpression expression, @NotNull PsiLocalVariable variable, @NotNull String name) {

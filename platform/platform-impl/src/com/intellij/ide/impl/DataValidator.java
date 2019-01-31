@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,14 +6,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstanceEP;
-import java.util.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class DataValidator<T> {
@@ -36,42 +22,42 @@ public abstract class DataValidator<T> {
   public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME =
     ExtensionPointName.create("com.intellij.dataValidator");
 
-  Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
-  private static final Map<String, DataValidator> ourValidators = new HashMap<>();
+  private static final Map<String, DataValidator<?>> ourValidators = new HashMap<>();
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {
-    public VirtualFile findInvalid(final String dataId, VirtualFile file, final Object dataSource) {
+    @Override
+    public VirtualFile findInvalid(@NotNull final String dataId, @NotNull VirtualFile file, @NotNull final Object dataSource) {
       return file.isValid() ? null : file;
     }
   };
   private static final DataValidator<Project> PROJECT_VALIDATOR = new DataValidator<Project>() {
     @Override
-    public Project findInvalid(final String dataId, final Project project, final Object dataSource) {
+    public Project findInvalid(@NotNull final String dataId, @NotNull final Project project, @NotNull final Object dataSource) {
       return project.isDisposed() ? project : null;
     }
   };
   private static final DataValidator<Editor> EDITOR_VALIDATOR = new DataValidator<Editor>() {
     @Override
-    public Editor findInvalid(final String dataId, final Editor editor, final Object dataSource) {
+    public Editor findInvalid(@NotNull final String dataId, @NotNull final Editor editor, @NotNull final Object dataSource) {
       return editor.isDisposed() ? editor : null;
     }
   };
 
   @Nullable
-  public abstract T findInvalid(final String dataId, T data, final Object dataSource);
+  public abstract T findInvalid(@NotNull String dataId, @NotNull T data, @NotNull Object dataSource);
 
-  private static <T> DataValidator<T> getValidator(String dataId) {
+  private static <T> DataValidator<T> getValidator(@NotNull String dataId) {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
-      for (KeyedLazyInstanceEP<DataValidator> ep : Extensions.getExtensions(EP_NAME)) {
+      for (KeyedLazyInstanceEP<DataValidator> ep : EP_NAME.getExtensionList()) {
         ourValidators.put(ep.key, ep.getInstance());
       }
     }
-    return ourValidators.get(dataId);
+    return (DataValidator<T>)ourValidators.get(dataId);
   }
 
-  public static <T> T findInvalidData(String dataId, Object data, final Object dataSource) {
-    if (data == null) return null;
+  static <T> T findInvalidData(@NotNull String dataId, @NotNull Object data, @NotNull Object dataSource) {
     DataValidator<T> validator = getValidator(dataId);
     if (validator != null) {
       try {
@@ -93,24 +79,24 @@ public abstract class DataValidator<T> {
     ourValidators.put(CommonDataKeys.HOST_EDITOR.getName(), EDITOR_VALIDATOR);
   }
 
-  public static class ArrayValidator<T> extends DataValidator<T[]> {
+  static class ArrayValidator<T> extends DataValidator<T[]> {
     private final DataValidator<T> myElementValidator;
 
-    public ArrayValidator(DataValidator<T> elementValidator) {
+    ArrayValidator(@NotNull DataValidator<T> elementValidator) {
       myElementValidator = elementValidator;
     }
 
-    public T[] findInvalid(final String dataId, T[] array, final Object dataSource) {
+    @Override
+    public T[] findInvalid(@NotNull final String dataId, @NotNull T[] array, @NotNull final Object dataSource) {
       for (T element : array) {
         if (element == null) {
-          LOG.error(
-            "Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString() + ")");
+          LOG.error("Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString() + ")");
+          return null;
         }
         T invalid = myElementValidator.findInvalid(dataId, element, dataSource);
         if (invalid != null) {
-          T[] result = (T[])Array.newInstance(array.getClass().getComponentType(), 1);
-          result[0] = invalid;
-          return result;
+          Class<T> type = (Class<T>)array.getClass().getComponentType();
+          return ArrayUtil.toObjectArray(type, invalid);
         }
       }
       return null;

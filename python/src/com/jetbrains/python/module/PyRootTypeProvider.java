@@ -90,13 +90,13 @@ public abstract class PyRootTypeProvider {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       final VirtualFile[] selectedFiles = getSelectedFiles();
       return selectedFiles.length != 0 && hasRoot(selectedFiles[0], myEditor);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean isSelected) {
+    public void setSelected(@NotNull AnActionEvent e, boolean isSelected) {
       final VirtualFile[] selectedFiles = getSelectedFiles();
       assert selectedFiles.length != 0;
 

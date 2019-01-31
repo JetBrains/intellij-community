@@ -134,10 +134,12 @@ public class ThumbnailComponent extends JComponent {
         return StringUtil.formatFileSize(fileSize);
     }
 
+    @Override
     public void updateUI() {
         setUI(UIManager.getUI(this));
     }
 
+    @Override
     public String getUIClassID() {
         return uiClassID;
     }

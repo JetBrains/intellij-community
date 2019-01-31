@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -48,7 +49,7 @@ public class InsertNewFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall) && !(myMethodCall.getNextSibling() instanceof PsiErrorElement);
+    return myMethodCall.isValid() && BaseIntentionAction.canModify(myMethodCall) && !(myMethodCall.getNextSibling() instanceof PsiErrorElement);
   }
 
   @NotNull
@@ -59,7 +60,7 @@ public class InsertNewFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethodCall.getProject());
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 
     CommentTracker tracker = new CommentTracker();

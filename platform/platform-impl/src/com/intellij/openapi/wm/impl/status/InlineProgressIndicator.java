@@ -113,7 +113,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myComponent.add(textAndProgress, BorderLayout.CENTER);
   }
 
-  static JPanel createButtonPanel(Iterable<JComponent> components) {
+  static JPanel createButtonPanel(Iterable<? extends JComponent> components) {
     JPanel iconsPanel = new NonOpaquePanel(new GridBagLayout());
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH);
     for (JComponent component : components) {

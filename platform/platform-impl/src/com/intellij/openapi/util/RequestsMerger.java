@@ -44,12 +44,12 @@ public class RequestsMerger {
   private final Object myLock = new Object();
 
   private MyState myState;
-  private final Consumer<Runnable> myAlarm;
+  private final Consumer<? super Runnable> myAlarm;
 
   private final List<Runnable> myWaitingStartListeners = new ArrayList<>();
   private final List<Runnable> myWaitingFinishListeners = new ArrayList<>();
 
-  public RequestsMerger(final Runnable runnable, final Consumer<Runnable> alarm) {
+  public RequestsMerger(final Runnable runnable, final Consumer<? super Runnable> alarm) {
     myAlarm = alarm;
     myWorker = new MyWorker(runnable);
 

@@ -54,6 +54,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return ServiceManager.getService(project, JavaCoverageAnnotator.class);
   }
 
+  @Override
   @Nullable
   public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
                                                 @NotNull final CoverageSuitesBundle currentSuite,
@@ -71,12 +72,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
   }
 
+  @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
     // N/A here we work with java classes
     return null;
   }
 
+  @Override
   public void onSuiteChosen(CoverageSuitesBundle newSuite) {
     super.onSuiteChosen(newSuite);
 
@@ -88,6 +91,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myExtensionCoverageInfos.clear();
   }
 
+  @Override
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
 
 
@@ -107,10 +111,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
     return () -> {
       final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
+        @Override
         public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
           myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
         }
 
+        @Override
         public void annotatePackage(String packageQualifiedName,
                                     PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                     boolean flatten) {
@@ -122,18 +128,21 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           }
         }
 
+        @Override
         public void annotateSourceDirectory(VirtualFile dir,
                                             PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
                                             Module module) {
           myDirCoverageInfos.put(dir, dirCoverageInfo);
         }
 
+        @Override
         public void annotateTestDirectory(VirtualFile virtualFile,
                                           PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                           Module module) {
           myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
         }
 
+        @Override
         public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
           myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
         }
@@ -191,7 +200,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public String getPackageCoverageInformationString(final PsiPackage psiPackage,
                                                     @Nullable final Module module,
-                                                    @NotNull final CoverageDataManager coverageDataManager, 
+                                                    @NotNull final CoverageDataManager coverageDataManager,
                                                     boolean flatten) {
     if (psiPackage == null) return null;
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();

@@ -51,7 +51,7 @@ public class RootDetectionUtil {
   }
 
   @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates,
+  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates,
                                             @Nullable Component parentComponent,
                                             @Nullable Project project,
                                             @NotNull final LibraryRootsComponentDescriptor rootsComponentDescriptor) {
@@ -60,7 +60,7 @@ public class RootDetectionUtil {
   }
 
   @NotNull
-  public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates, @Nullable Component parentComponent,
+  public static List<OrderRoot> detectRoots(@NotNull final Collection<? extends VirtualFile> rootCandidates, @Nullable Component parentComponent,
                                             @Nullable Project project, @NotNull final LibraryRootsDetector detector,
                                             @NotNull OrderRootType[] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<>();
@@ -158,7 +158,7 @@ public class RootDetectionUtil {
     return result;
   }
 
-  private static boolean allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(Collection<DetectedLibraryRoot> roots, VirtualFile candidate) {
+  private static boolean allRootsHaveOneTypeAndEqualToOrAreDirectParentOf(Collection<? extends DetectedLibraryRoot> roots, VirtualFile candidate) {
     for (DetectedLibraryRoot root : roots) {
       if (root.getTypes().size() > 1 || !root.getFile().equals(candidate) && !root.getFile().equals(candidate.getParent())) {
         return false;
@@ -168,7 +168,7 @@ public class RootDetectionUtil {
   }
 
   private static class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
-    public ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
+    ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
       super(project, names, title, description, true);
     }
 

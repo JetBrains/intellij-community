@@ -21,6 +21,7 @@ import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -44,10 +45,14 @@ public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfig
     Project project = e.getProject();
     if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
       List<RunDashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
-      e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
+      boolean enabled = targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();
         return content != null && !RunContentManagerImpl.isTerminated(content);
-      }));
+      });
+      e.getPresentation().setEnabled(enabled);
+      if (!enabled && ActionPlaces.isPopupPlace(e.getPlace())) {
+        e.getPresentation().setVisible(false);
+      }
     }
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();

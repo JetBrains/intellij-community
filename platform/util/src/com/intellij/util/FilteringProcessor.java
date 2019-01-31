@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Condition;
  * @author max
  */
 public class FilteringProcessor<T> implements Processor<T> {
-  private final Condition<T> myFilter;
-  private final Processor<T> myProcessor;
+  private final Condition<? super T> myFilter;
+  private final Processor<? super T> myProcessor;
 
-  public FilteringProcessor(final Condition<T> filter, Processor<T> processor) {
+  public FilteringProcessor(final Condition<? super T> filter, Processor<? super T> processor) {
     myFilter = filter;
     myProcessor = processor;
   }

@@ -143,7 +143,6 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   @NotNull
   @Override
   public DocumentContent getContent() {
-    //noinspection unchecked
     return (DocumentContent)super.getContent();
   }
 
@@ -188,7 +187,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getEditor();
     }

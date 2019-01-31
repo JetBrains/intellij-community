@@ -21,11 +21,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
 
 /**
@@ -33,7 +30,7 @@ import org.jetbrains.plugins.terminal.TerminalView;
  */
 public class RevealFileInTerminalAction extends DumbAwareAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabledAndVisible(project != null && getSelectedFile(e) != null);
   }
@@ -44,17 +41,12 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     VirtualFile selectedFile = getSelectedFile(e);
     if (project == null || selectedFile == null) {
       return;
     }
-
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    if (window != null && window.isAvailable()) {
-      TerminalView.getInstance(project).setFileToOpen(selectedFile);
-      window.activate(null);
-    }
+    TerminalView.getInstance(project).openTerminalIn(selectedFile);
   }
 }

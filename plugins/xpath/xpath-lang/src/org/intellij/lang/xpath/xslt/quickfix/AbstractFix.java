@@ -37,12 +37,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AbstractFix implements IntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     final String name = getClass().getSimpleName();
     return "XSLT " + name.replaceAll("Fix$", "").replaceAll("(\\p{Lower}+)(\\p{Upper})", "$1 $2");
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -57,6 +59,7 @@ public abstract class AbstractFix implements IntentionAction {
     return new TemplateBuilderImpl(psiFile);
   }
 
+  @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (requiresEditor() && editor == null) return false;
 
@@ -73,16 +76,19 @@ public abstract class AbstractFix implements IntentionAction {
     if (requiresEditor && !isOnTheFly) return null;
 
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return AbstractFix.this.getText();
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return AbstractFix.this.getFamilyName();
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         Editor editor;
         if (requiresEditor) {

@@ -21,15 +21,20 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("ConstantConditions")
 @SkipSlowTestLocally
 public class PsiEventsTest extends PsiTestCase {
   private VirtualFile myPrjDir1;
@@ -164,7 +169,7 @@ public class PsiEventsTest extends PsiTestCase {
     VirtualFile file = createChildData(myPrjDir1, "a.txt");
     PsiFile psiFile = fileManager.findFile(file);
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
 
 
     if (((FileManagerImpl)fileManager).getCachedDirectory(myPrjDir1) != null) {
@@ -266,7 +271,7 @@ public class PsiEventsTest extends PsiTestCase {
     FileManager fileManager = myPsiManager.getFileManager();
     VirtualFile file = createChildDirectory(myPrjDir1, "dir1");
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     assertNull(((FileManagerImpl)fileManager).getCachedDirectory(file));
 

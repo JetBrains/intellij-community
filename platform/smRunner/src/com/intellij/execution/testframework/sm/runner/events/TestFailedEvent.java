@@ -187,6 +187,7 @@ public class TestFailedEvent extends TreeNodeEvent {
   /**
    * @deprecated use {@link #getExpectedFilePath()} instead
    */
+  @Deprecated
   public String getFilePath() {
     return myExpectedFilePath;
   }

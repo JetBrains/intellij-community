@@ -38,10 +38,6 @@ public class InlineSameParameterValueTest extends LightQuickFixParameterizedTest
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
     final LocalQuickFix fix = (LocalQuickFix)new SameParameterValueInspection().getQuickFix(actionHint.getExpectedText());

@@ -83,6 +83,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   abstract T toShortcut(Object value);
 
   void setShortcut(T shortcut) {
+    setOKActionEnabled(shortcut != null);
     if (!equal(shortcut, myShortcutPanel.getShortcut())) {
       myShortcutPanel.setShortcut(shortcut);
     }

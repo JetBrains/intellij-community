@@ -91,17 +91,20 @@ public class BuildTargetConfiguration {
   }
 
   public void save(CompileContext context) {
+    persist(getCurrentState(context));
+  }
+
+  public void invalidate() {
+    persist("$dirty_mark$");
+  }
+
+  private void persist(final String data) {
     try {
       File configFile = getConfigFile();
       FileUtil.createParentDirs(configFile);
-      Writer out = new BufferedWriter(new FileWriter(configFile));
-      try {
-        String current = getCurrentState(context);
-        out.write(current);
-        myConfiguration = current;
-      }
-      finally {
-        out.close();
+      try (Writer out = new BufferedWriter(new FileWriter(configFile))) {
+        out.write(data);
+        myConfiguration = data;
       }
     }
     catch (IOException e) {
@@ -127,7 +130,6 @@ public class BuildTargetConfiguration {
 
   private String saveToString(CompileContext context) {
     StringWriter out = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myTarget.writeConfiguration(context.getProjectDescriptor(), new PrintWriter(out));
     return out.toString();
   }

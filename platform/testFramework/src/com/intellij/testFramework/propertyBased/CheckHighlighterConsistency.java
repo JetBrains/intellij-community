@@ -41,7 +41,7 @@ import java.util.function.Function;
  */
 public class CheckHighlighterConsistency extends ActionOnFile {
 
-  public CheckHighlighterConsistency(PsiFile file) {
+  public CheckHighlighterConsistency(@NotNull PsiFile file) {
     super(file);
   }
 

@@ -236,7 +236,7 @@ class TypeCorrector extends PsiTypeMapper {
     private final PsiClassType.ClassResolveResult myClassResolveResult;
     private volatile PsiSubstitutor myLazySubstitutor;
 
-    public CorrectedResolveResult(PsiClass psiClass,
+    CorrectedResolveResult(PsiClass psiClass,
                                   PsiClass mappedClass,
                                   PsiSubstitutor substitutor,
                                   PsiClassType.ClassResolveResult classResolveResult) {

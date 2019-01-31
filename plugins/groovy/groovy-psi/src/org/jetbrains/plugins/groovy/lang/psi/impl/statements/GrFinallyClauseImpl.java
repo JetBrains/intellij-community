@@ -22,6 +22,7 @@ public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinal
     visitor.visitFinallyClause(this);
   }
 
+  @Override
   public String toString() {
     return "Finally clause";
   }

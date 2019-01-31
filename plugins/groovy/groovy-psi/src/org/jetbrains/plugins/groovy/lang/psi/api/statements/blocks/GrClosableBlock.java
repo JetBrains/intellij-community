@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import com.intellij.psi.PsiElement;
@@ -8,15 +7,14 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 /**
  * @author ilyas
  */
-public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParametersOwner {
+public interface GrClosableBlock extends GrFunctionalExpression, GrCodeBlock {
   GrClosableBlock[] EMPTY_ARRAY = new GrClosableBlock[0];
 
   String OWNER_NAME = "owner";
@@ -34,9 +32,12 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
 
   boolean hasParametersSection();
 
+  @Override
   @Nullable
   PsiType getReturnType();
 
+  @NotNull
+  @Override
   GrParameter[] getAllParameters();
 
   @Nullable
@@ -50,6 +51,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
                                      @Nullable final PsiElement lastParent,
                                      @NotNull final PsiElement place);
 
+  @Override
   @Nullable
   PsiType getOwnerType();
 }

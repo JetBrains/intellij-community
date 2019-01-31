@@ -99,7 +99,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
     }
 
     private static boolean collectAssignedFields(PsiElement element, PsiParameter parameter,
-                                                 @Nullable Set<PsiMethod> methods, List<PsiField> assignedFields) {
+                                                 @Nullable Set<? super PsiMethod> methods, List<? super PsiField> assignedFields) {
       if (element instanceof PsiAssignmentExpression) {
         final PsiExpression lhs = ParenthesesUtils.stripParentheses(((PsiAssignmentExpression)element).getLExpression());
         final PsiVariable variable = resolveVariable(lhs, null);

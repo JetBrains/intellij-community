@@ -401,9 +401,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                         ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
                        )
                 ) {
-                if (!result.contains(candidateName)) {
-                  result.add(candidateName);
-                }
+                result.add(candidateName);
                 break;
               }
             }

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE.txt file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -95,7 +93,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(path + "/before6.java");
     checkResultByFile(path + "/after6.java");
   }
-  
+
   public void testParenAfterCall1_SpaceWithinMethodCallParens() {
     String path = "/parenAfterCall";
 
@@ -401,7 +399,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testConstructorWithExistingParens() { doTest(); }
 
   public void testMethodAnnotationNamedParameter() { doTest(); }
-  
+
   public void testInheritedClass() { doTest(); }
 
   public void testClassLiteralInAnno1() { doTest(); }
@@ -466,6 +464,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertStringItems("aac", "aab", "hashCode");
   }
+
+  public void testNoUninitializedSuperFieldsInConstructor() {
+    configureByTestName();
+    assertStringItems("input", "baseConstant");
+  }
+
   public void testFieldsSetInAnotherConstructor() { doTest(); }
   public void testFieldsSetAbove() { doTest(); }
 
@@ -654,7 +658,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   //todo 2nd completion
   public void _testDefaultAnnoParam2() { doTest(); }
-  
+
   public void testAnnotationValue() {doTest(); }
 
   public void testLiveTemplate() {
@@ -832,7 +836,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
     assertInstanceOf(item.getPsiElement(), PsiClass.class);
   }
-  
+
   public void testNoClassLiteral() {
     doActionTest();
     assertStringItems("Object.class", "getClass", "forName", "forName");
@@ -847,7 +851,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInsertOverride() {
-    JavaCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(getProject());
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
     doItemTest();
   }
@@ -907,7 +911,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAnnotation6() {
     configureByTestName();
-  
+
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
@@ -1040,11 +1044,36 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testEnumAsDefaultAnnotationParam() { doTest(); }
-  public void testBreakLabel() { doTest(); }
+
+  public void testBreakLabel() {
+    myFixture.configureByText(
+      "a.java",
+      "class a{{\n" +
+      "  foo: while (true) break <caret>\n" +
+      "}}");
+    complete();
+    myFixture.checkResult(
+      "class a{{\n" +
+      "  foo: while (true) break foo;<caret>\n" +
+      "}}");
+  }
+
+  public void testContinueLabel() {
+    myFixture.configureByText(
+      "a.java",
+      "class a{{\n" +
+      "  foo: while (true) continue <caret>\n" +
+      "}}");
+    complete();
+    myFixture.checkResult(
+      "class a{{\n" +
+      "  foo: while (true) continue foo;<caret>\n" +
+      "}}");
+  }
 
   public void testNewAbstractInsideAnonymous() { doTest(); }
 
-  public void testFilterPrivateConstructors() { doTest(); }
+  public void testFilterPrivateConstructors() { doAntiTest(); }
 
   public void testExplicitMethodTypeParametersQualify() { doTest(); }
   public void testExplicitMethodTypeParametersOverZealous() { doTest(); }
@@ -1059,7 +1088,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCaseMissingEnumValue() { doTest(); }
   public void testCaseMissingEnumValue2() { doTest(); }
-  
+
   public void testNoHiddenParameter() { doTest(); }
 
   public void testTypeVariableInstanceOf() {
@@ -1133,15 +1162,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInnerClassImports() {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.INSERT_INNER_CLASS_IMPORTS = true;
-    try {
-      myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
-      doActionTest();
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = false;
-    }
+    myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
+    doActionTest();
   }
 
   public void testCastWithGenerics() {
@@ -1170,9 +1194,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doFirstItemTest('\t');
   }
 
-  public void testSuggestMethodReturnType() { 
+  public void testSuggestMethodReturnType() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "Serializable", "CharSequence", "Object");
+  }
+
+  public void testSuggestMethodReturnTypeAnonymous() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "Object");
   }
 
   public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
@@ -1285,5 +1314,19 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoUnrelatedMethodSuggestion() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
+  }
+
+  public void testLog4jLevel() {
+    myFixture.addClass("package org.apache.log4j; " +
+                       "public class Category { " +
+                       "  public void log(Priority priority, Object message); " +
+                       "}" +
+                       "public class Priority { " +
+                       "  final static public Priority FATAL;" + //deprecated
+                       "}" +
+                       "public class Level extends Priority { " +
+                       "  final static public Level FATAL;" +
+                       "}");
+    doTest('\n');
   }
 }

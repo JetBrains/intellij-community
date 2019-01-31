@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.rollback;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;
@@ -23,13 +24,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Interface for performing VCS rollback / revert operations.
  *
  * @author yole
- * @since 7.0
  */
 public interface RollbackEnvironment extends VcsProviderMarker {
   /**
@@ -83,4 +85,11 @@ public interface RollbackEnvironment extends VcsProviderMarker {
    * @param file the file to rollback.
    */
   void rollbackIfUnchanged(VirtualFile file);
+
+  /**
+   * @return the list of VCS-specific rollback-flavoured actions to show in Commit dialog
+   */
+  default Collection<? extends AnAction> createCustomRollbackActions() {
+    return Collections.emptyList();
+  }
 }

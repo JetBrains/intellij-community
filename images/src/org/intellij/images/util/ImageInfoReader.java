@@ -16,7 +16,6 @@
 package org.intellij.images.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Couple;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +24,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.geom.Dimension2D;
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -39,16 +40,16 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull String file) {
-    return read(new File(file));
+  public static Info getInfo(@NotNull byte[] data) {
+    return getInfo(data, null);
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data) {
+  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
-        Info info = tryReadSvg(data);
+        Info info = getSvgSize(data);
         if (info != null) {
           return info;
         }
@@ -57,21 +58,26 @@ public class ImageInfoReader {
         break;
       }
     }
-    return read(new ByteArrayInputStream(data));
+    return read(new ByteArrayInputStream(data), inputName);
   }
 
-  private static Info tryReadSvg(byte[] data) {
+  private static Info getSvgSize(byte[] data) {
     try {
-      Couple<Integer> couple = SVGLoader.loadInfo(null, new ByteArrayInputStream(data), 1.0f);
-      return new Info(couple.first, couple.second, 32);
-    } catch (Throwable e) {
+      Dimension2D size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
+      return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32);
+    }
+    catch (Throwable e) {
       return null;
     }
   }
 
   @Nullable
-  private static Info read(@NotNull Object input) {
+  private static Info read(@NotNull Object input, @Nullable String inputName) {
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
+      if (isAppleOptimizedPNG(iis)) {
+        // They are not supported by PNGImageReader
+        return null;
+      }
       Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
       ImageReader reader = it.hasNext() ? it.next() : null;
       if (reader != null) {
@@ -84,7 +90,7 @@ public class ImageInfoReader {
       }
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.warn(inputName, e);
     }
     return null;
   }
@@ -123,4 +129,18 @@ public class ImageInfoReader {
     }
   }
 
+  private static final byte[] APPLE_PNG_SIGNATURE = {-119, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 4, 67, 103, 66, 73};
+
+  private static boolean isAppleOptimizedPNG(@NotNull ImageInputStream iis) throws IOException {
+    try {
+      byte[] signature = new byte[APPLE_PNG_SIGNATURE.length];
+      if (iis.read(signature) != APPLE_PNG_SIGNATURE.length) {
+        return false;
+      }
+      return Arrays.equals(signature, APPLE_PNG_SIGNATURE);
+    }
+    finally {
+      iis.seek(0);
+    }
+  }
 }

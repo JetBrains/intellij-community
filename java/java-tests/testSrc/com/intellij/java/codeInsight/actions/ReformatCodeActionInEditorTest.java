@@ -16,12 +16,15 @@
 package com.intellij.java.codeInsight.actions;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.FileInEditorProcessor;
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.codeInsight.actions.LayoutCodeOptions;
 import com.intellij.codeInsight.actions.ReformatCodeRunOptions;
+import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import static com.intellij.codeInsight.actions.TextRangeType.*;
@@ -37,6 +40,9 @@ public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixt
   public void tearDown() throws Exception {
     try {
       myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -118,5 +124,13 @@ public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixt
   public void testFormatSelection_DoNotTouchTrailingWhiteSpaces() {
     //todo actually test is not working, and working test is not working
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
+  }
+
+  public void testDisabledFormatting() {
+    CodeStyleSettings temp = new CodeStyleSettings();
+    NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
+    descriptor.setPattern("file:*.java");
+    temp.getExcludedFiles().addDescriptor(descriptor);
+    CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest(new ReformatCodeRunOptions(WHOLE_FILE).setOptimizeImports(true)));
   }
 }

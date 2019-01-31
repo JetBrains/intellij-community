@@ -8,6 +8,7 @@ public class Main {
   private static void foo(String a, E... vararg) {}
 
   private void test() {
-    foo("bar", E.B, E.A,<caret> E.C, E.D, E.A);
+    foo("bar", ((E.B) //
+    ), E.A,<caret> E.C, (/**/E.D), E.A);
   }
 }

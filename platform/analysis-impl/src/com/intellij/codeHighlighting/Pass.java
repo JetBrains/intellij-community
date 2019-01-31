@@ -19,9 +19,6 @@ public interface Pass {
   int UPDATE_FOLDING = 1;
   int POPUP_HINTS = 3;
   int UPDATE_ALL = 4;
-  /** will be removed shortly; use {@link #LINE_MARKERS} instead*/
-  @Deprecated
-  int UPDATE_OVERRIDDEN_MARKERS = 6;
   int LOCAL_INSPECTIONS = 7;
   int EXTERNAL_TOOLS = 8;
   int WOLF = 9;

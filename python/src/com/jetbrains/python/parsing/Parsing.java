@@ -54,7 +54,7 @@ public class Parsing {
     return getParsingContext().getFunctionParser();
   }
 
-  protected boolean checkMatches(final IElementType token, final String message) {
+  protected boolean checkMatches(final IElementType token, @NotNull String message) {
     if (myBuilder.getTokenType() == token) {
       myBuilder.advanceLexer();
       return true;
@@ -129,7 +129,7 @@ public class Parsing {
     }
   }
 
-  protected static void advanceError(@NotNull PsiBuilder builder, String message) {
+  protected static void advanceError(@NotNull PsiBuilder builder, @NotNull String message) {
     final PsiBuilder.Marker err = builder.mark();
     builder.advanceLexer();
     err.error(message);

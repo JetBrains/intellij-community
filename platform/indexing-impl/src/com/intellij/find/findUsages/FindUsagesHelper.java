@@ -30,11 +30,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-class FindUsagesHelper {
-  static boolean processUsagesInText(@NotNull final PsiElement element,
-                                     @NotNull Collection<String> stringToSearch,
-                                     @NotNull GlobalSearchScope searchScope,
-                                     @NotNull Processor<UsageInfo> processor) {
+public class FindUsagesHelper {
+  public static boolean processUsagesInText(@NotNull final PsiElement element,
+                                            @NotNull Collection<String> stringToSearch,
+                                            @NotNull GlobalSearchScope searchScope,
+                                            @NotNull Processor<? super UsageInfo> processor) {
     final TextRange elementTextRange = ReadAction.compute(() -> !element.isValid() || element instanceof PsiCompiledElement ? null : element.getTextRange());
     UsageInfoFactory factory = (usage, startOffset, endOffset) -> {
       if (!element.isValid()) return new UsageInfo(usage, startOffset, endOffset, true);

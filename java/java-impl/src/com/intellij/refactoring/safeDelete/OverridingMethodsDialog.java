@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -35,7 +20,6 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,7 +38,7 @@ import java.util.List;
  * @author dsl
  */
 class OverridingMethodsDialog extends DialogWrapper {
-  private final List<UsageInfo> myOverridingMethods;
+  private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
   private final boolean[] myChecked;
 
@@ -62,7 +46,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   private Table myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
-  public OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
+  OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];
@@ -84,6 +68,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.safeDelete.OverridingMethodsDialog";
   }
@@ -98,15 +83,12 @@ class OverridingMethodsDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()/*, getHelpAction()*/};
+  @Override
+  protected String getHelpId() {
+    return HelpID.SAFE_DELETE_OVERRIDING;
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.SAFE_DELETE_OVERRIDING);
-  }
-
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -115,6 +97,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
@@ -125,6 +108,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
@@ -133,7 +117,6 @@ class OverridingMethodsDialog extends DialogWrapper {
     myTable.setShowGrid(false);
 
     TableColumnModel columnModel = myTable.getColumnModel();
-//    columnModel.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MemberSelectionTable.MyTableRenderer());
     TableColumn checkboxColumn = columnModel.getColumn(CHECK_COLUMN);
     TableUtil.setupCheckboxColumn(checkboxColumn);
     checkboxColumn.setCellRenderer(new BooleanTableCellRenderer());
@@ -143,6 +126,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
     @NonNls final ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -175,6 +159,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     panel.add(scrollPane, BorderLayout.CENTER);
     ListSelectionListener selectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
@@ -192,8 +177,9 @@ class OverridingMethodsDialog extends DialogWrapper {
     splitter.setFirstComponent(panel);
     splitter.setSecondComponent(myUsagePreviewPanel);
     myUsagePreviewPanel.updateLayout(null);
-    
+
     Disposer.register(myDisposable, new Disposable(){
+      @Override
       public void dispose() {
         splitter.dispose();
       }
@@ -206,33 +192,31 @@ class OverridingMethodsDialog extends DialogWrapper {
   }
 
   class MyTableModel extends AbstractTableModel {
+    @Override
     public int getRowCount() {
       return myChecked.length;
     }
 
+    @Override
     public String getColumnName(int column) {
-      switch(column) {
-        case CHECK_COLUMN:
-          return " ";
-        default:
-          return RefactoringBundle.message("method.column");
-      }
+      return column == CHECK_COLUMN ? " " : RefactoringBundle.message("method.column");
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
-      switch(columnIndex) {
-        case CHECK_COLUMN:
-          return Boolean.class;
-        default:
-          return String.class;
+      if (columnIndex == CHECK_COLUMN) {
+        return Boolean.class;
       }
+      return String.class;
     }
 
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       if(columnIndex == CHECK_COLUMN) {
         return Boolean.valueOf(myChecked[rowIndex]);
@@ -242,12 +226,14 @@ class OverridingMethodsDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if(columnIndex == CHECK_COLUMN) {
         myChecked[rowIndex] = ((Boolean) aValue).booleanValue();
       }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == CHECK_COLUMN;
     }

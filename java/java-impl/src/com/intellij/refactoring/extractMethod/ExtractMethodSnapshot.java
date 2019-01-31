@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -105,84 +105,19 @@ public class ExtractMethodSnapshot {
     myFoldable = from.myFoldable;
 
     myTargetClass = Optional.ofNullable(from.getTargetClass())
-                            .map(fromClass -> findClassInCopy(pattern, copy, fromClass))
+                            .map(PsiElement::getTextRange)
+                            .map(range -> findTargetClassInRange(copy[0].getContainingFile(), range))
                             .map(smartPointerManager::createSmartPsiElementPointer)
                             .orElse(null);
   }
 
   @Nullable
-  private static PsiClass findClassInCopy(PsiElement[] pattern, PsiElement[] copy, @NotNull PsiClass fromClass) {
-    PsiFile patternFile = pattern[0].getContainingFile();
-    PsiFile copyFile = copy[0].getContainingFile();
-    if (patternFile == null || copyFile == null) {
-      return null;
-    }
-
-    List<PathNode> path = new ArrayList<>();
-    PsiElement element = fromClass;
-    while (element != patternFile) {
-      IElementType type = element.getNode().getElementType();
-      String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-      int indexByType = 0;
-      for (PsiElement prev = element.getPrevSibling(); prev != null; prev = prev.getPrevSibling()) {
-        if (prev.getNode().getElementType() == type) {
-          indexByType++;
-        }
-      }
-      path.add(new PathNode(type, indexByType, name));
-      element = element.getParent();
-      if (element == null) {
-        return null;
-      }
-    }
-
-
-    ListIterator<PathNode> pathIterator = path.listIterator(path.size());
-    PsiElement where = copyFile;
-    while (true) {
-      if (!pathIterator.hasPrevious()) {
-        return ObjectUtils.tryCast(where, PsiClass.class);
-      }
-
-      PathNode pathNode = pathIterator.previous();
-      int indexByType = 0;
-      for (PsiElement next = where.getFirstChild(); next != null; next = next.getNextSibling()) {
-        if (next.getNode().getElementType() != pathNode.myType) {
-          continue;
-        }
-        if (indexByType < pathNode.myIndexByType) {
-          indexByType++;
-          continue;
-        }
-        String name = next instanceof PsiNamedElement ? ((PsiNamedElement)next).getName() : null;
-        if (Objects.equals(name, pathNode.myExpectedName)) {
-          where = next;
-          break;
-        }
-        return null;
-      }
-    }
+  private static PsiClass findTargetClassInRange(@Nullable PsiFile file, @NotNull TextRange range) {
+    return file != null ? CodeInsightUtil.findElementInRange(file, range.getStartOffset(), range.getEndOffset(), PsiClass.class) : null;
   }
 
   @Nullable
   public PsiClass getTargetClass() {
     return myTargetClass != null ? myTargetClass.getElement() : null;
-  }
-
-  private static class PathNode {
-    final IElementType myType;
-    final int myIndexByType;
-    final String myExpectedName;
-
-    public PathNode(@NotNull IElementType type, int indexByType, @Nullable String expectedName) {
-      myType = type;
-      myIndexByType = indexByType;
-      myExpectedName = expectedName;
-    }
-
-    @Override
-    public String toString() {
-      return myType + "[" + myIndexByType + "]" + (myExpectedName != null ? " = " + myExpectedName : "");
-    }
   }
 }

@@ -1,0 +1,23 @@
+EditorConfig file
+  EditorConfigSectionImpl(SECTION)
+    EditorConfigHeaderImpl(HEADER)
+      PsiElement(EditorConfigTokenType.L_BRACKET)('[')
+      EditorConfigPatternImpl(PATTERN)
+        EditorConfigAsteriskPatternImpl(ASTERISK_PATTERN)
+          PsiElement(EditorConfigTokenType.ASTERISK)('*')
+        EditorConfigFlatPatternImpl(FLAT_PATTERN)
+          PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('.')
+      PsiElement(EditorConfigTokenType.L_CURLY)('{')
+      PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('ktm')
+      PsiElement(EditorConfigTokenType.COMMA)(',')
+      PsiWhiteSpace(' ')
+      PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('kts')
+      PsiErrorElement:EditorConfigTokenType.ASTERISK, EditorConfigTokenType.COMMA, EditorConfigTokenType.DOUBLE_ASTERISK, EditorConfigTokenType.L_BRACKET, EditorConfigTokenType.PATTERN_IDENTIFIER, EditorConfigTokenType.QUESTION or EditorConfigTokenType.R_CURLY expected, got ']'
+        PsiElement(EditorConfigTokenType.R_BRACKET)(']')
+    PsiWhiteSpace('\n')
+    key=value
+      key
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('key')
+      PsiElement(EditorConfigTokenType.SEPARATOR)('=')
+      value
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('value')

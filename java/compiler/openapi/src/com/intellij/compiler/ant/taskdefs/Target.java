@@ -51,7 +51,7 @@ public class Target extends Tag{
     return options.toArray(new Pair[0]);
   }
 
-  private static void appendIfNonEmpty(List<Pair> options, final String paramName, String value) {
+  private static void appendIfNonEmpty(List<? super Pair> options, final String paramName, String value) {
     if (!StringUtil.isEmptyOrSpaces(value)) {
       options.add(Couple.of(paramName, value));
     }

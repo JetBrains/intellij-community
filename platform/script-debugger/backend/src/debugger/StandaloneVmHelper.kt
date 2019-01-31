@@ -14,7 +14,8 @@ import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
 
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
-  private @Volatile var channel: Channel? = channel
+  @Volatile
+  private var channel: Channel? = channel
 
   fun getChannelIfActive(): Channel? {
     val currentChannel = channel

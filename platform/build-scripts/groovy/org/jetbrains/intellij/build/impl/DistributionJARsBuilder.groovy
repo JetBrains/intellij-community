@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.intellij.build.*
@@ -15,6 +16,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -35,9 +37,10 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
-  private final List<PluginLayout> pluginsToPublish
+  private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, List<PluginLayout> pluginsToPublish) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo,
+                          LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
@@ -147,7 +150,8 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
+      collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -183,12 +187,14 @@ class DistributionJARsBuilder {
   }
 
   Collection<String> getIncludedProjectArtifacts() {
-    platform.includedArtifacts.keySet() + pluginsToPublish.collectMany {it.includedArtifacts.keySet()}
+    platform.includedArtifacts.keySet() + pluginsToPublish.keySet().collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
+    buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
+    buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildThirdPartyLibrariesList()
 
@@ -196,6 +202,49 @@ class DistributionJARsBuilder {
     if (loadingOrderFilePath != null) {
       reorderJARs(loadingOrderFilePath)
     }
+  }
+
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  void buildSearchableOptions() {
+    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
+      def productLayout = buildContext.productProperties.productLayout
+      def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+      modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
+      def targetDirectory = getSearchableOptionsDir()
+      buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
+      buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
+      String targetFile = targetDirectory.absolutePath
+      FileUtil.delete(targetDirectory)
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in Settings dialog and build index for them.
+      BuildTasksImpl.runApplicationStarter(buildContext, "$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile, 'true'])
+      def modules = targetDirectory.list()
+      if (modules == null || modules.length == 0) {
+        buildContext.messages.error("Failed to build searchable options index: $targetFile is empty")
+      }
+      else {
+        buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+        buildContext.messages.debug("The following modules contain searchable options: $modules")
+      }
+    })
+  }
+
+  static List<String> getModulesToCompile(BuildContext buildContext) {
+    def productLayout = buildContext.productProperties.productLayout
+    productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
+    getPlatformApiModules(productLayout) +
+    getPlatformImplModules(productLayout) +
+    getProductApiModules(productLayout) +
+    getProductImplModules(productLayout) +
+    productLayout.additionalPlatformJars.values() +
+    toolModules + buildContext.productProperties.additionalModulesToCompile
+  }
+
+  List<String> getModulesForPluginsToPublish() {
+    def enabledModulesSet = enabledPluginModules
+    platformModules + (pluginsToPublish.collect { it.key.getActualModules(enabledModulesSet).values() }.flatten() as List<String>)
   }
 
   void reorderJARs(String loadingOrderFilePath) {
@@ -228,8 +277,10 @@ class DistributionJARsBuilder {
 
     if (productProperties.generateLibrariesLicensesTable) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      buildContext.ant.copy(file: getThirdPartyLibrariesFilePath(),
+      buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
+      buildContext.ant.copy(file: getThirdPartyLibrariesJsonFilePath(),
+                            tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.json")
     }
 
     if (productProperties.scrambleMainJar) {
@@ -248,27 +299,29 @@ class DistributionJARsBuilder {
 
   private void buildThirdPartyLibrariesList() {
     buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-      def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, buildContext.productProperties.allLibraryLicenses)
-      generator.generateLicensesTable(getThirdPartyLibrariesFilePath(), usedModules)
+      def generator = LibraryLicensesListGenerator.create(buildContext.messages,
+                                                          buildContext.project,
+                                                          buildContext.productProperties.allLibraryLicenses,
+                                                          usedModules)
+      generator.generateHtml(getThirdPartyLibrariesHtmlFilePath())
+      generator.generateJson(getThirdPartyLibrariesJsonFilePath())
     }
   }
 
-  private String getThirdPartyLibrariesFilePath() {
+  private String getThirdPartyLibrariesHtmlFilePath() {
     "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
+  }
+
+  private String getThirdPartyLibrariesJsonFilePath() {
+    "$buildContext.paths.temp/third-party-libraries.json"
   }
 
   private void buildLib() {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-    def searchableOptionsDir = new File(buildContext.paths.temp, "searchableOptions/result")
 
-    //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
-    def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules)
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-      layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
-    }
+    addSearchableOptions(layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -310,45 +363,94 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
+  private void buildOsSpecificBundledPlugins() {
+    def productLayout = buildContext.productProperties.productLayout
+    for (osFamily in OsFamily.values()) {
+      def osSpecificPluginModules = productLayout.bundledOsPluginModules[osFamily]
+      if (osSpecificPluginModules) {
+        def layoutBuilder = createLayoutBuilder()
+        buildPlugins(layoutBuilder, getPluginsByModules(buildContext, osSpecificPluginModules),
+                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        usedModules.addAll(layoutBuilder.usedModules)
+      }
+    }
+  }
+
   void buildNonBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
+      def pluginXmlFiles = new LinkedHashMap<PluginLayout, String>()
+
+      pluginsToPublish.each { pluginAndPublishing ->
+        def plugin = pluginAndPublishing.key
+
+        def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
+        def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
+        if (!new File(pluginXmlPath)) {
+          buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+        }
+
+        pluginXmlFiles.put(plugin, pluginXmlPath)
+      }
+
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-        pluginsToPublish.each { plugin ->
-          def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
-          def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-          if (!new File(pluginXmlPath)) {
-            buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
-          }
+        pluginsToPublish.each { pluginAndPublishing ->
+          def plugin = pluginAndPublishing.key
+          def publishingSpec = pluginAndPublishing.value
+
+          def pluginXmlPath = pluginXmlFiles[plugin]
           def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
+          def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
+          pluginXmlFiles.put(plugin, patchedPluginXmlPath)
+
           ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", getPluginVersion(plugin),
+
+          CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
+          if (compatibleBuildRange == null) {
+            def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+            compatibleBuildRange = includeInCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+          }
+
+          setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
                                    buildContext.buildNumber,
-                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins,
-                                   productLayout.pluginModulesWithRestrictedCompatibleBuildRange.contains(plugin.mainModule))
+                                   compatibleBuildRange)
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
         }
       }
 
-      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
-      def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
-      buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
+      def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish.keySet()), pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
-      def pluginZipFiles = new LinkedHashMap<PluginLayout, String>()
-      pluginsToPublish.each { plugin ->
+
+      def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+
+      pluginsToPublish.each { pluginAndPublishing ->
+        def plugin = pluginAndPublishing.key
+        def publishingSpec = pluginAndPublishing.value
+
+        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
-        def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
-        pluginZipFiles[plugin] = destFile.toString()
+        String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
+        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading ? "$nonBundledPluginsArtifacts/auto-uploading" : nonBundledPluginsArtifacts
+        def destFile = "$targetDirectory/$directory${suffix}.zip"
+
+        if (includeInCustomRepository) {
+          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
+                                                                          pluginXml: pluginXmlFiles[plugin]))
+        }
+
         ant.zip(destfile: destFile) {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
         buildContext.notifyArtifactBuilt(destFile)
       }
+
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, pluginZipFiles, nonBundledPluginsArtifacts)
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
@@ -380,6 +482,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
+    addSearchableOptions(layoutBuilder)
     def enabledModulesSet = enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
@@ -390,6 +493,23 @@ class DistributionJARsBuilder {
       }
       buildByLayout(layoutBuilder, plugin, "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}", actualModuleJars, generatedResources)
     }
+  }
+
+  private void addSearchableOptions(LayoutBuilder layoutBuilder) {
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+      def searchableOptionsDir = getSearchableOptionsDir()
+      if (!searchableOptionsDir.exists()) {
+        buildContext.messages.error("There are no searchable options available. " +
+                                    "Please ensure that you call DistributionJARsBuilder#buildSearchableOptions before this method.")
+      }
+      searchableOptionsDir.eachFile(FileType.DIRECTORIES) {
+        layoutBuilder.patchModuleOutput(it.name, FileUtil.toSystemIndependentName(it.absolutePath))
+      }
+    }
+  }
+
+  private File getSearchableOptionsDir() {
+    new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
   private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiValuesMap<String, String> moduleExcludes) {
@@ -465,6 +585,10 @@ class DistributionJARsBuilder {
                 if (layout.localizableResourcesJarName(moduleName) != null) {
                   ant.patternset(refid: resourceExcluded)
                 }
+                else {
+                  ant.exclude(name: "**/icon-robots.txt")
+                }
+
                 layout.moduleExcludes.get(moduleName)?.each {
                   //noinspection GrUnresolvedAccess
                   ant.exclude(name: it)
@@ -478,7 +602,7 @@ class DistributionJARsBuilder {
             }
           }
         }
-        def outputResourceJars = new MultiValuesMap<String, String>()
+        def outputResourceJars = new MultiValuesMap<String, String>(true)
         actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {
@@ -602,21 +726,29 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber,
+                                        CompatibleBuildRange compatibleBuildRange) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<version>[\\d.]*</version>",
                                    replace: "<version>${version}</version>")
     def sinceBuild
     def untilBuild
-    if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
-      if (buildNumber.matches(/\d+\.\d+/)) {
-        sinceBuild = buildNumber
+    if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
+      if (compatibleBuildRange == CompatibleBuildRange.ANY_WITH_SAME_BASELINE) {
+        sinceBuild = buildNumber.substring(0, buildNumber.indexOf('.'))
+        untilBuild = buildNumber.substring(0, buildNumber.indexOf('.')) + ".*"
       }
       else {
-        sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        if (buildNumber.matches(/\d+\.\d+/)) {
+          sinceBuild = buildNumber
+        }
+        else {
+          sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        }
+        int end = compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE ? buildNumber.lastIndexOf('.') :
+                  buildNumber.indexOf('.')
+        untilBuild = buildNumber.substring(0, end) + ".*"
       }
-      int end = useRestrictedCompatibleBuildRange ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
-      untilBuild = buildNumber.substring(0, end) + ".*"
     }
     else {
       sinceBuild = buildNumber
@@ -646,9 +778,12 @@ class DistributionJARsBuilder {
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
     def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", 
+                                                        "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", 
+                                                        "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
     def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")
     FileUtil.createParentDirs(targetFile)

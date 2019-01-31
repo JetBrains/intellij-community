@@ -1,3 +1,9 @@
+"""Contains methods for building XML structures for interacting with IDE
+
+The methods from this file are used for the debugger interaction. Please note
+that Python console now uses Thrift structures with the similar methods
+contained in `pydevd_thrift.py` file.
+"""
 from _pydev_bundle import pydev_log
 import traceback
 from _pydevd_bundle import pydevd_extension_utils
@@ -87,6 +93,13 @@ def _create_default_type_map():
         try:
             from collections import deque
             default_type_map.append((deque, pydevd_resolver.dequeResolver))
+        except:
+            pass
+
+        try:
+            from collections import OrderedDict
+            default_type_map.insert(0, (OrderedDict, pydevd_resolver.orderedDictResolver))
+            # we should put it before dict
         except:
             pass
 
@@ -297,7 +310,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
                 if v.__class__ == frame_type:
                     value = pydevd_resolver.frameResolver.get_frame_name(v)
 
-                elif v.__class__ in (list, tuple):
+                elif v.__class__ in (list, tuple, set, frozenset, dict):
                     if len(v) > 300:
                         value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
                     else:

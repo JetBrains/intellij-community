@@ -197,7 +197,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   private class MyAcceptSideAction extends DumbAwareAction {
     @NotNull private final Side myBaseSide;
 
-    public MyAcceptSideAction(@NotNull Side baseSide) {
+    MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
       getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
@@ -205,7 +205,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       VirtualFile baseFile = getContentFile(myBaseSide);
       VirtualFile targetFile = getContentFile(myBaseSide.other());
 
@@ -214,7 +214,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final VirtualFile baseFile = getContentFile(myBaseSide);
       final VirtualFile targetFile = getContentFile(myBaseSide.other());
       assert baseFile != null && targetFile != null;

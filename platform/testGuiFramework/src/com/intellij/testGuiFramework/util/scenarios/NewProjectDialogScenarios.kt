@@ -13,27 +13,15 @@ class NewProjectDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 
 val GuiTestCase.newProjectDialogScenarios by NewProjectDialogScenarios
 
-fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
+fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
+                                                        projectSdk: String,
+                                                        libs: LibrariesSet = emptySet(),
+                                                        template: String = "",
+                                                        basePackage: String = "") {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaProject(projectPath, libs, template, basePackage)
-  }
-}
-
-fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
-  with(testCase) {
-    assertProjectPathExists(projectPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaEnterpriseProject(projectPath, libs, template)
-  }
-}
-
-fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: LibrariesSet = emptySet()) {
-  with(testCase) {
-    assertProjectPathExists(projectPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJBossProject(projectPath, libs)
+    newProjectDialogModel.createJavaProject(projectPath, projectSdk, libs, template, basePackage)
   }
 }
 
@@ -45,35 +33,29 @@ fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, li
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, libs: LibrariesSet = emptySet()) {
+fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups,
+                                                           projectPath: String,
+                                                           projectSdk: String,
+                                                           libs: LibrariesSet = emptySet()) {
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createProjectInGroup(group, projectPath, libs)
+    newProjectDialogModel.createProjectInGroup(group, projectPath, projectSdk, libs)
   }
 }
 
-fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions){
+fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, projectSdk: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions){
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createGradleProject(projectPath, gradleOptions)
+    newProjectDialogModel.createGradleProject(projectPath, gradleOptions, projectSdk)
   }
 }
 
-fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions){
+fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, projectSdk: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions){
   with(testCase) {
-    assertProjectPathExists(projectPath)
+    fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
-  }
-}
-
-fun NewProjectDialogScenarios.createAndCheckAppServer(serverKind: String, serverPath: String, expectedServerName: String) {
-  with(testCase) {
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createAppServer(serverKind, serverPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.checkAppServerExists(expectedServerName)
+    newProjectDialogModel.createMavenProject(projectPath, mavenOptions, projectSdk)
   }
 }

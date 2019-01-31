@@ -48,7 +48,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/15/2014
  */
 public class ExternalProjectSerializer {
   private static final Logger LOG = Logger.getInstance(ExternalProjectSerializer.class);
@@ -295,7 +294,7 @@ public class ExternalProjectSerializer {
   private static class FileSerializer extends Serializer<File> {
     private final Kryo myStdKryo;
 
-    public FileSerializer() {
+    FileSerializer() {
       myStdKryo = new Kryo();
       myStdKryo.register(File.class);
       myStdKryo.setInstantiatorStrategy(new StdInstantiatorStrategy());

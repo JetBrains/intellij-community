@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -60,7 +45,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   public static XmlElementDescriptor getRelaxedDescriptor(XmlElementDescriptor base, final XmlTag childTag) {
     final String namespace = childTag.getNamespace();
     final XmlExtension extension = XmlExtension.getExtensionByElement(childTag);
-    if(!XmlUtil.XHTML_URI.equals(namespace) && 
+    if(!XmlUtil.XHTML_URI.equals(namespace) &&
        ( base.getContentType() != XmlElementDescriptor.CONTENT_TYPE_EMPTY ||
          (extension != null && extension.isCustomTagAllowed(childTag)) // allow custom tag
        ) ) {
@@ -79,7 +64,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     if (context == null) {
       return descriptors;
     }
-    for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
+    for (XmlAttributeDescriptorsProvider provider: XmlAttributeDescriptorsProvider.EP_NAME.getExtensionList()) {
       descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context), XmlAttributeDescriptor.ARRAY_FACTORY);
     }
     return descriptors;
@@ -103,7 +88,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
     if (context == null) {
       return null;
     }
-    for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
+    for (XmlAttributeDescriptorsProvider provider: XmlAttributeDescriptorsProvider.EP_NAME.getExtensionList()) {
       final XmlAttributeDescriptor descriptor = provider.getAttributeDescriptor(attributeName, context);
       if (descriptor != null) {
         return descriptor;

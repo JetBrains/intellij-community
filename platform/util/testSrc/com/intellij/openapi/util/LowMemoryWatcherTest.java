@@ -5,8 +5,6 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ALWAYS;
-import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 import static org.junit.Assert.assertEquals;
 
 public class LowMemoryWatcherTest {
@@ -15,17 +13,21 @@ public class LowMemoryWatcherTest {
     AtomicInteger onlyAfterGCCounter = new AtomicInteger();
     AtomicInteger alwaysCounter = new AtomicInteger();
 
-    //noinspection unused
-    LowMemoryWatcher onlyAfterGCWatcher = LowMemoryWatcher.register(onlyAfterGCCounter::incrementAndGet, ONLY_AFTER_GC);
-    //noinspection unused
-    LowMemoryWatcher alwaysWatcher = LowMemoryWatcher.register(alwaysCounter::incrementAndGet, ALWAYS);
+    LowMemoryWatcher onlyAfterGCWatcher = LowMemoryWatcher.register(onlyAfterGCCounter::incrementAndGet, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC);
+    LowMemoryWatcher alwaysWatcher = LowMemoryWatcher.register(alwaysCounter::incrementAndGet, LowMemoryWatcher.LowMemoryWatcherType.ALWAYS);
 
-    LowMemoryWatcher.onLowMemorySignalReceived(false);
-    assertEquals(1, alwaysCounter.get());
-    assertEquals(0, onlyAfterGCCounter.get());
+    try {
+      LowMemoryWatcher.onLowMemorySignalReceived(false);
+      assertEquals(1, alwaysCounter.get());
+      assertEquals(0, onlyAfterGCCounter.get());
 
-    LowMemoryWatcher.onLowMemorySignalReceived(true);
-    assertEquals(2, alwaysCounter.get());
-    assertEquals(1, onlyAfterGCCounter.get());
+      LowMemoryWatcher.onLowMemorySignalReceived(true);
+      assertEquals(2, alwaysCounter.get());
+      assertEquals(1, onlyAfterGCCounter.get());
+    }
+    finally {
+      alwaysWatcher.stop();
+      onlyAfterGCWatcher.stop();
+    }
   }
 }

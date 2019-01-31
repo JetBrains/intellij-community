@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
+import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
+
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
@@ -33,7 +35,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final TreeUpdater myTreeUpdater;
-  @NotNull private final Function<String, String> myNameCreator;
+  @NotNull private final Function<? super String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
@@ -41,7 +43,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
                                 @Nullable TreeUpdater updateTree,
-                                @NotNull Function<String, String> nameCreator) {
+                                @NotNull Function<? super String, String> nameCreator) {
     super(true, () -> {
       if (updateTree != null) {
         updateTree.updateTree(true);
@@ -78,12 +80,12 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Override
   public JComponent createOptionsPanel() {
     if (myView == null) {
-      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, s -> {
-        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME)) {
+      myView = new JsonSchemaMappingsView(myProject, myTreeUpdater, (s, force) -> {
+        if (myDisplayName.startsWith(JsonSchemaMappingsConfigurable.STUB_SCHEMA_NAME) || force) {
           int lastSlash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
-          if (lastSlash > 0) {
-            String substring = s.substring(lastSlash + 1);
-            int dot = substring.lastIndexOf('.');
+          if (lastSlash > 0 || force) {
+            String substring = lastSlash > 0 ? s.substring(lastSlash + 1) : s;
+            int dot = lastSlash > 0 ? substring.lastIndexOf('.') : -1;
             if (dot != -1) {
               substring = substring.substring(0, dot);
             }
@@ -128,7 +130,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   }
 
   public static boolean isValidURL(@NotNull final String url) {
-    return JsonFileResolver.isHttpPath(url) && Urls.parse(url, false) != null;
+    return isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
   private void doValidation() throws ConfigurationException {
@@ -141,7 +143,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     VirtualFile vFile;
     String filename;
 
-    if (JsonFileResolver.isHttpPath(schemaSubPath)) {
+    if (isHttpPath(schemaSubPath)) {
       filename = schemaSubPath;
 
       if (!isValidURL(schemaSubPath)) {

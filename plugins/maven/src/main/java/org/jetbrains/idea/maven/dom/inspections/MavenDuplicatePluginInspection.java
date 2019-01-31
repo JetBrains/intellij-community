@@ -66,21 +66,25 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
     }
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return MavenDomBundle.message("inspection.duplicate.plugin.declaration");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "MavenDuplicatePluginInspection";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;

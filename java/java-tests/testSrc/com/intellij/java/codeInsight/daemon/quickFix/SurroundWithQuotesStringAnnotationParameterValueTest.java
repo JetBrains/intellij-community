@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
  * @author Dmitry Batkovich
  */
 public class SurroundWithQuotesStringAnnotationParameterValueTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/surroundWithQuotesStringAnnotationParameterValue";

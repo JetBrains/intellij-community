@@ -36,10 +36,12 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
     super(AppEngineFacet.ID, STRING_ID, "Google App Engine");
   }
 
+  @Override
   public AppEngineFacetConfiguration createDefaultConfiguration() {
     return new AppEngineFacetConfiguration();
   }
 
+  @Override
   public AppEngineFacet createFacet(@NotNull Module module,
                                     String name,
                                     @NotNull AppEngineFacetConfiguration configuration,
@@ -47,6 +49,7 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
     return new AppEngineFacet(this, module, name, configuration);
   }
 
+  @Override
   public boolean isSuitableModuleType(ModuleType moduleType) {
     return moduleType instanceof JavaModuleType;
   }

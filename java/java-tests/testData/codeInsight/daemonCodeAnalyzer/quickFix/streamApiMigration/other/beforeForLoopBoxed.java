@@ -6,7 +6,7 @@ import java.util.List;
 public class Main {
   public void testForLoop() {
     List<Integer> result = new ArrayList<>();
-    for (in<caret>t i = 0; 10 >= i; i++) {
+    for (in<caret>t i = 0; (10 >= i); i++) {
       result.add(i);
     }
   }

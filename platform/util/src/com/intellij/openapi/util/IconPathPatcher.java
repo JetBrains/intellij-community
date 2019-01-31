@@ -9,8 +9,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IconPathPatcher {
   /**
    * @deprecated
-   * @see #patchPath(String, Class)
+   * @see #patchPath(String, ClassLoader)
    */
+  @Deprecated
   @Nullable
   public String patchPath(String path) {
     return patchPath(path, null);
@@ -29,7 +30,7 @@ public abstract class IconPathPatcher {
 
   /**
    * @deprecated
-   * @see #getContextClass(String, Class)
+   * @see #getContextClassLoader(String, ClassLoader)
    */
   @Deprecated
   public Class getContextClass(String path) {

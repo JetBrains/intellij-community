@@ -39,19 +39,22 @@ class GroupSurrounder implements Surrounder {
     private final String myTitle;
     private final String myGroupStart;
 
-    public GroupSurrounder(String title, String groupStart) {
+    GroupSurrounder(String title, String groupStart) {
         myTitle = title;
         myGroupStart = groupStart;
     }
 
+    @Override
     public String getTemplateDescription() {
         return myTitle;
     }
 
+    @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
         return elements.length == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent();
     }
 
+    @Override
     @Nullable
     public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
         assert elements.length == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent();

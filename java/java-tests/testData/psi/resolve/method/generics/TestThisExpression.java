@@ -5,7 +5,7 @@ public class WithInner<T> {
 
     class Inner {
         T foo () {
-            return  <ref>WithInner.this.foo();
+            return  <caret>WithInner.this.foo();
         }
     }
 

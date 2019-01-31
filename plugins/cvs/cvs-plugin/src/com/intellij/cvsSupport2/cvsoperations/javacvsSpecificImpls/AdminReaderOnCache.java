@@ -31,7 +31,6 @@ import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.file.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -46,6 +45,7 @@ public class AdminReaderOnCache implements IAdminReader {
   private final IAdminReader ourStandardAdminReader = new AdminReader(CvsApplicationLevelConfiguration.getCharset());
   private final CvsEntriesManager myCvsEntriesManager = CvsEntriesManager.getInstance();
 
+  @Override
   public Entry getEntry(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) {
     ProgressManager.checkCanceled();
     setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath()));
@@ -65,6 +65,7 @@ public class AdminReaderOnCache implements IAdminReader {
     }
   }
 
+  @Override
   public Collection<Entry> getEntries(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) {
     setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath()));
     ProgressManager.checkCanceled();
@@ -88,6 +89,7 @@ public class AdminReaderOnCache implements IAdminReader {
     progressIndicator.setText2(text);
   }
 
+  @Override
   public String getRepositoryForDirectory(DirectoryObject directoryObject, String repository, ICvsFileSystem cvsFileSystem) {
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(parent);
@@ -104,15 +106,18 @@ public class AdminReaderOnCache implements IAdminReader {
     }
   }
 
+  @Override
   public String getStickyTagForDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     return myCvsEntriesManager.getStickyTagFor(CvsVfsUtil.findFileByIoFile(parent));
   }
 
+  @Override
   public boolean hasCvsDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     return ourStandardAdminReader.hasCvsDirectory(directoryObject, cvsFileSystem);
   }
 
+  @Override
   public boolean isModified(FileObject fileObject, Date entryLastModified, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(fileObject);
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
@@ -124,6 +129,7 @@ public class AdminReaderOnCache implements IAdminReader {
     }
   }
 
+    @Override
     public boolean isStatic(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
         return ourStandardAdminReader.isStatic(directoryObject, cvsFileSystem);
     }

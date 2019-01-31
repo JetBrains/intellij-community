@@ -24,7 +24,6 @@ import java.util.LinkedHashSet;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/24/2014
  */
 public class DefaultExternalMultiLibraryDependency extends AbstractExternalDependency implements ExternalMultiLibraryDependency {
 

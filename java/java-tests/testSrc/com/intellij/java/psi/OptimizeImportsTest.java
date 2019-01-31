@@ -15,7 +15,10 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -59,6 +62,14 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testExcludeNonStaticElementsFromStaticConflictingMembers() {
     doTest();
+  }
+
+  public void testDisabledFormatting() {
+    CodeStyleSettings temp = new CodeStyleSettings();
+    NamedScopeDescriptor descriptor = new NamedScopeDescriptor("Test");
+    descriptor.setPattern("file:*.java");
+    temp.getExcludedFiles().addDescriptor(descriptor);
+    CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
   }
 
   private void doTest() {

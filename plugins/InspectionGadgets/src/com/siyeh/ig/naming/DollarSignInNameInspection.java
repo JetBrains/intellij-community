@@ -15,13 +15,83 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiVariable;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
-public class DollarSignInNameInspection extends DollarSignInNameInspectionBase {
+public class DollarSignInNameInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "dollar.sign.in.name.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "dollar.sign.in.name.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new DollarSignInNameVisitor();
+  }
+
+  private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final String name = variable.getName();
+      if (name == null) {
+        return;
+      }
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerVariableError(variable);
+    }
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final String name = method.getName();
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerMethodError(method);
+    }
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      //note: no call to super, to avoid drill-down
+      final String name = aClass.getName();
+      if (name == null) {
+        return;
+      }
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerClassError(aClass);
+    }
   }
 }

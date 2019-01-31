@@ -1,0 +1,13 @@
+PsiJavaFile:BreakExpr.java
+  PsiBreakStatement
+    PsiKeyword:break('break')
+    PsiWhiteSpace(' ')
+    PsiMethodCallExpression:boo()
+      PsiReferenceExpression:boo
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:boo('boo')
+      PsiExpressionList
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+    PsiJavaToken:SEMICOLON(';')

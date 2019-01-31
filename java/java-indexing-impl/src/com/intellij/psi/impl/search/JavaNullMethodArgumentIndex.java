@@ -4,12 +4,12 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -57,11 +57,11 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
         return Collections.emptyMap();
       }
 
-      int[] nullOffsets = new StringSearcher(PsiKeyword.NULL, true, true).findAllOccurrences(inputData.getContentAsText());
-      if (nullOffsets.length == 0) return Collections.emptyMap();
-
+      StringSearcher searcher = new StringSearcher(PsiKeyword.NULL, true, true);
       LighterAST lighterAst = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
-      Set<LighterASTNode> calls = findCallsWithNulls(lighterAst, nullOffsets);
+
+      CharSequence text = inputData.getContentAsText();
+      Set<LighterASTNode> calls = findCallsWithNulls(lighterAst, text, searcher);
       if (calls.isEmpty()) return Collections.emptyMap();
 
       Map<MethodCallData, Void> result = new THashMap<>();
@@ -81,9 +81,9 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   }
 
   @NotNull
-  private static Set<LighterASTNode> findCallsWithNulls(LighterAST lighterAst, int[] nullOffsets) {
+  private static Set<LighterASTNode> findCallsWithNulls(@NotNull LighterAST lighterAst, @NotNull CharSequence text, @NotNull StringSearcher searcher) {
     Set<LighterASTNode> calls = new HashSet<>();
-    for (int offset : nullOffsets) {
+    searcher.processOccurrences(text, offset -> {
       LighterASTNode leaf = LightTreeUtil.findLeafElementAt(lighterAst, offset);
       LighterASTNode literal = leaf == null ? null : lighterAst.getParent(leaf);
       if (isNullLiteral(lighterAst, literal)) {
@@ -92,7 +92,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
           ContainerUtil.addIfNotNull(calls, LightTreeUtil.getParentOfType(lighterAst, exprList, Lazy.CALL_TYPES, ElementType.MEMBER_BIT_SET));
         }
       }
-    }
+      return true;
+    });
     return calls;
   }
 
@@ -171,7 +172,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
-        return JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(file);
+        return JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file);
       }
     };
   }

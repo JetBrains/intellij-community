@@ -16,17 +16,20 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -87,14 +90,6 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   private static class ImportSorter {
-    private static final Comparator<PyImportElement> IMPORT_ELEMENT_COMPARATOR = (o1, o2) -> {
-      final int byImportedName = Comparing.compare(o1.getImportedQName(), o2.getImportedQName());
-      if (byImportedName != 0) {
-        return byImportedName;
-      }
-      return Comparing.compare(o1.getAsName(), o2.getAsName());
-    };
-
     private final PyFile myFile;
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
@@ -108,15 +103,29 @@ public class PyImportOptimizer implements ImportOptimizer {
     // Contains trailing and nested comments of modified (split and joined) imports
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToInnerComments = MultiMap.create();
     private final List<PsiComment> myDanglingComments = new ArrayList<>();
+    private final PyElementGenerator myGenerator;
+    private final LanguageLevel myLangLevel;
 
     private ImportSorter(@NotNull PyFile file) {
       myFile = file;
-      myPySettings = CodeStyleSettingsManager.getSettings(myFile.getProject()).getCustomSettings(PyCodeStyleSettings.class);
+      myPySettings = CodeStyle.getCustomSettings(myFile, PyCodeStyleSettings.class);
       myImportBlock = myFile.getImportBlock();
       myGroups = new EnumMap<>(ImportPriority.class);
       for (ImportPriority priority : ImportPriority.values()) {
         myGroups.put(priority, new ArrayList<>());
       }
+      myGenerator = PyElementGenerator.getInstance(myFile.getProject());
+      myLangLevel = LanguageLevel.forElement(myFile);
+    }
+
+    @NotNull
+    private Comparator<PyImportElement> getFromNamesComparator() {
+      final Comparator<String> stringComparator =
+        myPySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      final Comparator<QualifiedName> qNamesComparator = Comparator.comparing(QualifiedName::toString, stringComparator);
+      return Comparator
+        .comparing(PyImportElement::getImportedQName, Comparator.nullsFirst(qNamesComparator))
+        .thenComparing(PyImportElement::getAsName, Comparator.nullsFirst(stringComparator));
     }
 
     public void run() {
@@ -136,7 +145,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       boolean hasTransformedImports = false;
       for (ImportPriority priority : ImportPriority.values()) {
         final List<PyImportStatementBase> original = myGroups.get(priority);
-        final List<PyImportStatementBase> transformed = transformImportStatements(original);
+        final List<PyImportStatementBase> transformed = transformImportsInGroup(original);
         hasTransformedImports |= !original.equals(transformed);
         myGroups.put(priority, transformed);
       }
@@ -162,90 +171,126 @@ public class PyImportOptimizer implements ImportOptimizer {
     }
 
     @NotNull
-    private List<PyImportStatementBase> transformImportStatements(@NotNull List<PyImportStatementBase> imports) {
+    private List<PyImportStatementBase> transformImportsInGroup(@NotNull List<PyImportStatementBase> imports) {
       final List<PyImportStatementBase> result = new ArrayList<>();
-
-      final Project project = myFile.getProject();
-      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      final LanguageLevel langLevel = LanguageLevel.forElement(myFile);
 
       for (PyImportStatementBase statement : imports) {
         if (statement instanceof PyImportStatement) {
-          final PyImportStatement importStatement = (PyImportStatement)statement;
-          final PyImportElement[] importElements = importStatement.getImportElements();
-          // Split combined imports like "import foo, bar as b"
-          if (importElements.length > 1) {
-            final List<PyImportStatement> newImports =
-              ContainerUtil.map(importElements, e -> generator.createImportStatement(langLevel, e.getText(), null));
-            final PyImportStatement topmostImport;
-            if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
-              topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(project));
-            }
-            else {
-              topmostImport = newImports.get(0);
-            }
-            myNewImportToLineComments.putValues(topmostImport, myOldImportToLineComments.get(statement));
-            myNewImportToInnerComments.putValues(topmostImport, myOldImportToInnerComments.get(statement));
-            result.addAll(newImports);
-          }
-          else {
-            myNewImportToLineComments.putValues(statement, myOldImportToLineComments.get(statement));
-            result.add(importStatement);
-          }
+          transformPlainImport(result, (PyImportStatement)statement);
         }
         else if (statement instanceof PyFromImportStatement) {
-          final PyFromImportStatement fromImport = (PyFromImportStatement)statement;
-          final String source = getNormalizedFromImportSource(fromImport);
-          final List<PyImportElement> newStatementElements = new ArrayList<>();
-          boolean forceParentheses = false;
-
-          // We can neither sort, nor combine star imports
-          if (!fromImport.isStarImport()) {
-            final Collection<PyFromImportStatement> sameSourceImports = myOldFromImportBySources.get(source);
-            if (sameSourceImports.isEmpty()) {
-              continue;
-            }
-
-            forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
-
-            // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
-            if (myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1) {
-              for (PyFromImportStatement sameSourceImport : sameSourceImports) {
-                ContainerUtil.addAll(newStatementElements, sameSourceImport.getImportElements());
-              }
-              // Remember that we have checked imports with this source already 
-              myOldFromImportBySources.remove(source);
-            }
-            else if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-              final List<PyImportElement> originalElements = Arrays.asList(fromImport.getImportElements());
-              if (!Ordering.from(IMPORT_ELEMENT_COMPARATOR).isOrdered(originalElements)) {
-                ContainerUtil.addAll(newStatementElements, originalElements);
-              }
-            }
-          }
-
-          if (!newStatementElements.isEmpty()) {
-            if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-              Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
-            }
-            String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
-            if (forceParentheses) {
-              importedNames = "(" + importedNames + ")";
-            }
-            final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
-            ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
-              myNewImportToLineComments.putValues(combinedImport, myOldImportToLineComments.get(affected));
-              myNewImportToInnerComments.putValues(combinedImport, myOldImportToInnerComments.get(affected));
-            });
-            result.add(combinedImport);
-          }
-          else {
-            myNewImportToLineComments.putValues(fromImport, myOldImportToLineComments.get(fromImport));
-            result.add(fromImport);
-          }
+          transformFromImport(result, (PyFromImportStatement)statement);
         }
       }
       return result;
+    }
+
+    private void transformPlainImport(@NotNull List<PyImportStatementBase> result, @NotNull PyImportStatement importStatement) {
+      final PyImportElement[] importElements = importStatement.getImportElements();
+      // Split combined imports like "import foo, bar as b"
+      if (importElements.length > 1) {
+        final List<PyImportStatement> newImports =
+          ContainerUtil.map(importElements, e -> myGenerator.createImportStatement(myLangLevel, e.getText(), null));
+        replaceOneImportWithSeveral(result, importStatement, newImports);
+      }
+      else {
+        addImportAsIs(result, importStatement);
+      }
+    }
+
+    private void transformFromImport(@NotNull List<PyImportStatementBase> result, @NotNull PyFromImportStatement fromImport) {
+      // We can neither sort, nor combine star imports
+      if (fromImport.isStarImport()) {
+        addImportAsIs(result, fromImport);
+        return;
+      }
+
+      final String source = getNormalizedFromImportSource(fromImport);
+      final PyImportElement[] importedFromNames = fromImport.getImportElements();
+
+      final List<PyImportElement> newFromImportNames = new ArrayList<>();
+      final Comparator<PyImportElement> fromNamesComparator = getFromNamesComparator();
+
+      final Collection<PyFromImportStatement> sameSourceImports = myOldFromImportBySources.get(source);
+      if (sameSourceImports.isEmpty()) {
+        return;
+      }
+
+      // Keep existing parentheses if we only re-order names inside the import
+      boolean forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
+
+      // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
+      final boolean shouldJoinImports = myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1;
+      final boolean shouldSplitImport = myPySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS && importedFromNames.length > 1;
+
+      if (shouldJoinImports) {
+        for (PyFromImportStatement sameSourceImport : sameSourceImports) {
+          ContainerUtil.addAll(newFromImportNames, sameSourceImport.getImportElements());
+        }
+        // Remember that we have checked imports with this source already 
+        myOldFromImportBySources.remove(source);
+      }
+      else if (!shouldSplitImport && myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
+        if (!Ordering.from(fromNamesComparator).isOrdered(Arrays.asList(importedFromNames))) {
+          ContainerUtil.addAll(newFromImportNames, importedFromNames);
+        }
+      }
+
+      final boolean shouldGenerateNewFromImport = !newFromImportNames.isEmpty();
+      if (shouldGenerateNewFromImport) {
+        if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
+          Collections.sort(newFromImportNames, fromNamesComparator);
+        }
+        String importedNames = StringUtil.join(newFromImportNames, ImportSorter::getNormalizedImportElementText, ", ");
+        if (forceParentheses) {
+          importedNames = "(" + importedNames + ")";
+        }
+        final PyFromImportStatement combinedImport = myGenerator.createFromImportStatement(myLangLevel, source, importedNames, null);
+        final Set<PyImportStatementBase> oldImports = ContainerUtil.map2LinkedSet(newFromImportNames, 
+                                                                                  e -> (PyImportStatementBase)e.getParent());
+        replaceSeveralImportsWithOne(result, oldImports, combinedImport);
+      }
+      else if (shouldSplitImport) {
+        final List<PyFromImportStatement> newFromImports = ContainerUtil.map(importedFromNames, importElem -> {
+          final String name = Objects.toString(importElem.getImportedQName(), "");
+          final String alias = importElem.getAsName();
+          return myGenerator.createFromImportStatement(myLangLevel, source, name, alias);
+        });
+        replaceOneImportWithSeveral(result, fromImport, newFromImports);
+      }
+      else {
+        addImportAsIs(result, fromImport);
+      }
+    }
+
+    private void replaceSeveralImportsWithOne(@NotNull List<PyImportStatementBase> result,
+                                              @NotNull Collection<? extends PyImportStatementBase> oldImports,
+                                              @NotNull PyFromImportStatement newImport) {
+      for (PyImportStatementBase replaced : oldImports) {
+        myNewImportToLineComments.putValues(newImport, myOldImportToLineComments.get(replaced));
+        myNewImportToInnerComments.putValues(newImport, myOldImportToInnerComments.get(replaced));
+      }
+      result.add(newImport);
+    }
+
+    private void replaceOneImportWithSeveral(@NotNull List<PyImportStatementBase> result,
+                                             @NotNull PyImportStatementBase oldImport,
+                                             @NotNull Collection<? extends PyImportStatementBase> newImports) {
+      final PyImportStatementBase topmostImport;
+      if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
+        topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(myFile));
+      }
+      else {
+        topmostImport = ContainerUtil.getFirstItem(newImports);
+      }
+      myNewImportToLineComments.putValues(topmostImport, myOldImportToLineComments.get(oldImport));
+      myNewImportToInnerComments.putValues(topmostImport, myOldImportToInnerComments.get(oldImport));
+      result.addAll(newImports);
+    }
+
+    private void addImportAsIs(@NotNull List<PyImportStatementBase> result, @NotNull PyImportStatementBase oldImport) {
+      myNewImportToLineComments.putValues(oldImport, myOldImportToLineComments.get(oldImport));
+      result.add(oldImport);
     }
 
     @NotNull
@@ -282,7 +327,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         return false;
       }
       final Ordering<PyImportStatementBase> importOrdering =
-        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile));
       return ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
@@ -294,7 +339,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile));
           myGroups.put(priority, imports);
         }
       }
@@ -341,8 +386,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
 
       final Project project = anchor.getProject();
-      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      final PyFile file = (PyFile)generator.createDummyFile(LanguageLevel.forElement(anchor), content.toString());
+      final PyFile file = (PyFile)myGenerator.createDummyFile(myLangLevel, content.toString());
       final PyFile reformattedFile = (PyFile)CodeStyleManager.getInstance(project).reformat(file);
       final List<PyImportStatementBase> newImportBlock = reformattedFile.getImportBlock();
       assert newImportBlock != null;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -45,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author gregsh
@@ -61,7 +47,7 @@ public abstract class LRUPopupBuilder<T> {
   private final Map<T, Pair<String, Icon>> myPresentations = ContainerUtil.newIdentityHashMap();
 
   private T mySelection;
-  private Consumer<T> myOnChosen;
+  private Consumer<? super T> myOnChosen;
   private Comparator<? super T> myComparator;
   private Iterable<? extends T> myItemsIterable;
   private JBIterable<T> myExtraItems = JBIterable.empty();
@@ -69,7 +55,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull String title,
-                                           @NotNull Iterable<VirtualFile> files,
+                                           @NotNull Iterable<? extends VirtualFile> files,
                                            @NotNull PerFileMappings<Language> mappings) {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
@@ -88,7 +74,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @Nullable Language selection,
-                                           @NotNull Consumer<Language> onChosen) {
+                                           @NotNull Consumer<? super Language> onChosen) {
     return forFileLanguages(project, "Languages", selection, onChosen);
   }
 
@@ -96,7 +82,7 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull String title,
                                            @Nullable Language selection,
-                                           @NotNull Consumer<Language> onChosen) {
+                                           @NotNull Consumer<? super Language> onChosen) {
     return languagePopupBuilder(project, title).
       forValues(LanguageUtil.getFileLanguages()).
       withSelection(selection).
@@ -154,7 +140,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public LRUPopupBuilder<T> onChosen(@Nullable Consumer<T> consumer) {
+  public LRUPopupBuilder<T> onChosen(@Nullable Consumer<? super T> consumer) {
     myOnChosen = consumer;
     return this;
   }
@@ -281,7 +267,7 @@ public abstract class LRUPopupBuilder<T> {
                                              @NotNull Language t,
                                              @NotNull VirtualFile[] sortedFiles,
                                              @NotNull PerFileMappings<Language> mappings) throws UnexpectedUndoException {
-    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(sortedFiles);
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Arrays.asList(sortedFiles));
     if (status.hasReadonlyFiles()) return;
 
     final Set<VirtualFile> matchedExtensions = ContainerUtil.newLinkedHashSet();

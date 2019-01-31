@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashMap;
@@ -349,12 +348,13 @@ public class XsltSupport {
   }
 
   public static Icon createXsltIcon(Icon icon) {
-    return LayeredIcon.create(icon, XpathIcons.Xslt_filetype_overlay);
+    return XpathIcons.Xslt_filetype_overlay;
   }
 
   private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {
     public static final ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> INSTANCE = new XsltSupportProvider();
 
+    @Override
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
       if (!(psiFile instanceof XmlFile)) {
         return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);

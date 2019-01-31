@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,10 +322,7 @@ public abstract class ResourceInspection extends BaseInspection {
         }
       }
     }
-    PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
-    if (parent instanceof PsiConditionalExpression) {
-      parent = ParenthesesUtils.getParentSkipParentheses(parent);
-    }
+    final PsiElement parent = ExpressionUtils.getPassThroughParent(resourceCreationExpression);
     if (parent instanceof PsiReturnStatement) {
       return true;
     }
@@ -445,7 +442,7 @@ public abstract class ResourceInspection extends BaseInspection {
     private final PsiVariable boundVariable;
     private boolean escaped;
 
-    public EscapeVisitor(@NotNull PsiVariable boundVariable) {
+    EscapeVisitor(@NotNull PsiVariable boundVariable) {
       this.boundVariable = boundVariable;
     }
 

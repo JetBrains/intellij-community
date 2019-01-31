@@ -147,7 +147,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
     private final boolean myEmptyPreferred;
 
-    public ToArrayCallWithZeroLengthArrayArgumentFix(boolean emptyPreferred) {
+    ToArrayCallWithZeroLengthArrayArgumentFix(boolean emptyPreferred) {
       myEmptyPreferred = emptyPreferred;
     }
 

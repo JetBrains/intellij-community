@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -83,12 +84,22 @@ public class DarculaButtonPainter implements Border, UIResource {
   public Paint getBorderPaint(Component button) {
     AbstractButton b = (AbstractButton)button;
     Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
-    return button.isEnabled() ? borderColor != null ? borderColor :
-     button.hasFocus() ?
-        UIManager.getColor(isDefaultButton(b) ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor") :
-        UIManager.getColor(button.isEnabled() && isDefaultButton(b) ? "Button.darcula.defaultOutlineColor" : "Button.darcula.outlineColor")
+    Rectangle r = new Rectangle(b.getSize());
+    JBInsets.removeFrom(r, b.getInsets());
+    boolean defButton = isDefaultButton(b);
 
-     : UIManager.getColor("Button.darcula.disabledOutlineColor");
+    //noinspection UnregisteredNamedColor
+    return button.isEnabled() ? borderColor != null ? borderColor :
+                                button.hasFocus() ?
+                                JBColor.namedColor(defButton ? "Button.default.focusedBorderColor" : "Button.focusedBorderColor",
+                                  JBColor.namedColor(defButton ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor", 0x87afda)) :
+                                new GradientPaint(0, 0,
+                                                  JBColor.namedColor(defButton ? "Button.default.startBorderColor" : "Button.startBorderColor",
+                                                    JBColor.namedColor(defButton ? "Button.darcula.outlineDefaultStartColor" : "Button.darcula.outlineStartColor", 0xbfbfbf)),
+                                                  0, r.height,
+                                                  JBColor.namedColor(defButton ? "Button.default.endBorderColor" : "Button.endBorderColor",
+                                                    JBColor.namedColor(defButton ? "Button.darcula.outlineDefaultEndColor" : "Button.darcula.outlineEndColor", 0xb8b8b8)))
+                              : JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", 0xcfcfcf));
   }
 
   @Override

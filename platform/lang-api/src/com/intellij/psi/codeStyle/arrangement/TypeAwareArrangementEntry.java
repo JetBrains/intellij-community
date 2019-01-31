@@ -26,7 +26,6 @@ import java.util.Set;
  * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:17 AM
  */
 public interface TypeAwareArrangementEntry extends ArrangementEntry {
   

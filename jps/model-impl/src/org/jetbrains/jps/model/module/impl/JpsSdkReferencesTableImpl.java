@@ -75,7 +75,7 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
   }
 
   private static class JpsSdkReferencesTableRole extends JpsElementChildRoleBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {
-    public JpsSdkReferencesTableRole() {
+    JpsSdkReferencesTableRole() {
       super("sdk references");
     }
 

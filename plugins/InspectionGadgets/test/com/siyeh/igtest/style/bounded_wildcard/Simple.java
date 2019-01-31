@@ -4,7 +4,7 @@ import my.*;
 import java.util.function.*;
 import java.util.*;
 
-class Simple<T> {
+public class Simple<T> {
   boolean process(Processor<<warning descr="Can generalize to '? super T'">T</warning>> processor) {
     if (((processor) == null) || ((processor) == (this)) & this!=processor) return false;
 
@@ -282,6 +282,97 @@ class Simple<T> {
     to.loadState((S)from);
   }
 
+  //////////// anonymous
+  class bou<T> {
+    void fff() {
+      class Local {
+        boolean doit(List<<warning descr="Can generalize to '? extends T'">T</warning>> l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+
+        boolean doit(T[] l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+      }
+      new Runnable(){
+        @Override
+        public void run() {
+        }
+
+        boolean doit(List<<warning descr="Can generalize to '? extends T'">T</warning>> l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+
+        boolean doit(T[] l) {
+          for (T t : l) {
+            if (t == null) return true;
+          }
+          return false;
+        }
+      }.run();
+    }
+  }
+
+  //////////////  several same-named methods
+  private static int fillGap(List<Number> blocks, List<Number> result, int startOffset, int endOffset) {
+    return fillGap(null, blocks, result, startOffset, endOffset, 0);
+  }
+
+  private static int fillGap(Number parent,
+                             List<<warning descr="Can generalize to '? extends Number'">Number</warning>> blocks,
+                             List<<warning descr="Can generalize to '? super Number'">Number</warning>> result,
+                             int startOffset,
+                             int endOffset,
+                             int depth) {
+    int lastOffset = startOffset;
+    String currRange = "";
+    for (Number block : blocks) {
+      if (lastOffset == endOffset || block.intValue() > endOffset) return lastOffset;
+      if (currRange.contains("block")) {
+        result.add(block);
+        lastOffset = block.intValue();
+        currRange += endOffset;
+      }
+      else if (currRange.equals(block.toString())) {
+        lastOffset = fillGap(block, blocks.subList(0, lastOffset), result, lastOffset, endOffset, depth + 1);
+        currRange += lastOffset;
+      }
+    }
+    return lastOffset;
+  }
+
+  //////// class copy
+  interface II {
+    void foox(Processor<II> p);
+  }
+  class CCII implements II {
+    @Override
+    public void foox(Processor<<warning descr="Can generalize to '? super II'">II</warning>> p) {
+      if (p.process(this)) return;
+    }
+  }
 
 
+  // patch "this" expressions to resolve to original class instead of copy
+  class X {
+    private Consumer<X> myPopupTuner;
+
+    public X setPopupTuner(Consumer<<warning descr="Can generalize to '? super X'">X</warning>> tuner) {
+      myPopupTuner = tuner;
+
+      if (myPopupTuner != null) {
+        myPopupTuner.accept(this);
+      }
+      return this;
+    }
+  }
 }

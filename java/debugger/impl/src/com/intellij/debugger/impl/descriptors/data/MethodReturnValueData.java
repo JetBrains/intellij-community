@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
@@ -31,6 +29,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return myMethod;
   }
 
+  @Override
   protected MethodReturnValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new MethodReturnValueDescriptorImpl(project, myMethod, myReturnValue);
   }
@@ -43,7 +42,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     final MethodReturnValueData that = (MethodReturnValueData)o;
 
     if (!myMethod.equals(that.myMethod)) return false;
-    if (myReturnValue != null ? !myReturnValue.equals(that.myReturnValue) : that.myReturnValue != null) return false;
+    if (!Objects.equals(myReturnValue, that.myReturnValue)) return false;
 
     return true;
   }
@@ -52,12 +51,13 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return Objects.hash(myReturnValue, myMethod);
   }
 
+  @Override
   public DisplayKey<MethodReturnValueDescriptorImpl> getDisplayKey() {
     return new MethodReturnValueDisplayKey(myMethod, myReturnValue);
   }
 
   private static final class MethodReturnValueDisplayKey extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
-    public MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
+    MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
       super(method, value);
     }
   }

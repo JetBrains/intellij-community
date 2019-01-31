@@ -39,7 +39,8 @@ public abstract class AbstractBlockWrapper {
     Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  protected WhiteSpace myWhiteSpaceBefore;
+  private @NotNull final WhiteSpace myWhiteSpaceBefore;
+
   protected CompositeBlockWrapper myParent;
   protected int                   myStart;
   protected int                   myEnd;
@@ -57,7 +58,7 @@ public abstract class AbstractBlockWrapper {
   private final ASTNode myNode;
 
   public AbstractBlockWrapper(final Block block,
-                              final WhiteSpace whiteSpaceBefore,
+                              final @NotNull WhiteSpace whiteSpaceBefore,
                               final CompositeBlockWrapper parent,
                               final TextRange textRange) {
     myWhiteSpaceBefore = whiteSpaceBefore;
@@ -85,7 +86,7 @@ public abstract class AbstractBlockWrapper {
    *
    * @return the whitespace preceding the block
    */
-  @Nullable
+  @NotNull
   public WhiteSpace getWhiteSpace() {
     return myWhiteSpaceBefore;
   }
@@ -554,7 +555,6 @@ public abstract class AbstractBlockWrapper {
     myIndent = null;
     myIndentFromParent = null;
     myParent = null;
-    myWhiteSpaceBefore = null;
   }
 
   @Override

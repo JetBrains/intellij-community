@@ -30,6 +30,7 @@ public class ReorderableListToolbar<T> extends ReorderableListController<T> {
     super(list);
   }
 
+  @Override
   public void addActionDescription(final ActionDescription description) {
     myActions.add(description);
   }

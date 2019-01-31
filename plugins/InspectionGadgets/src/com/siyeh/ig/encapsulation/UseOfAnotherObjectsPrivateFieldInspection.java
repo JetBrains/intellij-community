@@ -15,16 +15,118 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.psi.PsiField;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import com.siyeh.ig.psiutils.MethodUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class UseOfAnotherObjectsPrivateFieldInspection
-  extends UseOfAnotherObjectsPrivateFieldInspectionBase {
+  extends BaseInspection {
+
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreSameClass = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreInnerClasses = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreEquals = false;
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return new EncapsulateVariableFix(field.getName());
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "AccessingNonPublicFieldOfAnotherObject";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "accessing.non.public.field.of.another.object.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "accessing.non.public.field.of.another.object.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("ignore.accesses.from.the.same.class"), "ignoreSameClass");
+    panel.addDependentCheckBox("Ignore accesses from inner classes", "ignoreInnerClasses", box);
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.accesses.from.equals.method"), "ignoreEquals");
+    return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    // this inspection uses old style serialization, make sure newly introduced setting field does not change profile.
+    defaultWriteSettings(node, "ignoreInnerClasses");
+    writeBooleanOption(node, "ignoreInnerClasses", false);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UseOfAnotherObjectsPrivateFieldVisitor();
+  }
+
+  private class UseOfAnotherObjectsPrivateFieldVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null || qualifier instanceof PsiThisExpression) {
+        return;
+      }
+      if (ignoreEquals) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        if (MethodUtils.isEquals(method)) {
+          return;
+        }
+      }
+      final PsiElement referent = expression.resolve();
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)referent;
+      if (ignoreSameClass) {
+        final PsiClass parent = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+        final PsiClass containingClass = field.getContainingClass();
+        if (parent != null && (parent.equals(containingClass) ||
+                               ignoreInnerClasses && PsiTreeUtil.isAncestor(containingClass, parent, true))) {
+          return;
+        }
+      }
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE) &&
+          !field.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiElement fieldNameElement = expression.getReferenceNameElement();
+      if (fieldNameElement == null) {
+        return;
+      }
+      registerError(fieldNameElement, field);
+    }
   }
 }

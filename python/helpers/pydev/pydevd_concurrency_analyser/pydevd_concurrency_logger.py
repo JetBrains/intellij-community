@@ -1,9 +1,9 @@
-from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wrap_attr
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, AsyncioTaskWrapper, wrap_attr
 
 import pydevd_file_utils
 from _pydevd_bundle import pydevd_xml
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, IS_PY36_OR_GREATER
 
 file_system_encoding = getfilesystemencoding()
 
@@ -254,27 +254,26 @@ class NameManager:
 class AsyncioLogger:
     def __init__(self):
         self.task_mgr = NameManager("Task")
-        self.coro_mgr = NameManager("Coro")
         self.start_time = cur_time()
 
     def get_task_id(self, frame):
-        while frame is not None:
+        if IS_PY36_OR_GREATER:
             if "self" in frame.f_locals:
                 self_obj = frame.f_locals["self"]
-                if isinstance(self_obj,  asyncio.Task):
-                    method_name = frame.f_code.co_name
-                    if method_name == "_step":
-                        return id(self_obj)
-            frame = frame.f_back
-        return None
+                current_task = asyncio.tasks._OrigTask.current_task(self_obj._loop)
+                return id(current_task)
+        else:
+            while frame is not None:
+                if "self" in frame.f_locals:
+                    self_obj = frame.f_locals["self"]
+                    if isinstance(self_obj,  asyncio.Task):
+                        method_name = frame.f_code.co_name
+                        if method_name == "_step":
+                            return id(self_obj)
+                frame = frame.f_back
 
     def log_event(self, frame):
         event_time = cur_time() - self.start_time
-
-        # Debug loop iterations
-        # if isinstance(self_obj, asyncio.base_events.BaseEventLoop):
-        #     if method_name == "_run_once":
-        #         print("Loop iteration")
 
         if not hasattr(frame, "f_back") or frame.f_back is None:
             return
@@ -282,20 +281,37 @@ class AsyncioLogger:
 
         if "self" in frame.f_locals:
             self_obj = frame.f_locals["self"]
-            if isinstance(self_obj, asyncio.Task):
-                method_name = frame.f_code.co_name
-                if method_name == "set_result":
-                    task_id = id(self_obj)
-                    task_name = self.task_mgr.get(str(task_id))
-                    send_message("asyncio_event", event_time, task_name, task_name, "thread", "stop", frame.f_code.co_filename,
-                                 frame.f_lineno, frame)
+            if IS_PY36_OR_GREATER:
+                if self_obj.__class__ == AsyncioTaskWrapper:
+                    method_name = frame.f_code.co_name
+                    if method_name == "__init__":
+                        original_task = frame.f_locals["obj"]
+                        task_id = id(original_task)
+                        task_name = self.task_mgr.get(str(task_id))
+                        send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
+                                     frame.f_lineno, frame)
+                    if method_name == "call_end" and "attr" in frame.f_locals:
+                        real_method = frame.f_locals["attr"]
+                        if real_method == "done":
+                            task_id = id(self_obj.wrapped_object)
+                            task_name = self.task_mgr.get(str(task_id))
+                            send_message("asyncio_event", event_time, task_name, task_name, "thread", "stop", frame.f_code.co_filename,
+                                         frame.f_lineno, frame)
+            else:
+                if isinstance(self_obj, asyncio.Task):
+                    method_name = frame.f_code.co_name
+                    if method_name == "set_result":
+                        task_id = id(self_obj)
+                        task_name = self.task_mgr.get(str(task_id))
+                        send_message("asyncio_event", event_time, task_name, task_name, "thread", "stop", frame.f_code.co_filename,
+                                     frame.f_lineno, frame)
 
-                method_name = back.f_code.co_name
-                if method_name == "__init__":
-                    task_id = id(self_obj)
-                    task_name = self.task_mgr.get(str(task_id))
-                    send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
-                                 frame.f_lineno, frame)
+                    method_name = back.f_code.co_name
+                    if method_name == "__init__":
+                        task_id = id(self_obj)
+                        task_name = self.task_mgr.get(str(task_id))
+                        send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,
+                                     frame.f_lineno, frame)
 
             method_name = frame.f_code.co_name
             if isinstance(self_obj, asyncio.Lock):

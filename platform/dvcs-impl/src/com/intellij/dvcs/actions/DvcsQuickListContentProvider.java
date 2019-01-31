@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
+import com.intellij.openapi.vcs.actions.VcsQuickListPopupAction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,47 +18,40 @@ import java.util.List;
 
 public abstract class DvcsQuickListContentProvider implements VcsQuickListContentProvider {
 
+  @Override
   @Nullable
   public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
                                       @Nullable DataContext dataContext) {
-
-    if (activeVcs == null || !getVcsName().equals(activeVcs.getName())) {
-      return null;
-    }
+    if (activeVcs == null || !replaceVcsActionsFor(activeVcs, dataContext)) return null;
 
     final ActionManager manager = ActionManager.getInstance();
     final List<AnAction> actions = new ArrayList<>();
 
-    actions.add(new Separator(activeVcs.getDisplayName()));
-    add("CheckinProject", manager, actions);
-    add("CheckinFiles", manager, actions);
-    add("ChangesView.Revert", manager, actions);
+    ActionGroup vcsGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP);
+    ActionGroup vcsAwareGroup = (ActionGroup)ContainerUtil.find(vcsGroup.getChildren(null), action -> {
+      if (action instanceof CustomisedActionGroup) action = ((CustomisedActionGroup)action).getOrigin();
+      return action instanceof VcsQuickListPopupAction.VcsAware;
+    });
+    if (vcsAwareGroup != null) ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));
 
-    addSeparator(actions);
-    add("Vcs.ShowTabbedFileHistory", manager, actions);
-    add("Annotate", manager, actions);
-    add("Compare.SameVersion", manager, actions);
-
-    addSeparator(actions);
-    addVcsSpecificActions(manager, actions);
+    List<AnAction> providerActions = collectVcsSpecificActions(manager);
+    actions.removeAll(providerActions);
+    actions.add(Separator.getInstance());
+    actions.addAll(providerActions);
     return actions;
   }
 
   @NotNull
   protected abstract String getVcsName();
 
-  protected abstract void addVcsSpecificActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions);
+  protected abstract List<AnAction> collectVcsSpecificActions(@NotNull ActionManager manager);
 
   @Override
   public boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs, @Nullable DataContext dataContext) {
     return getVcsName().equals(activeVcs.getName());
   }
 
-  protected static void addSeparator(@NotNull final List<AnAction> actions) {
-    actions.add(new Separator());
-  }
-
-  protected static void add(String actionName, ActionManager manager, List<AnAction> actions) {
+  protected static void add(String actionName, ActionManager manager, List<? super AnAction> actions) {
     final AnAction action = manager.getAction(actionName);
     assert action != null : "Can not find action " + actionName;
     actions.add(action);

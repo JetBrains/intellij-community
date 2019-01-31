@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
@@ -100,14 +102,14 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     });
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         if (isEditorOpenedFor(document)) {
           queueUpdateEncodingFromContent(document);
         }
       }
     }, this);
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         queueUpdateEncodingFromContent(event.getEditor().getDocument());
@@ -124,22 +126,19 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
-  private static final Key<String> DETECTING_ENCODING_KEY = Key.create("DETECTING_ENCODING_KEY");
   private void handleDocument(@NotNull final Document document) {
-    if (document.getUserData(DETECTING_ENCODING_KEY) == null) return;
-    try {
-      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile == null) return;
-      Project project = guessProject(virtualFile);
-      if (project != null && project.isDisposed()) return;
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) return;
+    Project project = guessProject(virtualFile);
+    while(true) {
+      if (project != null && project.isDisposed()) break;
+      int nRequests = addNumberOfRequestedRedetects(document, 0);
       Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
       Charset oldCached = getCachedCharsetFromContent(document);
       if (!Comparing.equal(charset, oldCached)) {
         setCachedCharsetFromContent(charset, oldCached, document);
       }
-    }
-    finally {
-      document.putUserData(DETECTING_ENCODING_KEY, null);
+      if (addNumberOfRequestedRedetects(document, -nRequests) == 0) break;
     }
   }
 
@@ -174,10 +173,22 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myDisposed.set(true);
   }
 
-  private void queueUpdateEncodingFromContent(@NotNull Document document) {
+  // stores number of re-detection requests for this document
+  private static final Key<AtomicInteger> RUNNING_REDETECTS_KEY = Key.create("DETECTING_ENCODING_KEY");
+
+  private static int addNumberOfRequestedRedetects(@NotNull Document document, int delta) {
+    AtomicInteger oldData = document.getUserData(RUNNING_REDETECTS_KEY);
+    if (oldData == null) {
+      oldData = ((UserDataHolderEx)document).putUserDataIfAbsent(RUNNING_REDETECTS_KEY, new AtomicInteger());
+    }
+    return oldData.addAndGet(delta);
+  }
+
+  void queueUpdateEncodingFromContent(@NotNull Document document) {
     if (myDisposed.get()) return; // ignore re-detect requests on app close
-    document.putUserData(DETECTING_ENCODING_KEY, "");
-    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
+    if (addNumberOfRequestedRedetects(document, 1) == 1) {
+      changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
+    }
   }
 
   private static class DocumentEncodingDetectRequest implements Runnable {
@@ -242,8 +253,12 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
     ((BoundedTaskExecutor)changedDocumentExecutor).clearAndCancelAll();
     // after clear and canceling all queued tasks, make sure they all are finished
+    waitAllTasksExecuted(1, TimeUnit.MINUTES);
+  }
+
+  void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) {
     try {
-      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(timeout, unit);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -258,7 +273,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
     Project project = guessProject(virtualFileOrDir);
-    EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
+    if (project != null) {
+      EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
+    }
   }
 
   @Override

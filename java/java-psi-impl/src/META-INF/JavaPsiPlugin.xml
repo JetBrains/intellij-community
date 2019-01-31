@@ -18,11 +18,11 @@
     <extensionPoint qualifiedName="com.intellij.codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjuster"/>
     </extensionPoint>
-
     <extensionPoint qualifiedName="com.intellij.javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
     <extensionPoint qualifiedName="com.intellij.javaCompilerConfigurationProxy" interface="com.intellij.psi.JavaCompilerConfigurationProxy"/>
     <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier"/>
+    <extensionPoint qualifiedName="com.intellij.lang.inferredAnnotationProvider" interface="com.intellij.codeInsight.InferredAnnotationProvider" area="IDEA_PROJECT"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
     <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint qualifiedName="com.intellij.psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
@@ -55,45 +55,20 @@
     <extensionPoint qualifiedName="com.intellij.java.languageFeatureProvider" interface="com.intellij.pom.java.LanguageFeatureProvider"/>
   </extensionPoints>
 
-  <extensions defaultExtensionNs="org.jetbrains.uast">
-    <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
-    <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
-    <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
-    <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
-                              implementationClass="com.intellij.psi.presentation.java.JavaModulePresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
-                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
-                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
-                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
-                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
-                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
-    <itemPresentationProvider forClass="com.intellij.psi.PsiPackage"
-                              implementationClass="com.intellij.psi.presentation.java.PackagePresentationProvider"/>
-    <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
-    <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
-    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
-    <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
-    <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
-    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
-    <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
-    <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
-    <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
+    <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
+                        serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
+                        serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
+                        serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
+
     <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
     <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
                     serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
-                        serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
                     serviceImplementation="com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.javadoc.JavadocManager"
@@ -112,10 +87,34 @@
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
     <projectService serviceInterface="org.jetbrains.uast.UastContext"
                     serviceImplementation="org.jetbrains.uast.UastContext"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
-                        serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
-                        serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
+
+    <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
+    <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
+    <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiJavaModule"
+                              implementationClass="com.intellij.psi.presentation.java.JavaModulePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
+                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
+                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
+                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiPackage"
+                              implementationClass="com.intellij.psi.presentation.java.PackagePresentationProvider"/>
+    <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes" externalIdPrefix="java."/>
+    <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
+    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
+    <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
+    <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
+    <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
+    <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
     <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
     <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
@@ -125,6 +124,10 @@
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">

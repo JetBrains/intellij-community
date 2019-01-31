@@ -23,16 +23,13 @@ public interface UsageView extends Disposable {
    * Returns {@link UsageTarget} to look usages for
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
-  @Deprecated String USAGE_TARGETS = USAGE_TARGETS_KEY.getName();
 
   /**
    * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
-  @Deprecated String USAGES = USAGES_KEY.getName();
 
   DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
-  @Deprecated String USAGE_VIEW = USAGE_VIEW_KEY.getName();
 
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
   DataKey<SearchScope> USAGE_SCOPE = DataKey.create("UsageScope");
@@ -51,10 +48,21 @@ public interface UsageView extends Disposable {
   /**
    * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
    */
+  @Deprecated
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
-  void setReRunActivity(@NotNull Runnable runnable);
+
+  /**
+   * @deprecated see {@link UsageView#setRerunAction(Action)}
+   */
+  @Deprecated
+  default void setReRunActivity(@NotNull Runnable runnable) {}
+
+  /**
+   * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.
+   */
+  default void setRerunAction(@NotNull Action rerunAction) {}
 
   void setAdditionalComponent(@Nullable JComponent component);
 
@@ -97,4 +105,15 @@ public interface UsageView extends Disposable {
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
   void removeUsagesBulk(@NotNull Collection<Usage> usages);
+
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
+
+  interface ExcludeListener {
+    /**
+     *
+     * @param usages unmodifiable set or nodes that were excluded or included
+     * @param excluded if <code>true</code> usages were excluded otherwise they were included
+     */
+    void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
+  }
 }

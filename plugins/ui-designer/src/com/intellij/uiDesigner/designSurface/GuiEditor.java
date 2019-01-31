@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -90,9 +76,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * {@code GuiEditor} is a panel with border layout. It has palette at the north,
@@ -296,7 +280,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     final Alarm alarm = new Alarm();
     myDocumentListener = new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent e) {
+      public void documentChanged(@NotNull final DocumentEvent e) {
         if (!myInsideChange) {
           UndoManager undoManager = UndoManager.getInstance(getProject());
           alarm.cancelAllRequests();
@@ -369,10 +353,12 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
                                         new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK)),
                                         myGlassLayer);
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      DesignerToolWindowManager.getInstance(myProject).bind(this);
-      PaletteToolWindowManager.getInstance(myProject).bind(this);
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        DesignerToolWindowManager.getInstance(myProject).bind(this);
+        PaletteToolWindowManager.getInstance(myProject).bind(this);
+      });
+    }
   }
 
   @Override
@@ -404,8 +390,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myDocument.removeDocumentListener(myDocumentListener);
     PsiManager.getInstance(getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
 
-    DesignerToolWindowManager.getInstance(myProject).dispose(this);
-    PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DesignerToolWindowManager.getInstance(myProject).dispose(this);
+      PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    }
+
     myPsiTreeChangeListener.dispose();
 
     Disposer.dispose(myContentSplitter);
@@ -460,10 +449,10 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     final ReadonlyStatusHandler.OperationStatus status;
     if (sourceFileToCheckOut != null) {
-      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile, sourceFileToCheckOut);
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(Arrays.asList(myFile, sourceFileToCheckOut));
     }
     else {
-      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile);
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(Collections.singletonList(myFile));
     }
     return !status.hasReadonlyFiles();
   }
@@ -523,7 +512,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
@@ -1105,13 +1094,13 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    */
   private final class CancelCurrentOperationAction extends AnAction {
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       myProcessor.cancelOperation();
       myQuickFixManager.hideIntentionHint();
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       PropertyInspector inspector = DesignerToolWindowManager.getInstance(GuiEditor.this).getPropertyInspector();
       e.getPresentation().setEnabled(inspector != null && !inspector.isEditing());
     }

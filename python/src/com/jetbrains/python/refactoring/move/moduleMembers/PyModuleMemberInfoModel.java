@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class PyModuleMemberInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyFile, PyModuleMemberInfo> {
   final PyFile myPyFile;
 
-  public PyModuleMemberInfoModel(@NotNull PyFile file) {
+  PyModuleMemberInfoModel(@NotNull PyFile file) {
     super(file, null, false);
     myPyFile = file;
   }

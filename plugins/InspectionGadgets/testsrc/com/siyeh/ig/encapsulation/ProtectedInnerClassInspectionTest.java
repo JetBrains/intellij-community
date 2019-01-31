@@ -1,13 +1,21 @@
 package com.siyeh.ig.encapsulation;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ProtectedInnerClassInspectionTest extends IGInspectionTestCase {
+public class ProtectedInnerClassInspectionTest extends LightInspectionTestCase {
 
-  public void test() {
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
     final ProtectedInnerClassInspection tool = new ProtectedInnerClassInspection();
     tool.ignoreEnums = true;
     tool.ignoreInterfaces = true;
-    doTest("com/siyeh/igtest/encapsulation/protected_inner_class", tool);
+    return tool;
+  }
+
+  public void testProtectedInnerClass() {
+    doTest();
   }
 }

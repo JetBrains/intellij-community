@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -57,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +62,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RefResolveServiceImpl extends RefResolveService implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance(RefResolveServiceImpl.class);
+
   private final AtomicInteger fileCount = new AtomicInteger();
   private final AtomicLong bytesSize = new AtomicLong();
   private final AtomicLong refCount = new AtomicLong();
@@ -83,12 +71,12 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   private final ConcurrentBitSet fileIsInQueue = new ConcurrentBitSet();
   private final ConcurrentBitSet fileIsResolved;
   private final ApplicationEx myApplication;
+  private final Project myProject;
   private volatile boolean myDisposed;
   private volatile boolean upToDate;
   private final AtomicInteger enableVetoes = new AtomicInteger();  // number of disable() calls. To enable the service, there should be at least corresponding number of enable() calls.
   private final FileWriter log;
   private final ProjectFileIndex myProjectFileIndex;
-
 
   public RefResolveServiceImpl(final Project project,
                                final MessageBus messageBus,
@@ -96,7 +84,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
                                StartupManager startupManager,
                                ApplicationEx application,
                                ProjectFileIndex projectFileIndex) throws IOException {
-    super(project);
+    myProject = project;
     ((FutureTask)resolveProcess).run();
     myApplication = application;
     myProjectFileIndex = projectFileIndex;
@@ -126,6 +114,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
           startThread();
         });
       }
+
       Disposer.register(this, new Disposable() {
         @Override
         public void dispose() {
@@ -166,12 +155,13 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   @NotNull
   private static String toVfString(@NotNull Collection<VirtualFile> list) {
-    List<VirtualFile> sub = new ArrayList<>(list).subList(0, Math.min(list.size(), 100));
+    List<VirtualFile> sub = ContainerUtil.getFirstItems(new ArrayList<>(list), 100);
     return list.size() + " files: " + StringUtil.join(sub, file -> file.getName(), ", ") + (list.size() == sub.size() ? "" : "...");
   }
 
   private void initListeners(@NotNull MessageBus messageBus, @NotNull PsiManager psiManager) {
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    MessageBusConnection connection = messageBus.connect(this);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         fileCount.set(0);
@@ -179,6 +169,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         queue(files, "VFS events " + events.size());
       }
     });
+
     psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
@@ -195,7 +186,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }
     });
 
-    messageBus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
         disable();
@@ -206,7 +197,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     });
-    messageBus.connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
         if (PowerSaveMode.isEnabled()) {
@@ -217,7 +209,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         }
       }
     });
-    myApplication.addApplicationListener(new ApplicationAdapter() {
+
+    myApplication.addApplicationListener(new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
         disable();
@@ -233,6 +226,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         disable();
       }
     }, this);
+
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
       public void beforeRefreshStart(boolean asynchronous) {
@@ -244,6 +238,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
         enable();
       }
     }, this);
+
     HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
       @Override
       public void processStarted() {
@@ -656,7 +651,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     int forwardSize = 0;
     int backwardSize = 0;
     final TIntObjectHashMap<TIntArrayList> fileToBackwardIds = new TIntObjectHashMap<>(fileToForwardIds.size());
-    for (IntObjectMap.Entry<int[]> entry : fileToForwardIds.entries()) {
+    for (IntObjectMap.Entry<int[]> entry : fileToForwardIds.entrySet()) {
       int fileId = entry.getKey();
       int[] forwardIds = entry.getValue();
       forwardSize += forwardIds.length;
@@ -812,11 +807,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
             || file.equals(virtualFile)
             || ArrayUtil.indexOf(backIds, getAbsId(file)) != -1) return true;
         return false & !myProjectFileIndex.isUnderSourceRootOfType(file, SOURCE_ROOTS); // filter out source file which we know for sure does not reference the element
-      }
-
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return 0;
       }
 
       @Override

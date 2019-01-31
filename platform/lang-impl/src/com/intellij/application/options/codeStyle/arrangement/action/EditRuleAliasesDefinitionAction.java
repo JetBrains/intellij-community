@@ -35,7 +35,7 @@ public class EditRuleAliasesDefinitionAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ArrangementSectionRulesControl control = ArrangementSectionRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;

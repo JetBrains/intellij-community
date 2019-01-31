@@ -17,9 +17,9 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -41,7 +41,7 @@ public class SnapshotContext {
     public String name;
     public JComponent value;
 
-    public ComponentProperty(final JComponent owner, final String name, final JComponent value) {
+    ComponentProperty(final JComponent owner, final String name, final JComponent value) {
       this.owner = owner;
       this.name = name;
       this.value = value;
@@ -93,7 +93,6 @@ public class SnapshotContext {
       if (radOwner != null && radValue != null) {
         final IntrospectedProperty property = radOwner.getPalette().getIntrospectedProperty(radOwner, prop.name);
         assert property != null;
-        //noinspection unchecked
         IntroComponentProperty icp = (IntroComponentProperty) property;
         try {
           icp.setValue(radOwner, radValue.getId());

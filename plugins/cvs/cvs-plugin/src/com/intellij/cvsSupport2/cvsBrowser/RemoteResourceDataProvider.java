@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 public interface RemoteResourceDataProvider {
 
   RemoteResourceDataProvider NOT_EXPANDABLE = new RemoteResourceDataProvider(){
+    @Override
     public void fillContentFor(GetContentCallback callback, Consumer<VcsException> errorCallback) {}
 
     @Override

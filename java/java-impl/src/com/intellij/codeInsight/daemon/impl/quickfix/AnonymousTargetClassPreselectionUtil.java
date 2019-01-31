@@ -32,7 +32,7 @@ public class AnonymousTargetClassPreselectionUtil {
   }
 
   @Nullable
-  public static PsiClass getPreselection(Collection<PsiClass> classes, PsiClass firstClass) {
+  public static PsiClass getPreselection(Collection<? extends PsiClass> classes, PsiClass firstClass) {
     if (firstClass instanceof PsiAnonymousClass && !PropertiesComponent.getInstance().getBoolean(PRESELECT_ANONYMOUS, true)) {
       for (PsiClass aClass : classes) {
         if (!(aClass instanceof PsiAnonymousClass)) {

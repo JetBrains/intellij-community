@@ -179,7 +179,7 @@ public class SkeletonVersionChecker {
   public static String toVersionString(final int input) {
     int major = input >> 8;
     int minor = input - (major << 8);
-    return String.valueOf(major) + "." + minor;
+    return major + "." + minor;
   }
 
   public static class LoadException extends RuntimeException {

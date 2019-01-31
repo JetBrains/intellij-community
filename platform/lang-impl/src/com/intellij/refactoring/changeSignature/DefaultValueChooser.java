@@ -56,9 +56,7 @@ public class DefaultValueChooser extends DialogWrapper{
     setTitle("Default value for parameter \"" + name + "\" needed");
     myLeaveBlankRadioButton.setSelected(true);
     myValueEditor.setEnabled(false);
-    myFeelLuckyDescription.setText("Variables of the same type would be searched in the method call place.\n" +
-                                   "When exactly one variable is found, it would be used.\n" +
-                                   "Otherwise parameter place would be left blank.");
+    myFeelLuckyDescription.setText("In calls to this method, if exactly one variable of the correct type is found, use it. Otherwise leave blank.");
     myFeelLuckyDescription.setUI(new MultiLineLabelUI());
     myBlankDescription.setUI(new MultiLineLabelUI());
     myValueEditor.setText(defaultValue);

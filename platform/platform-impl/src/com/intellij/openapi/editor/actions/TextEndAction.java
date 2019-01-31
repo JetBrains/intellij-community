@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
- * @since May 14, 2002
  */
 public class TextEndAction extends TextComponentEditorAction {
   public TextEndAction() {

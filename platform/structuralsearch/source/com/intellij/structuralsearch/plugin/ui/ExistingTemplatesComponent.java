@@ -7,7 +7,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,13 +21,16 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -63,64 +65,58 @@ public class ExistingTemplatesComponent {
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (!(selection instanceof DefaultMutableTreeNode)) {
-            return;
+      .setRemoveAction(button -> {
+        final Object selection = patternTree.getLastSelectedPathComponent();
+        if (!(selection instanceof DefaultMutableTreeNode)) {
+          return;
+        }
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+        if (!(node.getUserObject() instanceof Configuration)) {
+          return;
+        }
+        final Configuration configuration = (Configuration)node.getUserObject();
+        if (configuration.isPredefined()) {
+          return;
+        }
+        final String configurationName = configuration.getName();
+        for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
+          final MatchVariableConstraint constraint =
+            otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+          if (constraint == null) {
+            continue;
           }
+          final String within = constraint.getWithinConstraint();
+          if (configurationName.equals(within)) {
+            if (Messages.CANCEL == Messages.showOkCancelDialog(
+              project,
+              SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
+              SSRBundle.message("template.in.use.title", configurationName),
+              CommonBundle.message("button.remove"),
+              Messages.CANCEL_BUTTON,
+              AllIcons.General.WarningDialog
+            )) {
+              return;
+            }
+            break;
+          }
+        }
+        final int[] rows = patternTree.getSelectionRows();
+        if (rows != null && rows.length > 0) {
+          patternTree.addSelectionRow(rows[0] - 1);
+        }
+        patternTreeModel.removeNodeFromParent(node);
+        queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
+      }).setRemoveActionUpdater(e -> {
+        final Object selection = patternTree.getLastSelectedPathComponent();
+        if (selection instanceof DefaultMutableTreeNode) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-          if (!(node.getUserObject() instanceof Configuration)) {
-            return;
+          final Object userObject = node.getUserObject();
+          if (userObject instanceof Configuration) {
+            final Configuration configuration = (Configuration)userObject;
+            return !configuration.isPredefined();
           }
-          final Configuration configuration = (Configuration)node.getUserObject();
-          if (configuration.isPredefined()) {
-            return;
-          }
-          final String configurationName = configuration.getName();
-          for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
-            final MatchVariableConstraint constraint =
-              otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
-            if (constraint == null) {
-              continue;
-            }
-            final String within = constraint.getWithinConstraint();
-            if (configurationName.equals(within)) {
-              if (Messages.CANCEL == Messages.showOkCancelDialog(
-                project,
-                SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
-                SSRBundle.message("template.in.use.title", configurationName),
-                CommonBundle.message("button.remove"),
-                Messages.CANCEL_BUTTON,
-                AllIcons.General.WarningDialog
-              )) {
-                return;
-              }
-              break;
-            }
-          }
-          final int[] rows = patternTree.getSelectionRows();
-          if (rows != null && rows.length > 0) {
-            patternTree.addSelectionRow(rows[0] - 1);
-          }
-          patternTreeModel.removeNodeFromParent(node);
-          queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
         }
-      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          final Object selection = patternTree.getLastSelectedPathComponent();
-          if (selection instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
-            final Object userObject = node.getUserObject();
-            if (userObject instanceof Configuration) {
-              final Configuration configuration = (Configuration)userObject;
-              return !configuration.isPredefined();
-            }
-          }
-          return false;
-        }
+        return false;
       })
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
@@ -188,6 +184,7 @@ public class ExistingTemplatesComponent {
   private void configureSelectTemplateAction(JComponent component) {
     component.addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             owner.close(DialogWrapper.OK_EXIT_CODE);
@@ -213,7 +210,26 @@ public class ExistingTemplatesComponent {
     tree.setDragEnabled(false);
     tree.setEditable(false);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final Object selection = tree.getLastSelectedPathComponent();
+        if (!(selection instanceof DefaultMutableTreeNode)) {
+          return null;
+        }
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selection;
+        if (!(node.getUserObject() instanceof Configuration)) {
+          return null;
+        }
+        return new TextTransferable(ConfigurationUtil.toXml((Configuration)node.getUserObject()));
+      }
 
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
@@ -245,7 +261,7 @@ public class ExistingTemplatesComponent {
 
     private final ListSpeedSearch mySpeedSearch;
 
-    public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
+    ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
 
@@ -286,8 +302,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
-      final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
@@ -317,7 +333,7 @@ public class ExistingTemplatesComponent {
 
   public void finish(boolean performQueuedActions) {
     if (performQueuedActions) {
-      queuedActions.forEach(a -> a.run());
+      queuedActions.forEach(Runnable::run);
     }
     queuedActions.clear();
   }

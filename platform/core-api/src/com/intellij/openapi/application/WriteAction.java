@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +67,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
-    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
+    Class callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
+    return start(callerClass);
   }
 
   /**
@@ -100,7 +87,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    AccessToken token = start();
+    @SuppressWarnings("deprecation") AccessToken token = start(action.getClass());
     try {
       action.run();
     }
@@ -114,13 +101,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
-    AccessToken token = start();
-    try {
-      return action.compute();
-    }
-    finally {
-      token.finish();
-    }
+    return ApplicationManager.getApplication().runWriteAction(action);
   }
 
   /**
@@ -138,11 +119,12 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * <br/>Instead, please use {@link #run(ThrowableRunnable)}.
    */
   public static <E extends Throwable> void runAndWait(@NotNull ThrowableRunnable<E> action) throws E {
-    computeAndWait(()->{
+    computeAndWait(() -> {
       action.run();
       return null;
     });
   }
+
   /**
    * Executes {@code action} inside write action.
    * If called from outside the EDT, transfers control to the EDT first, executes write action there and waits for the execution end.
@@ -153,30 +135,21 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      AccessToken token = start(action.getClass());
-      try {
-        return action.compute();
-      }
-      finally {
-        token.finish();
-      }
+      return ApplicationManager.getApplication().runWriteAction(action);
     }
 
     if (application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
-    final AtomicReference<T> result = new AtomicReference<>();
-    final AtomicReference<Throwable> exception = new AtomicReference<>();
+
+    AtomicReference<T> result = new AtomicReference<>();
+    AtomicReference<Throwable> exception = new AtomicReference<>();
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(action.getClass());
       try {
-        result.set(action.compute());
+        result.set(compute(action));
       }
       catch (Throwable e) {
         exception.set(e);
-      }
-      finally {
-        token.finish();
       }
     });
 
@@ -184,9 +157,10 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     if (t != null) {
       t.addSuppressed(new RuntimeException()); // preserve the calling thread stacktrace
       ExceptionUtil.rethrowUnchecked(t);
-      //noinspection unchecked
-      throw (E)t;
+      @SuppressWarnings("unchecked") E e = (E)t;
+      throw e;
     }
+
     return result.get();
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -54,7 +56,7 @@ public abstract class AbstractValueHint {
   };
 
   private RangeHighlighter myHighlighter;
-  private Cursor myStoredCursor;
+  private boolean myCursorSet;
   private final Project myProject;
   private final Editor myEditor;
   private final ValueHintType myType;
@@ -111,13 +113,13 @@ public abstract class AbstractValueHint {
   public void hideHint() {
     myHintHidden = true;
     myCurrentRange = null;
-    if (myStoredCursor != null) {
-      Component internalComponent = myEditor.getContentComponent();
-      internalComponent.setCursor(myStoredCursor);
+    if (myCursorSet) {
+      myCursorSet = false;
+      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, null);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("internalComponent.setCursor(myStoredCursor)");
+        LOG.debug("restore cursor in editor");
       }
-      internalComponent.removeKeyListener(myEditorKeyListener);
+      myEditor.getContentComponent().removeKeyListener(myEditorKeyListener);
     }
 
     if (myCurrentHint != null) {
@@ -141,7 +143,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint()) {
+    if (!canShowHint() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
       hideHint();
       return;
     }
@@ -178,13 +180,12 @@ public abstract class AbstractValueHint {
                                                                   HighlighterLayer.SELECTION, attributes,
                                                                   HighlighterTargetArea.EXACT_RANGE);
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      Component internalComponent = myEditor.getContentComponent();
-      myStoredCursor = internalComponent.getCursor();
-      internalComponent.addKeyListener(myEditorKeyListener);
-      internalComponent.setCursor(hintCursor());
+      myEditor.getContentComponent().addKeyListener(myEditorKeyListener);
+      if (myEditor instanceof EditorEx) ((EditorEx)myEditor).setCustomCursor(AbstractValueHint.class, hintCursor());
       if (LOG.isDebugEnabled()) {
-        LOG.debug("internalComponent.setCursor(hintCursor())");
+        LOG.debug("set hint cursor to editor");
       }
+      myCursorSet = true;
     }
     else {
       TextAttributesKey attributesKey = DebuggerColors.EVALUATED_EXPRESSION_ATTRIBUTES;
@@ -238,7 +239,7 @@ public abstract class AbstractValueHint {
     };
     myCurrentHint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }
@@ -260,6 +261,9 @@ public abstract class AbstractValueHint {
                                                      HintManager.HIDE_BY_TEXT_CHANGE |
                                                      HintManager.HIDE_BY_SCROLLING, 0, false,
                                                      hint);
+    if (myHighlighter == null) { // hint text update
+      createHighlighter();
+    }
     setHighlighterAttributes();
     myInsideShow = false;
     return true;
@@ -327,7 +331,8 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    if (myEditor.isDisposed()) {
+    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+      hideHint();
       return;
     }
 
@@ -356,7 +361,7 @@ public abstract class AbstractValueHint {
     if (!myProject.equals(hint.myProject)) return false;
     if (!myEditor.equals(hint.myEditor)) return false;
     if (myType != hint.myType) return false;
-    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+    if (!Objects.equals(myCurrentRange, hint.myCurrentRange)) return false;
 
     return true;
   }

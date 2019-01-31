@@ -23,6 +23,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class IterableForEachLoopPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;

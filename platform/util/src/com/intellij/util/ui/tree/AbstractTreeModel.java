@@ -16,6 +16,7 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -90,7 +91,7 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @param listener a listener to add
    */
   @Override
-  public void addTreeModelListener(TreeModelListener listener) {
+  public void addTreeModelListener(@NotNull TreeModelListener listener) {
     if (!disposed) listeners.add(listener);
   }
 
@@ -100,7 +101,7 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @param listener a listener to remove
    */
   @Override
-  public void removeTreeModelListener(TreeModelListener listener) {
+  public void removeTreeModelListener(@NotNull TreeModelListener listener) {
     if (!disposed) listeners.remove(listener);
   }
 }

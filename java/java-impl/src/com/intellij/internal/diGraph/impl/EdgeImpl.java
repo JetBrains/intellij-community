@@ -15,10 +15,9 @@
  */
 package com.intellij.internal.diGraph.impl;
 
-import com.intellij.internal.diGraph.Edge;
 import com.intellij.internal.diGraph.Node;
-import com.intellij.internal.diGraph.analyzer.MarkedEdge;
 import com.intellij.internal.diGraph.analyzer.Mark;
+import com.intellij.internal.diGraph.analyzer.MarkedEdge;
 
 public class EdgeImpl implements MarkedEdge {
   NodeImpl myBeg;
@@ -35,18 +34,22 @@ public class EdgeImpl implements MarkedEdge {
     to.myIn.add(this);
   }
 
+  @Override
   public Node beg() {
     return myBeg;
   }
 
+  @Override
   public Node end() {
     return myEnd;
   }
 
+  @Override
   public Mark getMark(){
     return null;
   }
 
+  @Override
   public void setMark(Mark x){
 
   }

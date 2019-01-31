@@ -15,13 +15,13 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.group;
 
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.JBTable;
@@ -42,7 +42,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 11/13/12 7:27 PM
  */
 public class ArrangementGroupingRulesControl extends JBTable {
 
@@ -158,7 +157,6 @@ public class ArrangementGroupingRulesControl extends JBTable {
     super.processMouseEvent(e);
   }
 
-  @SuppressWarnings("ConstantConditions")
   private class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -175,7 +173,6 @@ public class ArrangementGroupingRulesControl extends JBTable {
     }
   }
   
-  @SuppressWarnings("ConstantConditions")
   private static class MyEditor extends AbstractTableCellEditor {
     
     @Nullable Object myValue;

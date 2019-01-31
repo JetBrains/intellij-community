@@ -55,6 +55,7 @@ public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Seque
     return XPathType.UNKNOWN;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2Sequence(this);
   }

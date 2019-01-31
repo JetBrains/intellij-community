@@ -19,7 +19,9 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -48,6 +50,11 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   private JCheckBox myCbKeepIndentsOnEmptyLines;
 
   public SmartIndentOptionsEditor() {
+    this(null);
+  }
+
+  public SmartIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+    super(provider);
     myContinuationOption = createContinuationOption(
       CONTINUATION_INDENT_LABEL,
       options -> options.CONTINUATION_INDENT_SIZE,  (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
@@ -76,8 +83,8 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
 
   private ContinuationOption createContinuationOption(
     @NotNull String labelText,
-    Function<CommonCodeStyleSettings.IndentOptions,Integer> getter,
-    BiConsumer<CommonCodeStyleSettings.IndentOptions,Integer> setter,
+    Function<? super CommonCodeStyleSettings.IndentOptions, Integer> getter,
+    BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> setter,
     int defaultValue
   ) {
     ContinuationOption option = new ContinuationOption(labelText, getter, setter, defaultValue);

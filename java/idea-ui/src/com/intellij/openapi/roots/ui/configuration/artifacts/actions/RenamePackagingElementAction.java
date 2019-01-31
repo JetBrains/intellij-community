@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.RenameablePackagingElement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 
@@ -40,7 +41,7 @@ public class RenamePackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElement<?> element = selection.getElementIfSingle();
     final boolean visible = element instanceof RenameablePackagingElement && ((RenameablePackagingElement)element).canBeRenamed();
@@ -49,7 +50,7 @@ public class RenamePackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
     final PackagingElement<?> element = selection.getElementIfSingle();

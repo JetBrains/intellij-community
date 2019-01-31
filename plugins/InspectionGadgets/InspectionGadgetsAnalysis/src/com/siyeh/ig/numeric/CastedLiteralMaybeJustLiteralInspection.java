@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -70,14 +71,14 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
 
     private final String replacementString;
 
-    public ReplaceCastedLiteralWithJustLiteralFix(String replacementString) {
+    ReplaceCastedLiteralWithJustLiteralFix(String replacementString) {
       this.replacementString = replacementString;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("int.literal.may.be.long.literal.quickfix", replacementString);
+      return CommonQuickFixBundle.message("fix.replace.with.x", replacementString);
     }
 
     @NotNull

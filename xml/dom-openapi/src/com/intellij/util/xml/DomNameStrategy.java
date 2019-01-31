@@ -15,6 +15,8 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Specifies how method names are converted into XML element names
  *
@@ -28,7 +30,8 @@ public abstract class DomNameStrategy {
    * @param propertyName property name, i.e. method name without first 'get', 'set' or 'is'
    * @return XML element name
    */
-  public abstract String convertName(String propertyName);
+  @NotNull
+  public abstract String convertName(@NotNull String propertyName);
 
   /**
    * Is used to get presentable DOM elements in UI  

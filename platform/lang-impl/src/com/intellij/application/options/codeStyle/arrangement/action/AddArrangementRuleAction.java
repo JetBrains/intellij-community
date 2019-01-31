@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/24/12 1:54 PM
  */
 public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   
@@ -39,13 +38,13 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;

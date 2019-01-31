@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -102,7 +103,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     return pointersToUrls(myRoots.get(rootType));
   }
 
-  private static String[] pointersToUrls(Collection<LightFilePointer> pointers) {
+  private static String[] pointersToUrls(Collection<? extends LightFilePointer> pointers) {
     List<String> urls = new ArrayList<>(pointers.size());
     for (LightFilePointer pointer : pointers) {
       urls.add(pointer.getUrl());
@@ -215,21 +216,22 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   public void applyTo(@NotNull LibraryEx.ModifiableModelEx model) {
     model.setProperties(myProperties);
-    exportRoots(model::getUrls, model::isValid, model::removeRoot, model::addRoot, model::addJarDirectory);
+    exportRoots(model::getUrls, model::isValid, model::removeRoot, model::addRoot, model::addJarDirectory, model::addExcludedRoot);
   }
 
 
   public void applyTo(@NotNull LibraryEditorBase editor) {
     editor.setProperties(myProperties);
-    exportRoots(editor::getUrls, editor::isValid, editor::removeRoot, editor::addRoot, editor::addJarDirectory);
+    exportRoots(editor::getUrls, editor::isValid, editor::removeRoot, editor::addRoot, editor::addJarDirectory, editor::addExcludedRoot);
   }
 
   private void exportRoots(
-    final Function<OrderRootType, String[]> getUrls,
-    final BiFunction<String, OrderRootType, Boolean> isValid,
-    final BiConsumer<String, OrderRootType> removeRoot,
-    final BiConsumer<String, OrderRootType> addRoot,
-    final TriConsumer<String, Boolean, OrderRootType> addJarDir) {
+    final Function<? super OrderRootType, String[]> getUrls,
+    final BiFunction<? super String, ? super OrderRootType, Boolean> isValid,
+    final BiConsumer<? super String, ? super OrderRootType> removeRoot,
+    final BiConsumer<? super String, ? super OrderRootType> addRoot,
+    final TriConsumer<? super String, ? super Boolean, ? super OrderRootType> addJarDir,
+    final Consumer<? super String> addExcludedRoot) {
 
     // first, clean the target container optionally preserving invalid paths
     for (OrderRootType type : OrderRootType.getAllTypes()) {
@@ -260,13 +262,16 @@ public class NewLibraryEditor extends LibraryEditorBase {
         addJarDir.accept(url, true, type);
       }
     }
+    for (LightFilePointer root: myExcludedRoots) {
+      addExcludedRoot.accept(root.getUrl());
+    }
   }
 
-  private static void collectJarFiles(@NotNull VirtualFile dir, @NotNull List<VirtualFile> container, final boolean recursively) {
+  private static void collectJarFiles(@NotNull VirtualFile dir, @NotNull List<? super VirtualFile> container, final boolean recursively) {
     VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT, recursively ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
           VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
           if (jarRoot != null) {
             container.add(jarRoot);

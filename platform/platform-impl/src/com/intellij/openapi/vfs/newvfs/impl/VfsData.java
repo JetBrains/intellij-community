@@ -1,34 +1,25 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -36,10 +27,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -80,8 +68,8 @@ public class VfsData {
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
-  
-  private final Object myDeadMarker = new String("dead file");
+
+  private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
@@ -105,7 +93,8 @@ public class VfsData {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {
         for (int id : myDyingIds.toArray()) {
-          assertNotNull(getSegment(id, false)).myObjectArray.set(getOffset(id), myDeadMarker);
+          Segment segment = assertNotNull(getSegment(id, false));
+          segment.myObjectArray.set(getOffset(id), myDeadMarker);
           myChangedParents.remove(id);
         }
         myDyingIds = new TIntHashSet();
@@ -216,7 +205,7 @@ public class VfsData {
 
     // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
     private final AtomicIntegerArray myIntArray = new AtomicIntegerArray(SEGMENT_SIZE * 2);
-    
+
     final VfsData vfsData;
 
     Segment(VfsData vfsData) {
@@ -260,7 +249,7 @@ public class VfsData {
       int offset = getOffset(id) * 2 + 1;
       while (true) {
         int oldInt = myIntArray.get(offset);
-        int updated = value ? (oldInt | mask) : (oldInt & ~mask);
+        int updated = BitUtil.set(oldInt, mask, value);
         if (myIntArray.compareAndSet(offset, oldInt, updated)) {
           return;
         }
@@ -286,55 +275,115 @@ public class VfsData {
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   public static class DirectoryData {
-    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
-    @NotNull volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
-    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
-    private Set<CharSequence> myAdoptedNames; // guarded by this
+    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+    @NotNull
+    volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+    /**
+     * sorted by {@link VfsData#getNameByFileId(int)}
+     * assigned under lock(this) only; never modified in-place
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
+     */
+    @NotNull
+    volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
+
+    // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
+    private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
-      assert fileId > 0;
-      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[myChildrenIds.length];
-      for (int i = 0; i < myChildrenIds.length; i++) {
-        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(myChildrenIds[i], parent));
+    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
+      int[] ids = myChildrenIds;
+      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
+      for (int i = 0; i < ids.length; i++) {
+        int childId = ids[i];
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        if (child == null) {
+          throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
+        }
+        children[i] = child;
       }
       return children;
     }
 
     boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
-      return updater.compareAndSet(this, oldMap, newMap);
+      return MY_USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);
     }
 
-    boolean isAdoptedName(CharSequence name) {
-      return myAdoptedNames != null && myAdoptedNames.contains(name);
+    boolean isAdoptedName(@NotNull CharSequence name) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        return false;
+      }
+      synchronized (adopted) {
+        return adopted.contains(name);
+      }
     }
 
-    void removeAdoptedName(CharSequence name) {
-      if (myAdoptedNames != null) {
-        myAdoptedNames.remove(name);
-        if (myAdoptedNames.isEmpty()) {
+    /**
+     * must call removeAdoptedName() before adding new child with the same name
+     * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     *
+     * Must be called in synchronized(VfsData)
+     */
+    void removeAdoptedName(@NotNull CharSequence name) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        return;
+      }
+      synchronized (adopted) {
+        boolean removed = adopted.remove(name);
+        if (removed && adopted.isEmpty()) {
           myAdoptedNames = null;
         }
       }
     }
-    void addAdoptedName(CharSequence name, boolean caseSensitive) {
-      if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+
+    /**
+     * Must be called in synchronized(VfsData)
+     */
+    void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
+      Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
+      CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
+      synchronized (adopted) {
+        adopted.add(sequence);
       }
-      myAdoptedNames.add(name);
     }
-    void addAdoptedNames(Collection<CharSequence> names, boolean caseSensitive) {
-      if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+
+    /**
+     * Optimization: faster than call {@link #addAdoptedName(CharSequence, boolean)} one by one
+     * Must be called in synchronized(VfsData)
+     */
+    void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
+      Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
+      synchronized (adopted) {
+        adopted.addAll(names);
       }
-      myAdoptedNames.addAll(names);
+    }
+
+    /**
+     * Must be called in synchronized(VfsData)
+     */
+    @NotNull
+    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        myAdoptedNames = adopted =
+          new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      }
+      return adopted;
     }
 
     @NotNull
-    Collection<CharSequence> getAdoptedNames() {
-      return myAdoptedNames == null ? Collections.emptyList() : myAdoptedNames;
+    List<String> getAdoptedNames() {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) return Collections.emptyList();
+      synchronized (adopted) {
+        return ContainerUtil.map(adopted, Functions.TO_STRING());
+      }
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void clearAdoptedNames() {
       myAdoptedNames = null;
     }

@@ -15,29 +15,33 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author cdr
  */
 public class SliceLeafAnalyzer {
+  private static final Logger LOG = Logger.getInstance(SliceLeafAnalyzer.class);
 
   @NotNull
   private final SliceLeafEquality myLeafEquality;
@@ -50,9 +54,9 @@ public class SliceLeafAnalyzer {
     myProvider = provider;
   }
 
-  static SliceNode filterTree(SliceNode oldRoot,
-                              NullableFunction<SliceNode, SliceNode> filter,
-                              PairProcessor<SliceNode, List<SliceNode>> postProcessor) {
+  public static SliceNode filterTree(SliceNode oldRoot,
+                                     NullableFunction<? super SliceNode, ? extends SliceNode> filter,
+                                     PairProcessor<? super SliceNode, ? super List<SliceNode>> postProcessor) {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
@@ -71,7 +75,7 @@ public class SliceLeafAnalyzer {
     return filtered;
   }
 
-  private void groupByValues(@NotNull Collection<PsiElement> leaves,
+  private void groupByValues(@NotNull Collection<? extends PsiElement> leaves,
                                     @NotNull SliceRootNode oldRoot,
                                     @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     assert oldRoot.myCachedChildren.size() == 1;
@@ -84,14 +88,14 @@ public class SliceLeafAnalyzer {
   }
 
   @NotNull
-  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
                                                         @NotNull SliceRootNode oldRoot,
                                                         @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<>(leaves.size());
+    List<SliceNode> leafValueRoots = new ArrayList<>(leaves.size());
 
     for (final PsiElement leafExpression : leaves) {
       SliceNode newNode = filterTree(oldRootStart, oldNode -> {
@@ -110,8 +114,10 @@ public class SliceLeafAnalyzer {
                                                                  root,
                                                                  myProvider.createRootUsage(leafExpression, oldRoot.getValue().params),
                                                                  Collections.singletonList(newNode));
-      root.myCachedChildren.add(lvNode);
+      leafValueRoots.add(lvNode);
     }
+    root.setChildren(leafValueRoots);
+
     return root;
   }
 
@@ -121,7 +127,8 @@ public class SliceLeafAnalyzer {
 
     final Map<SliceNode, Collection<PsiElement>> map = createMap();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(),
+                                                              "Expanding All Nodes... (May Very Well Take the Whole Day)", true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
@@ -155,10 +162,10 @@ public class SliceLeafAnalyzer {
 
   public Map<SliceNode, Collection<PsiElement>> createMap() {
     return ConcurrentFactoryMap.createMap(k -> ConcurrentCollectionFactory.createConcurrentSet(myLeafEquality),
-                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.<SliceNode>identityStrategy()));
+                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy()));
   }
 
-  static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+  public static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 
@@ -203,7 +210,15 @@ public class SliceLeafAnalyzer {
                                                            @NotNull AbstractTreeStructure treeStructure,
                                                            @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
+    AtomicInteger depth = new AtomicInteger();
+    boolean printToLog = LOG.isTraceEnabled();
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+      @Override
+      public void elementStarted(@NotNull SliceNode element) {
+        depth.incrementAndGet();
+        super.elementStarted(element);
+      }
+
       @Override
       public void visit(@NotNull final SliceNode element) {
         element.calculateDupNode();
@@ -217,6 +232,10 @@ public class SliceLeafAnalyzer {
             final SliceUsage sliceUsage = element.getValue();
 
             Collection<SliceNode> children = element.getChildren();
+            if (printToLog) {
+              LOG.trace(StringUtil.repeat("  ", Math.max(depth.get(), 0)) + "analyzing usages of " + sliceUsage +
+                        " (in " + (sliceUsage == null ? "null" : sliceUsage.getFile().getName() + ":" + sliceUsage.getLine()) + ")");
+            }
             if (children.isEmpty() && sliceUsage != null && sliceUsage.canBeLeaf()) {
               PsiElement value = sliceUsage.getElement();
               if (value != null) {
@@ -231,6 +250,7 @@ public class SliceLeafAnalyzer {
 
       @Override
       public void elementFinished(@NotNull SliceNode element) {
+        depth.decrementAndGet();
         SliceNode parent = guide.getParent(element);
         if (parent != null) {
           node(parent, map).addAll(node(element, map));

@@ -45,10 +45,12 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       addStep(step);
 
       step.addStepListener(new AbstractWizardStepEx.Listener() {
+        @Override
         public void stateChanged() {
           updateButtons();
         }
 
+        @Override
         public void doNextAction() {
           if (getNextButton().isEnabled()) {
             AbstractWizardEx.this.doNextAction();
@@ -61,6 +63,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     init();
   }
 
+  @Override
   protected void doPreviousAction() {
     // Commit data of current step
     final AbstractWizardStepEx currentStep = mySteps.get(myCurrentStep);
@@ -79,6 +82,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     updateStep(JBCardLayout.SwipeDirection.BACKWARD);
   }
 
+  @Override
   protected void doNextAction() {
     // Commit data of current step
     final AbstractWizardStepEx currentStep = mySteps.get(myCurrentStep);
@@ -101,23 +105,27 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     updateStep(JBCardLayout.SwipeDirection.FORWARD);
   }
 
+  @Override
   protected int getNextStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object nextStepId = stepObject.getNextStepId();
     return myStepId2Index.get(nextStepId);
   }
 
+  @Override
   protected int getPreviousStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object previousStepId = stepObject.getPreviousStepId();
     return myStepId2Index.get(previousStepId);
   }
 
+  @Override
   protected String getHelpID() {
     return getCurrentStepObject().getHelpId();
   }
 
 
+  @Override
   protected void updateStep() {
     super.updateStep();
     updateButtons();
@@ -130,6 +138,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
   }
 
+  @Override
   protected void updateButtons() {
     super.updateButtons();
     getPreviousButton().setEnabled(getCurrentStepObject().getPreviousStepId() != null);
@@ -142,10 +151,12 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     return getCurrentStepObject().isComplete();
   }
 
+  @Override
   protected boolean isLastStep() {
     return myIndex2Step.get(myCurrentStep).getNextStepId() == null;
   }
 
+  @Override
   protected boolean canFinish() {
     for (AbstractWizardStepEx step : mySteps) {
       if (!step.isComplete()) {

@@ -17,6 +17,7 @@ public class JavaModuleIndexRole extends JpsElementChildRoleBase<JavaModuleIndex
     super("java module index");
   }
 
+  @Override
   @NotNull
   public JavaModuleIndex create(@NotNull JpsCompilerExcludes excludes) {
     return new JavaModuleIndexImpl(excludes);

@@ -64,9 +64,9 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     if (CodeInsightTestFixtureImpl.processGuttersAtCaret(getEditor(), getProject(), mark -> {
       Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
       assertEquals(
-        "<html><body>Overrides method in <a href=\"#javaClass/I\">I</a><br><div style='margin-top: 5px'><font size='2'>Click or press " +
+        "<html><body><p>Overrides method in <a href=\"#element/I#run\"><code>I</code></a></p><p style='margin-top:8px;'><font size='2' color='#787878'>Press " +
         KeymapUtil.getShortcutText(shortcut) +
-        " to navigate</font></div></body></html>",
+        " to navigate</font></p></body></html>",
         mark.getTooltipText());
       return false;
     })) {
@@ -154,7 +154,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     Document document = getEditor().getDocument();
     List<LineMarkerInfo> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
     List<LineMarkerInfo> inMyClass = ContainerUtil.filter(markers, info -> OCBaseLanguageFileType.getTextRange().containsRange(info.startOffset, info.endOffset));
-    assertTrue(inMyClass.toString(), inMyClass.size() == 2);
+    assertEquals(inMyClass.toString(), 2, inMyClass.size());
     LineMarkerInfo iMarker = findMarkerWithElement(inMyClass, getName.getNameIdentifier());
     assertSame(MarkerType.OVERRIDING_METHOD.getNavigationHandler(), iMarker.getNavigationHandler());
 

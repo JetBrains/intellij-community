@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
@@ -27,15 +13,19 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
-    productCode = "IC"
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
     productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
-                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES + [
+      "intellij.platform.duplicates.analysis",
+      "intellij.platform.structuralSearch",
+      "intellij.java.structuralSearch",
+      "intellij.java.typeMigration",
+      "intellij.platform.main"
+    ]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.mainModules = ["intellij.idea.community.main"]
@@ -47,6 +37,8 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
 
     mavenArtifacts.forIdeModules = true
+
+    versionCheckerConfig = CE_CLASS_VERSIONS
   }
 
   @Override
@@ -98,6 +90,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
           "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+        extraExecutables = [
+          "plugins/Kotlin/kotlinc/bin/kotlin",
+          "plugins/Kotlin/kotlinc/bin/kotlinc",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-js",
+          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
+          "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
+        ]
       }
 
       @Override

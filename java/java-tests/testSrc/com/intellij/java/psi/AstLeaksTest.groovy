@@ -36,14 +36,14 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
   void "test AST should be on a soft reference, for changed files as well"() {
     def file = myFixture.addClass('class Foo {}').containingFile
     assert file.findElementAt(0) instanceof PsiKeyword
-    LeakHunter.checkLeak(file, JavaFileElement)
+    LeakHunter.checkLeak(file, JavaFileElement) { e -> e.psi == file }
 
     WriteCommandAction.runWriteCommandAction project, {
       file.viewProvider.document.insertString(0, ' ')
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
     assert file.findElementAt(0) instanceof PsiWhiteSpace
-    LeakHunter.checkLeak(file, JavaFileElement)
+    LeakHunter.checkLeak(file, JavaFileElement) { e -> e.psi == file }
   }
 
   void "test super methods held via their signatures in class user data"() {

@@ -44,7 +44,7 @@ public class RollbackUtil {
    * @return name for the "rollback" operation to be used in the UI.
    */
   @NotNull
-  public static String getRollbackOperationName(@NotNull Collection<AbstractVcs> vcses) {
+  public static String getRollbackOperationName(@NotNull Collection<? extends AbstractVcs> vcses) {
     String operationName = null;
     for (AbstractVcs vcs : vcses) {
       final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();

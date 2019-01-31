@@ -3,10 +3,8 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,16 +18,11 @@ public class LaFUsagesCollector extends ApplicationUsagesCollector {
   @Override
   public Set<UsageDescriptor> getUsages() {
     UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
-    String key = SystemInfo.OS_NAME + ".";
-    if (!StringUtil.isEmptyOrSpaces(SystemInfo.SUN_DESKTOP)) {
-      key=key.replaceAll(" ", "_");
-      key += SystemInfo.SUN_DESKTOP + ".";
-    }
-    return laf != null ? Collections.singleton(new UsageDescriptor(ensureProperKey(key + laf.getName()), 1))
+    return laf != null ? Collections.singleton(new UsageDescriptor(ensureProperKey(laf.getName()), 1, new FeatureUsageData().addOS()))
                        : Collections.emptySet();
   }
 
   @NotNull
   @Override
-  public String getGroupId() { return "statistics.ui.look.and.feel"; }
+  public String getGroupId() { return "ui.look.and.feel"; }
 }

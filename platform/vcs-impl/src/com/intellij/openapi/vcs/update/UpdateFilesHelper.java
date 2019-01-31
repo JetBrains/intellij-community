@@ -65,13 +65,13 @@ public class UpdateFilesHelper {
     }
   }
 
-  private static void iterateGroup(final FileGroup group, final Consumer<Couple<String>> callback) {
+  private static void iterateGroup(final FileGroup group, final Consumer<? super Couple<String>> callback) {
     for (FileGroup.UpdatedFile updatedFile : group.getUpdatedFiles()) {
       callback.consume(Couple.of(updatedFile.getPath(), updatedFile.getVcsName()));
     }
   }
 
-  public static void iterateAffectedFiles(final UpdatedFiles updatedFiles, final Consumer<Couple<String>> callback) {
+  public static void iterateAffectedFiles(final UpdatedFiles updatedFiles, final Consumer<? super Couple<String>> callback) {
     final List<FileGroup> groups = updatedFiles.getTopLevelGroups();
     for (FileGroup group : groups) {
       iterateGroup(group, callback);

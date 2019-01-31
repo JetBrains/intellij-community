@@ -12,7 +12,6 @@ import java.util.List;
  *
  * @author yole
  * @see MergeProvider2#createMergeSession
- * @since 8.1
  */
 public interface MergeSessionEx extends MergeSession {
   /**
@@ -26,7 +25,7 @@ public interface MergeSessionEx extends MergeSession {
    * Called after conflict resolution for conflicting files.
    * @see  #conflictResolvedForFile
    *
-   * @param file       the conflicting file.
+   * @param files       the conflicting file.
    * @param resolution the used resolution.
    */
   void conflictResolvedForFiles(@NotNull List<VirtualFile> files, @NotNull Resolution resolution);

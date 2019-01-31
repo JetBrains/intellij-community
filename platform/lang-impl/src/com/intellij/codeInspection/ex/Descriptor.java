@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class Descriptor {
   private static final Logger LOG = Logger.getInstance(Descriptor.class);
 
+  @NotNull
   private final String myText;
   private final String[] myGroup;
   private final HighlightDisplayKey myKey;
@@ -24,6 +25,7 @@ public class Descriptor {
   @Nullable
   private final NamedScope myScope;
   private final ScopeToolState myState;
+  @NotNull
   private final InspectionProfileModifiableModel myInspectionProfile;
   private final String myScopeName;
 
@@ -45,6 +47,7 @@ public class Descriptor {
     myToolWrapper = tool;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof Descriptor)) return false;
     final Descriptor descriptor = (Descriptor)obj;
@@ -54,6 +57,7 @@ public class Descriptor {
            myState.equalTo(descriptor.getState());
   }
 
+  @Override
   public int hashCode() {
     final int hash = myKey.hashCode() + 29 * myLevel.hashCode();
     return myScope != null ? myScope.hashCode() + 29 * hash : hash;
@@ -67,6 +71,7 @@ public class Descriptor {
     myEnabled = enabled;
   }
 
+  @NotNull
   public String getText() {
     return myText;
   }
@@ -103,10 +108,12 @@ public class Descriptor {
     return myToolWrapper.loadDescription();
   }
 
+  @NotNull
   public InspectionProfileModifiableModel getInspectionProfile() {
     return myInspectionProfile;
   }
 
+  @NotNull
   public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
     Element element = new Element("options");
     try {

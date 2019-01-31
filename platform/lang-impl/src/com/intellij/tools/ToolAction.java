@@ -40,12 +40,12 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     runTool(myActionId, e.getDataContext(), e, 0L, null);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Tool tool = findTool(myActionId, e.getDataContext());
     if (tool != null) {
       e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()));
@@ -79,5 +79,11 @@ public class ToolAction extends AnAction implements DumbAware {
     if (tool != null) {
       tool.execute(e, new HackyDataContext(context), executionId, processListener);
     }
+  }
+
+  @Nullable
+  @Override
+  public String getTemplateText() {
+    return "External Tool";
   }
 }

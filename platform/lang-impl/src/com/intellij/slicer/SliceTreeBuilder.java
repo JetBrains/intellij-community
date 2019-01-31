@@ -35,9 +35,9 @@ import java.util.Comparator;
  * @author cdr
  */
 public class SliceTreeBuilder extends AbstractTreeBuilder {
-  final boolean splitByLeafExpressions;
+  public final boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
-  volatile boolean analysisInProgress;
+  public volatile boolean analysisInProgress;
 
   public static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
@@ -94,7 +94,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   }
 
 
-  void switchToLeafNulls() {
+  public void switchToLeafNulls() {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
     if(provider == null){
       return;

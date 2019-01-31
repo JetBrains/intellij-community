@@ -14,6 +14,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -30,7 +31,6 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
 
-  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   private final Object[][] data = new Object[3][2];
 
   private void setData() {
@@ -43,7 +43,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
 
@@ -68,7 +68,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     };
 
     table.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
-      JTextField component = new JTextField();
+      final JTextField component = new JTextField();
 
       @Override
       public Object getCellEditorValue() {

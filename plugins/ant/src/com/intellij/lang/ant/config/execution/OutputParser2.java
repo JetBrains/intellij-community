@@ -46,6 +46,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     printable.printOn(null);
   }
 
+  @Override
   public void processPacket(String packet) {
     SegmentReader reader = new SegmentReader(packet);
     int index = reader.readInt();
@@ -64,23 +65,23 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
       }
     }
     else {
-      int priority = reader.readInt();
+      int priority = fixPriority(reader.readInt());
       char contentType = reader.readChar();
       String message = reader.readLimitedString();
-      switch (id) {
-        case IdeaAntLogger2.BUILD_END:
-          if (contentType == IdeaAntLogger2.EXCEPTION_CONTENT) {
-            processTag(IdeaAntLogger2.EXCEPTION, message, priority);
-          }
-          break;
-        default:
-          processTag(id, message, priority);
+      if (id == IdeaAntLogger2.BUILD_END) {
+        if (contentType == IdeaAntLogger2.EXCEPTION_CONTENT) {
+          processTag(IdeaAntLogger2.EXCEPTION, message, priority);
+        }
+      }
+      else {
+        processTag(id, message, priority);
       }
     }
   }
 
+  @Override
   public void onOutput(String text, ConsoleViewContentType contentType) {
-    if (text.length() == 0) return;
+    if (text.isEmpty()) return;
     if (myLastPacketIndex != -1) return;
     if (contentType == ConsoleViewContentType.ERROR_OUTPUT) readErrorOutput(text);
   }

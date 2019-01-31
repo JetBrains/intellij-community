@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
-import com.sun.tools.javac.util.ClientCodeException;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -31,7 +30,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   private final static TObjectIntHashMap<JavacRef> EMPTY_T_OBJ_INT_MAP = new TObjectIntHashMap<JavacRef>(0);
 
   private final boolean myDivideImportRefs;
-  private final Consumer<JavacFileData> myDataConsumer;
+  private final Consumer<? super JavacFileData> myDataConsumer;
   private final JavacTask myJavacTask;
   private final JavacTreeRefScanner myAstScanner;
   private final boolean myAtLeastJdk8;
@@ -46,7 +45,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   static void installOn(JavaCompiler.CompilationTask task,
                         boolean divideImportRefs,
-                        Consumer<JavacFileData> dataConsumer) {
+                        Consumer<? super JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
     Method addTaskMethod; // jdk >= 8
     try {
@@ -77,7 +76,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
   }
 
   private JavacReferenceCollectorListener(boolean divideImportRefs,
-                                          Consumer<JavacFileData> dataConsumer,
+                                          Consumer<? super JavacFileData> dataConsumer,
                                           JavacTask javacTask,
                                           boolean atLeastJdk8) {
     myDivideImportRefs = divideImportRefs;
@@ -97,61 +96,56 @@ final class JavacReferenceCollectorListener implements TaskListener {
     // Should be initialized only when JavaCompiler was created (jdk 6-7).
     // Otherwise JavacReferenceCollectorListener will not be loaded to javac Context.
     initializeUtilitiesIfNeeded();
-    try {
-      if (e.getKind() == TaskEvent.Kind.ANALYZE) {
-        // javac creates an event on each processed top level declared class not file
-        final CompilationUnitTree unit = e.getCompilationUnit();
-        final String fileName = new File(e.getSourceFile().toUri().getPath()).getPath();
+    if (e.getKind() == TaskEvent.Kind.ANALYZE) {
+      // javac creates an event on each processed top level declared class not file
+      final CompilationUnitTree unit = e.getCompilationUnit();
+      final String fileName = new File(e.getSourceFile().toUri().getPath()).getPath();
 
-        Tree declarationToProcess = myTreeUtility.getTree(e.getTypeElement());
+      Tree declarationToProcess = myTreeUtility.getTree(e.getTypeElement());
 
-        boolean collectImportsData;
-        boolean addedToCache = true;
-        ReferenceCollector incompletelyProcessedFile = myIncompletelyProcessedFiles.get(fileName);
-        if (incompletelyProcessedFile == null) {
-          final int declarationCount = unit.getTypeDecls().size();
-          incompletelyProcessedFile = new ReferenceCollector(declarationCount, fileName, unit);
-          if (declarationCount == 1 && declarationToProcess != null) {
-            addedToCache = false;
-          } else {
-            myIncompletelyProcessedFiles.put(fileName, incompletelyProcessedFile);
-          }
-          collectImportsData = true;
+      boolean collectImportsData;
+      boolean addedToCache = true;
+      ReferenceCollector incompletelyProcessedFile = myIncompletelyProcessedFiles.get(fileName);
+      if (incompletelyProcessedFile == null) {
+        final int declarationCount = unit.getTypeDecls().size();
+        incompletelyProcessedFile = new ReferenceCollector(declarationCount, fileName, unit);
+        if (declarationCount == 1 && declarationToProcess != null) {
+          addedToCache = false;
+        } else {
+          myIncompletelyProcessedFiles.put(fileName, incompletelyProcessedFile);
         }
-        else {
-          collectImportsData = false;
-        }
+        collectImportsData = true;
+      }
+      else {
+        collectImportsData = false;
+      }
 
-        final boolean isFileDataComplete;
-        if (incompletelyProcessedFile.decrementRemainDeclarationsAndGet(declarationToProcess) == 0) {
-          if (addedToCache) {
-            myIncompletelyProcessedFiles.remove(fileName);
-          }
-          isFileDataComplete = true;
+      final boolean isFileDataComplete;
+      if (incompletelyProcessedFile.decrementRemainDeclarationsAndGet(declarationToProcess) == 0) {
+        if (addedToCache) {
+          myIncompletelyProcessedFiles.remove(fileName);
         }
-        else {
-          isFileDataComplete = false;
-        }
+        isFileDataComplete = true;
+      }
+      else {
+        isFileDataComplete = false;
+      }
 
-        if (collectImportsData) {
-          scanImports(unit, incompletelyProcessedFile.myFileData.getRefs(), incompletelyProcessedFile);
-          if (myDivideImportRefs) {
-            scanImports(unit, incompletelyProcessedFile.myFileData.getImportRefs(), incompletelyProcessedFile);
-          }
-        }
-        myAstScanner.scan(declarationToProcess, incompletelyProcessedFile);
-
-        if (isFileDataComplete) {
-          for (AnnotationTree annotation : unit.getPackageAnnotations()) {
-            myAstScanner.scan(annotation, incompletelyProcessedFile);
-          }
-
-          myDataConsumer.consume(incompletelyProcessedFile.myFileData);
+      if (collectImportsData) {
+        scanImports(unit, incompletelyProcessedFile.myFileData.getRefs(), incompletelyProcessedFile);
+        if (myDivideImportRefs) {
+          scanImports(unit, incompletelyProcessedFile.myFileData.getImportRefs(), incompletelyProcessedFile);
         }
       }
-    }
-    catch (Exception ex) {
-      throw new ClientCodeException(ex);
+      myAstScanner.scan(declarationToProcess, incompletelyProcessedFile);
+
+      if (isFileDataComplete) {
+        for (AnnotationTree annotation : unit.getPackageAnnotations()) {
+          myAstScanner.scan(annotation, incompletelyProcessedFile);
+        }
+
+        myDataConsumer.consume(incompletelyProcessedFile.myFileData);
+      }
     }
   }
 
@@ -177,28 +171,29 @@ final class JavacReferenceCollectorListener implements TaskListener {
           final MemberSelectTree classImport = (MemberSelectTree)qExpr;
           final Element ownerElement = incompletelyProcessedFile.getReferencedElement(classImport);
           final Name name = id.getIdentifier();
-          if (!myNameTableCache.isAsterisk(name)) {
+          final JavacRef.ImportProperties importProps = JavacRef.ImportProperties.create(anImport.isStatic(), myNameTableCache.isAsterisk(name));
+          if (!importProps.isOnDemand()) {
             // member import
             for (Element memberElement : myElementUtility.getAllMembers((TypeElement)ownerElement)) {
               if (memberElement.getSimpleName() == name) {
-                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache));
+                incrementOrAdd(elements, JavacRef.JavacElementRefBase.fromElement(memberElement, null, myNameTableCache, importProps));
               }
             }
           }
-          collectClassImports(ownerElement, elements);
+          collectClassImports(ownerElement, elements, importProps);
         }
       } else {
         // class import
-        collectClassImports(element, elements);
+        collectClassImports(element, elements, JavacRef.ImportProperties.create(anImport.isStatic(), false));
       }
     }
   }
 
-  private void collectClassImports(Element baseImport, TObjectIntHashMap<JavacRef> collector) {
+  private void collectClassImports(Element baseImport, TObjectIntHashMap<JavacRef> collector, final JavacRef.ImportProperties importProps) {
     for (Element element = baseImport;
          element != null && element.getKind() != ElementKind.PACKAGE;
          element = element.getEnclosingElement()) {
-      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache));
+      incrementOrAdd(collector, JavacRef.JavacElementRefBase.fromElement(element, null, myNameTableCache, importProps));
     }
   }
 

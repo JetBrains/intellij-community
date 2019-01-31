@@ -25,13 +25,13 @@ import java.util.Collections;
 
 public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
 
-  @NotNull private final Collection<PsiVariable> variables;
+  @NotNull private final Collection<? extends PsiVariable> variables;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
   private boolean assigned = false;
   private PsiElement excludedElement = null;
 
-  public VariableAssignedVisitor(@NotNull Collection<PsiVariable> variables, boolean recurseIntoClasses) {
+  public VariableAssignedVisitor(@NotNull Collection<? extends PsiVariable> variables, boolean recurseIntoClasses) {
     this.variables = variables;
     checkUnaryExpressions = true;
     this.recurseIntoClasses = recurseIntoClasses;
@@ -68,7 +68,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     super.visitAssignmentExpression(assignment);
     final PsiExpression lhs = assignment.getLExpression();
     for (PsiVariable variable : variables) {
-      if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+      if (ExpressionUtils.isReferenceTo(lhs, variable)) {
         assigned = true;
         break;
       }
@@ -98,7 +98,7 @@ public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor 
     }
     final PsiExpression operand = prefixExpression.getOperand();
     for (PsiVariable variable : variables) {
-      if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
+      if (ExpressionUtils.isReferenceTo(operand, variable)) {
         assigned = true;
         break;
       }

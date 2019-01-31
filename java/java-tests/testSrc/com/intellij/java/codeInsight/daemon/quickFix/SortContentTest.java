@@ -4,8 +4,6 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 public class SortContentTest extends LightIntentionActionTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/sortContent";

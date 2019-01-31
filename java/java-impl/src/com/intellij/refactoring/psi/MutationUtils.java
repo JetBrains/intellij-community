@@ -28,7 +28,7 @@ public class MutationUtils {
 
   public static void replaceType(@NotNull String newTypeText, @NotNull PsiTypeElement typeElement) throws IncorrectOperationException {
     final Project project = typeElement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiType newType = factory.createTypeFromText(newTypeText, null);
     final PsiTypeElement newTypeElement = factory.createTypeElement(newType);
     final PsiElement insertedElement = typeElement.replace(newTypeElement);
@@ -38,7 +38,7 @@ public class MutationUtils {
 
   public static void replaceExpression(@NotNull String newExpression, @NotNull PsiExpression exp) throws IncorrectOperationException {
     final Project project = exp.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression newCall = factory.createExpressionFromText(newExpression, null);
     final PsiElement insertedElement = exp.replace(newCall);
     final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
@@ -77,7 +77,7 @@ public class MutationUtils {
 
   public static void replaceStatement(@NotNull String newStatement, @NotNull PsiStatement statement) throws IncorrectOperationException {
     final Project project = statement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiStatement newCall = factory.createStatementFromText(newStatement, null);
     final PsiElement insertedElement = statement.replace(newCall);
     final PsiElement shortenedElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);

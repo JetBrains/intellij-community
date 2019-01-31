@@ -9,6 +9,7 @@ deprecated: addPackage.png -> /toolbarDecorator/addFolder.svg; to be removed in 
 deprecated: addPattern.png -> /toolbarDecorator/addPattern.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddPattern
 deprecated: addRemoteDatasource.png -> /toolbarDecorator/addRemoteDatasource.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddRemoteDatasource
 deprecated: addYouTrack.png -> /toolbarDecorator/addYouTrack.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddYouTrack
+deprecated: analyze.png; to be removed in IDEA 2020
 deprecated: edit.png -> /actions/edit.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Edit
 deprecated: moveDown.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
 deprecated: moveUp.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp

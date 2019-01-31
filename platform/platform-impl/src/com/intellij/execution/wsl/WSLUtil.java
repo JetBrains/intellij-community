@@ -5,9 +5,12 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +21,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,26 +51,18 @@ public class WSLUtil {
     }
   };
 
-  private static final List<WSLDistribution.Description> DISTRIBUTIONS = Arrays.asList(
-    new WSLDistribution.Description("DEBIAN", "Debian", "debian.exe", "Debian GNU/Linux"),
-    new WSLDistribution.Description("KALI", "kali-linux", "kali.exe", "Kali Linux"),
-    new WSLDistribution.Description("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
-    new WSLDistribution.Description("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
-    new WSLDistribution.Description("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
-    new WSLDistribution.Description("UBUNTU1604", "Ubuntu-16.04", "ubuntu1604.exe", "Ubuntu 16.04"),
-    new WSLDistribution.Description("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04")
-  );
-
   /**
-   * @return
+   * @return true if there are distributions available for usage
    */
   public static boolean hasAvailableDistributions() {
-    return getAvailableDistributions().size() > 0;
+    return !getAvailableDistributions().isEmpty();
   }
 
 
   /**
    * @return list of installed WSL distributions
+   * @apiNote order of entries depends on configuration file and may change between launches.
+   * @see WSLDistributionService
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
@@ -76,18 +71,27 @@ public class WSLUtil {
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return Collections.emptyList();
 
-    final List<WSLDistribution> result = new ArrayList<>(DISTRIBUTIONS.size() + 1 /* LEGACY_WSL */);
+    Collection<WslDistributionDescriptor> descriptors = WSLDistributionService.getInstance().getDescriptors();
+    final List<WSLDistribution> result = new ArrayList<>(descriptors.size() + 1 /* LEGACY_WSL */);
 
-    for (WSLDistribution.Description description : DISTRIBUTIONS) {
-      final Path executablePath = executableRoot.resolve(description.exeName);
+    for (WslDistributionDescriptor descriptor: descriptors) {
+
+      Path executablePath = Paths.get(descriptor.getExecutablePath());
+      if (!executablePath.isAbsolute()) {
+        executablePath = executableRoot.resolve(executablePath);
+      }
+
       if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
-        result.add(new WSLDistribution(description, executablePath));
+        result.add(new WSLDistribution(descriptor, executablePath));
       }
     }
-    // add legacy WSL if it's available
-    ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
 
-    return Collections.unmodifiableList(result);
+    // add legacy WSL if it's available and enabled
+    if (Experiments.isFeatureEnabled("wsl.legacy.distribution")) {
+      ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
+    }
+
+    return result;
   }
 
   /**
@@ -119,14 +123,48 @@ public class WSLUtil {
    * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
    * Must be invoked just before execution, see RUBY-20358
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
   @NotNull
   public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
-    processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
-    processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
+    if (Experiments.isFeatureEnabled("wsl.close.process.input")) {
+      processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
+      processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
+    }
     return processHandler;
   }
 
   public static boolean isSystemCompatible() {
     return SystemInfo.isWin10OrNewer;
+  }
+
+  /**
+   * @deprecated in order to make custom wsl mount paths work, use {@link WSLUtil#getWindowsPath(java.lang.String, java.lang.String)} or
+   * {@link WSLDistribution#getWslPath(java.lang.String)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
+  @Nullable
+  public static String getWindowsPath(@NotNull String wslPath) {
+    return getWindowsPath(wslPath, WSLDistribution.DEFAULT_WSL_MNT_ROOT);
+  }
+
+  /**
+   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
+   * For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
+   */
+  @Nullable
+  public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
+    if (!wslPath.startsWith(mntRoot)) {
+      return null;
+    }
+    int driveLetterIndex = mntRoot.length();
+    if (driveLetterIndex >= wslPath.length() || !Character.isLetter(wslPath.charAt(driveLetterIndex))) {
+      return null;
+    }
+    int slashIndex = driveLetterIndex + 1;
+    if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
+      return null;
+    }
+    return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 }

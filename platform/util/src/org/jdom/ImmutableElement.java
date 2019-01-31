@@ -1,22 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -26,22 +13,63 @@ import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 class ImmutableElement extends Element {
-  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(new String[0], null, Namespace.NO_NAMESPACE);
+  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtil.EMPTY_STRING_ARRAY, null,
+                                                                                       Namespace.NO_NAMESPACE);
   private final Content[] myContent;
   private static final Content[] EMPTY_CONTENT = new Content[0];
   private final List<Attribute> myAttributes;
 
   ImmutableElement(@NotNull Element origin, @NotNull final JDOMInterner interner) {
-    Disposer.clearOwnFields(this, Conditions.<Field>alwaysTrue());
+    content = null;
     name = interner.internString(origin.getName());
+    myAttributes = internAttributes(origin, interner);
 
-    List<Attribute> originAttributes = origin.getAttributes();
-    String[] nameValues = new String[originAttributes.size() * 2];
+    List<Content> origContent = origin.getContent();
+    if (origContent.isEmpty()) {
+      myContent = EMPTY_CONTENT;
+    }
+    else {
+      Content[] newContent = new Content[origContent.size()];
+      int index = 0;
+      for (Content o : origContent) {
+        if (o instanceof Element) {
+          Element newElement = interner.internElement((Element)o);
+          newContent[index++]= newElement;
+        }
+        else if (o instanceof Text) {
+          Text newText = interner.internText((Text)o);
+          newContent[index++]= newText;
+        }
+        else if (o instanceof Comment) {
+          // ignore
+        }
+        else {
+          throw new RuntimeException(o.toString());
+        }
+      }
+
+      // ContentList is final, can't subclass
+      myContent = index == newContent.length ? newContent : Arrays.copyOf(newContent, index);
+    }
+
+    this.namespace = origin.getNamespace();
+    for (Namespace addns : origin.getAdditionalNamespaces()) {
+      super.addNamespaceDeclaration(addns);
+    }
+  }
+
+  @NotNull
+  private static List<Attribute> internAttributes(@NotNull Element origin, @NotNull final JDOMInterner interner) {
+    List<Attribute> originAttributes = JDOMUtil.getAttributes(origin);
+    if (originAttributes.isEmpty()) {
+      return EMPTY_LIST;
+    }
+
     AttributeType type = null;
+    String[] nameValues = new String[originAttributes.size() * 2];
     Namespace namespace = null;
     for (int i = 0; i < originAttributes.size(); i++) {
       Attribute origAttribute = originAttributes.get(i);
@@ -55,15 +83,12 @@ class ImmutableElement extends Element {
       }
       String name = interner.internString(origAttribute.getName());
       String value = interner.internString(origAttribute.getValue());
-      nameValues[i*2] = name;
-      nameValues[i*2+1] = value;
+      nameValues[i * 2] = name;
+      nameValues[i * 2 + 1] = value;
     }
-    List<Attribute> newAttributes;
-    if (originAttributes.isEmpty()) {
-      newAttributes = EMPTY_LIST;
-    }
-    else if (type == null) {
-      newAttributes = Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
+
+    if (type == null) {
+      return Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
         @Override
         public Attribute fun(Attribute attribute) {
           return new ImmutableAttribute(interner.internString(attribute.getName()),
@@ -73,34 +98,7 @@ class ImmutableElement extends Element {
       }));
     }
     else {
-      newAttributes = new ImmutableSameTypeAttributeList(nameValues, type, namespace);
-    }
-    myAttributes = newAttributes;
-
-    List<Content> origContent = origin.getContent();
-    List<Content> newContent = new ArrayList<Content>(origContent.size());
-    for (Content o : origContent) {
-      if (o instanceof Element) {
-        Element newElement = interner.internElement((Element)o);
-        newContent.add(newElement);
-      }
-      else if (o instanceof Text) {
-        Text newText = interner.internText((Text)o);
-        newContent.add(newText);
-      }
-      else if (o instanceof Comment) {
-        // ignore
-      }
-      else {
-        throw new RuntimeException(o.toString());
-      }
-    }
-
-    myContent = newContent.isEmpty() ? EMPTY_CONTENT : newContent.toArray(EMPTY_CONTENT); // ContentList is final, can't subclass
-
-    this.namespace = origin.getNamespace();
-    for (Namespace addns : origin.getAdditionalNamespaces()) {
-      super.addNamespaceDeclaration(addns);
+      return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
     }
   }
 
@@ -161,18 +159,18 @@ class ImmutableElement extends Element {
   @Override
   public String getText() {
     if (myContent.length == 0) {
-        return "";
+      return "";
     }
 
     // If we hold only a Text or CDATA, return it directly
     if (myContent.length == 1) {
-        final Object obj = myContent[0];
-        if (obj instanceof Text) {
-            return ((Text) obj).getText();
-        }
-        else {
-            return "";
-        }
+      final Object obj = myContent[0];
+      if (obj instanceof Text) {
+        return ((Text)obj).getText();
+      }
+      else {
+        return "";
+      }
     }
 
     // Else build String up
@@ -191,7 +189,7 @@ class ImmutableElement extends Element {
 
   @Override
   public int indexOf(final Content child) {
-      return ArrayUtil.indexOf(myContent, child);
+    return ArrayUtil.indexOf(myContent, child);
   }
 
   @Override
@@ -283,7 +281,7 @@ class ImmutableElement extends Element {
 
     // Cloning additional namespaces
     if (additionalNamespaces != null) {
-        element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
+      element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
     }
 
     // Cloning content
@@ -333,6 +331,7 @@ class ImmutableElement extends Element {
   public Element detach() {
     throw immutableError(this);
   }
+
   @Override
   public Element setName(String name) {
     throw immutableError(this);
@@ -393,6 +392,7 @@ class ImmutableElement extends Element {
     throw immutableError(this);
   }
 
+  @Override
   public Element addContent(Element child) {
     throw immutableError(this);
   }
@@ -432,6 +432,7 @@ class ImmutableElement extends Element {
     throw immutableError(this);
   }
 
+  @Override
   public Element setAttributes(List newAttributes) {
     throw immutableError(this);
   }

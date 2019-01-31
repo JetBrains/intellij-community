@@ -123,7 +123,6 @@ public class StructContext {
   }
 
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {

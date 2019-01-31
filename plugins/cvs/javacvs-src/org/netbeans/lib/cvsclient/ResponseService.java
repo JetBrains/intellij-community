@@ -41,11 +41,13 @@ public final class ResponseService
 
 	// Implemented ============================================================
 
-	public void setNextFileDate(Date nextFileDate) {
+	@Override
+        public void setNextFileDate(Date nextFileDate) {
 		this.nextFileDate = nextFileDate;
 	}
 
-	public Date getNextFileDate() {
+	@Override
+        public Date getNextFileDate() {
 		// We null the instance variable so that future calls will not
 		// retrieve a date specified for a previous file
 		final Date nextFileDate = this.nextFileDate;
@@ -53,21 +55,25 @@ public final class ResponseService
 		return nextFileDate;
 	}
 
-	public IEventSender getEventSender() {
+	@Override
+        public IEventSender getEventSender() {
 		return eventSender;
 	}
 
-	public void setValidRequests(String validRequests) {
+	@Override
+        public void setValidRequests(String validRequests) {
 		this.validRequests = validRequests;
 	}
 
-	public String getNextFileMode() {
+	@Override
+        public String getNextFileMode() {
 		final String result = nextFileMode;
 		nextFileMode = null;
 		return result;
 	}
 
-	public void setNextFileMode(String nextFileMode) {
+	@Override
+        public void setNextFileMode(String nextFileMode) {
 		this.nextFileMode = nextFileMode;
 	}
 

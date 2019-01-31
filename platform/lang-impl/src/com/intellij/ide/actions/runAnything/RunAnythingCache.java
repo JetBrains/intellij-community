@@ -1,13 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -22,32 +17,7 @@ import java.util.stream.Collectors;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
-  private static final Logger LOG = Logger.getInstance(RunAnythingCache.class);
   private final State mySettings = new State();
-  public boolean CAN_RUN_RVM = false;
-  public boolean CAN_RUN_RBENV = false;
-
-  public RunAnythingCache() {
-    try {
-      CAN_RUN_RVM = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRVM()).get();
-    }
-    catch (java.util.concurrent.ExecutionException ignored) {
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      throw new ProcessCanceledException(e);
-    }
-
-    try {
-      CAN_RUN_RBENV = ApplicationManager.getApplication().executeOnPooledThread(() -> canRunRbenv()).get();
-    }
-    catch (java.util.concurrent.ExecutionException ignored) {
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      throw new ProcessCanceledException(e);
-    }
-  }
 
   public static RunAnythingCache getInstance(Project project) {
     return ServiceManager.getService(project, RunAnythingCache.class);
@@ -79,26 +49,6 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
   @Override
   public void loadState(@NotNull State state) {
     XmlSerializerUtil.copyBean(state, mySettings);
-  }
-
-  static boolean canRunRbenv() {
-    return canRunCommand("rbenv");
-  }
-
-  static boolean canRunRVM() {
-    return canRunCommand("rvm");
-  }
-
-  private static boolean canRunCommand(@NotNull String command) {
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(command);
-    generalCommandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    try {
-      generalCommandLine.createProcess();
-    }
-    catch (ExecutionException e) {
-      return false;
-    }
-    return true;
   }
 
   public static class State {

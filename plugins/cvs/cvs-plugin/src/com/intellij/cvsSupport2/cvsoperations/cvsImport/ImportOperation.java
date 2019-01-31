@@ -38,10 +38,12 @@ public class ImportOperation extends CvsCommandOperation {
     myDetails = details;
   }
 
+  @Override
   protected Collection<CvsRootProvider> getAllCvsRoots() {
     return Collections.singleton(myDetails.getCvsRoot());
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final ImportCommand result = new ImportCommand();
     myDetails.prepareCommand(result);
@@ -54,6 +56,7 @@ public class ImportOperation extends CvsCommandOperation {
                                                     CvsBundle.message("import.defaults.log.message"),
                                                     sourceLocation.getName(), env, new ArrayList(),
                                                     new IIgnoreFileFilter(){
+                                                      @Override
                                                       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
                                                         return false;
                                                       }
@@ -61,14 +64,17 @@ public class ImportOperation extends CvsCommandOperation {
     return new ImportOperation(details);
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return 2 * myDetails.getTotalFilesInSourceDirectory();
   }
 
+  @Override
   protected String getOperationName() {
     return "import";
   }
 
+  @Override
   protected IIgnoreFileFilter getIgnoreFileFilter() {
     return myDetails.getIgnoreFileFilter();
   }

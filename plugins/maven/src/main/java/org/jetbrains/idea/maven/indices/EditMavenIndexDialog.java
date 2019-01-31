@@ -35,6 +35,7 @@ public class EditMavenIndexDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }

@@ -53,12 +53,14 @@ public class AntInstallation {
   }
 
   public static final Externalizer<AntInstallation> EXTERNALIZER = new Externalizer<AntInstallation>() {
+    @Override
     public AntInstallation readValue(Element dataElement) {
       AntInstallation antInstallation = new AntInstallation();
       antInstallation.readExternal(dataElement);
       return antInstallation;
     }
 
+    @Override
     public void writeValue(Element dataElement, AntInstallation antInstallation) {
       antInstallation.myProperties.writeExternal(dataElement);
     }

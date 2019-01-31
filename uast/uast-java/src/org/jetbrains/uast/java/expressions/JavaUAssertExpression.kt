@@ -18,13 +18,14 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssertStatement
 import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 
 class JavaUAssertExpression(
   override val psi: PsiAssertStatement,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UMultiResolvable {
   val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.assertCondition, this) }
   val message: UExpression? by lz { JavaConverter.convertOrNull(psi.assertDescription, this) }
 
@@ -66,4 +67,6 @@ class JavaUAssertExpression(
     get() = JavaUastCallKinds.ASSERT
 
   override fun resolve(): Nothing? = null
+
+  override fun multiResolve(): Iterable<ResolveResult> = emptyList()
 }

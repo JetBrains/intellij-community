@@ -100,7 +100,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   static class NotificationPanel extends JPanel {
     protected final JEditorPane myLabel;
 
-    public NotificationPanel() {
+    NotificationPanel() {
       super(new BorderLayout());
 
       myLabel = new JEditorPane(UIUtil.HTML_MIME, "");

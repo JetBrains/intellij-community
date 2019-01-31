@@ -38,7 +38,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  @SuppressWarnings("UnusedDeclaration")
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
   }
@@ -198,6 +197,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
+        if (expression.getParent() instanceof PsiMethodCallExpression) {
+          return;
+        }
         if (expression.resolve() == parent) {
           referenced = true;
         }
@@ -312,7 +314,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     // neighbouring type annotations are logical part of this type element and should be dropped
-    PsiImplUtil.markTypeAnnotations(this);
+    //if replacement is `var`, annotations should be left as they are not inferred from the right side of the assignment
+    if (!(newElement instanceof PsiTypeElement) || !((PsiTypeElement)newElement).isInferredType()) {
+      PsiImplUtil.markTypeAnnotations(this);
+    }
     PsiElement result = super.replace(newElement);
     if (result instanceof PsiTypeElement) {
       PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);

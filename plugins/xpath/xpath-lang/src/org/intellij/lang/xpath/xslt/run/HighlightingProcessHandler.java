@@ -24,7 +24,7 @@ import java.io.Reader;
 class HighlightingProcessHandler extends ProcessHandler {
     private final HighlightingProcessReader myProcessReader;
 
-    public HighlightingProcessHandler(Reader stream) {
+    HighlightingProcessHandler(Reader stream) {
         myProcessReader = new HighlightingProcessReader(stream, this);
     }
 
@@ -46,7 +46,6 @@ class HighlightingProcessHandler extends ProcessHandler {
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     public OutputStream getProcessInput() {
         return null;
     }
@@ -54,16 +53,18 @@ class HighlightingProcessHandler extends ProcessHandler {
     private static class HighlightingProcessReader extends ReadProcessThread {
         private final ProcessHandler myHandler;
 
-        public HighlightingProcessReader(Reader stream, ProcessHandler handler) {
+        HighlightingProcessReader(Reader stream, ProcessHandler handler) {
             super(stream);
             myHandler = handler;
         }
 
+        @Override
         public void run() {
             myHandler.startNotify();
             super.run();
         }
 
+        @Override
         protected void textAvailable(final String s) {
             myHandler.notifyTextAvailable(s, ProcessOutputTypes.SYSTEM);
         }

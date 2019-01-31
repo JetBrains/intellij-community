@@ -19,7 +19,6 @@ import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -49,7 +48,8 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
                                                                                  PyElementTypes.TUPLE_EXPRESSION, 
                                                                                  // List of types is allowed only inside Callable[...]
                                                                                  PyElementTypes.LIST_LITERAL_EXPRESSION,
-                                                                                 PyElementTypes.STRING_LITERAL_EXPRESSION);
+                                                                                 PyElementTypes.STRING_LITERAL_EXPRESSION,
+                                                                                 PyElementTypes.NONE_LITERAL_EXPRESSION);
 
   @Nullable
   @Override

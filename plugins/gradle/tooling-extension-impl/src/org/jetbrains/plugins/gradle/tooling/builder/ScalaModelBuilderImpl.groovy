@@ -33,7 +33,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 class ScalaModelBuilderImpl implements ModelBuilderService {
 
@@ -69,8 +68,8 @@ class ScalaModelBuilderImpl implements ModelBuilderService {
 
     ScalaCompile scalaCompile = (ScalaCompile)task
     ScalaModelImpl scalaModel = new ScalaModelImpl()
-    scalaModel.scalaClasspath = scalaCompile.scalaClasspath.files
-    scalaModel.zincClasspath = scalaCompile.zincClasspath.files
+    scalaModel.scalaClasspath = new LinkedHashSet<>(scalaCompile.scalaClasspath.files)
+    scalaModel.zincClasspath = new LinkedHashSet<>(scalaCompile.zincClasspath.files)
     scalaModel.scalaCompileOptions = create(scalaCompile.scalaCompileOptions)
     scalaModel.targetCompatibility = scalaCompile.targetCompatibility
     scalaModel.sourceCompatibility = scalaCompile.sourceCompatibility

@@ -6,10 +6,12 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.editor.actions.CtrlYActionChooser
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -39,7 +41,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     schemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
                                 name: String,
-                                attributeProvider: Function<String, String?>,
+                                attributeProvider: Function<in String, String?>,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
         fireActiveKeymapChanged(newScheme)
@@ -65,6 +67,10 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     schemeManager.loadSchemes()
 
     ourKeymapManagerInitialized = true
+
+    if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
+      CtrlYActionChooser.askAboutShortcut();
+    }
   }
 
   private fun fireActiveKeymapChanged(newScheme: Keymap?) {

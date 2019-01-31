@@ -141,8 +141,8 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
   }
 
-  private void addLibraries(Set<Library> libraries, ArtifactRootElement<?> root, CompositePackagingElement<?> archive,
-                            List<String> classpath) {
+  private void addLibraries(Set<? extends Library> libraries, ArtifactRootElement<?> root, CompositePackagingElement<?> archive,
+                            List<? super String> classpath) {
     PackagingElementFactory factory = PackagingElementFactory.getInstance();
     for (Library library : libraries) {
       if (LibraryPackagingElement.getKindForLibrary(library).containsDirectoriesWithClasses()) {
@@ -166,7 +166,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
   }
 
-  private static void addExtractedLibrariesToJar(CompositePackagingElement<?> archive, PackagingElementFactory factory, Set<Library> libraries) {
+  private static void addExtractedLibrariesToJar(CompositePackagingElement<?> archive, PackagingElementFactory factory, Set<? extends Library> libraries) {
     for (Library library : libraries) {
       if (LibraryPackagingElement.getKindForLibrary(library).containsJarFiles()) {
         for (VirtualFile classesRoot : library.getFiles(OrderRootType.CLASSES)) {

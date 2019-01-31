@@ -19,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface LocalFileProvider {
-  /** @deprecated use {@code ArchiveFileSystem.getLocalByEntry(entryVFile)} instead (to be removed in IDEA 2019) */
+  /** @deprecated use {@link com.intellij.openapi.vfs.newvfs.ArchiveFileSystem#getLocalByEntry(com.intellij.openapi.vfs.VirtualFile)} instead (to be removed in IDEA 2019) */
+  @Deprecated
   VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile);
 
-  /** @deprecated use {@code ArchiveFileSystem.findFileByBath(path)} instead (to be removed in IDEA 2019) */
+  /** @deprecated use {@code ArchiveFileSystem.findFileByPath(path)} instead (to be removed in IDEA 2019) */
+  @Deprecated
   VirtualFile findLocalVirtualFileByPath(@NotNull String path);
 }

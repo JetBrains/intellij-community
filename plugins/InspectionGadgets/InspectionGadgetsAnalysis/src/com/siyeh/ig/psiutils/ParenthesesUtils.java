@@ -92,6 +92,7 @@ public class ParenthesesUtils {
   }
 
   @Contract("null -> null")
+  @Nullable
   public static PsiExpression stripParentheses(@Nullable PsiExpression expression) {
     while (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
@@ -185,7 +186,9 @@ public class ParenthesesUtils {
     if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
       PsiExpression newExpression = ExpressionUtils.replacePolyadicWithParent(parenthesizedExpression, body);
       if (newExpression == null){
-        newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
+        CommentTracker commentTracker = new CommentTracker();
+        commentTracker.markUnchanged(body);
+        newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);
       }
       removeParentheses(newExpression, ignoreClarifyingParentheses);
     }

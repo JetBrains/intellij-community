@@ -18,11 +18,11 @@ package com.intellij.cvsSupport2.connections;
 import com.intellij.cvsSupport2.javacvsImpl.io.InputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.OutputStreamWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +45,7 @@ public class ConnectionWrapper implements IConnection {
     myCommandStopper = commandStopper;
   }
 
+  @Override
   public InputStream getInputStream() {
     if (myInputStreamWrapper == null) {
       if (Boolean.TRUE.toString().equals(System.getProperty(CVS_DONT_READ_IN_THREAD_PROPERTY))) {
@@ -59,6 +60,7 @@ public class ConnectionWrapper implements IConnection {
     return myInputStreamWrapper;
   }
 
+  @Override
   public OutputStream getOutputStream() {
     if (myOutputStreamWrapper == null) {
       myOutputStreamWrapper = new OutputStreamWrapper(mySourceConnection.getOutputStream(), myStatistics);
@@ -66,18 +68,22 @@ public class ConnectionWrapper implements IConnection {
     return myOutputStreamWrapper;
   }
 
+  @Override
   public String getRepository() {
     return mySourceConnection.getRepository();
   }
 
+  @Override
   public void verify(IStreamLogger streamLogger) throws AuthenticationException {
     mySourceConnection.verify(streamLogger);
   }
 
+  @Override
   public void open(IStreamLogger streamLogger) throws AuthenticationException {
     mySourceConnection.open(streamLogger);
   }
 
+  @Override
   public void close() throws IOException {
     if (myInputStreamWrapper != null) {
       myInputStreamWrapper.close();

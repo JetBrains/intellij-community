@@ -19,11 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalTask extends Serializable {
   @NotNull
@@ -36,4 +34,6 @@ public interface ExternalTask extends Serializable {
   String getGroup();
   @Nullable
   String getType();
+
+  boolean isTest();
 }

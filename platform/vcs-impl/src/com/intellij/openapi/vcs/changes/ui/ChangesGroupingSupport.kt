@@ -4,11 +4,14 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionFactory
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.MODULE_GROUPING
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.tree.DefaultTreeModel
 
-private val PREDEFINED_PRIORITIES = mapOf("directory" to 10, "module" to 20, "repository" to 30)
+private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUPING to 20, REPOSITORY_GROUPING to 30)
 
 class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
@@ -61,12 +64,22 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
     const val PROP_GROUPING_KEYS: String = "ChangesGroupingKeys"
     const val DIRECTORY_GROUPING: String = "directory"
     const val MODULE_GROUPING: String = "module"
+    const val REPOSITORY_GROUPING: String = "repository"
     const val NONE_GROUPING: String = "none"
 
+    private fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> {
+      return object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
+        ChangesGroupingPolicyFactory::class.java,
+        ChangesGroupingPolicyFactory.EP_NAME,
+        project.picoContainer
+      ) {
+        override fun getKey(key: String) = key
+      }
+    }
+
     @JvmStatic
-    fun collectFactories(project: Project): KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> = object : KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
-      ChangesGroupingPolicyFactory::class.java, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer) {
-      override fun getKey(key: String) = key
+    fun getFactory(project: Project, key: String): ChangesGroupingPolicyFactory {
+      return collectFactories(project).getByKey(key) ?: NoneChangesGroupingFactory
     }
   }
 }

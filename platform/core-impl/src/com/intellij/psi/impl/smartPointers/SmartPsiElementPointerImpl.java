@@ -81,6 +81,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @Override
   @Nullable
   public E getElement() {
+    if (getProject().isDisposed()) return null;
+
     E element = getCachedElement();
     if (element == null || !element.isValid()) {
       element = doRestoreElement();

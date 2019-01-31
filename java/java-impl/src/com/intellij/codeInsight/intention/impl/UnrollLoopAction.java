@@ -44,7 +44,11 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
           staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
 
-  private static final int MAX_ITERATIONS = 64;
+  /**
+   * Do not show the intention if approximate size of generated code exceeds given value to prevent
+   * accidental code blow up or out-of-memory error
+   */
+  private static final int MAX_BODY_SIZE_ESTIMATE = 5_000;
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
@@ -52,15 +56,20 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     PsiVariable iterationParameter = getVariable(loop);
     if (iterationParameter == null || !(loop.getParent() instanceof PsiCodeBlock)) return false;
     List<PsiExpression> expressions = extractExpressions(loop);
-    if (expressions.isEmpty() || expressions.size() > MAX_ITERATIONS) return false;
-    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
+    PsiStatement body = loop.getBody();
+    if (body == null) return false;
+    if (expressions.isEmpty() || expressions.size() > MAX_BODY_SIZE_ESTIMATE ||
+        (expressions.size() - 1) * body.getTextLength() > MAX_BODY_SIZE_ESTIMATE){
+      return false;
+    }
+    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
     if (statements.length == 0) return false;
     if (Arrays.stream(statements).anyMatch(PsiDeclarationStatement.class::isInstance)) return false;
-    if (VariableAccessUtils.variableIsAssigned(iterationParameter, loop.getBody())) return false;
+    if (VariableAccessUtils.variableIsAssigned(iterationParameter, body)) return false;
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
       boolean acceptable = PsiTreeUtil.processElements(statement, e -> {
-        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedStatement() == loop) return false;
+        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedElement() == loop) return false;
         if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return false;
         return true;
       });
@@ -125,7 +134,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         if (countingLoop.isIncluding()) {
           diff++; // overflow is ok: diff will become negative and we will exit
         }
-        if (diff < 0 || diff > MAX_ITERATIONS) return Collections.emptyList();
+        if (diff < 0 || diff > MAX_BODY_SIZE_ESTIMATE) return Collections.emptyList();
         int size = (int)(diff); // Less or equal to MAX_ITERATIONS => fits to int
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
         return new AbstractList<PsiExpression>() {
@@ -216,6 +225,6 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     PsiIfStatement ifStatement = (PsiIfStatement)statement;
     if (ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return false;
     PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelIdentifier() == null;
+    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelExpression() == null;
   }
 }

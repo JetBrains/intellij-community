@@ -30,8 +30,6 @@ public class OptionalAssignedToNullInspectionTest extends LightQuickFixParameter
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/optionalNull";

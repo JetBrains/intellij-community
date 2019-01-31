@@ -23,6 +23,7 @@ import com.intellij.ui.classFilter.ClassFilter;
  * @author egor
  */
 public interface FilteredRequestor extends LocatableEventRequestor {
+  @Override
   String getSuspendPolicy();
 
   boolean isInstanceFiltersEnabled();

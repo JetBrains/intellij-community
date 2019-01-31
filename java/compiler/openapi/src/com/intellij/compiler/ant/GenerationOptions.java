@@ -90,23 +90,7 @@ public abstract class GenerationOptions {
         this(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, inlineRuntimeClasspath, false);
     }
 
-    /**
-     * A constructor
-     *
-     * @param forceTargetJdk                 a value of corresponding option
-     * @param generateSingleFile             a value of corresponding option
-     * @param enableFormCompiler             a value of corresponding option
-     * @param backupPreviouslyGeneratedFiles a value of corresponding option
-     */
-    @Deprecated
-    public GenerationOptions(boolean forceTargetJdk,
-                             boolean generateSingleFile,
-                             boolean enableFormCompiler,
-                             boolean backupPreviouslyGeneratedFiles) {
-        this(forceTargetJdk, generateSingleFile, enableFormCompiler, backupPreviouslyGeneratedFiles, false);
-    }
-
-    /**
+  /**
      * Substitute path prefix with macro reference if it matches some macro.
      *
      * @param path a path to update

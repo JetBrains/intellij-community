@@ -37,7 +37,7 @@ public class DiffWindow extends DiffWindowBase {
   }
 
   private class MyCacheDiffRequestChainProcessor extends CacheDiffRequestChainProcessor {
-    public MyCacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
+    MyCacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
       super(project, requestChain);
     }
 

@@ -30,13 +30,13 @@ public class FilterUtil{
       return (PsiType)element;
     }
     if(element instanceof PsiClass){
-      return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)element);
     }
     if(element instanceof PsiMethod){
       if (((PsiMethod)element).isConstructor()) {
         final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
         if (containingClass != null) {
-          return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType(containingClass);
+          return JavaPsiFacade.getElementFactory(element.getProject()).createType(containingClass);
         }
       }
       return ((PsiMethod)element).getReturnType();

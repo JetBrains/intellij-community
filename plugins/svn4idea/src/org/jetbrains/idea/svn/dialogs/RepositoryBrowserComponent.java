@@ -251,8 +251,9 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     }
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
       if (project == null || project.isDefault()) {
@@ -278,6 +279,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return null;
   }
 
+  @Override
   public void dispose() {
   }
 

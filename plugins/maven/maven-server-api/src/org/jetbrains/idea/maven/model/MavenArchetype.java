@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +36,8 @@ public class MavenArchetype implements Serializable {
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
-    this.repository = StringUtil.isEmptyOrSpaces(repository) ? null : repository;
-    this.description = StringUtil.isEmptyOrSpaces(description) ? null : description;
+    this.repository = StringUtilRt.isEmptyOrSpaces(repository) ? null : repository;
+    this.description = StringUtilRt.isEmptyOrSpaces(description) ? null : description;
   }
 
   @Override

@@ -31,19 +31,23 @@ public class RemoveParamFix extends AbstractFix {
         myTag = tag;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Remove Argument '" + myName + "'";
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         myTag.delete();
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myTag.isValid();
     }
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }

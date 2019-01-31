@@ -25,7 +25,7 @@ class ChangedBlock {
 
   @NotNull private final LineFragment myLineFragment;
 
-  public ChangedBlock(@NotNull LineRange range1,
+  ChangedBlock(@NotNull LineRange range1,
                       @NotNull LineRange range2,
                       @NotNull LineFragment lineFragment) {
     myRange1 = range1;

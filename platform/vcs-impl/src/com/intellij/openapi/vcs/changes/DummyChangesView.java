@@ -25,7 +25,7 @@ import java.util.List;
 * @author irengrig
 */
 class DummyChangesView implements ChangesViewI {
-  public DummyChangesView(Project project) {
+  DummyChangesView(Project project) {
   }
 
   @Override
@@ -41,7 +41,7 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
-  public void selectChanges(@NotNull List<Change> changes) {
+  public void selectChanges(@NotNull List<? extends Change> changes) {
   }
 
   @Override

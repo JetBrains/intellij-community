@@ -17,10 +17,10 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -28,11 +28,11 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,27 +54,27 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private EditableSchemesCombo<T> mySchemesCombo;
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
-  protected InfoComponent myInfoComponent;
+  InfoComponent myInfoComponent;
   
   // region Colors (probably should be standard for platform UI)
   
-  protected static final Color HINT_FOREGROUND = JBColor.GRAY;
+  private static final Color HINT_FOREGROUND = JBColor.GRAY;
   @SuppressWarnings("UseJBColor")
-  protected static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+  private static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
 
   protected static final int DEFAULT_VGAP = 8;
   
   // endregion
 
-  public AbstractSchemesPanel() {
+  AbstractSchemesPanel() {
     this(DEFAULT_VGAP, null);
   }
 
-  public AbstractSchemesPanel(int vGap) {
+  AbstractSchemesPanel(int vGap) {
     this(vGap, null);
   }
 
-  public AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
+  AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     createUIComponents(vGap, rightCustomComponent);
   }
@@ -83,6 +83,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
     JPanel controlsPanel = createControlsPanel();
     verticalContainer.add(controlsPanel);
+    IdeUICustomization.getInstance().customizeSchemePanel(this, verticalContainer);
     verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
     if (rightCustomComponent != null) {
       JPanel horizontalContainer = new JPanel();
@@ -99,12 +100,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
+  @NotNull
   private static JPanel createVerticalContainer() {
     JPanel container = new JPanel();
     container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
     return container;
   }
 
+  @NotNull
   private JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
@@ -130,15 +133,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
-  
+
+  @NotNull
   private JComponent createToolbar() {
-    DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new ShowSchemesActionsListAction(myActions.getActions()));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty(3));
-    toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     return toolbarComponent;
   }
 
@@ -151,6 +155,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Scheme actions associated with the panel.
    * @see AbstractSchemeActions
    */
+  @NotNull
   protected abstract AbstractSchemeActions<T> createSchemeActions();
   
   public final T getSelectedScheme() {
@@ -161,7 +166,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.selectScheme(scheme);
   }
   
-  public final void resetSchemes(@NotNull Collection<T> schemes) {
+  public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
   }
   
@@ -169,7 +174,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     removeAll();
   }
 
-  public final void editCurrentSchemeName(@NotNull BiConsumer<T,String> newSchemeNameConsumer) {
+  final void editCurrentSchemeName(@NotNull BiConsumer<? super T, ? super String> newSchemeNameConsumer) {
     T currentScheme = getSelectedScheme();
     if (currentScheme != null) {
       String currentName = currentScheme.getName();
@@ -184,7 +189,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<String> nameConsumer) {
+  public final void editNewSchemeName(@NotNull String preferredName, boolean isProjectScheme, @NotNull Consumer<? super String> nameConsumer) {
     String name =
       SchemeNameGenerator.getUniqueName(preferredName, schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
     mySchemesCombo.startEdit(name, isProjectScheme, nameConsumer);
@@ -194,20 +199,21 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showInfo(@NotNull String message, @NotNull MessageType messageType) {
     myToolbar.setVisible(false);
     showMessage(message, messageType);
   }
 
   protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
 
-  public final void clearInfo() {
+  final void clearInfo() {
     myToolbar.setVisible(true);
     clearMessage();
   }
 
   protected abstract void clearMessage();
 
+  @NotNull
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
   }
@@ -223,6 +229,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     return getSchemeTypeName() + ":";
   }
 
+  @NotNull
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
@@ -267,7 +274,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
-  public void showStatus(final String message, MessageType messageType) {
+  public void showStatus(@NotNull String message, @NotNull MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -278,45 +285,38 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DumbAwareAction {
-
-    private final ActionGroup myActionGroup;
-    private final Component myParentComponent;
-
-    ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
-      myParentComponent = component;
-      myActionGroup = new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
+  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup {
+    ShowSchemesActionsListAction(@NotNull Collection<? extends AnAction> actions) {
+      setPopup(true);
+      getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+      getTemplatePresentation().setText("Show Scheme Actions");
+      getTemplatePresentation().setDescription("Show Scheme Actions");
+      addAll(actions);
     }
 
     @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setIcon(AllIcons.General.Gear);
-      p.setEnabledAndVisible(isEnabledAndVisible(e));
+    public boolean isDumbAware() {
+      return true;
     }
 
-    private boolean isEnabledAndVisible(AnActionEvent e) {
-      // copy existing event because an action update changes its presentation
-      e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, e.getDataContext());
-      for (AnAction action : myActionGroup.getChildren(e)) {
-        action.update(e); // ensure that at least action is enabled and visible
-        if (e.getPresentation().isEnabledAndVisible()) return true;
+    @Override
+    public boolean canBePerformed(@NotNull DataContext context) {
+      return true;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ListPopup popup = JBPopupFactory.getInstance().
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
+
+      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
+      Component component = e.getInputEvent().getComponent();
+      if (component instanceof ActionButtonComponent) {
+        popup.showUnderneathOf(component);
       }
-      return false;
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      ListPopup actionGroupPopup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
-
-      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), actionGroupPopup);
-      actionGroupPopup.show(new RelativePoint(myParentComponent, getPopupPoint()));
-    }
-
-    private Point getPopupPoint() {
-      int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(1) : 0;
-      return new Point(JBUI.scale(2), myParentComponent.getHeight() - dH);
+      else {
+        popup.showInCenterOf(component);
+      }
     }
   }
 

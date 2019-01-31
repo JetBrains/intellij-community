@@ -31,16 +31,19 @@ public class MavenModelInspection extends BasicDomElementsInspection<MavenDomPro
     super(MavenDomProjectModel.class);
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return MavenDomBundle.message("inspection.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "MavenModelInspection";

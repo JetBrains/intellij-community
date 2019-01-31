@@ -58,7 +58,7 @@ public abstract class Macro {
   }
 
   @NotNull
-  static String getPath(VirtualFile file) {
+  protected static String getPath(VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);
   }
 

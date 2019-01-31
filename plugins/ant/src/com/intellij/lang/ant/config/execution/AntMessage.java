@@ -15,15 +15,18 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public final class AntMessage {
   private final AntBuildMessageView.MessageType myType;
+  @Priority
   private final int myPriority;
   private final String myText;
   private final String[] myTextLines;
@@ -31,7 +34,7 @@ public final class AntMessage {
   private final int myLine;
   private final int myColumn;
 
-  public AntMessage(AntBuildMessageView.MessageType type, int priority, String text, VirtualFile file, int line, int column) {
+  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, String text, VirtualFile file, int line, int column) {
     myType = type;
     myPriority = priority;
     myFile = file;
@@ -46,30 +49,21 @@ public final class AntMessage {
     myTextLines = ArrayUtil.toStringArray(lines);
   }
 
-  public AntMessage(AntBuildMessageView.MessageType type, int priority, String[] lines, VirtualFile file, int line, int column) {
+  public AntMessage(AntBuildMessageView.MessageType type, @Priority int priority, String[] lines, VirtualFile file, int line, int column) {
     myType = type;
     myPriority = priority;
     myFile = file;
     myLine = line;
     myColumn = column;
     myTextLines = lines;
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (final String aLine : lines) {
-        builder.append(aLine);
-        builder.append('\n');
-      }
-      myText = builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    myText = StringUtil.join(lines, "\n");
   }
 
   public AntBuildMessageView.MessageType getType() {
     return myType;
   }
 
+  @Priority
   public int getPriority() {
     return myPriority;
   }
@@ -93,4 +87,12 @@ public final class AntMessage {
   public int getColumn() {
     return myColumn;
   }
+
+  @NotNull
+  public AntMessage withText(@NotNull String text) {
+    return new AntMessage(getType(), getPriority(), text, getFile(), getLine(), getColumn());
+  }
+
+  @MagicConstant(intValues = {AntBuildMessageView.PRIORITY_ERR, AntBuildMessageView.PRIORITY_WARN, AntBuildMessageView.PRIORITY_INFO, AntBuildMessageView.PRIORITY_VERBOSE, AntBuildMessageView.PRIORITY_DEBUG})
+  public @interface Priority {}
 }

@@ -201,6 +201,7 @@ public class SvnUtil {
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
@@ -263,6 +264,7 @@ public class SvnUtil {
         }
       }
 
+      @Override
       public void checkCancelled() {
       }
     };
@@ -307,16 +309,16 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static MultiMap<Pair<Url, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+  public static MultiMap<Pair<Url, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<? extends Change> changes) {
     return splitIntoRepositoriesMap(vcs, changes, change -> ChangesUtil.getFilePath(change));
   }
 
   @NotNull
   public static <T> MultiMap<Pair<Url, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
-                                                                                       @NotNull Collection<T> items,
-                                                                                       @NotNull final Convertor<T, FilePath> converter) {
+                                                                                       @NotNull Collection<? extends T> items,
+                                                                                       @NotNull final Convertor<? super T, ? extends FilePath> converter) {
     return ContainerUtil.groupBy(items, item -> {
-      RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
+      RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item));
 
       return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrl(), path.getFormat());
     });
@@ -367,7 +369,7 @@ public class SvnUtil {
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final File file) {
     final Info info = vcs.getInfo(file);
-    return info != null ? info.getRepositoryUUID() : null;
+    return info != null ? info.getRepositoryId() : null;
   }
 
   @Nullable
@@ -375,7 +377,7 @@ public class SvnUtil {
     try {
       final Info info = vcs.getInfo(url, Revision.UNDEFINED);
 
-      return (info == null) ? null : info.getRepositoryUUID();
+      return (info == null) ? null : info.getRepositoryId();
     }
     catch (SvnBindException e) {
       return null;
@@ -385,7 +387,7 @@ public class SvnUtil {
   @Nullable
   public static Url getRepositoryRoot(final SvnVcs vcs, final File file) {
     final Info info = vcs.getInfo(file);
-    return info != null ? info.getRepositoryRootURL() : null;
+    return info != null ? info.getRepositoryRootUrl() : null;
   }
 
   @Nullable
@@ -402,7 +404,7 @@ public class SvnUtil {
   public static Url getRepositoryRoot(final SvnVcs vcs, final Url url) throws SvnBindException {
     Info info = vcs.getInfo(url, Revision.HEAD);
 
-    return (info == null) ? null : info.getRepositoryRootURL();
+    return (info == null) ? null : info.getRepositoryRootUrl();
   }
 
   public static boolean isWorkingCopyRoot(@NotNull File file) {
@@ -523,7 +525,7 @@ public class SvnUtil {
     // todo for moved items?
     final Info info = vcs.getInfo(file);
 
-    return info == null ? null : info.getURL();
+    return info == null ? null : info.getUrl();
   }
 
   public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {
@@ -633,7 +635,7 @@ public class SvnUtil {
     if (info == null) {
       throw new SvnBindException("Could not get info for " + url);
     }
-    if (info.getRevision() == null) {
+    if (!info.getRevision().isValid()) {
       throw new SvnBindException("Could not get revision for " + url);
     }
 
@@ -698,8 +700,8 @@ public class SvnUtil {
   @Nullable
   public static String getChangelistName(@NotNull final Status status) {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
-    // and anyway status.getChangelistName() should just return null if change lists are not supported.
-    return status.getKind().isFile() ? status.getChangelistName() : null;
+    // and anyway status.getChangeListName() should just return null if change lists are not supported.
+    return status.getNodeKind().isFile() ? status.getChangeListName() : null;
   }
 
   public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {
@@ -771,7 +773,7 @@ public class SvnUtil {
       ensureTempFolder();
     }
 
-    public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+    SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
       myDbFile = dbFile;
     }
 

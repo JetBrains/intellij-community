@@ -338,7 +338,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * Returns the interface for selecting file version numbers.
    *
    * @return the revision selector implementation, or null if none is provided.
-   * @since 5.0.2
    */
   @Nullable
   public RevisionSelector getRevisionSelector() {
@@ -463,8 +462,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @NotNull
-  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
+  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    FilterDescendantVirtualFileConvertible<S> convertible =
+      new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance());
+    convertible.doFilter(in);
     return in;
   }
 

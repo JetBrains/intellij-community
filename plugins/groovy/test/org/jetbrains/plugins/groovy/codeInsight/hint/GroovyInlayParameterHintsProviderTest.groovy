@@ -47,10 +47,8 @@ class Foo {
     fixture.doHighlighting()
 
     def manager = ParameterHintsPresentationManager.instance
-    def inlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
-    Map<Integer, String> actualParameterHints = inlays.findAll {
-      manager.isParameterHint(it)
-    }.collectEntries {
+    def inlays = manager.getParameterHintsInRange(editor, 0, editor.document.textLength)
+    Map<Integer, String> actualParameterHints = inlays.collectEntries {
       [(it.offset): manager.getHintText(it)]
     }
 

@@ -1,18 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -28,7 +19,9 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer{
+public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer {
+  private static final Logger LOG = Logger.getInstance(ColoredTreeCellRenderer.class);
+
   private static final Icon LOADING_NODE_ICON = JBUI.scale(EmptyIcon.create(8, 16));
 
   /**
@@ -41,9 +34,12 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   private boolean myFocused;
   private boolean myFocusedCalculated;
 
+  protected boolean myUsedCustomSpeedSearchHighlighting = false;
+
   protected JTree myTree;
 
   private boolean myOpaque = true;
+
   @Override
   public final Component getTreeCellRendererComponent(JTree tree,
                                                       Object value,
@@ -51,7 +47,23 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
                                                       boolean expanded,
                                                       boolean leaf,
                                                       int row,
-                                                      boolean hasFocus){
+                                                      boolean hasFocus) {
+    try {
+      rendererComponentInner(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+    catch (Exception e) {
+      try { LOG.error(e); } catch (Exception ignore) { }
+    }
+    return this;
+  }
+
+  private void rendererComponentInner(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
     myTree = tree;
 
     clear();
@@ -67,7 +79,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
       if (selected) {
-        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
+      }
+      else {
+        setBackground(null);
       }
     }
     else if (selected) {
@@ -92,11 +107,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      super.setOpaque(false);  // avoid nasty background
-      super.setIconOpaque(false);
-    }
-    else if (WideSelectionTreeUI.isWideSelection(tree)) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -105,7 +116,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
-    return this;
+    if (!myUsedCustomSpeedSearchHighlighting && !AbstractTreeUi.isLoadingNode(value)) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
+    }
   }
 
   public JTree getTree() {
@@ -148,10 +161,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     if (mySelected && isFocused()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
-    }
-    else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground(true)), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);
@@ -184,5 +194,62 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   }
 
   protected class AccessibleColoredTreeCellRenderer extends AccessibleSimpleColoredComponent {
+  }
+
+  // The following method are overridden for performance reasons.
+  // See the Implementation Note for more information.
+  // javax.swing.tree.DefaultTreeCellRenderer
+  // javax.swing.DefaultListCellRenderer
+
+  @Override
+  public void validate() {
+  }
+
+  @Override
+  public void invalidate() {
+  }
+
+  @Override
+  public void revalidate() {
+  }
+
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+  }
+
+  @Override
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, char oldValue, char newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, short oldValue, short newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, int oldValue, int newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, long oldValue, long newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, float oldValue, float newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, double oldValue, double newValue) {
+  }
+
+  @Override
+  public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
   }
 }

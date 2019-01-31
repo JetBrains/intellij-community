@@ -32,7 +32,7 @@ import javax.swing.*;
  */
 public abstract class SetOperationToBase extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
     assert model != null && table != null;
@@ -50,7 +50,7 @@ public abstract class SetOperationToBase extends DumbAwareAction {
   protected abstract DirDiffOperation getOperation(DirDiffElementImpl element);
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
     if (table != null && model != null && model.isOperationsEnabled()) {

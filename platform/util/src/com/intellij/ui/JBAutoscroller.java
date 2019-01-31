@@ -212,7 +212,7 @@ public class JBAutoscroller implements ActionListener {
   }
 
   private static class SyntheticDragEvent extends MouseEvent {
-    public SyntheticDragEvent(Component source, int id, long when, int modifiers,
+    SyntheticDragEvent(Component source, int id, long when, int modifiers,
                               int x, int y, int xAbs, int yAbs,
                               int clickCount, boolean popupTrigger, int button) {
       super(source, id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, button);
@@ -224,7 +224,7 @@ public class JBAutoscroller implements ActionListener {
   private static class MoveTableCellEditorOnAutoscrollFix implements AdjustmentListener, PropertyChangeListener {
     private final JTable myTable;
 
-    public MoveTableCellEditorOnAutoscrollFix(JTable table) {
+    MoveTableCellEditorOnAutoscrollFix(JTable table) {
       myTable = table;
 
       JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myTable);
@@ -286,7 +286,7 @@ public class JBAutoscroller implements ActionListener {
     private final JTable myTable;
     private final AutoscrollLocker myLocker;
 
-    public ScrollOnTableSelectionChangeFix(JTable table, AutoscrollLocker locker) {
+    ScrollOnTableSelectionChangeFix(JTable table, AutoscrollLocker locker) {
       myTable = table;
       myLocker = locker;
 

@@ -63,7 +63,7 @@ public class PatchApplier<Unused> {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  @NotNull private final List<FilePatch> myPatches;
+  @NotNull private final List<? extends FilePatch> myPatches;
   private final CommitContext myCommitContext;
   @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
@@ -76,7 +76,7 @@ public class PatchApplier<Unused> {
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
@@ -101,7 +101,7 @@ public class PatchApplier<Unused> {
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
@@ -110,16 +110,11 @@ public class PatchApplier<Unused> {
   @Deprecated
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
+                      @NotNull List<? extends FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CustomBinaryPatchApplier ignored,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
-  }
-
-  @NotNull
-  public List<FilePatch> getPatches() {
-    return myPatches;
   }
 
   @NotNull
@@ -334,7 +329,7 @@ public class PatchApplier<Unused> {
     return isSuccess ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
   }
 
-  private static void markInternalOperation(List<PatchAndFile> textPatches, boolean set) {
+  private static void markInternalOperation(List<? extends PatchAndFile> textPatches, boolean set) {
     for (PatchAndFile patch : textPatches) {
       ChangesUtil.markInternalOperation(patch.getFile(), set);
     }
@@ -350,8 +345,8 @@ public class PatchApplier<Unused> {
 
   @CalledInAwt
   private static void refreshPassedFiles(@NotNull final Project project,
-                                         @NotNull Collection<FilePath> directlyAffected,
-                                         @NotNull Collection<VirtualFile> indirectlyAffected) {
+                                         @NotNull Collection<? extends FilePath> directlyAffected,
+                                         @NotNull Collection<? extends VirtualFile> indirectlyAffected) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
@@ -364,8 +359,8 @@ public class PatchApplier<Unused> {
   }
 
   @Nullable
-  private ApplyPatchStatus actualApply(final List<PatchAndFile> textPatches,
-                                       final List<PatchAndFile> binaryPatches,
+  private ApplyPatchStatus actualApply(final List<? extends PatchAndFile> textPatches,
+                                       final List<? extends PatchAndFile> binaryPatches,
                                        final CommitContext commitContext) {
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status;
@@ -384,7 +379,7 @@ public class PatchApplier<Unused> {
     return status;
   }
 
-  private ApplyPatchStatus applyList(final List<PatchAndFile> patches,
+  private ApplyPatchStatus applyList(final List<? extends PatchAndFile> patches,
                                      final ApplyPatchContext context,
                                      ApplyPatchStatus status,
                                      CommitContext commiContext) throws IOException {

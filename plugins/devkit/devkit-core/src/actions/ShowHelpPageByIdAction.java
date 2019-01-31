@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public class ShowHelpPageByIdAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String helpId = Messages.showInputDialog(e.getProject(), "Enter Help ID:", "Show Help Page", null);
     if (helpId != null) {
       HelpManager.getInstance().invokeHelp(helpId);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.util.ArrayUtil;
@@ -33,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,6 +50,7 @@ public class ModelGen {
   public static Element loadXml(File configXml) throws Exception {
     SAXBuilder saxBuilder = new SAXBuilder();
     saxBuilder.setEntityResolver(new EntityResolver() {
+      @Override
       public InputSource resolveEntity(String publicId,
                                        String systemId)
               throws SAXException, IOException {
@@ -92,18 +78,18 @@ public class ModelGen {
 
   public void loadConfig(Element element) {
     final Element namespaceEl = element.getChild("namespaces");
-    for (Element e : (List<Element>) namespaceEl.getChildren("schemaLocation")) {
+    for (Element e : namespaceEl.getChildren("schemaLocation")) {
       final String name = e.getAttributeValue("name");
       final String file = e.getAttributeValue("file");
       schemaLocationMap.put(name, file);
     }
-    for (Element e : (List<Element>) namespaceEl.getChildren("reserved-name")) {
+    for (Element e : namespaceEl.getChildren("reserved-name")) {
       final String name = e.getAttributeValue("name");
       final String replacement = e.getAttributeValue("replace-with");
       model.name2replaceMap.put(name, replacement);
     }
     NamespaceDesc def = new NamespaceDesc("", "generated", "java.lang.Object", "", null, null, null, null);
-    for (Element nsElement : (List<Element>) namespaceEl.getChildren("namespace")) {
+    for (Element nsElement : namespaceEl.getChildren("namespace")) {
       final String name = nsElement.getAttributeValue("name");
       final NamespaceDesc nsDesc = new NamespaceDesc(name, def);
 
@@ -115,13 +101,13 @@ public class ModelGen {
       final String packageEnumS = nsElement.getAttributeValue("enums");
       final String interfaces = nsElement.getAttributeValue("interfaces");
       final ArrayList<String> list = new ArrayList<>();
-      for (Element pkgElement : (List<Element>) nsElement.getChildren("package")) {
+      for (Element pkgElement : nsElement.getChildren("package")) {
         final String pkgName = pkgElement.getAttributeValue("name");
         final String fileName = pkgElement.getAttributeValue("file");
         list.add(fileName);
         list.add(pkgName);
       }
-      for (Element pkgElement : (List<Element>) nsElement.getChildren("property")) {
+      for (Element pkgElement : nsElement.getChildren("property")) {
         final String propertyName = pkgElement.getAttributeValue("name");
         final String propertyValue = pkgElement.getAttributeValue("value");
         nsDesc.props.put(propertyName, propertyValue);
@@ -149,6 +135,7 @@ public class ModelGen {
 
   public void loadModel(final File... modelRoots) throws Exception {
     XMLEntityResolver resolver = new XMLEntityResolver() {
+      @Override
       public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException, IOException {
         String esid = xmlResourceIdentifier.getExpandedSystemId();
         if (esid == null) {

@@ -31,10 +31,12 @@ public final class ExecuteBeforeCompilationEvent extends ExecutionEvent {
     return ourInstance;
   }
 
+  @Override
   public String getTypeId() {
     return TYPE_ID;
   }
 
+  @Override
   public String getPresentableName() {
     return AntBundle.message("ant.event.before.compilation.presentable.name");
   }

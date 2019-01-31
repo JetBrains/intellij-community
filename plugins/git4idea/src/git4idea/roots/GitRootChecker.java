@@ -26,8 +26,6 @@ import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
@@ -38,7 +36,7 @@ public class GitRootChecker extends VcsRootChecker {
 
   @Override
   public boolean isRoot(@NotNull String path) {
-    return GitUtil.isGitRoot(new File(path));
+    return GitUtil.isGitRoot(path);
   }
 
   @Override
@@ -48,8 +46,8 @@ public class GitRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isVcsDir(@NotNull String path) {
-    return path.toLowerCase().endsWith(GitUtil.DOT_GIT);
+  public boolean isVcsDir(@NotNull String dirName) {
+    return dirName.equalsIgnoreCase(GitUtil.DOT_GIT);
   }
 
   @Override

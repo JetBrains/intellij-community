@@ -1,21 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -87,6 +74,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @NotNull
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
   /**
@@ -112,13 +100,13 @@ public abstract class SdkType implements SdkTypeId {
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
 
   @Nullable
-  public SdkAdditionalData loadAdditionalData(Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return null;
   }
 
   @Override
   @Nullable
-  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
     return loadAdditionalData(additional);
   }
 
@@ -171,7 +159,7 @@ public abstract class SdkType implements SdkTypeId {
   public FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
@@ -207,17 +195,17 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<>();
+    //noinspection deprecation
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
-    Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
+    allTypes.addAll(EP_NAME.getExtensionList());
     return allTypes.toArray(new SdkType[0]);
   }
 
   @NotNull
   public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
-    for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
+    for (SdkType sdkType : EP_NAME.getExtensionList()) {
       if (sdkTypeClass.equals(sdkType.getClass())) {
         return sdkTypeClass.cast(sdkType);
       }
@@ -226,7 +214,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
-   * @return for sdk build over another sdk, returns type of the nested sdk, 
+   * @return for sdk build over another sdk, returns type of the nested sdk,
    *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
    *         null otherwise
    */
@@ -243,7 +231,6 @@ public abstract class SdkType implements SdkTypeId {
    * the {@link #showCustomCreateUI} method is called.
    *
    * @return true if the custom create UI is supported, false otherwise.
-   * @since 12.0
    */
   public boolean supportsCustomCreateUI() {
     return false;
@@ -257,17 +244,19 @@ public abstract class SdkType implements SdkTypeId {
    * @param parentComponent    the parent component for showing the dialog.
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @since 2017.1
+   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
-  @SuppressWarnings("deprecation")
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    //noinspection deprecation
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) { }
 
@@ -277,13 +266,13 @@ public abstract class SdkType implements SdkTypeId {
    *
    * @param sdk the SDK to validate the path for.
    * @return true if the home path is valid, false otherwise.
-   * @since 12.1
    */
   public boolean sdkHasValidPath(@NotNull Sdk sdk) {
     VirtualFile homeDir = sdk.getHomeDirectory();
     return homeDir != null && homeDir.isValid();
   }
 
+  @NotNull
   public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }

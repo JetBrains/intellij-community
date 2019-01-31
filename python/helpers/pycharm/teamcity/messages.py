@@ -3,11 +3,10 @@ import sys
 import time
 
 
-
-
 if sys.version_info < (3, ):
     # Python 2
-    text_type = unicode  # flake8: noqa
+    # flake8: noqa
+    text_type = unicode
 else:
     # Python 3
     text_type = str
@@ -18,6 +17,7 @@ _localtime = time.localtime
 _strftime = time.strftime
 
 _quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]'}
+
 
 def escape_value(value):
     return "".join(_quote.get(x, x) for x in value)
@@ -222,4 +222,3 @@ class TeamcityServiceMessages(object):
 
     def customMessage(self, text, status, errorDetails='', flowId=None):
         self.message('message', text=text, status=status, errorDetails=errorDetails, flowId=flowId)
-

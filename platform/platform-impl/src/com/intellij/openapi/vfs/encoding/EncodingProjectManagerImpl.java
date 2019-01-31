@@ -303,7 +303,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     };
   }
 
-  private boolean processSubFiles(@Nullable("null means all in the project") VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
+  private boolean processSubFiles(@Nullable("null means all in the project") VirtualFile file, @NotNull final Processor<? super VirtualFile> processor) {
     if (file == null) {
       for (VirtualFile virtualFile : ProjectRootManager.getInstance(myProject).getContentRoots()) {
         if (!processSubFiles(virtualFile, processor)) return false;
@@ -440,7 +440,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       return name;
     }
   }
-  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+
+  public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
     myBOMForNewUTF8Files = option;
   }
 

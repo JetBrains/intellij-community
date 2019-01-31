@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.ArrayUtil;
@@ -11,10 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/** void doProcess(Processor<T> processor) */
+/* void doProcess(Processor<T> processor) */
 class VarianceCandidate {
   final PsiMethod method; // doProcess
   final PsiParameter methodParameter; // processor
+  final PsiClassReferenceType methodParameterType; // Processor<T>
   final int methodParameterIndex; // 0
   final PsiTypeParameter typeParameter; // Processor.T
   final PsiType type; // T
@@ -22,12 +24,14 @@ class VarianceCandidate {
   final List<PsiMethod> superMethods = new ArrayList<>();
 
   private VarianceCandidate(@NotNull PsiParameter methodParameter,
+                            @NotNull PsiClassReferenceType methodParameterType,
                             @NotNull PsiMethod method,
                             int methodParameterIndex,
                             @NotNull PsiTypeParameter typeParameter,
                             @NotNull PsiType type,
                             int typeParameterIndex) {
     this.methodParameter = methodParameter;
+    this.methodParameterType = methodParameterType;
     this.method = method;
     this.methodParameterIndex = methodParameterIndex;
     this.typeParameter = typeParameter;
@@ -65,8 +69,10 @@ class VarianceCandidate {
     PsiParameterList parameterList = method.getParameterList();
     int parameterIndex = parameterList.getParameterIndex(parameter);
     if (parameterIndex == -1) return null;
+    PsiType parameterType = parameter.getType();
+    if (!(parameterType instanceof PsiClassReferenceType)) return null;
     PsiParameter[] methodParameters = parameterList.getParameters();
-    VarianceCandidate candidate = new VarianceCandidate(parameter, method, parameterIndex, typeParameter, type, index);
+    VarianceCandidate candidate = new VarianceCandidate(parameter, (PsiClassReferenceType)parameterType, method, parameterIndex, typeParameter, type, index);
 
     // check that if there is a super method, then it's parameterized similarly.
     // otherwise, it would make no sense to wildcardize "new Function<List<T>, T>(){ T apply(List<T> param) {...} }"
@@ -89,14 +95,15 @@ class VarianceCandidate {
 
   VarianceCandidate getSuperMethodVarianceCandidate(@NotNull PsiMethod superMethod) {
     PsiParameter superMethodParameter = superMethod.getParameterList().getParameters()[this.methodParameterIndex];
-    PsiClass paraClass = ((PsiClassType)superMethodParameter.getType()).resolve();
-    PsiTypeParameter superTypeParameter = paraClass.getTypeParameters()[this.typeParameterIndex];
+    PsiType superMethodParameterType = superMethodParameter.getType();
+    PsiClass paraClass = ((PsiClassType)superMethodParameterType).resolve();
+    PsiTypeParameter superTypeParameter = paraClass.getTypeParameters()[typeParameterIndex];
     PsiTypeElement superMethodParameterTypeElement = superMethodParameter.getTypeElement();
     if (superMethodParameterTypeElement == null) return null; // e.g. when java overrides kotlin
     PsiJavaCodeReferenceElement ref = superMethodParameterTypeElement.getInnermostComponentReferenceElement();
     PsiTypeElement[] typeElements = ref.getParameterList().getTypeParameterElements();
     PsiType type = typeElements[this.typeParameterIndex].getType();
 
-    return new VarianceCandidate(superMethodParameter, superMethod, this.methodParameterIndex, superTypeParameter, type, typeParameterIndex);
+    return new VarianceCandidate(superMethodParameter, (PsiClassReferenceType)superMethodParameterType, superMethod, this.methodParameterIndex, superTypeParameter, type, typeParameterIndex);
   }
 }

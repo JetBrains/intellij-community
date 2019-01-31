@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
-import java.util.HashSet;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,7 @@ public class ModuleUtilCore {
     if (isLibraryElement) {
       List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
       for(OrderEntry orderEntry:orders) {
-        if (orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
-            orderEntry instanceof LibraryOrderEntry) {
+        if (orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry) {
           return true;
         }
       }
@@ -93,7 +91,7 @@ public class ModuleUtilCore {
           return element.getUserData(KEY_MODULE);
         }
       }
-      if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+      if (fileIndex.isInLibrary(vFile)) {
         final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
           return null;
@@ -138,7 +136,7 @@ public class ModuleUtilCore {
   }
 
   //ignores export flag
-  public static void getDependencies(@NotNull Module module, @NotNull Set<Module> modules) {
+  public static void getDependencies(@NotNull Module module, @NotNull Set<? super Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
@@ -152,7 +150,7 @@ public class ModuleUtilCore {
    * @param module to find dependencies on
    * @param result resulted set
    */
-  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<Module> result) {
+  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<? super Module> result) {
     if (!result.add(module)) {
       return;
     }
@@ -205,8 +203,7 @@ public class ModuleUtilCore {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
-      return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
-             orderEntry instanceof LibraryOrderEntry;
+      return orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry;
     }
     else {
       return moduleRootManager.getFileIndex().isInContent(file);

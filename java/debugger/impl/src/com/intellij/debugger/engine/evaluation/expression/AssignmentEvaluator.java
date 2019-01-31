@@ -34,6 +34,7 @@ public class AssignmentEvaluator implements Evaluator{
     myRightEvaluator = DisableGC.create(rightEvaluator);
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     myLeftEvaluator.evaluate(context);
     final Modifier modifier = myLeftEvaluator.getModifier();
@@ -44,7 +45,7 @@ public class AssignmentEvaluator implements Evaluator{
     }
 
     assign(modifier, right, context);
-    
+
     return right;
   }
 
@@ -71,6 +72,7 @@ public class AssignmentEvaluator implements Evaluator{
     }
   }
 
+  @Override
   public Modifier getModifier() {
     return myLeftEvaluator.getModifier();
   }

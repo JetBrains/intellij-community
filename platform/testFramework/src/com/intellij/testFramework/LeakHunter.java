@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
@@ -58,7 +59,7 @@ public class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void checkLeak(@NotNull Supplier<Map<Object, String>> rootsSupplier,
+  public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                    @NotNull Class<T> suspectClass,
                                    @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
@@ -78,7 +79,7 @@ public class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  static <T> void processLeaks(@NotNull Supplier<Map<Object, String>> rootsSupplier,
+  static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                @NotNull Class<T> suspectClass,
                                @Nullable final Condition<? super T> isReallyLeak,
                                @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
@@ -89,7 +90,7 @@ public class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorBase.clearCacheForTests();
-    ApplicationManager.getApplication().runReadAction(() -> {
+    Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, Conditions.alwaysTrue(), (value, backLink) -> {
           @SuppressWarnings("unchecked")
@@ -100,7 +101,14 @@ public class LeakHunter {
           return true;
         });
       }
-    });
+    };
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      runnable.run();
+    }
+    else {
+      application.runReadAction(runnable);
+    }
   }
 
   /**
@@ -126,7 +134,7 @@ public class LeakHunter {
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");
-      result.put(ThreadTracker.getThreads(), "all live threads");
+      result.put(ThreadTracker.getThreads().values(), "all live threads");
       result.put(allLoadedClasses, "all loaded classes statics");
       return result;
     };

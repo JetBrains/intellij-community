@@ -15,8 +15,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -28,13 +27,12 @@ import java.util.*;
  */
 @Deprecated
 public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
-  private static final Logger LOG = Logger.getInstance(SoftKeySoftValueHashMap.class);
   private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   @Deprecated
   public SoftKeySoftValueHashMap() {
-    LOG.warn("This class is deprecated. Please use {@link ContainerUtil#createSoftKeySoftValueMap()} instead.", new IncorrectOperationException());
+    DeprecatedMethodException.report("Use ContainerUtil#createSoftKeySoftValueMap() instead");
   }
 
   SoftKeySoftValueHashMap(boolean goodConstructor) {
@@ -88,7 +86,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -140,6 +138,6 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 }

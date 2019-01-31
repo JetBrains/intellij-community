@@ -225,8 +225,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    System.gc();
-    System.gc();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     document = myDocumentManager.getDocument(file);
     assertEquals(idCode, System.identityHashCode(document));
@@ -244,8 +243,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     myDocumentManager.saveAllDocuments();
 
-    System.gc();
-    System.gc();
+    GCUtil.tryGcSoftlyReachableObjects();
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
@@ -450,7 +448,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
   }
 
-  public void testContentChanged_doNotReloadChangedDocumentOnSave() throws Exception {
+  public void testContentChanged_doNotReloadChangedDocumentOnSave() {
     final MockVirtualFile file =
     new MockVirtualFile("test.txt", "test") {
       @Override
@@ -534,7 +532,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     renameFile(file, "test.wtf");
     Document afterRename = documentManager.getDocument(file);
-    assertTrue(afterRename + " != " + original, afterRename == original);
+    assertSame(afterRename + " != " + original, afterRename, original);
   }
 
   public void testFileTypeChangeDocumentDetach() throws Exception {
@@ -601,12 +599,12 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     AtomicBoolean expectUnsaved = new AtomicBoolean(true);
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull DocumentEvent e) {
         assertFalse(manager.isDocumentUnsaved(document));
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         invoked.incrementAndGet();
         assertEquals(expectUnsaved.get(), manager.isDocumentUnsaved(document));
       }
@@ -623,7 +621,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
     file.refresh(false, false);
-    
+
     assertEquals("something", document.getText());
     assertFalse(manager.isDocumentUnsaved(document));
     assertEquals(4, invoked.get());

@@ -216,6 +216,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCodeBlock";
   }

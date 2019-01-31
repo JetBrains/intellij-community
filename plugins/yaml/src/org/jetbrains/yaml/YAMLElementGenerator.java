@@ -59,7 +59,7 @@ public class YAMLElementGenerator {
       text = keyName + ": " + valueText;
     }
     else {
-      text = keyName + ":\n" + indentText(valueText);
+      text = keyName + ":\n" + YAMLTextUtil.indentText(valueText, 2);
     }
 
     final PsiFile tempFile = createDummyYamlWithText(text);
@@ -104,20 +104,5 @@ public class YAMLElementGenerator {
     final PsiElement at = file.findElementAt("? foo ".length());
     assert at != null && at.getNode().getElementType() == YAMLTokenTypes.COLON;
     return at;
-  }
-
-  @NotNull
-  private static String indentText(@NotNull String text) {
-    StringBuilder buffer = new StringBuilder();
-    String indentString = StringUtil.repeatSymbol(' ', 2);
-    buffer.append(indentString);
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      buffer.append(c);
-      if (c == '\n') {
-        buffer.append(indentString);
-      }
-    }
-    return buffer.toString();
   }
 }

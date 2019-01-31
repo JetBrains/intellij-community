@@ -1,4 +1,4 @@
-// "Join declaration and assignment" "true"
+// "Join declaration and assignment" "GENERIC_ERROR_OR_WARNING"
 class T {
     {
         int a =<caret> foo(1);

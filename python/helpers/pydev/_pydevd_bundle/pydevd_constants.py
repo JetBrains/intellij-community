@@ -184,15 +184,8 @@ if IS_PY3K:
         return list(d.items())
 
 else:
-    dict_keys = None
-    try:
-        dict_keys = dict.keys
-    except:
-        pass
-
-    if IS_JYTHON or not dict_keys:
-        def dict_keys(d):
-            return d.keys()
+    def dict_keys(d):
+        return d.keys()
 
     try:
         dict_iter_values = dict.itervalues

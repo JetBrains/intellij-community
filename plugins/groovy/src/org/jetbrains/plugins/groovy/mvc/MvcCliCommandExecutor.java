@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/19/2014
  */
 public class MvcCliCommandExecutor extends MvcCommandExecutor {
   @Override

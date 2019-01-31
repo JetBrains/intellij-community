@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Jul 30, 2010
  */
 public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeImpl.class);
@@ -524,7 +523,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static class InferredAnonymousTypeVisitor extends PsiTypeVisitor<Boolean> {
     private final PsiElement myExpression;
 
-    public InferredAnonymousTypeVisitor(PsiElement expression) {
+    InferredAnonymousTypeVisitor(PsiElement expression) {
       myExpression = expression;
     }
 

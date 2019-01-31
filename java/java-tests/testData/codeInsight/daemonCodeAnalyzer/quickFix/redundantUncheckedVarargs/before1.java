@@ -7,7 +7,7 @@ public class Test {
   }
 
   void foo() {
-    //noinspec<caret>tion unchecked
+    //noinspection unc<caret>hecked
     foo(new ArrayList<String>());
   }
 }

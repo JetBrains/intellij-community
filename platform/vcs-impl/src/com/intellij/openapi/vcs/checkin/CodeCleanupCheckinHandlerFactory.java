@@ -29,7 +29,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
     private final CheckinProjectPanel myPanel;
     private final Project myProject;
 
-    public CleanupCodeCheckinHandler(CheckinProjectPanel panel) {
+    CleanupCodeCheckinHandler(CheckinProjectPanel panel) {
       myProject = panel.getProject();
       myPanel = panel;
     }

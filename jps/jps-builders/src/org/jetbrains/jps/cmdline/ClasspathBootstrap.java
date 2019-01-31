@@ -22,7 +22,6 @@ import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.OptimizedFileManagerUtil;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -89,12 +88,7 @@ public class ClasspathBootstrap {
     return ContainerUtil.newArrayList(cp);
   }
 
-  public static void appendJavaCompilerClasspath(Collection<String> cp, boolean includeEcj) {
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
-    }
-
+  public static void appendJavaCompilerClasspath(Collection<? super String> cp, boolean includeEcj) {
     if (includeEcj) {
       File file = EclipseCompilerTool.findEcjJarFile();
       if (file != null) {
@@ -113,18 +107,6 @@ public class ClasspathBootstrap {
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
-    }
-
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = OptimizedFileManagerUtil.getManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
-    }
-    else {
-      // last resort
-      final File f = new File(PathManager.getLibPath(), "optimizedFileManager.jar");
-      if (f.exists()) {
-        cp.add(f);
-      }
     }
 
     try {

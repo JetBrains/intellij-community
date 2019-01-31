@@ -26,7 +26,7 @@ import java.util.List;
 
 public abstract class ArrayAction extends DebuggerAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
 
     DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
@@ -61,7 +61,7 @@ public abstract class ArrayAction extends DebuggerAction {
                                                               String title);
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
@@ -141,7 +141,7 @@ public abstract class ArrayAction extends DebuggerAction {
   private static class NamedArrayConfigurable extends ArrayRendererConfigurable implements Configurable {
     private final String myTitle;
 
-    public NamedArrayConfigurable(String title, ArrayRenderer renderer) {
+    NamedArrayConfigurable(String title, ArrayRenderer renderer) {
       super(renderer);
       myTitle = title;
     }

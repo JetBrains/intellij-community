@@ -44,12 +44,12 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  protected final boolean apply(PresentationData presentation) {
+  protected final boolean apply(@NotNull PresentationData presentation) {
     return apply(presentation, null);
   }
 
   @Override
-  public void applyFrom(NodeDescriptor desc) {
+  public void applyFrom(@NotNull NodeDescriptor desc) {
     if (desc instanceof PresentableNodeDescriptor) {
       PresentableNodeDescriptor pnd = (PresentableNodeDescriptor)desc;
       apply(pnd.getPresentation());
@@ -59,11 +59,11 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
   }
 
-  protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
+  protected final boolean apply(@NotNull PresentationData presentation, @Nullable PresentationData before) {
     setIcon(presentation.getIcon(false));
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
-    boolean updated = before == null || !presentation.equals(before);
+    boolean updated = !presentation.equals(before);
 
     if (myUpdatedPresentation == null) {
       myUpdatedPresentation = createPresentation();
@@ -81,6 +81,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return updated;
   }
 
+  @NotNull
   private PresentationData getUpdatedPresentation() {
     PresentationData presentation = myUpdatedPresentation != null ? myUpdatedPresentation : createPresentation();
     myUpdatedPresentation = presentation;
@@ -115,20 +116,14 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return true;
   }
 
-  protected abstract void update(PresentationData presentation);
+  protected abstract void update(@NotNull PresentationData presentation);
 
   @NotNull
   public final PresentationData getPresentation() {
-    PresentationData result;
-    if (myUpdatedPresentation == null) {
-      result = getTemplatePresentation();
-    }
-    else {
-      result = myUpdatedPresentation;
-    }
-    return result;
+    return myUpdatedPresentation == null ? getTemplatePresentation() : myUpdatedPresentation;
   }
 
+  @NotNull
   protected final PresentationData getTemplatePresentation() {
     if (myTemplatePresentation == null) {
       myTemplatePresentation = createPresentation();
@@ -141,7 +136,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  public boolean isHighlightableContentNode(final PresentableNodeDescriptor kid) {
+  public boolean isHighlightableContentNode(@NotNull PresentableNodeDescriptor kid) {
     return true;
   }
 
@@ -149,7 +144,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return null;
   }
 
-  public boolean isParentOf(NodeDescriptor eachNode) {
+  public boolean isParentOf(@NotNull NodeDescriptor eachNode) {
     NodeDescriptor eachParent = eachNode.getParentDescriptor();
     while (eachParent != null) {
       if (eachParent == this) return true;
@@ -167,6 +162,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
+  @NotNull
   public Color getHighlightColor() {
     return UIUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getTreeBackground(), 1.1) : UIUtil.getTreeBackground().brighter();
   }
@@ -199,6 +195,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
 
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -212,9 +209,9 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
       return true;
     }
 
+    @Override
     public int hashCode() {
-      int result;
-      result = (myText != null ? myText.hashCode() : 0);
+      int result = myText != null ? myText.hashCode() : 0;
       result = 31 * result + (myToolTip != null ? myToolTip.hashCode() : 0);
       result = 31 * result + (myAttributes != null ? myAttributes.hashCode() : 0);
       return result;

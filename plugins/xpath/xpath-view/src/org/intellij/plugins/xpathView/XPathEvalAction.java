@@ -124,10 +124,8 @@ public class XPathEvalAction extends XPathAction {
   @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-        if (XpathIcons.Xml != null) {
-            event.getPresentation().setIcon(XpathIcons.Xml);
-        }
-    }
+    event.getPresentation().setIcon(XpathIcons.Xml);
+  }
 
     @Override
     protected boolean isEnabledAt(XmlFile xmlFile, int offset) {
@@ -135,7 +133,7 @@ public class XPathEvalAction extends XPathAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
         final Project project = event.getProject();
         if (project == null) {
             // no active project
@@ -477,7 +475,7 @@ public class XPathEvalAction extends XPathAction {
         private final XPath myXPath;
         private final XmlElement myContextNode;
 
-        public MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
+        MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
             myResult = result;
             myXPath = xPath;
             myContextNode = contextNode;

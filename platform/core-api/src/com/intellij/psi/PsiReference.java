@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,14 @@ public interface PsiReference {
   /**
    * Returns the part of the underlying element which serves as a reference, or the complete
    * text range of the element if the entire element is a reference.
+   * <p/>
+   * Sample: PsiElement representing a fully qualified name with multiple dedicated PsiReferences, each bound
+   * to the range it resolves to (skipping the '.' separator).
+   * <pre>
+   * PsiElement text: qualified.LongName
+   * PsiReferences:   [Ref1---]X[Ref2--]
+   * </pre>
+   * where {@code Ref1} would resolve to a "namespace" and {@code Ref2} to an "element".
    *
    * @return Relative range in element
    */
@@ -62,7 +71,8 @@ public interface PsiReference {
    * @return the target element, or null if it was not possible to resolve the reference to a valid target.
    * @see PsiPolyVariantReference#multiResolve(boolean)
    */
-  @Nullable PsiElement resolve();
+  @Nullable
+  PsiElement resolve();
 
   /**
    * Returns the name of the reference target element which does not depend on import statements
@@ -82,7 +92,7 @@ public interface PsiReference {
    * @return the new underlying element of the reference.
    * @throws IncorrectOperationException if the rename cannot be handled for some reason.
    */
-  PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;
+  PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,
@@ -101,20 +111,23 @@ public interface PsiReference {
    * @param element the element to check target for.
    * @return true if the reference targets that element, false otherwise.
    */
-  boolean isReferenceTo(PsiElement element);
+  boolean isReferenceTo(@NotNull PsiElement element);
 
   /**
-   * Returns the array of String, {@link PsiElement} and/or {@link LookupElement}
+   * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.codeInsight.lookup.LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by IDEA core.)
+   * <p>
+   * This method is default since 2018.3.
    *
    * @return the array of available identifiers.
    */
-  @SuppressWarnings("JavadocReference")
   @NotNull
-  Object[] getVariants();
+  default Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
 
   /**
    * Returns false if the underlying element is guaranteed to be a reference, or true

@@ -237,7 +237,8 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     }
 
     if (suggestJre) {
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      final Sdk internalJdk = ExternalSystemJdkUtil.getJdk(null, ExternalSystemJdkUtil.USE_INTERNAL_JAVA);
+      assert internalJdk != null;
       assert internalJdk.getHomePath() != null;
       result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
                  new JdkComboBoxItem(
@@ -312,7 +313,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     private final String comment;
     private final boolean valid;
 
-    public JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
+    JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
       this.jdkName = jdkName;
       this.label = label;
       this.comment = comment;

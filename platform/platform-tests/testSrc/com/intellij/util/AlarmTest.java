@@ -19,7 +19,7 @@ package com.intellij.util;
  import com.intellij.openapi.application.ApplicationManager;
  import com.intellij.openapi.application.ModalityState;
  import com.intellij.openapi.application.impl.LaterInvocator;
- import com.intellij.testFramework.PlatformTestCase;
+ import com.intellij.testFramework.LightPlatformTestCase;
  import com.intellij.util.containers.ContainerUtil;
  import com.intellij.util.ui.UIUtil;
  import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ package com.intellij.util;
  import java.util.stream.Collectors;
  import java.util.stream.Stream;
 
-public class AlarmTest extends PlatformTestCase {
+public class AlarmTest extends LightPlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
@@ -151,7 +151,7 @@ public class AlarmTest extends PlatformTestCase {
     alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
     alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
     assertEquals("", sb.toString());
-    alarm.flush();
+    alarm.drainRequestsInTest();
     assertEquals("12", sb.toString());
   }
 

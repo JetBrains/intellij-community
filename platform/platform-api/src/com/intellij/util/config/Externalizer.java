@@ -48,9 +48,9 @@ public interface Externalizer<T> {
   void writeValue(Element dataElement, T value);
 
   class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
-    private final Factory<T> myFactory;
+    private final Factory<? extends T> myFactory;
 
-    public FactoryBased(Factory<T> factory) {
+    public FactoryBased(Factory<? extends T> factory) {
       myFactory = factory;
     }
 
@@ -66,7 +66,7 @@ public interface Externalizer<T> {
       value.writeExternal(dataElement);
     }
 
-    static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<T> factory) {
+    static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<? extends T> factory) {
       return new FactoryBased<>(factory);
     }
   }

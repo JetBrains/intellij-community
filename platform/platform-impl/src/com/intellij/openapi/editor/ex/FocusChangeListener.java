@@ -16,13 +16,22 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.FocusEvent;
 import java.util.EventListener;
 
 /**
  * @author max
  */
 public interface FocusChangeListener extends EventListener {
-  void focusGained(Editor editor);
-  void focusLost(Editor editor);
+  void focusGained(@NotNull Editor editor);
+  void focusLost(@NotNull Editor editor);
+
+  default void focusLost(@NotNull Editor editor, @SuppressWarnings("unused") @NotNull FocusEvent event) {
+    focusLost(editor);
+  }
+  default void focusGained(@NotNull Editor editor, @SuppressWarnings("unused") @NotNull FocusEvent event) {
+    focusGained(editor);
+  }
 }

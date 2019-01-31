@@ -68,12 +68,7 @@ public class CutHandler extends EditorWriteActionHandler {
       if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          selectionModel.selectLineAtCaret();
-        }
-      });
+      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
       if (!selectionModel.hasSelection(true)) return;
     }
 
@@ -81,12 +76,8 @@ public class CutHandler extends EditorWriteActionHandler {
     int end = selectionModel.getSelectionEnd();
     final List<TextRange> selections = new ArrayList<>();
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          selections.add(new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
-        }
-      });
+      editor.getCaretModel().runForEachCaret(
+        __ -> selections.add(new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())));
     }
 
     EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, null, dataContext);
@@ -95,14 +86,11 @@ public class CutHandler extends EditorWriteActionHandler {
 
       Collections.reverse(selections);
       final Iterator<TextRange> it = selections.iterator();
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          TextRange range = it.next();
-          editor.getCaretModel().moveToOffset(range.getStartOffset());
-          selectionModel.removeSelection();
-          editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-        }
+      editor.getCaretModel().runForEachCaret(__ -> {
+        TextRange range = it.next();
+        editor.getCaretModel().moveToOffset(range.getStartOffset());
+        selectionModel.removeSelection();
+        editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
       });
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }

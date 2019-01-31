@@ -105,7 +105,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
 
     for (Change change : changes) {
-      RootUrlInfo path = mapping.getWcRootForFilePath(ChangesUtil.getFilePath(change).getIOFile());
+      RootUrlInfo path = mapping.getWcRootForFilePath(ChangesUtil.getFilePath(change));
 
       if (path != null) {
         result.putValue(path.getRepositoryUrl(), path.getFormat());

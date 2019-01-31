@@ -14,7 +14,7 @@ import com.intellij.openapi.util.TextRange;
 
 public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements JsonStringLiteral {
 
-  public JsonStringLiteralImpl(ASTNode node) {
+  public JsonStringLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -22,6 +22,7 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     visitor.visitStringLiteral(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
@@ -35,6 +36,10 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
   @NotNull
   public String getValue() {
     return JsonPsiImplUtils.getValue(this);
+  }
+
+  public boolean isPropertyName() {
+    return JsonPsiImplUtils.isPropertyName(this);
   }
 
 }

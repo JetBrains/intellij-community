@@ -66,7 +66,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     memberInfoChanged(event.getChangedMembers());
   }
 

@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
@@ -24,10 +12,11 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.AnchoredButton;
-import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.StripeButtonUI;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.*;
@@ -65,12 +54,6 @@ public class LightToolWindow extends JPanel {
   private final String myWidthKey;
   private final JPanel myMinimizeComponent;
   private final AnchoredButton myMinimizeButton;
-
-  private final TogglePinnedModeAction myToggleAutoHideModeAction = new TogglePinnedModeAction();
-  private final ToggleDockModeAction myToggleDockModeAction = new ToggleDockModeAction();
-  private final ToggleFloatingModeAction myToggleFloatingModeAction = new ToggleFloatingModeAction();
-  private final ToggleWindowedModeAction myToggleWindowedModeAction = new ToggleWindowedModeAction();
-  private final ToggleSideModeAction myToggleSideModeAction = new ToggleSideModeAction();
 
   private final ComponentListener myWidthListener = new ComponentAdapter() {
     @Override
@@ -342,46 +325,32 @@ public class LightToolWindow extends JPanel {
     DefaultActionGroup group = new DefaultActionGroup();
 
     group.add(myManager.createGearActions());
-    group.addSeparator();
-
-    ToolWindowType type = myManager.getToolWindow().getType();
-    if (type == ToolWindowType.DOCKED) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleDockModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-      group.add(myToggleSideModeAction);
+    if (myManager.getAnchor() == null) {
+      group.addSeparator();
+      DefaultActionGroup viewModeGroup = new DefaultActionGroup(ActionsBundle.groupText("ViewMode"), true);
+      for (ToolWindowViewModeAction.ViewMode viewMode : ToolWindowViewModeAction.ViewMode.values()) {
+        viewModeGroup.add(new MyViewModeAction(viewMode));
+      }
+      group.add(viewModeGroup);
     }
-    else if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
-      group.add(myToggleAutoHideModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-    }
-    else if (type == ToolWindowType.SLIDING) {
-      group.add(myToggleDockModeAction);
-      group.add(myToggleFloatingModeAction);
-      group.add(myToggleWindowedModeAction);
-    }
-
     return group;
   }
 
   private void showGearPopup(Component component, int x, int y) {
     ActionPopupMenu popupMenu =
       ((ActionManagerImpl)ActionManager.getInstance())
-        .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, createGearPopupGroup(), new MenuItemPresentationFactory(true));
+        .createActionPopupMenu(ToolWindowContentUi.POPUP_PLACE, createGearPopupGroup(), new MenuItemPresentationFactory());
     popupMenu.getComponent().show(component, x, y);
   }
 
   private class GearAction extends AnAction {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.General.Gear);
-      presentation.setHoveredIcon(AllIcons.General.GearHover);
+      presentation.setIcon(AllIcons.General.GearPlain);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int x = 0;
       int y = 0;
       InputEvent inputEvent = e.getInputEvent();
@@ -395,118 +364,33 @@ public class LightToolWindow extends JPanel {
   }
 
   private class HideAction extends AnAction {
-    public HideAction() {
+    HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.message("tool.window.hide.action.name"));
-      if (myAnchor == ToolWindowAnchor.LEFT) {
-        presentation.setIcon(AllIcons.General.HideLeftPart);
-        presentation.setHoveredIcon(AllIcons.General.HideLeftPartHover);
-      }
-      else if (myAnchor == ToolWindowAnchor.RIGHT) {
-        presentation.setIcon(AllIcons.General.HideRightPart);
-        presentation.setHoveredIcon(AllIcons.General.HideRightPartHover);
-      }
-      else if (myAnchor == ToolWindowAnchor.BOTTOM) {
-        presentation.setIcon(AllIcons.General.HideDownPart);
-        presentation.setHoveredIcon(AllIcons.General.HideDownPartHover);
-      }
+      presentation.setIcon(AllIcons.General.HideToolWindow);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       updateContent(false, true);
     }
   }
 
-  private class TogglePinnedModeAction extends ToggleAction {
-    public TogglePinnedModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.TOGGLE_PINNED_MODE_ACTION_ID));
+  private class MyViewModeAction extends ToolWindowViewModeAction {
+    private MyViewModeAction(@NotNull ViewMode mode) {
+      super(mode);
+      copyFrom(ActionManager.getInstance().getAction(mode.getActionID()));
+    }
+
+    @Nullable
+    @Override
+    protected ToolWindow getToolWindow(AnActionEvent e) {
+      return myManager.getToolWindow();
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !myManager.getToolWindow().isAutoHide();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      ToolWindow window = myManager.getToolWindow();
-      window.setAutoHide(!window.isAutoHide());
-      myManager.setEditorMode(null);
-    }
-  }
-
-  private class ToggleDockModeAction extends ToggleTypeModeAction {
-    public ToggleDockModeAction() {
-      super(ToolWindowType.DOCKED, InternalDecorator.TOGGLE_DOCK_MODE_ACTION_ID);
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      ToolWindow window = myManager.getToolWindow();
-      ToolWindowType type = window.getType();
-      if (type == ToolWindowType.DOCKED) {
-        window.setType(ToolWindowType.SLIDING, null);
-      }
-      else if (type == ToolWindowType.SLIDING) {
-        window.setType(ToolWindowType.DOCKED, null);
-      }
-      myManager.setEditorMode(null);
-    }
-  }
-
-  private class ToggleFloatingModeAction extends ToggleTypeModeAction {
-    public ToggleFloatingModeAction() {
-      super(ToolWindowType.FLOATING, InternalDecorator.TOGGLE_FLOATING_MODE_ACTION_ID);
-    }
-  }
-
-  private class ToggleWindowedModeAction extends ToggleTypeModeAction {
-    ToggleWindowedModeAction() {
-      super(ToolWindowType.WINDOWED, InternalDecorator.TOGGLE_WINDOWED_MODE_ACTION_ID);
-    }
-  }
-
-  private class ToggleTypeModeAction extends ToggleAction {
-    private final ToolWindowType myType;
-
-    ToggleTypeModeAction(@NotNull ToolWindowType type, @NotNull String id) {
-      myType = type;
-      copyFrom(ActionManager.getInstance().getAction(id));
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myManager.getToolWindow().getType() == myType;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      ToolWindow window = myManager.getToolWindow();
-      ToolWindowType type = window.getType();
-      if (type == myType) {
-        window.setType(((ToolWindowEx)window).getInternalType(), null);
-      }
-      else {
-        window.setType(myType, null);
-      }
-      myManager.setEditorMode(null);
-    }
-  }
-
-  private class ToggleSideModeAction extends ToggleAction {
-    public ToggleSideModeAction() {
-      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.TOGGLE_SIDE_MODE_ACTION_ID));
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myManager.getToolWindow().isSplitMode();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myManager.getToolWindow().setSplitMode(state, null);
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
       myManager.setEditorMode(null);
     }
   }
@@ -514,7 +398,7 @@ public class LightToolWindow extends JPanel {
   private class ActionButton extends Wrapper implements ActionListener {
     private final AnAction myAction;
 
-    public ActionButton(AnAction action) {
+    ActionButton(AnAction action) {
       myAction = action;
 
       Presentation presentation = action.getTemplatePresentation();
@@ -543,13 +427,13 @@ public class LightToolWindow extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(size.width, TabsUtil.getTabsHeight());
+      return new Dimension(size.width, TabsUtil.getTabsHeight(size.height));
     }
 
     @Override
     public Dimension getMinimumSize() {
       Dimension size = super.getMinimumSize();
-      return new Dimension(size.width, TabsUtil.getTabsHeight());
+      return new Dimension(size.width, TabsUtil.getTabsHeight(size.height));
     }
   }
 }

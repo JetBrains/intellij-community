@@ -90,20 +90,6 @@
       <option name="GROOVY_STATEMENT" value="true" />
     </context>
   </template>
-  <template name="itve" value="for(int $INDEX$ = 0; $INDEX$ &lt; $VECTOR$.size(); $INDEX$++) {&#10;  $ELEMENT_TYPE$ $VAR$ = $CAST$ $VECTOR$.elementAt($INDEX$);&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itve"  toReformat="true" toShortenFQNames="true">
-    <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />
-    <variable name="VECTOR" expression="variableOfType(&quot;java.util.Vector&quot;)" defaultValue="&quot;vector&quot;" alwaysStopAt="true" />
-    <variable name="ELEMENT_TYPE" expression="guessElementType(VECTOR)" defaultValue="&quot;Object&quot;" alwaysStopAt="true" />
-    <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
-    <variable name="CAST" expression="castToLeftSideType()" defaultValue="" alwaysStopAt="false" />
-    <context>
-      <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT" value="true" />
-      <option name="GROOVY" value="false" />
-      <option name="GROOVY_STATEMENT" value="true" />
-    </context>
-  </template>
   <template name="ritar" value="for(int $INDEX$ = $ARRAY$.length - 1; $INDEX$ &gt;= 0; $INDEX$--) {&#10;  $ELEMENT_TYPE$ $VAR$ = $ARRAY$[$INDEX$];&#10;  $END$&#10;}"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ritar"  toReformat="true" toShortenFQNames="true">
     <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />

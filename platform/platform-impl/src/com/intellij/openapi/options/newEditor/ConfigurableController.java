@@ -63,7 +63,7 @@ class ConfigurableController implements Configurable.TopComponentController {
       original = ((ConfigurableWrapper)configurable).getConfigurable();
     }
 
-    if (original instanceof Configurable.TopComponentProvider) {
+    if (original instanceof Configurable.TopComponentProvider && ((Configurable.TopComponentProvider)original).isAvailable()) {
       controller = new ConfigurableController();
       controller.setCenterComponent(((Configurable.TopComponentProvider)original).getCenterComponent(controller));
       controllers.put(configurable, controller);

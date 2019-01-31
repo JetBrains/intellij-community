@@ -59,8 +59,8 @@ public class ReplaceFileConfirmationDialog {
     if (modifiedFiles.isEmpty()) return true;
 
     return Messages.showOkCancelDialog(createMessage(modifiedFiles), myActionName,
-                                    createOwerriteButtonName(modifiedFiles), getCancelButtonText(),
-                               Messages.getWarningIcon()) ==
+                                       createOverwriteButtonName(modifiedFiles), getCancelButtonText(),
+                                       Messages.getWarningIcon()) ==
            Messages.OK;
 
   }
@@ -69,8 +69,7 @@ public class ReplaceFileConfirmationDialog {
     return CommonBundle.getCancelButtonText();
   }
 
-  private String createOwerriteButtonName(Collection modifiedFiles) {
-
+  private String createOverwriteButtonName(Collection modifiedFiles) {
     return modifiedFiles.size() > 1 ? getOkButtonTextForFiles() : getOkButtonTextForOneFile();
   }
 
@@ -99,8 +98,7 @@ public class ReplaceFileConfirmationDialog {
 
     if (files == null) return result;
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       if (myProgressIndicator != null) {
         myProgressIndicator.setText(VcsBundle.message("progress.text.searching.for.modified.files"));
         myProgressIndicator.setText2(file.getPresentableUrl());

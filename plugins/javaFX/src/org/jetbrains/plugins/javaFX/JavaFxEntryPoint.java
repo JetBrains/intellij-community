@@ -33,11 +33,13 @@ public class JavaFxEntryPoint extends EntryPoint {
   public static final String INITIALIZE_METHOD_NAME = "initialize";
   public boolean ADD_JAVAFX_TO_ENTRIES = true;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "JavaFX Applications";
   }
 
+  @Override
   public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     return isEntryPoint(psiElement);
   }
@@ -68,18 +70,22 @@ public class JavaFxEntryPoint extends EntryPoint {
     return false;
   }
 
+  @Override
   public boolean isSelected() {
     return ADD_JAVAFX_TO_ENTRIES;
   }
 
+  @Override
   public void setSelected(boolean selected) {
     ADD_JAVAFX_TO_ENTRIES = selected;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (!ADD_JAVAFX_TO_ENTRIES) {
       DefaultJDOMExternalizer.writeExternal(this, element);

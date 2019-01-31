@@ -118,7 +118,9 @@
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
-      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
+      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+      </action>
       <!--Moved to XDebugger <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>-->
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
@@ -139,24 +141,20 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-            text="Generate Hierarchy Visitor...">
-      <add-to-group group-id="Internal"/>
-    </action>
+    <group id="Internal.Java" text="Java" popup="true" internal="true" compact="true">
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
+              text="Generate Hierarchy Visitor..."/>
 
-    <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
-            text="List Used Icons">
-      <add-to-group group-id="Internal"/>
-    </action>
-    <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
-            text="Collect Java Expression Statistics">
-      <add-to-group group-id="Internal"/>
-    </action>
+      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
+              text="List Used Icons"/>
+      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
+              text="Collect Java Expression Statistics"/>
 
-    <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
-            text="List Static Field Initializers">
+      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
+              text="List Static Field Initializers"/>
+
       <add-to-group group-id="Internal"/>
-    </action>
+    </group>
 
     <group id="JavaDebuggerActions">
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
@@ -228,6 +226,10 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
 
+      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction" text="Step Out Of Code Block">
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="StepOut"/>
+      </action>
+
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
@@ -239,6 +241,10 @@
       </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"
               text="Switch to the next stopped breakpoint"/>
+      <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction" text="Trace Calls"
+              icon="AllIcons.Debugger.Db_set_breakpoint">
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
+      </action>
     </group>
 
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
@@ -246,6 +252,20 @@
             text="Show Instances">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
                     relative-to-action="Debugger.ShowReferring"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize"
+            text="Calculate Retained Size">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
+
+    <action class="com.intellij.debugger.memory.action.ShowGarbageCollectorRootsAction"
+            id="Memory.ShowGarbageCollectorRoots"
+            text="Find Garbage Collector Roots">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.CalculateRetainedSize"/>
     </action>
 
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
@@ -320,13 +340,7 @@
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
-    <action id="TypeHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"
-            use-shortcut-of="TypeHierarchy">
-      <add-to-group group-id="TypeHierarchyPopupMenu" anchor="first"/>
-    </action>
-
-    <group id="JavaMethodHierarchyPopupMenu" name="JavaMethodHierarchyPopupMenu">
+    <group id="JavaMethodHierarchyPopupMenu">
       <action id="MethodHierarchy.ImplementMethodAction" class="com.intellij.ide.hierarchy.method.ImplementMethodAction"
               use-shortcut-of="ImplementMethods"/>
       <action id="MethodHierarchy.OverrideMethodAction" class="com.intellij.ide.hierarchy.method.OverrideMethodAction"
@@ -334,18 +348,6 @@
       <separator/>
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
-
-    <action id="MethodHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"
-            use-shortcut-of="MethodHierarchy">
-      <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
-    </action>
-
-    <action id="CallHierarchy.BaseOnThisType"
-            class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction"
-            use-shortcut-of="CallHierarchy">
-      <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
-    </action>
 
     <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>

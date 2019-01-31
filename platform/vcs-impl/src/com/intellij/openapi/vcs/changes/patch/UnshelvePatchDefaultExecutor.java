@@ -37,6 +37,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+
 public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
@@ -49,7 +51,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining,
+  public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
@@ -63,8 +65,8 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     }
   }
 
-  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<FilePatch> remaining,
-                                                    @NotNull Collection<PatchApplier> appliers,
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
+                                                    @NotNull Collection<? extends PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
@@ -73,16 +75,11 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
       for (PatchApplier applier : appliers) {
         patches.addAll(applier.getRemainingPatches());
       }
-      if (patches.isEmpty()) {
-        shelveChangesManager.recycleChangeList(myCurrentShelveChangeList);
-      }
-      else {
-        shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, patches,
-                                                  ContainerUtil.mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
-                                                                                             ? ((ShelvedBinaryFilePatch)patch)
-                                                                                               .getShelvedBinaryFile()
-                                                                                             : null), commitContext);
-      }
+      shelveChangesManager
+        .updateListAfterUnshelve(myCurrentShelveChangeList, patches, mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
+                                                                                                  ? ((ShelvedBinaryFilePatch)patch)
+                                                                                                    .getShelvedBinaryFile()
+                                                                                                  : null), commitContext);
     }
     catch (Exception e) {
       LOG.error("Couldn't update and store remaining patches", e);

@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,39 +111,4 @@ public class SeparatorComponent extends JComponent {
     }
     return size;
   }
-
-  /**
-   * Create control what consist of label with <strong>title</strong> text in the left side and single line at all rest space.
-   * @param titleText text for a label.
-   * @param containerBackgroundColor background color of container in that control will be putted on.
-   */
-  public static JComponent createLabeledLineSeparator(final String titleText, final Color containerBackgroundColor) {
-    return createLabeledLineSeparator(titleText, containerBackgroundColor, new JBColor(Colors.DARK_BLUE, containerBackgroundColor.brighter().brighter()));
-  }
-
-  public static JComponent createLabeledLineSeparator(final String titleText, final Color containerBackgroundColor, Color foregroundColor) {
-    JLabel titleLabel = new JLabel(titleText);
-    titleLabel.setFont(UIUtil.getLabelFont());
-    titleLabel.setForeground(foregroundColor);
-
-    SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroundColor.darker(), containerBackgroundColor.brighter());
-
-    int hgap = !titleText.isEmpty() ? 5 : 0;
-    JPanel result = new JPanel(new BorderLayout(hgap, 10));
-    result.add(titleLabel, BorderLayout.WEST);
-    result.add(separatorComponent, BorderLayout.CENTER);
-    if (containerBackgroundColor != null) {
-      result.setBackground(containerBackgroundColor);
-    }
-
-    return result;
-  }
-
-  /**
-   * @deprecated use #createLabeledLineSeparator(String, Color) (to remove in IntelliJ 14)
-   */
-  public static JComponent createLabbeledLineSeparator(final String titleText, final Color containerBackgroundColor) {
-    return createLabeledLineSeparator(titleText, containerBackgroundColor);
-  }
-
 }

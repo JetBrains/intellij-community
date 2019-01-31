@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.Project;
@@ -29,11 +30,11 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/13/2014
  */
 public class EditExternalSystemRunConfigurationAction extends ExternalSystemAction {
 
-  protected boolean isEnabled(AnActionEvent e) {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null || selectedNodes.size() != 1) return false;
@@ -49,6 +50,7 @@ public class EditExternalSystemRunConfigurationAction extends ExternalSystemActi
 
     RunnerAndConfigurationSettings settings = ((RunConfigurationNode)selectedNodes.get(0)).getSettings();
     assert settings != null;
+    ExternalSystemActionsCollector.trigger(project, getSystemId(e), this, e);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
     EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();

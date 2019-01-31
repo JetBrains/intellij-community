@@ -16,8 +16,10 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
@@ -25,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -69,8 +72,12 @@ public class TestNGTestClass extends TestNGTestObject {
       throw new RuntimeConfigurationException("Invalid scope specified");
     }
     final PsiManager manager = PsiManager.getInstance(myConfig.getProject());
-    final PsiClass psiClass = ClassUtil.findPsiClass(manager, data.getMainClassName(), null, true, scope.getGlobalSearchScope());
-    if (psiClass == null) throw new RuntimeConfigurationException("Class '" + data.getMainClassName() + "' not found");
+    String testClassName = data.getMainClassName();
+    final PsiClass psiClass = ClassUtil.findPsiClass(manager, testClassName, null, true, scope.getGlobalSearchScope());
+    if (psiClass == null) throw new RuntimeConfigurationException("Class '" + testClassName + "' not found");
+    if (!TestNGUtil.isTestNGClass(psiClass)) {
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
+    }
   }
 
   @Override

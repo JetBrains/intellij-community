@@ -23,6 +23,7 @@ package com.intellij.refactoring.util.occurrences;
 public class NotInSuperCallOccurrenceFilter extends NotInSuperOrThisCallFilterBase {
   public static final OccurrenceFilter INSTANCE = new NotInSuperCallOccurrenceFilter();
 
+  @Override
   protected String getKeywordText() {
     return "super";
   }

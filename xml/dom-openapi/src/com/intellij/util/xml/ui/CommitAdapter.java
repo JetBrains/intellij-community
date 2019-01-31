@@ -15,15 +15,17 @@
  */
 package com.intellij.util.xml.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
 public abstract class CommitAdapter implements CommitListener{
   @Override
-  public void beforeCommit(DomUIControl control) {
+  public void beforeCommit(@NotNull DomUIControl control) {
   }
 
   @Override
-  public void afterCommit(DomUIControl control) {
+  public void afterCommit(@NotNull DomUIControl control) {
   }
 }

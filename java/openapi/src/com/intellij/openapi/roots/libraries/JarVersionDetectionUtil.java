@@ -52,7 +52,7 @@ public class JarVersionDetectionUtil {
   }
 
   @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<VirtualFile> files) {
+  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
            getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;

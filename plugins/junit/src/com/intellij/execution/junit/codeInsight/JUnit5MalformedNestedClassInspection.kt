@@ -7,8 +7,8 @@ import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmElementVisitor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.actions.createModifierActions
+import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.lang.jvm.inspection.JvmLocalInspection
 import com.intellij.openapi.project.Project
 import com.siyeh.ig.junit.JUnitCommonClassNames
@@ -21,7 +21,7 @@ class JUnit5MalformedNestedClassInspection : JvmLocalInspection() {
             clazz.hasModifier(JvmModifier.STATIC) &&
             clazz.hasAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) {
 
-          val fixes = createModifierActions(clazz, MemberRequest.Modifier(JvmModifier.STATIC, false)).toTypedArray()
+          val fixes = createModifierActions(clazz, modifierRequest(JvmModifier.STATIC, false)).toTypedArray()
           sink.highlight("Only non-static nested classes can serve as @Nested test classes.",
                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          *IntentionWrapper.wrapToQuickFixes(fixes, clazz.sourceElement!!.containingFile))

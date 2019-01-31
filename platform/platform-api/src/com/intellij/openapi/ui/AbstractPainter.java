@@ -30,6 +30,7 @@ public abstract class AbstractPainter implements Painter {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
 
+  @Override
   public boolean needsRepaint() {
     return myNeedsRepaint;
   }
@@ -45,10 +46,12 @@ public abstract class AbstractPainter implements Painter {
     }
   }
 
+  @Override
   public void addListener(final Listener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeListener(final Listener listener) {
     myListeners.remove(listener);
   }
@@ -89,6 +92,7 @@ public abstract class AbstractPainter implements Painter {
     }
   }
 
+  @Override
   public final void paint(final Component component, final Graphics2D g) {
     myNeedsRepaint = false;
     executePaint(component, g);

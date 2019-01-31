@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 project(WinFsNotifier)
+include(CheckSymbolExists)
 
 if(NOT WIN32)
   message(FATAL_ERROR "Windows only.")
@@ -13,7 +14,8 @@ endif()
 
 string(TIMESTAMP YEAR "%Y")
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+check_symbol_exists("_M_AMD64" "" TARGET_X64)
+if(TARGET_X64)
   set(FILE_NAME "fsnotifier64")
 else()
   set(FILE_NAME "fsnotifier")

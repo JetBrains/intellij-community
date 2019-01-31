@@ -15,21 +15,24 @@
  */
 package com.intellij.openapi.actionSystem;
 
-public class ActionInGroup {
+import org.jetbrains.annotations.NotNull;
 
+public class ActionInGroup {
   private final DefaultActionGroup myGroup;
   private final AnAction myAction;
 
-  ActionInGroup(DefaultActionGroup group, AnAction action) {
+  ActionInGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action) {
     myGroup = group;
     myAction = action;
   }
 
+  @NotNull
   public ActionInGroup setAsSecondary(boolean isSecondary) {
     myGroup.setAsPrimary(myAction, !isSecondary);
     return this;
   }
 
+  @NotNull
   public ActionGroup getGroup() {
     return myGroup;
   }

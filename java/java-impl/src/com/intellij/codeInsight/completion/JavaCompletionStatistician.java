@@ -51,7 +51,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     PsiElement position = location.getCompletionParameters().getPosition();
-    if (SUPER_CALL.accepts(position) || ReferenceExpressionCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+    if (SUPER_CALL.accepts(position) || JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
       return StatisticsInfo.EMPTY;
     }
 

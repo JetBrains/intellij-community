@@ -19,7 +19,6 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
@@ -28,27 +27,25 @@ import java.util.List;
 
 public class AntAnnotator implements DomElementsAnnotator {
 
+  @Override
   public void annotate(DomElement element, final DomElementAnnotationHolder holder) {
     element.accept(new AntDomRecursiveVisitor() {
 
+      @Override
       public void visitTypeDef(AntDomTypeDef typedef) {
         final List<String> errors = typedef.getErrorDescriptions();
         if (!errors.isEmpty()) {
-          final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-          try {
-            builder.append(AntBundle.message("failed.to.load.types")).append(":");
-            for (String error : errors) {
-              builder.append("\n").append(error);
-            }
-            createAnnotationOnTag(typedef, builder.toString(), holder);
+          final StringBuilder builder = new StringBuilder();
+          builder.append(AntBundle.message("failed.to.load.types")).append(":");
+          for (String error : errors) {
+            builder.append("\n").append(error);
           }
-          finally {
-            StringBuilderSpinAllocator.dispose(builder);
-          }
+          createAnnotationOnTag(typedef, builder.toString(), holder);
         }
         super.visitTypeDef(typedef);
       }
 
+      @Override
       public void visitAntDomCustomElement(AntDomCustomElement custom) {
         if (custom.getDefinitionClass() == null) {
           final AntDomNamedElement declaringElement = custom.getDeclaringElement();

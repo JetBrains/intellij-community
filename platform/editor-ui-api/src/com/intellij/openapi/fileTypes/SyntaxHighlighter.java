@@ -36,7 +36,7 @@ public interface SyntaxHighlighter {
    * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
    */
-  SyntaxHighlighterProvider PROVIDER =
+  @Deprecated SyntaxHighlighterProvider PROVIDER =
     new FileTypeExtensionFactory<>(SyntaxHighlighterProvider.class, EP_NAME).get();
 
   /**

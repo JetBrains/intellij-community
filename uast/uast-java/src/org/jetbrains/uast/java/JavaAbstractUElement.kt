@@ -18,9 +18,7 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import org.jetbrains.uast.*
-import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
-import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 
 abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, JvmDeclarationUElement {
@@ -68,24 +66,43 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
-    is JavaUCodeBlockExpression -> {
+    is UBlockExpression -> {
       val codeBlockParent = uParent.uastParent
-      if (codeBlockParent is JavaUExpressionList && codeBlockParent.kind == JavaSpecialExpressionKinds.SWITCH) {
-        if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatement }) {
-          return codeBlockParent
+      when (codeBlockParent) {
+
+        is JavaUBlockExpression -> {
+          val sourcePsi = codeBlockParent.sourcePsi
+          if (sourcePsi is PsiBlockStatement && sourcePsi.parent is PsiSwitchLabeledRuleStatement)
+            (codeBlockParent.uastParent as? JavaUSwitchEntry)?.let { return it.body }
         }
-        val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return uParent
-        val psiElement = psi ?: return uParent
-        return findUSwitchClauseBody(uSwitchExpression, psiElement) ?: return codeBlockParent
-      }
-      if (codeBlockParent is JavaUSwitchExpression) {
-        return unwrapSwitch(codeBlockParent)
+
+        is JavaUSwitchEntryList -> {
+          if (branchHasElement(psi, codeBlockParent.psi) { it is PsiSwitchLabelStatementBase }) {
+            return codeBlockParent
+          }
+          val psiElement = psi ?: return uParent
+          return codeBlockParent.findUSwitchEntryForBodyStatementMember(psiElement)?.body ?: return codeBlockParent
+        }
+
+        is JavaUSwitchExpression -> return unwrapSwitch(codeBlockParent)
       }
       return uParent
     }
 
+    is JavaUSwitchEntry -> {
+      val parentSourcePsi = uParent.sourcePsi
+      if (parentSourcePsi is PsiSwitchLabeledRuleStatement && parentSourcePsi.body?.children?.contains(psi) == true) {
+        val psi = psi
+        return if (psi is PsiExpression && uParent.body.expressions.size == 1)
+          DummyUBreakExpression(psi, uParent.body)
+        else uParent.body
+      }
+      else
+        return uParent
+    }
+
     is USwitchExpression -> {
-      val parentPsi = uParent.psi as PsiSwitchStatement
+      val parentPsi = uParent.psi as PsiSwitchBlock
       return if (this === uParent.body || branchHasElement(psi, parentPsi) { it === parentPsi.expression })
         uParent
       else

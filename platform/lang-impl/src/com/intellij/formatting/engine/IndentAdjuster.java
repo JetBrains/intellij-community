@@ -105,11 +105,6 @@ public class IndentAdjuster {
     }
   }
 
-  @Deprecated
-  public IndentInfo adjustLineIndent(@SuppressWarnings("unused") LeafBlockWrapper currentBlock, FormatProcessor.ChildAttributesInfo info) {
-    return adjustLineIndent(info);
-  }
-
   public IndentInfo adjustLineIndent(FormatProcessor.ChildAttributesInfo info) {
     AbstractBlockWrapper parent = info.parent;
     ChildAttributes childAttributes = info.attributes;

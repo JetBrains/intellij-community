@@ -27,10 +27,10 @@ import java.util.Set;
 */
 class AddToCompositeCollectionInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myMainDescription;
-  private final Set<CollectionChildDescriptionImpl> myQnames;
+  private final Set<? extends CollectionChildDescriptionImpl> myQnames;
   private final Type myType;
 
-  public AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<CollectionChildDescriptionImpl> qnames, final Type type) {
+  AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<? extends CollectionChildDescriptionImpl> qnames, final Type type) {
     myMainDescription = tagName;
     myQnames = qnames;
     myType = type;

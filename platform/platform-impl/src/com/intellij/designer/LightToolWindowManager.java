@@ -230,7 +230,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   private final Consumer<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);
 
-  private void runUpdateContent(Consumer<DesignerEditorPanelFacade> action) {
+  private void runUpdateContent(Consumer<? super DesignerEditorPanelFacade> action) {
     for (FileEditor editor : myFileEditorManager.getAllEditors()) {
       DesignerEditorPanelFacade designer = getDesigner(editor);
       if (designer != null) {

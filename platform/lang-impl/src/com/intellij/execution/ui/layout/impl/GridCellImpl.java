@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.MutualMap;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
@@ -56,12 +57,10 @@ public class GridCellImpl implements GridCell {
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
+    myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new JBEditorTabs(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container) {
       {
-        //noinspection UseJBColor
-        myDefaultPainter.setDefaultTabColor(new Color(0xC6CFDF));
-        //noinspection UseJBColor
-        myDarkPainter.setDefaultTabColor(new Color(0x424D5F));
+        myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.selectedBackground", new JBColor(0xC6CFDF, 0x424D5F)));
       }
 
       @Override
@@ -114,7 +113,7 @@ public class GridCellImpl implements GridCell {
     }.setDataProvider(new DataProvider() {
       @Override
       @Nullable
-      public Object getData(@NonNls final String dataId) {
+      public Object getData(@NotNull @NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
           TabInfo target = myTabs.getTargetInfo();
           if (target != null) {
@@ -303,7 +302,7 @@ public class GridCellImpl implements GridCell {
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         return new Content[]{myContent};
       }

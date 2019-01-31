@@ -29,9 +29,9 @@ import java.util.zip.ZipFile;
 
 /**
  * @author Dmitry Avdeev
- * @since 12/07/2011
  */
 public class JarMemoryLoader {
+  /** Special entry to keep the number of reordered classes in jar. */
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
   private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?
@@ -43,7 +43,7 @@ public class JarMemoryLoader {
   }
 
   @Nullable
-  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, Map<Resource.Attribute, String> attributes) throws IOException {
+  static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) return null;
 
@@ -56,7 +56,7 @@ public class JarMemoryLoader {
     JarMemoryLoader loader = new JarMemoryLoader();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
-      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributes);
+      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributesProvider != null ? attributesProvider.getAttributes() : null);
       loader.myResources.put(entry.getName(), resource);
     }
     return loader;

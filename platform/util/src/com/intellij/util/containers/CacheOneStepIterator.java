@@ -19,10 +19,10 @@ import java.util.Iterator;
 
 // only for those who cannot return null
 public class CacheOneStepIterator<T> implements Iterator<T> {
-  private final Iterator<T> myProbableIterator;
+  private final Iterator<? extends T> myProbableIterator;
   private T myPreCalculated;
 
-  public CacheOneStepIterator(final Iterator<T> probableIterator) {
+  public CacheOneStepIterator(final Iterator<? extends T> probableIterator) {
     myProbableIterator = probableIterator;
     step();
   }

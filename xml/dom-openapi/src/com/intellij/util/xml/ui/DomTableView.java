@@ -45,16 +45,11 @@ public class DomTableView extends AbstractTableView<DomElement> {
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     super.calcData(key, sink);
     for (final TypeSafeDataProvider customDataProvider : myCustomDataProviders) {
       customDataProvider.calcData(key, sink);
     }
-  }
-
-  @Deprecated
-  protected final void installPopup(final DefaultActionGroup group) {
-    installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, group);
   }
 
   @Override

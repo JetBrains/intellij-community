@@ -24,12 +24,12 @@ public class RunAnythingGeneralGroup extends RunAnythingGroupBase {
 
   @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext) {
+  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     Collection<RunAnythingItem> collector = ContainerUtil.newArrayList();
 
     for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
       if (GENERAL_GROUP_TITLE.equals(provider.getCompletionGroupTitle())) {
-        Collection values = provider.getValues(dataContext);
+        Collection values = provider.getValues(dataContext, pattern);
         for (Object value : values) {
           //noinspection unchecked
           collector.add(provider.getMainListItem(dataContext, value));

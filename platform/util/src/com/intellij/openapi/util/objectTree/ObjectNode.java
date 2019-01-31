@@ -53,7 +53,7 @@ final class ObjectNode<T> {
     myParent = parentNode;
     myObject = object;
 
-    myTrace = Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
+    myTrace = parentNode == null && Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
     myOwnModification = modification;
   }
 
@@ -103,10 +103,11 @@ final class ObjectNode<T> {
     }
   }
 
-  void execute(@NotNull final ObjectTreeAction<T> action) {
+  void execute(@NotNull final ObjectTreeAction<T> action, @NotNull final List<Throwable> exceptions) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
+        if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
         try {
           action.beforeTreeExecution(myObject);
         }
@@ -117,21 +118,20 @@ final class ObjectNode<T> {
         ObjectNode<T>[] childrenArray;
         synchronized (myTree.treeLock) {
           childrenArray = getChildrenArray();
+          myChildren = null;
         }
-
-        List<Throwable> exceptions = new SmartList<Throwable>();
 
         for (int i = childrenArray.length - 1; i >= 0; i--) {
           try {
-            childrenArray[i].execute(action);
+            ObjectNode<T> childNode = childrenArray[i];
+            childNode.execute(action, exceptions);
+            synchronized (myTree.treeLock) {
+              childNode.myParent = null;
+            }
           }
           catch (Throwable e) {
             exceptions.add(e);
           }
-        }
-
-        synchronized (myTree.treeLock) {
-          myChildren = null;
         }
 
         try {
@@ -141,15 +141,13 @@ final class ObjectNode<T> {
         catch (Throwable e) {
           exceptions.add(e);
         }
-
-        remove();
+        removeFromObjectTree();
 
         handleExceptions(exceptions);
       }
 
       @Override
       public void beforeTreeExecution(@NotNull ObjectNode<T> parent) {
-
       }
     });
   }
@@ -166,17 +164,15 @@ final class ObjectNode<T> {
       if (pce != null) {
         throw pce;
       }
+      exceptions.clear();
     }
   }
 
-  private void remove() {
+  void removeFromObjectTree() {
     synchronized (myTree.treeLock) {
       myTree.putNode(myObject, null);
       if (myParent == null) {
         myTree.removeRootObject(myObject);
-      }
-      else {
-        myParent.removeChild(this);
       }
     }
   }
@@ -206,10 +202,6 @@ final class ObjectNode<T> {
         }
       }
     }
-  }
-
-  Throwable getAllocation() {
-    return myTrace;
   }
 
   long getOwnModification() {

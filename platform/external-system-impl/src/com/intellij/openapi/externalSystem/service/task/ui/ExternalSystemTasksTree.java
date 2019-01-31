@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/13/13 4:18 PM
  */
 public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTaskExecutionInfo> {
 

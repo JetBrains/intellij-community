@@ -8,7 +8,7 @@ import javax.swing.*;
 abstract class AbstractTabComponent extends AdditionalTabComponent {
   private final String myTabTitle;
 
-  public AbstractTabComponent(String tabTitle) {
+  AbstractTabComponent(String tabTitle) {
     myTabTitle = tabTitle;
   }
 

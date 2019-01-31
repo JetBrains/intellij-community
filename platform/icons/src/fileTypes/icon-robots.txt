@@ -1,0 +1,3 @@
+deprecated: facelets.svg; to be removed in IDEA 2020 - use JsfIcons.Facelets
+deprecated: facesConfig.svg; to be removed in IDEA 2020 - use JsfIcons.FacesConfig
+deprecated: typeScript.svg; to be removed in IDEA 2020 - use JavaScriptPsiIcons.FileTypes.TypeScriptFile

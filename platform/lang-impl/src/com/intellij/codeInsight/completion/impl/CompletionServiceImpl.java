@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -36,11 +36,13 @@ public final class CompletionServiceImpl extends CompletionService {
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static Throwable ourPhaseTrace;
 
+  @Nullable private CompletionProcess myApiCompletionProcess;
+
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        CompletionProgressIndicator indicator = getCurrentCompletion();
+      public void projectClosing(@NotNull Project project) {
+        CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
@@ -51,6 +53,17 @@ public final class CompletionServiceImpl extends CompletionService {
     });
   }
 
+  @Override
+  public void performCompletion(final CompletionParameters parameters, final Consumer<? super CompletionResult> consumer) {
+    myApiCompletionProcess = parameters.getProcess();
+    try {
+      super.performCompletion(parameters, consumer);
+    }
+    finally {
+      myApiCompletionProcess = null;
+    }
+  }
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl) CompletionService.getCompletionService();
@@ -58,14 +71,14 @@ public final class CompletionServiceImpl extends CompletionService {
 
   @Override
   public String getAdvertisementText() {
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     return completion == null ? null : ContainerUtil.getFirstItem(completion.getLookup().getAdvertisements());
   }
 
   @Override
   public void setAdvertisementText(@Nullable final String text) {
     if (text == null) return;
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     if (completion != null) {
       completion.addAdvertisement(text, null);
     }
@@ -100,9 +113,14 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  public CompletionProgressIndicator getCurrentCompletion() {
+  public CompletionProcess getCurrentCompletion() {
+    CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
+    return indicator != null ? indicator : myApiCompletionProcess;
+  }
+
+  public static CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
     if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
-      CompletionPhase.Synchronous.class)) {
+                CompletionPhase.Synchronous.class)) {
       return ourPhase.indicator;
     }
     return null;
@@ -232,11 +250,22 @@ public final class CompletionServiceImpl extends CompletionService {
     if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
       LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion: oldPhase=" + oldPhase);
     }
+    boolean wasCompletionRunning = isRunningPhase(oldPhase);
+    boolean isCompletionRunning = isRunningPhase(phase);
+    if (isCompletionRunning != wasCompletionRunning) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionPhaseListener.TOPIC).completionPhaseChanged(isCompletionRunning);
+    }
 
     Disposer.dispose(oldPhase);
     ourPhase = phase;
     ourPhaseTrace = new Throwable();
   }
+
+  private static boolean isRunningPhase(@NotNull CompletionPhase phase) {
+    return phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
+           !(phase instanceof CompletionPhase.ItemsCalculated);
+  }
+
 
   public static CompletionPhase getCompletionPhase() {
     return ourPhase;
@@ -285,21 +314,21 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 
-  @SuppressWarnings("unused")
   public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
-    return new CompletionLookupArrangerImpl(parameters);
+    return new CompletionLookupArrangerImpl(parameters).withAllItemsVisible();
   }
 
-  @SuppressWarnings("unused")
   public void handleCompletionItemSelected(CompletionParameters parameters,
                                            LookupElement lookupElement,
                                            PrefixMatcher prefixMatcher,
+                                           String additionalPrefix,
                                            char completionChar) {
 
+    String itemPattern = prefixMatcher.getPrefix() + additionalPrefix;
     LookupImpl.insertLookupString(parameters.getPosition().getProject(),
                                   parameters.getEditor(),
                                   lookupElement,
-                                  prefixMatcher, prefixMatcher.getPrefix(), prefixMatcher.getPrefix().length());
+                                  prefixMatcher, itemPattern, itemPattern.length());
     CodeCompletionHandlerBase handler =
       CodeCompletionHandlerBase.createHandler(parameters.getCompletionType(), true, parameters.isAutoPopup(), true);
     handler.handleCompletionElementSelected(parameters, lookupElement, completionChar);

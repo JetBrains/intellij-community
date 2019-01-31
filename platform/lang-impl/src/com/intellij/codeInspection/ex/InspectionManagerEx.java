@@ -42,7 +42,6 @@ import java.util.Set;
 public class InspectionManagerEx extends InspectionManagerBase {
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<>();
-  private GlobalInspectionContextImpl myGlobalInspectionContext;
 
   public InspectionManagerEx(final Project project) {
     super(project);
@@ -71,12 +70,12 @@ public class InspectionManagerEx extends InspectionManagerBase {
             private static final String PREFIX = "of ";
 
             @Override
-            public void contentAdded(ContentManagerEvent event) {
+            public void contentAdded(@NotNull ContentManagerEvent event) {
               handleContentSizeChanged();
             }
 
             @Override
-            public void contentRemoved(ContentManagerEvent event) {
+            public void contentRemoved(@NotNull ContentManagerEvent event) {
               handleContentSizeChanged();
             }
 
@@ -117,18 +116,13 @@ public class InspectionManagerEx extends InspectionManagerBase {
   @Override
   @NotNull
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
-    final GlobalInspectionContextImpl inspectionContext;
-    if (reuse) {
-      if (myGlobalInspectionContext == null) {
-        myGlobalInspectionContext = inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
-      }
-      else {
-        inspectionContext = myGlobalInspectionContext;
-      }
-    }
-    else {
-      inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
-    }
+    return createNewGlobalContext();
+  }
+
+  @NotNull
+  @Override
+  public GlobalInspectionContextImpl createNewGlobalContext() {
+    final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
     myRunningContexts.add(inspectionContext);
     return inspectionContext;
   }

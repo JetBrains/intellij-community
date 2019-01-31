@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.BeforeRunTaskProvider
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator
@@ -12,8 +14,10 @@ import com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTas
 import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.ObjectUtils.consumeIfCast
+import com.intellij.util.ThreeState
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
@@ -30,7 +34,16 @@ class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
       consumeIfCast(cfg["projectPath"], String::class.java) { externalProjectPath = it }
     }
     task.isEnabled = true
-    beforeRunTasks.add(task)
+
+    val taskExists = beforeRunTasks.filterIsInstance<ExternalSystemBeforeRunTask>()
+      .any {
+        it.taskExecutionSettings.taskNames == task.taskExecutionSettings.taskNames &&
+        it.taskExecutionSettings.externalProjectPath == task.taskExecutionSettings.externalProjectPath
+      }
+
+    if (!taskExists) {
+      beforeRunTasks.add(task)
+    }
     return beforeRunTasks
   }
 
@@ -42,7 +55,7 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
   override fun apply(project: Project,
                      modelsProvider: IdeModifiableModelsProvider,
                      configuration: ConfigurationData) {
-    val obj = configuration.find("taskTriggersConfig") as? Map<*, *> ?: return
+    val obj = configuration.find("taskTriggers") as? Map<*, *> ?: return
 
     val taskTriggerConfig = obj as Map<String, Collection<*>>
     val activator = ExternalProjectsManagerImpl.getInstance(project).taskActivator
@@ -52,10 +65,13 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
         val projectPath = taskInfo["projectPath"]
         val taskPath = taskInfo["taskPath"]
         if (projectPath is String && taskPath is String) {
-          activator.addTask(ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
-                                                                            phase,
-                                                                            projectPath,
-                                                                            taskPath))
+
+          val newEntry = ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
+                                                                         phase,
+                                                                         projectPath,
+                                                                         taskPath)
+          activator.removeTask(newEntry)
+          activator.addTask(newEntry)
         }
       }
     }
@@ -72,21 +88,28 @@ class GradleTaskTriggersImporter : ConfigurationHandler {
 }
 
 class ActionDelegateConfigImporter: ConfigurationHandler {
-  override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val config = configuration.find("actionDelegationConfig") as? Map<String, *> ?: return
-    val settings = GradleSystemRunningSettings.getInstance()
+  override fun apply(project: Project,
+                     projectData: ProjectData?,
+                     modelsProvider: IdeModifiableModelsProvider,
+                     configuration: ConfigurationData) {
+    val config = configuration.find("delegateActions") as? Map<String, *> ?: return
 
-    consumeIfCast(config["delegateBuildRunToGradle"], java.lang.Boolean::class.java) { settings.isUseGradleAwareMake = it.booleanValue() }
+    val projectPath = projectData?.linkedExternalProjectPath ?: return
+    val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath) ?: return
+
+    consumeIfCast(config["delegateBuildRunToGradle"], java.lang.Boolean::class.java) {
+      projectSettings.delegatedBuild = ThreeState.fromBoolean(it.booleanValue())
+    }
     consumeIfCast(config["testRunner"], String::class.java) {
-      settings.preferredTestRunner = TEST_RUNNER_MAP[it] ?: return@consumeIfCast
+      projectSettings.testRunner = TEST_RUNNER_MAP[it] ?: return@consumeIfCast
     }
   }
 
   companion object {
     private val TEST_RUNNER_MAP = mapOf(
-      "PLATFORM" to GradleSystemRunningSettings.PreferredTestRunner.PLATFORM_TEST_RUNNER,
-      "GRADLE" to GradleSystemRunningSettings.PreferredTestRunner.GRADLE_TEST_RUNNER,
-      "CHOOSE_PER_TEST" to GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST
+      "PLATFORM" to PLATFORM,
+      "GRADLE" to GRADLE,
+      "CHOOSE_PER_TEST" to CHOOSE_PER_TEST
     )
   }
 }

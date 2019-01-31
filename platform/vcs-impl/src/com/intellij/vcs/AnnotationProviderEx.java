@@ -19,6 +19,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,4 +33,16 @@ public interface AnnotationProviderEx extends AnnotationProvider {
    */
   @NotNull
   FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException;
+
+  default boolean isAnnotationValid(@NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
+    return true;
+  }
+
+  @Override
+  default boolean isAnnotationValid(@NotNull VcsFileRevision rev) {
+    if (rev instanceof VcsFileRevisionEx) {
+      return isAnnotationValid(((VcsFileRevisionEx)rev).getPath(), rev.getRevisionNumber());
+    }
+    return true;
+  }
 }

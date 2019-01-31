@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class ViewToolbarAction extends ToggleAction implements DumbAware {
   public ViewToolbarAction() {
@@ -27,12 +28,12 @@ public class ViewToolbarAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return UISettings.getInstance().getShowMainToolbar();
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean state) {
+  public void setSelected(@NotNull AnActionEvent event, boolean state) {
     UISettings uiSettings = UISettings.getInstance();
     uiSettings.setShowMainToolbar(state);
     uiSettings.fireUISettingsChanged();

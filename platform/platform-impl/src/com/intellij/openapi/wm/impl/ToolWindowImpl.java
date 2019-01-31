@@ -5,6 +5,7 @@ import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,19 +37,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowImpl implements ToolWindowEx {
+public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
@@ -66,18 +63,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myHideOnEmptyContent;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
-
-  private static final Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
-    new KeyStroke[]{
-      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)
-    }
-  ));
-
-  private static final Set<KeyStroke> BACKWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
-    new KeyStroke[]{
-      KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)
-    }
-  ));
 
   private final BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
@@ -97,6 +82,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
     myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
+    Disposer.register(this, myContentManager);
 
     if (component != null) {
       final Content content = contentFactory.createContent(component, "", false);
@@ -106,7 +92,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     myComponent = myContentManager.getComponent();
 
-    installToolwindowFocusPolicy();
+    InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
 
     UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable.Adapter() {
       @Override
@@ -115,50 +101,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
     });
     Disposer.register(myContentManager, notifyConnector);
-  }
-
-  /**
-   * Installs a focus traversal policy for the tool window.
-   * If the policy cannot handle a keystroke, it delegates the handling to
-   * the nearest ancestors focus traversal policy. For instance,
-   * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
-   * to a ThreeComponentSplitter instance.
-   */
-  private void installToolwindowFocusPolicy() {
-
-    myComponent.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, FORWARD_TRAVERSAL_KEYSTROKES);
-    myComponent.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, BACKWARD_TRAVERSAL_KEYSTROKES);
-
-    FocusTraversalPolicy layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicy();
-
-    myComponent.setFocusCycleRoot(true);
-    myComponent.setFocusTraversalPolicyProvider(true);
-    myComponent.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      @Override
-      public Component getComponentAfter(Container container, Component component) {
-        return layoutFocusTraversalPolicy.getComponentAfter(container, component);
-      }
-
-      @Override
-      public Component getComponentBefore(Container container, Component component) {
-        return layoutFocusTraversalPolicy.getComponentBefore(container, component);
-      }
-
-      @Override
-      public Component getFirstComponent(Container container) {
-        return layoutFocusTraversalPolicy.getFirstComponent(container);
-      }
-
-      @Override
-      public Component getLastComponent(Container container) {
-        return layoutFocusTraversalPolicy.getLastComponent(container);
-      }
-
-      @Override
-      public Component getDefaultComponent(Container container) {
-        return layoutFocusTraversalPolicy.getDefaultComponent(container);
-      }
-    });
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
@@ -370,6 +312,15 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
+  public void setTabActions(AnAction... actions) {
+    getDecorator().setTabActions(actions);
+  }
+
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myContentUI.setTabDoubleClickActions(actions);
+  }
+
+  @Override
   public final void setAvailable(final boolean available, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Boolean oldAvailable = myAvailable ? Boolean.TRUE : Boolean.FALSE;
@@ -404,6 +355,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
   public ContentManager getContentManager() {
     ensureContentInitialized();
     return myContentManager;
+  }
+
+  // to avoid ensureContentInitialized call - myContentManager can report canCloseContents without full initialization
+  public boolean canCloseContents() {
+    return myContentManager.canCloseContents();
   }
 
   public ToolWindowContentUi getContentUI() {
@@ -442,8 +398,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
       if (oldIcon != icon && icon != null && !(icon instanceof LayeredIcon) &&
-          Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
-          Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1)
+          (Math.abs(icon.getIconHeight() - JBUI.scale(13f)) >= 1 ||
+           Math.abs(icon.getIconWidth() - JBUI.scale(13f)) >= 1))
       {
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
       }
@@ -548,6 +504,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public boolean isDisposed() {
     return myContentManager.isDisposed();
+  }
+
+  @Override
+  public void dispose() {
+    myToolWindowManager.doUnregisterToolWindow(myId);
   }
 
   boolean isPlaceholderMode() {

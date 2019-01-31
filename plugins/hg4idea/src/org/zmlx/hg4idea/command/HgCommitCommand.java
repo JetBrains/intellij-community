@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -27,7 +26,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
+import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgCommitCommand extends HgCommitTypeCommand {
 
@@ -55,6 +54,7 @@ public class HgCommitCommand extends HgCommitTypeCommand {
     this(project, repo, message, false);
   }
 
+  @Override
   protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws VcsException {
     if (chunkedCommits.isEmpty()) {
       commitChunkFiles(ContainerUtil.emptyList(), myAmend, myCloseBranch);

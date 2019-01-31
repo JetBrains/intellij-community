@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.Pair.pair;
-
 class CanonicalPathMap {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
@@ -42,12 +26,12 @@ class CanonicalPathMap {
   private final List<String> myCanonicalFlatWatchRoots;
   private final MultiMap<String, String> myPathMapping;
 
-  public CanonicalPathMap() {
+  CanonicalPathMap() {
     myRecursiveWatchRoots = myCanonicalRecursiveWatchRoots = myFlatWatchRoots = myCanonicalFlatWatchRoots = Collections.emptyList();
     myPathMapping = MultiMap.empty();
   }
 
-  public CanonicalPathMap(@NotNull List<String> recursive, @NotNull List<String> flat) {
+  CanonicalPathMap(@NotNull List<String> recursive, @NotNull List<String> flat) {
     myRecursiveWatchRoots = ContainerUtil.newArrayList(recursive);
     myFlatWatchRoots = ContainerUtil.newArrayList(flat);
 
@@ -60,7 +44,8 @@ class CanonicalPathMap {
     addMapping(mapping);
   }
 
-  private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
+  @NotNull
+  private static Map<String, String> resolvePaths(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots) {
     Map<String, String> result = ContainerUtil.newConcurrentMap();
     Stream.concat(recursiveRoots.stream(), flatRoots.stream())
       .parallel()
@@ -68,28 +53,31 @@ class CanonicalPathMap {
     return result;
   }
 
-  private static List<String> mapPaths(Map<String, String> resolvedPaths, List<String> paths, Collection<Pair<String, String>> mapping) {
+  @NotNull
+  private static List<String> mapPaths(@NotNull Map<String, String> resolvedPaths, @NotNull List<String> paths, @NotNull Collection<? super Pair<String, String>> mapping) {
     List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
       String canonicalPath = resolvedPaths.get(path);
       if (canonicalPath != null && !path.equals(canonicalPath)) {
         canonicalPaths.set(i, canonicalPath);
-        mapping.add(pair(canonicalPath, path));
+        mapping.add(Pair.create(canonicalPath, path));
       }
     }
     return canonicalPaths;
   }
 
-  public List<String> getCanonicalRecursiveWatchRoots() {
+  @NotNull
+  List<String> getCanonicalRecursiveWatchRoots() {
     return myCanonicalRecursiveWatchRoots;
   }
 
-  public List<String> getCanonicalFlatWatchRoots() {
+  @NotNull
+  List<String> getCanonicalFlatWatchRoots() {
     return myCanonicalFlatWatchRoots;
   }
 
-  public void addMapping(@NotNull Collection<Pair<String, String>> mapping) {
+  public void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (Pair<String, String> pair : mapping) {
       // See if we are adding a mapping that itself should be mapped to a different path
       // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
@@ -120,7 +108,7 @@ class CanonicalPathMap {
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
   @NotNull
-  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact) {
+  Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact) {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
@@ -134,17 +122,13 @@ class CanonicalPathMap {
           continue ext;
         }
         if (isExact) {
-          String parentPath = new File(path).getParent();
-          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
+          if (isApproxParent(path, root)) {
             changedPaths.add(path);
             continue ext;
           }
         }
-        else {
-          String rootParent = new File(root).getParent();
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        else if (isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
 
@@ -153,11 +137,8 @@ class CanonicalPathMap {
           changedPaths.add(path);
           continue ext;
         }
-        if (!isExact) {
-          String rootParent = new File(root).getParent();
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        if (!isExact && isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
     }
@@ -169,7 +150,17 @@ class CanonicalPathMap {
     return changedPaths;
   }
 
-  private Collection<String> applyMapping(String reportedPath) {
+  // doesn't care about drive or UNC
+  private static boolean isApproxParent(@NotNull String path, @NotNull String parent) {
+    return path.lastIndexOf(File.separatorChar) == parent.length() && FileUtil.startsWith(path, parent);
+  }
+
+  @NotNull
+  private Collection<String> applyMapping(@NotNull String reportedPath) {
+    if (myPathMapping.isEmpty()) {
+      return Collections.singletonList(reportedPath);
+    }
+
     List<String> results = ContainerUtil.newSmartList(reportedPath);
     List<String> pathComponents = FileUtil.splitPath(reportedPath);
 

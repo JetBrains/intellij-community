@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -36,8 +36,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     return new JavaElementVisitor() {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
-        PsiElement parent = assignment.getParent();
-        if (!(parent instanceof PsiExpressionStatement)) return;
+        if (!assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return;
+        if (assignment.getParent() instanceof PsiExpressionList || !ExpressionUtils.isVoidContext(assignment)) return;
         PsiField field = getAssignedField(assignment);
         if (field == null || field.hasInitializer()) return;
         PsiClass psiClass = field.getContainingClass();
@@ -74,9 +74,8 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     PsiCodeBlock codeBlock = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
     if (codeBlock == null) return false;
     if (codeBlock.getParent() != ctrOrInitializer) return false;
-    if (!ReferencesSearch.search(field, new LocalSearchScope(ctrOrInitializer)).forEach(ref -> {
-      return PsiTreeUtil.isAncestor(assignment, ref.getElement(), true);
-    })) {
+    if (ReferencesSearch.search(field, new LocalSearchScope(ctrOrInitializer))
+      .anyMatch(ref -> !PsiTreeUtil.isAncestor(assignment, ref.getElement(), true))) {
       return false;
     }
     // If it's not the first statement in the initializer, allow some more (likely unrelated) assignments only
@@ -170,9 +169,10 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         if (assignmentExpression == null) return;
         PsiExpression rValue = assignmentExpression.getRExpression();
         PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
-        if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
+        if ((member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) &&
+            ExpressionUtils.isVoidContext(assignmentExpression) && assignmentExpression.getOperationTokenType().equals(JavaTokenType.EQ)) {
           // ignore usages other than initializing
-          if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
+          if (rValue == null || !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
           initializingAssignments.add(assignmentExpression);
@@ -222,7 +222,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
       field.setInitializer(ct.markUnchanged(initializer));
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comments != null) {
         PsiCodeBlock block = factory.createCodeBlockFromText("{" + comments + "}", initializer);
         for(PsiElement child : block.getChildren()) {
@@ -235,16 +235,20 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiModifierListOwner owner = enclosingMethodOrClassInitializer(assignment, field);
 
       for (PsiAssignmentExpression assignmentExpression : assignments) {
-        PsiElement statement = assignmentExpression.getParent();
-        PsiElement parent = statement.getParent();
-        if (parent instanceof PsiIfStatement ||
-            parent instanceof PsiWhileStatement ||
-            parent instanceof PsiForStatement ||
-            parent instanceof PsiForeachStatement) {
-          ct.replace(statement, ";");
-        }
-        else {
-          ct.delete(statement);
+        PsiElement parent = assignmentExpression.getParent();
+        if (parent instanceof PsiExpressionStatement) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiIfStatement || grandParent instanceof PsiLoopStatement) {
+            ct.replace(parent, ";");
+          }
+          else if (grandParent instanceof PsiSwitchLabeledRuleStatement) {
+            ct.replace(parent, "{}");
+          }
+          else {
+            ct.delete(parent);
+          }
+        } else if (parent instanceof PsiLambdaExpression) {
+          ct.replace(assignmentExpression, factory.createCodeBlock());
         }
         ct.insertCommentsBefore(field);
         // if we replace/delete several assignments we want to restore comments at each place separately

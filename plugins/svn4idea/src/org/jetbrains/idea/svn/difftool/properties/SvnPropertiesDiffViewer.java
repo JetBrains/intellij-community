@@ -189,7 +189,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   private class MyDividerPainter implements DiffSplitter.Painter, DiffDividerDrawUtil.DividerPaintable {
     @NotNull private final JBLabel myLabel;
 
-    public MyDividerPainter() {
+    MyDividerPainter() {
       myLabel = new JBLabel();
       myLabel.setFont(UIUtil.getLabelFont());
       myLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -309,7 +309,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "topicId758145";
     }
@@ -420,7 +420,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @NotNull DocumentContent myContent2;
     private final boolean myEmbedded;
 
-    public WrapperRequest(@NotNull SvnPropertiesDiffRequest request,
+    WrapperRequest(@NotNull SvnPropertiesDiffRequest request,
                           @NotNull Document document1,
                           @NotNull Document document2,
                           boolean embedded) {
@@ -471,7 +471,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @Nullable private final String myBefore;
     @Nullable private final String myAfter;
 
-    public PropertyRecord(@NotNull String name,
+    PropertyRecord(@NotNull String name,
                           @Nullable String before,
                           @Nullable String after) {
       assert before != null || after != null;
@@ -506,7 +506,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     @Nullable private List<? extends LineFragment> myFragments;
 
-    public DiffChange(@NotNull PropertyRecord record, int startLine1, int endLine1, int startLine2, int endLine2) {
+    DiffChange(@NotNull PropertyRecord record, int startLine1, int endLine1, int startLine2, int endLine2) {
       myRecord = record;
       myStartLine1 = startLine1;
       myEndLine1 = endLine1;

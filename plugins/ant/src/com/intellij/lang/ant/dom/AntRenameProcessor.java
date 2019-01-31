@@ -20,6 +20,7 @@ import java.util.Map;
  */
 public class AntRenameProcessor extends RenamePsiElementProcessor{
 
+  @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
     final AntDomElement antElement = convertToAntDomElement(element);
     String propName = null;
@@ -44,6 +45,7 @@ public class AntRenameProcessor extends RenamePsiElementProcessor{
     }
   }
 
+  @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     final AntDomElement antElement = convertToAntDomElement(element);
     if (antElement instanceof AntDomProperty || antElement instanceof AntDomAntCallParam) {
@@ -51,8 +53,8 @@ public class AntRenameProcessor extends RenamePsiElementProcessor{
     }
     return false;
   }
-  
-  @Nullable 
+
+  @Nullable
   private static AntDomElement convertToAntDomElement(PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();

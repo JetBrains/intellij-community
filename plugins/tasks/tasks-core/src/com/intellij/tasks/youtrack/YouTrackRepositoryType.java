@@ -17,11 +17,13 @@ import java.util.EnumSet;
  */
 public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepository> {
 
+  @Override
   @NotNull
   public String getName() {
     return "YouTrack";
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return TasksCoreIcons.Youtrack;
@@ -33,6 +35,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
     return "<html>Not YouTrack customer yet? Get <a href='https://www.jetbrains.com/youtrack/download/get_youtrack.html?idea_integration'>YouTrack</a></html>";
   }
 
+  @Override
   @NotNull
   public YouTrackRepository createRepository() {
     return new YouTrackRepository(this);

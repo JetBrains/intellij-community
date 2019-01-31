@@ -57,7 +57,7 @@ public class ChangesComparator {
   private static class VirtualFileComparator implements Comparator<VirtualFile> {
     private final boolean myFlattened;
 
-    public VirtualFileComparator(boolean flattened) {
+    VirtualFileComparator(boolean flattened) {
       myFlattened = flattened;
     }
 
@@ -70,7 +70,7 @@ public class ChangesComparator {
   private static class ChangeComparator implements Comparator<Change> {
     private final boolean myFlattened;
 
-    public ChangeComparator(boolean flattened) {
+    ChangeComparator(boolean flattened) {
       myFlattened = flattened;
     }
 

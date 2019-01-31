@@ -90,6 +90,14 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   Set<Language> getLanguages();
 
   /**
+   * Check if given language is supported.
+   * Implementations may provide more effective way to check without getting all languages.
+   */
+  default boolean hasLanguage(@NotNull Language language) {
+    return getLanguages().contains(language);
+  }
+
+  /**
    * @param target target language
    * @return PsiFile for given language, or {@code null} if the language not present
    */

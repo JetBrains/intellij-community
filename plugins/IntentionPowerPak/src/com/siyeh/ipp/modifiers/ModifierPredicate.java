@@ -28,7 +28,7 @@ class ModifierPredicate implements PsiElementPredicate {
   @PsiModifier.ModifierConstant
   private final String myModifier;
 
-  public ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
+  ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
     myModifier = modifier;
   }
 

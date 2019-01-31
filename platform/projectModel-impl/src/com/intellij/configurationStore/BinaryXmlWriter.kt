@@ -44,7 +44,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   private fun writeElement(element: Element) {
     writeString(element.name)
 
-    writeAttributes(element.attributes)
+    writeAttributes(if (element.hasAttributes()) element.attributes else emptyList())
 
     val content = element.content
     for (item in content) {

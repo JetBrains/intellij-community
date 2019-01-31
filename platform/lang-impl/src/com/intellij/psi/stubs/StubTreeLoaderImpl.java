@@ -80,7 +80,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
     }
     catch (IOException e) {
-      LOG.info(e); // content can be not cached yet, and the file can be deleted on disk already, without refresh
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      } else {
+        // content can be not cached yet, and the file can be deleted on disk already, without refresh
+        LOG.info("Can't load file content for stub building: " + e.getMessage());
+      }
     }
 
     return null;
@@ -93,7 +98,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return null;
     }
 
-    final int id = Math.abs(FileBasedIndex.getFileId(vFile));
+    final int id = SingleEntryFileBasedIndexExtension.getFileKey(vFile);
     if (id <= 0) {
       return null;
     }
@@ -176,14 +181,18 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
-    if (ourStubReloadingProhibited) return;
+    if (ourStubReloadingProhibited || !(tree instanceof StubTree)) return;
 
-    for (Stub each : tree.getPlainListFromAllRoots()) {
-      if (each instanceof StubBase) {
-        PsiElement cachedPsi = ((StubBase)each).getCachedPsi();
-        if (cachedPsi != null) {
-          ourStubReloadingProhibited = true;
-          throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+    for (PsiFileStub root : ((PsiFileStubImpl<?>)tree.getRoot()).getStubRoots()) {
+      if (root instanceof StubBase) {
+        StubList stubList = ((StubBase)root).myStubList;
+        for (int i = 0; i < stubList.size(); i++) {
+          StubBase<?> each = stubList.getCachedStub(i);
+          PsiElement cachedPsi = each == null ? null : ((StubBase)each).getCachedPsi();
+          if (cachedPsi != null) {
+            ourStubReloadingProhibited = true;
+            throw new AssertionError("Stub deserialization shouldn't create PSI: " + cachedPsi + "; " + each);
+          }
         }
       }
     }
@@ -211,9 +220,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       if (doc != null) {
         FileDocumentManager.getInstance().saveDocument(doc);
       }
+      
+      // avoid deadlock by requesting reindex later. 
+      // processError may be invoked under stub index's read action and requestReindex in EDT starts dumb mode in writeAction (IDEA-197296)
+      FileBasedIndex.getInstance().requestReindex(vFile);
     }, ModalityState.NON_MODAL);
 
-    FileBasedIndex.getInstance().requestReindex(vFile);
     return null;
   }
 

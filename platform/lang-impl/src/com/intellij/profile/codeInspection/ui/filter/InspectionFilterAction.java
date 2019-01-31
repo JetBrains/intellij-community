@@ -53,7 +53,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().putClientProperty(Toggleable.SELECTED_PROPERTY, !myInspectionsFilter.isEmptyFilter());
   }
@@ -109,7 +109,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class ResetFilterAction extends DumbAwareAction {
-    public ResetFilterAction() {
+    ResetFilterAction() {
       super("Reset Filter");
     }
 
@@ -126,34 +126,34 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
-    public ShowOnlyCleanupInspectionsAction() {
+    ShowOnlyCleanupInspectionsAction() {
       super("Show Only Cleanup Inspections");
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.isShowOnlyCleanupInspections();
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       myInspectionsFilter.setShowOnlyCleanupInspections(state);
     }
   }
 
   private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
-    public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
-      super("Show Only \"Available only for Analyze | Inspect Code\"");
+    ShowAvailableOnlyOnAnalyzeInspectionsAction() {
+      super("Show Only Batch-Mode Inspections");
     }
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.isAvailableOnlyForAnalyze();
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       myInspectionsFilter.setAvailableOnlyForAnalyze(state);
     }
   }
@@ -171,12 +171,12 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.containsSeverity(mySeverity);
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       if (state) {
         myInspectionsFilter.addSeverity(mySeverity);
       } else {
@@ -189,19 +189,19 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     private final Boolean myShowEnabledActions;
 
-    public ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
+    ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
       super("Show Only " + (showEnabledActions ? "Enabled" : "Disabled"));
       myShowEnabledActions = showEnabledActions;
     }
 
 
     @Override
-    public boolean isSelected(final AnActionEvent e) {
+    public boolean isSelected(@NotNull final AnActionEvent e) {
       return myInspectionsFilter.getSuitableInspectionsStates() == myShowEnabledActions;
     }
 
     @Override
-    public void setSelected(final AnActionEvent e, final boolean state) {
+    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
       final boolean previousState = isSelected(e);
       myInspectionsFilter.setSuitableInspectionsStates(previousState ? null : myShowEnabledActions);
     }
@@ -210,18 +210,18 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private class LanguageFilterAction extends CheckboxAction implements DumbAware {
     private final Language myLanguage;
 
-    public LanguageFilterAction(final @Nullable Language language) {
+    LanguageFilterAction(final @Nullable Language language) {
       super(language == null ? "Language is not specified" : language.getDisplayName());
       myLanguage = language;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myInspectionsFilter.containsLanguage(myLanguage);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myInspectionsFilter.addLanguage(myLanguage);
       } else {
@@ -242,23 +242,23 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myFilterComponent.setFilter("\"New in " + version + "\"");
     }
   }
 
   private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
-    public ShowOnlyModifiedInspectionsAction() {
+    ShowOnlyModifiedInspectionsAction() {
       super("Show Only Modified Inspections");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myInspectionsFilter.isShowOnlyModifiedInspections();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myInspectionsFilter.setShowOnlyModifiedInspections(state);
     }
   }

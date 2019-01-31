@@ -34,11 +34,13 @@ public class NativeFileType implements INativeFileType {
 
   private NativeFileType() { }
 
+  @Override
   @NotNull
   public String getName() {
     return "Native";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Files opened in associated applications";
@@ -50,6 +52,7 @@ public class NativeFileType implements INativeFileType {
     return "";
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Custom;
   }

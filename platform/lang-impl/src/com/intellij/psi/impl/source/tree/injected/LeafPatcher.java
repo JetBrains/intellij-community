@@ -17,9 +17,12 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
@@ -34,17 +37,18 @@ import java.util.Map;
  * @author cdr
 */
 class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
+  private static final Logger LOG = Logger.getInstance(LeafPatcher.class);
   private int shredNo;
   private String hostText;
   private LiteralTextEscaper currentTextEscaper;
   private TextRange rangeInHost;
   private final Map<LeafElement, String> newTexts = new THashMap<>();
   @NotNull
-  private final List<PlaceInfo> myPlaceInfos;
+  private final List<? extends PlaceInfo> myPlaceInfos;
   private final StringBuilder catLeafs;
   private final StringBuilder tempLeafBuffer = new StringBuilder();
 
-  LeafPatcher(@NotNull List<PlaceInfo> placeInfos, int approxTextLength) {
+  LeafPatcher(@NotNull List<? extends PlaceInfo> placeInfos, int approxTextLength) {
     myPlaceInfos = placeInfos;
     catLeafs = new StringBuilder(approxTextLength);
   }
@@ -107,6 +111,13 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
           startOffset = endOffsetCut;
           // todo what about lastTimer?
         }
+        else {
+          LOG.error("Text escaper " + currentTextEscaper +" ("+currentTextEscaper.getClass()+") " +
+                    "returned -1 in 'getOffsetInHost("+(endOffsetCut - shredRange.getStartOffset() - prefix.length())+", new TextRange"+rangeInHost+")' " +
+                    "for "+currentPlace.host.getClass(),
+                    new Attachment("host", StringUtil.first(currentPlace.host.getText(), 100, true)));
+        }
+
         continue;
       }
 
@@ -127,7 +138,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
     }
   }
 
-  void patch(@NotNull ASTNode parsedNode, @NotNull List<PlaceInfo> placeInfos) {
+  void patch(@NotNull ASTNode parsedNode, @NotNull List<? extends PlaceInfo> placeInfos) {
     ((TreeElement)parsedNode).acceptTree(this);
 
     assert ((TreeElement)parsedNode).textMatches(catLeafs) :

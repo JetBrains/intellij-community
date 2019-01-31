@@ -84,6 +84,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     }
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     final CheckoutCommand result = new CheckoutCommand(null);
     result.setRecursive(true);
@@ -99,6 +100,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     return new File(myModuleName).getParentFile() == null;
   }
 
+  @Override
   protected File getAdminRootFor(CvsRootProvider root) {
     return getRoot();
   }
@@ -107,17 +109,20 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
     return myFile.getParentFile();
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setCheckedOutFilesReadOnly(myMakeNewFilesReadOnly);
   }
 
+  @Override
   protected File getLocalRootFor(CvsRootProvider root) {
     final File result = getRoot();
     LOG.assertTrue(result != null);
     return result;
   }
 
+  @Override
   protected String getOperationName() {
     return "checkout";
   }

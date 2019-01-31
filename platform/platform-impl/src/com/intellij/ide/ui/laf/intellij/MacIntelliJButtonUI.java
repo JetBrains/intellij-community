@@ -3,11 +3,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -35,7 +31,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = LafIconLookup.getIcon("helpButton", false, c.hasFocus(), true);
+      Icon icon = LafIconLookup.getIcon("help", false, c.hasFocus(), true);
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -110,7 +106,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = LafIconLookup.getIcon("helpButton");
+      Icon icon = LafIconLookup.getIcon("help");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();
@@ -121,6 +117,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
   }
 
+  @Override
   protected int getMinimumHeight() {
     return MINIMUM_HEIGHT.get();
   }
@@ -134,6 +131,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     } else {
       g.setColor(UIManager.getColor("Button.disabledText"));
     }
-    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
+    UIUtilities.drawStringUnderlineCharAt(c, g, text, -1, x, y);
   }
 }

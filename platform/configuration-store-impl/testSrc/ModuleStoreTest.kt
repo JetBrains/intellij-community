@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.runWriteAction
@@ -19,6 +20,7 @@ import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -43,7 +45,8 @@ class ModuleStoreTest {
   @Rule
   val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
 
-  @Test fun `set option`() {
+  @Test
+  fun `set option`() = runBlocking {
     val moduleFile = runWriteAction {
       VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -54,7 +57,7 @@ class ModuleStoreTest {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
 
       setOption("foo", "not bar")
-      saveStore()
+      stateStore.save()
     }
 
     projectRule.loadModule(moduleFile).useAndDispose {
@@ -62,7 +65,7 @@ class ModuleStoreTest {
 
       setOption("foo", "not bar")
       // ensure that save the same data will not lead to any problems (like "Content equals, but it must be handled not on this level")
-      saveStore()
+      stateStore.save()
     }
   }
 
@@ -76,30 +79,32 @@ class ModuleStoreTest {
     }
   }
 
-  @Test fun `must be empty if classpath storage`() {
+  @Test
+  fun `must be empty if classpath storage`() = runBlocking<Unit> {
     // we must not use VFS here, file must not be created
     val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
     projectRule.createModule(moduleFile).useAndDispose {
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
-      saveStore()
+      stateStore.save()
       assertThat(moduleFile).isRegularFile
       assertThat(moduleFile.readText()).startsWith("""
       <?xml version="1.0" encoding="UTF-8"?>
       <module type="JAVA_MODULE" version="4">""".trimIndent())
 
       ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
-      saveStore()
+      stateStore.save()
       assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
       <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
     }
   }
 
-  @Test fun `one batch update session if several modules changed`() {
+  @Test
+  fun `one batch update session if several modules changed`() = runBlocking<Unit> {
     val nameToCount = TObjectIntHashMap<String>()
     val root = tempDirManager.newPath(refreshVfs = true)
 
-    fun Module.addContentRoot() {
+    suspend fun Module.addContentRoot() {
       val moduleName = name
       var batchUpdateCount = 0
       nameToCount.put(moduleName, batchUpdateCount)
@@ -113,23 +118,25 @@ class ModuleStoreTest {
       //
       ModuleRootModificationUtil.addContentRoot(this, root.resolve(moduleName).systemIndependentPath)
       assertThat(contentRootUrls).hasSize(1)
-      saveStore()
+      stateStore.save()
     }
 
-    fun Module.removeContentRoot() {
-      val modulePath = stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
+    fun removeContentRoot(module: Module) {
+      val modulePath = module.stateStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
       val moduleFile = Paths.get(modulePath)
       assertThat(moduleFile).isRegularFile
 
       val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
-      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/$name\" />\n", "").toByteArray()
+      val oldText = moduleFile.readText()
+      val newText = oldText.replace("<content url=\"file://\$MODULE_DIR$/${module.name}\" />\n", "")
+      assertThat(oldText).isNotEqualTo(newText)
       runWriteAction {
-        virtualFile.setBinaryContent(newData)
+        virtualFile.setBinaryContent(newText.toByteArray())
       }
     }
 
-    fun Module.assertChangesApplied() {
-      assertThat(contentRootUrls).isEmpty()
+    fun assertChangesApplied(module: Module) {
+      assertThat(module.contentRootUrls).isEmpty()
     }
 
     val m1 = projectRule.createModule(root.resolve("m1.iml"))
@@ -145,13 +152,13 @@ class ModuleStoreTest {
     m1.addContentRoot()
     m2.addContentRoot()
 
-    m1.removeContentRoot()
-    m2.removeContentRoot()
+    removeContentRoot(m1)
+    removeContentRoot(m2)
 
     (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
-    m1.assertChangesApplied()
-    m2.assertChangesApplied()
+    assertChangesApplied(m1)
+    assertChangesApplied(m2)
 
     assertThat(nameToCount.size()).isEqualTo(3)
     assertThat(nameToCount.get("p")).isEqualTo(1)

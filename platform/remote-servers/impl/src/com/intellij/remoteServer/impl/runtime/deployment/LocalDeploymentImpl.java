@@ -21,6 +21,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,13 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     setPresentableName(presentableName);
   }
 
+  @NotNull
+  @Override
+  public DeploymentTask<D> getDeploymentTask() {
+    return ObjectUtils.notNull(super.getDeploymentTask());
+  }
+
+
   private boolean isLocalState() {
     return myRemoteDeployment == null || super.getStatus().isTransition();
   }
@@ -83,5 +91,9 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
       myRemoteDeployment.changeState(myRemoteDeployment.getStatus(), newStatus, statusText, myRemoteDeployment.getRuntime());
     }
     return result;
+  }
+
+  public boolean hasRemoteDeloyment() {
+    return myRemoteDeployment != null;
   }
 }

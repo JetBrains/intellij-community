@@ -37,32 +37,39 @@ public class TypeCookRefactoringImpl extends RefactoringImpl<TypeCookProcessor> 
                           final boolean cookObjects,
                           final boolean cookToWildcards) {
     super(new TypeCookProcessor(project, elements, new Settings() {
+      @Override
       public boolean dropObsoleteCasts() {
         return dropObsoleteCasts;
       }
 
+      @Override
       public boolean leaveObjectParameterizedTypesRaw() {
         return leaveObjectsRaw;
       }
 
+      @Override
       public boolean exhaustive() {
         return exhaustiveSearch;
       }
 
+      @Override
       public boolean cookObjects() {
         return cookObjects;
       }
 
+      @Override
       public boolean cookToWildcards() {
         return cookToWildcards;
       }
 
+      @Override
       public boolean preserveRawArrays() {
         return preserveRawArrays;
       }
     }));
   }
 
+  @Override
   public List<PsiElement> getElements() {
     return myProcessor.getElements();
   }

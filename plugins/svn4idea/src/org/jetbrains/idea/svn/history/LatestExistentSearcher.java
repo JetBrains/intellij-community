@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,9 +125,8 @@ public class LatestExistentSearcher {
       if (rootUrlInfo == null) return true;
       final VirtualFile vf = rootUrlInfo.getVirtualFile();
       final Info info = myVcs.getInfo(vf);
-      if ((info == null) || (info.getRevision() == null)) {
-        return false;
-      }
+      if (info == null || !info.getRevision().isValid()) return false;
+
       myStartNumber = info.getRevision().getNumber();
       myStartExistsKnown = true;
     }

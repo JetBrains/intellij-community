@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Debugger.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiValuesMap<K, V>{
   private final Map<K, Collection<V>> myBaseMap;
   private final boolean myOrdered;
@@ -103,19 +105,6 @@ public class MultiValuesMap<K, V>{
 
   public boolean containsKey(final K key) {
     return myBaseMap.containsKey(key);
-  }
-
-  /**
-   * @deprecated this method will return unordered set for ordered map, use {@link #values()} instead
-   */
-  @NotNull
-  public Collection<V> collectValues() {
-    Collection<V> result = new HashSet<V>();
-    for (Collection<V> v : myBaseMap.values()) {
-      result.addAll(v);
-    }
-
-    return result;
   }
 
   @Nullable

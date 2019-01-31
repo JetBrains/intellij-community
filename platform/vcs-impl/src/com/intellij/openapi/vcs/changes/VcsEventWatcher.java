@@ -25,7 +25,7 @@ public class VcsEventWatcher implements ProjectComponent {
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(() ->
             VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }

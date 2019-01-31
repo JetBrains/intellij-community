@@ -22,7 +22,6 @@ import java.util.EventListener;
 
 /**
  * @author Evgeny Gerashchenko
- * @since  27 Aug 2012
  */
 public interface ExternalAnnotationsListener extends EventListener {
   /**

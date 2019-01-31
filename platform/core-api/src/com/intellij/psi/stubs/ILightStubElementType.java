@@ -28,9 +28,10 @@ public abstract class ILightStubElementType<StubT extends StubElement, PsiT exte
     super(debugName, language);
   }
 
-  public abstract StubT createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub);
+  @NotNull
+  public abstract StubT createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub);
 
-  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public boolean shouldCreateStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     return true;
   }
 }

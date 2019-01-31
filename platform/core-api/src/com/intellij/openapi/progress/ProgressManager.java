@@ -29,7 +29,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
-  private static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
+  static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
 
   @NotNull
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -84,12 +84,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   }
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
-
-  /**
-   * to be removed in 2017.2
-   */
-  @Deprecated
-  public abstract void setCancelButtonText(String cancelButtonText);
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -152,6 +146,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
    * @deprecated use {@link #run(Task)}
    */
+  @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
                                                             @NotNull Runnable process,
@@ -171,6 +166,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param option           progress indicator behavior controller.
    * @deprecated use {@link #run(Task)}
    */
+  @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
                                                             @NotNull Runnable process,
@@ -238,7 +234,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * </ul>
    * @param action the code to execute under read action
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
-   * @since 171.*
    */
   public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 

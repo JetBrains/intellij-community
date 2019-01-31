@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 public class AddConstructorFix implements LocalQuickFix, IntentionAction {
 
   private final SmartPsiElementPointer<PsiClass> myBeanClass;
-  private final List<PsiParameter> myParameters;
+  private final List<? extends PsiParameter> myParameters;
   private final String name;
 
-  public AddConstructorFix(PsiClass beanClass, List<PsiParameter> parameters) {
+  public AddConstructorFix(PsiClass beanClass, List<? extends PsiParameter> parameters) {
     myBeanClass = SmartPointerManager.getInstance(beanClass.getProject()).createSmartPsiElementPointer(beanClass);
     myParameters = parameters;
     final String params = myParameters.stream().map(p -> p.getText()).collect(Collectors.joining(", "));
@@ -44,6 +44,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     name = QuickFixBundle.message("model.create.constructor.quickfix.message", signature);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return name;
@@ -56,6 +57,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     return name;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("model.create.constructor.quickfix.message.family.name");
@@ -76,7 +78,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(myBeanClass.getContainingFile())) return;
       PsiClass psiClass = myBeanClass.getElement();
       if (psiClass == null) return;
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myBeanClass.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myBeanClass.getProject());
 
       final PsiMethod constructor = elementFactory.createConstructor();
 
@@ -95,6 +97,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
     return true;
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     applyFix();
   }

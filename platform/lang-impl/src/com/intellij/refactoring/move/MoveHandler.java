@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.move;
 
@@ -20,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -78,7 +63,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
   private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext,
                                           final PsiReference reference, final Editor editor) {
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.tryToMove(element, project, dataContext, reference, editor)) {
         return true;
       }
@@ -94,7 +79,7 @@ public class MoveHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<>();
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
         delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
       }
@@ -124,7 +109,7 @@ public class MoveHandler implements RefactoringActionHandler {
   public static void doMove(Project project, @NotNull PsiElement[] elements, PsiElement targetContainer, DataContext dataContext, MoveCallback callback) {
     if (elements.length == 0) return;
 
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer)) {
         delegate.doMove(project, elements, delegate.adjustTargetForMove(dataContext, targetContainer), callback);
         break;
@@ -138,7 +123,7 @@ public class MoveHandler implements RefactoringActionHandler {
    */
   @Nullable
   public static PsiElement[] adjustForMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(sourceElements, targetElement)) {
         return delegate.adjustForMove(project, sourceElements, targetElement);
       }
@@ -151,7 +136,7 @@ public class MoveHandler implements RefactoringActionHandler {
    * target container can be null => means that container is not determined yet and must be spacify by the user
    */
   public static boolean canMove(@NotNull PsiElement[] elements, PsiElement targetContainer) {
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer)) return true;
     }
 
@@ -160,7 +145,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
   public static boolean isValidTarget(final PsiElement psiElement, PsiElement[] elements) {
     if (psiElement != null) {
-      for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
         if (delegate.isValidTarget(psiElement, elements)){
           return true;
         }
@@ -171,7 +156,7 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   public static boolean canMove(DataContext dataContext) {
-     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(dataContext)) return true;
     }
 
@@ -179,7 +164,7 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   public static boolean isMoveRedundant(PsiElement source, PsiElement target) {
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+    for(MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.isMoveRedundant(source, target)) return true;
     }
     return false;

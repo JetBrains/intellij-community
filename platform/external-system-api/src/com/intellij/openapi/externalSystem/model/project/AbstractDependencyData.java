@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.roots.DependencyScope;
@@ -8,7 +9,6 @@ import java.io.ObjectInputStream;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/11 6:41 PM
  */
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData, Named, OrderAware
@@ -16,8 +16,8 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final ModuleData myOwnerModule;
-  @NotNull private final T          myTarget;
+  @NotNull private ModuleData myOwnerModule;
+  @NotNull private T          myTarget;
 
   private DependencyScope myScope = DependencyScope.COMPILE;
 
@@ -30,14 +30,24 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myTarget = dependency;
   }
 
+  @Override
   @NotNull
   public ModuleData getOwnerModule() {
     return myOwnerModule;
   }
 
+  public void setOwnerModule(@NotNull ModuleData ownerModule) {
+    myOwnerModule = ownerModule;
+  }
+
+  @Override
   @NotNull
   public T getTarget() {
     return myTarget;
+  }
+
+  public void setTarget(@NotNull T target) {
+    myTarget = target;
   }
 
   @Override
@@ -110,7 +120,6 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myOrder = order;
   }
 
-  @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
   }

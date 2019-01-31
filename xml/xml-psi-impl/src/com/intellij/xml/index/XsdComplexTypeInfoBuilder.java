@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,13 +14,12 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 
-public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
+public class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
   private final static String SIGN = "";
   public static final String HTTP_WWW_W3_ORG_2001_XMLSCHEMA = "http://www.w3.org/2001/XMLSchema";
   // base type -> inherited types
   private final MultiMap<SchemaTypeInfo, SchemaTypeInfo> myMap;
   private NameSpaceHelper myNameSpaceHelper;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.index.XsdComplexTypeInfoBuilder");
 
   public void setNameSpaceHelper(NameSpaceHelper nameSpaceHelper) {
     myNameSpaceHelper = nameSpaceHelper;
@@ -43,19 +29,17 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
     return parse(new InputStreamReader(is));
   }
 
-  public static MultiMap<SchemaTypeInfo, SchemaTypeInfo> parse(final Reader reader) {
+  public static MultiMap<SchemaTypeInfo, SchemaTypeInfo> parse(@NotNull Reader reader) {
     try {
       final XsdComplexTypeInfoBuilder builder = new XsdComplexTypeInfoBuilder();
       final NameSpaceHelper helper = new NameSpaceHelper();
       builder.setNameSpaceHelper(helper);
       NanoXmlUtil.parse(reader, builder, helper);
-      final MultiMap<SchemaTypeInfo,SchemaTypeInfo> map = builder.getMap();
-      return map;
-    } finally {
+      return builder.getMap();
+    }
+    finally {
       try {
-        if (reader != null) {
-          reader.close();
-        }
+        reader.close();
       }
       catch (IOException e) {
         // can never happen
@@ -74,11 +58,8 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   // todo work with substitution groups also!
 
   private String myCurrentElementName;
-  private String myCurrentElementNsName;
   private String myCurrentComplexTypeName;
-  private String myCurrentComplexTypeNsName;
   private String myCurrentSimpleTypeName;
-  private String myCurrentSimpleTypeNsName;
 
   private boolean myInsideSchema;
   private boolean myInsideRestriction;
@@ -93,12 +74,9 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
       myInsideSchema = true;
     } else if ("complexType".equals(name)) {
       myCurrentComplexTypeName = SIGN;
-      myCurrentComplexTypeNsName = nsURI;
     } else if ("simpleType".equals(name)) {
       myCurrentSimpleTypeName = SIGN;
-      myCurrentSimpleTypeNsName = nsURI;
     } else if ("element".equals(name)) {
-      myCurrentElementNsName = nsURI;
       myCurrentElementName = SIGN;
     } else if ("restriction".equals(name)) {
       myInsideRestriction = true;
@@ -116,12 +94,9 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
       myInsideSchema = false;
     } else if ("complexType".equals(name)) {
       myCurrentComplexTypeName = null;
-      myCurrentComplexTypeNsName = null;
     } else if ("simpleType".equals(name)) {
       myCurrentSimpleTypeName = null;
-      myCurrentSimpleTypeNsName = null;
     } else if ("element".equals(name)) {
-      myCurrentElementNsName = null;
       myCurrentElementName = null;
     } else if ("restriction".equals(name)) {
       myInsideRestriction = false;
@@ -134,29 +109,45 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
   @Override
   public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-    if (! StringUtil.isEmptyOrSpaces(nsURI) && ! HTTP_WWW_W3_ORG_2001_XMLSCHEMA.equals(nsURI)) return;
+    if (!StringUtil.isEmptyOrSpaces(nsURI) && !HTTP_WWW_W3_ORG_2001_XMLSCHEMA.equals(nsURI)) return;
     if ("base".equals(key)) {
       if (myCurrentComplexTypeName != null && myInsideContent && (myInsideExtension || myInsideRestriction)) {
-        putTypeDataToMap(nsURI, value, myCurrentComplexTypeName, myCurrentComplexTypeNsName);
-      } else if (myCurrentSimpleTypeName != null && myInsideRestriction) {
-        putTypeDataToMap(nsURI, value, myCurrentSimpleTypeName, myCurrentSimpleTypeNsName);
+        putTypeDataToMap(value, myCurrentComplexTypeName);
       }
-    } else if (myInsideSchema) {
-    } else if ("name".equals(key) || "ref".equals(key)) {
-      if (SIGN.equals(myCurrentElementName) && ! myInsideContent && ! myInsideExtension && ! myInsideRestriction && ! myInsideSchema &&
-        myCurrentComplexTypeName == null && myCurrentSimpleTypeName == null) {
+      else if (myCurrentSimpleTypeName != null && myInsideRestriction) {
+        putTypeDataToMap(value, myCurrentSimpleTypeName);
+      }
+    }
+    else if (myInsideSchema) {
+
+    }
+    else if ("name".equals(key) || "ref".equals(key)) {
+      if (SIGN.equals(myCurrentElementName) &&
+          !myInsideContent &&
+          !myInsideExtension &&
+          !myInsideRestriction &&
+          myCurrentComplexTypeName == null &&
+          myCurrentSimpleTypeName == null) {
         myCurrentElementName = value;
-      } else if (SIGN.equals(myCurrentComplexTypeName) && ! myInsideContent && ! myInsideExtension && ! myInsideRestriction && ! myInsideSchema &&
-              myCurrentSimpleTypeName == null) {
+      }
+      else if (SIGN.equals(myCurrentComplexTypeName) &&
+               !myInsideContent &&
+               !myInsideExtension &&
+               !myInsideRestriction &&
+               myCurrentSimpleTypeName == null) {
         myCurrentComplexTypeName = value;
-      } else if (SIGN.equals(myCurrentSimpleTypeName) && ! myInsideContent && ! myInsideExtension && ! myInsideRestriction && ! myInsideSchema &&
-                 myCurrentComplexTypeName == null) {
+      }
+      else if (SIGN.equals(myCurrentSimpleTypeName) &&
+               !myInsideContent &&
+               !myInsideExtension &&
+               !myInsideRestriction &&
+               myCurrentComplexTypeName == null) {
         myCurrentSimpleTypeName = value;
       }
     }
   }
 
-  private void putTypeDataToMap(String nsURI, String value, final String typeName, final String typeNamespace) {
+  private void putTypeDataToMap(String value, final String typeName) {
     /*final int separatorIdx = value.indexOf(':');
     final String ns = separatorIdx <= 0 ? "" : new String(value.substring(0, separatorIdx));
     final String element = separatorIdx <= 0 ? value : new String(value.substring(separatorIdx + 1));

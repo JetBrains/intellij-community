@@ -37,29 +37,36 @@ public class SyntheticVariableEvaluator implements Evaluator{
     myLocalName = localName;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     return myCodeFragmentEvaluator.getValue(myLocalName, context.getDebugProcess().getVirtualMachineProxy());
   }
 
+  @Override
   public Modifier getModifier() {
     return new Modifier() {
+      @Override
       public boolean canInspect() {
         return false;
       }
 
+      @Override
       public boolean canSetValue() {
         return false;
       }
 
+      @Override
       public void setValue(Value value) throws EvaluateException {
         myCodeFragmentEvaluator.setValue(myLocalName, value);
       }
 
+      @Override
       public Type getExpectedType() {
         LOG.assertTrue(false);
         return null;
       }
 
+      @Override
       public NodeDescriptorImpl getInspectItem(Project project) {
         return null;
       }

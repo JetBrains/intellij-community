@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Two panel editor with three states: Editor, Preview and Editor with Preview.
+ * Based on SplitFileEditor by Valentin Fondaratov
+ *
  * @author Konstantin Bulenkov
  */
 public class TextEditorWithPreview extends UserDataHolderBase implements FileEditor {
@@ -208,7 +211,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
 
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
@@ -411,18 +414,18 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private class ChangeViewModeAction extends ToggleAction implements DumbAware {
     private final Layout myActionLayout;
 
-    public ChangeViewModeAction(Layout layout) {
+    ChangeViewModeAction(Layout layout) {
       super(layout.getName(), layout.getName(), layout.getIcon());
       myActionLayout = layout;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myLayout == myActionLayout;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
         PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, Layout.SHOW_EDITOR_AND_PREVIEW.myName);

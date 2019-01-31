@@ -17,7 +17,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
     public boolean INTERACTIVE = true;
     public boolean PRESERVE_MERGES = false;
     public boolean SHOW_TAGS = false;
-    public boolean SHOW_REMOTE_BRANCHES = false;
     public String ONTO = null;
   }
 
@@ -54,14 +53,6 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
 
   public void setShowTags(boolean showTags) {
     myState.SHOW_TAGS = showTags;
-  }
-
-  public boolean showRemoteBranches() {
-    return myState.SHOW_REMOTE_BRANCHES;
-  }
-
-  public void setShowRemoteBranches(boolean showRemoteBranches) {
-    myState.SHOW_REMOTE_BRANCHES = showRemoteBranches;
   }
 
   @Nullable

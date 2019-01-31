@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -35,7 +35,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -110,7 +109,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         }
       }
       Collections.reverse(messages);
-      description = "\n" + messages.stream().collect(Collectors.joining("\n\n"));
+      description = "\n" + String.join("\n\n", messages);
     }
     else {
       description = "Unknown error occurred";
@@ -143,7 +142,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     ApplicationManager.getApplication().invokeLater(() -> {
       if (mySceneBuilder != null) {
 
-        if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
+        if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(myFile)).hasReadonlyFiles()) {
           return;
         }
 
@@ -281,7 +280,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private class ExternalChangeListener implements DocumentListener {
     private volatile boolean myRunState;
 
-    public ExternalChangeListener() {
+    ExternalChangeListener() {
       myDocument.addDocumentListener(this);
     }
 
@@ -306,7 +305,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (myRunState) {
         addSceneBuilder();
       }

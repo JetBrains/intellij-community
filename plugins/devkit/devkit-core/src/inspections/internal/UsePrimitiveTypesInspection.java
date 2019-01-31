@@ -62,7 +62,7 @@ public class UsePrimitiveTypesInspection extends DevKitInspectionBase {
   private static class ReplaceEqualityWithEqualsFix implements LocalQuickFix {
     private final String myName;
 
-    public ReplaceEqualityWithEqualsFix(String name) {
+    ReplaceEqualityWithEqualsFix(String name) {
       myName = name;
     }
 

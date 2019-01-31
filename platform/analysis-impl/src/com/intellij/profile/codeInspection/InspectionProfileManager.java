@@ -2,11 +2,11 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,16 +35,12 @@ public interface InspectionProfileManager {
   void setRootProfile(@Nullable String name);
 
   @NotNull
-  @Deprecated
-  default InspectionProfile getRootProfile() {
-    return getCurrentProfile();
-  }
-
-  @NotNull
   InspectionProfileImpl getCurrentProfile();
 
+  @Contract("_,true -> !null")
   InspectionProfileImpl getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
+  @NotNull
   default InspectionProfileImpl getProfile(@NotNull String name) {
     return getProfile(name, true);
   }

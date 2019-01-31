@@ -154,7 +154,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     removeGarbage(document);
 
     documentManager.commitAllDocuments();
-    String myFullDataPath = getTestDataPath() + "psi/";
+    String myFullDataPath = getTestDataPath() + "psi/xml";
     ParsingTestCase.doCheckResult(myFullDataPath, file, true, "testXmlDeclDtd", false, false);
   }
 

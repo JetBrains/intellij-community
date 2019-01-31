@@ -204,7 +204,7 @@ class LanguageResolvingUtil {
   @Nullable
   private static String getStringConstantExpression(PsiElement psiElement) {
     final Pair<PsiElement, String> pair = StringExpressionHelper.evaluateConstantExpression(psiElement);
-    return pair != null ? pair.second : null;
+    return Pair.getSecond(pair);
   }
 
   @Nullable

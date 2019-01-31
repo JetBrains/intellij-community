@@ -50,12 +50,12 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
     return contains(file, holder.getProject(), holder);
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (matchesScope(file, project, fileIndex)) {
       if (myPattern == null) {
@@ -79,7 +79,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       return isSource && !TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
-      return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
+      return fileIndex.isInLibrary(file) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
       return isSource && TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);

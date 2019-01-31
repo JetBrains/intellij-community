@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 public class Main {
     public static void main(String[] args) {
         List<String> list = Arrays.asList("a", "b", "c", "d");
-        for (String o: list) {
+        for (String o : list) {
             if (!o.isEmpty()) {
                 System.out.println("Peek: " + o);
                 System.out.println("Peek2: " + o);
@@ -33,7 +33,7 @@ public class Main {
             }
         }
 
-        for (String s: list) {
+        for (String s : list) {
             if ("b".equals(s)) {
                 System.out.println("Found:");
                 System.out.println(s);
@@ -41,7 +41,7 @@ public class Main {
             }
         }
         Optional<String> found = Optional.empty();
-        for (String qq: list) {
+        for (String qq : list) {
             if ("b".equals(qq)) {
                 found = Optional.of(qq);
                 break;
@@ -54,7 +54,7 @@ public class Main {
         });
 
         StringBuilder res = new StringBuilder();
-        for (String str: list) {
+        for (String str : list) {
             if (str != null) {
                 str = "[" + str + "]";
                 res.append(str);
@@ -63,7 +63,7 @@ public class Main {
         System.out.println(res);
 
         long count = 0L;
-        for (String n: list) {
+        for (String n : list) {
             if (!"a".equals(n)) {
                 for (int i = 0; i < 3; i++) {
                     System.out.println("In flatmap idx: " + i);
@@ -76,7 +76,7 @@ public class Main {
     }
 
     void test(List<String> list) {
-        for (String x: list) {
+        for (String x : list) {
             if (x.isEmpty()) continue;
             System.out.println(x);
         }

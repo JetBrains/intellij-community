@@ -27,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -43,9 +46,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
       return myWin10ComboDropTriangleIcon;
     }
-    Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
-    if (myIcon != icon) {
-      myIcon = icon;
+    if (myIcon != AllIcons.General.ArrowDown) {
+      myIcon = AllIcons.General.ArrowDown;
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
     return enabled ? myIcon : myDisabledIcon;
@@ -58,7 +60,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
@@ -78,8 +80,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button,
@@ -110,7 +113,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
-  @SuppressWarnings("unused")
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
@@ -132,9 +134,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
+    private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+      myTooltipText = myPresentation.getDescription();
+
       setModel(new MyButtonModel());
       getModel().setEnabled(myPresentation.isEnabled());
       setVisible(presentation.isVisible());
@@ -146,7 +151,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
 
-      //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -221,6 +225,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         myPresentation.removePropertyChangeListener(myButtonSynchronizer);
         myButtonSynchronizer = null;
       }
+      HelpTooltip.dispose(this);
       super.removeNotify();
     }
 
@@ -237,12 +242,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void initButton() {
       setIcon(myPresentation.getIcon());
       setText(myPresentation.getText());
-      updateTooltipText(myPresentation.getDescription());
+      myTooltipText = myPresentation.getDescription();
+      updateTooltipText();
       updateButtonSize();
     }
 
-    private void updateTooltipText(String description) {
-      String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
+    private void updateTooltipText() {
+      String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
       if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(tooltip)) {
         HelpTooltip.dispose(this);
         new HelpTooltip().setDescription(tooltip).setLocation(HelpTooltip.Alignment.BOTTOM).installOn(this);
@@ -272,7 +278,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           updateButtonSize();
         }
         else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          updateTooltipText((String)evt.getNewValue());
+          myTooltipText = (String)evt.getNewValue();
+          updateTooltipText();
         }
         else if (Presentation.PROP_ICON.equals(propertyName)) {
           setIcon((Icon)evt.getNewValue());
@@ -338,6 +345,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       super.updateUI();
       setMargin(JBUI.insets(0, 5, 0, 2));
       updateButtonSize();
+      updateTooltipText();
     }
 
     protected void updateButtonSize() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -21,7 +7,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -51,11 +36,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
-
-  public static class Factory extends AbstractProjectComponent implements MainHighlightingPassFactory {
+  public static class Factory implements MainHighlightingPassFactory {
+    private final Project myProject;
 
     protected Factory(Project project, TextEditorHighlightingPassRegistrar registrar) {
-      super(project);
+      myProject = project;
       registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, -1);
     }
 
@@ -119,8 +104,8 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
   }
 
   private void collectHighlights(@NotNull PsiElement element,
-                                 @NotNull List<HighlightInfo> inside,
-                                 @NotNull List<HighlightInfo> outside,
+                                 @NotNull List<? super HighlightInfo> inside,
+                                 @NotNull List<? super HighlightInfo> outside,
                                  @NotNull ProperTextRange priorityRange) {
     EditorColorsScheme scheme = ObjectUtils.notNull(getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
     TextAttributes defaultAttrs = scheme.getAttributes(HighlighterColors.TEXT);
@@ -144,6 +129,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
         }
       }
       TextAttributes forcedAttributes;
+      List<? super HighlightInfo> result = priorityRange.contains(tr) ? inside : outside;
       if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
         forcedAttributes = TextAttributes.ERASE_MARKER;
       }
@@ -152,7 +138,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
           range(tr).
           textAttributes(TextAttributes.ERASE_MARKER).
           createUnconditionally();
-        (priorityRange.contains(tr) ? inside : outside).add(info);
+        result.add(info);
 
         forcedAttributes = new TextAttributes(attributes.getForegroundColor(), attributes.getBackgroundColor(),
                                               attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
@@ -162,7 +148,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
         range(tr).
         textAttributes(forcedAttributes).
         createUnconditionally();
-      (priorityRange.contains(tr) ? inside : outside).add(info);
+      result.add(info);
     }
   }
 

@@ -127,7 +127,6 @@ public class AnnotationProcessorProfileSerializer {
     final Set<String> processors = profile.getProcessors();
     if (!processors.isEmpty()) {
       final List<String> processorList = new ArrayList<>(processors);
-      processorList.sort(ALPHA_COMPARATOR);
       for (String proc : processorList) {
         addChild(element, "processor").setAttribute(NAME, proc);
       }
@@ -155,7 +154,6 @@ public class AnnotationProcessorProfileSerializer {
     final Set<String> moduleNames = profile.getModuleNames();
     if (!moduleNames.isEmpty()) {
       final List<String> names = new ArrayList<>(moduleNames);
-      names.sort(ALPHA_COMPARATOR);
       for (String name : names) {
         addChild(element, MODULE).setAttribute(NAME, name);
       }

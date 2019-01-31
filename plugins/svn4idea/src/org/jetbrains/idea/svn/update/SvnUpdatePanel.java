@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -28,7 +13,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   private JPanel myConfigureRootsPanel;
   private JCheckBox myForceBox;
   private JPanel myPanel;
-  private JCheckBox myLockOnDemand;
   private DepthCombo myDepthCombo;
   private JLabel myDepthLabel;
   private JPanel myAdditionalPanel;
@@ -50,14 +34,13 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setLabelFor(myDepthCombo);
 
     SvnConfiguration svnConfiguration = myVCS.getSvnConfiguration();
-    myLockOnDemand.setSelected(svnConfiguration.isUpdateLockOnDemand());
-    myLockOnDemand.addActionListener(e -> svnConfiguration.setUpdateLockOnDemand(myLockOnDemand.isSelected()));
     myForceBox.setSelected(svnConfiguration.isForceUpdate());
     myIgnoreExternalsCheckBox.setSelected(svnConfiguration.isIgnoreExternals());
     myForceBox.addActionListener(e -> svnConfiguration.setForceUpdate(myForceBox.isSelected()));
     myIgnoreExternalsCheckBox.addActionListener(e -> svnConfiguration.setIgnoreExternals(myIgnoreExternalsCheckBox.isSelected()));
   }
 
+  @Override
   protected JPanel getRootsPanel() {
     return myConfigureRootsPanel;
   }
@@ -67,29 +50,22 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     return myAdditionalPanel;
   }
 
+  @Override
   protected SvnPanel createRootPanel(final FilePath root, final SvnVcs vcs, Collection<FilePath> roots) {
     return new SvnUpdateRootOptionsPanel(root, vcs, roots);
   }
 
+  @Override
   protected JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected DepthCombo getDepthBox() {
     return myDepthCombo;
   }
 
   private void createUIComponents() {
-    myLockOnDemand = new JCheckBox() {
-      @Override
-      public JToolTip createToolTip() {
-        JToolTip toolTip = new JToolTip() {{
-          setUI(new MultiLineTooltipUI());
-        }};
-        toolTip.setComponent(this);
-        return toolTip;
-      }
-    };
     myDepthCombo = new DepthCombo(true);
   }
 }

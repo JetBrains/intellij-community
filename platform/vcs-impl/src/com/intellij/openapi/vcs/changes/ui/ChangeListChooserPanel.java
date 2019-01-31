@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,13 +30,13 @@ public class ChangeListChooserPanel extends JPanel {
 
   private final MyEditorComboBox myExistingListsCombo;
   private final NewEditChangelistPanel myListPanel;
-  private final NullableConsumer<String> myOkEnabledListener;
+  private final NullableConsumer<? super String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
   @Nullable private ChangeListData myData;
 
-  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<? super String> okEnabledListener) {
     super(new BorderLayout());
     myProject = project;
     myExistingListsCombo = new MyEditorComboBox();
@@ -240,7 +226,7 @@ public class ChangeListChooserPanel extends JPanel {
     private static final int PREF_WIDTH = 200;
     private final LanguageTextField myEditorTextField;
 
-    public MyEditorComboBox() {
+    MyEditorComboBox() {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);
@@ -255,7 +241,7 @@ public class ChangeListChooserPanel extends JPanel {
       myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       myEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(DocumentEvent e) {
+        public void documentChanged(@NotNull DocumentEvent e) {
           String changeListName = e.getDocument().getText();
           panel.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
         }

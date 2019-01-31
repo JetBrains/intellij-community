@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
@@ -30,7 +31,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author anna
- * @since 26-Aug-2009
  */
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
@@ -118,17 +118,10 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     PsiExpression currentInitializer = var.getInitializer();
     if (currentInitializer != null) return;
     final PsiType type = var.getType();
-    String initializerText = null;
-    if (PsiType.BOOLEAN.equals(type)) {
-      initializerText = "false";
-    }
-    else if (type instanceof PsiPrimitiveType) {
-      initializerText = "0";
-    }
-    if (initializerText != null) {
-      String finalInitializerText = initializerText;
+    String initializerText = PsiTypesUtil.getDefaultValueOfType(type);
+    if (!PsiKeyword.NULL.equals(initializerText)) {
       WriteAction.run(() -> {
-        PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(finalInitializerText, var);
+        PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(initializerText, var);
         var.setInitializer(initializer);
       });
     }

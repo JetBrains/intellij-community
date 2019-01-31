@@ -85,7 +85,7 @@ public class SshKeyChecker {
 
     private Notification myErrorNotification;
 
-    public ServerHandler(CloudNotifier notifier, Project project, CloudConnectionTask connectionTask) {
+    ServerHandler(CloudNotifier notifier, Project project, CloudConnectionTask connectionTask) {
       myNotifier = notifier;
       myProject = project;
       myConnectionTask = connectionTask;
@@ -225,7 +225,7 @@ public class SshKeyChecker {
 
     private final HyperlinkLabel myLabel;
 
-    public ConfigurableHandler(HyperlinkLabel label,
+    ConfigurableHandler(HyperlinkLabel label,
                                final UnnamedConfigurable serverConfigurable,
                                C serverConfiguration,
                                ServerType<C> serverType) {

@@ -13,6 +13,10 @@ class UnhandledExceptionsHighlightingTest : LightDaemonAnalyzerTestCase() {
     doTest(false)
   }
 
+  fun testIgnoreExceptionThrownInAnonymous() {
+    doTest(false)
+  }
+
   private fun doTest(warnings: Boolean) {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().project).languageLevel = LanguageLevel.JDK_1_8
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), testRootDisposable)

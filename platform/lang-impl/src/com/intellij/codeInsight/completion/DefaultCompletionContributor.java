@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +59,6 @@ public class DefaultCompletionContributor extends CompletionContributor {
         lookup.addAdvertisement(LangBundle.message("completion.quick.implementations.ad", shortcut), null);
       }
     }
-  }
-
-  @Override
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
-    return LangBundle.message("completion.no.suggestions");
   }
 
   @Override

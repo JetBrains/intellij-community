@@ -18,8 +18,4 @@ public class ConvertToThreadLocalIntentionTest extends LightQuickFixParameterize
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
-
-  public void test() {
-    doAllTests();
-  }
 }

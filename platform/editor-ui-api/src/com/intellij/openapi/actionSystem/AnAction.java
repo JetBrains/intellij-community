@@ -103,7 +103,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
+  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);
@@ -207,17 +207,24 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Override this method to provide the ability to dynamically change action's
    * state and(or) presentation depending on the context (For example
    * when your action state depends on the selection you can check for
-   * selection and change the state accordingly).
-   * This method can be called frequently, for instance, if an action is added to a toolbar,
-   * it will be updated twice a second. This means that this method is supposed to work really fast,
+   * selection and change the state accordingly).<p></p>
+   *
+   * This method can be called frequently, and on UI thread.
+   * This means that this method is supposed to work really fast,
    * no real work should be done at this phase. For example, checking selection in a tree or a list,
-   * is considered valid, but working with a file system is not. If you cannot understand the state of
-   * the action fast you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
-   * the user that action cannot be executed if it's the case.
+   * is considered valid, but working with a file system or PSI (especially resolve) is not.
+   * If you cannot determine the state of the action fast enough,
+   * you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
+   * the user that action cannot be executed if it's the case.<p></p>
+   *
+   * If the action is added to a toolbar, its "update" can be called twice a second, but only if there was
+   * any user activity or a focus transfer. If your action's availability is changed
+   * in absence of any of these events, please call {@code ActivityTracker.getInstance().inc()} to notify
+   * action subsystem to update all toolbar actions when your subsystem's determines that its actions' visibility might be affected.
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
   }
 
   /**
@@ -246,9 +253,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
     if (presentation == null){
-      myTemplatePresentation = presentation = new Presentation();
+      myTemplatePresentation = presentation = createTemplatePresentation();
     }
     return presentation;
+  }
+
+  @NotNull
+  Presentation createTemplatePresentation() {
+    return new Presentation();
   }
 
   /**
@@ -256,7 +268,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place
    */
-  public abstract void actionPerformed(AnActionEvent e);
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myIsGlobal && myShortcutSet != shortcutSet) {
@@ -322,7 +334,23 @@ public abstract class AnAction implements PossiblyDumbAware {
     return getTemplatePresentation().toString();
   }
 
+  public final boolean isGlobal() {
+    return myIsGlobal;
+  }
+
   void markAsGlobal() {
     myIsGlobal = true;
+  }
+
+  /**
+   * Returns default action text.
+   * This method must be overridden in case template presentation contains user data like Project name,
+   * Run Configuration name, etc
+   *
+   * @return action presentable text without private user data
+   */
+  @Nullable
+  public String getTemplateText() {
+    return getTemplatePresentation().getText();
   }
 }

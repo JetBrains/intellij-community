@@ -75,6 +75,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return JdkUtil.checkForJdk(path);
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return suggestJavaSdkName(this, currentSdkName, sdkHome);
@@ -104,7 +105,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<SdkTypeId> condition) {
+  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
     return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
   }
 }

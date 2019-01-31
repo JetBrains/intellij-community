@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.quickFixes;
 
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
@@ -25,7 +24,6 @@ import com.jetbrains.python.inspections.PyCallingNonCallableInspection;
 public class PyRemoveCallQuickFixTest extends PyQuickFixTestCase {
 
   public void testExpression() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doQuickFixTest(PyCallingNonCallableInspection.class, PyBundle.message("QFIX.NAME.remove.call"));
   }
 
@@ -34,7 +32,6 @@ public class PyRemoveCallQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testClass() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doQuickFixTest(PyCallingNonCallableInspection.class, PyBundle.message("QFIX.NAME.remove.call"));
   }
 

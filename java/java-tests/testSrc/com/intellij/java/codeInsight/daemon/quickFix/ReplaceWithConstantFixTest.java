@@ -28,10 +28,6 @@ public class ReplaceWithConstantFixTest extends LightQuickFixParameterizedTestCa
     return new LocalInspectionTool[]{new DuplicateStringLiteralInspection()};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceWithConstant";

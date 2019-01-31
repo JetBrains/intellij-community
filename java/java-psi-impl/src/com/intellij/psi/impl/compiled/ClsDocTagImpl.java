@@ -131,7 +131,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     private final ClsDocTagImpl myParent;
     private final String myText;
 
-    public NameElement(ClsDocTagImpl parent, String text) {
+    NameElement(ClsDocTagImpl parent, String text) {
       myParent = parent;
       myText = text;
     }

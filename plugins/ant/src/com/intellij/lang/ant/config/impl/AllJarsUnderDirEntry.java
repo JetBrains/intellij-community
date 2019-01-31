@@ -49,16 +49,19 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
     this(new File(osPath));
   }
 
+  @Override
   public void writeExternal(final Element dataElement) {
     String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, myDir.getAbsolutePath().replace(File.separatorChar, '/'));
     dataElement.setAttribute(DIR, url);
   }
 
+  @Override
   public void addFilesTo(final List<File> files) {
     File[] children = myDir.listFiles(FileFilters.filesWithExtension("jar"));
     if (children != null) ContainerUtil.addAll(files, children);
   }
 
+  @Override
   public CellAppearanceEx getAppearance() {
     CellAppearanceEx appearance = FileAppearanceService.getInstance().forIoFile(myDir);
     if (appearance instanceof ModifiableCellAppearanceEx) {

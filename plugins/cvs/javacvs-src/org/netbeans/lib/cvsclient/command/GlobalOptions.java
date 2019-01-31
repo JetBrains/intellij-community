@@ -27,7 +27,7 @@ public final class GlobalOptions
 	private boolean useGzip;
 	private boolean noHistoryLogging;
 	private boolean someQuiet;
-	private Map myEnvVariables;
+	private Map<String, String> myEnvVariables;
 
 	// Setup ==================================================================
 
@@ -37,23 +37,28 @@ public final class GlobalOptions
 
 	// Implemented ============================================================
 
-	public boolean isCheckedOutFilesReadOnly() {
+	@Override
+        public boolean isCheckedOutFilesReadOnly() {
 		return checkedOutFilesReadOnly;
 	}
 
-	public boolean isDoNoChanges() {
+	@Override
+        public boolean isDoNoChanges() {
 		return doNoChanges;
 	}
 
-	public boolean isNoHistoryLogging() {
+	@Override
+        public boolean isNoHistoryLogging() {
 		return noHistoryLogging;
 	}
 
-	public boolean isUseGzip() {
+	@Override
+        public boolean isUseGzip() {
 		return useGzip;
 	}
 
-	public boolean isSomeQuiet() {
+	@Override
+        public boolean isSomeQuiet() {
 		return someQuiet;
 	}
 
@@ -79,11 +84,12 @@ public final class GlobalOptions
 		this.someQuiet = someQuiet;
 	}
 
-	public Map getEnvVariables() {
+	@Override
+        public Map<String, String> getEnvVariables() {
 		return myEnvVariables;
 	}
 
-	public void setEnvVariables(Map myEnvVariables) {
+	public void setEnvVariables(Map<String, String> myEnvVariables) {
 		this.myEnvVariables = myEnvVariables;
 	}
 	// Actions ================================================================

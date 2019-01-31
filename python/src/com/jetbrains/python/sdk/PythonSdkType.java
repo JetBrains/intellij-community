@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -27,23 +26,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.LanguageCaseCollector;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -65,8 +59,14 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher.SkeletonHeader;
+import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import icons.PythonIcons;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,12 +74,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -93,7 +94,7 @@ public final class PythonSdkType extends SdkType {
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
   @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
-  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts"};
+  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts", "net45"};
   private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
   private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
 
@@ -146,59 +147,13 @@ public final class PythonSdkType extends SdkType {
   @NonNls
   @Nullable
   public String suggestHomePath() {
-    final String pythonFromPath = findPythonInPath();
-    if (pythonFromPath != null) {
-      return pythonFromPath;
-    }
-    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
-      TreeSet<String> candidates = createVersionSet();
-      candidates.addAll(flavor.suggestHomePaths());
-      if (!candidates.isEmpty()) {
-        // return latest version
-        String[] candidateArray = ArrayUtil.toStringArray(candidates);
-        return candidateArray[candidateArray.length - 1];
-      }
+    final Sdk[] existingSdks = ProjectJdkTable.getInstance().getAllJdks();
+    final List<PyDetectedSdk> sdks = PySdkExtKt.detectSystemWideSdks(null, Arrays.asList(existingSdks));
+    final PyDetectedSdk latest = StreamEx.of(sdks).findFirst().orElse(null);
+    if (latest != null) {
+      return latest.getHomePath();
     }
     return null;
-  }
-
-  @Nullable
-  private static String findPythonInPath() {
-    final String defaultCommand = SystemInfo.isWindows ? "python.exe" : "python";
-    final String path = System.getenv("PATH");
-    for (String root : path.split(File.pathSeparator)) {
-      final File file = new File(root, defaultCommand);
-      if (file.exists()) {
-        try {
-          return file.getCanonicalPath();
-        }
-        catch (IOException ignored) {
-        }
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Collection<String> suggestHomePaths() {
-    List<String> candidates = new ArrayList<>();
-    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
-      candidates.addAll(flavor.suggestHomePaths());
-    }
-    return candidates;
-  }
-
-  private static TreeSet<String> createVersionSet() {
-    return new TreeSet<>(Comparator.comparing(PythonSdkType::findDigits));
-  }
-
-  private static String findDigits(String s) {
-    int pos = StringUtil.findFirst(s, Character::isDigit);
-    if (pos >= 0) {
-      return s.substring(pos);
-    }
-    return s;
   }
 
   public static boolean hasValidSdk() {
@@ -246,7 +201,7 @@ public final class PythonSdkType extends SdkType {
     final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
             throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
@@ -289,7 +244,7 @@ public final class PythonSdkType extends SdkType {
     if (pointerInfo == null) return;
     final Point point = pointerInfo.getLocation();
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
+      .show(project, null, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
         if (sdk != null) {
           sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);
@@ -302,18 +257,21 @@ public final class PythonSdkType extends SdkType {
     return isVirtualEnv(path);
   }
 
-  public static boolean isVirtualEnv(String path) {
+  @Contract("null -> false")
+  public static boolean isVirtualEnv(@Nullable String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
   public static boolean isConda(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isConda(sdk);
+    return PyCondaPackageManagerImpl.isConda(sdk);
+  }
+
+  public static boolean isConda(@Nullable String sdkPath) {
+    return PyCondaPackageManagerImpl.isConda(sdkPath);
   }
 
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
+    return PyCondaPackageManagerImpl.isCondaVirtualEnv(sdk);
   }
 
   @Nullable
@@ -407,11 +365,11 @@ public final class PythonSdkType extends SdkType {
       Map<String, String> env = commandLine.getEnvironment();
       String pathValue;
       if (env.containsKey(PATH)) {
-        pathValue = PythonEnvUtil.appendToPathEnvVar(env.get(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(env.get(PATH), virtualenvBin, true);
       }
       else if (passParentEnvironment) {
         // append to PATH
-        pathValue = PythonEnvUtil.appendToPathEnvVar(System.getenv(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(System.getenv(PATH), virtualenvBin, true);
       }
       else {
         pathValue = virtualenvBin;
@@ -420,6 +378,7 @@ public final class PythonSdkType extends SdkType {
     }
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
@@ -455,12 +414,17 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
       }
+    }
+    // TODO: Extract loading additional SDK data into a Python SDK provider
+    final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
+    if (pipEnvData != null) {
+      return pipEnvData;
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
   }
@@ -476,6 +440,7 @@ public final class PythonSdkType extends SdkType {
     return "Python SDK";
   }
 
+  @NotNull
   @Override
   public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
@@ -531,7 +496,6 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {
@@ -699,7 +663,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findSdkByPath(List<Sdk> sdkList, @Nullable String path) {
+  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
       for (Sdk sdk : sdkList) {
         if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
@@ -736,19 +700,47 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
-    final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
+      @Nullable VirtualFile originFile = vFile;
+      @NotNull String originPath = vFile.getPath();
+      boolean checkOnRemoteFS = false; 
+      // All binary skeletons are collected under the same root regardless of their original location.
+      // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
+      final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
+      if (header != null) {
+        // Binary module paths in skeleton headers of Mock SDK don't map to actual physical files.
+        // Fallback to the old heuristic for these stubs.
+        if (ApplicationManager.getApplication().isUnitTestMode() &&
+            Objects.equals(vFile.getParent(), PySdkUtil.findSkeletonsDir(pythonSdk))) {
+          return true;
+        }
+
+        final String binaryPath = header.getBinaryFile();
+        // XXX Assume that all pre-generated stubs belong to the interpreter's stdlib -- might change in future with PY-32229
+        if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME) || binaryPath.equals(SkeletonVersionChecker.PREGENERATED)) {
+          return true;
+        }
+        if (isRemote(pythonSdk)) {
+          checkOnRemoteFS = true;
+          // Actual file is on remote file system and not available
+          originFile = null;
+        }
+        else {
+          originFile = VfsUtil.findFileByIoFile(new File(binaryPath), true);
+        }
+        originPath = binaryPath;
+      }
+      if (originFile != null) {
+        originFile = ObjectUtils.notNull(originFile.getCanonicalFile(), originFile);
+        originPath = originFile.getPath();
+      }
+      
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtilCore.isAncestor(libDir, resolved, false)) {
-        return isNotSitePackages(resolved, libDir);
+      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
+        return true;
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, resolved, false)) {
-        return isNotSitePackages(resolved, venvLibDir);
-      }
-      final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
-      if (skeletonsDir != null &&
-          Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
+      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
       if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
@@ -761,12 +753,53 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
-  private static boolean isNotSitePackages(VirtualFile vFile, VirtualFile libDir) {
-    final VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
-    if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
-      return false;
+  @Nullable
+  private static SkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
+    final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
+    if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
+      return PySkeletonRefresher.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
     }
-    return true;
+    return null;
+  }
+
+  @NotNull
+  private static String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
+    final RemoteSdkAdditionalData remoteSdkData = as(sdk.getSdkAdditionalData(), RemoteSdkAdditionalData.class);
+    if (remoteSdkData != null) {
+      return remoteSdkData.getPathMappings().convertToRemote(localRoot);
+    }
+    return localRoot;
+  }
+
+  private static boolean isUnderLibDirButNotSitePackages(@Nullable VirtualFile file,
+                                                         @NotNull String path,
+                                                         @NotNull VirtualFile libDir,
+                                                         @NotNull Sdk sdk, 
+                                                         boolean checkOnRemoteFS) {
+    final VirtualFile originLibDir;
+    final String originLibDirPath;
+    if (checkOnRemoteFS) {
+      originLibDir = libDir;
+      originLibDirPath = mapToRemote(originLibDir.getPath(), sdk);
+    }
+    else {
+      // Normalize the path to the lib directory on local FS
+      originLibDir = ObjectUtils.notNull(libDir.getCanonicalFile(), libDir);
+      originLibDirPath = originLibDir.getPath();
+    }
+
+    // This check is more brittle and thus used as a fallback measure
+    if (checkOnRemoteFS || file == null) {
+      final String normalizedLidDirPath = FileUtil.toSystemIndependentName(originLibDirPath);
+      final String sitePackagesPath = normalizedLidDirPath + "/" + PyNames.SITE_PACKAGES;
+      final String normalizedPath = FileUtil.toSystemIndependentName(path);
+      return FileUtil.startsWith(normalizedPath, normalizedLidDirPath) && !FileUtil.startsWith(normalizedPath, sitePackagesPath);
+    }
+    else if (VfsUtilCore.isAncestor(originLibDir, file, false)) {
+      final VirtualFile sitePackagesDir = originLibDir.findChild(PyNames.SITE_PACKAGES);
+      return sitePackagesDir == null || !VfsUtilCore.isAncestor(sitePackagesDir, file, false);
+    }
+    return false;
   }
 
   /**
@@ -800,7 +833,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;
@@ -904,6 +937,11 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
+  public static boolean isRunAsRootViaSudo(@NotNull Sdk sdk) {
+    SdkAdditionalData data = sdk.getSdkAdditionalData();
+    return data instanceof PyRemoteSdkAdditionalDataBase && ((PyRemoteSdkAdditionalDataBase)data).isRunAsRootViaSudo();
+  }
+
   public static boolean hasInvalidRemoteCredentials(Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       final Ref<Boolean> result = Ref.create(false);
@@ -953,21 +991,17 @@ public final class PythonSdkType extends SdkType {
 
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    Map<String, String> env = Maps.newHashMap();
-
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
     if (reader.getActivate() != null) {
       try {
-        env.putAll(reader.readPythonEnv().entrySet().stream()
-                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
       }
       catch (Exception e) {
         LOG.error("Couldn't read virtualenv variables", e);
       }
     }
 
-    return ImmutableMap.copyOf(env);
+    return Collections.emptyMap();
   }
 }
 

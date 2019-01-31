@@ -2,14 +2,23 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 
 class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   override fun createLogger(): FeatureUsageEventLogger {
-    return FeatureUsageFileEventLogger()
+    val config = EventLogConfiguration
+    val bucket = config.bucket.toString()
+    val version = config.version.toString()
+    val logger = FeatureUsageFileEventLogger(config.sessionId, config.build, bucket, version, FeatureUsageLogEventWriter())
+    Disposer.register(ApplicationManager.getApplication(), logger)
+    return logger
   }
 
-  override fun isEnabled() : Boolean {
-    return StatisticsUploadAssistant.isSendAllowed() && Registry.`is`("feature.usage.event.log.collect.and.upload")
+  override fun isEnabled(): Boolean {
+    return !ApplicationManager.getApplication().isUnitTestMode &&
+           Registry.`is`("feature.usage.event.log.collect.and.upload") &&
+           StatisticsUploadAssistant.isCollectAllowed()
   }
 }

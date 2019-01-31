@@ -24,7 +24,7 @@ import java.util.List;
 
 public class WritesCounterSemilattice<T> implements Semilattice<TObjectIntHashMap<T>> {
 
-  private static <T> void merge(final TObjectIntHashMap<T> to, TObjectIntHashMap<T> from) {
+  private static <T> void merge(final TObjectIntHashMap<? super T> to, TObjectIntHashMap<T> from) {
     from.forEachEntry(new TObjectIntProcedure<T>() {
       @Override
       public boolean execute(T key, int value) {
@@ -39,7 +39,7 @@ public class WritesCounterSemilattice<T> implements Semilattice<TObjectIntHashMa
 
   @NotNull
   @Override
-  public TObjectIntHashMap<T> join(@NotNull List<TObjectIntHashMap<T>> ins) {
+  public TObjectIntHashMap<T> join(@NotNull List<? extends TObjectIntHashMap<T>> ins) {
     final TObjectIntHashMap<T> result = new TObjectIntHashMap<>();
     for (TObjectIntHashMap<T> i : ins) {
       merge(result, i);

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/11/2014
  */
 public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNotificationExtension {
   @NotNull
@@ -39,7 +38,6 @@ public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNo
                         @NotNull Project project,
                         @Nullable Throwable error) {
     if (error == null) return;
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof ExternalSystemException) {
       updateNotification(notification, project, (ExternalSystemException)unwrapped);

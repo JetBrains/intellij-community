@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -43,7 +43,7 @@ public abstract class JavaValueModifier extends XValueModifier {
   public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
     final Value value = myJavaValue.getDescriptor().getValue();
     if (value == null || value instanceof PrimitiveValue) {
-      String valueString = myJavaValue.getValueString();
+      String valueString = myJavaValue.getValueText();
       int pos = valueString.lastIndexOf('('); //skip hex presentation if any
       if (pos > 1) {
         valueString = valueString.substring(0, pos).trim();
@@ -118,7 +118,7 @@ public abstract class JavaValueModifier extends XValueModifier {
       }
       else if (varType instanceof ReferenceType) {
         if (value instanceof PrimitiveValue) {
-          value = (Value)new BoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
+          value = (Value)BoxingEvaluator.box(value, context);
         }
       }
     }
@@ -201,10 +201,12 @@ public abstract class JavaValueModifier extends XValueModifier {
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
     SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {
+      @Override
       public Priority getPriority() {
         return Priority.HIGH;
       }
 
+      @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator;
         try {
@@ -215,6 +217,7 @@ public abstract class JavaValueModifier extends XValueModifier {
             SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
             PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
             evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+              @Override
               public ExpressionEvaluator compute() throws EvaluateException {
                 return EvaluatorBuilderImpl
                   .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
@@ -223,6 +226,7 @@ public abstract class JavaValueModifier extends XValueModifier {
           }
 
           setValue(evaluator, evaluationContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException,

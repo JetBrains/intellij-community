@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -25,5 +26,5 @@ import com.intellij.util.messages.Topic;
 public interface EditorHintListener {
   Topic<EditorHintListener> TOPIC = Topic.create("Notification about showing editor hints", EditorHintListener.class);
 
-  void hintShown(Project project, LightweightHint hint, int flags);
+  void hintShown(Project project, @NotNull LightweightHint hint, int flags);
 }

@@ -21,6 +21,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 
 public class NumberDocument extends PlainDocument {
+  @Override
   public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
     char[] source = str.toCharArray();
     char[] result = new char[source.length];

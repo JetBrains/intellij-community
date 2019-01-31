@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -28,25 +13,23 @@ import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
+
   private final PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
   private final boolean myAllowInlineThisOnly;
-
   private final PsiMethod myMethod;
+  private final int myOccurrencesNumber;
 
-  private int myOccurrencesNumber = -1;
-
-  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor,
-                            final boolean allowInlineThisOnly) {
+  public InlineMethodDialog(Project project, PsiMethod method, PsiJavaCodeReferenceElement ref, Editor editor, boolean allowInlineThisOnly) {
     super(project, true, method);
     myMethod = method;
     myReferenceElement = ref;
     myEditor = editor;
     myAllowInlineThisOnly = allowInlineThisOnly;
     myInvokedOnReference = ref != null;
+    myOccurrencesNumber = getNumberOfOccurrences(method);
 
     setTitle(REFACTORING_NAME);
-    myOccurrencesNumber = getNumberOfOccurrences(method);
     init();
   }
 
@@ -98,9 +81,8 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    if (myMethod.isConstructor()) HelpManager.getInstance().invokeHelp(HelpID.INLINE_CONSTRUCTOR);
-    else HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
+  protected String getHelpId() {
+    return myMethod.isConstructor() ? HelpID.INLINE_CONSTRUCTOR : HelpID.INLINE_METHOD;
   }
 
   @Override

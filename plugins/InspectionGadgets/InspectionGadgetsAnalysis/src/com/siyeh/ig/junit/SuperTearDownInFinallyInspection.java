@@ -89,7 +89,7 @@ public class SuperTearDownInFinallyInspection extends BaseInspection {
       private final PsiElement myIgnore;
       private boolean nonTrivialActivity = false;
 
-      public NonTrivialActivityVisitor(PsiElement ignore) {
+      NonTrivialActivityVisitor(PsiElement ignore) {
         myIgnore = ignore;
       }
 

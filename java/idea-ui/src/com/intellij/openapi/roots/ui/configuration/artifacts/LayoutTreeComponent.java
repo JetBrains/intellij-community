@@ -623,6 +623,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private class LayoutTreeStructure extends SimpleTreeStructure {
     private ArtifactRootNode myRootNode;
 
+    @NotNull
     @Override
     public Object getRootElement() {
       if (myRootNode == null) {
@@ -637,7 +638,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   private class LayoutTreeBuilder extends SimpleTreeBuilder {
-    public LayoutTreeBuilder() {
+    LayoutTreeBuilder() {
       super(LayoutTreeComponent.this.myTree, LayoutTreeComponent.this.myTree.getBuilderModel(), LayoutTreeComponent.this.myTreeStructure,
             LayoutTreeComponent.this.getComparator());
     }

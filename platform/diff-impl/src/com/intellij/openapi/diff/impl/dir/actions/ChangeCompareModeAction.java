@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -43,13 +44,13 @@ class ChangeCompareModeAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myModel.setCompareMode(myMode);
     myModel.reloadModel(false);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final boolean on = myModel.getCompareMode() == myMode;
     e.getPresentation().setIcon(on ? ON : OFF);
     e.getPresentation().setSelectedIcon(on ? ON_SELECTED : OFF);

@@ -46,12 +46,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     final File etalonFile = new File(myAnnotateDataDir, "etalon");
 
     XStream xStream = new XStream();
-    FileReader reader = new FileReader(etalonFile);
-    try {
-      myAnnotations = (List<HgAnnotationLine>) xStream.fromXML(reader);
-    }
-    finally {
-      reader.close();
+    try (FileReader reader = new FileReader(etalonFile)) {
+      myAnnotations = (List<HgAnnotationLine>)xStream.fromXML(reader);
     }
   }
   
@@ -105,12 +101,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
     }
 
     XStream xStream = new XStream();
-    FileWriter writer = new FileWriter(etalonFile);
-    try {
+    try (FileWriter writer = new FileWriter(etalonFile)) {
       xStream.toXML(annotationLines, writer);
-    }
-    finally {
-      writer.close();
     }
   }
 

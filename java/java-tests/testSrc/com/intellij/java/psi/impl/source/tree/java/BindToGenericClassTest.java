@@ -17,8 +17,6 @@ package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.java.psi.GenericsTestCase;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 
@@ -26,23 +24,11 @@ import com.intellij.psi.search.GlobalSearchScope;
  * @author dsl
  */
 public class BindToGenericClassTest extends GenericsTestCase {
-  private boolean myOldFQNamesSetting;
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     setupGenericSampleClasses();
-    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-
-    myOldFQNamesSetting = currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES;
-    currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES = true;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES = myOldFQNamesSetting;
-    super.tearDown();
+    JavaCodeStyleSettings.getInstance(getProject()).USE_FQ_CLASS_NAMES = true;
   }
 
   public void testReferenceElement() {

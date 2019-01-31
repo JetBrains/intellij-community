@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/18/12 12:02 PM
  */
 public interface ArrangementEntryMatcher {
 

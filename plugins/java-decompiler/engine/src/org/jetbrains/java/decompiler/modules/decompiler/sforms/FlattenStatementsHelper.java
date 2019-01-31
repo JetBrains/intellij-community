@@ -56,15 +56,15 @@ public class FlattenStatementsHelper {
   private void flattenStatement() {
 
     class StatementStackEntry {
-      public Statement statement;
-      public LinkedList<StackEntry> stackFinally;
-      public List<Exprent> tailExprents;
+      public final Statement statement;
+      public final LinkedList<StackEntry> stackFinally;
+      public final List<Exprent> tailExprents;
 
       public int statementIndex;
       public int edgeIndex;
       public List<StatEdge> succEdges;
 
-      public StatementStackEntry(Statement statement, LinkedList<StackEntry> stackFinally, List<Exprent> tailExprents) {
+      StatementStackEntry(Statement statement, LinkedList<StackEntry> stackFinally, List<Exprent> tailExprents) {
         this.statement = statement;
         this.stackFinally = stackFinally;
         this.tailExprents = tailExprents;
@@ -517,7 +517,7 @@ public class FlattenStatementsHelper {
     public final DirectNode finallyShortRangeSource;
     public final DirectNode finallyLongRangeSource;
 
-    public StackEntry(CatchAllStatement catchstatement,
+    StackEntry(CatchAllStatement catchstatement,
                       boolean state,
                       int edgetype,
                       Statement destination,
@@ -539,7 +539,7 @@ public class FlattenStatementsHelper {
       this.finallyLongRangeSource = finallyLongRangeSource;
     }
 
-    public StackEntry(CatchAllStatement catchstatement, boolean state) {
+    StackEntry(CatchAllStatement catchstatement, boolean state) {
       this(catchstatement, state, -1, null, null, null, null, null, false);
     }
   }
@@ -549,7 +549,7 @@ public class FlattenStatementsHelper {
     public final Integer statid;
     public final int edgetype;
 
-    public Edge(String sourceid, Integer statid, int edgetype) {
+    Edge(String sourceid, Integer statid, int edgetype) {
       this.sourceid = sourceid;
       this.statid = statid;
       this.edgetype = edgetype;

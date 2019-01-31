@@ -170,11 +170,11 @@ public class ReflectionAccessMethodBuilder {
     public final String name;
     public final String jvmTypeName;
 
-    public ParameterInfo(@NotNull String type, @NotNull String name) {
+    ParameterInfo(@NotNull String type, @NotNull String name) {
       this(type, name, type);
     }
 
-    public ParameterInfo(@NotNull String type, @NotNull String name, @NotNull String jvmTypeName) {
+    ParameterInfo(@NotNull String type, @NotNull String name, @NotNull String jvmTypeName) {
       this.type = type;
       this.name = name;
       this.jvmTypeName = jvmTypeName;
@@ -201,7 +201,7 @@ public class ReflectionAccessMethodBuilder {
     private final String myClassName;
     private final FieldAccessType myAccessType;
 
-    public MyFieldAccessor(@NotNull String className,
+    MyFieldAccessor(@NotNull String className,
                            @NotNull String fieldName,
                            @NotNull FieldAccessType accessType) {
       myFieldName = fieldName;
@@ -240,7 +240,7 @@ public class ReflectionAccessMethodBuilder {
     private final String myClassName;
     private final String myMethodName;
 
-    public MyMethodAccessor(@NotNull String className, @NotNull String methodName) {
+    MyMethodAccessor(@NotNull String className, @NotNull String methodName) {
       myClassName = className;
       myMethodName = methodName;
     }
@@ -279,7 +279,7 @@ public class ReflectionAccessMethodBuilder {
   private class MyConstructorAccessor implements MyMemberAccessor {
     private final String myClassName;
 
-    public MyConstructorAccessor(@NotNull String className) {
+    MyConstructorAccessor(@NotNull String className) {
       myClassName = className;
     }
 

@@ -67,7 +67,7 @@ public class ProtocolParser {
       throw new PyDebuggerException("Expected <threading_event> or <asyncio_event>, found " + reader.getNodeName());
     }
 
-    final Long time = Long.parseLong(readString(reader, "time", ""));
+    final long time = Long.parseLong(readString(reader, "time", ""));
     final String name = readString(reader, "name", "");
     final String thread_id = readString(reader, "thread_id", "");
     final String type = readString(reader, "type", "");

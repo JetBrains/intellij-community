@@ -95,6 +95,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     }
   }
 
+  @Override
   public String toString() {
     return "PsiLabeledStatement";
   }
@@ -112,6 +113,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return true;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return getLabelIdentifier().getText();

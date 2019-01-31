@@ -16,6 +16,8 @@
 package git4idea.remote
 
 import com.intellij.openapi.components.service
+import com.intellij.util.UriUtil
+import com.intellij.util.io.URLUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
@@ -28,17 +30,33 @@ import java.util.concurrent.TimeUnit
 
 class GitRemoteTest : GitPlatformTest() {
 
-  private lateinit var authenticator : TestAuthenticator
-  private lateinit var authTestService : GitHttpAuthTestService
+  private lateinit var authenticator: TestAuthenticator
+  private lateinit var authTestService: GitHttpAuthTestService
 
-  private val projectName = "projectA"
+  private lateinit var host: String
+  private lateinit var token: String
 
   override fun setUp() {
     super.setUp()
 
+    host = System.getenv("idea.test.github.host")
+    token = System.getenv("idea.test.github.token1")
+
     authenticator = TestAuthenticator()
     authTestService = service<GitHttpAuthService>() as GitHttpAuthTestService
     authTestService.register(authenticator)
+  }
+
+  private fun makeUrl(): String {
+    return "${host}/testmaster/$PROJECT_NAME.git"
+  }
+
+  private fun makeUrlWithUsername(): String {
+    return UriUtil.splitScheme(host).let {
+      val scheme = it.first
+      if (scheme.isNotEmpty()) it.first + URLUtil.SCHEME_SEPARATOR + USERNAME + "@" + it.second + "/testmaster/" + PROJECT_NAME + ".git"
+      else USERNAME + "@" + it.second + "/testmaster/" + PROJECT_NAME + ".git"
+    }
   }
 
   override fun tearDown() {
@@ -53,27 +71,27 @@ class GitRemoteTest : GitPlatformTest() {
   override fun hasRemoteGitOperation() = true
 
   fun `test clone from http with username`() {
-    val cloneWaiter = cloneOnPooledThread(makeUrl("gituser"))
+    val cloneWaiter = cloneOnPooledThread(makeUrlWithUsername())
 
     assertPasswordAsked()
-    authenticator.supplyPassword("gitpassword")
+    authenticator.supplyPassword(token)
 
     assertCloneSuccessful(cloneWaiter)
   }
 
   fun `test clone from http without username`() {
-    val cloneWaiter = cloneOnPooledThread(makeUrl(null))
+    val cloneWaiter = cloneOnPooledThread(makeUrl())
 
     assertUsernameAsked()
-    authenticator.supplyUsername("gituser")
+    authenticator.supplyUsername(USERNAME)
     assertPasswordAsked()
-    authenticator.supplyPassword("gitpassword")
+    authenticator.supplyPassword(token)
 
     assertCloneSuccessful(cloneWaiter)
   }
 
   fun `test clone fails if incorrect password`() {
-    val url = makeUrl("gituser")
+    val url = makeUrlWithUsername()
 
     val cloneWaiter = cloneOnPooledThread(url)
 
@@ -81,7 +99,7 @@ class GitRemoteTest : GitPlatformTest() {
     authenticator.supplyPassword("incorrect")
 
     assertTrue("Clone didn't complete during the reasonable period of time", cloneWaiter.await(30, TimeUnit.SECONDS))
-    assertFalse("Repository directory shouldn't be created", File(testRoot, projectName).exists())
+    assertFalse("Repository directory shouldn't be created", File(testRoot, PROJECT_NAME).exists())
 
     val expectedAuthFailureMessage = if (vcs.version.isLaterOrEqual(GitVersion(1, 8, 3, 0))) {
       "Authentication failed for '$url/'"
@@ -90,11 +108,6 @@ class GitRemoteTest : GitPlatformTest() {
       "Authentication failed"
     }
     assertErrorNotification("Clone failed", expectedAuthFailureMessage)
-  }
-
-  private fun makeUrl(username: String?) : String {
-    val login = if (username == null) "" else "$username@"
-    return "http://${login}deb6-vm7-git.labs.intellij.net/$projectName.git"
   }
 
   private fun cloneOnPooledThread(url: String): CountDownLatch {
@@ -109,7 +122,7 @@ class GitRemoteTest : GitPlatformTest() {
 
   private fun assertCloneSuccessful(cloneCompleted: CountDownLatch) {
     assertTrue("Clone didn't complete during the reasonable period of time", cloneCompleted.await(30, TimeUnit.SECONDS))
-    assertTrue("Repository directory was not found", File(testRoot, projectName).exists())
+    assertTrue("Repository directory was not found", File(testRoot, PROJECT_NAME).exists())
   }
 
   private fun assertPasswordAsked() {
@@ -130,11 +143,15 @@ class GitRemoteTest : GitPlatformTest() {
     private val passwordSuppliedWaiter = CountDownLatch(1)
     private val usernameSuppliedWaiter = CountDownLatch(1)
 
-    @Volatile private var passwordAsked: Boolean = false
-    @Volatile private var usernameAsked: Boolean = false
+    @Volatile
+    private var passwordAsked: Boolean = false
+    @Volatile
+    private var usernameAsked: Boolean = false
 
-    @Volatile private lateinit var password: String
-    @Volatile private lateinit var username: String
+    @Volatile
+    private lateinit var password: String
+    @Volatile
+    private lateinit var username: String
 
     override fun askPassword(url: String): String {
       passwordAsked = true
@@ -188,5 +205,10 @@ class GitRemoteTest : GitPlatformTest() {
     internal fun wasUsernameAsked(): Boolean {
       return usernameAsked
     }
+  }
+
+  companion object {
+    private const val PROJECT_NAME = "GitRemoteTest"
+    private const val USERNAME = "x-oauth-basic"
   }
 }

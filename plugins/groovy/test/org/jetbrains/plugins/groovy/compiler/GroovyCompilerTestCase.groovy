@@ -11,7 +11,6 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.module.ModuleGroupTestsKt
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
-import org.jetbrains.plugins.groovy.util.Slow 
+import org.jetbrains.plugins.groovy.util.Slow
 /**
  * @author aalmiray
  * @author peter
@@ -55,8 +54,9 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     return super.getProject()
   }
 
+  @NotNull
   @Override
-  Disposable disposeOnTearDown(Disposable disposable) {
+  Disposable disposeOnTearDown(@NotNull Disposable disposable) {
     return super.disposeOnTearDown(disposable)
   }
 
@@ -109,9 +109,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   protected void setupTestSources() {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
+    WriteCommandAction.runWriteCommandAction(getProject(), {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule)
         final ModifiableRootModel rootModel = rootManager.getModifiableModel()
         final ContentEntry entry = rootModel.getContentEntries()[0]
@@ -119,8 +117,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
         entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("src"), false)
         entry.addSourceFolder(myFixture.getTempDirFixture().findOrCreateDir("tests"), true)
         rootModel.commit()
-      }
-    }.execute()
+      })
   }
 
   protected Module addDependentModule() {
@@ -210,7 +207,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
     output = output.findAll { line ->
       !StringUtil.containsIgnoreCase(line, "illegal") &&
-      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass")
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass") &&
+      !line.startsWith("Picked up ")
     }
     assertEquals(expected.trim(), output.join("\n"))
   }

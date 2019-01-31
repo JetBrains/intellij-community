@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -102,26 +103,31 @@ public class HierarchyNodeIterator extends NodeIterator {
     build(reference, new HashSet<>());
   }
 
+  @Override
   public boolean hasNext() {
     return index < remaining.size();
   }
 
+  @Override
   public PsiElement current() {
     return remaining.get(index);
   }
 
+  @Override
   public void advance() {
     if (index!=remaining.size()) {
       ++index;
     }
   }
 
+  @Override
   public void rewind() {
     if (index > 0) {
       --index;
     }
   }
 
+  @Override
   public void reset() {
     index = 0;
   }

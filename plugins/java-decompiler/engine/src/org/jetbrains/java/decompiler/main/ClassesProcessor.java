@@ -1,9 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -18,7 +18,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -27,7 +30,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ClassesProcessor {
+public class ClassesProcessor implements CodeConstants {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
   private final StructContext context;
@@ -54,12 +57,13 @@ public class ClassesProcessor {
     Map<String, String> mapNewSimpleNames = new HashMap<>();
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
+    boolean verifyAnonymousClasses = DecompilerContext.getOption(IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES);
 
     // create class nodes
     for (StructClass cl : context.getClasses().values()) {
       if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
         if (bDecompileInner) {
-          StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttribute("InnerClasses");
+          StructInnerClassesAttribute inner = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
 
           if (inner != null) {
             for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
@@ -136,7 +140,7 @@ public class ClassesProcessor {
             Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
               StructClass scl = superNode.classStruct;
-              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttribute("InnerClasses");
+              StructInnerClassesAttribute inner = scl.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
 
               if (inner == null || inner.getEntries().isEmpty()) {
                 DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
@@ -169,19 +173,18 @@ public class ClassesProcessor {
                 nestedNode.type = rec.type;
                 nestedNode.access = rec.accessFlags;
 
+                // sanity checks of the class supposed to be anonymous
+                if (verifyAnonymousClasses && nestedNode.type == ClassNode.CLASS_ANONYMOUS && !isAnonymous(nestedNode.classStruct, scl)) {
+                  nestedNode.type = ClassNode.CLASS_LOCAL;
+                }
+
                 if (nestedNode.type == ClassNode.CLASS_ANONYMOUS) {
                   StructClass cl = nestedNode.classStruct;
-
                   // remove static if anonymous class (a common compiler bug)
                   nestedNode.access &= ~CodeConstants.ACC_STATIC;
 
                   int[] interfaces = cl.getInterfaces();
-
                   if (interfaces.length > 0) {
-                    if (interfaces.length > 1) {
-                      String message = "Inconsistent anonymous class definition: " + cl.qualifiedName;
-                      DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-                    }
                     nestedNode.anonymousClassType = new VarType(cl.getInterface(0), true);
                   }
                   else {
@@ -205,6 +208,92 @@ public class ClassesProcessor {
         }
       }
     }
+  }
+
+  private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
+    // checking super class and interfaces
+    int[] interfaces = cl.getInterfaces();
+    if (interfaces.length > 0) {
+      boolean hasNonTrivialSuperClass = cl.superClass != null && !VarType.VARTYPE_OBJECT.equals(new VarType(cl.superClass.getString(), true));
+      if (hasNonTrivialSuperClass || interfaces.length > 1) { // can't have multiple 'sources'
+        String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName + "'. Multiple interfaces and/or super class defined.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+        return false;
+      }
+    }
+    else if (cl.superClass == null) { // neither interface nor super class defined
+      String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName + "'. Neither interface nor super class defined.";
+      DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+      return false;
+    }
+
+    // FIXME: check constructors
+    // FIXME: check enclosing class/method
+
+    ConstantPool pool = enclosingCl.getPool();
+
+    int refCounter = 0;
+    boolean refNotNew = false;
+
+    StructEnclosingMethodAttribute attribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
+    String enclosingMethod = attribute != null ? attribute.getMethodName() : null;
+
+    // checking references in the enclosing class
+    for (StructMethod mt : enclosingCl.getMethods()) {
+      if (enclosingMethod != null && !enclosingMethod.equals(mt.getName())) {
+        continue;
+      }
+
+      try {
+        mt.expandData();
+
+        InstructionSequence seq = mt.getInstructionSequence();
+        if (seq != null) {
+          int len = seq.length();
+          for (int i = 0; i < len; i++) {
+            Instruction instr = seq.getInstr(i);
+            switch (instr.opcode) {
+              case opc_checkcast:
+              case opc_instanceof:
+                if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                  refCounter++;
+                  refNotNew = true;
+                }
+                break;
+              case opc_new:
+              case opc_anewarray:
+              case opc_multianewarray:
+                if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
+                  refCounter++;
+                }
+                break;
+              case opc_getstatic:
+              case opc_putstatic:
+                if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
+                  refCounter++;
+                  refNotNew = true;
+                }
+            }
+          }
+        }
+
+        mt.releaseResources();
+      }
+      catch (IOException ex) {
+        String message = "Could not read method while checking anonymous class definition: '" + enclosingCl.qualifiedName + "', '" +
+                         InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()) + "'";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+        return false;
+      }
+
+      if (refCounter > 1 || refNotNew) {
+        String message = "Inconsistent references to the class '" + cl.qualifiedName + "' which is supposed to be anonymous";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public void writeClass(StructClass cl, TextBuffer buffer) throws IOException {

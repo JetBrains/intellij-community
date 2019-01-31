@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -30,19 +31,20 @@ public abstract class ToggleEditorModeAction extends ToggleAction {
   private final ToolWindowAnchor myAnchor;
 
   public ToggleEditorModeAction(LightToolWindowManager manager, Project project, ToolWindowAnchor anchor) {
-    super(StringUtil.capitalize(anchor.toString()), "Pin/unpin tool window to " + anchor + " side UI Designer Editor", null);
+    super(anchor != null ? StringUtil.capitalize(anchor.toString()) : "None",
+          anchor != null ? "Pin tool window to " + anchor + " side UI Designer Editor" : "Unpin tool window from Designer Editor", null);
     myManager = manager;
     myProject = project;
     myAnchor = anchor;
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myAnchor == myManager.getEditorMode();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (state) {
       myManager.setEditorMode(myAnchor);
 

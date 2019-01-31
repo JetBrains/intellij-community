@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -20,6 +22,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
+import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -70,8 +73,9 @@ public final class EditorUtil {
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     if (editor instanceof EditorImpl) {
-      LogicalPosition lineEndPosition = editor.visualToLogicalPosition(new VisualPosition(line, Integer.MAX_VALUE));
-      int lineEndOffset = editor.logicalPositionToOffset(lineEndPosition);
+      EditorImpl editorImpl = (EditorImpl)editor;
+      int lineEndOffset = line >= editorImpl.getVisibleLineCount()
+                          ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
     }
     Document document = editor.getDocument();
@@ -289,6 +293,10 @@ public final class EditorUtil {
     return offset - start + shift;
   }
 
+  /**
+   * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
+   */
+  @Deprecated
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
@@ -358,10 +366,10 @@ public final class EditorUtil {
     if (tabSize <= 0) {
       return x + plainSpaceWidth;
     }
-    tabSize *= plainSpaceWidth;
+    float tabSizePixels = tabSize * plainSpaceWidth;
 
-    int nTabs = (int) (x / tabSize);
-    return (nTabs + 1) * tabSize;
+    int nTabs = (int) ((x + plainSpaceWidth / 2) / tabSizePixels);
+    return (nTabs + 1) * tabSizePixels;
   }
 
   public static int textWidthInColumns(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, int x) {
@@ -655,7 +663,7 @@ public final class EditorUtil {
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
-    int line = editor instanceof EditorImpl ? ((EditorImpl)editor).yToVisibleLine(y): y / editor.getLineHeight();
+    int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
     return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
   }
 
@@ -820,5 +828,55 @@ public final class EditorUtil {
       pos = new VisualPosition(pos.line, pos.column + 1);
     }
     return pos;
+  }
+
+  public static int getTotalInlaysHeight(@NotNull List<? extends Inlay> inlays) {
+    int sum = 0;
+    for (Inlay inlay : inlays) {
+      sum += inlay.getHeightInPixels();
+    }
+    return sum;
+  }
+
+  /**
+   * This is similar to {@link SelectionModel#addSelectionListener(SelectionListener, Disposable)}, but when selection changes happen within
+   * the scope of {@link CaretModel#runForEachCaret(CaretAction)} call, there will be only one notification at the end of iteration over
+   * carets.
+   */
+  public static void addBulkSelectionListener(@NotNull Editor editor, @NotNull SelectionListener listener, @NotNull Disposable disposable) {
+    Ref<Pair<int[], int[]>> selectionBeforeBulkChange = new Ref<>();
+    Ref<Boolean> selectionChangedDuringBulkChange = new Ref<>();
+    editor.getSelectionModel().addSelectionListener(new SelectionListener() {
+      @Override
+      public void selectionChanged(@NotNull SelectionEvent e) {
+        if (selectionBeforeBulkChange.isNull()) {
+          listener.selectionChanged(e);
+        }
+        else {
+          selectionChangedDuringBulkChange.set(Boolean.TRUE);
+        }
+      }
+    }, disposable);
+    editor.getCaretModel().addCaretActionListener(new CaretActionListener() {
+      @Override
+      public void beforeAllCaretsAction() {
+        selectionBeforeBulkChange.set(getSelectionOffsets());
+        selectionChangedDuringBulkChange.set(null);
+      }
+
+      @Override
+      public void afterAllCaretsAction() {
+        if (!selectionChangedDuringBulkChange.isNull()) {
+          Pair<int[], int[]> beforeBulk = selectionBeforeBulkChange.get();
+          Pair<int[], int[]> afterBulk = getSelectionOffsets();
+          listener.selectionChanged(new SelectionEvent(editor, beforeBulk.first, beforeBulk.second, afterBulk.first, afterBulk.second));
+        }
+        selectionBeforeBulkChange.set(null);
+      }
+
+      private Pair<int[], int[]> getSelectionOffsets() {
+        return Pair.create(editor.getSelectionModel().getBlockSelectionStarts(), editor.getSelectionModel().getBlockSelectionEnds());
+      }
+    }, disposable);
   }
 }

@@ -148,7 +148,7 @@ public class CollapsiblePanel extends JPanel {
         myContent.requestFocusInWindow();
       }
 
-      notifyListners();
+      notifyListeners();
 
       revalidate();
       repaint();
@@ -176,7 +176,7 @@ public class CollapsiblePanel extends JPanel {
     }
   }
 
-  private void notifyListners() {
+  private void notifyListeners() {
     for (CollapsingListener listener : myListeners) {
       listener.onCollapsingChanged(this, isCollapsed());
     }

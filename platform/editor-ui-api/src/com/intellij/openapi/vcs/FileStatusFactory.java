@@ -59,7 +59,7 @@ public class FileStatusFactory {
     private final ColorKey myColorKey;
     private final String myText;
 
-    public FileStatusImpl(@NotNull String status, @NotNull ColorKey key, String text) {
+    FileStatusImpl(@NotNull String status, @NotNull ColorKey key, String text) {
       myStatus = status;
       myColorKey = key;
       myText = text;

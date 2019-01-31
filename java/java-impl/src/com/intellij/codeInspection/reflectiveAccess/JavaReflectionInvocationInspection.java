@@ -60,7 +60,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   private static void checkReflectionCall(@NotNull PsiMethodCallExpression methodCall,
                                           int argumentOffset,
                                           @NotNull ProblemsHolder holder,
-                                          @NotNull Predicate<PsiMethodCallExpression> methodPredicate) {
+                                          @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final List<PsiExpression> requiredTypes =
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
@@ -112,7 +112,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   @Nullable
   private static List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
                                                                 int argumentOffset,
-                                                                @NotNull Predicate<PsiMethodCallExpression> methodPredicate) {
+                                                                @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(ParenthesesUtils.stripParentheses(qualifier));
     if (definition instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
@@ -160,7 +160,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     final PsiExpression[] expressions;
     final boolean varargAsArray;
 
-    public Arguments(PsiExpression[] expressions, boolean varargAsArray) {
+    Arguments(PsiExpression[] expressions, boolean varargAsArray) {
       this.expressions = expressions;
       this.varargAsArray = varargAsArray;
     }

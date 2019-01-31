@@ -39,7 +39,7 @@ import java.util.ArrayList;
 public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
     VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
 
@@ -61,7 +61,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setText(VcsBundle.message("action.name.create.patch.for.selected.revisions"));
     e.getPresentation().setDescription(VcsBundle.message("action.description.create.patch.for.selected.revisions"));
@@ -113,7 +113,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
       VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
 
       try {
-        myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
+        myList = AbstractVcsHelperImpl.getRemoteList(provider, myRevision.getRevisionNumber(), vf);
         //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
       }
       catch (VcsException e1) {

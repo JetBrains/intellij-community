@@ -3,7 +3,10 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -18,6 +21,7 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
@@ -236,6 +240,31 @@ class SomeClass {
 }
 """
     measureHighlighting(text, 14_000)
+  }
+
+  void "test constructor call's"() {
+    def text = """
+class Cl {
+
+    Cl(Map<String, Integer> a, Condition<Cl> con, String s) {
+    }
+
+    interface Condition<T> {}
+
+    static <T> Condition<T> alwaysFalse() {
+        return (Condition<T>)null
+    }
+
+
+    static m() {
+        ${'''new Cl(alwaysFalse(), name: 1, m: 2, new Object().toString(), sad: 12)\n'''*100}
+    }
+}
+"""
+    IdeaTestUtil.startPerformanceTest(getTestName(false), 750, configureAndHighlight(text))
+      .attempts(20)
+      .usesAllCPUCores()
+      .assertTiming()
   }
 
   void "test infer only the variable types that are needed"() {
@@ -511,25 +540,44 @@ public class Doo$i {}
     }).attempts(1).assertTiming()
   }
 
-  void 'test resolve long chains'() {
+  void 'test resolve long chain of references'() {
+    def header = """\
+class Node {
+  public Node nn
+}
+def a = new Node()
+"""
+    // a.nn.nn ... .nn
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${'.nn' * 500}.nn")
+    def reference = (GrReferenceExpression)file.statements.last()
+    assert reference.resolve() != null
+  }
+
+  void 'test resolve long chain of method calls'() {
     def header = """\
 class Node {
   public Node nn
   public Node nn() {}
+}
+def a = new Node()
+"""
+    // a.nn() ... .nn().nn
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${'.nn()' * 250}.nn")
+    def reference = (GrReferenceExpression)file.statements.last()
+    assert reference.resolve() != null
+  }
+
+  void 'test resolve long chain of operators'() {
+    def header = """\
+class Node {
   public Node plus(Node n) {n}
 }
 def a = new Node()
 """
-    def data = [
-      "a${'.nn' * 500}.nn",               // a.nn.nn ... .nn
-      "a${'.nn()' * 250}.nn",             // a.nn() ... .nn().nn
-      "a${' += a' * 500} += new Node()",  // a += a ... += a += new Node()
-    ]
-    for (expressionText in data) {
-      def file = (GroovyFile)fixture.configureByText('_.groovy', header + expressionText)
-      def reference = (PsiReference)file.statements.last()
-      assert reference.resolve() != null
-    }
+    // a += a ... += a += new Node()
+    def file = (GroovyFile)fixture.configureByText('_.groovy', header + "a${' += a' * 500} += new Node()")
+    def reference = ((GrAssignmentExpression)file.statements.last()).reference
+    assert reference.resolve() != null
   }
 
   void "test do not resolve LHS and RHS of assignment when name doesn't match"() {

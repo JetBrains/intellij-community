@@ -35,7 +35,10 @@ public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
   public Collection<OptionDescription> getOptions(@Nullable Project project) {
     ArrayList<OptionDescription> options = new ArrayList<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    for (IdeaPluginDescriptor pluginDescriptor : PluginManagerCore.getPlugins()) {
+
+    IdeaPluginDescriptor[] descriptors = PluginManagerCore.getPlugins();
+
+    for (IdeaPluginDescriptor pluginDescriptor : descriptors) {
       if (applicationInfo.isEssentialPlugin(pluginDescriptor.getPluginId().getIdString())) {
         continue;
       }

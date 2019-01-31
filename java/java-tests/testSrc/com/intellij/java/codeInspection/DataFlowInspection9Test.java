@@ -2,25 +2,14 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
-    }
-  };
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_9_ANNOTATED;
   }
 
   @Override
@@ -30,4 +19,5 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
 
   public void testNullabilityJdk9() { doTest();}
   public void testMutabilityJdk9() { doTest();}
+  public void testMutabilityInferred() { doTest(); }
 }

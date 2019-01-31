@@ -9,16 +9,10 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
-import com.intellij.ide.scratch.ScratchProjectViewPane;
-import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -36,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.intellij.ide.projectView.impl.ProjectViewPane.canBeSelectedInProjectView;
 import static com.intellij.psi.SmartPointerManager.createPointer;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
@@ -111,12 +106,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
     if (vFile == null || !vFile.isValid()) return false;
 
-    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return index.getContentRootForFile(vFile, false) != null ||
-           index.isInLibraryClasses(vFile) ||
-           index.isInLibrarySource(vFile) ||
-           Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
+    return canBeSelectedInProjectView(myProject, vFile);
   }
 
   public String getSubIdPresentableName(String subId) {
@@ -149,7 +139,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   private TreeStructureProvider[] getProvidersDumbAware() {
-    TreeStructureProvider[] allProviders = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
+    TreeStructureProvider[] allProviders = TreeStructureProvider.EP_NAME.getExtensions(myProject);
     List<TreeStructureProvider> dumbAware = DumbService.getInstance(myProject).filterByDumbAwareness(allProviders);
     return dumbAware.toArray(new TreeStructureProvider[0]);
   }

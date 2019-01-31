@@ -2,7 +2,7 @@ package com.siyeh.igtest.encapsulation.protected_inner_class;
 
 public class ProtectedInnerClass
 {
-  protected class Barangus
+  protected class <warning descr="Protected nested class 'Barangus'">Barangus</warning>
   {
 
     public Barangus(int val)

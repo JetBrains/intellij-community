@@ -46,7 +46,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   private PsiMethod mySuperMethod;
   private final String[] myModifiers;
 
-  DetectedJavaChangeInfo(@PsiModifier.ModifierConstant String newVisibility,
+  DetectedJavaChangeInfo(@PsiModifier.ModifierConstant @NotNull String newVisibility,
                          PsiMethod method,
                          CanonicalTypes.Type newType,
                          @NotNull ParameterInfoImpl[] newParms,
@@ -306,6 +306,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
     };
     final JavaChangeSignatureDialog dialog =
       new JavaChangeSignatureDialog(method.getProject(), descriptor, true, method) {
+        @Override
         protected BaseRefactoringProcessor createRefactoringProcessor() {
           return createChangeSignatureProcessor(method);
         }

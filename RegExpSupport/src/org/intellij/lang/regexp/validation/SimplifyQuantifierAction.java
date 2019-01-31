@@ -33,25 +33,29 @@ class SimplifyQuantifierAction implements IntentionAction {
     private final RegExpQuantifier myQuantifier;
     private final String myReplacement;
 
-    public SimplifyQuantifierAction(RegExpQuantifier quantifier, String s) {
+    SimplifyQuantifierAction(RegExpQuantifier quantifier, String s) {
         myQuantifier = quantifier;
         myReplacement = s;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return myReplacement == null ? "Simplify" : "Replace with '" + myReplacement + "'";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "Simplify Quantifier";
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         return myQuantifier.isValid();
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         if (myReplacement == null) {
             myQuantifier.delete();
@@ -69,6 +73,7 @@ class SimplifyQuantifierAction implements IntentionAction {
         }
     }
 
+    @Override
     public boolean startInWriteAction() {
         return true;
     }

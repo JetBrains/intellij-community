@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.history.Label;
@@ -63,8 +49,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private VirtualFile mySelectedFile;
@@ -102,10 +88,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myActionInfo = actionInfo;
 
     myFileStatusListener = new FileStatusListener() {
+      @Override
       public void fileStatusesChanged() {
         myTree.repaint();
       }
 
+      @Override
       public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
         myTree.repaint();
       }
@@ -124,6 +112,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myTreeIterable = new MyTreeIterable();
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myRoot);
     if (myFileStatusListener != null) {
@@ -145,6 +134,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
+  @Override
   protected void addActionsTo(DefaultActionGroup group) {
     group.add(new MyGroupByPackagesAction());
     group.add(new GroupByChangeListAction());
@@ -154,6 +144,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON));
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
@@ -171,6 +162,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     createTreeModel();
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         AbstractTreeNode treeNode = (AbstractTreeNode)e.getPath().getLastPathComponent();
         VirtualFilePointer pointer = null;
@@ -198,6 +190,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }, true);
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("UpdateActionGroup");
         if (group != null) { //if no UpdateActionGroup was configured
@@ -230,7 +223,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  public Object getData(String dataId) {
+  @Override
+  public Object getData(@NotNull String dataId) {
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return null;
     }
@@ -273,10 +267,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       step();
     }
 
+    @Override
     public boolean hasNext() {
       return myNext != null;
     }
 
+    @Override
     public Pair<FilePath, FileStatus> next() {
       final FilePath result = myNext;
       final FileStatus status = myStatus;
@@ -319,12 +315,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       return (GroupTreeNode)currentNode;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }
   }
 
   private class MyTreeIterable implements Iterable<Pair<FilePath, FileStatus>> {
+    @Override
     public Iterator<Pair<FilePath, FileStatus>> iterator() {
       return new MyTreeIterator();
     }
@@ -394,6 +392,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         statusText.clear();
         statusText.appendText("Click ")
           .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
               RefreshIncomingChangesAction.doRefresh(myProject);
             }
@@ -404,35 +403,40 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
-    public MyGroupByPackagesAction() {
+    MyGroupByPackagesAction() {
       super(VcsBundle.message("action.name.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES = state;
       updateTreeModel();
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList);
     }
   }
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
-    public GroupByChangeListAction() {
+    GroupByChangeListAction() {
       super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
     }
 
-    public boolean isSelected(AnActionEvent e) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myGroupByChangeList;
     }
 
-    public void setSelected(AnActionEvent e, boolean state) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myGroupByChangeList = state;
       myVcsConfiguration.UPDATE_GROUP_BY_CHANGELIST = myGroupByChangeList;
       final CardLayout cardLayout = (CardLayout)myCenterPanel.getLayout();
@@ -444,7 +448,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCanGroupByChangeList);
     }
@@ -487,22 +492,23 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
+    FilterAction() {
       super("Scope Filter", VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.UPDATE_FILTER_BY_SCOPE;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myVcsConfiguration.UPDATE_FILTER_BY_SCOPE = state;
       updateTreeModel();
     }
 
-    public void update(AnActionEvent e) {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList && getFilterScopeName() != null);
     }

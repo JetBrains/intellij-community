@@ -25,7 +25,6 @@ import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +50,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
     return !getAvailableArtifacts(context, artifact, false).isEmpty();
   }
 
+  @Override
   @NotNull
   public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
@@ -90,6 +90,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
     return list;
   }
 
+  @Override
   @NotNull
   public ArtifactPackagingElement createEmpty(@NotNull Project project) {
     return new ArtifactPackagingElement(project);

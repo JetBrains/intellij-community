@@ -15,6 +15,7 @@
  */
 package com.intellij.html.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.html.index.Html5CustomAttributesIndex;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,17 +61,16 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
     });
     if (keys.isEmpty()) return XmlAttributeDescriptor.EMPTY;
 
+    boolean inCompletion = tag.getContainingFile().getVirtualFile() == null;
     final List<XmlAttributeDescriptor> result = new ArrayList<>();
     for (String key : keys) {
       boolean add = true;
-      for (String attr : currentAttrs) {
-        if (attr.startsWith(key)) {
-          add = false;
+      if (inCompletion) {
+        for (String attr : currentAttrs) {
+          if (attr.equals(key + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) add = false;
         }
       }
-      if (add) {
-        result.add(new AnyXmlAttributeDescriptor(key));
-      }
+      if (add) result.add(new AnyXmlAttributeDescriptor(key));
     }
 
     return result.toArray(XmlAttributeDescriptor.EMPTY);

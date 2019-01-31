@@ -44,8 +44,8 @@ import java.util.List;
  */
 public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
   private static final JpsElementCollectionRole<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_ROLE =
-    JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsElementReference<?>>create("external reference"));
-  private static final JpsElementCollectionRole<JpsRunConfiguration> RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsRunConfiguration>create("run configuration"));
+    JpsElementCollectionRole.create(JpsElementChildRoleBase.create("external reference"));
+  private static final JpsElementCollectionRole<JpsRunConfiguration> RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("run configuration"));
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 

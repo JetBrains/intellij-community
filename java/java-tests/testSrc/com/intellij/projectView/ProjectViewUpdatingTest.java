@@ -61,8 +61,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> classes[0].delete());
 
 
-    PlatformTestUtil.waitForAlarm(600);
-
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: standardProviders\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -111,7 +110,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     CommandProcessor.getInstance().executeCommand(myProject,
                                                   () -> new RenameProcessor(myProject, aClass, "Form1_renamed", false, false).run(), null, null);
 
-    PlatformTestUtil.waitForAlarm(600);
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(tree, "-Project\n" +
                                            " -PsiDirectory: updateProjectView\n" +
                                            "  -PsiDirectory: src\n" +
@@ -135,7 +134,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     final PsiClass aClass2 = JavaDirectoryService.getInstance()
       .createClass(getContentDirectory().findSubdirectory("src").findSubdirectory("com").findSubdirectory("package1"), "Class6");
-    PlatformTestUtil.waitForAlarm(600);
+
     final PsiFile containingFile2 = aClass2.getContainingFile();
     pane.select(aClass2, containingFile2.getVirtualFile(), true);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
@@ -197,8 +196,8 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
-    PlatformTestUtil.waitForAlarm(600);
 
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -243,7 +242,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
       }
     }), null, null);
 
-    PlatformTestUtil.waitForAlarm(600);
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     if (tree.getModel() instanceof AsyncTreeModel) {
       // TODO:SAM new model loses selection of moved node for now
       tree.setSelectionPath(PlatformTestUtil.waitForPromise(pane.promisePathToElement(lastField)));
@@ -279,11 +278,12 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PsiFile containingFile = aClass.getContainingFile();
     PsiDirectory directory = containingFile.getContainingDirectory();
     pane.select(aClass, containingFile.getVirtualFile(), true);
+    PlatformTestUtil.waitWhileBusy(tree);
     Point viewPosition = ((JViewport)tree.getParent()).getViewPosition();
     for (int i=0;i<100;i++) {
       JavaDirectoryService.getInstance().createClass(directory, "A" + i);
     }
-    PlatformTestUtil.waitForAlarm(600);
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     Point viewPositionAfter = ((JViewport)tree.getParent()).getViewPosition();
     assertEquals(viewPosition, viewPositionAfter);
 
@@ -293,7 +293,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     String myName;
     List<NodeWrapper> myChildren = new ArrayList<>();
 
-    public NodeWrapper(final Project project, final String value) {
+    NodeWrapper(final Project project, final String value) {
       super(project, new Object());
       myName = value;
     }
@@ -305,7 +305,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     }
 
     @Override
-    protected void update(final PresentationData presentation) {
+    protected void update(@NotNull final PresentationData presentation) {
       presentation.setPresentableText(myName);
     }
 

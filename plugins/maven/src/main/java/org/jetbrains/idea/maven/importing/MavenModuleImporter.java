@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -384,11 +385,11 @@ public class MavenModuleImporter {
     }
 
     if (level == null) {
-      String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
-      level = LanguageLevel.parse(mavenProjectSourceLevel);
+      String mavenProjectReleaseLevel = myMavenProject.getReleaseLevel();
+      level = LanguageLevel.parse(mavenProjectReleaseLevel);
       if (level == null) {
-        String mavenProjectReleaseLevel = myMavenProject.getReleaseLevel();
-        level = LanguageLevel.parse(mavenProjectReleaseLevel);
+        String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+        level = LanguageLevel.parse(mavenProjectSourceLevel);
         if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
           level = LanguageLevel.HIGHEST;
         }
@@ -400,6 +401,23 @@ public class MavenModuleImporter {
       level = LanguageLevel.JDK_1_5;
     }
 
+    if (level.isAtLeast(LanguageLevel.JDK_11)) {
+      Element compilerConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+      if (compilerConfiguration != null) {
+        Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
+        if (compilerArgs != null) {
+          for (Element child : compilerArgs.getChildren("arg")) {
+            if (JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim())) {
+              try {
+                level = LanguageLevel.valueOf(level.name() + "_PREVIEW");
+              }
+              catch (IllegalArgumentException ignored) { }
+              break;
+            }
+          }
+        }
+      }
+    }
     myRootModelAdapter.setLanguageLevel(level);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -54,6 +54,7 @@ public class SvnChangeProvider implements ChangeProvider {
     mySvnFileUrlMapping = (SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping();
   }
 
+  @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder, @NotNull ProgressIndicator progress,
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
@@ -136,12 +137,12 @@ public class SvnChangeProvider implements ChangeProvider {
 
     for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
       final Status deletedStatus = deletedFile.getStatus();
-      if (Comparing.equal(copyFromURL, deletedStatus.getURL())) {
+      if (Comparing.equal(copyFromURL, deletedStatus.getUrl())) {
         final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, deletedToDelete, deletedFile, copiedStatus, clName);
         for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
           final Status childStatus = deletedChild.getStatus();
-          final Url childUrl = childStatus.getURL();
+          final Url childUrl = childStatus.getUrl();
           if (childUrl == null) {
             continue;
           }
@@ -167,7 +168,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
     // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
     // by building a relative url
-    if (!foundRename && copiedStatus.getURL() != null) {
+    if (!foundRename && copiedStatus.getUrl() != null) {
       File wcPath = myVcs.getSvnFileUrlMapping().getLocalPath(copyFromURL);
 
       if (wcPath != null) {
@@ -227,6 +228,7 @@ public class SvnChangeProvider implements ChangeProvider {
                           status.getRevision());
   }
 
+  @Override
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }

@@ -15,7 +15,7 @@ import java.util.Collection;
  * @author max
  */
 public abstract class LocalChangeList implements Cloneable, ChangeList {
-  
+
   @NonNls public static final String DEFAULT_NAME = VcsBundle.message("changes.default.changelist.name");
   @NonNls public static final String OLD_DEFAULT_NAME = "Default";
 
@@ -23,6 +23,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
     return VcsContextFactory.SERVICE.getInstance().createLocalChangeList(project, name);
   }
 
+  @Override
   public abstract Collection<Change> getChanges();
 
   /**
@@ -34,9 +35,11 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
     return getName();
   }
 
+  @Override
   @NotNull
   public abstract String getName();
 
+  @Override
   @Nullable
   public abstract String getComment();
 

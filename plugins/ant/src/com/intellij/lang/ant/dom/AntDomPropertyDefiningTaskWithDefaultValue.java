@@ -28,6 +28,7 @@ public abstract class AntDomPropertyDefiningTaskWithDefaultValue extends AntDomP
   @Attribute("value")
   public abstract GenericAttributeValue<String> getPropertyValue();
 
+  @Override
   protected final String calcPropertyValue(String propertyName) {
     final String value = getPropertyValue().getStringValue();
     return value != null? value : DEFAULT_PROPERTY_VALUE;

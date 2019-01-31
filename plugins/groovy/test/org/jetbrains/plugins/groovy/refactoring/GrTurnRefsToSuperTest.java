@@ -39,6 +39,7 @@ public class GrTurnRefsToSuperTest extends MultiFileTestCase {
     return "/refactoring/turnRefsToSuper/";
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return TestUtils.getAbsoluteTestDataPath();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -38,13 +38,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-@State(
-  name = "ExternalResourceManagerImpl",
-  storages = {
-    @Storage("javaeeExternalResources.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "ExternalResourceManagerImpl", storages = @Storage("javaeeExternalResources.xml"))
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
@@ -100,10 +94,10 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
-    for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getExtensions()) {
+    for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getExtensionList()) {
       provider.registerResources(registrar);
     }
-    for (StandardResourceEP extension : StandardResourceEP.EP_NAME.getExtensions()) {
+    for (StandardResourceEP extension : StandardResourceEP.EP_NAME.getExtensionList()) {
       registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
     }
 
@@ -246,24 +240,22 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     return ArrayUtil.toStringArray(result);
   }
 
-  private static <T> void addResourcesFromMap(@NotNull List<String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
+  private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
     Map<String, T> resources = getMap(resourcesMap, version, false);
     if (resources != null) {
       result.addAll(resources.keySet());
     }
   }
 
+  /**
+   * @see #registerResourceTemporarily(String, String, Disposable)
+   */
+  @Deprecated()
   @TestOnly
   public static void addTestResource(final String url, final String location, Disposable parentDisposable) {
-    final ExternalResourceManagerExImpl instance = (ExternalResourceManagerExImpl)getInstance();
-    ApplicationManager.getApplication().runWriteAction(() -> instance.addResource(url, location));
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ApplicationManager.getApplication().runWriteAction(() -> instance.removeResource(url));
-      }
-    });
+    registerResourceTemporarily(url, location, parentDisposable);
   }
+
   @Override
   public void addResource(@NotNull String url, String location) {
     addResource(url, DEFAULT_VERSION, location);
@@ -350,6 +342,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
@@ -406,15 +399,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
-  public void removeIgnoredResource(@NotNull String url) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myIgnoredResources.remove(url)) {
-      incModificationCount();
-      fireExternalResourceChanged();
-    }
-  }
-
-  @Override
   public boolean isIgnoredResource(@NotNull String url) {
     if (myIgnoredResources.contains(url)) {
       return true;
@@ -426,7 +410,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   private static boolean isImplicitNamespaceDescriptor(@NotNull String url) {
-    for (ImplicitNamespaceDescriptorProvider provider : ImplicitNamespaceDescriptorProvider.EP_NAME.getExtensions()) {
+    for (ImplicitNamespaceDescriptorProvider provider : ImplicitNamespaceDescriptorProvider.EP_NAME.getExtensionList()) {
       if (provider.getNamespaceDescriptor(null, url, null) != null) {
         return true;
       }

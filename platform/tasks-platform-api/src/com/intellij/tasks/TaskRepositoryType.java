@@ -35,14 +35,16 @@ import java.util.List;
 public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype {
 
   public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
-  
+
   public static TaskRepositoryType[] getRepositoryTypes() {
     return EP_NAME.getExtensions();
   }
 
+  @Override
   @NotNull
   public abstract String getName();
 
+  @Override
   @NotNull
   public abstract Icon getIcon();
 
@@ -53,7 +55,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
-    return Collections.singletonList((TaskRepositorySubtype)this);
+    return Collections.singletonList(this);
   }
 
   @NotNull
@@ -61,6 +63,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return subtype.createRepository();
   }
 
+  @Override
   @NotNull
   public abstract TaskRepository createRepository();
 

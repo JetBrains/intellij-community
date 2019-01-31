@@ -26,7 +26,7 @@ public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspecti
     private final YamlMetaTypeProvider myMetaTypeProvider;
     private final ProblemsHolder myProblemsHolder;
 
-    public StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
+    StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
       myProblemsHolder = problemsHolder;
       myMetaTypeProvider = metaTypeProvider;
     }

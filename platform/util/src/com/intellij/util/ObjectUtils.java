@@ -22,6 +22,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Comparator;
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -40,8 +46,44 @@ public class ObjectUtils {
    *             it's recommended to supply that field name (possibly qualified with the class name).
    * @return a new sentinel object
    */
-  public static Object sentinel(final String name) {
+  @NotNull
+  public static Object sentinel(@NotNull String name) {
     return new Sentinel(name);
+  }
+  private static class Sentinel {
+    private final String myName;
+
+    Sentinel(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
+  }
+
+  /**
+   * Creates an instance of class {@code ofInterface} with its {@link Object#toString()} method returning {@code name}.
+   * No other guarantees about return value behaviour.
+   * {@code ofInterface} must represent an interface class.
+   * Useful for stubs in generic code, e.g. for storing in {@code List<T>} to represent empty special value.
+   */
+  @NotNull
+  public static <T> T sentinel(@NotNull final String name, @NotNull Class<T> ofInterface) {
+    if (!ofInterface.isInterface()) {
+      throw new IllegalArgumentException("Expected interface but got: " + ofInterface);
+    }
+    //noinspection unchecked
+    return (T)Proxy.newProxyInstance(ObjectUtils.class.getClassLoader(), new Class[]{ofInterface}, new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) {
+        if ("toString".equals(method.getName()) && args.length == 0) {
+          return name;
+        }
+        throw new AbstractMethodError();
+      }
+    });
   }
 
   @NotNull
@@ -58,17 +100,17 @@ public class ObjectUtils {
     }
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }
 
-  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; null, null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
     return chooseNotNull(t1, t2);
   }
 
-  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; _,_,_ -> null", pure = true)
+  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; null,null,null -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2, @Nullable T t3) {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
@@ -95,7 +137,7 @@ public class ObjectUtils {
   }
 
   @NotNull
-  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<T> defaultValue) {
+  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends T> defaultValue) {
     return value == null ? defaultValue.create() : value;
   }
 
@@ -109,7 +151,7 @@ public class ObjectUtils {
   }
 
   @Nullable
-  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<T, S> convertor) {
+  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<? super T, ? extends S> convertor) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked
       return convertor.convert((T)obj);
@@ -117,28 +159,44 @@ public class ObjectUtils {
     return null;
   }
 
+  @Contract("null, _ -> null")
+  @Nullable
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+    return obj == null ? null : function.fun(obj);
+  }
+
   @SuppressWarnings("unchecked")
-  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
+  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
   }
 
   @Nullable
   @Contract("null, _ -> null")
-  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
+  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<? super T> condition) {
     if (condition.value(obj)) {
       return null;
     }
     return obj;
   }
 
-  private static class Sentinel {
-    private final String myName;
-
-    public Sentinel(String name) {myName = name;}
-
-    @Override
-    public String toString() {
-      return myName;
+  /**
+   * Performs binary search on the range [fromIndex, toIndex)
+   * @param indexComparator a comparator which receives a middle index and returns the result of comparision of the value at this index and the goal value
+   *                        (e.g 0 if found, -1 if the value[middleIndex] < goal, or 1 if value[middleIndex] > goal)
+   * @return index for which {@code indexComparator} returned 0 or {@code -insertionIndex-1} if wasn't found
+   * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)
+   * @see java.util.Collections#binarySearch(List, Object, Comparator)
+   */
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction indexComparator) {
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      int cmp = indexComparator.fun(mid);
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid;
     }
+    return -(low + 1);
   }
 }

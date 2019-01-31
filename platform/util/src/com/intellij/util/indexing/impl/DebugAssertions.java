@@ -53,7 +53,7 @@ public class DebugAssertions {
     LOG.error(new Formatter().format(message, args));
   }
 
-  public static <Key> boolean equals(Collection<Key> keys, Collection<Key> keys2, KeyDescriptor<Key> keyDescriptor) {
+  public static <Key> boolean equals(Collection<? extends Key> keys, Collection<? extends Key> keys2, KeyDescriptor<Key> keyDescriptor) {
     if (keys == null && keys2 == null) return true;
     if (keys == null || keys2 == null || keys.size() != keys2.size()) return false;
     LinkedHashMap<Key, Boolean> map = new LinkedHashMap<Key, Boolean>(keys.size(), 0.8f, keyDescriptor);

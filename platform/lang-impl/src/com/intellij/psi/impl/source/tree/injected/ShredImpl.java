@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 class ShredImpl implements PsiLanguageInjectionHost.Shred {
   private final SmartPsiFileRange relevantRangeInHost;
   private final SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer;
-  private final TextRange rangeInDecodedPSI; // range in (decoded) PSI
+  private final TextRange rangeInDecodedPSI;
   private final String prefix;
   private final String suffix;
   private final boolean usePsiRange;
@@ -50,7 +50,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   }
 
   private void assertValid() {
-    Segment hostRange = getHostRangeMarker();
+    Segment hostRange = relevantRangeInHost.getPsiRange();
     assert hostRange != null : "invalid host range: " + relevantRangeInHost;
 
     PsiLanguageInjectionHost host = hostElementPointer.getElement();

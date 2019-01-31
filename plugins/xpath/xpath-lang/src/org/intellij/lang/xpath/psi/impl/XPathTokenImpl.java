@@ -25,10 +25,12 @@ public class XPathTokenImpl extends XPathElementImpl implements XPathToken {
         super(node);
     }
 
+    @Override
     public IElementType getTokenType() {
         return getNode().getElementType();
     }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathToken(this);
   }

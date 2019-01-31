@@ -37,10 +37,6 @@ public class ConvertParameterToLocalVariableTest extends LightQuickFixParameteri
   }
 
   
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   @NonNls
   protected String getBasePath() {

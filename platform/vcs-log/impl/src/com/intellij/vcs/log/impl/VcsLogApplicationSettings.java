@@ -74,10 +74,12 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
            SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property);
   }
 
+  @Override
   public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
     myListeners.remove(listener);
   }

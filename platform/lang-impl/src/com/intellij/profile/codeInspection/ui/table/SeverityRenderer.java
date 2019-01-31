@@ -30,7 +30,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity(InspectionsBundle.message("inspection.edit.severities.text"), -1);
   @NotNull
   private final Runnable myOnClose;
-  private ScopesAndSeveritiesTable myTable;
+  private final ScopesAndSeveritiesTable myTable;
   @NotNull
   private final Icon myDisabledIcon;
   @NotNull
@@ -97,7 +97,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   }
 
   @Override
-  public void onClosed(LightweightWindowEvent event) {
+  public void onClosed(@NotNull LightweightWindowEvent event) {
     super.onClosed(event);
     myOnClose.run();
     if (getCellEditorValue() == EDIT_SEVERITIES) {

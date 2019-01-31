@@ -28,32 +28,37 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
-  private static final String DISPLAY_NAME = "Convert TestNG Javadoc to 1.5 annotations";
+  static final String FIX_NAME = "Convert TestNG Javadoc to 1.5 annotations";
+  private static final String INSPECTION_NAME = "TestNG Javadoc can be converted to annotations";
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return INSPECTION_NAME;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "ConvertJavadoc";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitDocTag(final PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
-          holder.registerProblem(tag, DISPLAY_NAME, new ConvertJavadocQuickfix());
+          holder.registerProblem(tag, INSPECTION_NAME, new ConvertJavadocQuickfix());
         }
       }
     };
@@ -62,9 +67,10 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   private static class ConvertJavadocQuickfix implements LocalQuickFix {
     private static final Logger LOG = Logger.getInstance(ConvertJavadocQuickfix.class);
 
+    @Override
     @NotNull
     public String getFamilyName() {
-      return DISPLAY_NAME;
+      return FIX_NAME;
     }
 
     @Override
@@ -72,6 +78,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiDocTag tag = (PsiDocTag)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(tag)) return;
@@ -144,7 +151,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       try {
         PsiModifierList modifierList = member.getModifierList();
         PsiAnnotation annotation =
-          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), member);
+          JavaPsiFacade.getElementFactory(tag.getProject()).createAnnotationFromText(annotationText.toString(), member);
         final PsiElement inserted = modifierList.addBefore(annotation, modifierList.getFirstChild());
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 
@@ -158,7 +165,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
           if (element instanceof PsiWhiteSpace) continue;
           if (!(element instanceof PsiDocToken)) return;
           PsiDocToken docToken = (PsiDocToken)element;
-          if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && docToken.getText().trim().length() > 0) {
+          if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }
         }

@@ -87,7 +87,7 @@ public class ConfigurableExtensionPointUtil {
   @NotNull
   private static ConfigurableWrapper addChildrenRec(@NotNull String id,
                                                     @NotNull Map<String, ConfigurableWrapper> idToConfigurable,
-                                                    @NotNull Set<String> visited,
+                                                    @NotNull Set<? super String> visited,
                                                     @NotNull Map<String, List<String>> idTree) {
     ConfigurableWrapper wrapper = idToConfigurable.get(id);
     if (visited.contains(id)) {
@@ -144,7 +144,7 @@ public class ConfigurableExtensionPointUtil {
    * @param project       a project used to create a project settings group or {@code null}
    * @return the root configurable group that represents a tree of settings
    */
-  public static ConfigurableGroup getConfigurableGroup(@NotNull List<Configurable> configurables, @Nullable Project project) {
+  public static ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
     Map<String, Node<SortedConfigurableGroup>> tree = ContainerUtil.newHashMap();
     for (Map.Entry<String, List<Configurable>> entry : map.entrySet()) {
@@ -204,7 +204,7 @@ public class ConfigurableExtensionPointUtil {
     Node<SortedConfigurableGroup> node = tree.remove(groupId);
     if (node.myChildren != null) {
       for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
-        @SuppressWarnings("unchecked") // expected type
+        // expected type
         String childId = (String)iterator.next();
         node.myValue.myList.add(getGroup(tree, childId));
       }
@@ -213,7 +213,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   private static void addGroup(Map<String, Node<SortedConfigurableGroup>> tree, Project project,
-                               String groupId, List<Configurable> configurables, ResourceBundle alternative) {
+                               String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
@@ -264,7 +264,7 @@ public class ConfigurableExtensionPointUtil {
    * @param configurables a list of settings to process
    * @return the map of different groups of settings
    */
-  public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<Configurable> configurables) {
+  public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
     Map<String, Node<ConfigurableWrapper>> tree = new THashMap<>();
     for (Configurable configurable : configurables) {
       if (!(configurable instanceof ConfigurableWrapper)) {
@@ -378,7 +378,7 @@ public class ConfigurableExtensionPointUtil {
     return list;
   }
 
-  private static void addValid(List<Configurable> list, Configurable configurable, Project project) {
+  private static void addValid(List<? super Configurable> list, Configurable configurable, Project project) {
     if (isValid(configurable, project)) {
       list.add(configurable);
     }
@@ -402,7 +402,7 @@ public class ConfigurableExtensionPointUtil {
 
   @Nullable
   public static ResourceBundle getBundle(@NotNull String resource,
-                                         @Nullable Iterable<Configurable> configurables,
+                                         @Nullable Iterable<? extends Configurable> configurables,
                                          @Nullable ResourceBundle alternative) {
     ResourceBundle bundle = OptionsBundle.getBundle();
     if (getString(bundle, resource) != null) {
@@ -506,14 +506,10 @@ public class ConfigurableExtensionPointUtil {
   /**
    * @deprecated create a new instance of configurable instead
    */
+  @Deprecated
   @NotNull
   public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
     return findConfigurable(project.getExtensions(Configurable.PROJECT_CONFIGURABLE), configurableClass);
-  }
-
-  @NotNull
-  public static <T extends Configurable> T findApplicationConfigurable(@NotNull Class<T> configurableClass) {
-    return findConfigurable(Configurable.APPLICATION_CONFIGURABLE.getExtensions(), configurableClass);
   }
 
   @NotNull

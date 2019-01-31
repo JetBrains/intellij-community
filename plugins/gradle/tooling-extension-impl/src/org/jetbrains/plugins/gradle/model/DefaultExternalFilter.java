@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/22/2014
  */
 public class DefaultExternalFilter implements ExternalFilter {
   private static final long serialVersionUID = 1L;

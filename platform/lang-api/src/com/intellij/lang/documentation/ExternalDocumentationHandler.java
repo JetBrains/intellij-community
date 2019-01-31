@@ -40,4 +40,15 @@ public interface ExternalDocumentationHandler {
                                     @Nullable PsiElement originalElement) {
     return true;
   }
+
+  /**
+   * This method can supply a target (HTML reference), which will be navigated to on showing of
+   * {@link #fetchExternalDocumentation(String, PsiElement)}) result.
+   *
+   * @see com.intellij.codeInsight.documentation.DocumentationManagerProtocol
+   */
+  @Nullable
+  default String extractRefFromLink(@NotNull String link) {
+    return null;
+  }
 }

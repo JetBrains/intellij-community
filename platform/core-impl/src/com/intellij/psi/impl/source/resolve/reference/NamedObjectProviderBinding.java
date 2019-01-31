@@ -61,7 +61,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
-                                              @NotNull List<ProviderInfo<ProcessingContext>> list,
+                                              @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
     String name = getName(position);
     if (name != null) {
@@ -92,8 +92,8 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   protected abstract String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @Nullable final List<ProviderInfo<ElementPattern>> providerList,
-                                   @NotNull Collection<ProviderInfo<ProcessingContext>> output,
+                                   @Nullable final List<? extends ProviderInfo<ElementPattern>> providerList,
+                                   @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
     if (providerList == null) return;
 

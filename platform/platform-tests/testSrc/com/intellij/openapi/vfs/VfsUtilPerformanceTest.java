@@ -17,8 +17,9 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -33,16 +34,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.JITSensitive;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
 import org.junit.Rule;
@@ -56,12 +54,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
-
-@JITSensitive
+@RunFirst
 @SkipSlowTestLocally
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -215,7 +210,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   private void doAsyncRefreshTest() throws Exception {
-    int N = 1000;
+    int N = 1_000;
     byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
 
     File temp = myTempDir.newFolder();
@@ -248,17 +243,24 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
       FileUtil.writeToFile(file, data);
-      assertTrue(file.setLastModified(timestamp[i] - 2000));
+      assertTrue(file.setLastModified(timestamp[i] - 2_000));
       long modified = file.lastModified();
       assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
       timestamp[i] = modified;
       IoTestUtil.assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
     }
 
-    CountDownLatch latch = new CountDownLatch(N);
-    for (VirtualFile child : children) {
-      child.refresh(true, true, latch::countDown);
-      TimeoutUtil.sleep(10);
+    Disposable refreshEngaged = Disposer.newDisposable();
+    CountDownLatch latch;
+    try {
+      FrequentEventDetector.disableUntil(refreshEngaged);
+      latch = new CountDownLatch(N);
+      for (VirtualFile child : children) {
+        child.refresh(true, true, latch::countDown);
+      }
+    }
+    finally {
+      Disposer.dispose(refreshEngaged);
     }
     while (latch.getCount() > 0) {
       latch.await(100, TimeUnit.MILLISECONDS);
@@ -272,7 +274,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void PersistentFS_performance_ofManyFilesCreateDelete() throws IOException {
+  public void PersistentFS_performance_ofManyFilesCreateDelete() {
     int N = 30_000;
     List<VFileEvent> events = new ArrayList<>(N);
     VirtualDirectoryImpl temp = createTempFsDirectory();
@@ -280,7 +282,6 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       PlatformTestUtil.startPerformanceTest("many files creations", 3_000, () -> {
         assertEquals(N, events.size());
-        assertTrue(!temp.allChildrenLoaded());
         processEvents(events);
         assertEquals(N, temp.getCachedChildren().size());
       })
@@ -316,17 +317,10 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     );
   }
 
-  private VirtualDirectoryImpl createTempFsDirectory() throws IOException {
-    VirtualDirectoryImpl temp = WriteAction.computeAndWait(() ->
-         (VirtualDirectoryImpl)TempFileSystem.getInstance().findFileByPath("/").createChildDirectory(this, "temp"));
-    Disposer.register(getTestRootDisposable(), () -> {
-      try {
-        WriteAction.runAndWait(() -> temp.delete(this));
-      }
-      catch (IOException e) {
-        throw new RuntimeException();
-      }
-    });
+  private VirtualDirectoryImpl createTempFsDirectory() {
+    VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
+    VirtualDirectoryImpl temp = (VirtualDirectoryImpl)VfsTestUtil.createDir(root, "temp");
+    Disposer.register(getTestRootDisposable(), () -> VfsTestUtil.deleteFile(temp));
     return temp;
   }
 
@@ -334,22 +328,22 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
   }
 
-  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) {
+  private void eventsForCreating(List<? super VFileEvent> events, int N, VirtualDirectoryImpl temp) {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, false))
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, false, false))
       .peek(event -> {
         if (fs.findModelChild(temp, event.getChildName()) == null) {
           fs.createChildFile(this, temp, event.getChildName());
         }
       })
       .forEach(events::add);
-    List<CharSequence> names = events.stream().map(e -> ((VFileCreateEvent)e).getChildName()).collect(Collectors.toList());
+    List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
     temp.removeChildren(new TIntHashSet(), names);
   }
 
-  private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
+  private void eventsForDeleting(List<? super VFileEvent> events, VirtualDirectoryImpl temp) {
     events.clear();
     temp.getCachedChildren().stream()
       .map(v->new VFileDeleteEvent(this, v, false))

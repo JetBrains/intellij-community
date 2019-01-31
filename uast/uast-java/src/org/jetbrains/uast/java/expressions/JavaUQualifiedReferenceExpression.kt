@@ -18,12 +18,13 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.*
 
 class JavaUQualifiedReferenceExpression(
   override val psi: PsiJavaCodeReferenceElement,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
+) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
   override val receiver: UExpression by lz {
     psi.qualifier?.let { JavaConverter.convertPsiElement(it, this) as? UExpression } ?: UastEmptyExpression(this)
   }
@@ -39,6 +40,9 @@ class JavaUQualifiedReferenceExpression(
     get() = (psi.resolve() as? PsiNamedElement)?.name
 
   override fun resolve(): PsiElement? = psi.resolve()
+
+  override fun multiResolve(): Iterable<ResolveResult> = psi.multiResolve(false).asIterable()
+
 }
 
 internal fun UElement.unwrapCompositeQualifiedReference(uParent: UElement?): UElement? = when (uParent) {

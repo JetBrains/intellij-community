@@ -34,7 +34,7 @@ import java.util.List;
 
 public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(getStack(e) != null);
   }
 

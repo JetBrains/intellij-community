@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentProvider {
 
@@ -48,7 +47,7 @@ public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentPro
     ExecuteRunConfigurationTask
       runTask = new ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings);
     for (ProjectTaskRunner projectTaskRunner : ProjectTaskRunner.EP_NAME.getExtensions()) {
-      if (projectTaskRunner.canRun(runTask)) {
+      if (projectTaskRunner.canRun(project, runTask)) {
         return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
       }
     }

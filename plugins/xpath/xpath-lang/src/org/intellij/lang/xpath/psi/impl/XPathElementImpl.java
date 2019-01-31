@@ -38,6 +38,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     super(node);
   }
 
+  @Override
   public String toString() {
     final String name = getClass().getName();
     return name.substring(name.lastIndexOf('.') + 1) + ": " + getText();
@@ -69,6 +70,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return node.getPsi();
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode child = psiElement.getNode();
     assert child != null;
@@ -76,6 +78,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return getNode().getPsi();
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     final ASTNode node = getNode();
 
@@ -92,6 +95,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {
     final ASTNode newNode = psiElement.getNode();
     final ASTNode myNode = getNode();
@@ -102,8 +106,9 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return newNode.getPsi();
   }
 
+  @Override
   @NotNull
-  @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
+  @SuppressWarnings({"EmptyMethod" })
   public final ASTNode getNode() {
     return super.getNode();
   }
@@ -136,6 +141,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     }
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathElement(this);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import org.junit.Test;
@@ -22,7 +8,7 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class DigesterTest extends UpdaterTestCase {
   @Test
@@ -61,7 +47,7 @@ public class DigesterTest extends UpdaterTestCase {
 
   @Test
   public void testSymlinks() throws Exception {
-    assumeTrue(!UtilsTest.IS_WINDOWS);
+    assumeFalse(Utils.IS_WINDOWS);
 
     File simpleLink = getTempFile("Readme.simple.link");
     Utils.createLink("Readme.txt", simpleLink);
@@ -80,5 +66,15 @@ public class DigesterTest extends UpdaterTestCase {
     catch (IOException e) {
       assertThat(e.getMessage()).startsWith("Absolute link");
     }
+  }
+
+  @Test
+  public void testExecutables() throws Exception {
+    assumeFalse(Utils.IS_WINDOWS);
+    File testFile = new File(tempDir.getRoot(), "idea.bat");
+    Utils.copy(new File(dataDir, "bin/idea.bat"), testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(testFile, false));
+    Utils.setExecutable(testFile);
+    assertEquals(CHECKSUMS.IDEA_BAT | Digester.EXECUTABLE, Digester.digestRegularFile(testFile, false));
   }
 }

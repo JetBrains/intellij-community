@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -14,12 +15,11 @@ public @interface State {
   /**
    * Component name.
    */
+  @NotNull
   String name();
 
   /**
    * <p>Storages specification.</p>
-   *
-   * <p>Application-level: optional if you need to load only default state ({@link #defaultStateAsResource} must be true in this case).</p>
    *
    * <p>Project-level: optional, standard project file will be used by default
    * ({@code *.ipr} file for file-based and
@@ -27,6 +27,7 @@ public @interface State {
    *
    * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
+  @NotNull
   Storage[] storages() default {};
 
   /**
@@ -50,6 +51,11 @@ public @interface State {
    * Is this component intended to store data only in the external storage.
    */
   boolean externalStorageOnly() default false;
+
+  /**
+   * If true and statistics is enabled, values of boolean fields will be recorded.
+   */
+  boolean reportStatistic() default false;
 
   abstract class NameGetter implements Getter<String> {
   }

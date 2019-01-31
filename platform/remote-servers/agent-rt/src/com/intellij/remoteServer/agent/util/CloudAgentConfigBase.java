@@ -23,4 +23,6 @@ public interface CloudAgentConfigBase extends CloudAgentConfig, CloudAgentProxyC
   String getEmail();
 
   String getPassword();
+
+  String getPasswordSafe();
 }

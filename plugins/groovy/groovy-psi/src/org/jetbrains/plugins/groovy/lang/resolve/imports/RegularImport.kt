@@ -30,7 +30,11 @@ data class RegularImport(val classFqn: String, override val name: String) : Groo
 
   constructor(classFqn: String) : this(classFqn, StringUtil.getShortName(classFqn))
 
-  override val isAliased: Boolean = getShortName(classFqn) != name
+  override val isAliased: Boolean = shortName != name
+
+  override val shortName: String get() = getShortName(classFqn)
+
+  override val fullyQualifiedName: String get() = classFqn
 
   override fun resolveImport(file: GroovyFileBase): PsiClass? = file.resolve(this) {
     if (file.packageName.isEmpty() || '.' in classFqn) {

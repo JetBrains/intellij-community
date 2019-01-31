@@ -31,6 +31,7 @@ import java.util.Iterator;
 public class SendTextFilePreprocessor implements ISendTextFilePreprocessor {
   @NonNls private static final String TEMP_FILE_PREFIX = "send";
 
+  @Override
   public File getPreprocessedTextFile(File originalTextFile, IWriterFactory writerFactory) throws IOException {
     final File preprocessedTextFile = FileUtil.createTempFile(TEMP_FILE_PREFIX, null);
     final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(originalTextFile));
@@ -58,6 +59,7 @@ public class SendTextFilePreprocessor implements ISendTextFilePreprocessor {
     return preprocessedTextFile;
   }
 
+  @Override
   public void cleanup(File preprocessedTextFile) {
     preprocessedTextFile.delete();
   }

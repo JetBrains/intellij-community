@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PsiCompositeModifierList extends LightModifierList {
-  private final List<PsiModifierList> mySublists;
+  private final List<? extends PsiModifierList> mySublists;
 
-  public PsiCompositeModifierList(final PsiManager manager, List<PsiModifierList> sublists) {
+  public PsiCompositeModifierList(final PsiManager manager, List<? extends PsiModifierList> sublists) {
     super(manager);
     mySublists = sublists;
   }

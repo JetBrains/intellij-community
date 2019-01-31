@@ -92,7 +92,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     public static final String BUILDER_NAME = "ant";
     private final JpsAntArtifactExtension myExtension;
 
-    public AntArtifactBuildTask(@NotNull JpsAntArtifactExtension extension) {
+    AntArtifactBuildTask(@NotNull JpsAntArtifactExtension extension) {
       myExtension = extension;
     }
 

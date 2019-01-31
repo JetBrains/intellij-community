@@ -91,6 +91,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
     return projectConfig.moduleConfigurations.get(myModule.getName());
   }
 
+  @Override
   public boolean isTests() {
     return ((MavenResourcesTargetType)getTargetType()).isTests();
   }

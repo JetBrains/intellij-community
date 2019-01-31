@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public class Main {
   private static test(List<String> packages) {
-      for (String s: packages) {
+      for (String s : packages) {
           if (s.startsWith("xyz")) {
               return Optional.of(s).filter(pkg -> pkg.endsWith("abc")).isPresent();
           }

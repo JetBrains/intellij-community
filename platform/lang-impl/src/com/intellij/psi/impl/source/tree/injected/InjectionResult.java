@@ -10,10 +10,10 @@ import com.intellij.psi.injection.ReferenceInjector;
 import java.util.List;
 
 class InjectionResult implements ModificationTracker {
-  final List<PsiFile> files;
-  final List<Pair<ReferenceInjector, Place>> references;
+  final List<? extends PsiFile> files;
+  final List<? extends Pair<ReferenceInjector, Place>> references;
 
-  InjectionResult(List<PsiFile> files, List<Pair<ReferenceInjector, Place>> references) {
+  InjectionResult(List<? extends PsiFile> files, List<? extends Pair<ReferenceInjector, Place>> references) {
     this.files = files;
     this.references = references;
     if (files == null && references == null) throw new IllegalArgumentException("At least one argument must not be null");

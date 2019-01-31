@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.updateSettings.impl.ChannelStatus;
+import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,5 +34,16 @@ public class UpdateStrategyCustomization {
 
   public boolean isChannelActive(@NotNull ChannelStatus channel) {
     return channel != ChannelStatus.MILESTONE;
+  }
+
+  /**
+   * Returns {@code true} if the both passed builds correspond to the same major version of the IDE. The platform uses this method when several
+   * new builds are available, to suggest updating to the build from the same major version, i.e. IntelliJ IDEA 2018.2.5 will suggest to
+   * update to 2018.2.6, not to 2018.3.
+   * <br>
+   * Override this method if major versions of your IDE doesn't directly correspond to major version of the IntelliJ platform.
+   */
+  public boolean haveSameMajorVersion(@NotNull BuildNumber build1, @NotNull BuildNumber build2) {
+    return build1.getBaselineVersion() == build2.getBaselineVersion();
   }
 }

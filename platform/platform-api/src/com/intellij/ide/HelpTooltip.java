@@ -15,11 +15,9 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -27,12 +25,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -45,10 +39,11 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Standard implementation of help context tooltip.
@@ -66,10 +61,10 @@ import java.util.*;
  * </p>
  *
  * <h2>Restrictions and field formats</h2>
- * <p>If you’re creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
+ * <p>If you're creating a tooltip with a shortcut then title is mandatory otherwise title, description, link are optional.
  * You can optionally set the tooltip relative location using {@link HelpTooltip#setLocation(Alignment)}.
- * The <code>Alignment</code> enum defines fixed relative locations according to the design document (see the link below).
- * More types of relative location will be added as needed but there won’t be a way to choose the location on pixel basis.</p>
+ * The {@code Alignment} enum defines fixed relative locations according to the design document (see the link below).
+ * More types of relative location will be added as needed but there won't be a way to choose the location on pixel basis.</p>
  *
  * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
  * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
@@ -80,7 +75,7 @@ import java.util.*;
  * <h2>Timeouts</h2>
  *
  * <p>Single line tooltips autoclose in 10 seconds, multiline in 30 seconds. You can optionally disable autoclosing by
- * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to <code>true</code>. By default tooltips don’t close after a timeout on help buttons
+ * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default tooltips don't close after a timeout on help buttons
  * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
  *
  * <p>System wide tooltip timeouts are set through the registry:
@@ -91,39 +86,30 @@ import java.util.*;
  *
  * <h2>Avoiding multiple popups</h2>
  * <p>Some actions may open a popup menu. Current design is that the action's popup menu should take over the help tooltip.
- * This is partly implemented in <code>AbstractPopup</code> class to track such cases. But this doesn’t always work.
- * If help tooltip shows up over the component’s popup menu you should make sure you set the master popup for the help tooltip.
+ * This is partly implemented in {@code AbstractPopup} class to track such cases. But this doesn't always work.
+ * If help tooltip shows up over the component's popup menu you should make sure you set the master popup for the help tooltip.
  * This will prevent help tooltip from showing when the popup menu is opened. The best way to do it is to take source component
- * from an <code>InputEvent</code> and pass the source component along with the popup menu reference to
+ * from an {@code InputEvent} and pass the source component along with the popup menu reference to
  * {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
  *
- * <p>If you’re handling <code>DumbAware.actionPerformed(AnActionEvent e)</code>, it has <code>InputEvent</code>in <code>AnActionEvent</code> which you can use to get the source.</p>
+ * <p>If you're handling {@code DumbAware.actionPerformed(AnActionEvent e)}, it has {@code InputEvent}in {@code AnActionEvent} which you can use to get the source.</p>
  *
  * <h2>ContextHelpLabel</h2>
- * <p>ContextHelpLabel is a convenient <code>JLabel</code> which contains a help icon and has a HelpTooltip installed on it.
+ * <p>ContextHelpLabel is a convenient {@code JLabel} which contains a help icon and has a HelpTooltip installed on it.
  * You can create it using one of its static methods and pass title/description/link. This label can also be used in forms.
- * The UI designer will offer to create <code>private void createUIComponents()</code> method where you can create the label with a static method.</p>
+ * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
 
-public class HelpTooltip implements Disposable {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.backgroundColor", 0xf7f7f7);
-  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.textColor", 0x1a1a1a);
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutTextColor", 0x787878);
+public class HelpTooltip {
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.background", 0xf7f7f7);
+  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.foreground", 0x1a1a1a);
+  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutForeground", 0x787878);
   private static final Color BORDER_COLOR = JBColor.namedColor("HelpTooltip.borderColor", 0xadadad);
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
 
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
-
-  private static final Set<String> REINIT_PROP_NAMES = new HashSet<>(Arrays.asList(
-    "HelpTooltip.fontSizeDelta",
-    "HelpTooltip.defaultTextBorderInsets",
-    "HelpTooltip.smallTextBorderInsets",
-    "HelpTooltip.verticalGap",
-    "HelpTooltip.horizontalGap",
-    "HelpTooltip.maxWidth"
-  ));
 
   private String title;
   private String shortcut;
@@ -132,7 +118,6 @@ public class HelpTooltip implements Disposable {
   private boolean neverHide;
   private Alignment alignment = Alignment.BOTTOM;
 
-  private JComponent owner;
   private JBPopup masterPopup;
   private ComponentPopupBuilder myPopupBuilder;
   private JBPopup myPopup;
@@ -142,8 +127,6 @@ public class HelpTooltip implements Disposable {
   private int myDismissDelay;
 
   private MouseAdapter myMouseListener;
-  private PropertyChangeListener myFontChangeListener;
-  private PropertyChangeListener myAncestorChangeListener;
 
   /**
    * Location of the HelpTooltip relatively to the owner component.
@@ -152,21 +135,21 @@ public class HelpTooltip implements Disposable {
     RIGHT {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(size.width + JBUI.scale(5) - xOffset(), JBUI.scale(1) + yOffset());
+        return new Point(size.width + JBUI.scale(5) - X_OFFSET.get(), JBUI.scale(1) + Y_OFFSET.get());
       }
     },
 
     BOTTOM {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(JBUI.scale(1) + xOffset(), JBUI.scale(5) + size.height - yOffset());
+        return new Point(JBUI.scale(1) + X_OFFSET.get(), JBUI.scale(5) + size.height - Y_OFFSET.get());
       }
     },
 
     HELP_BUTTON {
       @Override public Point getPointFor(JComponent owner) {
         Dimension size = owner.getSize();
-        return new Point(xOffset() - JBUI.scale(5), JBUI.scale(5) + size.height - yOffset());
+        return new Point(X_OFFSET.get() - JBUI.scale(5), JBUI.scale(5) + size.height - Y_OFFSET.get());
       }
     };
 
@@ -178,7 +161,7 @@ public class HelpTooltip implements Disposable {
    * the text is automatically stripped to the word boundary and dots are added to the end.
    *
    * @param title text for title.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setTitle(String title) {
     this.title = title;
@@ -189,7 +172,7 @@ public class HelpTooltip implements Disposable {
    * Sets text for the shortcut placeholder.
    *
    * @param shortcut text for shortcut.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setShortcut(String shortcut) {
     this.shortcut = shortcut;
@@ -200,7 +183,7 @@ public class HelpTooltip implements Disposable {
    * Sets description text.
    *
    * @param description text for description.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setDescription(String description) {
     this.description = description;
@@ -212,10 +195,10 @@ public class HelpTooltip implements Disposable {
    *
    * @param linkText text to show in the link.
    * @param linkAction action to execute when link is clicked.
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setLink(String linkText, Runnable linkAction) {
-    this.link = LinkLabel.create(linkText, () -> {
+    link = LinkLabel.create(linkText, () -> {
       hidePopup(true);
       linkAction.run();
     });
@@ -225,8 +208,8 @@ public class HelpTooltip implements Disposable {
   /**
    * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
    *
-   * @param neverHide <code>true</code> don't hide, <code>false</code> otherwise.
-   * @return <code>this</code>
+   * @param neverHide {@code true} don't hide, {@code false} otherwise.
+   * @return {@code this}
    */
   public HelpTooltip setNeverHideOnTimeout(boolean neverHide) {
     this.neverHide = neverHide;
@@ -237,7 +220,7 @@ public class HelpTooltip implements Disposable {
    * Sets location of the tooltip relatively to the owner component.
    *
    * @param alignment is relative location
-   * @return <code>this</code>
+   * @return {@code this}
    */
   public HelpTooltip setLocation(Alignment alignment) {
     this.alignment = alignment;
@@ -249,7 +232,7 @@ public class HelpTooltip implements Disposable {
    *
    * @param component is the owner component for the tooltip.
    */
-  public void installOn(JComponent component) {
+  public void installOn(@NotNull JComponent component) {
     myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
@@ -258,7 +241,7 @@ public class HelpTooltip implements Disposable {
         if (myPopup != null && !myPopup.isDisposed()){
           myPopup.cancel();
         }
-        scheduleShow(Registry.intValue("ide.tooltip.initialReshowDelay"));
+        scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.initialReshowDelay"));
       }
 
       @Override public void mouseExited(MouseEvent e) {
@@ -267,34 +250,20 @@ public class HelpTooltip implements Disposable {
 
       @Override public void mouseMoved(MouseEvent e) {
         if (myPopup == null || myPopup.isDisposed()) {
-          scheduleShow(Registry.intValue("ide.tooltip.reshowDelay"));
+          scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.reshowDelay"));
         }
       }
     };
 
     initPopupBuilder();
 
-    myFontChangeListener = evt -> {
-      if (REINIT_PROP_NAMES.contains(evt.getPropertyName())) {
-        initPopupBuilder();
-      }
-    };
-
-    myAncestorChangeListener = evt -> {
-      hidePopup(true);
-      Disposer.dispose(this);
-      if (evt.getNewValue() != null) {
-        registerOn((JComponent)evt.getSource());
-      }
-    };
-
-    registerOn(component);
+    component.putClientProperty(TOOLTIP_PROPERTY, this);
+    installMouseListeners(component);
   }
 
   private void initPopupBuilder() {
     myPopupBuilder = JBPopupFactory.getInstance().
-      createComponentPopupBuilder(createTipPanel(), null).
-        setBorderColor(BORDER_COLOR).setShowShadow(false);
+        createComponentPopupBuilder(createTipPanel(), null).setBorderColor(BORDER_COLOR).setShowShadow(false);
   }
 
   private JPanel createTipPanel() {
@@ -312,7 +281,7 @@ public class HelpTooltip implements Disposable {
       }
     });
 
-    tipPanel.setLayout(new VerticalLayout(vgap()));
+    tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 
     if (StringUtil.isNotEmpty(title)) {
@@ -340,46 +309,33 @@ public class HelpTooltip implements Disposable {
     return tipPanel;
   }
 
-  private void registerOn(JComponent component) {
-    owner = component;
-    owner.putClientProperty(TOOLTIP_PROPERTY, this);
+  private void installMouseListeners(@NotNull JComponent owner) {
     owner.addMouseListener(myMouseListener);
     owner.addMouseMotionListener(myMouseListener);
-    owner.addPropertyChangeListener("ancestor", myAncestorChangeListener);
-
-    UIManager.getDefaults().addPropertyChangeListener(myFontChangeListener);
   }
 
-  @Override
-  public void dispose() {
-    if (owner != null) {
-      owner.removeMouseListener(myMouseListener);
-      owner.removeMouseMotionListener(myMouseListener);
-      owner.removePropertyChangeListener("ancestor", myAncestorChangeListener);
-
-      owner.putClientProperty(TOOLTIP_PROPERTY, null);
-      owner = null;
-      masterPopup = null;
-    }
-
-    if (myFontChangeListener != null) {
-      UIManager.getDefaults().removePropertyChangeListener(myFontChangeListener);
-    }
+  private void uninstallMouseListeners(@NotNull JComponent owner) {
+    owner.removeMouseListener(myMouseListener);
+    owner.removeMouseMotionListener(myMouseListener);
   }
 
   /**
    * Hides and disposes the tooltip possibly installed on the mentioned component. Disposing means
-   * unregistering all <code>HelpTooltip</code> specific listeners installed on the component.
+   * unregistering all {@code HelpTooltip} specific listeners installed on the component.
    * If there is no tooltip installed on the component nothing happens.
    *
-   * @param owner a possible <code>HelpTooltip</code> owner.
+   * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void dispose(@NotNull Component owner) {
     if (owner instanceof JComponent) {
-      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      JComponent component = (JComponent)owner;
+      HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null) {
         instance.hidePopup(true);
-        Disposer.dispose(instance);
+        instance.uninstallMouseListeners(component);
+
+        component.putClientProperty(TOOLTIP_PROPERTY, null);
+        instance.masterPopup = null;
       }
     }
   }
@@ -389,7 +345,7 @@ public class HelpTooltip implements Disposable {
    * Listeners are not removed.
    * If there is no tooltip installed on the component nothing happens.
    *
-   * @param owner a possible <code>HelpTooltip</code> owner.
+   * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void hide(@NotNull Component owner) {
     if (owner instanceof JComponent) {
@@ -401,7 +357,7 @@ public class HelpTooltip implements Disposable {
   }
 
   /**
-   * Sets master popup for the current <code>HelpTooltip</code>. Master popup takes over the help tooltip,
+   * Sets master popup for the current {@code HelpTooltip}. Master popup takes over the help tooltip,
    * so when the master popup is about to be shown help tooltip hides.
    *
    * @param owner possible owner
@@ -416,7 +372,7 @@ public class HelpTooltip implements Disposable {
     }
   }
 
-  private void scheduleShow(int delay) {
+  private void scheduleShow(JComponent owner, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
       if (canShow()) {
@@ -446,25 +402,12 @@ public class HelpTooltip implements Disposable {
     }
   }
 
-  private static int vgap() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.verticalGap"));
-  }
-
-  private static int hgap() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.horizontalGap"));
-  }
-
-  private static int maxWidth() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.maxWidth"));
-  }
-
-  private static int xOffset() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.xOffset"));
-  }
-
-  private static int yOffset() {
-    return JBUI.scale(UIManager.getInt("HelpTooltip.yOffset"));
-  }
+  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
+  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 10);
+  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
+  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
+  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
+  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
 
   private static Border textBorder(boolean isDefault) {
     Insets i = UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
@@ -472,8 +415,7 @@ public class HelpTooltip implements Disposable {
   }
 
   private static Font modifyFont(Font font) {
-    int deltaSize = JBUI.scale(UIManager.getInt("HelpTooltip.fontSizeDelta"));
-    return font.deriveFont((float)font.getSize() + deltaSize);
+    return font.deriveFont((float)font.getSize() + FONT_DELTA_SIZE.get());
   }
 
   private class Header extends JPanel {
@@ -506,14 +448,14 @@ public class HelpTooltip implements Disposable {
 
       // Compute preferred size
       FontMetrics tfm = getFontMetrics(titleFont);
-      int titleWidth = SwingUtilities2.stringWidth(this, tfm, title);
+      int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
-      titleWidth += StringUtil.isNotEmpty(shortcut) ? hgap() + SwingUtilities2.stringWidth(this, fm, shortcut) : 0;
+      titleWidth += StringUtil.isNotEmpty(shortcut) ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
 
       boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
-      isMultiline = limitWidth && (titleWidth > maxWidth());
-      setPreferredSize(isMultiline ? new Dimension(maxWidth(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
+      isMultiline = limitWidth && titleWidth > MAX_WIDTH.get();
+      setPreferredSize(isMultiline ? new Dimension(MAX_WIDTH.get(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
     }
 
     @Override public void paintComponent(Graphics g) {
@@ -553,7 +495,7 @@ public class HelpTooltip implements Disposable {
 
         if (lineMeasurer.getPosition() < paragraphEnd) {
           if (shortcutString != null) {
-            breakWidth -= dotLayout.getAdvance() + hgap() + shortcutLayout.getAdvance();
+            breakWidth -= dotLayout.getAdvance() + HGAP.get() + shortcutLayout.getAdvance();
           }
 
           layout = lineMeasurer.nextLayout(breakWidth);
@@ -565,13 +507,13 @@ public class HelpTooltip implements Disposable {
             dotLayout.draw(g2, layout.getAdvance(), drawPosY);
 
             g2.setColor(SHORTCUT_COLOR);
-            shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + hgap(), drawPosY);
+            shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + HGAP.get(), drawPosY);
           }
         } else if (layout != null && shortcutString != null) {
           g2.setColor(SHORTCUT_COLOR);
-          if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + hgap()) >= 0) {
+          if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + HGAP.get()) >= 0) {
             drawPosY = shortcutLayout.getAscent();
-            shortcutLayout.draw(g2, layout.getAdvance() + hgap(), drawPosY);
+            shortcutLayout.draw(g2, layout.getAdvance() + HGAP.get(), drawPosY);
           } else {
             drawPosY += shortcutLayout.getAscent();
             shortcutLayout.draw(g2, 0, drawPosY);
@@ -594,12 +536,12 @@ public class HelpTooltip implements Disposable {
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
       float width = v.getPreferredSpan(View.X_AXIS);
-      isMultiline = isMultiline || width > maxWidth();
-      setText(width > maxWidth() ?
-              String.format("<html><div width=%d>%s</div></html>", maxWidth(), text) :
+      isMultiline = isMultiline || width > MAX_WIDTH.get();
+      setText(width > MAX_WIDTH.get() ?
+              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), text) :
               String.format("<html>%s</html>", text));
 
-      if (width > maxWidth()) {
+      if (width > MAX_WIDTH.get()) {
         v = (View)getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           width = 0.0f;
@@ -621,7 +563,7 @@ public class HelpTooltip implements Disposable {
       return rows;
     }
 
-    private void visit(@NotNull View v, Collection<View> result) {
+    private void visit(@NotNull View v, Collection<? super View> result) {
       String cname = v.getClass().getCanonicalName();
       if (cname != null && cname.contains("ParagraphView.Row")) {
         result.add(v);

@@ -68,7 +68,7 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
   private class Loader extends BuildTargetLoader<ModuleBuildTarget> {
     private final Map<String, JpsModule> myModules;
 
-    public Loader(JpsModel model) {
+    Loader(JpsModel model) {
       myModules = new HashMap<>();
       for (JpsModule module : model.getProject().getModules()) {
         myModules.put(module.getName(), module);

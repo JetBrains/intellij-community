@@ -1,30 +1,29 @@
 /*
-* Copyright (c) 2005, Joe Desbonnet, (jdesbonnet@gmail.com)
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*     * Redistributions of source code must retain the above copyright
-*       notice, this list of conditions and the following disclaimer.
-*     * Redistributions in binary form must reproduce the above copyright
-*       notice, this list of conditions and the following disclaimer in the
-*       documentation and/or other materials provided with the distribution.
-*     * Neither the name of the <organization> nor the
-*       names of its contributors may be used to endorse or promote products
-*       derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY <copyright holder> ``AS IS'' AND ANY
-* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL <copyright holder> BE LIABLE FOR ANY
-* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
+ * Copyright (c) 2005, Joe Desbonnet, (jdesbonnet@gmail.com)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <organization> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY <copyright holder> ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <copyright holder> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package ie.wombat.jbdiff;
 
 import com.intellij.updater.Utils;
@@ -33,101 +32,92 @@ import java.io.*;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Java Binary patcher (based on bspatch by Colin Percival)
+ * Java Binary Patch utility. Based on <a href="http://www.daemonology.net/bsdiff/">bsdiff (v4.2)</a> by Colin Percival.
  *
- * @author Joe Desbonnet, jdesbonnet@gmail.com
+ * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
 public class JBPatch {
-  private static final int block_size = 2 * 1024 * 1024;
+  private static final int BLOCK_SIZE = 2 * 1024 * 1024;
 
-  public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn)
-    throws IOException {
-
-    int oldpos, newpos;
+  public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn) throws IOException {
+    int oldPos, newPos;
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
-    DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream diffIn = new DataInputStream(new ByteArrayInputStream(diffData));
 
-    // headerMagic at header offset 0 (length 8 bytes)
-    long headerMagic = diffIn.readLong();
-
-    // ctrlBlockLen after gzip compression at heater offset 8 (length 8 bytes)
+    // ctrlBlockLen after gzip compression at heater offset 0 (length 8 bytes)
     long ctrlBlockLen = diffIn.readLong();
 
-    // diffBlockLen after gzip compression at header offset 16 (length 8 bytes)
+    // diffBlockLen after gzip compression at header offset 8 (length 8 bytes)
     long diffBlockLen = diffIn.readLong();
 
-    // size of new file at header offset 24 (length 8 bytes)
-    int newsize = (int)diffIn.readLong();
+    // size of new file at header offset 16 (length 8 bytes)
+    int newSize = (int)diffIn.readLong();
 
     InputStream in;
     in = new ByteArrayInputStream(diffData);
-    in.skip(ctrlBlockLen + 32);
-    GZIPInputStream diffBlockIn = new GZIPInputStream(in);
+    skip(in, ctrlBlockLen + 24);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream diffBlockIn = new GZIPInputStream(in);
 
     in = new ByteArrayInputStream(diffData);
-    in.skip(diffBlockLen + ctrlBlockLen + 32);
-    GZIPInputStream extraBlockIn = new GZIPInputStream(in);
+    skip(in, diffBlockLen + ctrlBlockLen + 24);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    final byte[] oldBuf = realAllFileContent(oldFileIn);
-    final int oldsize = oldBuf.length;
+    byte[] oldBuf = realAllFileContent(oldFileIn);
+    int oldSize = oldBuf.length;
 
-    final byte[] newBuf = new byte[block_size];
+    byte[] newBuf = new byte[BLOCK_SIZE];
 
-    oldpos = 0;
-    newpos = 0;
+    oldPos = 0;
+    newPos = 0;
 
-    while (newpos < newsize) {
-      final int bytesToReadFromDiffAndOld = diffIn.readInt();
-      final int bytesToReadFromExtraBlockIn = diffIn.readInt();
-      final int bytesToSkipFromOld = diffIn.readInt();
+    while (newPos < newSize) {
+      int bytesToReadFromDiffAndOld = diffIn.readInt();
+      int bytesToReadFromExtraBlockIn = diffIn.readInt();
+      int bytesToSkipFromOld = diffIn.readInt();
 
-      if (newpos + bytesToReadFromDiffAndOld > newsize) {
-        System.err.println("Corrupted patch\n");
-        return;
+      if (newPos + bytesToReadFromDiffAndOld > newSize) {
+        throw new IOException("Corrupted patch");
       }
 
-      int nbytes = 0;
-      while (nbytes < bytesToReadFromDiffAndOld) {
-        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - nbytes));
+      int nBytes = 0;
+      while (nBytes < bytesToReadFromDiffAndOld) {
+        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - nBytes));
         if (nBytesFromDiff < 0) {
-          System.err.println("error reading from diffBlockIn");
-          return;
+          throw new IOException("error reading from diffBlockIn");
         }
 
-        int nbytesFromOld = Math.min(nBytesFromDiff, oldsize - oldpos);
-        for (int i = 0; i < nbytesFromOld; ++i) {
-          newBuf[i] += oldBuf[oldpos + i];
+        int nBytesFromOld = Math.min(nBytesFromDiff, oldSize - oldPos);
+        for (int i = 0; i < nBytesFromOld; ++i) {
+          newBuf[i] += oldBuf[oldPos + i];
         }
 
-        nbytes += nBytesFromDiff;
-        newpos += nBytesFromDiff;
-        oldpos += nBytesFromDiff;
+        nBytes += nBytesFromDiff;
+        newPos += nBytesFromDiff;
+        oldPos += nBytesFromDiff;
         Utils.writeBytes(newBuf, nBytesFromDiff, newFileOut);
       }
 
       if (bytesToReadFromExtraBlockIn > 0) {
-        if (newpos + bytesToReadFromExtraBlockIn > newsize) {
-          System.err.println("Corrupted patch");
-          return;
+        if (newPos + bytesToReadFromExtraBlockIn > newSize) {
+          throw new IOException("Corrupted patch");
         }
 
-        nbytes = 0;
-        while (nbytes < bytesToReadFromExtraBlockIn) {
-          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - nbytes));
+        nBytes = 0;
+        while (nBytes < bytesToReadFromExtraBlockIn) {
+          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - nBytes));
           if (nBytesFromExtraBlockIn < 0) {
-            System.err.println("error reading from extraBlockIn");
-            return;
+            throw new IOException("error reading from extraBlockIn");
           }
 
-          nbytes += nBytesFromExtraBlockIn;
-          newpos += nBytesFromExtraBlockIn;
+          nBytes += nBytesFromExtraBlockIn;
+          newPos += nBytesFromExtraBlockIn;
           Utils.writeBytes(newBuf, nBytesFromExtraBlockIn, newFileOut);
         }
       }
 
-      oldpos += bytesToSkipFromOld;
+      oldPos += bytesToSkipFromOld;
     }
 
     // TODO: Check if at end of ctrlIn
@@ -137,6 +127,10 @@ public class JBPatch {
     diffBlockIn.close();
     extraBlockIn.close();
     diffIn.close();
+  }
+
+  private static void skip(InputStream in, long n) throws IOException {
+    if (in.skip(n) != n) throw new IOException("Premature EOF?");
   }
 
   private static byte[] realAllFileContent(InputStream oldFileIn) throws IOException {

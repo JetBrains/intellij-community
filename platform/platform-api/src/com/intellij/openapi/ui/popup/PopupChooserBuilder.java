@@ -74,9 +74,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
     default void setRenderer(ListCellRenderer renderer) {}
 
-    void setItemChosenCallback(Consumer<T> callback);
+    void setItemChosenCallback(Consumer<? super T> callback);
 
-    void setItemsChosenCallback(Consumer<Set<T>> callback);
+    void setItemsChosenCallback(Consumer<? super Set<T>> callback);
 
     JScrollPane createScrollPane();
 
@@ -99,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
-    default void setItemSelectedCallback(Consumer<T> c) {
+    default void setItemSelectedCallback(Consumer<? super T> c) {
       throw new UnsupportedOperationException("Not supported for this popup type");
     }
 
@@ -149,7 +149,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setTitle(@NotNull @Nls String title) {
+  public PopupChooserBuilder<T> setTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
     return this;
   }
@@ -181,7 +181,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @NotNull
   @Override
-  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChosenCallback(@NotNull Consumer<? super Set<T>> callback) {
     myChooserComponent.setItemsChosenCallback(callback);
     return this;
   }
@@ -204,7 +204,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myCouldPin = callback;
     return this;
   }
-  
+
   @NotNull
   public PopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp) {
     myEastComponent = cmp;
@@ -439,6 +439,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private void registerClosePopupKeyboardAction(final KeyStroke keyStroke, final boolean shouldPerformAction) {
     registerPopupKeyboardAction(keyStroke, new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!shouldPerformAction && myChooserComponent.checkResetFilter()) return;
         closePopup(shouldPerformAction, null, shouldPerformAction);
@@ -481,8 +482,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public PopupChooserBuilder<T> setSettingButton(Component abutton) {
-    mySettingsButtons = abutton;
+  public PopupChooserBuilder<T> setSettingButton(Component button) {
+    mySettingsButtons = button;
     return this;
   }
 
@@ -543,7 +544,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
+  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c) {
     myChooserComponent.setItemSelectedCallback(c);
     return this;
   }

@@ -67,7 +67,7 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public void reset(@NotNull SvnConfiguration configuration) {
-    myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
+    myUseCommonProxy.setSelected(configuration.isUseDefaultProxy());
     mySSHConnectionTimeout.setValue(Long.valueOf(configuration.getSshConnectionTimeout() / 1000));
     mySSHReadTimeout.setValue(Long.valueOf(configuration.getSshReadTimeout() / 1000));
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
@@ -85,7 +85,7 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public boolean isModified(@NotNull SvnConfiguration configuration) {
-    if (configuration.isIsUseDefaultProxy() != myUseCommonProxy.isSelected()) {
+    if (configuration.isUseDefaultProxy() != myUseCommonProxy.isSelected()) {
       return true;
     }
     if (configuration.getSshConnectionTimeout() / 1000 != ((SpinnerNumberModel)mySSHConnectionTimeout.getModel()).getNumber().longValue()) {
@@ -103,7 +103,7 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public void apply(@NotNull SvnConfiguration configuration) {
-    configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
+    configuration.setUseDefaultProxy(myUseCommonProxy.isSelected());
     configuration.setSshConnectionTimeout(((SpinnerNumberModel)mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setSshReadTimeout(((SpinnerNumberModel)mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setHttpTimeout(((SpinnerNumberModel)myHttpTimeout.getModel()).getNumber().longValue() * 1000);

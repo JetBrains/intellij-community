@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,7 +133,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logSyntaxInfo(syntaxInfo);
 
       createResult(syntaxInfo, editor);
-      return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
+      return ObjectUtils.notNull(myResult, Collections.emptyList());
     }
     catch (Throwable t) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
@@ -257,14 +258,10 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       myDefaultForeground = scheme.getDefaultForeground();
       myDefaultBackground = scheme.getDefaultBackground();
 
-      // Java assumes screen resolution of 72dpi when calculating font size in pixels. External applications are supposedly using correct
-      // resolution, so we need to adjust font size for copied text to look the same in them.
-      // (See https://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-Desktop/html/java2d.html#gdlwn)
-      // Java on Mac is not affected by this issue.
       int javaFontSize = scheme.getEditorFontSize();
       float fontSize = SystemInfo.isMac || ApplicationManager.getApplication().isHeadlessEnvironment() ? 
                        javaFontSize : 
-                       javaFontSize * 72f / Toolkit.getDefaultToolkit().getScreenResolution();
+                       javaFontSize * 0.75f / UISettings.getDefFontScale(); // matching font size in external apps
       
       builder = new SyntaxInfo.Builder(myDefaultForeground, myDefaultBackground, fontSize);
       myIndentSymbolsToStrip = indentSymbolsToStrip;
@@ -470,7 +467,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private int myCurrentEnd;
 
     // iterators have priority corresponding to their order in the parameter list - rightmost having the largest priority
-    public CompositeRangeIterator(@NotNull EditorColorsScheme colorsScheme, RangeIterator... iterators) {
+    CompositeRangeIterator(@NotNull EditorColorsScheme colorsScheme, RangeIterator... iterators) {
       myDefaultForeground = colorsScheme.getDefaultForeground();
       myDefaultBackground = colorsScheme.getDefaultBackground();
       myIterators = new IteratorWrapper[iterators.length];
@@ -751,7 +748,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private int myCurrentEnd;
     private TextAttributes myCurrentAttributes;
 
-    public HighlighterRangeIterator(@NotNull EditorHighlighter highlighter, int startOffset, int endOffset) {
+    HighlighterRangeIterator(@NotNull EditorHighlighter highlighter, int startOffset, int endOffset) {
       myStartOffset = startOffset;
       myEndOffset = endOffset;
       myIterator = highlighter.createIterator(startOffset);

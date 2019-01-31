@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -87,7 +73,6 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                                            ExecutionBundle.message("run.configuration.program.parameters"));
-
     FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     //noinspection DialogTitleCapitalization
     fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
@@ -114,7 +99,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   @Deprecated // use MacroComboBoxWithBrowseButton instead
   protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
-    button.setIcon(AllIcons.RunConfigurations.Variables);
+    button.setIcon(AllIcons.Actions.ListFiles);
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -164,7 +149,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     return myWorkingDirectoryComboBox;
   }
 
-  public void addWorkingDirectoryListener(Consumer<String> onTextChange) {
+  public void addWorkingDirectoryListener(Consumer<? super String> onTextChange) {
     myWorkingDirectoryComboBox.getChildComponent().addActionListener(event -> onTextChange.accept(myWorkingDirectoryComboBox.getText()));
   }
 

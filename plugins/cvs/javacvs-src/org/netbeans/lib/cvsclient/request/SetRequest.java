@@ -9,6 +9,7 @@ public final class SetRequest extends AbstractRequest {
     this.varValue = varValue;
   }
 
+  @Override
   public String getRequestString() {
     return "Set " + varName + "=" + varValue + "\n";
   }

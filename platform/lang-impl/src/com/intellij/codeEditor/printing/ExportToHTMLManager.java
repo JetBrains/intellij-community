@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -144,7 +143,7 @@ class ExportToHTMLManager {
         return;
       }
       TreeMap<Integer, PsiReference> refMap = null;
-      for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      for (PrintOption printOption : PrintOption.EP_NAME.getExtensionList()) {
         final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
           refMap = new TreeMap<>(map);
@@ -181,7 +180,7 @@ class ExportToHTMLManager {
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory,
-                                       List<PsiFile> filesList,
+                                       List<? super PsiFile> filesList,
                                        boolean isRecursive,
                                        final String outputDirectoryName) throws FileNotFoundException {
     if (!psiDirectory.isValid()) {
@@ -232,7 +231,7 @@ class ExportToHTMLManager {
     private final String myOutputDirectoryName;
     private final Project myProject;
 
-    public ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
+    ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
                           PsiDirectory psiDirectory,
                           String outputDirectoryName,
                           Project project) {

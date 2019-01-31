@@ -30,6 +30,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myConsoleProperties = consoleProperties;
   }
 
+  @Override
   public void customizeCellRenderer(@NotNull final JTree tree,
                                     final Object value,
                                     final boolean selected,
@@ -47,7 +48,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
       if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
         SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
-        if (node.isLeaf()) {
+        if (rootTestProxy.isLeaf()) {
           TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {
           TestsPresentationUtil.formatRootNodeWithChildren(rootTestProxy, this);
@@ -83,8 +84,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    return myDurationWidth < 0 || ((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow) 
-           ? preferredSize 
+    return myDurationWidth < 0 || ((TestTreeView)myTree).isExpandableHandlerVisibleForCurrentRow(myRow)
+           ? preferredSize
            : JBUI.size(preferredSize.width + myDurationWidth, preferredSize.height);
   }
 

@@ -39,6 +39,7 @@ public abstract class AntDomExecTask extends AntDomPropertyDefiningElement{
   @NameValue
   public abstract GenericAttributeValue<String> getResultPropertyName();
 
+  @Override
   protected List<GenericAttributeValue<String>> getPropertyDefiningAttributes() {
     return Arrays.asList(getOutputPropertyName(), getResultPropertyName(), getErrorPropertyName());
   }

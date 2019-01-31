@@ -32,13 +32,14 @@ import com.intellij.psi.xml.XmlTag;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.ValidateAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class ConvertSchemaAction extends AnAction {
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (files != null && project != null) {
@@ -89,7 +90,7 @@ public class ConvertSchemaAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (file != null && project != null) {

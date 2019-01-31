@@ -15,11 +15,14 @@
  */
 package org.jetbrains.jps.incremental.artifacts
 
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
+import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
+import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
@@ -174,7 +177,9 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
   fun testModuleSources() {
     val file = createFile("src/A.java", "class A{}")
+    val testFile = createFile("tests/ATest.java", "class ATest{}")
     val m = addModule("m", PathUtil.getParentPath(file))
+    m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(testFile)), JavaSourceRootType.TEST_SOURCE)
     val a = addArtifact(root().moduleSource(m))
     buildAll()
     assertOutput(a, directoryContent {
@@ -420,6 +425,16 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
       assertNotNull(entry)
       assertEquals(ZipEntry.STORED, entry.method)
     }
+  }
+
+  fun testProperlyReportValueWithInvalidCrcInRepackedFile() {
+    val corruptedJar = PathManagerEx.findFileUnderCommunityHome(
+      "jps/jps-builders/testData/output/corruptedJar/incorrect-crc.jar")!!.absolutePath
+    val a = addArtifact(archive("a.jar").extractedDir(corruptedJar, ""))
+    val result = doBuild(CompileScopeTestBuilder.rebuild().artifacts(a))
+    result.assertFailed()
+    val message = result.getMessages(BuildMessage.Kind.ERROR).first()
+    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"));
   }
 
   fun testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {

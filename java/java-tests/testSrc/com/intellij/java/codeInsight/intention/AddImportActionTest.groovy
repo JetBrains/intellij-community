@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.intention
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
@@ -28,7 +15,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
 class AddImportActionTest extends LightCodeInsightFixtureTestCase {
-  private CodeStyleSettings settings
+  private CommonCodeStyleSettings settings
 
   void testMap15() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
@@ -85,6 +72,17 @@ public class Foo {
     String<caret>Value sv;
 }
 '''
+  }
+
+  void testInaccessibleInnerInSuper() {
+    myFixture.addClass 'package foo; class Super { private class Inner {}}'
+    myFixture.configureByText 'a.java', '''\
+package foo;
+public class Foo {
+    In<caret>ner in;
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
   }
 
   void testPackageLocalInner() {
@@ -422,6 +420,22 @@ class Test {
     assert !myFixture.filterAvailableIntentions("Import class")
   }
 
+  void "test don't import class if already imported but not accessible"() {
+    myFixture.addClass '''
+package foo;
+class Foo {}
+'''
+    myFixture.configureByText 'a.java', '''
+import foo.Foo;
+class Test {
+    {
+      F<caret>oo 
+    }
+}
+'''
+    assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
   void "test don't import class in qualified reference at reference name"() {
     myFixture.configureByText 'a.java', '''
 class Test {
@@ -523,7 +537,7 @@ class A {}
 
 
   void "test keep methods formatting on add import"() {
-    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true
+    settings.ALIGN_GROUP_FIELD_DECLARATIONS = true
 
     myFixture.configureByText 'Tq.java', '''
 class Tq {
@@ -562,15 +576,13 @@ class Tq {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    settings = new CodeStyleSettings()
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject())
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
-    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings)
   }
 
   @Override
   void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings()
     settings = null
     super.tearDown()
   }
@@ -679,5 +691,17 @@ class Bar {
 }  
 '''
     assert !myFixture.filterAvailableIntentions("Import class").empty
+  }
+
+  void "test prefer top-level List"() {
+    myFixture.addClass("package foo; public interface Restore { interface List {}}")
+    def juList = myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST)
+
+    myFixture.configureByText 'a.java', 'class F implements Lis<caret>t {}'
+    importClass()
+    myFixture.checkResult '''\
+import java.util.List;
+
+class F implements List {}'''
   }
 }

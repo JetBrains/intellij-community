@@ -40,7 +40,7 @@ import java.util.List;
 class TemplateReference extends AttributeReference implements EmptyResolveMessageProvider, LocalQuickFixProvider, PsiPolyVariantReference {
   private final String myName;
 
-  public TemplateReference(XmlAttribute attribute) {
+  TemplateReference(XmlAttribute attribute) {
     super(attribute, createMatcher(attribute), false);
     myName = attribute.getValue();
   }
@@ -49,6 +49,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
     return new NamedTemplateMatcher(PsiTreeUtil.getParentOfType(attribute, XmlDocument.class), attribute.getValue());
   }
 
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiElement element = resolve();
@@ -79,6 +80,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
     return new LocalQuickFix[] { new CreateTemplateFix(myAttribute.getParent(), myName) };
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     return "Cannot resolve template ''{0}''";

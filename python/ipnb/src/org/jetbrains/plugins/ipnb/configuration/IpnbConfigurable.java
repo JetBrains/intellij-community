@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.intellij.ide.DataManager;
@@ -8,9 +9,9 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import org.jetbrains.annotations.Nls;
@@ -36,7 +37,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
   public IpnbConfigurable(@NotNull Project project) {
     myProject = project;
     myProPanel.setVisible(PlatformUtils.isPyCharmPro() || PlatformUtils.isIdeaUltimate());
-    myInterpreterSetupLinkLabel.setForeground(JBColor.link());
+    myInterpreterSetupLinkLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
     myInterpreterSetupLinkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     createNavigateToInterpreterSettingsListener().installOn(myInterpreterSetupLinkLabel);
 
@@ -83,6 +84,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     };
   }
 
+  @Override
   public void apply() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     ipnbSettings.setHasFx(myMarkdownCheckBox.isSelected());
@@ -108,6 +110,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public void reset() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     final boolean hasFx = ipnbSettings.hasFx();
@@ -121,6 +124,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
     final boolean hasFx = ipnbSettings.hasFx();

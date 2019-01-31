@@ -82,4 +82,27 @@ public class SameParameterValueTest extends InspectionTestCase {
   public void testNegativeDouble() {
     doTest(getTestDir(), myTool, false, true);
   }
+
+  public void testClassObject() {
+    doTest(getTestDir(), myTool, false, true);
+  }
+
+  public void testUsageCount() {
+    int previous = myTool.minimalUsageCount;
+    try {
+      myTool.minimalUsageCount = 5;
+      doTest(getTestDir(), myTool, false, true);
+    }
+    finally {
+      myTool.minimalUsageCount = previous;
+    }
+  }
+
+  public void testField() {
+    doTest(getTestDir(), myTool, false, true);
+  }
+
+  public void testOverrideGroovy() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

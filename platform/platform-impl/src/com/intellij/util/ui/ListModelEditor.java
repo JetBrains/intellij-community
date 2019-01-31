@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,28 +25,20 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     list.setCellRenderer(new MyListCellRenderer());
 
     toolbarDecorator = ToolbarDecorator.createDecorator(list, model)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          if (!model.isEmpty()) {
-            T lastItem = model.getElementAt(model.getSize() - 1);
-            if (ListModelEditor.this.itemEditor.isEmpty(lastItem)) {
-              ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
-              return;
-            }
+      .setAddAction(button -> {
+        if (!model.isEmpty()) {
+          T lastItem = model.getElementAt(model.getSize() - 1);
+          if (ListModelEditor.this.itemEditor.isEmpty(lastItem)) {
+            ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
+            return;
           }
-
-          T item = createElement();
-          model.add(item);
-          ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
         }
+
+        T item = createElement();
+        model.add(item);
+        ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), item));
       })
-    .setRemoveActionUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        return areSelectedItemsRemovable(list.getSelectionModel());
-      }
-    });
+    .setRemoveActionUpdater(e -> areSelectedItemsRemovable(list.getSelectionModel()));
   }
 
   @NotNull
@@ -83,6 +63,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     return (T)list.getSelectedValue();
   }
 
+  @Override
   public void reset(@NotNull List<T> items) {
     super.reset(items);
 

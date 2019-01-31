@@ -52,7 +52,7 @@ public class FunctionUtil {
   }
 
   @NotNull
-  public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<B, C> f, @NotNull final NotNullFunction<A, B> g) {
+  public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<? super B, ? extends C> f, @NotNull final NotNullFunction<? super A, ? extends B> g) {
     return new NotNullFunction<A, C>() {
       @Override
       @NotNull

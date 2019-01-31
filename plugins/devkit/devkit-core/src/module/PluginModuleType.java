@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import java.util.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +23,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,21 +43,25 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return get(module) instanceof PluginModuleType;
   }
 
+  @Override
   @NotNull
   public PluginModuleBuilder createModuleBuilder() {
     return new PluginModuleBuilder();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return DevKitBundle.message("module.title");
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return DevKitBundle.message("module.description");
   }
 
+  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Plugin;
   }

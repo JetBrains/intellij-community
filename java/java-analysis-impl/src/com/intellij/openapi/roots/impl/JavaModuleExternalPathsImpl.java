@@ -37,6 +37,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     }
   }
 
+  @NotNull
   @Override
   public ModuleExtension getModifiableModel(boolean writable) {
     return new JavaModuleExternalPathsImpl(this);
@@ -101,13 +102,12 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
-        if (pathsElement != null) {
+        if (pathsElement != null && !pathsElement.getChildren(ROOT_ELEMENT).isEmpty()) {
           VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(this, null);
           myOrderRootPointerContainers.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT, false);
@@ -117,7 +117,6 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     for (OrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);

@@ -41,11 +41,13 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     return mySettings;
   }
 
+  @Override
   @NotNull
   public MavenRunnerSettings getState() {
     return mySettings;
   }
 
+  @Override
   public void loadState(@NotNull MavenRunnerSettings settings) {
     mySettings = settings;
   }
@@ -55,20 +57,20 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
 
     final MavenConsole console = createConsole();
     try {
-      final MavenExecutor[] executor = new MavenExecutor[]{createExecutor(parameters, null, settings, console)};
+      final MavenExecutor executor = createExecutor(parameters, null, settings, console);
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor[0].getCaption(), true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor.getCaption(), true) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             try {
-              if (executor[0].execute(indicator)) {
+              if (executor.execute(indicator)) {
                 if (onComplete != null) onComplete.run();
               }
             }
             catch (ProcessCanceledException ignore) {
             }
 
-            executor[0] = null;
             updateTargetFolders();
           }
           finally {

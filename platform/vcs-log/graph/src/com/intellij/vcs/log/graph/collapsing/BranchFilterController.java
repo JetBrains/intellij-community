@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.CascadeController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
+import com.intellij.vcs.log.graph.utils.GraphUtilKt;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,26 +29,25 @@ import java.util.Set;
 
 public class BranchFilterController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
-  @Nullable private final Set<Integer> myIdsOfVisibleBranches;
+  @NotNull private final UnsignedBitSet myVisibility;
 
   public BranchFilterController(@NotNull LinearGraphController delegateLinearGraphController,
                                 @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                                 @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
-    myIdsOfVisibleBranches = idsOfVisibleBranches;
-    myCollapsedGraph = updateCollapsedGraph();
+    myVisibility = GraphUtilKt.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), idsOfVisibleBranches);
+    myCollapsedGraph = update();
   }
 
   @NotNull
-  private CollapsedGraph updateCollapsedGraph() {
-    UnsignedBitSet initVisibility = ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
-    return CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
+  private CollapsedGraph update() {
+    return CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), myVisibility);
   }
 
   @NotNull
   @Override
   protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
-    if (delegateAnswer.getGraphChanges() != null) myCollapsedGraph = updateCollapsedGraph();
+    if (delegateAnswer.getGraphChanges() != null) myCollapsedGraph = update();
     return delegateAnswer;
   }
 

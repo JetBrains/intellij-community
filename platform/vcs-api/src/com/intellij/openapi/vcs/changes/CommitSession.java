@@ -32,6 +32,7 @@ public interface CommitSession {
   /**
    * @deprecated Since version 7.0, {@link #getAdditionalConfigurationUI(java.util.Collection, String)} is called instead
    */
+  @Deprecated
   @Nullable
   default JComponent getAdditionalConfigurationUI() {
     return null;
@@ -53,7 +54,6 @@ public interface CommitSession {
 
   /**
    * @return the ID of the help topic to show for the dialog
-   * @since 10.5
    */
   @Nullable
   default String getHelpId() {

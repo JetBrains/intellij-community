@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -31,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class CvsOperationOnFiles extends CvsCommandOperation {
@@ -44,6 +44,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   public CvsOperationOnFiles() {
   }
 
+  @Override
   public synchronized void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
     synchronized (CvsOperation.class) {
       if (!myFiles.isEmpty()) {
@@ -109,6 +110,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
     return myFiles.size();
   }
 
+  @Override
   public int getFilesToProcessCount() {
     return getFilesCount();
   }
@@ -134,6 +136,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
     return myRootsToFiles;
   }
 
+  @Override
   protected Collection<CvsRootProvider> getAllCvsRoots() throws CannotFindCvsRootException {
     return getRootsToFilesMap().keySet();
   }

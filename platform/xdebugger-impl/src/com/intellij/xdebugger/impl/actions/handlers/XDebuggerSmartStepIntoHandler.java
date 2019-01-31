@@ -15,7 +15,9 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -24,6 +26,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
@@ -31,14 +40,20 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
+
+  private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
 
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
@@ -71,6 +86,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       return;
     }
 
+    ScopeHighlighter highlighter = new ScopeHighlighter(editor);
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<V>(handler.getPopupTitle(position), variants) {
       @Override
       public Icon getIconFor(V aValue) {
@@ -86,9 +102,39 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       @Override
       public PopupStep onChosen(V selectedValue, boolean finalChoice) {
         session.smartStepInto(handler, selectedValue);
+        highlighter.dropHighlight();
         return FINAL_CHOICE;
       }
+
+      @Override
+      public void canceled() {
+        highlighter.dropHighlight();
+        super.canceled();
+      }
     });
+    popup.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+          Object selectedValue = ObjectUtils.doIfCast(e.getSource(), JBList.class, it -> it.getSelectedValue());
+          highlightVariant(ObjectUtils.tryCast(selectedValue, XSmartStepIntoVariant.class), session, editor, highlighter);
+        }
+      }
+    });
+    highlightVariant(ObjectUtils.tryCast(ContainerUtil.getFirstItem(variants), XSmartStepIntoVariant.class), session, editor, highlighter);
     DebuggerUIUtil.showPopupForEditorLine(popup, editor, position.getLine());
+  }
+
+  private static void highlightVariant(@Nullable XSmartStepIntoVariant variant,
+                                       XDebugSession session,
+                                       Editor editor,
+                                       @NotNull ScopeHighlighter highlighter) {
+    PsiElement element = variant != null ? variant.getHighlightElement() : null;
+    if (element != null) {
+      PsiFile currentFile = PsiDocumentManager.getInstance(session.getProject()).getPsiFile(editor.getDocument());
+      LOG.assertTrue(PsiTreeUtil.isAncestor(currentFile, element, false),
+                     "Highlight element " + element + " is not from the current file");
+      highlighter.highlight(element, Collections.singletonList(element));
+    }
   }
 }

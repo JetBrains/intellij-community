@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.file.FileUtils;
 
 import java.io.File;
@@ -47,12 +48,12 @@ public class MigrateCvsRootAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     myVisibility.applyToEvent(e);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final VcsContext context = CvsContextWrapper.createInstance(event);
     final VirtualFile selectedFile = context.getSelectedFile();
     final Project project = context.getProject();

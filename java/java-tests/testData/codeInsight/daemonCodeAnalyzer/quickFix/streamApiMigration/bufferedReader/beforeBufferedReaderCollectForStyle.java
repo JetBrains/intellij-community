@@ -8,7 +8,7 @@ import java.util.List;
 public class Main {
   List<String> test(BufferedReader br) throws IOException {
     List<String> result = new ArrayList<>();
-    for <caret>(String line = br.readLine(); line != null; line = br.readLine()) {
+    for <caret>(String line = ((br.readLine())); line != null; line = (br.readLine())) {
       result.add(line.trim());
     }
     return result;

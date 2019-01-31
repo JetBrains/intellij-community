@@ -25,6 +25,12 @@ import java.util.Collection;
  * @author oleg
  */
 public interface Instruction {
+
+  Instruction[] EMPTY_ARRAY = new Instruction[0];
+
+  /**
+   * @return related psi elements. Can be null for fake instructions e.g. entry and exit points
+   */
   @Nullable
   PsiElement getElement();
 
@@ -47,25 +53,25 @@ public interface Instruction {
    */
   @NotNull
   String getElementPresentation();
-  
+
   default void addSucc(@NotNull Instruction endInstruction) {
     if (!allSucc().contains(endInstruction)) {
       allSucc().add(endInstruction);
     }
   }
-  
+
   default void addPred(@NotNull Instruction beginInstruction) {
     if (!allPred().contains(beginInstruction)) {
       allPred().add(beginInstruction);
     }
   }
-  
-  default void replacePred(@NotNull Instruction oldInstruction, @NotNull Collection<Instruction> newInstructions) {
+
+  default void replacePred(@NotNull Instruction oldInstruction, @NotNull Collection<? extends Instruction> newInstructions) {
     newInstructions.forEach(el -> addPred(el));
     allPred().remove(oldInstruction);
   }
 
-  default void replaceSucc(@NotNull Instruction oldInstruction, @NotNull Collection<Instruction> newInstructions) {
+  default void replaceSucc(@NotNull Instruction oldInstruction, @NotNull Collection<? extends Instruction> newInstructions) {
     newInstructions.forEach(el -> addSucc(el));
     allSucc().remove(oldInstruction);
   }

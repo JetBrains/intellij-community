@@ -39,7 +39,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
     return componentAdapters.getImmutableSet();
   }
 
-  private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<ComponentAdapter> result) {
+  private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<? super ComponentAdapter> result) {
     List<ComponentAdapter> comp = new ArrayList<>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
@@ -185,6 +185,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
     return result;
   }
 
+  @FunctionalInterface
   public interface LazyComponentAdapter {
     boolean isComponentInstantiated();
   }
@@ -201,9 +202,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
       //noinspection unchecked
       return (T)getLocalInstance(adapter);
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @Override
@@ -265,7 +264,7 @@ public class DefaultPicoContainer implements AreaPicoContainer {
   public ComponentAdapter unregisterComponentByInstance(@NotNull Object componentInstance) {
     for (ComponentAdapter adapter : getComponentAdapters()) {
       Object o = getInstance(adapter);
-      if (o != null && o.equals(componentInstance)) {
+      if (componentInstance.equals(o)) {
         return unregisterComponent(adapter.getComponentKey());
       }
     }

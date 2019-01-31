@@ -16,6 +16,7 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -155,6 +156,7 @@ public class PsiBuilderUtil {
     int balance = 1;
 
     while (true) {
+      ProgressManager.checkCanceled();
       IElementType type = lexer.getTokenType();
 
       if (type == null) {

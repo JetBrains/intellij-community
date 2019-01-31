@@ -114,10 +114,12 @@ public class MethodReturnValueWatcher implements OverheadProducer {
     return myLastMethodReturnValue;
   }
 
+  @Override
   public boolean isEnabled() {
     return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
+  @Override
   public void setEnabled(final boolean enabled) {
     DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
     clear();
@@ -130,11 +132,11 @@ public class MethodReturnValueWatcher implements OverheadProducer {
   public void enable(ThreadReference thread) {
     setTrackingEnabled(true, thread);
   }
-  
+
   public void disable() {
     setTrackingEnabled(false, null);
   }
-  
+
   private void setTrackingEnabled(boolean trackingEnabled, final ThreadReference thread) {
     myTrackingEnabled = trackingEnabled;
     updateRequestState(trackingEnabled && isEnabled(), thread);

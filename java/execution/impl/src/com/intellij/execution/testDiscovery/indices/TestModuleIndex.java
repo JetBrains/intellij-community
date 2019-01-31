@@ -62,10 +62,12 @@ public class TestModuleIndex {
   }
 
   private static class IntSeqExternalizer implements DataExternalizer<TIntArrayList> {
+    @Override
     public void save(@NotNull DataOutput dataOutput, TIntArrayList testNameIds) throws IOException {
       for (int testNameId : testNameIds.toNativeArray()) DataInputOutputUtil.writeINT(dataOutput, testNameId);
     }
 
+    @Override
     public TIntArrayList read(@NotNull DataInput dataInput) throws IOException {
       TIntHashSet result = new TIntHashSet();
 

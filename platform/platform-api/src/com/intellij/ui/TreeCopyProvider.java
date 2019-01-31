@@ -35,6 +35,7 @@ public class TreeCopyProvider implements CopyProvider {
     myTree = tree;
   }
 
+  @Override
   public void performCopy(@NotNull DataContext dataContext) {
     try {
       final Clipboard clipboard = myTree.getToolkit().getSystemClipboard();
@@ -46,10 +47,12 @@ public class TreeCopyProvider implements CopyProvider {
     }
   }
 
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return myTree.getSelectionPath() != null;
   }
 
+  @Override
   public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }

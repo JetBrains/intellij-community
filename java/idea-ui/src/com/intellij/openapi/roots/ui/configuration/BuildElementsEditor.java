@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -20,6 +20,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,6 @@ import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
   private JRadioButton myInheritCompilerOutput;
-  @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
 
   private CommitableFieldPanel myOutputPathPanel;
@@ -107,7 +107,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
     myInheritCompilerOutput.setSelected(outputPathInherited);
     myPerModuleCompilerOutput.setSelected(!outputPathInherited);
-    
+
     // fill with data
     updateOutputPathPresentation();
 
@@ -212,7 +212,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         commitRunnable.run();
       }
     });
@@ -279,7 +279,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private static class CommitableFieldPanel extends FieldPanel {
     private final Runnable myCommitRunnable;
 
-    public CommitableFieldPanel(final JTextField textField,
+    CommitableFieldPanel(final JTextField textField,
                                 String labelText,
                                 final String viewerDialogTitle,
                                 ActionListener browseButtonActionListener,

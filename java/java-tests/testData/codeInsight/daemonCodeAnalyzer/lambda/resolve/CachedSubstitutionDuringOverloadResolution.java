@@ -9,7 +9,7 @@ class Test {
   }
 
   public static void main(Stream<Test> stream) {
-    stream.map(s -> Inner.of(Test::get<ref>Key, s));
+    stream.map(s -> Inner.of(Test::get<caret>Key, s));
   }
 
   public static final class Inner<K> {

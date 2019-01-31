@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -162,8 +163,8 @@ public class LongRangeKnownMethods {
 
   void testStringComparison(String name) {
     // Parentheses misplaced -- found in AndroidStudio
-    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
-          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
+    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
+          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
       System.out.println("ok");
     }
   }
@@ -286,10 +287,75 @@ public class LongRangeKnownMethods {
     }
   }
 
+  void testDoubleBrace() {
+    List<String> list = new ArrayList<String>() {{
+      this.add("foo");
+      this.add("bar");
+    }};
+    if(list.isEmpty()) {
+      System.out.println("Not known now");
+    }
+  }
+
   void testSizeCheck() {
     List<String> list = new ArrayList<>();
     list.add(null);
     if(list.size() == 0) return;
     if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+  }
+
+  void testStartsWithEmpty(String s1, String s2) {
+    if(s1.startsWith(s2) || <warning descr="Condition 's2.isEmpty()' is always 'false' when reached">s2.isEmpty()</warning>) {
+      System.out.println("Oops");
+    }
+  }
+  
+  void testCalendar(Calendar c) {
+    int month = c.get(Calendar.MONTH);
+    if (<warning descr="Condition 'month < 0' is always 'false'">month < 0</warning>) {}
+  }
+  
+  void testSkip(InputStream is, int amount) throws IOException {
+    long skipped = is.skip(amount);
+    if (<warning descr="Condition 'skipped > Integer.MAX_VALUE' is always 'false'">skipped > Integer.MAX_VALUE</warning>) {}
+    if (<warning descr="Condition 'skipped < 0' is always 'false'">skipped < 0</warning>) {}
+    if (<warning descr="Condition 'is.skip(-1) == 0' is always 'true'">is.skip(-1) == 0</warning>) {}
+  }
+  
+  void testNumberToString(int i, long j) {
+    String s;
+    s = Integer.toHexString(i);
+    if (<warning descr="Condition 's.length() < 1' is always 'false'">s.length() < 1</warning>) {}
+    if (s.length() < 2) {}
+    if (s.length() > 7) {}
+    if (<warning descr="Condition 's.length() > 8' is always 'false'">s.length() > 8</warning>) {}
+    s = Integer.toOctalString(i);
+    if (s.length() > 10) {}
+    if (<warning descr="Condition 's.length() > 11' is always 'false'">s.length() > 11</warning>) {}
+    s = Integer.toBinaryString(i);
+    if (s.length() > 31) {}
+    if (<warning descr="Condition 's.length() > 32' is always 'false'">s.length() > 32</warning>) {}
+    s = Long.toHexString(j);
+    if (<warning descr="Condition 's.length() < 1' is always 'false'">s.length() < 1</warning>) {}
+    if (s.length() < 2) {}
+    if (s.length() > 15) {}
+    if (<warning descr="Condition 's.length() > 16' is always 'false'">s.length() > 16</warning>) {}
+    s = Long.toOctalString(j);
+    if (s.length() > 21) {}
+    if (<warning descr="Condition 's.length() > 22' is always 'false'">s.length() > 22</warning>) {}
+    s = Long.toBinaryString(j);
+    if (s.length() > 63) {}
+    if (<warning descr="Condition 's.length() > 64' is always 'false'">s.length() > 64</warning>) {}
+    if (i >= 0 && i < 100) {
+      s = Integer.toBinaryString(i);
+      if (s.length() > 6) {}
+      if (<warning descr="Condition 's.length() > 7' is always 'false'">s.length() > 7</warning>) {}
+    }
+  }
+  
+  void testNumberToStringExact(boolean b) {
+    int i = b ? 123 : 456;
+    String s = Integer.toString(i);
+    if (<warning descr="Condition 's.equals(\"123\") || s.equals(\"456\")' is always 'true'">s.equals("123") || <warning descr="Condition 's.equals(\"456\")' is always 'true' when reached">s.equals("456")</warning></warning>) {}
   }
 }

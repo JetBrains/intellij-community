@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -101,7 +98,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
       if (documentWindow != null) {
-        handler.navigate(documentWindow.hostToInjectedUnescaped(offset));
+        handler.navigate(InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset));
       }
     }
     return handler;
@@ -119,6 +116,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       return handler;
     }
     handler = new QuickEditHandler(project, injectedFile, origFile, editor, this);
+    Disposer.register(project, handler);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // todo remove and hide QUICK_EDIT_HANDLER
       injectedFile.putUserData(QUICK_EDIT_HANDLER, handler);
@@ -134,9 +132,8 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     TextRange hostRange = TextRange.create(hostRanges[0].getStartOffset(),
                                            hostRanges[hostRanges.length - 1].getEndOffset());
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor.getDocument() != documentWindow.getDelegate()) continue;
       QuickEditHandler handler = editor.getUserData(QUICK_EDIT_HANDLER);
-      if (handler != null && handler.changesRange(hostRange)) return handler;
+      if (handler != null && handler.tryReuse(injectedFile, hostRange)) return handler;
     }
     return null;
   }

@@ -41,7 +41,6 @@ import static org.junit.Assert.assertArrayEquals;
  * It's main purpose is to provide utility methods like fold regions addition and setup; typing etc. 
  * 
  * @author Denis Zhdanov
- * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
   public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
@@ -65,6 +64,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   protected void tearDown() throws Exception {
     try {
       FontLayoutService.setInstance(null);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -170,7 +172,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     assertArrayEquals(positions, softWrapPositions.toArray());
   }
 
-  protected static void configureSoftWraps(int charCountToWrapAt) {
+  protected void configureSoftWraps(int charCountToWrapAt) {
     EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
   }
 
@@ -178,8 +180,16 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     return addInlay(offset, false);
   }
 
+  public static Inlay addInlay(int offset, int widthInPixels) {
+    return EditorTestUtil.addInlay(myEditor, offset, false, widthInPixels);
+  }
+
   public static Inlay addInlay(int offset, boolean relatesToPrecedingText) {
     return EditorTestUtil.addInlay(myEditor, offset, relatesToPrecedingText);
+  }
+
+  public static Inlay addBlockInlay(int offset) {
+    return EditorTestUtil.addBlockInlay(myEditor, offset);
   }
 
   protected static void runWriteCommand(ThrowableRunnable r) {

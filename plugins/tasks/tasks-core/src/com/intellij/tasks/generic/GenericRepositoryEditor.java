@@ -60,6 +60,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     super(project, repository, changeListener);
 
     myTest2Button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         afterTestConnection(TaskManager.getManager(project).testConnection(repository));
       }

@@ -26,6 +26,7 @@ import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +34,18 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class LocalHistoryTestCase extends Assert {
+  @Rule
+  public TestRule watcher = TestLoggerFactory.createTestWatcher();
+
   private static long myCurrentId = 0;
   private static IdeaProjectTestFixture fixture; // to initialize FSRecords
 
@@ -47,7 +54,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   protected static byte[] b(String s) {
-    return s.getBytes();
+    return s.getBytes(StandardCharsets.UTF_8);
   }
 
   protected static Content c(String data) {
@@ -157,7 +164,7 @@ public abstract class LocalHistoryTestCase extends Assert {
       }
     }
     facade.endChangeSet(changeSetName);
-    return (ChangeSet)facade.getChangeListInTests().getChangesInTests().get(0);
+    return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
   public static List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {

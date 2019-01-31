@@ -1,3 +1,3 @@
 def f(name):
-    a = open(name, 'rb')
-    return a.read()
+    A_NEW_NAME = open(name, 'rb')
+    return A_NEW_NAME.read()

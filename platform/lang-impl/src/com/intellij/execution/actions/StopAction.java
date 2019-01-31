@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -35,14 +36,14 @@ import java.util.List;
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
-  private static boolean isPlaceGlobal(AnActionEvent e) {
+  private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
   }
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
     String description = getTemplatePresentation().getDescription();
@@ -57,7 +58,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else if (stopCount == 1) {
           presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                       StringUtil.escapeMnemonics(stoppableDescriptors.get(0).getDisplayName())));
+                                                       StringUtil.escapeMnemonics(
+                                                         StringUtil.notNullize(stoppableDescriptors.get(0).getDisplayName()))));
       }
     }
     else {
@@ -80,7 +82,9 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else {
         presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                     StringUtil.escapeMnemonics(runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName())));
+                                                     StringUtil.escapeMnemonics(runProfile == null
+                                                                                ? StringUtil.notNullize(contentDescriptor.getDisplayName())
+                                                                                : runProfile.getName())));
       }
     }
 
@@ -90,7 +94,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
@@ -164,7 +168,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         })
         .addListener(new JBPopupAdapter() {
           @Override
-          public void onClosed(LightweightWindowEvent event) {
+          public void onClosed(@NotNull LightweightWindowEvent event) {
             myActivePopupRef = null;
           }
         })
@@ -265,7 +269,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
     List<Pair<RunContentDescriptor, Runnable>> descriptors = new ArrayList<>(stoppableDescriptors.size());
     for (RunContentDescriptor sd : stoppableDescriptors)
-      descriptors.add(Pair.create(sd, ()->ExecutionManagerImpl.stopProcess(sd)));
+      descriptors.add(Pair.create(sd, ()->ApplicationManager.getApplication().invokeLater(()->ExecutionManagerImpl.stopProcess(sd))));
     TouchBarsManager.showStopRunningBar(descriptors);
   }
 

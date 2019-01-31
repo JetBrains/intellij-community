@@ -32,6 +32,8 @@ public interface DeploymentLogManager {
   @NotNull
   LoggingHandler addAdditionalLog(@NotNull String presentableName);
 
+  void removeAdditionalLog(@NotNull String presentableName);
+
   boolean isTtySupported();
 
   TerminalHandler addTerminal(@NotNull String presentableName, InputStream terminalOutput, OutputStream terminalInput);

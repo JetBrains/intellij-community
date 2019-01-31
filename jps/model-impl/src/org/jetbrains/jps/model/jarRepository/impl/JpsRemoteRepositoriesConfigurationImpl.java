@@ -42,7 +42,7 @@ public class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRe
     ));
   }
 
-  public JpsRemoteRepositoriesConfigurationImpl(List<JpsRemoteRepositoryDescription> repositories) {
+  public JpsRemoteRepositoriesConfigurationImpl(List<? extends JpsRemoteRepositoryDescription> repositories) {
     myRepositories.addAll(repositories);
   }
 

@@ -36,10 +36,7 @@ import java.net.Socket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collection;
@@ -170,12 +167,11 @@ public final class SocketLock {
   }
 
   private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
+    OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
     FileUtilRt.createDirectory(new File(myConfigPath));
-    Path path1 = Paths.get(myConfigPath, PORT_LOCK_FILE);
-    try (FileChannel ch1 = FileChannel.open(path1, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock1 = ch1.lock()) {
+    try (FileChannel cc = FileChannel.open(Paths.get(myConfigPath, PORT_LOCK_FILE), options); @SuppressWarnings("unused") FileLock cl = cc.lock()) {
       FileUtilRt.createDirectory(new File(mySystemPath));
-      Path path2 = Paths.get(mySystemPath, PORT_LOCK_FILE);
-      try (FileChannel ch2 = FileChannel.open(path2, StandardOpenOption.CREATE, StandardOpenOption.APPEND); @SuppressWarnings("unused") FileLock lock2 = ch2.lock()) {
+      try (FileChannel sc = FileChannel.open(Paths.get(mySystemPath, PORT_LOCK_FILE), options); @SuppressWarnings("unused") FileLock sl = sc.lock()) {
         return action.call();
       }
     }
@@ -294,12 +290,12 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                                   @NotNull AtomicReference<Consumer<List<String>>> activateListener,
+    MyChannelInboundHandler(@NotNull String[] lockedPaths,
+                                   @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
                                    @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
@@ -310,11 +306,9 @@ public final class SocketLock {
     public void channelActive(ChannelHandlerContext context) throws Exception {
       ByteBuf buffer = context.alloc().ioBuffer(1024);
       boolean success = false;
-      try {
-        ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+      try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
         for (String path : myLockedPaths) out.writeUTF(path);
         out.writeUTF(PATHS_EOT_RESPONSE);
-        out.close();
         success = true;
       }
       finally {
@@ -352,10 +346,10 @@ public final class SocketLock {
 
             if (StringUtil.startsWith(command, PID_COMMAND)) {
               ByteBuf buffer = context.alloc().ioBuffer();
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              String name = ManagementFactory.getRuntimeMXBean().getName();
-              out.writeUTF(name);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                String name = ManagementFactory.getRuntimeMXBean().getName();
+                out.writeUTF(name);
+              }
               context.writeAndFlush(buffer);
             }
 
@@ -380,9 +374,9 @@ public final class SocketLock {
               }
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              out.writeUTF(OK_RESPONSE);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                out.writeUTF(OK_RESPONSE);
+              }
               context.writeAndFlush(buffer);
             }
             context.close();

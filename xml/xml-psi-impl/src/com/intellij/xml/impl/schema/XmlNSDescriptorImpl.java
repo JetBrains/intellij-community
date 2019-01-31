@@ -186,12 +186,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<XmlTag> processor) {
+  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<? super XmlTag> processor) {
     return processTagsInNamespaceInner(myTag, tagNames, processor, null);
   }
 
   private static boolean processTagsInNamespaceInner(@NotNull final XmlTag rootTag, final String[] tagNames,
-                                                     final PsiElementProcessor<XmlTag> processor, Set<XmlTag> visitedTags) {
+                                                     final PsiElementProcessor<? super XmlTag> processor, Set<? super XmlTag> visitedTags) {
     if (visitedTags == null) visitedTags = new HashSet<>(3);
     else if (visitedTags.contains(rootTag)) return true;
 
@@ -359,7 +359,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @Override
   @Nullable
-  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference) {
+  public XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<? super XmlNSDescriptorImpl> visited, boolean reference) {
     if(visited.contains(this)) return null;
 
     final QNameKey pair = new QNameKey(namespace, localName);
@@ -389,7 +389,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
               }
               final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
-              return new CachedValueProvider.Result<>(xmlElementDescriptor, xmlElementDescriptor.getDependences());
+              return new CachedValueProvider.Result<>(xmlElementDescriptor, xmlElementDescriptor.getDependencies());
             }, false);
             myDescriptorsMap.put(pair, cachedValue);
             return cachedValue.getValue();
@@ -512,7 +512,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 if(attributeDescriptor != null){
                   final CachedValue<XmlAttributeDescriptor> value = CachedValuesManager.getManager(includedDocument.getProject()).createCachedValue(
                     () -> {
-                      Object[] deps = attributeDescriptor.getDependences();
+                      Object[] deps = attributeDescriptor.getDependencies();
                       if (deps.length == 0) {
                         LOG.error(attributeDescriptor + " (" + attributeDescriptor.getClass() + ") returned no dependencies");
                       }
@@ -945,7 +945,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
     return dependencies;
   }

@@ -28,9 +28,9 @@ import java.util.function.Function;
  */
 public class CallHandler<T> implements Function<PsiMethodCallExpression, T> {
   private final CallMatcher myMatcher;
-  private final Function<PsiMethodCallExpression, T> myTransformer;
+  private final Function<? super PsiMethodCallExpression, ? extends T> myTransformer;
 
-  public CallHandler(CallMatcher matcher, Function<PsiMethodCallExpression, T> transformer) {
+  public CallHandler(CallMatcher matcher, Function<? super PsiMethodCallExpression, ? extends T> transformer) {
     myMatcher = matcher;
     myTransformer = transformer;
   }
@@ -63,7 +63,7 @@ public class CallHandler<T> implements Function<PsiMethodCallExpression, T> {
    * @param <T> a type of transformer return value
    * @return a new CallHandler
    */
-  public static <T> CallHandler<T> of(CallMatcher matcher, Function<PsiMethodCallExpression, T> transformer) {
+  public static <T> CallHandler<T> of(CallMatcher matcher, Function<? super PsiMethodCallExpression, ? extends T> transformer) {
     return new CallHandler<>(matcher, transformer);
   }
 }

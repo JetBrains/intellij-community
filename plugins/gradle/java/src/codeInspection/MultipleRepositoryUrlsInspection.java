@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/21/13
  */
 public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 
@@ -77,15 +76,14 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
       GrMethodCall mavenMethodCall = PsiTreeUtil.getParentOfType(closure, GrMethodCall.class);
       if (mavenMethodCall == null) return;
       GrExpression mavenMethodExpression = mavenMethodCall.getInvokedExpression();
-      if (mavenMethodExpression == null ||
-          !ArrayUtil.contains(mavenMethodExpression.getText(), "maven", "ivy")) {
+      if (!ArrayUtil.contains(mavenMethodExpression.getText(), "maven", "ivy")) {
         return;
       }
 
       GrMethodCall repositoryMethodCall = PsiTreeUtil.getParentOfType(mavenMethodCall, GrMethodCall.class);
       if (repositoryMethodCall == null) return;
       GrExpression repositoryMethodExpression = repositoryMethodCall.getInvokedExpression();
-      if (repositoryMethodExpression == null || !repositoryMethodExpression.getText().equals("repositories")) return;
+      if (!repositoryMethodExpression.getText().equals("repositories")) return;
 
       List<GrCallExpression> statements = findUrlCallExpressions(closure);
       if (statements.size() > 1) {

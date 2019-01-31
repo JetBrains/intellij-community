@@ -16,14 +16,13 @@
 
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
-
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
@@ -34,11 +33,13 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
         myType = type;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Make Type Conversion Explicit";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "ImplicitTypeConversion";

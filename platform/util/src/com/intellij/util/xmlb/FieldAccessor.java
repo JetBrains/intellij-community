@@ -15,7 +15,7 @@ import java.lang.reflect.Type;
 class FieldAccessor implements MutableAccessor {
   private final Field myField;
 
-  public FieldAccessor(@NotNull Field field) {
+  FieldAccessor(@NotNull Field field) {
     myField = field;
     field.setAccessible(true);
   }

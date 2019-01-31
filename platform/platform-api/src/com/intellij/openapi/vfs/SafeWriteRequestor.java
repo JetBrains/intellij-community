@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs;
 import java.nio.file.Path;
 
 /**
- * A marker interface for {@link VirtualFile#getOutputStream(Object)} and {@link SafeWriteUtil#outputStream(Path, Object)}
+ * A marker interface for {@link VirtualFile#getOutputStream(Object)} and {@link SafeWriteUtil#safeOutputStream(Path, Object)}
  * to take extra caution w.r.t. an existing content.
  * Specifically, if the operation fails for whatever reason (like not enough disk space left), the prior content shall not be overwritten.
  *

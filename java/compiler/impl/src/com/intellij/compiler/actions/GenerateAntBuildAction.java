@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -98,13 +84,13 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(e.getProject() != null);
   }
 
-  private void generate(final Project project, final GenerationOptions genOptions) {
-    ApplicationManager.getApplication().saveAll();
+  private void generate(@NotNull Project project, final GenerationOptions genOptions) {
+    StoreUtil.saveDocumentsAndProjectSettings(project);
     final List<File> filesToRefresh = new ArrayList<>();
     final IOException[] _ex = new IOException[]{null};
     final List<File> _generated = new ArrayList<>();
@@ -166,7 +152,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                CompilerBundle.message("generate.ant.build.title"));
     }
     else {
-      StringBuffer filesString = new StringBuffer();
+      StringBuilder filesString = new StringBuilder();
       for (int idx = 0; idx < _generated.size(); idx++) {
         final File file = _generated.get(idx);
         if (idx > 0) {
@@ -183,7 +169,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
   }
 
-  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<File> filesToRefresh) {
+  private boolean backup(final File file, final Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) {
     if (!genOptions.backupPreviouslyGeneratedFiles || !file.exists()) {
       return true;
     }
@@ -210,7 +196,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     return ok;
   }
 
-  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
+  private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final File destFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
@@ -236,19 +222,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                              final File propertiesFile) throws IOException {
     FileUtil.createIfDoesntExist(buildxmlFile);
     FileUtil.createIfDoesntExist(propertiesFile);
-    final PrintWriter dataOutput = makeWriter(buildxmlFile);
-    try {
+    try (PrintWriter dataOutput = makeWriter(buildxmlFile)) {
       new SingleFileProjectBuild(project, genOptions).generate(dataOutput);
     }
-    finally {
-      dataOutput.close();
-    }
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
-    }
-    finally {
-      propertiesOut.close();
     }
   }
 
@@ -274,14 +252,14 @@ public class GenerateAntBuildAction extends CompileActionBase {
       }
     }
     final ReadonlyStatusHandler.OperationStatus status =
-      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtil.toVirtualFileArray(toCheck));
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(toCheck);
     if (status.hasReadonlyFiles()) {
       throw new IOException(status.getReadonlyFilesMessage());
     }
   }
 
-  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
-    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
+  public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<? super File> filesToRefresh) throws IOException {
+    final File projectBuildFileDestDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<>();
     final File projectBuildFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
@@ -303,8 +281,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     FileUtil.createIfDoesntExist(projectBuildFile);
-    final PrintWriter mainDataOutput = makeWriter(projectBuildFile);
-    try {
+    try (PrintWriter mainDataOutput = makeWriter(projectBuildFile)) {
       final MultipleFileProjectBuild build = new MultipleFileProjectBuild(project, genOptions);
       build.generate(mainDataOutput);
       generated.add(projectBuildFile);
@@ -324,27 +301,16 @@ public class GenerateAntBuildAction extends CompileActionBase {
         }
 
         FileUtil.createIfDoesntExist(chunkBuildFile);
-        final PrintWriter out = makeWriter(chunkBuildFile);
-        try {
+        try (PrintWriter out = makeWriter(chunkBuildFile)) {
           new ModuleChunkAntProject(project, chunk, genOptions).generate(out);
           generated.add(chunkBuildFile);
         }
-        finally {
-          out.close();
-        }
       }
     }
-    finally {
-      mainDataOutput.close();
-    }
     // properties
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);
-    }
-    finally {
-      propertiesOut.close();
     }
 
     filesToRefresh.addAll(generated);

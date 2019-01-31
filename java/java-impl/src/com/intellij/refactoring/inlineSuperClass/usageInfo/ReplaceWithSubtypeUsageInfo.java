@@ -22,12 +22,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author anna
- * @since 27-Aug-2008
  */
 public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public static final Logger LOG = Logger.getInstance(ReplaceWithSubtypeUsageInfo.class);
@@ -46,10 +44,11 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
     }
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     if (myTypeElement.isValid()) {
       Project project = myTypeElement.getProject();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       PsiElement replaced = myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
     }

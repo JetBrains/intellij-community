@@ -32,11 +32,13 @@ public class MyArtifactRepository extends LocalArtifactRepository {
     return MavenModuleMap.getInstance().resolveToModule(artifact);
   }
 
+  @Override
   public Artifact find(Artifact artifact) {
     resolveAsModule(artifact);
     return artifact;
   }
 
+  @Override
   public boolean hasLocalMetadata() {
     return false;
   }

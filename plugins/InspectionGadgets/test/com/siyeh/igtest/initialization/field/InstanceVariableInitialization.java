@@ -1,24 +1,24 @@
 package com.siyeh.igtest.initialization.field;
 
-import junit.framework.TestCase;
+import <error descr="Cannot resolve symbol 'junit'">junit</error>.framework.TestCase;
 
-public class InstanceVariableInitialization extends TestCase { // needs junit.jar for testcase to work
+public class InstanceVariableInitialization extends <error descr="Cannot resolve symbol 'TestCase'">TestCase</error> { // needs junit.jar for testcase to work
 
-    private String javaHome;
+    private String <warning descr="Instance field 'javaHome' may not be initialized during object construction">javaHome</warning>;
 
     InstanceVariableInitialization() {
         //javaHome = System.getProperty("java.home");
     }
 
     protected void setUp() throws Exception {
-        super.setUp();
+        super.<error descr="Cannot resolve method 'setUp()'">setUp</error>();
     }
 }
 class InstanceVariableInitializationInspection
 {
     private int m_fooBar;
     private int m_fooBard;
-    private int m_fooBardo;
+    private int <warning descr="Instance field 'm_fooBardo' may not be initialized during object construction">m_fooBardo</warning>;
     private int m_fooBaz = 1;
     private int m_fooBarangus;
 
@@ -82,7 +82,7 @@ class B {
   private int i;
 
   B() throws java.io.FileNotFoundException {
-    try (java.io.FileInputStream in = new java.io.FileInputStream("asdf" + (i = 3) + "asdf")) {
+    try (<error descr="Unhandled exception from auto-closeable resource: java.io.IOException">java.io.FileInputStream in = new java.io.FileInputStream("asdf" + (i = 3) + "asdf")</error>) {
 
     }
   }
@@ -99,4 +99,8 @@ class D {
   D() {
     for (Object o : l = new java.util.ArrayList()) {}
   }
+}
+class WithNullable {
+  @org.jetbrains.annotations.Nullable
+  private String str;
 }

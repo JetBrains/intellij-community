@@ -96,7 +96,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     }
   }
 
-  private static void collectRefs(GrCodeReferenceElement[] refs, Collection<String> classes, Collection<String> interfaces, Collection<String> unknown) {
+  private static void collectRefs(GrCodeReferenceElement[] refs, Collection<? super String> classes, Collection<? super String> interfaces, Collection<? super String> unknown) {
     for (GrCodeReferenceElement ref : refs) {
       final PsiElement extendsElement = ref.resolve();
       String canonicalText = ref.getCanonicalText();

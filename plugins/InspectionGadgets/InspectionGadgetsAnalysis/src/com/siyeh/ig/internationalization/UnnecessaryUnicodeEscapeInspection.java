@@ -70,7 +70,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     private final char c;
     private final RangeMarker myRangeMarker;
 
-    public UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
+    UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
       this.c = c;
       myRangeMarker = rangeMarker;
     }
@@ -131,14 +131,10 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         if (!isEscape) {
           continue;
         }
-        int nextChar = i;
-        do {
-          nextChar++;
-          if (nextChar >= length) {
-            break;
-          }
+        int nextChar = i + 1;
+        while (nextChar < length && text.charAt(nextChar) == 'u') {
+          nextChar++; // \\uuuu0061 is a legal Unicode escape
         }
-        while (text.charAt(nextChar) == 'u'); // \\uuuu0061 is a legal unicode escape
         if (nextChar == i + 1 || nextChar + 3 >= length) {
           continue;
         }

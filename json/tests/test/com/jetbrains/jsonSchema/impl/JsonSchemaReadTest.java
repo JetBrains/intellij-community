@@ -15,6 +15,8 @@ import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Irina.Chernushina on 8/29/2015.
  */
 public class JsonSchemaReadTest extends CompletionTestCase {
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema";

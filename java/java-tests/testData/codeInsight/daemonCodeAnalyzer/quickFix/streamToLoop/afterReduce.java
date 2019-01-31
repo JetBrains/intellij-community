@@ -11,7 +11,7 @@ import static java.util.Arrays.asList;
 public class Main {
   public static String testReduce2(List<String> list) {
       String acc = "";
-      for (String s: list) {
+      for (String s : list) {
           acc = acc + s;
       }
       return acc;
@@ -19,7 +19,7 @@ public class Main {
 
   public static int testReduce3(List<String> list) {
       Integer acc = 0;
-      for (String s: list) {
+      for (String s : list) {
           acc = acc + s.length();
       }
       return acc;
@@ -27,7 +27,7 @@ public class Main {
 
   private static Integer testReduceMethodRef(List<Integer> numbers) {
       Integer acc = 0;
-      for (Integer number: numbers) {
+      for (Integer number : numbers) {
           acc = Math.max(acc, number);
       }
       return acc;
@@ -36,7 +36,7 @@ public class Main {
   private static OptionalInt testReduceOptionalInt() {
       boolean seen = false;
       int acc = 0;
-      for (int i: new int[]{}) {
+      for (int i : new int[]{}) {
           if (!seen) {
               seen = true;
               acc = i;
@@ -50,7 +50,7 @@ public class Main {
   private static Optional<Integer> testReduceOptionalInteger(Integer... numbers) {
       boolean seen = false;
       Integer acc = null;
-      for (Integer number: numbers) {
+      for (Integer number : numbers) {
           if (!seen) {
               seen = true;
               acc = number;

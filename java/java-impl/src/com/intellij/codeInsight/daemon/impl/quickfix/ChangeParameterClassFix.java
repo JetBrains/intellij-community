@@ -31,7 +31,6 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,11 +53,13 @@ public class ChangeParameterClassFix extends ExtendsListFix {
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
+    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
     return
       super.isAvailable(project, file, startElement, endElement)
-      && myClassToExtendFrom != null
-      && myClassToExtendFrom.isValid()
-      && myClassToExtendFrom.getQualifiedName() != null
+      && classToExtendFrom != null
+      && classToExtendFrom.isValid()
+      && classToExtendFrom.getQualifiedName() != null
       ;
   }
 

@@ -24,7 +24,7 @@ class NegationCountVisitor extends JavaRecursiveElementWalkingVisitor {
   private int m_count;
   private boolean ignoring;
 
-  public NegationCountVisitor(boolean ignoreInAssertStatements) {
+  NegationCountVisitor(boolean ignoreInAssertStatements) {
     myIgnoreInAssertStatements = ignoreInAssertStatements;
   }
 

@@ -24,7 +24,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     init();
   }
 
-  public DropDownLink(@NotNull T initialItem, @NotNull List<T> items, @Nullable Consumer<T> itemChosenAction, boolean updateLabel) {
+  public DropDownLink(@NotNull T initialItem, @NotNull List<T> items, @Nullable Consumer<? super T> itemChosenAction, boolean updateLabel) {
     super(initialItem.toString(), AllIcons.General.LinkDropTriangle);
     chosenItem = initialItem;
     IPopupChooserBuilder<T> popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(items).

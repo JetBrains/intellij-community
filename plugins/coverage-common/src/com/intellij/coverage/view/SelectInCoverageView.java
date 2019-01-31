@@ -43,6 +43,7 @@ public class SelectInCoverageView implements  SelectInTarget {
     }
   }
 
+  @Override
   public String getToolWindowId() {
     return CoverageViewManager.TOOLWINDOW_ID;
   }
@@ -52,6 +53,7 @@ public class SelectInCoverageView implements  SelectInTarget {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.STRUCTURE_WEIGHT + 0.5f;
   }

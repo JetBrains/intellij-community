@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,8 +91,8 @@ public class ProjectListBuilder extends AbstractListBuilder {
   protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
-    for (int i = 0; i < childElements.length; i++) {
-      ProjectViewNode childElement = (ProjectViewNode)childElements[i];
+    for (Object childElement1 : childElements) {
+      ProjectViewNode childElement = (ProjectViewNode)childElement1;
       if (childElement.contains(file)) result.add(childElement);
     }
 
@@ -217,20 +218,8 @@ public class ProjectListBuilder extends AbstractListBuilder {
 
     @Override
     public void fileStatusChanged(@NotNull final VirtualFile vFile) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-
-      if (vFile.isDirectory()) {
-        final PsiDirectory directory = manager.findDirectory(vFile);
-        if (directory != null) {
-          myPsiTreeChangeListener.childrenChanged();
-        }
-      }
-      else {
-        final PsiFile file = manager.findFile(vFile);
-        if (file != null){
-          myPsiTreeChangeListener.childrenChanged();
-        }
-      }
+      PsiFileSystemItem item = PsiUtilCore.findFileSystemItem(myProject, vFile);
+      if (item != null) myPsiTreeChangeListener.childrenChanged();
     }
   }
 

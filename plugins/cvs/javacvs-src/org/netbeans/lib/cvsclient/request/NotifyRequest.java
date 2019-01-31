@@ -60,7 +60,7 @@ public final class NotifyRequest extends AbstractRequest {
 	public NotifyRequest(FileObject fileObject, String path, String command, String parameters) {
 		BugLog.getInstance().assertNotNull(fileObject);
 
-		@NonNls final StringBuffer buffer = new StringBuffer();
+		@NonNls final StringBuilder buffer = new StringBuilder();
 		buffer.append("Notify "); // NOI18N
 		buffer.append(fileObject.getName());
 		buffer.append('\n');
@@ -79,7 +79,8 @@ public final class NotifyRequest extends AbstractRequest {
 
 	// Implemented ============================================================
 
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return request;
 	}
 }

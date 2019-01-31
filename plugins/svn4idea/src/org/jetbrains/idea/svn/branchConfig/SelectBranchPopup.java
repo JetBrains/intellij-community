@@ -101,7 +101,7 @@ public class SelectBranchPopup {
 
     private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
-    public BranchBasesPopupStep(@NotNull Project project,
+    BranchBasesPopupStep(@NotNull Project project,
                                 @NotNull VirtualFile vcsRoot,
                                 @NotNull SvnBranchConfigurationNew configuration,
                                 @NotNull BranchSelectedCallback callback,
@@ -203,7 +203,7 @@ public class SelectBranchPopup {
     private final JLabel myUrlLabel = new JLabel();
     private final JLabel myDateLabel = new JLabel();
 
-    public BranchRenderer() {
+    BranchRenderer() {
       super(new BorderLayout());
       add(myUrlLabel, BorderLayout.WEST);
       add(myDateLabel, BorderLayout.EAST);
@@ -213,6 +213,7 @@ public class SelectBranchPopup {
       myDateLabel.setForeground(UIUtil.getInactiveTextColor());
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (isSelected || cellHasFocus) {
         setBackground(UIUtil.getListSelectionBackground());

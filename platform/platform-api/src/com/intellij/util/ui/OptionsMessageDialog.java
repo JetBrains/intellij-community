@@ -40,6 +40,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   protected abstract String getOkActionName();
   protected abstract String getCancelActionName();
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     final Action okAction = getOKAction();
@@ -61,6 +62,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     }
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout(15, 0));
     if (myIcon != null) {
@@ -79,6 +81,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }

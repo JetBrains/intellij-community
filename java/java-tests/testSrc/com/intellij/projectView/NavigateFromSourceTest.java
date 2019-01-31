@@ -9,17 +9,23 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.io.IOException;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class NavigateFromSourceTest extends BaseProjectViewTestCase {
@@ -120,5 +126,37 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     pane.select(psiClass, virtualFile, true);
     PlatformTestUtil.waitWhileBusy(tree);
     PlatformTestUtil.assertTreeEqual(tree, expected, true);
+  }
+
+  public void testSelectFileInArchiveUnderModuleGroup() throws IOException {
+    Project project = getProject();
+    VirtualFile root = getContentRoot();
+
+    // create grouped module on top level to create ModuleGroupNode
+    VirtualFile moduleRoot = WriteAction.computeAndWait(() -> root.getParent().createChildDirectory(project, "module"));
+    Module module = createModule("group.module");
+    PsiTestUtil.addContentRoot(module, moduleRoot);
+
+    // move archive from default module to the created one
+    VirtualFile archive = root.findChild("test.jar");
+    WriteAction.runAndWait(() -> archive.move(project, moduleRoot));
+    PsiTestUtil.addLibrary(module, archive.getPath()); // only libraries are expanded now
+
+    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    // select archived file in the Project View
+    VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(archive).findChild("Main.class");
+    pane.select(PsiManager.getInstance(project).findFile(file), file, false);
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
+                                                     " -Group: group\n" +
+                                                     "  -PsiDirectory: module\n" +
+                                                     "   -test.jar\n" +
+                                                     "    PsiDirectory: META-INF\n" +
+                                                     "    [Main]\n" +
+                                                     " PsiDirectory: selectFileInArchiveUnderModuleGroup\n" +
+                                                     " group.module.iml\n" +
+                                                     getRootFiles() +
+                                                     " +External Libraries\n"
+      , true);
   }
 }

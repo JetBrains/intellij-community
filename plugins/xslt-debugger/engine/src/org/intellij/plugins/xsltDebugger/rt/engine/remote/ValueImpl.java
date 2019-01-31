@@ -24,7 +24,7 @@ class ValueImpl implements Value {
   private final Serializable myValue;
   private final Type myType;
 
-  public ValueImpl(Object value, Type type) {
+  ValueImpl(Object value, Type type) {
     if (value instanceof Serializable) {
       myValue = (Serializable)value;
     } else {

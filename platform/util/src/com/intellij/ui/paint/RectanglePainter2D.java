@@ -285,7 +285,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
    * @param y      Y position of the area to paint
    * @param width  width of the area to paint
    * @param height height of the area to paint
-   * @param object an optional configuration parameter
+   * @param arc an optional configuration parameter
    * @param strokeType the stroke type
    * @param strokeWidth the stroke width
    * @param valueAA overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}

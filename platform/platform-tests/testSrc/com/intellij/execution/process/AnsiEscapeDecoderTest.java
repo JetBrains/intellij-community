@@ -2,7 +2,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AnsiEscapeDecoderTest extends PlatformTestCase {
+public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
   private static final String STDOUT_KEY = ProcessOutputTypes.STDOUT.toString();
   private static final String STDERR_KEY = ProcessOutputTypes.STDERR.toString();
@@ -51,14 +51,40 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
             .addExpected("Red", "\u001B[31m"));
   }
 
-  public void testBackspaceControlSequence() {
+  public void testPrivateSequence() {
+    check(new ColoredText("\u001B[0;32mgreen\u001B[0m\u001B[0K\u001B[?25l\n", ProcessOutputTypes.STDOUT)
+            .addExpected("green", "\u001B[0;32m")
+            .addExpected("\n", STDOUT_KEY)
+    );
+  }
+
+  public void testMalformedSequence() {
+    check(false, Collections.singletonList(new ColoredText("\u001B[32mGreen\u001B[\1World\n", ProcessOutputTypes.STDOUT)
+            .addExpected("Green\u001B[\1World\n", "\u001B[32m")
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B\n", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B[\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B[\n", ProcessOutputTypes.STDOUT.toString())
+    ));
     check(false, ContainerUtil.newArrayList(
-      new ColoredText(" 10% 0/1 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 70% 1/1 build modules", ProcessOutputTypes.STDOUT)
-        .addExpected(" 70% 1/1 build modules", STDOUT_KEY),
-      new ColoredText(
-        "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 40% 1/2 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 30% 1/3 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 25% 1/4 build modules",
-        ProcessOutputTypes.STDOUT)
-        .addExpected("\n 25% 1/4 build modules", STDOUT_KEY)
+      new ColoredText("\u001B\nHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001B\nHello,", ProcessOutputTypes.STDOUT.toString()),
+      new ColoredText("\u001B[31mWorld", ProcessOutputTypes.STDOUT)
+        .addExpected("World", "\u001B[31m")
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001BHello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
+        .addExpected("ello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+        .addExpected("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT.toString())
     ));
   }
 
@@ -201,7 +227,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     });
   }
 
-  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<ProcessHandler> actionToTest) {
+  public static void withProcessHandlerFrom(@NotNull Process testProcess, @NotNull Consumer<? super ProcessHandler> actionToTest) {
     KillableColoredProcessHandler handler = new KillableColoredProcessHandler(testProcess, "testProcess");
     handler.setShouldDestroyProcessRecursively(false);
     handler.setShouldKillProcessSoftly(false);
@@ -222,7 +248,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     private final List<Pair<String, String>> myExpectedColoredChunks = new ArrayList<>();
     private final Key myOutputType;
 
-    public ColoredText(@NotNull String rawText, @NotNull Key outputType) {
+    ColoredText(@NotNull String rawText, @NotNull Key outputType) {
       myRawText = rawText;
       myOutputType = outputType;
     }

@@ -19,7 +19,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDa
   }
 
   @Override
-  protected final ServersToolWindowContent getTreeContent(AnActionEvent e) {
+  protected final ServersToolWindowContent getTreeContent(@NotNull AnActionEvent e) {
     return e.getData(ServersToolWindowContent.KEY);
   }
 
@@ -39,12 +39,12 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDa
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, List<T> nodes) {
     super.doActionPerformed(content, e, nodes);
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, T node) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, T node) {
     super.doActionPerformed(content, e, node);
   }
 

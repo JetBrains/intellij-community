@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,14 +66,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private final boolean decrement;
 
-    public ManualArrayCopyFix(boolean decrement) {
+    ManualArrayCopyFix(boolean decrement) {
       this.decrement = decrement;
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
     }
 
     @Override
@@ -89,8 +89,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(ifStatement.getCondition())))  {
         PsiStatement copyStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         assert copyStatement != null;
-        CommentTracker ct = new CommentTracker();
-        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(copyStatement));
+        new CommentTracker().replaceAndRestoreComments(ifStatement, copyStatement);
       }
     }
 
@@ -541,7 +540,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
         return ExpressionUtils.isOffsetArrayAccess(rhs, variable);
       }
       else {
-        return VariableAccessUtils.evaluatesToVariable(rhs, variable2);
+        return ExpressionUtils.isReferenceTo(rhs, variable2);
       }
     }
 

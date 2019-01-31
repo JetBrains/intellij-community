@@ -54,7 +54,6 @@ public class IpnbUtils {
     return textArea;
   }
 
-  @SuppressWarnings("Duplicates")
   @Nullable
   public static <T> T execCancelable(@NotNull final Callable<T> callable) {
     final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);

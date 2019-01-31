@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
@@ -27,6 +13,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.diff.GitSubmoduleContentRevision;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +44,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     myCharset = charset;
   }
 
+  @Override
   @Nullable
   public String getContent() throws VcsException {
     byte[] bytes = getContentAsBytes();
@@ -79,11 +71,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 
+  @Override
   @NotNull
   public FilePath getFile() {
     return myFile;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;
@@ -120,19 +114,25 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                Project project,
                                                boolean unescapePath) throws VcsException {
     FilePath file = createPath(vcsRoot, path, unescapePath);
-    return createRevision(file, revisionNumber, project);
+    return createRevision(file, revisionNumber, project, null);
   }
 
-  @NotNull
-  private static ContentRevision createRevision(@NotNull FilePath filePath,
-                                                @Nullable VcsRevisionNumber revisionNumber,
-                                                @NotNull Project project) {
-    if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
-      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
+  @Nullable
+  public static GitSubmodule getRepositoryIfSubmodule(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+    if (file == null) { // NB: deletion of a submodule is not supported yet
+      return null;
     }
-    else {
-      return CurrentContentRevision.create(filePath);
+    if (!file.isDirectory()) {
+      return null;
     }
+
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    GitRepository candidate = repositoryManager.getRepositoryForRoot(file);
+    if (candidate == null) { // not a root
+      return null;
+    }
+    return GitSubmoduleKt.asSubmodule(candidate);
   }
 
   @NotNull
@@ -149,7 +149,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     } else {
       filePath = createPath(vcsRoot, path, unescapePath);
     }
-    return createRevision(filePath, revisionNumber, project);
+    return createRevision(filePath, revisionNumber, project, null);
   }
 
   @NotNull
@@ -179,8 +179,15 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                @NotNull Project project,
                                                @Nullable Charset charset) {
+    GitSubmodule submodule = getRepositoryIfSubmodule(project, filePath);
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
+      if (submodule != null) {
+        return GitSubmoduleContentRevision.createRevision(submodule, revisionNumber);
+      }
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
+    }
+    else if (submodule != null) {
+      return GitSubmoduleContentRevision.createCurrentRevision(submodule.getRepository());
     }
     else {
       return CurrentContentRevision.create(filePath);

@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.RangeState
+import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 
-private typealias TrackerState = PartialLocalLineStatusTracker.State
-private typealias FullTrackerState = PartialLocalLineStatusTracker.FullState
+private typealias TrackerState = ChangelistsLocalLineStatusTracker.State
+private typealias FullTrackerState = ChangelistsLocalLineStatusTracker.FullState
 
 @State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 class PartialLineStatusTrackerManagerState(

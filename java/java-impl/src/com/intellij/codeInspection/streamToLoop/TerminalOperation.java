@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 abstract class TerminalOperation extends Operation {
   @Override
@@ -98,10 +101,10 @@ abstract class TerminalOperation extends Operation {
       return ToCollectionTerminalOperation.toSet(resultType);
     }
     if(name.equals("toImmutableList") && args.length == 0) {
-      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList", resultType);
     }
     if(name.equals("toImmutableSet") && args.length == 0) {
-      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet", resultType);
     }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
@@ -145,7 +148,7 @@ abstract class TerminalOperation extends Operation {
         return new ExplicitCollectTerminalOperation(supplier, accumulator);
       }
       if (args.length == 1) {
-        return fromCollector(elementType, resultType, args[0]);
+        return fromCollector(elementType, resultType, PsiUtil.skipParenthesizedExprDown(args[0]));
       }
     }
     return null;
@@ -179,17 +182,28 @@ abstract class TerminalOperation extends Operation {
         return ToCollectionTerminalOperation.toList(resultType);
       case "toUnmodifiableList":
         if (collectorArgs.length != 0) return null;
-        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList", resultType);
       case "toSet":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toSet(resultType);
       case "toUnmodifiableSet":
         if (collectorArgs.length != 0) return null;
-        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet", resultType);
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
+      case "collectingAndThen": {
+        if (collectorArgs.length != 2) return null;
+        PsiExpression collectorCall = collectorArgs[0];
+        PsiType downstreamResultType = PsiUtil.substituteTypeParameter(collectorCall.getType(), "java.util.stream.Collector", 2, false);
+        if (downstreamResultType == null) return null;
+        CollectorBasedTerminalOperation downstream =
+          tryCast(fromCollector(elementType, downstreamResultType, collectorCall), CollectorBasedTerminalOperation.class);
+        if (downstream == null) return null;
+        FunctionHelper andThen = FunctionHelper.create(collectorArgs[1], 1);
+        return andThen != null ? new WrappedCollectionTerminalOperation(downstream, andThen) : null;
+      }
       case "toUnmodifiableMap":
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
@@ -203,7 +217,7 @@ abstract class TerminalOperation extends Operation {
         if(supplier == null) return null;
         CollectorBasedTerminalOperation operation = new ToMapTerminalOperation(key, value, merger, supplier, resultType);
         return collectorName.equals("toUnmodifiableMap")
-               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap")
+               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap", resultType)
                : operation;
       }
       case "reducing":
@@ -350,6 +364,7 @@ abstract class TerminalOperation extends Operation {
     abstract String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context);
     abstract String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
+    @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String acc = initAccumulator(inVar, context);
       return getAccumulatorUpdater(inVar, acc);
@@ -361,14 +376,14 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myType;
     private final FunctionHelper myUpdater;
 
-    public ReduceTerminalOperation(PsiExpression identity, FunctionHelper updater, PsiType type) {
+    ReduceTerminalOperation(PsiExpression identity, FunctionHelper updater, PsiType type) {
       myIdentity = identity;
       myType = type;
       myUpdater = updater;
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myIdentity);
       myUpdater.registerReusedElements(consumer);
     }
@@ -385,13 +400,13 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myType;
     private final FunctionHelper myUpdater;
 
-    public ReduceToOptionalTerminalOperation(FunctionHelper updater, PsiType type) {
+    ReduceToOptionalTerminalOperation(FunctionHelper updater, PsiType type) {
       myType = type;
       myUpdater = updater;
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myUpdater.registerReusedElements(consumer);
     }
 
@@ -426,13 +441,13 @@ abstract class TerminalOperation extends Operation {
     private final FunctionHelper mySupplier;
     private final FunctionHelper myAccumulator;
 
-    public ExplicitCollectTerminalOperation(FunctionHelper supplier, FunctionHelper accumulator) {
+    ExplicitCollectTerminalOperation(FunctionHelper supplier, FunctionHelper accumulator) {
       mySupplier = supplier;
       myAccumulator = accumulator;
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       mySupplier.registerReusedElements(consumer);
       myAccumulator.registerReusedElements(consumer);
     }
@@ -456,7 +471,7 @@ abstract class TerminalOperation extends Operation {
     private final boolean myDoubleAccumulator;
     private final boolean myUseOptional;
 
-    public AverageTerminalOperation(boolean doubleAccumulator, boolean useOptional) {
+    AverageTerminalOperation(boolean doubleAccumulator, boolean useOptional) {
       myDoubleAccumulator = doubleAccumulator;
       myUseOptional = useOptional;
     }
@@ -497,7 +512,7 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myType;
     private final FunctionHelper mySupplier;
 
-    public ToArrayTerminalOperation(PsiType type, FunctionHelper supplier) {
+    ToArrayTerminalOperation(PsiType type, FunctionHelper supplier) {
       myType = type;
       mySupplier = supplier;
     }
@@ -525,7 +540,7 @@ abstract class TerminalOperation extends Operation {
   static class FindTerminalOperation extends TerminalOperation {
     private final PsiType myType;
 
-    public FindTerminalOperation(PsiType type) {
+    FindTerminalOperation(PsiType type) {
       myType = type;
     }
 
@@ -539,7 +554,7 @@ abstract class TerminalOperation extends Operation {
     private final FunctionHelper myFn;
     private final boolean myDefaultValue, myNegatePredicate;
 
-    public MatchTerminalOperation(FunctionHelper fn, String name) {
+    MatchTerminalOperation(FunctionHelper fn, String name) {
       myFn = fn;
       switch(name) {
         case "anyMatch":
@@ -560,7 +575,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -589,7 +604,7 @@ abstract class TerminalOperation extends Operation {
     // Non-trivial finishers are not supported
     default void transform(StreamToLoopReplacementContext context, String item) {}
     default void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
-    default void registerReusedElements(Consumer<PsiElement> consumer) {}
+    default void registerReusedElements(Consumer<? super PsiElement> consumer) {}
     String getSupplier();
     String getAccumulatorUpdater(StreamVariable inVar, String acc);
 
@@ -634,7 +649,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       mySupplier.registerReusedElements(consumer);
     }
 
@@ -712,7 +727,7 @@ abstract class TerminalOperation extends Operation {
 
     @NotNull
     static TemplateBasedOperation summing(PsiType type) {
-      String defValue = type.equals(PsiType.DOUBLE) ? "0.0" : type.equals(PsiType.LONG) ? "0L" : "0";
+      String defValue = TypeUtils.getDefaultValue(type);
       return new TemplateBasedOperation("sum", type, defValue, "{acc}+={item};");
     }
 
@@ -730,16 +745,22 @@ abstract class TerminalOperation extends Operation {
 
   static class WrappedCollectionTerminalOperation extends TerminalOperation {
     private final CollectorBasedTerminalOperation myDelegate;
-    private final String myWrapper;
+    private final FunctionHelper myWrapper;
 
-    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper) {
+    WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper, PsiType resultType) {
+      this(delegate,
+           new FunctionHelper.InlinedFunctionHelper(resultType, 1, CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + wrapper + "({0})"));
+    }
+
+    WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, FunctionHelper wrapper) {
       myDelegate = delegate;
       myWrapper = wrapper;
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myDelegate.registerReusedElements(consumer);
+      myWrapper.registerReusedElements(consumer);
     }
 
     @Override
@@ -750,7 +771,8 @@ abstract class TerminalOperation extends Operation {
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       String acc = myDelegate.initAccumulator(inVar, context, false);
-      context.setFinisher(CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + myWrapper + "(" + acc + ")");
+      myWrapper.transform(context, acc);
+      context.setFinisher(myWrapper.getText());
       return myDelegate.getAccumulatorUpdater(inVar, acc);
     }
   }
@@ -758,7 +780,7 @@ abstract class TerminalOperation extends Operation {
   static class ToCollectionTerminalOperation extends CollectorBasedTerminalOperation {
     private final boolean myList;
 
-    public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
+    ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
       super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
             context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
@@ -797,7 +819,7 @@ abstract class TerminalOperation extends Operation {
     private @Nullable final FunctionHelper myComparator;
     private final boolean myMax;
 
-    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
+    MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
@@ -805,7 +827,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       if(myComparator != null) {
         myComparator.registerReusedElements(consumer);
       }
@@ -898,7 +920,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       super.registerReusedElements(consumer);
       myKeyExtractor.registerReusedElements(consumer);
       myValueExtractor.registerReusedElements(consumer);
@@ -954,7 +976,7 @@ abstract class TerminalOperation extends Operation {
     private final FunctionHelper myKeyExtractor;
     private String myKeyVar;
 
-    public GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
+    GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
       super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myCollector = collector;
@@ -966,7 +988,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       super.registerReusedElements(consumer);
       myKeyExtractor.registerReusedElements(consumer);
       myCollector.registerReusedElements(consumer);
@@ -1001,14 +1023,14 @@ abstract class TerminalOperation extends Operation {
     private final CollectorOperation myCollector;
     private final FunctionHelper myPredicate;
 
-    public PartitionByTerminalOperation(FunctionHelper predicate, PsiType resultType, CollectorOperation collector) {
+    PartitionByTerminalOperation(FunctionHelper predicate, PsiType resultType, CollectorOperation collector) {
       myPredicate = predicate;
       myResultType = resultType.getCanonicalText();
       myCollector = collector;
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myPredicate.registerReusedElements(consumer);
       myCollector.registerReusedElements(consumer);
     }
@@ -1048,7 +1070,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myMapper.registerReusedElements(consumer);
       myDownstream.registerReusedElements(consumer);
     }
@@ -1145,7 +1167,7 @@ abstract class TerminalOperation extends Operation {
   static class ForEachTerminalOperation extends TerminalOperation {
     private final FunctionHelper myFn;
 
-    public ForEachTerminalOperation(FunctionHelper fn) {
+    ForEachTerminalOperation(FunctionHelper fn) {
       myFn = fn;
     }
 
@@ -1155,7 +1177,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -1171,7 +1193,7 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myKeyType;
     private final PsiType myValueType;
 
-    public MapForEachTerminalOperation(FunctionHelper fn, PsiType keyType, PsiType valueType) {
+    MapForEachTerminalOperation(FunctionHelper fn, PsiType keyType, PsiType valueType) {
       myFn = fn;
       myKeyType = keyType;
       myValueType = valueType;
@@ -1185,7 +1207,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -1218,7 +1240,7 @@ abstract class TerminalOperation extends Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myOrigin.registerReusedElements(consumer);
       if(myComparator != null) {
         consumer.accept(myComparator);

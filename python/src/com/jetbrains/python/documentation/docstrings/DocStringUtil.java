@@ -32,7 +32,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +134,7 @@ public class DocStringUtil {
 
   @NotNull
   private static Substring stripPrefixAndQuotes(@NotNull String text) {
-    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
+    final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
   
@@ -319,7 +318,7 @@ public class DocStringUtil {
   }
 
   /**
-   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames.DOCFORMAT} attribute or
+   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames#DOCFORMAT} attribute or
    * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
    * accordingly.
    *

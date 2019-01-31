@@ -2,9 +2,10 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import gnu.trove.THashMap;
@@ -20,12 +21,15 @@ public class XDependentBreakpointManager {
   private final Map<XBreakpoint<?>,  XDependentBreakpointInfo> mySlave2Info = new HashMap<>();
   private final MultiValuesMap<XBreakpointBase, XDependentBreakpointInfo> myMaster2Info = new MultiValuesMap<>();
   private final XBreakpointManagerImpl myBreakpointManager;
-  private final EventDispatcher<XDependentBreakpointListener> myDispatcher;
+  private final XDependentBreakpointListener myEventPublisher;
 
-  public XDependentBreakpointManager(final XBreakpointManagerImpl breakpointManager) {
+  public XDependentBreakpointManager(@NotNull XBreakpointManagerImpl breakpointManager) {
     myBreakpointManager = breakpointManager;
-    myDispatcher = EventDispatcher.create(XDependentBreakpointListener.class);
-    myBreakpointManager.addBreakpointListener(new XBreakpointListener<XBreakpoint<?>>() {
+    MessageBus messageBus = breakpointManager.getProject().getMessageBus();
+    myEventPublisher = messageBus.syncPublisher(XDependentBreakpointListener.TOPIC);
+    MessageBusConnection busConnection = messageBus.connect();
+    busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+      @Override
       public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
         XDependentBreakpointInfo info = mySlave2Info.remove(breakpoint);
         if (info != null) {
@@ -37,20 +41,12 @@ public class XDependentBreakpointManager {
           for (XDependentBreakpointInfo breakpointInfo : infos) {
             XDependentBreakpointInfo removed = mySlave2Info.remove(breakpointInfo.mySlaveBreakpoint);
             if (removed != null) {
-              myDispatcher.getMulticaster().dependencyCleared(breakpointInfo.mySlaveBreakpoint);
+              myEventPublisher.dependencyCleared(breakpointInfo.mySlaveBreakpoint);
             }
           }
         }
       }
     });
-  }
-
-  public void addListener(final XDependentBreakpointListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeListener(final XDependentBreakpointListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   public void loadState() {
@@ -117,18 +113,18 @@ public class XDependentBreakpointManager {
       info.myLeaveEnabled = leaveEnabled;
       myMaster2Info.put((XBreakpointBase)master, info);
     }
-    myDispatcher.getMulticaster().dependencySet(slave, master);
+    myEventPublisher.dependencySet(slave, master);
   }
 
   public void clearMasterBreakpoint(@NotNull XBreakpoint<?> slave) {
     XDependentBreakpointInfo info = mySlave2Info.remove(slave);
     if (info != null) {
       myMaster2Info.remove(info.myMasterBreakpoint, info);
-      myDispatcher.getMulticaster().dependencyCleared(slave);
+      myEventPublisher.dependencyCleared(slave);
     }
   }
 
-  private void addDependency(final XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
+  private void addDependency(@NotNull XBreakpointBase<?, ?, ?> master, final XBreakpointBase<?, ?, ?> slave, final boolean leaveEnabled) {
     XDependentBreakpointInfo info = new XDependentBreakpointInfo(master, slave, leaveEnabled);
     mySlave2Info.put(slave, info);
     myMaster2Info.put(master, info);
@@ -181,7 +177,7 @@ public class XDependentBreakpointManager {
     private final Collection<XDependentBreakpointInfo> myDependencies = new SmartList<>();
     private final XBreakpointBase myBreakpoint;
 
-    public DependenciesData(XBreakpointBase breakpoint) {
+    DependenciesData(XBreakpointBase breakpoint) {
       myBreakpoint = breakpoint;
       ContainerUtil.addIfNotNull(myDependencies, mySlave2Info.get(breakpoint));
       Collection<XDependentBreakpointInfo> infos = myMaster2Info.get(breakpoint);

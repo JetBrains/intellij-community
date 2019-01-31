@@ -16,7 +16,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -24,17 +27,28 @@ public class IgnoredBeanFactory {
   private IgnoredBeanFactory() {
   }
 
-  public static IgnoredFileBean ignoreUnderDirectory(final @NonNls String path, Project p) {
-    final String correctedPath = (path.endsWith("/") || path.endsWith(File.separator)) ? path : path + "/";
+  @NotNull
+  public static IgnoredFileBean ignoreUnderDirectory(@NotNull @NonNls String path, @Nullable Project p) {
+    String correctedPath = (path.endsWith("/") || path.endsWith(File.separator)) ? path : path + "/";
     return new IgnoredFileBean(correctedPath, IgnoreSettingsType.UNDER_DIR, p);
   }
 
-  public static IgnoredFileBean ignoreFile(final @NonNls String path, Project p) {
-    // todo check??
+  @NotNull
+  public static IgnoredFileBean ignoreFile(@NotNull @NonNls String path, @Nullable Project p) {
     return new IgnoredFileBean(path, IgnoreSettingsType.FILE, p);
   }
 
-  public static IgnoredFileBean withMask(final String mask) {
+  @NotNull
+  public static IgnoredFileBean ignoreFile(@NotNull VirtualFile file, @Nullable Project p) {
+    if (file.isDirectory()) {
+      return ignoreUnderDirectory(file.getPath(), p);
+    }
+
+    return ignoreFile(file.getPath(), p);
+  }
+
+  @NotNull
+  public static IgnoredFileBean withMask(@NotNull String mask) {
     return new IgnoredFileBean(mask);
   }
 }

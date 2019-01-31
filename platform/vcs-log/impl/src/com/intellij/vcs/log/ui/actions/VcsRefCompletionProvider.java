@@ -18,7 +18,7 @@ public class VcsRefCompletionProvider extends TwoStepCompletionProvider<VcsRef> 
   @NotNull private final Set<VirtualFile> myRoots;
 
   public VcsRefCompletionProvider(@NotNull VcsLogRefs refs,
-                                  @NotNull Collection<VirtualFile> roots,
+                                  @NotNull Collection<? extends VirtualFile> roots,
                                   @NotNull TextCompletionValueDescriptor<VcsRef> descriptor) {
     super(descriptor);
     myRefs = refs;

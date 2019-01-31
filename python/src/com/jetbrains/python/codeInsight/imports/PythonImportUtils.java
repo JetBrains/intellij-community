@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +17,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -89,7 +76,7 @@ public final class PythonImportUtils {
     ProgressManager.checkCanceled(); // before expensive index searches
     addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
 
-    for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
+    for(PyImportCandidateProvider provider: PyImportCandidateProvider.EP_NAME.getExtensionList()) {
       provider.addImportCandidates(reference, refText, fix);
     }
     if (!fix.getCandidates().isEmpty()) {
@@ -115,10 +102,13 @@ public final class PythonImportUtils {
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, importElement, importElement.resolve());
       }
-      for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
-        if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
-          PsiElement source = fromImportStatement.resolveImportSource();
-          existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
+      final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(node.getContainingFile(), PyCodeStyleSettings.class);
+      if (!pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
+        for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+          if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
+            PsiElement source = fromImportStatement.resolveImportSource();
+            existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
+          }
         }
       }
     }
@@ -212,8 +202,11 @@ public final class PythonImportUtils {
   }
 
   private static boolean isPossibleModuleReference(PyElement node) {
-    if (node.getParent() instanceof PyCallExpression && node == ((PyCallExpression) node.getParent()).getCallee()) {
-      return false;
+    final PyCallExpression callExpression = as(node.getParent(), PyCallExpression.class);
+    if (callExpression != null && node == callExpression.getCallee()) {
+      final PyDecorator decorator = as(callExpression, PyDecorator.class);
+      // getArgumentList() still returns empty (but not null) element in this case
+      return decorator != null && !decorator.hasArgumentList();
     }
     if (node.getParent() instanceof PyArgumentList) {
       final PyArgumentList argumentList = (PyArgumentList)node.getParent();

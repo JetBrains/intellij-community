@@ -39,10 +39,12 @@ public class BranchAction extends ActionOnSelectedElement{
     visibility.addCondition(FILES_EXIST_IN_CVS);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("operation.name.create.branch");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final FilePath[] selectedFiles = context.getSelectedFilePaths();
     final Project project = context.getProject();

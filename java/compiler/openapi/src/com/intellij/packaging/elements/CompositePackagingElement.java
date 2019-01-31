@@ -102,6 +102,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     return myUnmodifiableChildren;
   }
 
+  @Override
   public boolean canBeRenamed() {
     return true;
   }

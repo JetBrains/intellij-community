@@ -29,11 +29,13 @@ import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
 public class SnapshotVisiblePackBuilder {
+  private static final int VISIBLE_RANGE = 1000;
   @NotNull private final VcsLogStorage myStorage;
 
   public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
@@ -43,7 +45,8 @@ public class SnapshotVisiblePackBuilder {
   @NotNull
   public VisiblePack build(@NotNull VisiblePack visiblePack) {
     if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl && visiblePack.getVisibleGraph().getVisibleCommitCount() > 0) {
-      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters());
+      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
+                   visiblePack.getAdditionalData());
     }
     else {
       VisibleGraph<Integer> newGraph = EmptyVisibleGraph.getInstance();
@@ -55,12 +58,15 @@ public class SnapshotVisiblePackBuilder {
   @NotNull
   private VisiblePack build(@NotNull DataPackBase oldPack,
                             @NotNull VisibleGraphImpl<Integer> oldGraph,
-                            @NotNull VcsLogFilterCollection filters) {
-    final PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo();
+                            @NotNull VcsLogFilterCollection filters,
+                            @Nullable Object data) {
+    int visibleRow = VISIBLE_RANGE;
+    int visibleRange = VISIBLE_RANGE;
+    PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);
     Set<Integer> heads = ContainerUtil.map2Set(info.getPermanentGraphLayout().getHeadNodeIndex(),
                                                integer -> info.getPermanentCommitsInfo().getCommitId(integer));
 
-    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders());
+    RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
 
     GraphColorManagerImpl colorManager =
@@ -70,7 +76,7 @@ public class SnapshotVisiblePackBuilder {
     VisibleGraph<Integer> newGraph =
       new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
 
-    return new VisiblePack(newPack, newGraph, true, filters);
+    return new VisiblePack(newPack, newGraph, true, filters, data);
   }
 
   @NotNull
@@ -80,15 +86,20 @@ public class SnapshotVisiblePackBuilder {
 
   private RefsModel createRefsModel(@NotNull RefsModel refsModel,
                                     @NotNull Set<Integer> heads,
-                                    @NotNull VisibleGraph<Integer> visibleGraph,
-                                    @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+                                    @NotNull VisibleGraphImpl<Integer> visibleGraph,
+                                    @NotNull Map<VirtualFile, VcsLogProvider> providers, int visibleRow, int visibleRange) {
     Set<VcsRef> branchesAndHeads = ContainerUtil.newHashSet();
-    refsModel.getBranches().stream().filter(ref -> {
-      int index = myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-      Integer row = visibleGraph.getVisibleRowIndex(index);
-      return row != null && row >= 0;
-    }).forEach(branchesAndHeads::add);
-    heads.stream().flatMap(head -> refsModel.refsToCommit(head).stream()).forEach(branchesAndHeads::add);
+
+    for (int row = Math.max(0, visibleRow - visibleRange);
+         row < Math.min(visibleGraph.getLinearGraph().nodesCount(), visibleRow + visibleRange);
+         row++) {
+      Integer commit = visibleGraph.getRowInfo(row).getCommit();
+      refsModel.refsToCommit(commit).forEach(ref -> {
+        if (ref.getType().isBranch() || heads.contains(commit)) {
+          branchesAndHeads.add(ref);
+        }
+      });
+    }
 
     Map<VirtualFile, Set<VcsRef>> map = VcsLogUtil.groupRefsByRoot(branchesAndHeads);
     Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();

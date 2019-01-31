@@ -15,34 +15,29 @@ import java.util.Arrays;
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {
-  JDK_1_0(LanguageLevel.JDK_1_3, false),
-  JDK_1_1(LanguageLevel.JDK_1_3, false),
-  JDK_1_2(LanguageLevel.JDK_1_3, false),
-  JDK_1_3(LanguageLevel.JDK_1_3, false),
-  JDK_1_4(LanguageLevel.JDK_1_4, false),
-  JDK_1_5(LanguageLevel.JDK_1_5, false),
-  JDK_1_6(LanguageLevel.JDK_1_6, false),
-  JDK_1_7(LanguageLevel.JDK_1_7, false),
-  JDK_1_8(LanguageLevel.JDK_1_8, true),
-  JDK_1_9(LanguageLevel.JDK_1_9, false),
-  JDK_10(LanguageLevel.JDK_10, false),
-  JDK_11(LanguageLevel.JDK_11, true);
+  JDK_1_0(LanguageLevel.JDK_1_3),
+  JDK_1_1(LanguageLevel.JDK_1_3),
+  JDK_1_2(LanguageLevel.JDK_1_3),
+  JDK_1_3(LanguageLevel.JDK_1_3),
+  JDK_1_4(LanguageLevel.JDK_1_4),
+  JDK_1_5(LanguageLevel.JDK_1_5),
+  JDK_1_6(LanguageLevel.JDK_1_6),
+  JDK_1_7(LanguageLevel.JDK_1_7),
+  JDK_1_8(LanguageLevel.JDK_1_8),
+  JDK_1_9(LanguageLevel.JDK_1_9),
+  JDK_10(LanguageLevel.JDK_10),
+  JDK_11(LanguageLevel.JDK_11),
+  JDK_12(LanguageLevel.JDK_12);
 
   private final LanguageLevel myMaxLanguageLevel;
-  private final boolean myLongTermSupport;
 
-  JavaSdkVersion(LanguageLevel maxLanguageLevel, boolean longTermSupport) {
+  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel) {
     myMaxLanguageLevel = maxLanguageLevel;
-    myLongTermSupport = longTermSupport;
   }
 
   @NotNull
   public LanguageLevel getMaxLanguageLevel() {
     return myMaxLanguageLevel;
-  }
-
-  public boolean isLongTermSupport() {
-    return myLongTermSupport;
   }
 
   @NotNull

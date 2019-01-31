@@ -192,9 +192,7 @@ public final class LogInformation {
 	/** Search the revisions by number of revision. If not found, return null.
 	 */
 	public Revision getRevision(String number) {
-		final Iterator it = revisions.iterator();
-		while (it.hasNext()) {
-			Revision item = (Revision)it.next();
+		for (Revision item : revisions) {
 			if (item.getNumber().equals(number)) {
 				return item;
 			}
@@ -271,8 +269,7 @@ public final class LogInformation {
 		if (symbolicNames == null) {
 			createSymNames();
 		}
-		for (Iterator it = symbolicNames.iterator(); it.hasNext();) {
-			final SymbolicName item = (SymbolicName)it.next();
+		for (final SymbolicName item : symbolicNames) {
 			if (item.getName().equals(symName)) {
 				return item;
 			}

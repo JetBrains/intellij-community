@@ -63,7 +63,7 @@ public class VariableInitializationChecker {
   }
 
   private static class MyDfaInstance implements DfaInstance<Data> {
-    public MyDfaInstance(String var) {
+    MyDfaInstance(String var) {
       myVar = var;
     }
 
@@ -87,7 +87,7 @@ public class VariableInitializationChecker {
   private static class MySemilattice implements Semilattice<Data> {
     @NotNull
     @Override
-    public Data join(@NotNull List<Data> ins) {
+    public Data join(@NotNull List<? extends Data> ins) {
       if (ins.isEmpty()) return new Data(false);
 
       boolean b = true;
@@ -105,7 +105,7 @@ public class VariableInitializationChecker {
   }
 
   private static class Data extends Ref<Boolean> {
-    public Data(Boolean value) {
+    Data(Boolean value) {
       super(value);
     }
   }

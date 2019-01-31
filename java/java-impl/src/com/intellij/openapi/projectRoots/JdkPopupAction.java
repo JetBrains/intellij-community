@@ -51,7 +51,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabledInCurrentOS();
     if (enabled) {
       FileSystemTree tree = FileSystemTree.DATA_KEY.getData(e.getDataContext());
@@ -64,7 +64,7 @@ public class JdkPopupAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final JComponent component;
     final boolean showInMiddle;
     InputEvent inputEvent = e.getInputEvent();
@@ -116,7 +116,7 @@ public class JdkPopupAction extends AnAction {
                 if (selectedFile != null) {
                   selected = homes.getFirst().getAbsolutePath().equals(VfsUtilCore.virtualToIoFile(selectedFile).getAbsolutePath());
                 }
-                e.getPresentation().setIcon(selected ? AllIcons.Diff.CurrentLine : null);
+                e.getPresentation().setIcon(selected ? AllIcons.Actions.Forward : null);
               }
 
               @Override

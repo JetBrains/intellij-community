@@ -34,7 +34,7 @@ public interface InspectionsReportConverter {
   void convert(@NotNull String rawDataDirectoryPath,
                @Nullable String outputPath,
                @NotNull Map<String, Tools> tools,
-               @NotNull List<File> inspectionsResults) throws ConversionException;
+               @NotNull List<? extends File> inspectionsResults) throws ConversionException;
 
   class ConversionException extends Exception {
     public ConversionException(String message) {

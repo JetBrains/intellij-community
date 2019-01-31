@@ -45,6 +45,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     super(context);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return "Project";

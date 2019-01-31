@@ -45,14 +45,13 @@ import java.util.List;
  * This class is not singleton but provides {@link #getInstance() single-point-of-usage field}.
  * 
  * @author Denis Zhdanov
- * @since 5/27/11 2:35 PM
  */
 public class JavadocHelper {
 
   private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
-    = new Pair<>(null, Collections.<JavadocParameterInfo>emptyList());
+    = new Pair<>(null, Collections.emptyList());
   private static final JavadocHelper INSTANCE = new JavadocHelper();
   
   @NotNull
@@ -67,7 +66,6 @@ public class JavadocHelper {
    * @param editor    target editor
    * @param project   target project
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public void navigate(@NotNull LogicalPosition position, @NotNull Editor editor, @NotNull final Project project) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -92,10 +90,9 @@ public class JavadocHelper {
    * @param anchor   descriptor for the target parameter
    * @return         logical position that points to the desired parameter description start location
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
-                                                           @NotNull Collection<JavadocParameterInfo> data,
+                                                           @NotNull Collection<? extends JavadocParameterInfo> data,
                                                            @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
     int descriptionStartColumn = -1;
@@ -130,7 +127,6 @@ public class JavadocHelper {
    * @return              pair like (javadoc info for the line identified by the given offset; list of javadoc parameter infos for
    *                      adjacent lines if any
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
     List<JavadocParameterInfo> result = new ArrayList<>();

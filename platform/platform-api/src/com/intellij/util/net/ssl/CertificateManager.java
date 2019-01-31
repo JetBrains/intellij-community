@@ -60,13 +60,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Mikhail Golubev
  */
-@State(
-  name = "CertificateManager",
-  storages = {
-    @Storage("certificates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "CertificateManager", storages = @Storage("certificates.xml"))
 public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
 
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
@@ -76,15 +70,29 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
   /**
-   * Note that deprecated {@link org.apache.http.conn.ssl.BrowserCompatHostnameVerifier} is used intentionally here 
-   * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and 
+   * Note that deprecated {@link org.apache.http.conn.ssl.BrowserCompatHostnameVerifier} is used intentionally here
+   * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and
    * {@link org.apache.http.conn.ssl.DefaultHostnameVerifier} is not.
-   * 
+   *
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new BrowserCompatHostnameVerifier();
-  
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
+    private volatile HostnameVerifier myHostnameVerifier; 
+    @Override
+    public boolean verify(String s, SSLSession session) {
+      HostnameVerifier hostnameVerifier = myHostnameVerifier;
+      if (hostnameVerifier == null) {
+        //noinspection SynchronizeOnThis
+        synchronized (this) {
+          hostnameVerifier = myHostnameVerifier;
+          if (hostnameVerifier == null) myHostnameVerifier = hostnameVerifier = new BrowserCompatHostnameVerifier();
+        }
+      }
+      return hostnameVerifier.verify(s, session);
+    }
+  };
+
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
    * {@link java.awt.MediaTracker}.

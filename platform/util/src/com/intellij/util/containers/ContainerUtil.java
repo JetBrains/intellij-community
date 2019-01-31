@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -30,36 +30,36 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K, V> HashMap<K, V> newHashMap() {
-    return ContainerUtilRt.newHashMap();
+    return new HashMap<K, V>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return ContainerUtilRt.newHashMap(map);
+    return new HashMap<K, V>(map);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull List<? extends K> keys, @NotNull List<? extends V> values) {
     return ContainerUtilRt.newHashMap(keys, values);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<K, V> map) {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newTreeMap(map);
   }
 
@@ -77,13 +77,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newLinkedHashMap(map);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K, ? extends V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -146,7 +146,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> ArrayList<T> newArrayList() {
-    return ContainerUtilRt.newArrayList();
+    return new ArrayList<T>();
   }
 
   @NotNull
@@ -164,7 +164,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return ContainerUtilRt.newArrayListWithCapacity(size);
+    return new ArrayList<T>(size);
   }
 
   @NotNull
@@ -197,56 +197,61 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 0) {
       return emptyList();
     }
-    else if (size == 1) {
+    if (size == 1) {
       return Collections.singletonList(originalList.get(0));
     }
-    else {
-      return Collections.unmodifiableList(newArrayList(originalList));
-    }
+    return Collections.unmodifiableList(new ArrayList<T>(originalList));
   }
 
   @NotNull
   @Contract(pure = true)
-  public static <T> Collection<T> unmodifiableOrEmptyCollection(Collection<? extends T> original) {
+  public static <T> Collection<T> unmodifiableOrEmptyCollection(@NotNull Collection<? extends T> original) {
     int size = original.size();
     if (size == 0) {
       return emptyList();
     }
-    else {
-      return Collections.unmodifiableCollection(original);
+    if (size == 1) {
+      return Collections.singletonList(original.iterator().next());
     }
+    return Collections.unmodifiableCollection(original);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static <T> List<T> unmodifiableOrEmptyList(List<? extends T> original) {
+  public static <T> List<T> unmodifiableOrEmptyList(@NotNull List<? extends T> original) {
     int size = original.size();
     if (size == 0) {
       return emptyList();
     }
-    else {
-      return Collections.unmodifiableList(original);
+    if (size == 1) {
+      return Collections.singletonList(original.iterator().next());
     }
+    return Collections.unmodifiableList(original);
   }
-  
+
   @NotNull
   @Contract(pure = true)
-  public static <T> Set<T> unmodifiableOrEmptySet(Set<? extends T> original) {
+  public static <T> Set<T> unmodifiableOrEmptySet(@NotNull Set<? extends T> original) {
     int size = original.size();
     if (size == 0) {
       return Collections.emptySet();
     }
-    else {
-      return Collections.unmodifiableSet(original);
+    if (size == 1) {
+      return Collections.singleton(original.iterator().next());
     }
+    return Collections.unmodifiableSet(original);
   }
-  
+
   @NotNull
   @Contract(pure = true)
-  public static <K,V> Map<K,V> unmodifiableOrEmptyMap(Map<? extends K, ? extends V> original) {
+  public static <K,V> Map<K,V> unmodifiableOrEmptyMap(@NotNull Map<? extends K, ? extends V> original) {
     int size = original.size();
     if (size == 0) {
       return Collections.emptyMap();
+    }
+    if (size == 1) {
+      Map.Entry<? extends K, ? extends V> entry = original.entrySet().iterator().next();
+      return Collections.singletonMap(entry.getKey(), entry.getValue());
     }
     else {
       return Collections.unmodifiableMap(original);
@@ -274,13 +279,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet() {
-    return ContainerUtilRt.newHashSet();
+    return new HashSet<T>();
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
-    return ContainerUtilRt.newHashSet(initialCapacity);
+    return new HashSet<T>(initialCapacity);
   }
 
   @NotNull
@@ -351,13 +356,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull Collection<T> elements) {
+  public static <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull Collection<? extends T> elements) {
     return new THashSet<T>(elements, strategy);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> THashSet<T> newTroveSet(@NotNull Collection<T> elements) {
+  public static <T> THashSet<T> newTroveSet(@NotNull Collection<? extends T> elements) {
     return new THashSet<T>(elements);
   }
 
@@ -374,7 +379,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   @Contract(pure=true)
-  public static <K> THashSet<K> newIdentityTroveSet(@NotNull Collection<K> collection) {
+  public static <K> THashSet<K> newIdentityTroveSet(@NotNull Collection<? extends K> collection) {
     return new THashSet<K>(collection, ContainerUtil.<K>identityStrategy());
   }
 
@@ -386,19 +391,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet() {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return ContainerUtilRt.newTreeSet();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newTreeSet(elements);
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
@@ -432,7 +431,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <E> List<E> reverse(@NotNull final List<E> elements) {
+  public static <E> List<E> reverse(@NotNull final List<? extends E> elements) {
     if (elements.isEmpty()) {
       return ContainerUtilRt.emptyList();
     }
@@ -461,13 +460,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
-    return union((Collection<T>)set, set2);
+  public static <T> Set<T> union(@NotNull Set<? extends T> set, @NotNull Set<? extends T> set2) {
+    return union((Collection<? extends T>)set, set2);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Set<T> union(@NotNull Collection<T> set, @NotNull Collection<T> set2) {
+  public static <T> Set<T> union(@NotNull Collection<? extends T> set, @NotNull Collection<? extends T> set2) {
     Set<T> result = new THashSet<T>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);
@@ -501,7 +500,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <E> ImmutableList<E> immutableList(@NotNull List<E> list) {
+  public static <E> ImmutableList<E> immutableList(@NotNull List<? extends E> list) {
     return new ImmutableListBackedByList<E>(list);
   }
 
@@ -512,7 +511,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> MultiMap<K, V> groupBy(@NotNull Iterable<V> collection, @NotNull NullableFunction<V, K> grouper) {
+  @Contract(pure = true)
+  public static <K, V> MultiMap<K, V> groupBy(@NotNull Iterable<? extends V> collection, @NotNull NullableFunction<? super V, ? extends K> grouper) {
     MultiMap<K, V> result = MultiMap.createLinked();
     for (V data : collection) {
       K key = grouper.fun(data);
@@ -523,13 +523,14 @@ public class ContainerUtil extends ContainerUtilRt {
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      return new KeyOrderedMultiMap<K, V>(result);
+      //noinspection unchecked
+      return new KeyOrderedMultiMap(result);
     }
     return result;
   }
 
   @Contract(pure = true)
-  public static <T> T getOrElse(@NotNull List<T> elements, int i, T defaultValue) {
+  public static <T> T getOrElse(@NotNull List<? extends T> elements, int i, T defaultValue) {
     return elements.size() > i ? elements.get(i) : defaultValue;
   }
 
@@ -548,9 +549,9 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   private static class ImmutableListBackedByList<E> extends ImmutableList<E> {
-    private final List<E> myStore;
+    private final List<? extends E> myStore;
 
-    private ImmutableListBackedByList(@NotNull List<E> list) {
+    private ImmutableListBackedByList(@NotNull List<? extends E> list) {
       myStore = list;
     }
 
@@ -581,20 +582,37 @@ public class ContainerUtil extends ContainerUtilRt {
     public int size() {
       return myStore.length;
     }
+
+    // override for more efficient arraycopy vs. iterator() creation/traversing
+    @NotNull
+    @Override
+    public <T> T[] toArray(@NotNull T[] a) {
+      int size = size();
+      //noinspection unchecked
+      T[] result = a.length >= size ? a : (T[])Array.newInstance(a.getClass().getComponentType(), size);
+      System.arraycopy(myStore, 0, result, 0, size);
+      if (result.length > size) {
+        result[size] = null;
+      }
+      return result;
+    }
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> intersection(@NotNull Map<K, V> map1, @NotNull Map<K, V> map2) {
-    final Map<K, V> res = newHashMap();
-    final Set<K> keys = newHashSet();
-    keys.addAll(map1.keySet());
-    keys.addAll(map2.keySet());
-    for (K k : keys) {
-      V v1 = map1.get(k);
-      V v2 = map2.get(k);
-      if (v1 == v2 || v1 != null && v1.equals(v2)) {
-        res.put(k, v1);
+  public static <K, V> Map<K, V> intersection(@NotNull Map<? extends K, ? extends V> map1, @NotNull Map<? extends K, ? extends V> map2) {
+    if (map2.size() < map1.size()) {
+      Map<? extends K, ? extends V> t = map1;
+      map1 = map2;
+      map2 = t;
+    }
+    final Map<K, V> res = new HashMap<K, V>(map1);
+    for (Map.Entry<? extends K, ? extends V> entry : map2.entrySet()) {
+      K key = entry.getKey();
+      V v2 = entry.getValue();
+      V v1 = map1.get(key);
+      if (!(v1 == v2 || v1 != null && v1.equals(v2))) {
+        res.remove(key);
       }
     }
     return res;
@@ -602,11 +620,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K,Couple<V>> diff(@NotNull Map<K, V> map1, @NotNull Map<K, V> map2) {
-    final Map<K, Couple<V>> res = newHashMap();
-    final Set<K> keys = newHashSet();
-    keys.addAll(map1.keySet());
-    keys.addAll(map2.keySet());
+  public static <K, V> Map<K,Couple<V>> diff(@NotNull Map<? extends K, ? extends V> map1, @NotNull Map<? extends K, ? extends V> map2) {
+    Set<K> keys = union(map1.keySet(), map2.keySet());
+    Map<K, Couple<V>> res = new HashMap<K, Couple<V>>();
     for (K k : keys) {
       V v1 = map1.get(k);
       V v2 = map2.get(k);
@@ -617,11 +633,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
-                                                   @NotNull List<T> list2,
+  public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
+                                                   @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
-                                                   @NotNull Consumer<T> processor) {
+                                                   @NotNull Consumer<? super T> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
@@ -636,18 +652,24 @@ public class ContainerUtil extends ContainerUtilRt {
         T element1 = list1.get(index1);
         T element2 = list2.get(index2);
         int c = comparator.compare(element1, element2);
-        if (c <= 0) {
+        if (c == 0) {
+          index1++;
+          index2++;
+          if (mergeEqualItems) {
+            e = element1;
+          }
+          else {
+            processor.consume(element1);
+            e = element2;
+          }
+        }
+        else if (c < 0) {
           e = element1;
           index1++;
         }
         else {
           e = element2;
           index2++;
-        }
-        if (c == 0 && !mergeEqualItems) {
-          processor.consume(e);
-          index2++;
-          e = element2;
         }
       }
       processor.consume(e);
@@ -656,8 +678,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> mergeSortedLists(@NotNull List<T> list1,
-                                             @NotNull List<T> list2,
+  public static <T> List<T> mergeSortedLists(@NotNull List<? extends T> list1,
+                                             @NotNull List<? extends T> list2,
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<T>(list1.size() + list2.size());
@@ -676,11 +698,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return list.subList(from, list.size());
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> appendix) {
+  public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> appendix) {
     addAll(collection, appendix.iterator());
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<? extends T> iterator) {
+  public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
       collection.add(o);
@@ -690,14 +712,14 @@ public class ContainerUtil extends ContainerUtilRt {
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
-  public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> elements) {
+  public static <T> void addAllNotNull(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> elements) {
     addAllNotNull(collection, elements.iterator());
   }
 
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
-  public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterator<? extends T> elements) {
+  public static <T> void addAllNotNull(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> elements) {
     while (elements.hasNext()) {
       T o = elements.next();
       if (o != null) {
@@ -707,7 +729,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> List<T> collect(@NotNull Iterator<T> iterator) {
+  public static <T> List<T> collect(@NotNull Iterator<? extends T> iterator) {
     if (!iterator.hasNext()) return emptyList();
     List<T> list = new ArrayList<T>();
     addAll(list, iterator);
@@ -715,16 +737,17 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <T> Set<T> collectSet(@NotNull Iterator<T> iterator) {
+  public static <T> Set<T> collectSet(@NotNull Iterator<? extends T> iterator) {
     if (!iterator.hasNext()) return Collections.emptySet();
-    Set<T> hashSet = newHashSet();
+    Set<T> hashSet = new HashSet<T>();
     addAll(hashSet, iterator);
     return hashSet;
   }
 
   @NotNull
-  public static <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<K> keys, @NotNull Convertor<K, V> valueConvertor) {
-    Map<K, V> map = newHashMap();
+  @Contract(pure = true)
+  public static <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<? extends K> keys, @NotNull Convertor<? super K, ? extends V> valueConvertor) {
+    Map<K, V> map = new HashMap<K, V>();
     while (keys.hasNext()) {
       K key = keys.next();
       map.put(key, valueConvertor.convert(key));
@@ -733,15 +756,16 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
-    Map<K, V> map = newHashMap();
+  @Contract(pure = true)
+  public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<? extends V> values, @NotNull Convertor<? super V, ? extends K> keyConvertor) {
+    Map<K, V> map = new HashMap<K, V>();
     fillMapWithValues(map, values, keyConvertor);
     return map;
   }
 
-  public static <K, V> void fillMapWithValues(@NotNull Map<K, V> map,
-                                              @NotNull Iterator<V> values,
-                                              @NotNull Convertor<V, K> keyConvertor) {
+  public static <K, V> void fillMapWithValues(@NotNull Map<? super K, ? super V> map,
+                                              @NotNull Iterator<? extends V> values,
+                                              @NotNull Convertor<? super V, ? extends K> keyConvertor) {
     while (values.hasNext()) {
       V value = values.next();
       map.put(keyConvertor.convert(value), value);
@@ -749,7 +773,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K, V> Map<K, Set<V>> classify(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
+  @Contract(pure = true)
+  public static <K, V> Map<K, Set<V>> classify(@NotNull Iterator<? extends V> iterator, @NotNull Convertor<? super V, ? extends K> keyConvertor) {
     Map<K, Set<V>> hashMap = new LinkedHashMap<K, Set<V>>();
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -784,7 +809,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return null;
   }
 
-  public static <T> boolean process(@NotNull Iterable<? extends T> iterable, @NotNull Processor<T> processor) {
+  public static <T> boolean process(@NotNull Iterable<? extends T> iterable, @NotNull Processor<? super T> processor) {
     for (final T t : iterable) {
       if (!processor.process(t)) {
         return false;
@@ -793,7 +818,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<T> processor) {
+  public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<? super T> processor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = list.size(); i < size; i++) {
       T t = list.get(i);
@@ -813,7 +838,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
-  public static <T> boolean process(@NotNull Iterator<T> iterator, @NotNull Processor<? super T> processor) {
+  public static <T> boolean process(@NotNull Iterator<? extends T> iterator, @NotNull Processor<? super T> processor) {
     while (iterator.hasNext()) {
       if (!processor.process(iterator.next())) {
         return false;
@@ -824,8 +849,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T, V extends T> V find(@NotNull Iterable<V> iterable, @NotNull Condition<T> condition) {
-    return find(iterable.iterator(), condition);
+  public static <T, V extends T> V find(@NotNull Iterable<? extends V> iterable, @NotNull Condition<? super T> condition) {
+    return ContainerUtilRt.find(iterable, condition);
   }
 
   @Nullable
@@ -851,16 +876,13 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
-  public static <T, V extends T> V find(@NotNull Iterator<V> iterator, @NotNull Condition<T> condition) {
-    while (iterator.hasNext()) {
-      V value = iterator.next();
-      if (condition.value(value)) return value;
-    }
-    return null;
+  public static <T, V extends T> V find(@NotNull Iterator<? extends V> iterator, @NotNull Condition<? super T> condition) {
+    return ContainerUtilRt.find(iterator, condition);
   }
 
   @Nullable
-  public static <T, V extends T> V findLast(@NotNull List<V> list, @NotNull Condition<T> condition) {
+  @Contract(pure = true)
+  public static <T, V extends T> V findLast(@NotNull List<? extends V> list, @NotNull Condition<? super T> condition) {
     int index = lastIndexOf(list, condition);
     if (index < 0) return null;
     return list.get(index);
@@ -868,14 +890,14 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, K, V> Map<K, V> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<K, V>> mapper) {
+  public static <T, K, V> Map<K, V> map2Map(@NotNull T[] collection, @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
     return map2Map(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T, K, V> Map<K, V> map2Map(@NotNull Collection<? extends T> collection,
-                                            @NotNull Function<T, Pair<K, V>> mapper) {
+                                            @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
     final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
       Pair<K, V> pair = mapper.fun(t);
@@ -887,14 +909,14 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure = true)
   public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull T[] collection,
-                                                   @NotNull Function<T, Pair<K, V>> mapper) {
+                                                   @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
     return map2MapNotNull(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure = true)
   public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                   @NotNull Function<T, Pair<K, V>> mapper) {
+                                                   @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
     final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
       Pair<K, V> pair = mapper.fun(t);
@@ -907,7 +929,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> map2Map(@NotNull Collection<Pair<K, V>> collection) {
+  public static <K, V> Map<K, V> map2Map(@NotNull Collection<? extends Pair<K, V>> collection) {
     final Map<K, V> result = new THashMap<K, V>(collection.size());
     for (Pair<K, V> pair : collection) {
       result.put(pair.first, pair.second);
@@ -917,33 +939,40 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Object[] map2Array(@NotNull T[] array, @NotNull Function<T, Object> mapper) {
+  public static <T> Object[] map2Array(@NotNull T[] array, @NotNull Function<? super T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Object[] map2Array(@NotNull Collection<T> array, @NotNull Function<T, Object> mapper) {
+  public static <T> Object[] map2Array(@NotNull Collection<? extends T> array, @NotNull Function<? super T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? super V> aClass, @NotNull Function<T, V> mapper) {
-    return map2Array(Arrays.asList(array), aClass, mapper);
+  public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
+    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, array.length);
+    for (int i = 0; i < array.length; i++) {
+      result[i] = mapper.fun(array[i]);
+    }
+    return result;
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? super V> aClass, @NotNull Function<T, V> mapper) {
-    final List<V> list = map2List(collection, mapper);
-    @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(aClass, list.size());
-    return list.toArray(array);
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
+    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, collection.size());
+    int i = 0;
+    for (T t : collection) {
+      result[i++] = mapper.fun(t);
+    }
+    return result;
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull V[] to, @NotNull Function<T, V> mapper) {
+  public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull V[] to, @NotNull Function<? super T, V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
@@ -977,6 +1006,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Contract(pure = true)
+  public static <T> List<T> filterIsInstance(@NotNull Collection<?> collection, @NotNull final Class<? super T> aClass) {
+    return (List<T>)filter(collection, Conditions.instanceOf(aClass));
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> filter(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
@@ -985,9 +1021,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <K, V> Map<K, V> filter(@NotNull Map<K, ? extends V> map, @NotNull Condition<? super K> keyFilter) {
-    Map<K, V> result = newHashMap();
-    for (Map.Entry<K, ? extends V> entry : map.entrySet()) {
+  public static <K, V> Map<K, V> filter(@NotNull Map<? extends K, ? extends V> map, @NotNull Condition<? super K> keyFilter) {
+    Map<K, V> result = new HashMap<K, V>();
+    for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
       if (keyFilter.value(entry.getKey())) {
         result.put(entry.getKey(), entry.getValue());
       }
@@ -1060,8 +1096,17 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    for (T t : collection) {
+      if (!condition.value(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
-    Set<T> collected = newHashSet();
+    Set<T> collected = new HashSet<T>();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
       T t = iterator.next();
       if (!collected.contains(t)) {
@@ -1076,7 +1121,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static Map<String, String> stringMap(@NotNull final String... keyValues) {
-    final Map<String, String> result = newHashMap();
+    final Map<String, String> result = new HashMap<String, String>();
     for (int i = 0; i < keyValues.length - 1; i+=2) {
       result.put(keyValues[i], keyValues[i+1]);
     }
@@ -1092,7 +1137,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> iterate(@NotNull final Enumeration<T> enumeration) {
+  public static <T> Iterator<T> iterate(@NotNull final Enumeration<? extends T> enumeration) {
     return new Iterator<T>() {
       @Override
       public boolean hasNext() {
@@ -1192,14 +1237,14 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<T> iterable1, @NotNull final Iterable<E> iterable2) {
+  public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<? extends T> iterable1, @NotNull final Iterable<? extends E> iterable2) {
     return new Iterable<Pair<T, E>>() {
       @NotNull
       @Override
       public Iterator<Pair<T, E>> iterator() {
         return new Iterator<Pair<T, E>>() {
-          private final Iterator<T> i1 = iterable1.iterator();
-          private final Iterator<E> i2 = iterable2.iterator();
+          private final Iterator<? extends T> i1 = iterable1.iterator();
+          private final Iterator<? extends E> i2 = iterable2.iterator();
 
           @Override
           public boolean hasNext() {
@@ -1234,7 +1279,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return list;
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Enumeration<? extends T> enumeration) {
+  public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Enumeration<? extends T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
       collection.add(element);
@@ -1299,24 +1344,24 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T, U extends T> U findInstance(@NotNull Iterable<T> iterable, @NotNull Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull Iterable<? extends T> iterable, @NotNull Class<? extends U> aClass) {
     return findInstance(iterable.iterator(), aClass);
   }
 
-  public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull Iterator<? extends T> iterator, @NotNull Class<? extends U> aClass) {
     //noinspection unchecked
     return (U)find(iterator, FilteringIterator.instanceOf(aClass));
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T, U extends T> U findInstance(@NotNull T[] array, @NotNull Class<U> aClass) {
+  public static <T, U extends T> U findInstance(@NotNull T[] array, @NotNull Class<? extends U> aClass) {
     return findInstance(Arrays.asList(array), aClass);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<T> concat(@NotNull V[] array, @NotNull Function<V, Collection<? extends T>> fun) {
+  public static <T, V> List<T> concat(@NotNull V[] array, @NotNull Function<? super V, ? extends Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);
   }
 
@@ -1325,24 +1370,16 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> concat(@NotNull Iterable<? extends Collection<T>> list) {
-    List<T> result = new ArrayList<T>();
-    for (final Collection<T> ts : list) {
+  public static <T> List<T> concat(@NotNull Iterable<? extends Collection<? extends T>> list) {
+    int totalSize = 0;
+    for (final Collection<? extends T> ts : list) {
+      totalSize += ts.size();
+    }
+    List<T> result = new ArrayList<T>(totalSize);
+    for (final Collection<? extends T> ts : list) {
       result.addAll(ts);
     }
     return result.isEmpty() ? Collections.<T>emptyList() : result;
-  }
-
-  /**
-   * @deprecated Use {@link #append(List, Object[])} or {@link #prepend(List, Object[])} instead
-   * @param appendTail specify whether additional values should be appended in front or after the list
-   * @return read-only list consisting of the elements from specified list with some additional values
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
-    return appendTail ? concat(list, list(values)) : concat(list(values), list);
   }
 
   @NotNull
@@ -1399,7 +1436,7 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @SuppressWarnings({"unchecked", "LambdaUnfriendlyMethodOverload"})
+  @SuppressWarnings("unchecked")
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
@@ -1427,7 +1464,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> concatIterators(@NotNull Collection<Iterator<T>> iterators) {
+  public static <T> Iterator<T> concatIterators(@NotNull Collection<? extends Iterator<? extends T>> iterators) {
     return new SequenceIterator<T>(iterators);
   }
 
@@ -1501,7 +1538,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<T> concat(@NotNull Iterable<? extends V> list, @NotNull Function<V, Collection<? extends T>> listGenerator) {
+  public static <T, V> List<T> concat(@NotNull Iterable<? extends V> list, @NotNull Function<? super V, ? extends Collection<? extends T>> listGenerator) {
     List<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(listGenerator.fun(v));
@@ -1553,18 +1590,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable Collection<T> items) {
+  public static <T> T getFirstItem(@Nullable Collection<? extends T> items) {
     return getFirstItem(items, null);
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable List<T> items) {
+  public static <T> T getFirstItem(@Nullable List<? extends T> items) {
     return items == null || items.isEmpty() ? null : items.get(0);
   }
 
   @Contract(pure=true)
-  public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+  public static <T> T getFirstItem(@Nullable final Collection<? extends T> items, @Nullable final T defaultResult) {
     return items == null || items.isEmpty() ? defaultResult : items.iterator().next();
   }
 
@@ -1577,12 +1614,12 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @Nullable
   @Contract(pure=true)
-  public static <T> T getOnlyItem(@Nullable final Collection<T> items) {
+  public static <T> T getOnlyItem(@Nullable final Collection<? extends T> items) {
     return getOnlyItem(items, null);
   }
 
   @Contract(pure=true)
-  public static <T> T getOnlyItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+  public static <T> T getOnlyItem(@Nullable final Collection<? extends T> items, @Nullable final T defaultResult) {
     return items == null || items.size() != 1 ? defaultResult : items.iterator().next();
   }
 
@@ -1593,18 +1630,21 @@ public class ContainerUtil extends ContainerUtilRt {
    * @param items list
    * @param maxItems size of the result will be equal or less than {@code maxItems}
    * @param <T> type of list
-   * @return new list with no more than {@code maxItems} first elements
+   * @return list with no more than {@code maxItems} first elements
    */
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
-    return items.subList(0, Math.min(maxItems, items.size()));
+    if (maxItems < 0) {
+      throw new IllegalArgumentException("Expected non-negative maxItems; got: "+maxItems);
+    }
+    return maxItems >= items.size() ? items : items.subList(0, maxItems);
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T iterateAndGetLastItem(@NotNull Iterable<T> items) {
-    Iterator<T> itr = items.iterator();
+  public static <T> T iterateAndGetLastItem(@NotNull Iterable<? extends T> items) {
+    Iterator<? extends T> itr = items.iterator();
     T res = null;
     while (itr.hasNext()) {
       res = itr.next();
@@ -1615,7 +1655,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T,U> Iterator<U> mapIterator(@NotNull final Iterator<T> iterator, @NotNull final Function<T,U> mapper) {
+  public static <T,U> Iterator<U> mapIterator(@NotNull final Iterator<? extends T> iterator, @NotNull final Function<? super T, ? extends U> mapper) {
     return new Iterator<U>() {
       @Override
       public boolean hasNext() {
@@ -1639,7 +1679,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> Iterator<T> filterIterator(@NotNull final Iterator<T> iterator, @NotNull final Condition<T> filter) {
+  public static <T> Iterator<T> filterIterator(@NotNull final Iterator<? extends T> iterator, @NotNull final Condition<? super T> filter) {
     return new Iterator<T>() {
       T next;
       boolean hasNext;
@@ -1686,13 +1726,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list, @Nullable T def) {
-    return isEmpty(list) ? def : list.get(list.size() - 1);
+    return ContainerUtilRt.getLastItem(list, def);
   }
 
   @Nullable
   @Contract(pure=true)
   public static <T, L extends List<T>> T getLastItem(@Nullable L list) {
-    return getLastItem(list, null);
+    return ContainerUtilRt.getLastItem(list);
   }
 
   /**
@@ -1700,27 +1740,28 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T> Collection<T> subtract(@NotNull Collection<T> from, @NotNull Collection<T> what) {
-    final Set<T> set = newHashSet(from);
+  public static <T> Collection<T> subtract(@NotNull Collection<? extends T> from, @NotNull Collection<? extends T> what) {
+    final Set<T> set = ContainerUtilRt.newHashSet(from);
     set.removeAll(what);
     return set.isEmpty() ? ContainerUtil.<T>emptyList() : set;
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] toArray(@Nullable Collection<T> c, @NotNull ArrayFactory<T> factory) {
-    return c != null ? c.toArray(factory.create(c.size())) : factory.create(0);
+  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull ArrayFactory<? extends T> factory) {
+    T[] a = factory.create(c.size());
+    return c.toArray(a);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] toArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] toArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<? extends T> factory) {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] mergeCollectionsToArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<T> factory) {
+  public static <T> T[] mergeCollectionsToArray(@NotNull Collection<? extends T> c1, @NotNull Collection<? extends T> c2, @NotNull ArrayFactory<? extends T> factory) {
     return ArrayUtil.mergeCollections(c1, c2, factory);
   }
 
@@ -1819,13 +1860,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> sorted(@NotNull Collection<T> list, @NotNull Comparator<? super T> comparator) {
-    return sorted((Iterable<T>)list, comparator);
+  public static <T> List<T> sorted(@NotNull Collection<? extends T> list, @NotNull Comparator<? super T> comparator) {
+    return sorted((Iterable<? extends T>)list, comparator);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> sorted(@NotNull Iterable<T> list, @NotNull Comparator<? super T> comparator) {
+  public static <T> List<T> sorted(@NotNull Iterable<? extends T> list, @NotNull Comparator<? super T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
     return sorted;
@@ -1833,7 +1874,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<T> list) {
+  public static <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<? extends T> list) {
     return sorted(list, new Comparator<T>() {
       @Override
       public int compare(T o1, T o2) {
@@ -1842,7 +1883,7 @@ public class ContainerUtil extends ContainerUtilRt {
     });
   }
 
-  public static <T> void sort(@NotNull T[] a, @NotNull Comparator<T> comparator) {
+  public static <T> void sort(@NotNull T[] a, @NotNull Comparator<? super T> comparator) {
     int size = a.length;
 
     if (size < 2) return;
@@ -1880,8 +1921,8 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    List<V> result = new ArrayList<V>();
+  public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
+    List<V> result = new ArrayList<V>(iterable instanceof Collection ? ((Collection)iterable).size() : 10);
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
@@ -1895,7 +1936,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T,V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
+  public static <T,V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
     return ContainerUtilRt.map2List(collection, mapping);
   }
 
@@ -1906,7 +1947,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull T[] array, @NotNull Function<T, V> mapping) {
+  public static <T, V> List<V> mapNotNull(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
 
@@ -1918,7 +1959,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] mapNotNull(@NotNull T[] array, @NotNull Function<T, V> mapping, @NotNull V[] emptyArray) {
+  public static <T, V> V[] mapNotNull(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapping, @NotNull V[] emptyArray) {
     List<V> result = new ArrayList<V>(array.length);
     for (T t : array) {
       V v = mapping.fun(t);
@@ -1940,7 +1981,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Iterable<? extends T> iterable, @NotNull Function<T, V> mapping) {
+  public static <T, V> List<V> mapNotNull(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {
       final V o = mapping.fun(t);
@@ -1958,19 +1999,8 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
-    if (collection.isEmpty()) {
-      return emptyList();
-    }
-
-    List<V> result = new ArrayList<V>(collection.size());
-    for (T t : collection) {
-      final V o = mapping.fun(t);
-      if (o != null) {
-        result.add(o);
-      }
-    }
-    return result.isEmpty() ? ContainerUtil.<V>emptyList() : result;
+  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
+    return ContainerUtilRt.mapNotNull(collection, mapping);
   }
 
   /**
@@ -1991,7 +2021,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> map(@NotNull T[] array, @NotNull Function<T, V> mapping) {
+  public static <T, V> List<V> map(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapping) {
     List<V> result = new ArrayList<V>(array.length);
     for (T t : array) {
       result.add(mapping.fun(t));
@@ -2001,7 +2031,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> V[] map(@NotNull T[] arr, @NotNull Function<T, V> mapping, @NotNull V[] emptyArray) {
+  public static <T, V> V[] map(@NotNull T[] arr, @NotNull Function<? super T, ? extends V> mapping, @NotNull V[] emptyArray) {
     if (arr.length==0) {
       assert emptyArray.length == 0 : "You must pass an empty array";
       return emptyArray;
@@ -2018,34 +2048,34 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> set(@NotNull T ... items) {
-    return newHashSet(items);
+    return ContainerUtilRt.newHashSet(items);
   }
 
-  public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
+  public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<? super K, ? super V> result) {
     if (!result.containsKey(key)) {
       result.put(key, value);
     }
   }
 
-  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<? super K, ? super V> result) {
     if (value != null) {
       result.put(key, value);
     }
   }
 
-  public static <K, V> void putIfNotNull(final K key, @Nullable Collection<? extends V> value, @NotNull final MultiMap<K, V> result) {
+  public static <K, V> void putIfNotNull(final K key, @Nullable Collection<? extends V> value, @NotNull final MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValues(key, value);
     }
   }
 
-  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final MultiMap<K, V> result) {
+  public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final MultiMap<? super K, ? super V> result) {
     if (value != null) {
       result.putValue(key, value);
     }
   }
 
-  public static <T> void add(final T element, @NotNull final Collection<T> result, @NotNull final Disposable parentDisposable) {
+  public static <T> void add(final T element, @NotNull final Collection<? super T> result, @NotNull final Disposable parentDisposable) {
     if (result.add(element)) {
       Disposer.register(parentDisposable, new Disposable() {
         @Override
@@ -2077,7 +2107,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return value;
   }
 
-  public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull Factory<V> factory) {
+  public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull Factory<? extends V> factory) {
     V value = result.get(key);
     if (value == null) {
       result.put(key, value = factory.create());
@@ -2098,7 +2128,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean and(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> boolean and(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     for (final T t : iterable) {
       if (!condition.value(t)) return false;
     }
@@ -2106,22 +2136,25 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean exists(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
-    return or(Arrays.asList(iterable), condition);
+  public static <T> boolean exists(@NotNull T[] array, @NotNull Condition<? super T> condition) {
+    for (final T t : array) {
+      if (condition.value(t)) return true;
+    }
+    return false;
   }
 
   @Contract(pure=true)
-  public static <T> boolean exists(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> boolean exists(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     return or(iterable, condition);
   }
 
   @Contract(pure=true)
   public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
-    return or(Arrays.asList(iterable), condition);
+    return exists(iterable, condition);
   }
 
   @Contract(pure=true)
-  public static <T> boolean or(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> boolean or(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     for (final T t : iterable) {
       if (condition.value(t)) return true;
     }
@@ -2129,7 +2162,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int count(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+  public static <T> int count(@NotNull Iterable<? extends T> iterable, @NotNull Condition<? super T> condition) {
     int count = 0;
     for (final T t : iterable) {
       if (condition.value(t)) count++;
@@ -2139,7 +2172,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T, T> next) {
+  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<? super T, ? extends T> next) {
     if (t == null) return emptyList();
 
     List<T> list = new ArrayList<T>();
@@ -2164,11 +2197,11 @@ public class ContainerUtil extends ContainerUtilRt {
 
   // Generalized Quick Sort. Does neither array.clone() nor list.toArray()
 
-  public static <T> void quickSort(@NotNull List<T> list, @NotNull Comparator<? super T> comparator) {
+  public static <T> void quickSort(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
     quickSort(list, comparator, 0, list.size());
   }
 
-  private static <T> void quickSort(@NotNull List<T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
+  private static <T> void quickSort(@NotNull List<? extends T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
     // Insertion sort on smallest arrays
     if (len < 7) {
       for (int i = off; i < len + off; i++) {
@@ -2231,7 +2264,7 @@ public class ContainerUtil extends ContainerUtilRt {
   /*
    * Returns the index of the median of the three indexed longs.
    */
-  private static <T> int med3(@NotNull List<T> x, Comparator<? super T> comparator, int a, int b, int c) {
+  private static <T> int med3(@NotNull List<? extends T> x, Comparator<? super T> comparator, int a, int b, int c) {
     return comparator.compare(x.get(a), x.get(b)) < 0 ? comparator.compare(x.get(b), x.get(c)) < 0
                                                         ? b
                                                         : comparator.compare(x.get(a), x.get(c)) < 0 ? c : a
@@ -2305,7 +2338,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<? extends E>> collections) {
-    List<E> result = new ArrayList<E>();
+    int totalSize = 0;
+    for (Collection<? extends E> list : collections) {
+      totalSize += list.size();
+    }
+    List<E> result = new ArrayList<E>(totalSize);
     for (Collection<? extends E> list : collections) {
       result.addAll(list);
     }
@@ -2319,7 +2356,11 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
-    List<E> result = new ArrayList<E>();
+    int totalSize = 0;
+    for (Iterable<E> list : collections) {
+      totalSize += list instanceof Collection ? ((Collection)list).size() : 10;
+    }
+    List<E> result = new ArrayList<E>(totalSize);
     for (Iterable<E> list : collections) {
       for (E e : list) {
         result.add(e);
@@ -2329,7 +2370,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<K,V> fun) {
+  public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<? super K, ? extends V> fun) {
     if (to.length < from.length) {
       @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
       to = array;
@@ -2341,7 +2382,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean containsIdentity(@NotNull Iterable<T> list, T element) {
+  public static <T> boolean containsIdentity(@NotNull Iterable<? extends T> list, T element) {
     for (T t : list) {
       if (t == element) {
         return true;
@@ -2351,7 +2392,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOfIdentity(@NotNull List<T> list, T element) {
+  public static <T> int indexOfIdentity(@NotNull List<? extends T> list, T element) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {
       if (list.get(i) == element) {
         return i;
@@ -2361,7 +2402,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean equalsIdentity(@NotNull List<T> list1, @NotNull List<T> list2) {
+  public static <T> boolean equalsIdentity(@NotNull List<? extends T> list1, @NotNull List<? extends T> list2) {
     int listSize = list1.size();
     if (list2.size() != listSize) {
       return false;
@@ -2376,18 +2417,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
-    for (int i = 0, listSize = list.size(); i < listSize; i++) {
-      T t = list.get(i);
-      if (condition.value(t)) {
-        return i;
-      }
-    }
-    return -1;
+  public static <T> int indexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
+    return ContainerUtilRt.indexOf(list, condition);
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<T> list, @NotNull Condition<? super T> condition) {
+  public static <T> int lastIndexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     for (int i = list.size() - 1; i >= 0; i--) {
       T t = list.get(i);
       if (condition.value(t)) {
@@ -2399,7 +2434,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Nullable
   @Contract(pure = true)
-  public static <T, U extends T> U findLastInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+  public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, @NotNull final Class<? extends U> clazz) {
     int i = lastIndexOf(list, new Condition<T>() {
       @Override
       public boolean value(T t) {
@@ -2411,7 +2446,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure = true)
-  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<T> list, @NotNull final Class<U> clazz) {
+  public static <T, U extends T> int lastIndexOfInstance(@NotNull List<? extends T> list, @NotNull final Class<U> clazz) {
     return lastIndexOf(list, new Condition<T>() {
       @Override
       public boolean value(T t) {
@@ -2420,24 +2455,10 @@ public class ContainerUtil extends ContainerUtilRt {
     });
   }
 
-  /**
-   * @deprecated use {@link List#indexOf(Object)} instead, to be removed in 2018.3
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
-    return indexOf(list, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t.equals(object);
-      }
-    });
-  }
-
   @NotNull
   @Contract(pure=true)
   public static <A,B> Map<B,A> reverseMap(@NotNull Map<A,B> map) {
-    final Map<B,A> result = newHashMap();
+    final Map<B,A> result = new HashMap<B, A>();
     for (Map.Entry<A, B> entry : map.entrySet()) {
       result.put(entry.getValue(), entry.getKey());
     }
@@ -2457,19 +2478,19 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> Stack<T> newStack() {
     return ContainerUtilRt.newStack();
   }
 
   @NotNull
-  @Contract(pure=true)
-  public static <T> Stack<T> newStack(@NotNull Collection<T> initial) {
+  @Contract(value = "_ -> new", pure = true)
+  public static <T> Stack<T> newStack(@NotNull Collection<? extends T> initial) {
     return ContainerUtilRt.newStack(initial);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> Stack<T> newStack(@NotNull T... initial) {
     return ContainerUtilRt.newStack(initial);
   }
@@ -2481,9 +2502,10 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
-    return ContainerUtilRt.createEmptyCOWList();
+    // does not create garbage new Object[0]
+    return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());
   }
 
   /**
@@ -2497,133 +2519,138 @@ public class ContainerUtil extends ContainerUtilRt {
    * therefore can return array with null elements at the end.
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> List<T> createLockFreeCopyOnWriteList() {
     return createConcurrentList();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<T>(c);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap() {
     return new ConcurrentIntObjectHashMap<V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_,_ -> new", pure = true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
     return new ConcurrentIntObjectHashMap<V>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
     return new ConcurrentIntKeySoftValueHashMap<V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap() {
     return new ConcurrentLongObjectHashMap<V>();
   }
+
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <V> ConcurrentLongObjectMap<V> createConcurrentLongObjectMap(int initialCapacity) {
     return new ConcurrentLongObjectHashMap<V>(initialCapacity);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakValueMap() {
     return new ConcurrentWeakValueHashMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
     return new ConcurrentIntKeyWeakValueHashMap<V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_,_,_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
                                                                              float loadFactor,
                                                                              int concurrencyLevel,
-                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                                                             @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
+
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_,_,_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
                                                                              float loadFactor,
                                                                              int concurrencyLevel,
-                                                                             @NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+                                                                             @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     return new ConcurrentSoftKeySoftValueHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap() {
     return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
     return createConcurrentWeakKeyWeakValueMap(ContainerUtil.<K>canonicalStrategy());
   }
 
   @NotNull
-  @Contract(pure=true)
-  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap(@NotNull TObjectHashingStrategy<K> strategy) {
+  @Contract(value = "_ -> new", pure = true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap(@NotNull TObjectHashingStrategy<? super K> strategy) {
     return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
                                                        strategy);
   }
 
   @NotNull
-  @Contract(pure = true)
+  @Contract(value = " -> new", pure = true)
   public static <K, V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
     return new ConcurrentSoftValueHashMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
     //noinspection deprecation
-    return new ConcurrentWeakHashMap<K, V>();
+    return new ConcurrentWeakHashMap<K, V>(0.75f);
   }
+
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_,_,_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftMap(int initialCapacity,
-                                 float loadFactor,
-                                 int concurrencyLevel,
-                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+                                                                 float loadFactor,
+                                                                 int concurrencyLevel,
+                                                                 @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     return new ConcurrentSoftHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
+
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_,_,_ -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(int initialCapacity,
-                                 float loadFactor,
-                                 int concurrencyLevel,
-                                 @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+                                                                 float loadFactor,
+                                                                 int concurrencyLevel,
+                                                                 @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
+
   @NotNull
-  @Contract(pure=true)
-  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  @Contract(value = "_ -> new", pure = true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakHashMap<K, V>(hashingStrategy);
   }
@@ -2632,13 +2659,13 @@ public class ContainerUtil extends ContainerUtilRt {
    * @see #createLockFreeCopyOnWriteList()
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> ConcurrentList<T> createConcurrentList() {
     return new LockFreeCopyOnWriteArrayList<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
     return new LockFreeCopyOnWriteArrayList<T>(collection);
   }
@@ -2647,47 +2674,47 @@ public class ContainerUtil extends ContainerUtilRt {
    * @see #addIfNotNull(Collection, Object) instead
    */
   @Deprecated
-  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
+  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {
     addIfNotNull(result,element);
   }
 
-  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
+  public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     ContainerUtilRt.addIfNotNull(result, element);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
+  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapper) {
     return ContainerUtilRt.map2List(array, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     return ContainerUtilRt.map2List(collection, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
+  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.map2List(map);
   }
-  
+
   @NotNull
   @Contract(pure=true)
-  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
+  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<? super T, ? extends V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> Set<V> map2LinkedSet(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+  public static <T, V> Set<V> map2LinkedSet(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return Collections.emptySet();
     Set <V> set = new LinkedHashSet<V>(collection.size());
     for (final T t : collection) {
@@ -2698,7 +2725,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> Set<V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+  public static <T, V> Set<V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return Collections.emptySet();
     Set <V> set = new HashSet<V>(collection.size());
     for (T t : collection) {
@@ -2710,20 +2737,28 @@ public class ContainerUtil extends ContainerUtilRt {
     return set.isEmpty() ? Collections.<V>emptySet() : set;
   }
 
+  /**
+   * @deprecated use {@link List#toArray(Object[])} instead
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
-    return ContainerUtilRt.toArray(collection, array);
+    return collection.toArray(array);
   }
 
+  /**
+   * @deprecated use {@link Collection#toArray(Object[])} instead
+   */
+  @Deprecated
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
-    return ContainerUtilRt.toArray(c, sample);
+  public static <T> T[] toArray(@NotNull Collection<? extends T> c, @NotNull T[] sample) {
+    return c.toArray(sample);
   }
 
   @NotNull
-  public static <T> T[] copyAndClear(@NotNull Collection<T> collection, @NotNull ArrayFactory<T> factory, boolean clear) {
+  public static <T> T[] copyAndClear(@NotNull Collection<? extends T> collection, @NotNull ArrayFactory<? extends T> factory, boolean clear) {
     int size = collection.size();
     T[] a = factory.create(size);
     if (size > 0) {
@@ -2733,14 +2768,34 @@ public class ContainerUtil extends ContainerUtilRt {
     return a;
   }
 
+  @Contract("null -> null")
+  public static <T> List<T> copyList(@Nullable List<? extends T> list) {
+    if (list == null) {
+      return null;
+    }
+    else if (list == Collections.emptyList()) {
+      return Collections.emptyList();
+    }
+    else if (list.size() == 1) {
+      return new SmartList<T>(list.get(0));
+    }
+    else if (list.isEmpty()) {
+      return new SmartList<T>();
+    }
+    else {
+      return new ArrayList<T>(list);
+    }
+  }
+
   @NotNull
   @Contract(pure=true)
-  public static <T> Collection<T> toCollection(@NotNull Iterable<T> iterable) {
+  public static <T> Collection<T> toCollection(@NotNull Iterable<? extends T> iterable) {
+    //noinspection unchecked
     return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
   }
 
   @NotNull
-  public static <T> List<T> toList(@NotNull Enumeration<T> enumeration) {
+  public static <T> List<T> toList(@NotNull Enumeration<? extends T> enumeration) {
     if (!enumeration.hasMoreElements()) {
       return Collections.emptyList();
     }
@@ -2753,12 +2808,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(value = "null -> true", pure = true)
-  public static <T> boolean isEmpty(Collection<T> collection) {
-    return collection == null || collection.isEmpty();
+  public static <T> boolean isEmpty(@Nullable Collection<? extends T> collection) {
+    return ContainerUtilRt.isEmpty(collection);
   }
 
   @Contract(value = "null -> true", pure = true)
-  public static boolean isEmpty(Map map) {
+  public static boolean isEmpty(@Nullable Map map) {
     return map == null || map.isEmpty();
   }
 
@@ -2781,7 +2836,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure = true)
-  public static <T> boolean startsWith(@NotNull List<T> list, @NotNull List<T> prefix) {
+  public static <T> boolean startsWith(@NotNull List<? extends T> list, @NotNull List<? extends T> prefix) {
     return list.size() >= prefix.size() && list.subList(0, prefix.size()).equals(prefix);
   }
 
@@ -2792,7 +2847,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2) {
+  public static <T extends Comparable<T>> int compareLexicographically(@NotNull List<? extends T> o1, @NotNull List<? extends T> o2) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
       int result = Comparing.compare(o1.get(i), o2.get(i));
       if (result != 0) {
@@ -2803,7 +2858,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int compareLexicographically(@NotNull List<T> o1, @NotNull List<T> o2, @NotNull Comparator<T> comparator) {
+  public static <T> int compareLexicographically(@NotNull List<? extends T> o1, @NotNull List<? extends T> o2, @NotNull Comparator<? super T> comparator) {
     for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
       int result = comparator.compare(o1.get(i), o2.get(i));
       if (result != 0) {
@@ -2831,8 +2886,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return sb.toString();
   }
 
-  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
-
+  public static class KeyOrderedMultiMap<K extends Comparable<K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
     }
 
@@ -2854,20 +2908,24 @@ public class ContainerUtil extends ContainerUtilRt {
 
     @NotNull
     public NavigableSet<K> navigableKeySet() {
-      //noinspection unchecked
-      return ((TreeMap)myMap).navigableKeySet();
+      return ((TreeMap<K, Collection<V>>)myMap).navigableKeySet();
     }
   }
 
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakKeySoftValueMap() {
     return new WeakKeySoftValueHashMap<K, V>();
   }
+
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakKeyWeakValueMap() {
     //noinspection deprecation
-    return new WeakKeyWeakValueHashMap<K, V>();
+    return new WeakKeyWeakValueHashMap<K, V>(true);
   }
+
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
     return new SoftKeySoftValueHashMap<K, V>(true);
@@ -2878,10 +2936,11 @@ public class ContainerUtil extends ContainerUtilRt {
    * Null keys are NOT allowed
    * Null values are allowed
    */
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftValueMap() {
     //noinspection deprecation
-    return new SoftValueHashMap<K, V>();
+    return new SoftValueHashMap<K, V>(ContainerUtil.<K>canonicalStrategy());
   }
 
   /**
@@ -2889,10 +2948,11 @@ public class ContainerUtil extends ContainerUtilRt {
    * Null keys are NOT allowed
    * Null values are allowed
    */
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakValueMap() {
     //noinspection deprecation
-    return new WeakValueHashMap<K, V>();
+    return new WeakValueHashMap<K, V>(ContainerUtil.<K>canonicalStrategy());
   }
 
   /**
@@ -2900,13 +2960,16 @@ public class ContainerUtil extends ContainerUtilRt {
    * Null keys are NOT allowed
    * Null values are allowed
    */
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftMap() {
     //noinspection deprecation
-    return new SoftHashMap<K, V>();
+    return new SoftHashMap<K, V>(4);
   }
+
+  @Contract(value = "_ -> new", pure = true)
   @NotNull
-  public static <K,V> Map<K,V> createSoftMap(@NotNull TObjectHashingStrategy<K> strategy) {
+  public static <K,V> Map<K,V> createSoftMap(@NotNull TObjectHashingStrategy<? super K> strategy) {
     //noinspection deprecation
     return new SoftHashMap<K, V>(strategy);
   }
@@ -2916,31 +2979,38 @@ public class ContainerUtil extends ContainerUtilRt {
    * Null keys are NOT allowed
    * Null values are allowed
    */
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakMap() {
-    //noinspection deprecation
-    return new WeakHashMap<K, V>();
+    return createWeakMap(4);
   }
+
+  @Contract(value = "_ -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakMap(int initialCapacity) {
-    //noinspection deprecation
-    return new WeakHashMap<K, V>(initialCapacity);
+    return createWeakMap(initialCapacity, 0.8f, ContainerUtil.<K>canonicalStrategy());
   }
+
+  @Contract(value = "_, _, _ -> new", pure = true)
   @NotNull
-  public static <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<K> strategy) {
+  public static <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<? super K> strategy) {
     //noinspection deprecation
     return new WeakHashMap<K, V>(initialCapacity, loadFactor, strategy);
   }
 
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <T> Set<T> createWeakSet() {
     return new WeakHashSet<T>();
   }
 
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <T> IntObjectMap<T> createIntKeyWeakValueMap() {
     return new IntKeyWeakValueHashMap<T>();
   }
+
+  @Contract(value = " -> new", pure = true)
   @NotNull
   public static <T> ObjectIntMap<T> createWeakKeyIntValueMap() {
     return new WeakKeyIntValueHashMap<T>();

@@ -17,10 +17,10 @@ REGEXP_FILE
       RegExpCharImpl: <c>
         PsiElement(CHARACTER)('c')
       PsiWhiteSpace(' ')
-      PsiComment(COMMENT)('#')
-      PsiComment(COMMENT)('foo \q bar\n')
-      PsiComment(COMMENT)('#')
-      PsiComment(COMMENT)(' foo\n')
+      PsiComment(COMMENT)('#foo \q bar')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT)('# foo')
+      PsiWhiteSpace('\n')
       RegExpSetOptionsImpl: <(?-xi)>
         PsiElement(SET_OPTIONS)('(?')
         RegExpOptionsImpl: <-xi>

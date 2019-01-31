@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author gregsh
- */
 public interface Separator extends GenericDomValue<String> {
+
   @NotNull
   @Stubbed
   GenericAttributeValue<String> getText();

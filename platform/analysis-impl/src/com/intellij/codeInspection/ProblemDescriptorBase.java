@@ -138,6 +138,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEndSmartPointer == null ? getStartElement() : myEndSmartPointer.getElement();
   }
 
+  @NotNull
+  public Project getProject() {
+    return myStartSmartPointer.getProject();
+  }
+
   @Override
   public int getLineNumber() {
     if (myLineNumber == -1) {

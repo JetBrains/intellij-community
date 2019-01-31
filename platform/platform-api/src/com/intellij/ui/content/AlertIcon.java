@@ -46,14 +46,17 @@ public class AlertIcon implements Icon {
     return myHShift;
   }
 
+  @Override
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     myIcon.paintIcon(c, g, x + myHShift, y + myVShift);
   }
 
+  @Override
   public int getIconWidth() {
     return myIcon.getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return myIcon.getIconHeight();
   }

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 public class JdkVersionUtil {
   /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */
+  @Deprecated
   public static JavaSdkVersion getVersion(@NotNull String versionString) {
     return JavaSdkVersion.fromVersionString(versionString);
   }

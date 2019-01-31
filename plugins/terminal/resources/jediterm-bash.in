@@ -31,28 +31,36 @@ function load_interactive_configs {
   fi
 }
 
-if [ -n $LOGIN_SHELL ]; then
+function override_jb_variables {
+  for VARIABLE in $(env)
+  do
+    NAME=${VARIABLE%%=*}
+    if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
+    then
+      NEW_NAME=${NAME:20}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE"
+      fi
+    fi
+  done
+}
+
+if [ -n "$LOGIN_SHELL" ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
 
 load_interactive_configs
 
+override_jb_variables
+
 # mappings for Ctrl-left-arrow and Ctrl-right-arrow for word moving
 bind '"\e\e[C":forward-word'
 bind '"\e\e[D": backward-word'
 bind '"\e\O[C":forward-word'
 bind '"\e\O[D": backward-word'
-
-function generate_command_executed_sequence() {
-   printf '\e\7'
-}
-
-export -f generate_command_executed_sequence
-
-
-#generate escape sequence after command is executed to notify jediterm emulator
-trap "generate_command_executed_sequence" DEBUG
 
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
@@ -62,6 +70,20 @@ fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source "$JEDITERM_SOURCE"
+  source "$JEDITERM_SOURCE" $JEDITERM_SOURCE_ARGS
   unset JEDITERM_SOURCE
+  unset JEDITERM_SOURCE_ARGS
 fi
+
+function configureCommandHistory {
+  local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
+  if [ -n "$commandHistoryFile" ]
+  then
+    if [ ! -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
+    then
+      command cp "$HISTFILE" "$commandHistoryFile"
+    fi
+    export HISTFILE="$commandHistoryFile"
+  fi
+}
+configureCommandHistory

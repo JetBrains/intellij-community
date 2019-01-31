@@ -19,7 +19,6 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,12 +50,6 @@ public class DependentNSReference extends BasicAttributeValueReference {
     PsiElement element = myReference.resolve();
     if (element == null && !myForceFetchResultValid && !XmlUtil.isUrlText(canonicalText, myElement.getProject())) return myElement;  // file reference will highlight it
     return element;
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

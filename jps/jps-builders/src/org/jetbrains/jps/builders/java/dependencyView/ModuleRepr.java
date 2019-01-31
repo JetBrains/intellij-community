@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -53,6 +53,7 @@ public class ModuleRepr extends ClassFileRepr{
     return myExports;
   }
 
+  @Override
   public void save(DataOutput out) {
     super.save(out);
     try {
@@ -65,6 +66,7 @@ public class ModuleRepr extends ClassFileRepr{
     }
   }
 
+  @Override
   protected void updateClassUsages(DependencyContext context, Set<UsageRepr.Usage> s) {
     for (ModuleRequiresRepr require : myRequires) {
       if (require.name != name) {
@@ -73,6 +75,7 @@ public class ModuleRepr extends ClassFileRepr{
     }
   }
 
+  @Override
   public void toStream(DependencyContext context, PrintStream stream) {
     super.toStream(context, stream);
 
@@ -114,29 +117,35 @@ public class ModuleRepr extends ClassFileRepr{
 
     public abstract boolean versionChanged();
 
+    @Override
     public boolean no() {
       return base() == NONE && requires().unchanged() && exports().unchanged() && !versionChanged();
     }
   }
 
+  @Override
   public Diff difference(Proto past) {
     final Difference delegate = super.difference(past);
     final ModuleRepr pastModule = (ModuleRepr)past;
     final int base = !getUsages().equals(pastModule.getUsages())? delegate.base() | Difference.USAGES : delegate.base();
 
     return new Diff(delegate) {
+      @Override
       public Specifier<ModuleRequiresRepr, ModuleRequiresRepr.Diff> requires() {
         return Difference.make(pastModule.myRequires, myRequires);
       }
 
+      @Override
       public Specifier<ModulePackageRepr, ModulePackageRepr.Diff> exports() {
         return Difference.make(pastModule.myExports, myExports);
       }
 
+      @Override
       public boolean versionChanged() {
         return pastModule.getVersion() != myVersion;
       }
 
+      @Override
       public int base() {
         return base;
       }

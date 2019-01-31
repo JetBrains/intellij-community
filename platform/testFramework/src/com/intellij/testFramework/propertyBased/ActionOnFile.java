@@ -32,7 +32,7 @@ public abstract class ActionOnFile implements MadTestingAction {
   private final Project myProject;
   private final VirtualFile myVirtualFile;
 
-  protected ActionOnFile(PsiFile file) {
+  protected ActionOnFile(@NotNull PsiFile file) {
     myProject = file.getProject();
     myVirtualFile = file.getVirtualFile();
   }

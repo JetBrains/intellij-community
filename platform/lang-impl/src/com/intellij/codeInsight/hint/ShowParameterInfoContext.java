@@ -117,7 +117,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      if (editor.isDisposed() || DumbService.isDumb(project) || 
+      if (editor.isDisposed() || DumbService.isDumb(project) || !element.isValid() ||
           (!ApplicationManager.getApplication().isUnitTestMode() &&
            !ApplicationManager.getApplication().isHeadlessEnvironment() &&
            !editor.getComponent().isShowing())) return;
@@ -130,6 +130,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
+        controller.setDescriptors(descriptors);
         controller.showHint(requestFocus, singleParameterInfo);
       }
     });

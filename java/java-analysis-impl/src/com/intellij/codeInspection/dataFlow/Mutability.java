@@ -4,17 +4,14 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +67,7 @@ public enum Mutability {
   }
 
   @NotNull
-  public Mutability union(Mutability other) {
+  public Mutability unite(Mutability other) {
     if (this == other) return this;
     if (this == MUTABLE || other == MUTABLE) return MUTABLE;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
@@ -83,7 +80,6 @@ public enum Mutability {
     if (myAnnotation == null) return null;
     return CachedValuesManager.getManager(project).getCachedValue(project, myKey, () -> {
       PsiAnnotation annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + myAnnotation, null);
-      InferredAnnotationsManagerImpl.markInferred(annotation);
       ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
       return CachedValueProvider.Result.create(annotation, ModificationTracker.NEVER_CHANGED);
     }, false);
@@ -100,6 +96,13 @@ public enum Mutability {
    */
   @NotNull
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof LightElement) return UNKNOWN;
+    return CachedValuesManager.getCachedValue(owner, () -> 
+      CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  public static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
       PsiParameterList list = (PsiParameterList)owner.getParent();
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
@@ -146,7 +149,7 @@ public enum Mutability {
           PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
           newMutability = method == null ? UNKNOWN : getMutability(method);
         }
-        mutability = mutability.union(newMutability);
+        mutability = mutability.unite(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

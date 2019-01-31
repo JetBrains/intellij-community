@@ -35,7 +35,7 @@ public abstract class CodeStyleSchemes {
   public abstract void deleteScheme(@NotNull CodeStyleScheme scheme);
 
   @Nullable
-  protected abstract CodeStyleScheme findSchemeByName(@NotNull String name);
+  public abstract CodeStyleScheme findSchemeByName(@NotNull String name);
 
   /**
    * Attempts to find a scheme with a given name or an alternative suitable scheme.

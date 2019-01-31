@@ -12,16 +12,16 @@
  */
 package org.netbeans.lib.cvsclient.command.watch;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.*;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -53,7 +53,8 @@ public final class WatchCommand extends AbstractCommand {
 	 * @throws IllegalStateException if the commands options aren't set correctly
 	 * @throws CommandException if some other thing gone wrong
 	 */
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                   AuthenticationException {
 		checkState();
 
@@ -69,9 +70,9 @@ public final class WatchCommand extends AbstractCommand {
 		addFileRequests(cvsFiles, requests, clientEnvironment);
 		if (getWatchMode().isWatchOptionAllowed()) {
 			final String[] arguments = getWatchNotNull().getArguments();
-			for (int i = 0; i < arguments.length; i++) {
+			for (String argument : arguments) {
 				requests.addArgumentRequest("-a");
-				requests.addArgumentRequest(arguments[i]);
+				requests.addArgumentRequest(argument);
 			}
 		}
 		requests.addLocalPathDirectoryRequest();
@@ -84,7 +85,8 @@ public final class WatchCommand extends AbstractCommand {
 	 * Resets all switches in this command.
 	 * After calling this method, the command behaves like newly created.
 	 */
-	public void resetCvsCommand() {
+	@Override
+        public void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setWatch(null);
@@ -93,7 +95,8 @@ public final class WatchCommand extends AbstractCommand {
 	/**
 	 * Returns how this command would look like when typed on the command line.
 	 */
-	public String getCvsCommandLine() {
+	@Override
+        public String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommand = new StringBuffer("watch ");
 		cvsCommand.append(getCVSArguments());
 		appendFileArguments(cvsCommand);

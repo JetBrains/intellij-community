@@ -26,14 +26,17 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class PsiViewerCodeFragmentExtension extends JavaPsiViewerExtension {
+  @Override
   public String getName() {
     return "Java Code Block";
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.CLASS_INITIALIZER;
   }
 
+  @Override
   public PsiElement createElement(Project project, String text) {
     return getFactory(project).createCodeBlockFromText(text, null);
   }

@@ -26,7 +26,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJav
   private static class ExportedToSelfVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public ExportedToSelfVisitor(ProblemsHolder holder) {
+    ExportedToSelfVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

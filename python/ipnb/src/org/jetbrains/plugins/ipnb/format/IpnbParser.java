@@ -426,7 +426,7 @@ public class IpnbParser {
       Integer prompt = execution_count != null ? execution_count : prompt_number;
       final IpnbOutputCell outputCell;
       if (png != null || (data != null && data.png != null)) {
-        outputCell = new IpnbPngOutputCell(png == null ? StringUtil.join(data.png) : png, text, prompt, metadata);
+        outputCell = new IpnbPngOutputCell(png == null ? data.png : png, text, prompt, metadata);
       }
       else if (jpeg != null || (data != null && data.jpeg != null)) {
         outputCell = new IpnbJpegOutputCell(jpeg == null ? StringUtil.join(data.jpeg, "") : jpeg, text, prompt, metadata);

@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public class Main {
   private static void test(List<String> names) {
-    names.stream().filter(Objects::nonNull).fo<caret>rEach(System.out::println);
+    names.stream().filter(Objects::nonNull).fo<caret>rEach(System/*1*/./*2*/out/*3*/::/*4*/println);
   }
 
   private static String getString() {

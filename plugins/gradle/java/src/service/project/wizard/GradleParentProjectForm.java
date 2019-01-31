@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.icons.AllIcons;
@@ -33,6 +19,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ArrayUtil;
@@ -87,6 +74,7 @@ public class GradleParentProjectForm implements Disposable {
     if (!myIsVisible) return;
     mySelectParent.setIcon(AllIcons.Actions.Module);
     mySelectParent.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myParent = doSelectProject(myParent);
         myConsumer.consume(myParent);
@@ -143,8 +131,18 @@ public class GradleParentProjectForm implements Disposable {
   private ProjectData findPotentialParentProject(@Nullable Project project) {
     if (project == null) return null;
 
-    ExternalProjectSettings linkedProjectSettings =
-      ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectSettings(myContext.getProjectFileDirectory());
+    String contextProjectFileDirectory = myContext.getProjectFileDirectory();
+    ExternalProjectSettings linkedProjectSettings = null;
+    for (Object settings : ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings()) {
+      if (settings instanceof ExternalProjectSettings) {
+        String projectPath = ((ExternalProjectSettings)settings).getExternalProjectPath();
+        if (FileUtil.isAncestor(projectPath, contextProjectFileDirectory, false)) {
+          linkedProjectSettings = (ExternalProjectSettings)settings;
+          break;
+        }
+      }
+    }
+
     if(linkedProjectSettings == null) return null;
 
     final ExternalProjectInfo projectInfo =
@@ -181,11 +179,11 @@ public class GradleParentProjectForm implements Disposable {
     private final boolean myEmbeddedIntoDialogWrapper;
     private final boolean myUseSoftWraps;
 
-    public TextViewer(@NotNull String initialText, @NotNull Project project) {
+    TextViewer(@NotNull String initialText, @NotNull Project project) {
       this(createDocument(initialText), project, true, true);
     }
 
-    public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
+    TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
       super(document, project, FileTypes.PLAIN_TEXT, true, false);
       myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
       myUseSoftWraps = useSoftWraps;

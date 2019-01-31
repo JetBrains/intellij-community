@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.LookupElementListPresenter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +30,13 @@ public abstract class LookupArranger implements WeighingContext {
     updateCache(item);
   }
 
+  public void clear() {
+    myItems.clear();
+    myMatchingItems.clear();
+    myExactPrefixItems.clear();
+    myInexactPrefixItems.clear();
+  }
+
   private void updateCache(LookupElement item) {
     if (!prefixMatches(item)) {
       return;
@@ -46,6 +54,7 @@ public abstract class LookupArranger implements WeighingContext {
     item.putUserData(myMatcherKey, matcher);
   }
 
+  @Override
   @NotNull
   public String itemPattern(@NotNull LookupElement element) {
     String prefix = itemMatcher(element).getPrefix();
@@ -53,6 +62,7 @@ public abstract class LookupArranger implements WeighingContext {
     return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
   }
 
+  @Override
   @NotNull
   public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
     PrefixMatcher matcher = item.getUserData(myMatcherKey);
@@ -137,7 +147,7 @@ public abstract class LookupArranger implements WeighingContext {
     return false;
   }
 
-  protected List<LookupElement> getMatchingItems() {
+  public List<LookupElement> getMatchingItems() {
     return myMatchingItems;
   }
 
@@ -151,6 +161,17 @@ public abstract class LookupArranger implements WeighingContext {
   public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
                                                                                boolean hideSingleValued) {
     return Collections.emptyMap();
+  }
+
+  /**
+   * Called when the prefix has been truncated farther than the additional prefix typed while the lookup was visible.
+   */
+  public void prefixTruncated(@NotNull LookupImpl lookup, int hideOffset) {
+    lookup.hideLookup(false);
+  }
+
+  public boolean isCompletion() {
+    return false;
   }
 
   public static class DefaultArranger extends LookupArranger {

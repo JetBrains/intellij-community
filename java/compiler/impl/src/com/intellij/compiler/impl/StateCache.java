@@ -44,11 +44,11 @@ public abstract class StateCache<T> {
   public void force() {
     myMap.force();
   }
-  
+
   public void close() throws IOException {
     myMap.close();
   }
-  
+
   public boolean wipe() {
     try {
       myMap.close();
@@ -93,10 +93,12 @@ public abstract class StateCache<T> {
 
   private PersistentHashMap<String, T> createMap(final File file) throws IOException {
     return new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<T>() {
+      @Override
       public void save(@NotNull final DataOutput out, final T value) throws IOException {
         StateCache.this.write(value, out);
       }
 
+      @Override
       public T read(@NotNull final DataInput in) throws IOException {
         return StateCache.this.read(in);
       }

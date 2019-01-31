@@ -29,12 +29,12 @@ public abstract class HighlightInfoProcessor {
   // Will remove all range-highlighters from there and replace them with passed infos
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull List<HighlightInfo> infos,
+                                                     @NotNull List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange, int groupId) {}
   public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull List<HighlightInfo> infos,
+                                                      @NotNull List<? extends HighlightInfo> infos,
                                                       @NotNull TextRange priorityRange,
                                                       @NotNull TextRange restrictedRange, int groupId) {}
 
@@ -50,7 +50,7 @@ public abstract class HighlightInfoProcessor {
   // Can queue to EDT to remove abandoned bijective highlighters from this range. All the rest abandoned highlighters have to wait until *AreProduced().
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
-                                               @Nullable List<HighlightInfo> infos){}
+                                               @Nullable List<? extends HighlightInfo> infos){}
 
   public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
                                  @Nullable Editor editor,

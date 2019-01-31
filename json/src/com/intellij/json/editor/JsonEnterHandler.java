@@ -29,6 +29,10 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvanceRef,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
+    if (!JsonEditorOptions.getInstance().COMMA_ON_ENTER) {
+      return Result.Continue;
+    }
+
     Language language = EnterHandler.getLanguage(dataContext);
     if (!(language instanceof JsonLanguage)) {
       return Result.Continue;

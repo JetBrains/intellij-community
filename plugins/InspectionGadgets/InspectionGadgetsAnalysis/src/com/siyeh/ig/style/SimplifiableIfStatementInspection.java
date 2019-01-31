@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
@@ -62,7 +63,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   private static class SimplifiableIfStatementFix implements LocalQuickFix {
     private final String myOperator;
 
-    public SimplifiableIfStatementFix(String operator) {
+    SimplifiableIfStatementFix(String operator) {
       myOperator = operator;
     }
 
@@ -94,7 +95,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       if (!PsiTreeUtil.isAncestor(ifStatement, model.myElseBranch, true)) {
         commentTracker.delete(model.myElseBranch);
       }
-      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, commentTracker.markUnchanged(model.myThenBranch));
+      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, model.myThenBranch);
       tryJoinDeclaration(result);
     }
 
@@ -299,9 +300,14 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       final PsiType thenType = thenReturn.getType();
       final PsiType elseType = elseReturn.getType();
       if (thenType == null || elseType == null) return null;
-      if (!thenType.isAssignableFrom(elseType) && !elseType.isAssignableFrom(thenType)) return null;
       PsiType type = PsiTypesUtil.getMethodReturnType(thenReturn);
       if (type == null) return null;
+      if (!thenType.isAssignableFrom(elseType) && !elseType.isAssignableFrom(thenType)) {
+        if (!(thenType instanceof PsiClassType) || !(elseType instanceof PsiClassType)) return null;
+        if (TypeConversionUtil.isPrimitiveWrapper(thenType) || TypeConversionUtil.isPrimitiveWrapper(elseType)) return null;
+        PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(thenType, elseType, condition.getManager());
+        if (leastUpperBound == null || !type.isAssignableFrom(leastUpperBound)) return null;
+      }
       return new ReplaceIfWithConditionalModel(condition, thenReturn, elseReturn, thenBranch, elseBranch, type);
     }
 

@@ -35,7 +35,6 @@ import java.util.Map;
  * the same category is not determined).
  *
  * @author Eugene Zhuravlev
- * @since 9/17/11
  * @see BuilderService#createModuleLevelBuilders()
  */
 public abstract class ModuleLevelBuilder extends Builder {
@@ -98,6 +97,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(java.io.File)} instead
    */
+  @Deprecated
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;
   }
@@ -119,5 +119,14 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
+  }
+
+  @Override
+  public long getExpectedBuildTime() {
+    //temporary workaround until this method is overridden in Kotlin plugin
+    if (getClass().getName().equals("org.jetbrains.kotlin.jps.build.KotlinBuilder")) {
+      return 100;
+    }
+    return super.getExpectedBuildTime();
   }
 }

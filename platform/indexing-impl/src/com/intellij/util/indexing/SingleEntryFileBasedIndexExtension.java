@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -44,5 +45,10 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
   @Override
   public boolean keyIsUniqueForIndexedFile() {
     return true;
+  }
+
+  /** Use this method to get key for extracting the value from index */
+  public static int getFileKey(@NotNull VirtualFile file) {
+    return Math.abs(FileBasedIndex.getFileId(file));
   }
 }

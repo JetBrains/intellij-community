@@ -20,12 +20,15 @@ package com.intellij.cvsSupport2.cvsExecution;
 */
 public class DefaultCvsOperationExecutorCallback implements CvsOperationExecutorCallback {
 
+  @Override
   public void executionFinished(boolean successfully) {
   }
 
+  @Override
   public void executionFinishedSuccessfully() {
   }
 
+  @Override
   public void executeInProgressAfterAction(ModalityContext modaityContext) {
   }
 }

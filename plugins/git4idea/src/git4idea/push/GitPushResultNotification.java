@@ -53,7 +53,7 @@ class GitPushResultNotification extends Notification {
 
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
-  public GitPushResultNotification(@NotNull String groupDisplayId,
+  GitPushResultNotification(@NotNull String groupDisplayId,
                                    @NotNull String title,
                                    @NotNull String content,
                                    @NotNull NotificationType type) {

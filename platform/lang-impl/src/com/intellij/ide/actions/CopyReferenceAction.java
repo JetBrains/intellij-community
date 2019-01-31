@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -29,7 +15,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
@@ -74,7 +59,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean plural = false;
     boolean enabled;
     boolean paths = false;
@@ -104,7 +89,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -175,18 +160,15 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   private static PsiElement adjustElement(PsiElement element) {
-    for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-      PsiElement adjustedElement = provider.adjustElementToCopy(element);
-      if (adjustedElement != null) return adjustedElement;
-    }
-    return element;
+    PsiElement adjustedElement = QualifiedNameProviderUtil.adjustElementToCopy(element);
+    return adjustedElement != null ? adjustedElement : element;
   }
 
   public static boolean doCopy(final PsiElement element, final Project project) {
     return doCopy(Arrays.asList(element), project, null);
   }
 
-  private static boolean doCopy(List<PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
+  private static boolean doCopy(List<? extends PsiElement> elements, @Nullable final Project project, @Nullable Editor editor) {
     if (elements.isEmpty()) return false;
 
     List<String> fqns = ContainerUtil.newArrayList();
@@ -217,7 +199,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   private static class MyTransferable implements Transferable {
     private final String fqn;
 
-    public MyTransferable(String fqn) {
+    MyTransferable(String fqn) {
       this.fqn = fqn;
     }
 
@@ -274,15 +256,11 @@ public class CopyReferenceAction extends DumbAwareAction {
     if (element == null) return null;
     DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(true);
     try {
-      for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
-        String result = provider.getQualifiedName(element);
-        if (result != null) return result;
-      }
+      return QualifiedNameProviderUtil.getQualifiedName(element);
     }
     finally {
       DumbService.getInstance(element.getProject()).setAlternativeResolveEnabled(false);
     }
-    return null;
   }
 
   @NotNull
@@ -293,7 +271,7 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   @NotNull
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    for (VirtualFileQualifiedNameProvider provider : Extensions.getExtensions(VirtualFileQualifiedNameProvider.EP_NAME)) {
+    for (VirtualFileQualifiedNameProvider provider : VirtualFileQualifiedNameProvider.EP_NAME.getExtensionList()) {
       String qualifiedName = provider.getQualifiedName(project, virtualFile);
       if (qualifiedName != null) {
         return qualifiedName;

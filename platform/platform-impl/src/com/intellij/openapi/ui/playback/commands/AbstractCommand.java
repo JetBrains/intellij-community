@@ -41,10 +41,12 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return myLine;
   }
 
+  @Override
   public boolean canGoFurther() {
     return true;
   }
 
+  @Override
   public final Promise<Object> execute(final PlaybackContext context) {
     try {
       if (isToDumpCommand()) {

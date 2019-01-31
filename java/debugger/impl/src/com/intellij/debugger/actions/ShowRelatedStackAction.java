@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.List;
  */
 public class ShowRelatedStackAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     List<StackFrameItem> stack = getRelatedStack(e);
     if (project != null && stack != null) {
@@ -35,7 +37,7 @@ public class ShowRelatedStackAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     List<StackFrameItem> stack = getRelatedStack(e);
     e.getPresentation().setEnabledAndVisible(stack != null);
   }
@@ -46,8 +48,11 @@ public class ShowRelatedStackAction extends AnAction {
     if (values.size() == 1) {
       ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
       if (descriptor.isValueReady()) {
-        DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-        return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)descriptor.getValue(), debuggerContext.getDebugProcess());
+        Value value = descriptor.getValue();
+        if (value instanceof ObjectReference) {
+          DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+          return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)value, debuggerContext.getDebugProcess());
+        }
       }
     }
 

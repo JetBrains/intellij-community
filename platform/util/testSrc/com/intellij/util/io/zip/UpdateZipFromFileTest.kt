@@ -19,8 +19,7 @@ class UpdateZipFromFileTest {
     }.generateInTempDir()
 
     val zip = JBZipFile(File(dir, "a.zip"))
-    zip.getOrCreateEntry("b.txt").setDataFromFile(File(dir, "b.txt"))
-    zip.close()
+    zip.use { zip.getOrCreateEntry("b.txt").setDataFromFile(File(dir, "b.txt")) }
 
     directoryContent {
       zip("a.zip") {
@@ -41,8 +40,7 @@ class UpdateZipFromFileTest {
     }.generateInTempDir()
 
     val zip = JBZipFile(File(dir, "a.zip"))
-    zip.getOrCreateEntry("a.txt").setDataFromFile(File(dir, "b.txt"))
-    zip.close()
+    zip.use { zip.getOrCreateEntry("a.txt").setDataFromFile(File(dir, "b.txt")) }
 
     directoryContent {
       zip("a.zip") {

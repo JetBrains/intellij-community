@@ -64,6 +64,10 @@ def _on_set_trace_for_new_thread(global_debugger):
 #===============================================================================
 # Things related to monkey-patching
 #===============================================================================
+def is_python_args(args):
+    return len(args) > 0 and is_python(args[0])
+
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
@@ -177,7 +181,11 @@ def patch_args(args):
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
+                if args[i] == '-':
+                    # this is the marker that input is going to be from stdin for Python
+                    # for now we just disable the debugging here, don't crash but is not supported
+                    return args
+                elif args[i].startswith('-'):
                     new_args.append(args[i])
                 else:
                     break
@@ -336,7 +344,8 @@ def create_execl(original_name):
         """
         import os
         args = patch_args(args)
-        send_process_created_message()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
 
@@ -348,7 +357,8 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
-        send_process_created_message()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, patch_args(args))
     return new_execv
 
@@ -360,7 +370,8 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
-        send_process_created_message()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, patch_args(args), env)
     return new_execve
 
@@ -495,6 +506,17 @@ def send_process_created_message():
     debugger = get_global_debugger()
     if debugger is not None:
         debugger.send_process_created_message()
+
+
+def send_process_will_be_substituted():
+    """Sends a message that a new process is going to be created.
+    When `PyDB` works in server mode this method also waits for the
+    response from IDE to be sure that IDE received this message.
+    """
+    from _pydevd_bundle.pydevd_comm import get_global_debugger
+    debugger = get_global_debugger()
+    if debugger is not None:
+        debugger.send_process_will_be_substituted()
 
 
 def patch_new_process_functions():

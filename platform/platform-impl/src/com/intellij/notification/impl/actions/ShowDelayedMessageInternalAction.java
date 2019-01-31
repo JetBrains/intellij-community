@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,14 +31,13 @@ import javax.swing.*;
  */
 public class ShowDelayedMessageInternalAction extends AnAction implements DumbAware{
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
 
     new Thread("show delayed msg") {
       @Override
       public void run() {
         super.run();
 
-        //noinspection EmptyCatchBlock
         TimeoutUtil.sleep(3000);
 
         //noinspection SSBasedInspection

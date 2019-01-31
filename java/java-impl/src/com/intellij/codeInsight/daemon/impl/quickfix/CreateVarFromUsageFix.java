@@ -42,7 +42,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myReferenceExpression.isValid() || !myReferenceExpression.getManager().isInProject(myReferenceExpression)) return null;
+    if (!myReferenceExpression.isValid() || !canModify(myReferenceExpression)) return null;
 
     PsiElement parent = myReferenceExpression.getParent();
 
@@ -59,12 +59,8 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected boolean isAvailableImpl(int offset) {
-    if (CreateFromUsageUtils.shouldShowTag(offset, myReferenceExpression.getReferenceNameElement(), myReferenceExpression)) {
-      setText(getText(myReferenceExpression.getReferenceName()));
-      return true;
-    }
-
-    return false;
+    setText(getText(myReferenceExpression.getReferenceName()));
+    return true;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

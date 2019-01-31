@@ -51,6 +51,7 @@ public class IdeGlassPaneUtil {
 
       IdeGlassPane myPane;
 
+      @Override
       public void showNotify() {
         IdeGlassPane pane = find(target);
         if (myPane != null && myPane != pane) {
@@ -60,6 +61,7 @@ public class IdeGlassPaneUtil {
         myPane.addPainter(target, painter, parent);
       }
 
+      @Override
       public void hideNotify() {
         if (myPane != null) {
           myPane.removePainter(painter);

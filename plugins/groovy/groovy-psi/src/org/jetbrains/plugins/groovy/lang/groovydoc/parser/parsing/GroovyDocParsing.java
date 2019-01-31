@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class GroovyDocParsing {
 
 
-  static enum RESULT {
+  enum RESULT {
     ERROR, METHOD, FIELD
   }
 

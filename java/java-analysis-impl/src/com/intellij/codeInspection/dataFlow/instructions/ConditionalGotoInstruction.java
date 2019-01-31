@@ -50,11 +50,6 @@ public class ConditionalGotoInstruction extends BranchingInstruction implements 
 
   @Override
   public void setOffset(final int offset) {
-    myOffset = new ControlFlow.ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return offset;
-      }
-    };
+    myOffset = new ControlFlow.FixedOffset(offset);
   }
 }

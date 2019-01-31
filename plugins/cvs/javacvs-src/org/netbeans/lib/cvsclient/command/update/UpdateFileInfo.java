@@ -12,11 +12,11 @@
  */
 package org.netbeans.lib.cvsclient.command.update;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.IFileInfo;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -45,12 +45,13 @@ public final class UpdateFileInfo
 
 	// Implemented ============================================================
 
-	public FileObject getFileObject() {
+	@Override
+        public FileObject getFileObject() {
 		return fileObject;
 	}
 
 	public String toString() {
-		@NonNls final StringBuffer buffer = new StringBuffer();
+		@NonNls final StringBuilder buffer = new StringBuilder();
 		buffer.append(type);
 		buffer.append("  ");
 		if (isDirectory()) {

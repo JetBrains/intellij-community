@@ -1,0 +1,16 @@
+YAML file
+  YAML document
+    YAML sequence
+      PsiElement(indent)('    ')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('item1')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('    ')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('item2')

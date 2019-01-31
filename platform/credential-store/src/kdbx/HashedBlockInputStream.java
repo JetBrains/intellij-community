@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.credentialStore.kdbx;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +45,9 @@ import java.util.Arrays;
  *
  * @author Jo
  */
-public class HashedBlockInputStream extends InputStream {
+final class HashedBlockInputStream extends InputStream {
   private static final int HASH_SIZE = 32;
+  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   private static final byte[] ZERO_HASH = new byte[HASH_SIZE];
 
   private long expectedSequenceNumber = 0;
@@ -55,9 +55,9 @@ public class HashedBlockInputStream extends InputStream {
   private final InputStream inputStream;
   private ByteArrayInputStream blockInputStream = new ByteArrayInputStream(new byte[0]);
 
-  private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();
+  private final MessageDigest md = KdbxKt.sha256MessageDigest();
 
-  public HashedBlockInputStream(InputStream inputStream) {
+  HashedBlockInputStream(@NotNull InputStream inputStream) {
     this.inputStream = inputStream;
   }
 
@@ -89,7 +89,7 @@ public class HashedBlockInputStream extends InputStream {
    * @return the number of bytes actually returned, , -1 if end of file
    * @throws IOException
    */
-  protected int get(byte[] b, int offset, int length) throws IOException {
+  private int get(byte[] b, int offset, int length) throws IOException {
     if (done) {
       return -1;
     }

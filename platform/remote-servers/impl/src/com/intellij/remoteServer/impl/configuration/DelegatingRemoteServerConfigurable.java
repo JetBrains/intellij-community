@@ -28,7 +28,7 @@ import javax.swing.*;
 class DelegatingRemoteServerConfigurable extends RemoteServerConfigurable {
   private final UnnamedConfigurable myDelegate;
 
-  public DelegatingRemoteServerConfigurable(UnnamedConfigurable delegate) {
+  DelegatingRemoteServerConfigurable(UnnamedConfigurable delegate) {
     myDelegate = delegate;
   }
 

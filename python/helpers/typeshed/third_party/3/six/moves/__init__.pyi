@@ -66,7 +66,4 @@ from . import urllib_robotparser
 # import xmlrpc.client as xmlrpc_client
 # import xmlrpc.server as xmlrpc_server
 
-if sys.version_info >= (3, 4):
-    from importlib import reload as reload_module
-else:
-    from imp import reload as reload_module
+from importlib import reload as reload_module

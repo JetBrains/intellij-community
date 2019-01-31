@@ -57,7 +57,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/13/13
  */
 public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
                                                                                                                           DumbAware {
@@ -75,7 +74,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     myProject = project;
     project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
     });

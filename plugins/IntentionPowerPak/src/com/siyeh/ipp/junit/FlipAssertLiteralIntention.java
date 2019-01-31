@@ -15,10 +15,10 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -35,16 +35,13 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String fromMethodName = methodExpression.getReferenceName();
-    @NonNls final String toMethodName;
-    if ("assertTrue".equals(fromMethodName)) {
-      toMethodName = "assertFalse";
-    }
-    else {
-      toMethodName = "assertTrue";
-    }
-    return IntentionPowerPackBundle.message(
-      "flip.assert.literal.intention.name",
-      fromMethodName, toMethodName);
+    @NonNls final String toMethodName = getOppositeAssertMethodName(fromMethodName);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", fromMethodName + "()", toMethodName + "()");
+  }
+
+  @NotNull
+  private static String getOppositeAssertMethodName(String fromMethodName) {
+    return "assertTrue".equals(fromMethodName) ? "assertFalse" : "assertTrue";
   }
 
   @Override
@@ -58,13 +55,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String fromMethodName = methodExpression.getReferenceName();
-    @NonNls final String toMethodName;
-    if ("assertTrue".equals(fromMethodName)) {
-      toMethodName = "assertFalse";
-    }
-    else {
-      toMethodName = "assertTrue";
-    }
+    @NonNls final String toMethodName = getOppositeAssertMethodName(fromMethodName);
     CommentTracker tracker = new CommentTracker();
     @NonNls final StringBuilder newCall = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();

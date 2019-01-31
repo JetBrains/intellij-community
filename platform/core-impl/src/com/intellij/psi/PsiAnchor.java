@@ -242,9 +242,8 @@ public abstract class PsiAnchor {
     }
 
     @Override
-    @NotNull
     public PsiElement retrieve() {
-      return myElement;
+      return myElement.isValid() ? myElement : null;
     }
 
     @Override

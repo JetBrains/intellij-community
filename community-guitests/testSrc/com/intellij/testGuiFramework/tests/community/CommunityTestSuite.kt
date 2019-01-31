@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.projectWizard.CommandLineProjectGuiTest
 import com.intellij.testGuiFramework.framework.FirstStartWith
+import com.intellij.testGuiFramework.framework.GuiTestSuite
 import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
@@ -29,5 +30,6 @@ import org.junit.runners.Suite
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
 @Suite.SuiteClasses(CommandLineProjectGuiTest::class,
-                    DockedModeGuiTest::class)
-class CommunityTestSuite
+                    DockedModeGuiTest::class,
+                    SaveFilesOnFrameDeactivationGuiTest::class)
+class CommunityTestSuite : GuiTestSuite()

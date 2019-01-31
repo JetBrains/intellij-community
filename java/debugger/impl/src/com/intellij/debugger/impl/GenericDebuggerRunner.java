@@ -14,11 +14,14 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -67,7 +70,16 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                                false);
         isPollConnection = true;
       }
-      return attachVirtualMachine(state, environment, connection, isPollConnection);
+
+      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
+      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
+      if (descriptor != null) {
+        ProcessHandler handler = descriptor.getProcessHandler();
+        if (handler instanceof KillableProcessHandler) {
+          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
+        }
+      }
+      return descriptor;
     }
     if (state instanceof PatchedRunnableState) {
       final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
@@ -147,8 +159,10 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
-    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings.LOCAL, debuggerSettings.getTransport(),
-                                                     debuggerSettings.getDebugPort(), false, beforeExecution);
+    return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
+      .asyncAgent(beforeExecution)
+      .memoryAgent(beforeExecution && Registry.is("debugger.enable.memory.agent"))
+      .create(javaParameters);
   }
 
   @Override

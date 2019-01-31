@@ -24,8 +24,15 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 public class MavenParameterGoalTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
-    MavenServerManager.getInstance().shutdown(true);
-    super.tearDown();
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testCompletion() {

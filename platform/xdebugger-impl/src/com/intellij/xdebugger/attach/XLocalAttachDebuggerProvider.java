@@ -13,12 +13,14 @@ import java.util.List;
 /**
  * @deprecated use {@link XAttachDebuggerProvider} instead
  */
+@Deprecated
 public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.localAttachDebuggerProvider");
 
   /**
    * @deprecated use {@link XAttachDebuggerProvider#getAvailableDebuggers(Project, XAttachHost, ProcessInfo, UserDataHolder)} instead
    */
+  @Deprecated
   List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
                                                      @NotNull ProcessInfo process,
                                                      @NotNull UserDataHolder contextHolder);
@@ -26,6 +28,7 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
   /**
    * @deprecated use {@link XAttachDebuggerProvider#getPresentationGroup()} instead
    */
+  @Deprecated
   @NotNull
   default XAttachPresentationGroup<ProcessInfo> getAttachGroup() {
     return XDefaultLocalAttachGroup.INSTANCE;

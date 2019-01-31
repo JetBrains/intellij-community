@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
 
+  @Override
   public String getTextForElement(PsiElement element) {
     String operatorText = "";
     String flippedOperatorText = "";
@@ -51,11 +52,13 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ComparisonPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression expression =
       (PsiBinaryExpression)element;

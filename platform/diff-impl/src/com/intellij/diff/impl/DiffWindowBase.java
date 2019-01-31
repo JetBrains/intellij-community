@@ -68,18 +68,6 @@ public abstract class DiffWindowBase {
   protected abstract DiffRequestProcessor createProcessor();
 
   //
-  // Delegate
-  //
-
-  protected void setWindowTitle(@NotNull String title) {
-    myWrapper.setTitle(title);
-  }
-
-  protected void onAfterNavigate() {
-    DiffUtil.closeWindow(myWrapper.getWindow(), true, true);
-  }
-
-  //
   // Getters
   //
 
@@ -92,7 +80,7 @@ public abstract class DiffWindowBase {
   }
 
   private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull JComponent content) {
+    MyPanel(@NotNull JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
     }

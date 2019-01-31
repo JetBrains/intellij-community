@@ -240,7 +240,7 @@ public class CompileDriver {
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
-      public void sessionTerminated(final UUID sessionId) {
+      public void sessionTerminated(@NotNull final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
           final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
           view.clearProgress();
@@ -249,7 +249,7 @@ public class CompileDriver {
       }
 
       @Override
-      public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+      public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
         final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {
@@ -372,10 +372,11 @@ public class CompileDriver {
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, !withModalProgress, true,
-                                                      isCompilationStartedAutomatically(scope), withModalProgress);
+    final String name = CompilerBundle.message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    final CompilerTask compileTask = new CompilerTask(
+      myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
+    );
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date
@@ -736,7 +737,7 @@ public class CompileDriver {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();
     final int maxModulesToShow = 10;
-    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+    for (String name : ContainerUtil.getFirstItems(modules, maxModulesToShow)) {
       if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
         nameToSelect = name;
       }

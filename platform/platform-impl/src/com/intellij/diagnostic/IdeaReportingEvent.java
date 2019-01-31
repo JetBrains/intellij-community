@@ -10,13 +10,11 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 public class IdeaReportingEvent extends IdeaLoggingEvent {
-  private final String myStacktrace;
-  private final Throwable myThrowable;
+  private final TextBasedThrowable myThrowable;
   private final IdeaPluginDescriptor myPlugin;
 
   public IdeaReportingEvent(@NotNull AbstractMessage messageObject, String message, @NotNull String stacktrace, IdeaPluginDescriptor plugin) {
     super(message, null, messageObject);
-    myStacktrace = stacktrace;
     myThrowable = new TextBasedThrowable(stacktrace);
     myPlugin = plugin;
   }
@@ -40,7 +38,7 @@ public class IdeaReportingEvent extends IdeaLoggingEvent {
 
   @Override
   public String getThrowableText() {
-    return myStacktrace;
+    return myThrowable.myStacktrace;
   }
 
   @Override

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage("editor.xml")
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
-  private boolean myShowCssColorPreviewInGutter = true;
+  private final boolean myShowCssColorPreviewInGutter = true;
   private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
   private boolean myAutomaticallyInsertClosingTag = true;
@@ -49,15 +49,9 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   /**
    * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
    */
+  @Deprecated
   public boolean isShowCssColorPreviewInGutter() {
     return myShowCssColorPreviewInGutter;
-  }
-
-  /**
-   * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
-   */
-  public void setShowCssColorPreviewInGutter(final boolean showCssColorPreviewInGutter) {
-    myShowCssColorPreviewInGutter = showCssColorPreviewInGutter;
   }
 
   public boolean isAutomaticallyInsertClosingTag() {

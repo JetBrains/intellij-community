@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -35,9 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.List;
 
 public class KeymapUtil {
 
@@ -90,6 +90,7 @@ public class KeymapUtil {
   }
 
   @NotNull
+  @Deprecated
   public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;
@@ -231,6 +232,13 @@ public class KeymapUtil {
     return shortcut == null? "" : getShortcutText(shortcut);
   }
 
+  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
+    for (KeyboardShortcut shortcut : ContainerUtil.findAll(getActiveKeymapShortcuts(actionId).getShortcuts(), KeyboardShortcut.class)) {
+      if (AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == shortcut.getFirstKeyStroke()) return true;
+    }
+    return false;
+  }
+
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     return getFirstKeyboardShortcutText(action.getShortcutSet());
@@ -304,7 +312,7 @@ public class KeymapUtil {
           button = Integer.parseInt(token.substring(6));
         }
         catch (NumberFormatException e) {
-          throw new InvalidDataException("unparseable token: " + token);
+          throw new InvalidDataException("unparsable token: " + token);
         }
       }
       else if (DOUBLE_CLICK.equals(token)) {
@@ -390,7 +398,7 @@ public class KeymapUtil {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
       ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
         @Override
-        public void afterValueChanged(RegistryValue value) {
+        public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
         }
       }, Disposer.get("ui"));
@@ -581,5 +589,34 @@ public class KeymapUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  public static ShortcutSet filterKeyStrokes(@NotNull ShortcutSet source, KeyStroke...toLeaveOut) {
+    List<Shortcut> filtered = new ArrayList<>(Arrays.asList(source.getShortcuts()));
+    for (Shortcut shortcut : source.getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        if (ArrayUtil.find(toLeaveOut, ((KeyboardShortcut)shortcut).getFirstKeyStroke()) != -1) {
+          filtered.remove(shortcut);
+        }
+      }
+    }
+    return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
+  }
+
+  /**
+   * Check if {@link AnActionEvent} was called with keyboard shortcut
+   * and if so return string presentation for this shortcut
+   * @param event called event
+   * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
+   */
+  @Nullable
+  public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
+    if (event.getInputEvent() instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)event.getInputEvent();
+      return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
+    }
+
+    return null;
   }
 }

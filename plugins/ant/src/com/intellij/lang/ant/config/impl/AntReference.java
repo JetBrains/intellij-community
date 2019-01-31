@@ -34,6 +34,7 @@ public abstract class AntReference {
   @NonNls private static final String BUNDLED_ANT_ATTR = "bundledAnt";
 
   public static final Externalizer<AntReference> EXTERNALIZER = new Externalizer<AntReference>() {
+    @Override
     public AntReference readValue(Element dataElement) {
       if (Boolean.valueOf(dataElement.getAttributeValue(PROJECT_DEFAULT_ATTR)).booleanValue()) return PROJECT_DEFAULT;
       if (Boolean.valueOf(dataElement.getAttributeValue(BUNDLED_ANT_ATTR)).booleanValue()) return BUNDLED_ANT;
@@ -44,11 +45,13 @@ public abstract class AntReference {
       return new MissingAntReference(name);
     }
 
+    @Override
     public void writeValue(Element dataElement, AntReference antReference) {
       antReference.writeExternal(dataElement);
     }
   };
   public static final Comparator<AntReference> COMPARATOR = new Comparator<AntReference>() {
+    @Override
     public int compare(AntReference reference, AntReference reference1) {
       if (reference.equals(reference1)) return 0;
       if (reference == BUNDLED_ANT) return -1;
@@ -64,18 +67,22 @@ public abstract class AntReference {
   }
 
   public static final AntReference PROJECT_DEFAULT = new AntReference() {
+    @Override
     protected void writeExternal(Element dataElement) {
       dataElement.setAttribute(PROJECT_DEFAULT_ATTR, Boolean.TRUE.toString());
     }
 
+    @Override
     public AntInstallation find(GlobalAntConfiguration ants) {
       throw new UnsupportedOperationException("Should not call");
     }
 
+    @Override
     public AntReference bind(GlobalAntConfiguration antConfiguration) {
       return this;
     }
 
+    @Override
     public String getName() {
       throw new UnsupportedOperationException("Should not call");
     }
@@ -91,6 +98,7 @@ public abstract class AntReference {
   };
 
   public static final AntReference BUNDLED_ANT = new AntReference() {
+    @Override
     protected void writeExternal(Element dataElement) {
       dataElement.setAttribute(BUNDLED_ANT_ATTR, Boolean.TRUE.toString());
     }
@@ -99,14 +107,17 @@ public abstract class AntReference {
       return obj == this;
     }
 
+    @Override
     public String getName() {
       return GlobalAntConfiguration.BUNDLED_ANT_NAME;
     }
 
+    @Override
     public AntInstallation find(GlobalAntConfiguration antConfiguration) {
       return antConfiguration.getBundledAnt();
     }
 
+    @Override
     public AntReference bind(GlobalAntConfiguration antConfiguration) {
       return this;
     }
@@ -129,7 +140,7 @@ public abstract class AntReference {
   }
 
   @Nullable
-  public static AntInstallation findAnt(AbstractProperty<AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
+  public static AntInstallation findAnt(AbstractProperty<? extends AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     LOG.assertTrue(antConfiguration != null);
     AntReference antReference = property.get(container);
@@ -140,7 +151,7 @@ public abstract class AntReference {
     return antReference.find(antConfiguration);
   }
 
-  public static AntInstallation findNotNullAnt(AbstractProperty<AntReference> property,
+  public static AntInstallation findNotNullAnt(AbstractProperty<? extends AntReference> property,
                                                AbstractProperty.AbstractPropertyContainer container,
                                                GlobalAntConfiguration antConfiguration) throws CantRunException {
     AntReference antReference = property.get(container);
@@ -163,22 +174,26 @@ public abstract class AntReference {
   static class MissingAntReference extends AntReference {
     private final String myName;
 
-    public MissingAntReference(String name) {
+    MissingAntReference(String name) {
       myName = name;
     }
 
+    @Override
     protected void writeExternal(Element dataElement) {
       dataElement.setAttribute(NAME_ATTR, myName);
     }
 
+    @Override
     public String getName() {
       return myName;
     }
 
+    @Override
     public AntInstallation find(GlobalAntConfiguration antConfiguration) {
       return antConfiguration.getConfiguredAnts().get(this);
     }
 
+    @Override
     public AntReference bind(GlobalAntConfiguration antConfiguration) {
       AntInstallation antInstallation = find(antConfiguration);
       if (antInstallation != null) return new BindedReference(antInstallation);
@@ -189,22 +204,26 @@ public abstract class AntReference {
   static class BindedReference extends AntReference {
     private final AntInstallation myAnt;
 
-    public BindedReference(AntInstallation ant) {
+    BindedReference(AntInstallation ant) {
       myAnt = ant;
     }
 
+    @Override
     public AntInstallation find(GlobalAntConfiguration antConfiguration) {
       return myAnt;
     }
 
+    @Override
     public String getName() {
       return myAnt.getName();
     }
 
+    @Override
     protected void writeExternal(Element dataElement) {
       dataElement.setAttribute(NAME_ATTR, getName());
     }
 
+    @Override
     public AntReference bind(GlobalAntConfiguration antConfiguration) {
       return this;
     }

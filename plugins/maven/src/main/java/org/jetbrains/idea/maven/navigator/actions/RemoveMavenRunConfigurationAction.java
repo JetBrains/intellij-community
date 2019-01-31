@@ -16,13 +16,13 @@
 package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -32,13 +32,14 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+    MavenActionsUsagesCollector.trigger(project, this, e);
     RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
 
     assert settings != null && project != null;
 
     int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
     if (res == Messages.YES) {
-      ((RunManagerEx)RunManager.getInstance(project)).removeConfiguration(settings);
+      RunManager.getInstance(project).removeConfiguration(settings);
     }
   }
 

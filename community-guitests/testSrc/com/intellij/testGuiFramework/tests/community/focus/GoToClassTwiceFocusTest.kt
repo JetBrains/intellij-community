@@ -22,11 +22,6 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
 
   private val typedString = "hefuihwefwehrf;werfwerfw"
 
-  @Rule @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest()
-  @Rule @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
   private val actionKeyStroke: KeyStroke by lazy {
     val activeKeymapShortcuts: ShortcutSet = KeymapUtil.getActiveKeymapShortcuts("GotoClass")
     KeymapUtil.getKeyStroke(activeKeymapShortcuts)!!
@@ -82,7 +77,7 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
     smartRobot.shortcut(actionKeyStroke)
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
-    FocusIssuesUtil.checkSearchEverywhereUI(typedString)
+    FocusIssuesUtil.checkSearchEnteredText(typedString)
     shortcut(ESCAPE)
   }
 

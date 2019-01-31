@@ -17,8 +17,8 @@
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.facet.impl.ui.FacetErrorPanel;
-import com.intellij.facet.ui.libraries.LibrariesValidationComponent;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
+import com.intellij.facet.ui.libraries.LibrariesValidationComponent;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.util.EventDispatcher;
@@ -41,29 +41,35 @@ public class LibrariesValidationComponentImpl implements LibrariesValidationComp
     myLibrariesValidator = new FacetLibrariesValidatorImpl(requiredLibraries, description, new LibrariesValidatorContextImpl(myModule),
                                                            myErrorPanel.getValidatorsManager());
     myErrorPanel.getValidatorsManager().registerValidator(myLibrariesValidator);
-    myErrorPanel.addListener(() -> myDispatcher.getMulticaster().valididyChanged(myErrorPanel.isOk()));
+    myErrorPanel.addListener(() -> myDispatcher.getMulticaster().validityChanged(myErrorPanel.isOk()));
   }
 
+  @Override
   public JComponent getComponent() {
     return myErrorPanel.getComponent();
   }
 
+  @Override
   public void validate() {
     myErrorPanel.getValidatorsManager().validate();
   }
 
+  @Override
   public boolean isValid() {
     return myErrorPanel.isOk();
   }
 
+  @Override
   public void addValidityListener(final ValidityListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void removeValidityListener(final ValidityListener listener) {
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public void setupLibraries() {
   }
 }

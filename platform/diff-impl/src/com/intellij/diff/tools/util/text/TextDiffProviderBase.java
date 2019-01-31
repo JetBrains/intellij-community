@@ -88,7 +88,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
 
 
   private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
-    public MyIgnorePolicySettingAction(@NotNull TextDiffSettings settings,
+    MyIgnorePolicySettingAction(@NotNull TextDiffSettings settings,
                                        @NotNull IgnorePolicy[] ignorePolicies) {
       super(settings, ignorePolicies);
     }
@@ -101,7 +101,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
   private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
-    public MyHighlightPolicySettingAction(@NotNull TextDiffSettings settings,
+    MyHighlightPolicySettingAction(@NotNull TextDiffSettings settings,
                                           @NotNull HighlightPolicy[] highlightPolicies) {
       super(settings, highlightPolicies);
     }
@@ -116,7 +116,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
   private static class MyListener implements TextDiffSettings.Listener {
     @NotNull private final Runnable myRediff;
 
-    public MyListener(@NotNull Runnable rediff) {
+    MyListener(@NotNull Runnable rediff) {
       myRediff = rediff;
     }
 

@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author irengrig
  */
-public abstract class MoreAction  extends AnAction implements CustomComponentAction {
+public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
   public static final String LOAD_MORE = "Load more";
   protected final JLabel myLabel;
   private final JPanel myPanel;
@@ -45,7 +32,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(JBUI.insets(2));
-    myLoadMoreBtn.addActionListener(e -> this.actionPerformed(null));
+    myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel("Loading...");
     myLabel.setForeground(UIUtil.getInactiveTextColor());
@@ -53,8 +40,9 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myPanel.add(myLabel);
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return myPanel;
   }
 
@@ -65,12 +53,19 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myEnabled);
     e.getPresentation().setVisible(myVisible);
   }
 
   public void setVisible(boolean b) {
     myVisible = b;
+  }
+
+  public abstract void perform();
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    perform();
   }
 }

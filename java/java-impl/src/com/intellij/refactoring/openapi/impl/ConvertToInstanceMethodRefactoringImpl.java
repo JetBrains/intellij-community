@@ -31,14 +31,17 @@ public class ConvertToInstanceMethodRefactoringImpl extends RefactoringImpl<Conv
     super(new ConvertToInstanceMethodProcessor(project, method, targetParameter, null));
   }
 
+  @Override
   public PsiMethod getMethod() {
     return myProcessor.getMethod();
   }
 
+  @Override
   public PsiParameter getTargetParameter() {
     return myProcessor.getTargetParameter();
   }
 
+  @Override
   public PsiClass getTargetClass() {
     return myProcessor.getTargetClass();
   }

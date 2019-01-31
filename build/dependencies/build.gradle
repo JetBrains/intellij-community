@@ -1,8 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 buildscript {
   repositories {
-    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
-    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.4.2"
@@ -44,9 +43,11 @@ apply from: 'setupKotlin.gradle'
 apply from: 'setupJetSign.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
+apply from: 'setupToolboxLiteGen.gradle'
+apply from: 'setupBundledMaven.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'
@@ -62,5 +63,5 @@ task dependenciesFile() {
 
 task wrapper(type: Wrapper) {
   gradleVersion = '4.3.1'
-  distributionUrl = "https://cache-redirector.shared.aws.intellij.net/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+  distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

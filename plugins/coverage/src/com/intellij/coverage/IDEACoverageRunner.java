@@ -2,7 +2,6 @@
 
 package com.intellij.coverage;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +21,7 @@ import java.util.Map;
 public class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
 
+  @Override
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
     File sourceMapFile = new File(JavaCoverageEnabledConfiguration.getSourceMapPath(sessionDataFile.getPath()));
@@ -58,6 +58,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
     appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
   }
 
+  @Override
   public void appendCoverageArgument(final String sessionDataFilePath,
                                      final String[] patterns,
                                      final String[] excludePatterns,
@@ -110,14 +111,17 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
   }
 
 
+  @Override
   public String getPresentableName() {
     return "IntelliJ IDEA";
   }
 
+  @Override
   public String getId() {
     return "idea";
   }
 
+  @Override
   public String getDataFileExtension() {
     return "ic";
   }

@@ -1,42 +1,41 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffTestCase
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 
 class MergeAutoTest : MergeTestBase() {
   companion object {
-    private val MODIFICATION_CYCLE_COUNT = 5
-    private val MODIFICATION_CYCLE_SIZE = 3
+    private const val RUNS = 10
+    private const val MODIFICATION_CYCLE_COUNT = 5
+    private const val MODIFICATION_CYCLE_SIZE = 3
+    private const val MAX_TEXT_LENGTH = 300
   }
 
-  fun testUndo() {
-    doUndoTest(System.currentTimeMillis(), 10, 300)
+  fun `test undo - default policy`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.DEFAULT)
   }
 
-  private fun doUndoTest(seed: Long, runs: Int, maxLength: Int) {
+  fun `test undo - trim whitespaces`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.TRIM_WHITESPACES)
+  }
+
+  fun `test undo - ignore whitespaces`() {
+    doUndoTest(System.currentTimeMillis(), RUNS, MAX_TEXT_LENGTH, IgnorePolicy.IGNORE_WHITESPACES)
+  }
+
+  private fun doUndoTest(seed: Long, runs: Int, maxLength: Int, policy: IgnorePolicy) {
     doTest(seed, runs, maxLength) { text1, text2, text3, debugData ->
-      testN(text1, text2, text3) {
+      debugData.put("IgnorePolicy", policy)
+
+      test(text1, text2, text3, -1, policy) {
         if (changes.isEmpty()) {
           assertEquals(text1, text2)
           assertEquals(text1, text3)
           assertEquals(text2, text3)
-          return@testN
+          return@test
         }
 
         for (m in 1..MODIFICATION_CYCLE_COUNT) {

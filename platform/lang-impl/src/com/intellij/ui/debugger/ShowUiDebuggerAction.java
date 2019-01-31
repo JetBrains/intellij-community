@@ -18,18 +18,19 @@ package com.intellij.ui.debugger;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowUiDebuggerAction extends AnAction {
 
   private UiDebugger myDebugger;
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText("UI Debugger");
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myDebugger == null) {
       myDebugger = new UiDebugger() {
         @Override

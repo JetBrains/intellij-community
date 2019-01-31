@@ -24,7 +24,6 @@ import java.io.IOException;
 
 /**
  * @author Denis Zhdanov
- * @since 3/25/13 1:19 PM
  */
 public class SyntaxInfo {
   private final int myOutputInfoCount;

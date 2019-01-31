@@ -15,13 +15,70 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
-public class UpperCaseFieldNameNotConstantInspection extends UpperCaseFieldNameNotConstantInspectionBase {
+public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "upper.case.field.name.not.constant.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "NonConstantFieldWithUpperCaseName";
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "upper.case.field.name.not.constant.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UpperCaseFieldNameNotConstantVisitor();
+  }
+
+  private static class UpperCaseFieldNameNotConstantVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (field.hasModifierProperty(PsiModifier.STATIC) &&
+          field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final String fieldName = field.getName();
+      if (fieldName == null) {
+        return;
+      }
+      if (!fieldName.equals(fieldName.toUpperCase())) {
+        return;
+      }
+      registerFieldError(field);
+    }
   }
 }

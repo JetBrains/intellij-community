@@ -265,13 +265,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testRemoveVarargParameter() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->
+      doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false)
+    );
   }
 
   public void testEnumConstructor() {
@@ -355,6 +351,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testReorderWithVarargs() {  // IDEADEV-26977
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(1),
+      new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("java.lang.String...", getFile()))
+    }, false);
+  }
+
+  public void testReorderWithVarargsFromSimpleType() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(1),
       new ParameterInfoImpl(0, "s", myFactory.createTypeFromText("java.lang.String...", getFile()))
@@ -446,6 +449,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testPreserveOverride() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
+  public void testKeepTryWithResources() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 

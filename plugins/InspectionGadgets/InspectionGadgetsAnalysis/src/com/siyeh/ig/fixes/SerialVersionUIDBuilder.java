@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-20175 Bas Leijdekkers
+ * Copyright 2003-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   /**
    * @see java.io.ObjectStreamClass#computeDefaultSUID(Class)
    */
+  @SuppressWarnings("JavadocReference")
   public static long computeDefaultSUID(@NotNull PsiClass psiClass) {
     final Project project = psiClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -175,7 +176,9 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
       final String className = PsiFormatUtil.getExternalName(psiClass);
-      dataOutputStream.writeUTF(className);
+      if (className != null) {
+        dataOutputStream.writeUTF(className);
+      }
 
       final PsiModifierList classModifierList = psiClass.getModifierList();
       int classModifiers = classModifierList != null ? MemberSignature.calculateModifierBitmap(classModifierList) : 0;
@@ -194,7 +197,9 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       Arrays.sort(interfaces, INTERFACE_COMPARATOR);
       for (PsiClass aInterfaces : interfaces) {
         final String name = aInterfaces.getQualifiedName();
-        dataOutputStream.writeUTF(name);
+        if (name != null) {
+          dataOutputStream.writeUTF(name);
+        }
       }
 
       final MemberSignature[] fields = serialVersionUIDBuilder.getNonPrivateFields();

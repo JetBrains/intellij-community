@@ -19,15 +19,10 @@ abstract class CommandSenderBase<SUCCESS_RESPONSE> {
 class RequestPromise<SUCCESS_RESPONSE, RESULT : Any?>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
   override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
     catchError {
-      val r: Any?
-      if (resultReader == null || response == null) {
-        r = response
-      }
-      else if (methodName == null) {
-        r = null
-      }
-      else {
-        r = resultReader.readResult(methodName, response)
+      val r = when {
+        resultReader == null || response == null -> response
+        methodName == null -> null
+        else -> resultReader.readResult(methodName, response)
       }
 
       UnsafeSetResult.setResult(this, r)

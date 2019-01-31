@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DTDParserDefinition extends XMLParserDefinition {
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new DtdLexer(false));
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -24,5 +25,5 @@ import java.util.EventListener;
  * @author Vladimir Kondratyev
  */
 public interface ComponentSelectionListener extends EventListener{
-  void selectedComponentChanged(GuiEditor source);
+  void selectedComponentChanged(@NotNull GuiEditor source);
 }

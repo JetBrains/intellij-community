@@ -29,6 +29,7 @@ import java.util.List;
 public class ExternalLibraryDescriptor {
   private static final Logger LOG = Logger.getInstance(ExternalLibraryDescriptor.class);
   private final String myLibraryGroupId;
+  @NotNull
   private final String myLibraryArtifactId;
   private final String myMinVersion;
   private final String myMaxVersion;
@@ -88,6 +89,7 @@ public class ExternalLibraryDescriptor {
     return myPreferredVersion;
   }
 
+  @NotNull
   public String getPresentableName() {
     return myLibraryArtifactId;
   }

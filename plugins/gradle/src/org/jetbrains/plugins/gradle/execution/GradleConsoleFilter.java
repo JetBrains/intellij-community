@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -33,7 +34,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilter implements Filter {
   private final Project myProject;
@@ -48,7 +48,7 @@ public class GradleConsoleFilter implements Filter {
 
   @Nullable
   @Override
-  public Result applyFilter(final String line, final int entireLength) {
+  public Result applyFilter(@NotNull final String line, final int entireLength) {
     String[] filePrefixes = new String[]{"Build file '", "build file '"};
     String[] linePrefixes = new String[]{"' line: ", "': "};
     String filePrefix = null;

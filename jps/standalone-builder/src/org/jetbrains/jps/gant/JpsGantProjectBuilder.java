@@ -51,6 +51,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  * @deprecated use {@link org.jetbrains.intellij.build.CompilationTasks} from intellij.platform.buildScripts module for building IDEs based
  * on IntelliJ Platform. If you need to build another project use {@link Standalone} directly.
  */
+@Deprecated
 public class JpsGantProjectBuilder {
   private final Project myProject;
   private final JpsModel myModel;

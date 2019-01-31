@@ -23,7 +23,7 @@ class PyMagicLiteralReferenceSearcher extends QueryExecutorBase<PsiReference, Re
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final PsiElement refElement = queryParameters.getElementToSearch();
-      if (PyMagicLiteralTools.isMagicLiteral(refElement)) {
+      if (PyMagicLiteralTools.couldBeMagicLiteral(refElement)) {
         final String refText = ((StringLiteralExpression)refElement).getStringValue();
         if (!StringUtil.isEmpty(refText)) {
           final SearchScope searchScope = queryParameters.getEffectiveSearchScope();

@@ -58,7 +58,7 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
   public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getAllResources(ID<K, V> indexId,
                                                                                               @Nullable final Module module,
                                                                                               @NotNull Project project,
-                                                                                              @Nullable NullableFunction<List<IndexedRelevantResource<K, V>>, IndexedRelevantResource<K, V>> chooser) {
+                                                                                              @Nullable NullableFunction<? super List<IndexedRelevantResource<K, V>>, ? extends IndexedRelevantResource<K, V>> chooser) {
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<>();
     Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, project);
     for (K key : allKeys) {

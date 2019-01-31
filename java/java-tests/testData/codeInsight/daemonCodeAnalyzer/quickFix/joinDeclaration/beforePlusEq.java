@@ -1,4 +1,4 @@
-// "Join declaration and assignment" "true"
+// "Join declaration and assignment" "INFORMATION"
 class Test {
   {
     String ss = "hello";

@@ -2,7 +2,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -38,10 +40,12 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new MacIntelliJComboBoxUI();
   }
 
+  @Override
   protected void installDarculaDefaults() {
     comboBox.setOpaque(false);
   }
 
+  @Override
   protected void uninstallDarculaDefaults() {}
 
     @Override
@@ -54,7 +58,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
         Icon icon = LafIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
-        if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
+        if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
           UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         } else {
@@ -100,16 +104,9 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void layoutContainer(Container parent) {
       JComboBox cb = (JComboBox)parent;
 
-      Dimension size = cb.getMinimumSize();
-      Rectangle bounds = cb.getBounds();
-      bounds.height = bounds.height < size.height ? size.height : bounds.height;
-
-      size = cb.getPreferredSize();
-      bounds.height = bounds.height > size.height ? size.height : bounds.height;
-      cb.setBounds(bounds);
-
-      Insets cbInsets = cb.getInsets();
       if (arrowButton != null) {
+        Rectangle bounds = cb.getBounds();
+        Insets cbInsets = cb.getInsets();
         Dimension prefSize = arrowButton.getPreferredSize();
 
         int buttonHeight = bounds.height - (cbInsets.top + cbInsets.bottom);
@@ -139,6 +136,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       @Override
       protected void configureList() {
         super.configureList();
+        list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
         wrapRenderer();
       }
 
@@ -169,7 +167,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
     private final ListCellRenderer<Object> myRenderer;
 
-    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+    ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
       myRenderer = renderer;
     }
 
@@ -178,6 +176,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 8));
       panel.setBackground(c.getBackground());
+      c.setBackground(UIUtil.TRANSPARENT_COLOR);
       return panel;
     }
   }

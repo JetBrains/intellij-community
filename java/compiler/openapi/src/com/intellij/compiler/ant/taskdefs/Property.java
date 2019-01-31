@@ -26,12 +26,10 @@ import org.jetbrains.annotations.NonNls;
 public class Property extends Tag {
 
   public Property(@NonNls final String name, final String value) {
-    //noinspection HardCodedStringLiteral
     super("property", Couple.of("name", name), Couple.of("value", value));
   }
 
   public Property(@NonNls final String filePath) {
-    //noinspection HardCodedStringLiteral
     super("property", Couple.of("file", filePath));
   }
 

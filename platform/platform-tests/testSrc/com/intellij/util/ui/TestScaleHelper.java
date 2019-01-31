@@ -6,10 +6,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI.BaseScaleContext;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +29,6 @@ import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 /**
  * @author tav
  */
-@SuppressWarnings("JUnitTestCaseWithNoTests")
 public class TestScaleHelper {
   private static final String STANDALONE_PROP = "intellij.test.standalone";
 
@@ -116,7 +118,6 @@ public class TestScaleHelper {
     };
   }
 
-  @SuppressWarnings("unused")
   public static void saveImage(BufferedImage image, String path) {
     try {
       javax.imageio.ImageIO.write(image, "png", new File(path));
@@ -138,6 +139,10 @@ public class TestScaleHelper {
     catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static String msg(BaseScaleContext ctx) {
+    return "[JRE-HiDPI " + UIUtil.isJreHiDPIEnabled() + "], " + ctx.toString();
   }
 
   private static class MyGraphicsConfiguration extends GraphicsConfiguration {

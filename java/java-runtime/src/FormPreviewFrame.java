@@ -31,7 +31,7 @@ public class FormPreviewFrame {
 
     JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
     frame.setContentPane(f.myComponent);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(3); //WindowConstants.EXIT_ON_CLOSE is not presented in JDK 1.3
 
     // Add menu bar
     final JMenuBar menuBar = new JMenuBar();
@@ -61,7 +61,7 @@ public class FormPreviewFrame {
   }
 
   private static final class MyExitAction extends AbstractAction{
-    public MyExitAction() {
+    MyExitAction() {
       super(ourBundle.getString("form.menu.file.exit"));
     }
 
@@ -73,7 +73,7 @@ public class FormPreviewFrame {
   private static final class MyPackAction extends AbstractAction{
     private final JFrame myFrame;
 
-    public MyPackAction(final JFrame frame) {
+    MyPackAction(final JFrame frame) {
       super(ourBundle.getString("form.menu.view.pack"));
       myFrame = frame;
     }
@@ -87,7 +87,7 @@ public class FormPreviewFrame {
     private final JFrame myFrame;
     private final UIManager.LookAndFeelInfo myInfo;
 
-    public MySetLafAction(final JFrame frame, final UIManager.LookAndFeelInfo info) {
+    MySetLafAction(final JFrame frame, final UIManager.LookAndFeelInfo info) {
       super(info.getName());
       myFrame = frame;
       myInfo = info;

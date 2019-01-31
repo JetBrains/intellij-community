@@ -63,22 +63,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
     @Override
-    public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-      return Collections.emptyList();
-    }
-
-    @Override
     public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                          final boolean includeXmlProblems,
                                                          final boolean withChildren) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                         final boolean includeXmlProblems,
-                                                         final boolean withChildren,
-                                                         HighlightSeverity minSeverity) {
       return Collections.emptyList();
     }
 
@@ -230,18 +217,22 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return problemHolder.getAllProblems(inspection);
     }
 
-    final DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly);
+    DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement);
     inspection.checkFileElement(domFileElement, holder);
     return appendProblems(domFileElement, holder, inspection.getClass());
   }
 
   public List<DomElementsInspection> getSuitableDomInspections(final DomFileElement fileElement, boolean enabledOnly) {
-    Class rootType = fileElement.getRootElementClass();
+    Class<?> rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
     final List<DomElementsInspection> inspections = new SmartList<>();
     for (final InspectionToolWrapper toolWrapper : profile.getInspectionTools(fileElement.getFile())) {
       if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), fileElement.getFile())) {
-        ContainerUtil.addIfNotNull(inspections, getSuitableInspection(toolWrapper.getTool(), rootType));
+        InspectionProfileEntry entry = toolWrapper.getTool();
+        if (entry instanceof DomElementsInspection &&
+            ContainerUtil.exists(((DomElementsInspection<?>)entry).getDomClasses(), cls -> cls.isAssignableFrom(rootType))) {
+          inspections.add((DomElementsInspection)entry);
+        }
       }
     }
     return inspections;
@@ -251,17 +242,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getCurrentProfile();
   }
 
-  @Nullable
-  private static DomElementsInspection getSuitableInspection(InspectionProfileEntry entry, Class rootType) {
-    if (entry instanceof DomElementsInspection) {
-      if (((DomElementsInspection)entry).getDomClasses().contains(rootType)) {
-        return (DomElementsInspection) entry;
-      }
-    }
-    return null;
-  }
-
-  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<T> root) {
+  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<? extends T> root) {
     if (root.getFileDescription().isAutomaticHighlightingEnabled()) {
       return new MockAnnotatingDomInspection<>(root.getRootElementClass());
     }
@@ -272,7 +253,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return null;
   }
 
-  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<DomElementsInspection> suitableInspections) {
+  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<? extends DomElementsInspection> suitableInspections) {
     for (final DomElementsInspection inspection : suitableInspections) {
       if (!holder.isInspectionCompleted(inspection)) {
         return false;

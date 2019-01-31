@@ -16,7 +16,7 @@ constructor(private val configuration: AbstractPythonRunConfiguration<*>,
             chooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor().withPythonFiles())
   : TextBrowseFolderListener(chooserDescriptor, configuration.getProject()) {
 
-  override final fun getInitialFile(): VirtualFile? =
+  final override fun getInitialFile(): VirtualFile? =
     super.getInitialFile() ?: LocalFileSystem.getInstance().findFileByPath(configuration.getWorkingDirectorySafe())
 
 }

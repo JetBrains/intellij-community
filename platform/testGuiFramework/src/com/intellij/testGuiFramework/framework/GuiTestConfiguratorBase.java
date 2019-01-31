@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.framework;
 
+import com.intellij.testGuiFramework.idea.IdeGuiTest;
 import org.fest.reflect.reference.TypeRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

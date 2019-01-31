@@ -63,30 +63,37 @@ public class SingleRowPassInfo extends LayoutPassInfo {
     scrollOffset = layout.getScrollOffset();
   }
 
+  @Override
   public TabInfo getPreviousFor(final TabInfo info) {
     return getPrevious(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
+  @Override
   public TabInfo getNextFor(final TabInfo info) {
     return getNext(myVisibleInfos, myVisibleInfos.indexOf(info));
   }
 
+  @Override
   public int getRowCount() {
     return 1;
   }
 
+  @Override
   public int getColumnCount(final int row) {
     return myVisibleInfos.size();
   }
 
+  @Override
   public TabInfo getTabAt(final int row, final int column) {
     return myVisibleInfos.get(column);
   }
 
+  @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
 
+  @Override
   public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
     return true;
   }

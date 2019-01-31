@@ -42,7 +42,7 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    public DuplicateAlternationBranchVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    DuplicateAlternationBranchVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
     }

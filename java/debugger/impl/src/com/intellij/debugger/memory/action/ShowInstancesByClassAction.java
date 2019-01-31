@@ -15,21 +15,21 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.debugger.memory.ui.InstancesWindow;
 import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.debugger.memory.ui.InstancesWindow;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ShowInstancesByClassAction extends DebuggerTreeAction {
   @Override
@@ -54,7 +54,7 @@ public class ShowInstancesByClassAction extends DebuggerTreeAction {
         final ReferenceType referenceType = ref.referenceType();
         new InstancesWindow(debugSession, l -> {
           final List<ObjectReference> instances = referenceType.instances(l);
-          return instances == null ? Collections.emptyList() : instances.stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
+          return instances == null ? Collections.emptyList() : ContainerUtil.map(instances, JavaReferenceInfo::new);
         }, referenceType.name()).show();
       }
     }

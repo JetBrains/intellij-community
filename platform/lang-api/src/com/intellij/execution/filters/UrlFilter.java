@@ -15,8 +15,12 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,18 +29,31 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class UrlFilter implements Filter, DumbAware {
+  private static final String FILE_URL_PROTOCOL = "file://";
+  private final Project myProject;
+
+  public UrlFilter() {
+    this(null);
+  }
+
+  public UrlFilter(Project project) {
+    myProject = project;
+  }
+
   @Nullable
   @Override
-  public Result applyFilter(String line, int entireLength) {
+  public Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
-    Matcher m = URLUtil.URL_PATTERN.matcher(line);
+    Pattern pattern = line.contains(URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR) ? URLUtil.FILE_URL_PATTERN : URLUtil.URL_PATTERN;
+    Matcher m = pattern.matcher(line);
     ResultItem item = null;
     List<ResultItem> items = null;
     while (m.find()) {
@@ -57,13 +74,34 @@ public class UrlFilter implements Filter, DumbAware {
 
   @NotNull
   protected HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
-    return new BrowserHyperlinkInfo(url);
+    HyperlinkInfo fileHyperlinkInfo = buildFileHyperlinkInfo(url);
+    return fileHyperlinkInfo != null ? fileHyperlinkInfo : new BrowserHyperlinkInfo(url);
+  }
+
+  @Nullable
+  private HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
+    if (myProject != null && url.startsWith(FILE_URL_PROTOCOL)) {
+      return new LazyFileHyperlinkInfo(myProject, StringUtil.trimStart(url, FILE_URL_PROTOCOL), 0, 0) {
+        @Nullable
+        @Override
+        public OpenFileDescriptor getDescriptor() {
+          OpenFileDescriptor descriptor = super.getDescriptor();
+          if (descriptor == null) {
+            Messages.showErrorDialog(myProject, "Cannot find file " + StringUtil.trimMiddle(url, 150),
+                                     IdeBundle.message("title.cannot.open.file"));
+          }
+          return descriptor;
+        }
+      };
+    }
+    return null;
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
+    @NotNull
     @Override
     public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
-      return new Filter[]{new UrlFilter()};
+      return new Filter[]{new UrlFilter(project)};
     }
 
     @NotNull

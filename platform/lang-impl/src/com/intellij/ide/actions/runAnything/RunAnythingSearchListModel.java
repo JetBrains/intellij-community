@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
-public abstract class RunAnythingSearchListModel extends DefaultListModel {
+public abstract class RunAnythingSearchListModel extends DefaultListModel<Object> {
   @SuppressWarnings("UseOfObsoleteCollectionType")
   Vector myDelegate;
 

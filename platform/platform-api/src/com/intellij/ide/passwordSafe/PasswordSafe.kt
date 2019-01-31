@@ -2,11 +2,15 @@
 package com.intellij.ide.passwordSafe
 
 import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.CredentialStore
 import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.components.ServiceManager
 import org.jetbrains.concurrency.Promise
 
-abstract class PasswordSafe : PasswordStorage {
+/**
+ * [See documentation](https://github.com/JetBrains/intellij-community/blob/master/platform/credential-store/readme.md)
+ */
+abstract class PasswordSafe : PasswordStorage, CredentialStore {
   companion object {
     @JvmStatic
     val instance: PasswordSafe

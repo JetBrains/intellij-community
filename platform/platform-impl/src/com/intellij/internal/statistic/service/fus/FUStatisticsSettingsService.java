@@ -4,16 +4,24 @@ package com.intellij.internal.statistic.service.fus;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
 
-// this service connects to jetbrains.com resources and requests actual info about running statistics services
-// 1. url: where to post statistics data.
-// 2. white-list-service: WhiteListService url: this service returns approved UsagesCollectors(groups)
-// 3. permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
+/**
+ * This service connects to jetbrains.com resources and requests actual info about running statistics services
+ * <ul>
+ * <li> url: where to post statistics data.
+ * <li> white-list-service: WhiteListService url: this service returns approved UsagesCollectors(groups)
+ * <li> permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
+ * </ul>
+ */
+@Deprecated
+/** @deprecated to be removed in 2019.1 */
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}
@@ -34,11 +42,25 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
     if (approvedGroupsServiceUrl == null) {
       return Collections.emptySet();
     }
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl));
+    final BuildNumber build = ApplicationInfo.getInstance().getBuild();
+    return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl), toReportedBuild(build));
+  }
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return null;
   }
 
   @NotNull
   public String getProductRelatedUrl(@NotNull  String approvedGroupsServiceUrl) {
     return approvedGroupsServiceUrl + ApplicationInfo.getInstance().getBuild().getProductCode() + ".json";
+  }
+
+  @NotNull
+  private static BuildNumber toReportedBuild(@NotNull BuildNumber build) {
+    if (build.isSnapshot()) {
+      final String buildString = build.asStringWithoutProductCodeAndSnapshot();
+      return BuildNumber.fromString(buildString.endsWith(".") ? buildString + "0" : buildString);
+    }
+    return build;
   }
 }

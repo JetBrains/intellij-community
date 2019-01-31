@@ -29,10 +29,12 @@ public class MigrationConflictsPanel extends UsagesPanel{
     super(project);
   }
 
+  @Override
   public String getInitialPositionText() {
     return "No migration conflicts found";
   }
 
+  @Override
   public String getCodeUsagesString() {
     return "Found migration conflicts";
   }

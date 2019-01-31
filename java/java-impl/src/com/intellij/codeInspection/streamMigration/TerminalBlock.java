@@ -7,6 +7,7 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -65,9 +66,8 @@ class TerminalBlock {
     int startOffset = controlFlow.getStartOffset(myStatements[0]);
     int endOffset = controlFlow.getEndOffset(myStatements[myStatements.length - 1]);
     if (startOffset < 0 || endOffset < 0) return null;
-    return ControlFlowUtil
-      .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                   PsiBreakStatement.class, PsiReturnStatement.class);
+    return ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(),
+                                                       ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
   }
 
   PsiStatement getSingleStatement() {
@@ -253,7 +253,7 @@ class TerminalBlock {
     FilterOp filter = tb.getLastOperation(FilterOp.class);
     if (filter == null) return this;
     PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
-    if (binOp == null || !ComparisonUtils.isComparison(binOp)) return this;
+    if (!ComparisonUtils.isComparison(binOp)) return this;
     String comparison = filter.isNegated() ? ComparisonUtils.getNegatedComparison(binOp.getOperationTokenType())
                         : binOp.getOperationSign().getText();
     boolean flipped = false;
@@ -469,6 +469,8 @@ class TerminalBlock {
    * @param factory factory to use to create new element if necessary
    */
   void replaceContinueWithReturn(PsiElementFactory factory) {
+    PsiLoopStatement currentLoop = PsiTreeUtil.getParentOfType(myStatements[0], PsiLoopStatement.class);
+    if (currentLoop == null) return;
     for (int i = 0, length = myStatements.length; i < length; i++) {
       PsiStatement statement = myStatements[i];
       if(statement instanceof PsiContinueStatement) {
@@ -477,7 +479,8 @@ class TerminalBlock {
       }
       StreamEx.ofTree(statement, (PsiElement s) -> StreamEx.of(s.getChildren()))
         .select(PsiContinueStatement.class)
-        .forEach(stmt -> stmt.replace(factory.createStatementFromText("return;", null)));
+        .filter(stmt -> stmt.findContinuedStatement() == currentLoop)
+        .forEach(stmt -> new CommentTracker().replaceAndRestoreComments(stmt, "return;"));
     }
   }
 

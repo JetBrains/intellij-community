@@ -17,6 +17,7 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,7 +60,7 @@ public class CompletionPolicy {
       return null;
     }
 
-    if (isDeclarationName(editor, file, leaf)) return null;
+    if (isDeclarationName(editor, file, leaf, ref)) return null;
 
     if (ref != null) {
       PsiElement target = getValidResolveResult(ref);
@@ -67,7 +68,7 @@ public class CompletionPolicy {
       
       if (ref instanceof PsiMultiReference) {
         for (PsiReference ref1 : ((PsiMultiReference)ref).getReferences()) {
-          if (target == ref1.resolve() && !shouldSuggestReferenceText(ref1, target)) return null;
+          if (target.getClass().isInstance(ref1.resolve()) && !shouldSuggestReferenceText(ref1, target)) return null;
         }
       }
     }
@@ -99,12 +100,13 @@ public class CompletionPolicy {
     return ref.resolve();
   }
 
-  private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {
+  private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf, @Nullable PsiReference ref) {
     PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target != null) target = target.getNavigationElement();
     PsiFile targetFile = target != null ? target.getContainingFile() : null;
-    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() && 
-           target.getTextOffset() == leaf.getTextRange().getStartOffset();
+    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() &&
+           (target.getTextOffset() == leaf.getTextRange().getStartOffset() ||
+            ref != null && target.getTextOffset() == ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset());
   }
 
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
@@ -112,6 +114,6 @@ public class CompletionPolicy {
   }
 
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) { 
-    return true;
+    return !(ref instanceof WebReference);
   }
 }

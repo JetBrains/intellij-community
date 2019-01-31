@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -33,14 +34,12 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
-import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
@@ -67,7 +66,7 @@ object UpdateChecker {
    * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
    */
   @Suppress("MemberVisibilityCanBePrivate")
-  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf<String>()
+  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
@@ -105,7 +104,7 @@ object UpdateChecker {
    */
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
+    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
@@ -160,25 +159,25 @@ object UpdateChecker {
     try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
+        updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
-          .forceHttps(settings.canUseSecureConnection())
-          .connect {
-            try {
-              if (settings.isPlatformUpdateEnabled)
-                UpdatesInfo(loadElement(it.reader))
-              else
-                null
-            }
-            catch (e: JDOMException) {
-              // corrupted content, don't bother telling user
-              LOG.info(e)
+        .forceHttps(settings.canUseSecureConnection())
+        .connect {
+          try {
+            if (settings.isPlatformUpdateEnabled)
+              UpdatesInfo(JDOMUtil.load(it.reader))
+            else
               null
-            }
           }
+          catch (e: JDOMException) {
+            // corrupted content, don't bother telling user
+            LOG.info(e)
+            null
+          }
+        }
     }
     catch (e: Exception) {
       LOG.info(e)
@@ -203,7 +202,7 @@ object UpdateChecker {
       .forceHttps(settings.canUseSecureConnection())
       .connect {
         try {
-          UpdatesInfo(loadElement(it.reader))
+          UpdatesInfo(JDOMUtil.load(it.reader))
         }
         catch (e: JDOMException) {
           // corrupted content, don't bother telling user
@@ -222,9 +221,8 @@ object UpdateChecker {
 
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
-    val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-    outer@ for (host in hosts) {
+    outer@ for (host in RepositoryHelper.getPluginHosts()) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
         val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
@@ -243,12 +241,7 @@ object UpdateChecker {
       }
       catch (e: IOException) {
         LOG.debug(e)
-        if (host != null) {
-          LOG.info("failed to load plugin descriptions from " + host + ": " + e.message)
-        }
-        else {
-          throw e
-        }
+        LOG.info("failed to load plugin descriptions from ${host ?: "default repository"}: ${e.message}")
       }
     }
 
@@ -262,7 +255,7 @@ object UpdateChecker {
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate()}.associateBy { it.pluginId }
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
@@ -299,7 +292,7 @@ object UpdateChecker {
     return updateable
   }
 
-  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
@@ -389,9 +382,9 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+        val patches = checkForUpdateResult.patches
         val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, newBuild, patch, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, patches, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
@@ -400,8 +393,12 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
+        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
-        showNotification(project, message, runnable, NotificationUniqueType.PLATFORM)
+        showNotification(project, message, {
+          IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
+          runnable()
+        }, NotificationUniqueType.PLATFORM)
       }
       return
     }
@@ -466,12 +463,12 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
+  private fun prepareUpdateCheckArgs(url: Url): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
-    if (packageManagerName != null) {
-      addUpdateRequestParameter("manager", packageManagerName)
+    if (ExternalUpdateManager.ACTUAL != null) {
+      addUpdateRequestParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
     }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -494,9 +491,9 @@ object UpdateChecker {
             val file = File(PathManager.getConfigPath(), DISABLED_UPDATE)
             if (file.isFile) {
               FileUtil.loadFile(file)
-                  .split("[\\s]".toRegex())
-                  .map { it.trim() }
-                  .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
+                .split("[\\s]".toRegex())
+                .map { it.trim() }
+                .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
             }
           }
           catch (e: IOException) {
@@ -543,25 +540,25 @@ object UpdateChecker {
 
     val channel: UpdateChannel?
     val newBuild: BuildInfo?
-    val patch: PatchInfo?
+    val patches: UpdateChain?
     if (forceUpdate) {
-      val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
-      patch = newBuild.patches.firstOrNull()
+      patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
-      val updateInfo = UpdatesInfo(loadElement(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
-      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+      patches = checkForUpdateResult.patches
     }
 
     if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(channel, newBuild, patch, patchFile).show()
+      UpdateInfoDialog(channel, newBuild, patches, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

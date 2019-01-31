@@ -320,6 +320,7 @@ public class ConfigUI extends JPanel {
             this.option = option;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
         }
     }
@@ -335,6 +336,7 @@ public class ConfigUI extends JPanel {
             this.option = option;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
         }
     }
@@ -344,6 +346,7 @@ public class ConfigUI extends JPanel {
      * Action listener for user checking sort elements
      */
     private class OnSortElements implements ActionListener {
+        @Override
         public void actionPerformed(ActionEvent e) {
             sortElementsComboBox.setEnabled(sortElements.isSelected());
         }

@@ -1,7 +1,8 @@
 class X {
   {
     if (true) {
-      System.out.println();
+      java.lang.//c1
+        System.out.println();
     <caret>}
     else {
       System.out.println();

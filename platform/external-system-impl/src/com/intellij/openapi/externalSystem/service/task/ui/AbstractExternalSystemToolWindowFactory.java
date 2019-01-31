@@ -20,7 +20,6 @@ import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 5/13/13 4:15 PM
  */
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
 
@@ -41,7 +40,7 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
       () -> ApplicationManager.getApplication().invokeLater(() -> {
         final ExternalProjectsViewImpl projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, myExternalSystemId);
         ExternalProjectsManagerImpl.getInstance(project).registerView(projectsView);
-        ContentImpl tasksContent = new ContentImpl(projectsView, ExternalSystemBundle.message("tool.window.title.projects"), true);
+        ContentImpl tasksContent = new ContentImpl(projectsView, "", true);
         contentManager.removeAllContents(true);
         contentManager.addContent(tasksContent);
       }, project.getDisposed()));

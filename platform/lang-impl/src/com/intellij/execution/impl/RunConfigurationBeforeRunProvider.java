@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -151,7 +150,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean executeTask(final DataContext dataContext,
+  public boolean executeTask(@NotNull final DataContext dataContext,
                              @NotNull RunConfiguration configuration,
                              @NotNull final ExecutionEnvironment env,
                              @NotNull RunConfigurableBeforeRunTask task) {
@@ -162,18 +161,10 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     return doExecuteTask(env, settings.first, settings.second);
   }
 
-  /**
-   * @deprecated use {@link #doExecuteTask(ExecutionEnvironment, RunnerAndConfigurationSettings, ExecutionTarget)} instead
-   */
-  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
-                                      @NotNull final RunnerAndConfigurationSettings settings) {
-    return doExecuteTask(env, settings, null);
-  }
-
   public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
                                       @NotNull final RunnerAndConfigurationSettings settings,
                                       @Nullable final ExecutionTarget target) {
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    final Executor executor = env.getExecutor();
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
     if (builder == null) {
@@ -182,18 +173,18 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     ExecutionTarget effectiveTarget = target;
 
-    if (effectiveTarget == null && ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+    if (effectiveTarget == null && ExecutionTargetManager.canRun(settings.getConfiguration(), env.getExecutionTarget())) {
       effectiveTarget = env.getExecutionTarget();
     }
 
-    List<ExecutionTarget> allTargets = ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings);
+    List<ExecutionTarget> allTargets = ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings.getConfiguration());
     if (effectiveTarget == null) {
       effectiveTarget = ContainerUtil.find(allTargets, it -> it.isReady());
     }
     if (effectiveTarget == null) {
       effectiveTarget = ContainerUtil.getFirstItem(allTargets);
     }
-    
+
     if (effectiveTarget == null) {
       return false;
     }
@@ -270,7 +261,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   private static void beforeRun(@NotNull ExecutionEnvironment environment) {
-    for (RunConfigurationBeforeRunProviderDelegate delegate : Extensions.getExtensions(RunConfigurationBeforeRunProviderDelegate.EP_NAME)) {
+    for (RunConfigurationBeforeRunProviderDelegate delegate : RunConfigurationBeforeRunProviderDelegate.EP_NAME.getExtensionList()) {
       delegate.beforeRun(environment);
     }
   }
@@ -304,7 +295,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       String type = element.getAttributeValue("run_configuration_type");
       String targetId = element.getAttributeValue("run_configuration_target");
       if (name != null && type != null) myTypeNameTarget = new TypeNameTarget(type, name, targetId);
-      
+
       mySettingsWithTarget = null;
     }
 
@@ -324,12 +315,12 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       if (mySettingsWithTarget != null) {
         return;
       }
-      
+
       if (myTypeNameTarget != null) {
         RunnerAndConfigurationSettings settings = RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(
           myTypeNameTarget.getType(), myTypeNameTarget.getName());
         ExecutionTarget target = ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject)).findTargetByIdFor(
-          settings, myTypeNameTarget.getTargetId());
+          settings != null ? settings.getConfiguration() : null, myTypeNameTarget.getTargetId());
 
         setSettingsWithTarget(settings, target);
       }
@@ -343,8 +334,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     @Nullable
     public RunnerAndConfigurationSettings getSettings() {
-      Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = getSettingsWithTarget();
-      return settingsWithTarget == null ? null : settingsWithTarget.first;
+      return Pair.getFirst(getSettingsWithTarget());
     }
 
     @Nullable

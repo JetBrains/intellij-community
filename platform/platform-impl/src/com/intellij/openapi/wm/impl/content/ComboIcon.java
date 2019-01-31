@@ -22,7 +22,7 @@ import java.awt.*;
 
 public abstract class ComboIcon {
 
-  private final ActiveIcon myIcon = new ActiveIcon(AllIcons.General.Combo2);
+  private final ActiveIcon myIcon = new ActiveIcon(AllIcons.General.ArrowDown);
 
   public void paintIcon(final Component c, final Graphics g) {
     myIcon.setActive(isActive());

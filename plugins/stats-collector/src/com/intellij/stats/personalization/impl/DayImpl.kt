@@ -32,17 +32,17 @@ class DayImpl(date: Date) : Day {
 
     companion object {
         private val LOG = Logger.getInstance(DayImpl::class.java)
-        private val DATE_FORMAT = SimpleDateFormat("dd-MM-yyyy")
+        private val DATE_FORMAT = ThreadLocal.withInitial { SimpleDateFormat("dd-MM-yyyy") }
 
         fun fromString(str: String): Day? {
             val position = ParsePosition(0)
 
             val date: Date
             try {
-                date = DATE_FORMAT.parse(str, position)
+                date = DATE_FORMAT.get().parse(str, position)
             }
             catch (e: NumberFormatException) {
-                LOG.error("Could not parse a date from string: $str. Collected data for the day will be skipped.")
+                LOG.error("Could not parse a date from string: $str. Collected data for the day will be skipped.", e)
                 return null
             }
             if (position.index == 0) return null
@@ -80,6 +80,8 @@ class DayImpl(date: Date) : Day {
     }
 
     override fun toString(): String {
-        return "$dayOfMonth-$month-$year"
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month - 1, dayOfMonth)
+        return DATE_FORMAT.get().format(calendar.time)
     }
 }

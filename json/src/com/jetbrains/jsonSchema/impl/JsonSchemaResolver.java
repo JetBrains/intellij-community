@@ -15,16 +15,20 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.json.psi.JsonContainer;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
@@ -35,9 +39,9 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchema
 public class JsonSchemaResolver {
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
-  @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> myPosition;
+  @NotNull private final JsonPointerPosition myPosition;
 
-  public JsonSchemaResolver(@NotNull JsonSchemaObject schema, boolean isName, @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
+  public JsonSchemaResolver(@NotNull JsonSchemaObject schema, boolean isName, @NotNull JsonPointerPosition position) {
     mySchema = schema;
     myIsName = isName;
     myPosition = position;
@@ -46,11 +50,11 @@ public class JsonSchemaResolver {
   public JsonSchemaResolver(@NotNull JsonSchemaObject schema) {
     mySchema = schema;
     myIsName = true;
-    myPosition = Collections.emptyList();
+    myPosition = new JsonPointerPosition();
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(mySchema, myPosition, false, false, !myIsName);
+    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(mySchema, myPosition, false, !myIsName);
     return MatchResult.create(node);
   }
 
@@ -58,25 +62,24 @@ public class JsonSchemaResolver {
   public Collection<JsonSchemaObject> resolve() {
     final MatchResult result = detailedResolve();
     final List<JsonSchemaObject> list = new ArrayList<>(result.mySchemas);
-    list.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
+    list.addAll(result.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
     return list;
   }
 
   @Nullable
-  public PsiElement findNavigationTarget(boolean literalResolve,
-                                         @Nullable final JsonValue element,
+  public PsiElement findNavigationTarget(@Nullable final PsiElement element,
                                          boolean acceptAdditionalPropertiesSchema) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
-      .buildTree(mySchema, myPosition, true, literalResolve, acceptAdditionalPropertiesSchema || !myIsName);
+      .buildTree(mySchema, myPosition, true, acceptAdditionalPropertiesSchema || !myIsName);
     return getSchemaNavigationItem(selectSchema(node, element, myPosition.isEmpty()));
   }
 
   @Nullable
   private static JsonSchemaObject selectSchema(@NotNull final JsonSchemaTreeNode resolveRoot,
-                                               @Nullable final JsonValue element, boolean topLevelSchema) {
+                                               @Nullable final PsiElement element, boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
     List<JsonSchemaObject> schemas = new ArrayList<>(matchResult.mySchemas);
-    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
+    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
     final JsonSchemaObject firstSchema = getFirstValidSchema(schemas);
     if (element == null || schemas.size() == 1 || firstSchema == null) {
@@ -91,8 +94,7 @@ public class JsonSchemaResolver {
     if (topLevelSchema) {
       parentAdapter = null;
     } else {
-      final JsonValue parentValue = PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
-                                                                JsonObject.class, JsonArray.class);
+      final PsiElement parentValue = walker.getParentContainer(element);
       if (parentValue == null || (parentAdapter = walker.createValueAdapter(parentValue)) == null) return null;
     }
 
@@ -124,7 +126,7 @@ public class JsonSchemaResolver {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type == null) return true;
     if (!areSchemaTypesCompatible(schema, type)) return false;
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
     checker.checkByScheme(value, schema);
     return checker.isCorrect();
   }

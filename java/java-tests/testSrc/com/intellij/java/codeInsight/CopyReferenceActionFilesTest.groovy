@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class CopyReferenceActionFilesTest extends CodeInsightTestCase {
   VirtualFile additionalRoot
 

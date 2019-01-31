@@ -218,7 +218,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
     private final String myOperationSign;
 
-    public ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
+    ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
       myOperationSign = operationSign;
     }
 

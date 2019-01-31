@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.context;
 
@@ -22,7 +8,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -73,7 +58,7 @@ public class WorkingContextManager {
   }
 
   public void loadContext(Element fromElement) {
-    for (WorkingContextProvider provider : Extensions.getExtensions(WorkingContextProvider.EP_NAME, myProject)) {
+    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensions(myProject)) {
       try {
         Element child = fromElement.getChild(provider.getId());
         if (child != null) {
@@ -87,7 +72,7 @@ public class WorkingContextManager {
   }
 
   public void saveContext(Element toElement) {
-    for (WorkingContextProvider provider : Extensions.getExtensions(WorkingContextProvider.EP_NAME, myProject)) {
+    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensions(myProject)) {
       try {
         Element child = new Element(provider.getId());
         provider.saveContext(child);
@@ -100,7 +85,7 @@ public class WorkingContextManager {
   }
 
   public void clearContext() {
-    for (WorkingContextProvider provider : Extensions.getExtensions(WorkingContextProvider.EP_NAME, myProject)) {
+    for (WorkingContextProvider provider : WorkingContextProvider.EP_NAME.getExtensions(myProject)) {
       provider.clearContext();
     }
   }
@@ -120,9 +105,7 @@ public class WorkingContextManager {
 
 
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       if (entryName == null) {
         int i = archive.getEntries().size();
         do {
@@ -140,9 +123,6 @@ public class WorkingContextManager {
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -189,9 +169,7 @@ public class WorkingContextManager {
   }
 
   private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         action.consume(entry);
@@ -201,21 +179,7 @@ public class WorkingContextManager {
     catch (Exception e) {
       LOG.error(e);
     }
-    finally {
-      closeArchive(archive);
-    }
     return false;
-  }
-
-  private static void closeArchive(JBZipFile archive) {
-    if (archive != null) {
-      try {
-        archive.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   public List<ContextInfo> getContextHistory() {
@@ -223,18 +187,13 @@ public class WorkingContextManager {
   }
 
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
     catch (Exception e) {
       LOG.error(e);
       return Collections.emptyList();
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -251,9 +210,7 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(postfix);
+    try (JBZipFile archive = getTasksArchive(postfix)) {
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
         archive.eraseEntry(entry);
@@ -261,9 +218,6 @@ public class WorkingContextManager {
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -273,9 +227,7 @@ public class WorkingContextManager {
   }
 
   private synchronized void pack(int max, int delta, String zipPostfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
         JBZipEntry[] array = entries.toArray(new JBZipEntry[0]);
@@ -283,18 +235,21 @@ public class WorkingContextManager {
         for (int i = array.length - 1; i >= max; i--) {
           archive.eraseEntry(array[i]);
         }
+        archive.gc();
       }
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
   @TestOnly
   public File getContextFile() {
     return getArchiveFile(CONTEXT_ZIP_POSTFIX);
+  }
+
+  @TestOnly
+  public File getTaskFile() {
+    return getArchiveFile(TASKS_ZIP_POSTFIX);
   }
 }

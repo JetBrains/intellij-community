@@ -81,9 +81,8 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
       new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
-                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                   project, scope, module, false,
-                                   AnalysisUIOptions.getInstance(project), element);
+                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
+                                   AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
@@ -133,7 +132,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     invokeOnScope(project, Collections.singleton(member), scope, false);
   }
 
-  public static void invokeOnScope(final Project project, final Set<PsiMember> members, final AnalysisScope scope, boolean silent) {
+  public static void invokeOnScope(final Project project, final Set<? extends PsiMember> members, final AnalysisScope scope, boolean silent) {
     final Map<PsiMember, List<Match>> duplicates = new HashMap<>();
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -181,6 +180,11 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                 break;
               }
             }
+
+            if (method instanceof PsiMethod && ((PsiMethod)method).findDeepestSuperMethods().length > 0 && 
+                MethodDuplicatesMatchProvider.isEssentialStaticContextAbsent(match, (PsiMethod)method)) {
+              iterator.remove();
+            }
           }
           if (!matchList.isEmpty()) {
             List<Match> matches = duplicates.get(method);
@@ -211,7 +215,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     }
   }
 
-  private static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<PsiMember> methods) {
+  public static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<? extends PsiMember> methods) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 
@@ -241,7 +245,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     ApplicationManager.getApplication().invokeLater(replaceRunnable, project.getDisposed());
   }
 
-  public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
+  public static List<Match> hasDuplicates(final PsiElement file, final PsiMember member) {
     final DuplicatesFinder duplicatesFinder = createDuplicatesFinder(member);
     if (duplicatesFinder == null) {
       return Collections.emptyList();

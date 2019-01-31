@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -39,6 +39,7 @@ import java.util.List;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
@@ -83,20 +84,23 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     setResizable(true);
     setTitle(message("dialog.title.branch"));
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
-    myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
+    mySwitchOnCreate.setBorder(JBUI.Borders.emptyTop(10));
+    myProjectButton.setIcon(ProductIcons.getInstance().getProjectIcon());
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
 
     Info info = myVcs.getInfo(file);
-    if (info == null || info.getURL() == null) {
+    if (info == null || info.getUrl() == null) {
       throw new VcsException("Can not find url for file: " + file.getPath());
     }
-    mySrcURL = info.getURL();
+    mySrcURL = info.getUrl();
 
     myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
                                                myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
+        updateSwitchOnCreate();
         updateControls();
       }
     });
@@ -107,7 +111,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });
@@ -127,7 +132,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
 
-    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
+    RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (root == null) {
       throw new VcsException("Can not find working copy for file: " + file.getPath());
     }
@@ -141,6 +146,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateBranchTagBases();
 
     init();
+    ActionListener switchOnCreateListener = e -> updateSwitchOnCreate();
+    myWorkingCopyRadioButton.addActionListener(switchOnCreateListener);
+    myRepositoryRadioButton.addActionListener(switchOnCreateListener);
     ActionListener listener = e -> updateControls();
     myWorkingCopyRadioButton.addActionListener(listener);
     myRepositoryRadioButton.addActionListener(listener);
@@ -148,7 +156,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myAnyLocationRadioButton.addActionListener(listener);
     updateControls();
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateToURL();
       }
     });
@@ -194,9 +203,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  private void updateSwitchOnCreate() {
+    mySwitchOnCreate.setText("Switch " + getSourceFile() + " to the newly created branch or tag");
+  }
+
   private void updateControls() {
     myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
-    mySwitchOnCreate.setEnabled(myWorkingCopyRadioButton.isSelected());
     myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
     myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
     myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
@@ -213,6 +225,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return HELP_ID;
   }
 
+  @Override
   protected void init() {
     super.init();
     myWorkingCopyField.setText(mySrcFile.toString());
@@ -221,6 +234,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateControls();
 
     myWorkingCopyRadioButton.setSelected(true);
+    updateSwitchOnCreate();
   }
 
   public String getComment() {
@@ -251,14 +265,17 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myTopPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBranchTextField;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "svn.copyDialog";
   }
@@ -328,10 +345,6 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return null;
   }
 
-  public boolean isCopyFromWorkingCopy() {
-    return myWorkingCopyRadioButton.isSelected();
-  }
-
   public boolean isSwitchOnCreate() {
     return mySwitchOnCreate.isSelected();
   }
@@ -343,7 +356,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
   @NotNull
   public File getSourceFile() {
-    return new File(myWorkingCopyField.getText());
+    return myRepositoryRadioButton.isSelected() ? mySrcFile : new File(myWorkingCopyField.getText());
   }
 
   @Nullable

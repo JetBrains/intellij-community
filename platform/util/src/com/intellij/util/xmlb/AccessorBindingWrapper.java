@@ -16,7 +16,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final boolean myFlat;
   private final Property.Style beanStyle;
 
-  public AccessorBindingWrapper(@NotNull MutableAccessor accessor,
+  AccessorBindingWrapper(@NotNull MutableAccessor accessor,
                                 @NotNull Binding binding,
                                 boolean flat,
                                 Property.Style beanStyle) {
@@ -101,7 +101,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
       ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0));
@@ -128,5 +128,10 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     else {
       return myBinding.isBoundTo(element);
     }
+  }
+
+  @Override
+  public String toString() {
+    return myBinding.toString();
   }
 }

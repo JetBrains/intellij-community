@@ -3,7 +3,7 @@
 Groovy script
   Property selection
     Literal
-      PsiElement(string)(''medved'')
+      PsiElement(single quoted string)(''medved'')
     PsiElement(.)('.')
     Parenthesized expression
       PsiElement(()('(')

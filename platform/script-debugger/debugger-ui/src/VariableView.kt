@@ -62,17 +62,20 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      evaluateContext.evaluate(variable.name)
-        .onSuccess(node) {
-          if (it.wasThrown) {
-            setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
-          }
-          else {
-            value = it.value
-            computePresentation(it.value, node)
-          }
+        context.memberFilter.then {
+          evaluateContext.evaluate(it.sourceNameToRaw(variable.name) ?: variable.name)
+            .onSuccess(node) {
+              if (it.wasThrown) {
+                setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
+              }
+              else {
+                value = it.value
+                computePresentation(it.value, node)
+              }
+            }
+            .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
+
         }
-        .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
       return
     }
 
@@ -118,7 +121,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED -> node.setPresentation(icon, XKeywordValuePresentation(value.valueString!!), false)
 
-      ValueType.NUMBER -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
+      ValueType.NUMBER, ValueType.BIGINT  -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
 
       ValueType.STRING -> {
         node.setPresentation(icon, XStringValuePresentation(value.valueString!!), false)
@@ -215,7 +218,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     var functionValue = value as? FunctionValue
-    if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+    if (functionValue != null && (functionValue.hasScopes() == ThreeState.NO)) {
       functionValue = null
     }
 
@@ -302,7 +305,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       override fun setValue(expression: XExpression, callback: XValueModifier.XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression.expression, evaluateContext)
-          .doneRun {
+          .onSuccess {
             value = null
             callback.valueModified()
           }
@@ -313,7 +316,8 @@ class VariableView(override val variableName: String, private val variable: Vari
 
   fun getValue(): Value? = variable.value
 
-  override fun canNavigateToSource(): Boolean = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
+  override fun canNavigateToSource(): Boolean = value is FunctionValue && value?.valueString?.contains("[native code]") != true
+                                                || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
@@ -324,7 +328,7 @@ class VariableView(override val variableName: String, private val variable: Vari
               navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                 object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
-                    return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
+                    return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
                       // element will be "open paren", but we should navigate to function name,
                       // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
                       var referenceCandidate: PsiElement? = element
@@ -487,4 +491,4 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-private val PROTOTYPE_PROP = "__proto__"
+private const val PROTOTYPE_PROP = "__proto__"

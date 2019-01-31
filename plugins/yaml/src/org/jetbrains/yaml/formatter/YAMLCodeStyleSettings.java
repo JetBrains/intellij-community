@@ -12,10 +12,13 @@ public class YAMLCodeStyleSettings extends CustomCodeStyleSettings {
   public static final int ALIGN_ON_VALUE = 1;
   public static final int ALIGN_ON_COLON = 2;
 
-  public boolean INDENT_SEQUENCE_VALUE = false;
+  public boolean INDENT_SEQUENCE_VALUE = true;
 
   public boolean SEQUENCE_ON_NEW_LINE = false;
   public boolean BLOCK_MAPPING_ON_NEW_LINE = false;
+
+  /** Whether editor should automatically insert hyphen on Enter for subsequent (non-first) items */
+  public boolean AUTOINSERT_SEQUENCE_MARKER = true;
 
   public YAMLCodeStyleSettings(CodeStyleSettings container) {
     super(YAMLLanguage.INSTANCE.getID(), container);

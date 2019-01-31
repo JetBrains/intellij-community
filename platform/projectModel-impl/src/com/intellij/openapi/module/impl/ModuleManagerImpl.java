@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -108,6 +109,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected void cleanCachedStuff() {
     myCachedModuleComparator = null;
     myCachedSortedModules = null;
+    myCachedModuleProductionGraph = null;
+    myCachedModuleTestGraph = null;
   }
 
   @Override
@@ -153,7 +156,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void loadState(@NotNull Element state) {
     Set<ModulePath> files = getPathsToModuleFiles(state);
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       files.addAll(externalModules);
     }
@@ -163,7 +166,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void noStateLoaded() {
     // if there are only external modules, loadState will be not called
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       loadState(new LinkedHashSet<>(externalModules));
     }
@@ -364,7 +367,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
-  private void reportError(@NotNull List<ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
+  private void reportError(@NotNull List<? super ModuleLoadingErrorDescription> errors, @NotNull ModulePath modulePath, @NotNull Exception e) {
     errors.add(new ModuleLoadingErrorDescription(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath, this));
   }
 
@@ -378,7 +381,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return false;
   }
 
-  protected void showUnknownModuleTypeNotification(@NotNull List<Module> types) {
+  protected void showUnknownModuleTypeNotification(@NotNull List<? extends Module> types) {
   }
 
   protected void fireModuleAdded(@NotNull Module module) {
@@ -414,7 +417,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, oldNames::get);
   }
 
-  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<ModuleLoadingErrorDescription> errors) {
+  private void onModuleLoadErrors(@NotNull ModuleModelImpl moduleModel, @NotNull List<? extends ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
     moduleModel.myModulesCache = null;
@@ -434,7 +437,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   // overridden in Upsource
-  protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
+  protected void fireModuleLoadErrors(@NotNull List<? extends ModuleLoadingErrorDescription> errors) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
@@ -480,7 +483,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  public void writeExternal(@NotNull Element element, @NotNull List<Module> collection) {
+  public void writeExternal(@NotNull Element element, @NotNull List<? extends Module> collection) {
     List<SaveItem> sorted = new ArrayList<>(collection.size() + myFailedModulePaths.size() + myUnloadedModules.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
@@ -542,6 +545,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   private volatile Module[] myCachedSortedModules;
+  private volatile Graph<Module> myCachedModuleProductionGraph;
+  private volatile Graph<Module> myCachedModuleTestGraph;
 
   @Override
   @NotNull
@@ -586,7 +591,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public Graph<Module> moduleGraph(boolean includeTests) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myModuleModel.moduleGraph(includeTests);
+
+    Graph<Module> graph = includeTests ? myCachedModuleTestGraph : myCachedModuleProductionGraph;
+    if (graph != null) return graph;
+
+    graph = myModuleModel.moduleGraph(includeTests);
+    if (includeTests) {
+      myCachedModuleTestGraph = graph;
+    } else {
+      myCachedModuleProductionGraph = graph;
+    }
+
+    return graph;
   }
 
   @Override
@@ -851,11 +867,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     private Graph<Module> moduleGraph(final boolean includeTests) {
       return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+        @NotNull
         @Override
         public Collection<Module> getNodes() {
           return myModules.values();
         }
 
+        @NotNull
         @Override
         public Iterator<Module> getIn(Module m) {
           Module[] dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests);
@@ -1094,7 +1112,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
           List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));
           UnloadedModuleDescriptionImpl unloadedModuleDescription = new UnloadedModuleDescriptionImpl(modulePath, description.getDependencyModuleNames(), contentRoots);
-          ServiceKt.getStateStore(module).save(new SmartList<>(), false);//we need to save module configuration before unloading, otherwise its settings will be lost
+          // we need to save module configuration before unloading, otherwise its settings will be lost
+          StateStorageManagerKt.saveComponentManager(module);
           model.disposeModule(module);
           myUnloadedModules.put(name, unloadedModuleDescription);
         }
@@ -1110,7 +1129,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   @Override
-  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  public void removeUnloadedModules(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (UnloadedModuleDescription module : unloadedModules) {
       myUnloadedModules.remove(module.getName());

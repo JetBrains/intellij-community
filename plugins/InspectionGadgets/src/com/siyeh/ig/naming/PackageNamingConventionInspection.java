@@ -132,7 +132,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
   private static class LocalPackageNamingConventionInspection extends BaseSharedLocalInspection<PackageNamingConventionInspection> {
 
-    public LocalPackageNamingConventionInspection(PackageNamingConventionInspection inspection) {
+    LocalPackageNamingConventionInspection(PackageNamingConventionInspection inspection) {
       super(inspection);
     }
 

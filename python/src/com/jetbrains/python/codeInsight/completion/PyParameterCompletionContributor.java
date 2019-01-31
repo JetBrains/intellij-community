@@ -46,7 +46,7 @@ public class PyParameterCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       result.addElement(LookupElementBuilder.create(myName).withIcon(AllIcons.Nodes.Parameter));
     }

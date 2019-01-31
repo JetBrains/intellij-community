@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -59,7 +44,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
@@ -72,18 +56,21 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author traff
  */
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
-
+  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
   private final boolean myTestMode;
@@ -102,26 +89,33 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
+  public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
-    getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    VirtualFile virtualFile = getVirtualFile();
+    virtualFile.putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
-    //noinspection ConstantConditions
-    myPyHighlighter = new PyHighlighter(
-      sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
+    LanguageLevel languageLevel = LanguageLevel.getDefault();
+    if (sdk != null) {
+      final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
+      if (sdkFlavor != null) {
+        languageLevel = sdkFlavor.getLanguageLevel(sdk);
+      }
+    }
+    myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
     PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
     myPromptView = new ConsolePromptDecorator(this.getConsoleEditor(), data);
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY, communication);
 
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);
@@ -210,21 +204,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myInitialized.doWhenDone(
       () -> {
         if (code != null) {
-          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", true) {
             @Override
             public void run(@NotNull final ProgressIndicator indicator) {
-              long time = System.currentTimeMillis();
               while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
                 if (indicator.isCanceled()) {
                   break;
-                }
-                if (System.currentTimeMillis() - time > 1000) {
-                  if (editor != null) {
-                    UIUtil.invokeLaterIfNeeded(
-                      () -> HintManager.getInstance()
-                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
-                  }
-                  return;
                 }
                 TimeoutUtil.sleep(300);
               }
@@ -243,6 +228,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
 
   public void executeInConsole(@NotNull final String code) {
+    CountDownLatch latch = new CountDownLatch(1);
+
     TransactionGuard.submitTransaction(this, () -> {
       final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
@@ -267,7 +254,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
           getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
         }
       });
+
+      latch.countDown();
     });
+
+    try {
+      latch.await(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
@@ -416,6 +412,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     highlighter.putUserData(PyConsoleCopyHandler.PROMPT_LENGTH_MARKER, prompt.length() + 1);
   }
 
+  @Override
   @NotNull
   protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     String text;

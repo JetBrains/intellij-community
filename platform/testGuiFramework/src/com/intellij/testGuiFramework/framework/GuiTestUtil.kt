@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.toCanonicalPath
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.isNotEmpty
@@ -28,20 +27,18 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.fixtures.extended.hasValidModel
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
-import com.intellij.testGuiFramework.impl.toFestTimeout
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher
-import com.intellij.testGuiFramework.util.Clipboard
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Shortcut
+import com.intellij.testGuiFramework.util.*
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.JdkBundle
 import com.intellij.util.PathUtil
-import com.intellij.util.Producer
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -64,7 +61,6 @@ import org.fest.swing.fixture.JTreeFixture
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
-import org.fest.swing.timing.Timeout.timeout
 import org.fest.util.Strings.isNullOrEmpty
 import org.fest.util.Strings.quote
 import org.junit.Assert.assertNotNull
@@ -73,11 +69,9 @@ import java.awt.event.KeyEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.MINUTES
-import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
 import javax.annotation.Nonnull
@@ -85,19 +79,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 
 object GuiTestUtil {
-  /**
-   * default timeout to find target component for fixture. Using seconds as time unit.
-   */
-  const val defaultTimeout = 120L
-
-  val THIRTY_SEC_TIMEOUT = timeout(30, SECONDS)
-
-  val MINUTE_TIMEOUT = timeout(1, MINUTES)
-  val SHORT_TIMEOUT = timeout(2, MINUTES)
-  val LONG_TIMEOUT = timeout(5, MINUTES)
-  val TEN_MIN_TIMEOUT = timeout(10, MINUTES)
-  val FIFTEEN_MIN_TIMEOUT = timeout(15, MINUTES)
-  val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
+  const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
   private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
 
@@ -105,11 +87,10 @@ object GuiTestUtil {
    * Environment variable pointing to the JDK to be used for tests
    */
 
-  val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
-  val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  val FIRST_START = "GUI_FIRST_START"
+  const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
+  const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
+  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
-  val projectCreationDirPath = createTempProjectCreationDir()
 
   val gradleHomePath: File?
     get() = getFilePathProperty("supported.gradle.home.path", "the path of a local Gradle 2.2.1 distribution", true)
@@ -173,7 +154,7 @@ object GuiTestUtil {
     return !fatalErrors.isEmpty()
   }
 
-  // Called by IdeTestApplication via reflection.
+  // Called by GuiTestPaths via reflection.
   fun setUpDefaultGeneralSettings() {
 
   }
@@ -199,10 +180,10 @@ object GuiTestUtil {
   }
 
   fun setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(projectCreationDirPath.path)
+    RecentProjectsManager.getInstance().lastProjectCreationLocation = PathUtil.toSystemIndependentName(GuiTestOptions.projectsDir.path)
   }
 
-  // Called by IdeTestApplication via reflection.
+  // Called by GuiTestPaths via reflection.
   fun waitForIdeToStart() {
     val firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START)
     val isFirstStart = firstStart != null && firstStart.toLowerCase() == "true"
@@ -229,7 +210,7 @@ object GuiTestUtil {
           }
           return false
         }
-      }).withTimeout(LONG_TIMEOUT.duration()).using(robot)
+      }).withTimeout(Timeouts.minutes05.duration()).using(robot)
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
@@ -263,7 +244,7 @@ object GuiTestUtil {
             }
             return false
           }
-        }, LONG_TIMEOUT)
+        }, Timeouts.minutes05)
       }
     }
     finally {
@@ -289,7 +270,7 @@ object GuiTestUtil {
         override fun isMatching(dialog: JDialog): Boolean {
           return if (dialog.title == null) false else dialog.title.contains(policyAgreement) && dialog.isShowing
         }
-      }).withTimeout(LONG_TIMEOUT.duration()).using(robot)
+      }).withTimeout(Timeouts.minutes05.duration()).using(robot)
       val buttonText = "Accept"
       val acceptButton = privacyDialogFixture.button(object : GenericTypeMatcher<JButton>(JButton::class.java) {
         override fun isMatching(button: JButton): Boolean {
@@ -314,7 +295,7 @@ object GuiTestUtil {
     val dialogName = ApplicationBundle.message("title.complete.installation")
     try {
       val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot)
+        .withTimeout(Timeouts.seconds30.duration()).using(robot)
       completeInstallationDialog.button("OK").click()
     }
     catch (we: WaitTimedOutError) {
@@ -327,7 +308,7 @@ object GuiTestUtil {
     val dialogName = ApplicationNamesInfo.getInstance().fullProductName + " License Activation"
     try {
       val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot)
+        .withTimeout(Timeouts.seconds30.duration()).using(robot)
       completeInstallationDialog.button("Evaluate for free for 30 days").click()
     }
     catch (we: WaitTimedOutError) {
@@ -340,7 +321,7 @@ object GuiTestUtil {
     val dialogName = "License Agreement for" + ApplicationInfoImpl.getShadowInstance().fullApplicationName
     try {
       val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot)
+        .withTimeout(Timeouts.seconds30.duration()).using(robot)
 
       completeInstallationDialog.button("Evaluate for free for 30 days").click()
     }
@@ -354,27 +335,12 @@ object GuiTestUtil {
     val dialogName = "Customize " + ApplicationNamesInfo.getInstance().fullProductName
     try {
       val completeInstallationDialog = findDialog(dialogName)
-        .withTimeout(THIRTY_SEC_TIMEOUT.duration()).using(robot)
+        .withTimeout(Timeouts.seconds30.duration()).using(robot)
 
       completeInstallationDialog.button("Skip All and Set Defaults").click()
     }
     catch (we: WaitTimedOutError) {
       LOG.error("Timed out waiting for \"$dialogName\" JDialog. Continue...")
-    }
-
-  }
-
-  fun createTempProjectCreationDir(): File {
-    try {
-      // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-      // EditorFixture seems to require a canonical path when opening the file.
-      val tempDir = FileUtilRt.createTempDirectory("guiTest", null)
-      return tempDir.canonicalFile
-    }
-    catch (ex: IOException) {
-      // For now, keep the original behavior and point inside the source tree.
-      ex.printStackTrace()
-      return File(testProjectsRootDirPath, "newProjects")
     }
 
   }
@@ -428,14 +394,16 @@ object GuiTestUtil {
   }
 
   fun findAndClickButtonWhenEnabled(container: ContainerFixture<out Container>, text: String) {
-    val robot = container.robot()
-    val button = findButton(container, text, robot)
-    Pause.pause(object : Condition("Wait for button $text to be enabled.") {
-      override fun test(): Boolean {
-        return button.isEnabled && button.isVisible && button.isShowing
-      }
-    }, SHORT_TIMEOUT)
-    robot.click(button)
+    step("find and click button '$text' when enabled") {
+      val robot = container.robot()
+      val button = findButton(container, text, robot)
+      Pause.pause(object : Condition("Wait for button $text to be enabled.") {
+        override fun test(): Boolean {
+          return button.isEnabled && button.isVisible && button.isShowing
+        }
+      }, Timeouts.minutes02)
+      robot.click(button)
+    }
   }
 
   fun invokeMenuPathOnRobotIdle(projectFrame: IdeFrameFixture, vararg path: String) {
@@ -465,11 +433,13 @@ object GuiTestUtil {
 
   fun typeText(text: CharSequence, robot: Robot, delayAfterEachCharacterMillis: Long) {
     robot.waitForIdle()
-    for (i in 0 until text.length) {
-      robot.type(text[i])
-      Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS)
+    step("typing '$text' by symbol ") {
+      for (i in 0 until text.length) {
+        robot.type(text[i])
+        Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS)
+      }
+      Pause.pause(300, TimeUnit.MILLISECONDS)
     }
-    Pause.pause(300, TimeUnit.MILLISECONDS)
   }
 
   fun findBoundedLabel(container: Container, textField: JTextField, robot: Robot): JLabel? {
@@ -512,7 +482,7 @@ object GuiTestUtil {
         val buttons = robot.finder().findAll(matcher)
         return !buttons.isEmpty()
       }
-    }, SHORT_TIMEOUT)
+    }, Timeouts.minutes02)
 
     return robot.finder().find(container.target(), matcher)
   }
@@ -543,7 +513,7 @@ object GuiTestUtil {
   fun <T : Component> waitUntilFound(robot: Robot,
                                      root: Container?,
                                      matcher: GenericTypeMatcher<T>): T {
-    return waitUntilFound(robot, root, matcher, SHORT_TIMEOUT)
+    return waitUntilFound(robot, root, matcher, Timeouts.minutes02)
   }
 
   /**
@@ -611,21 +581,21 @@ object GuiTestUtil {
         val allFound = if (root == null) GuiRobotHolder.robot.finder().findAll(matcher) else GuiRobotHolder.robot.finder().findAll(root, matcher)
         return allFound.isEmpty()
       }
-    }, SHORT_TIMEOUT)
+    }, Timeouts.minutes02)
   }
 
   /**
    * Waits until no components match the given criteria under the given root
    */
   fun <T : Component> waitUntilGone(root: Container?,
-                                    timeoutInSeconds: Int,
+                                    timeout: Timeout,
                                     matcher: GenericTypeMatcher<T>) {
     Pause.pause(object : Condition("Find component using " + matcher.toString()) {
       override fun test(): Boolean {
         val allFound = if (root == null) GuiRobotHolder.robot.finder().findAll(matcher) else GuiRobotHolder.robot.finder().findAll(root, matcher)
         return allFound.isEmpty()
       }
-    }, timeout(timeoutInSeconds.toLong(), SECONDS))
+    }, timeout)
   }
 
 
@@ -682,7 +652,7 @@ object GuiTestUtil {
       override fun isMatching(@Nonnull button: JRadioButton): Boolean {
         return button.text != null && button.text == text
       }
-    }, SHORT_TIMEOUT)
+    }, Timeouts.minutes02)
     return RadioButtonFixture(GuiRobotHolder.robot, radioButton)
   }
 
@@ -703,10 +673,11 @@ object GuiTestUtil {
    * @param shortcut should follow [KeyStrokeAdapter.getKeyStroke] instructions and be generated by [KeyStrokeAdapter.toString] preferably
    */
   fun invokeActionViaShortcut(shortcut: String) {
-
-    val keyStroke = KeyStrokeAdapter.getKeyStroke(shortcut)
-    LOG.info("Invoking action via shortcut \"$shortcut\"")
-    GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
+    step("press shortcut '$shortcut'") {
+      val keyStroke = KeyStrokeAdapter.getKeyStroke(shortcut)
+      LOG.info("Invoking action via shortcut \"$shortcut\"")
+      GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
+    }
   }
 
   fun invokeAction(actionId: String) {
@@ -717,58 +688,51 @@ object GuiTestUtil {
     GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
-  fun pause(conditionString: String, producer: Producer<Boolean>, timeout: Timeout) {
-    Pause.pause(object : Condition(conditionString) {
-      override fun test(): Boolean {
-        val produce = producer.produce()
-        assertNotNull(produce)
-        return produce!!
-      }
-    }, timeout)
-  }
-
   fun getListCellRendererComponent(list: JList<*>, value: Any, index: Int): Component {
     return (list as JList<Any>).cellRenderer.getListCellRendererComponent(list, value, index, true, true)
   }
 
-  fun textfield(textLabel: String?, container: Container, timeout: Long): JTextComponentFixture {
+  fun textfield(textLabel: String?, container: Container, timeout: Timeout): JTextComponentFixture {
     if (textLabel.isNullOrEmpty()) {
       val jTextField = com.intellij.testGuiFramework.impl.waitUntilFound(container, JTextField::class.java,
                                                                          timeout) { jTextField -> jTextField.isShowing }
       return JTextComponentFixture(GuiRobotHolder.robot, jTextField)
     }
-    //wait until label has appeared
-    com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
-      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+    step("wait until label '$textLabel' has appeared, timeout = ${timeout.toPrintable()}") {
+      com.intellij.testGuiFramework.impl.waitUntilFound(container, Component::class.java, timeout) {
+        it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+      }
     }
     val jTextComponent = GuiTestUtilKt.findBoundedComponentByText(GuiRobotHolder.robot, container, textLabel!!, JTextComponent::class.java)
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)
   }
 
-  fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
-    val myTree: JTree?
-    val pathList = pathStrings.toList()
+  fun jTreeComponent(container: Container,
+                     timeout: Timeout,
+                     vararg pathStrings: String,
+                     predicate: FinderPredicate = Predicate.equality): JTree = step("search '${pathStrings.joinToString()}' in tree") {
     try {
-      myTree = if (pathList.isEmpty()) {
-        waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
-      }
-      else {
-        waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(GuiRobotHolder.robot, it).hasPath(pathList) },
-                       timeout.toFestTimeout())
-      }
+      waitUntilFound(
+        robot = GuiRobotHolder.robot,
+        root = container,
+        matcher = GuiTestUtilKt.typeMatcher(JTree::class.java) {
+          // the found tree should have meaningful model
+          it.hasValidModel() &&
+          (pathStrings.isEmpty() || ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath())
+        },
+        timeout = timeout
+      )
     }
-    catch (e: WaitTimedOutError){
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
     }
-    return ExtendedTreeFixture(GuiRobotHolder.robot, myTree)
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
    */
-  fun typeText(text: String) = GuiTestUtil.typeText(text, GuiRobotHolder.robot, 10)
+  fun typeText(text: String) = step("type '$text'") { GuiTestUtil.typeText(text, GuiRobotHolder.robot, 10) }
 
   /**
    * @param keyStroke should follow {@link KeyStrokeAdapter#getKeyStroke(String)} instructions and be generated by {@link KeyStrokeAdapter#toString(KeyStroke)} preferably
@@ -802,16 +766,39 @@ object GuiTestUtil {
     return null
   }
 
-  fun fileSearchAndReplace(fileName: String, condition: (String) -> String) {
-    val buffer = mutableListOf<String>()
-    val inputFile = Paths.get(fileName)
-    for (line in Files.readAllLines(inputFile)) {
-      buffer.add(condition(line))
-    }
-    val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
-    Files.write(tmpFile, buffer)
-    Files.copy(tmpFile, inputFile, StandardCopyOption.REPLACE_EXISTING)
+  fun fileSearchAndReplace(fileName: Path, condition: (String) -> String) {
+    saveToFile(
+      fileName = fileName,
+      linesToSave = Files.readAllLines(fileName).map { condition(it) }
+    )
+  }
+
+  fun isFileContainsLine(fileName: Path, line: String): Boolean {
+    return Files.readAllLines(fileName).any { it.contains(line) }
+  }
+
+  fun fileInsertFromBegin(fileName: Path, lines: List<String>) {
+    saveToFile(
+      fileName = fileName,
+      linesToSave = lines + Files.readAllLines(fileName)
+    )
+  }
+
+  private fun saveToFile(fileName: Path, linesToSave: List<String>){
+    val tmpFile = Files.createTempFile(fileName.fileName.toString(), "tmp")
+    Files.write(tmpFile, linesToSave)
+    Files.copy(tmpFile, fileName, StandardCopyOption.REPLACE_EXISTING)
     tmpFile.toFile().deleteOnExit()
   }
+
+fun printFileContent(fileName: Path) {
+  println("--------------------------------------------")
+  println("--- File: $fileName ---")
+  println("--------------------------------------------")
+  Files.readAllLines(fileName).forEach { println("    $it") }
+  println("--------------------------------------------")
+}
+
+  fun Long.toMs(): Long = this * 1000
 
 }

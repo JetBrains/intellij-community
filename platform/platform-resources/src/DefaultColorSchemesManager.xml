@@ -8,7 +8,7 @@
       <option name="WHITESPACES" value="c5c5c5"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
-      <option name="NOTIFICATION_BACKGROUND" value="ffffcc" />
+      <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
       <option name="LINE_NUMBERS_COLOR" value="999999"/>
@@ -33,8 +33,6 @@
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER"/>
 
       <option name="FILESTATUS_ADDED" value="0a7700"/>
       <option name="FILESTATUS_DELETED" value="616161"/>
@@ -62,6 +60,32 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
+
+      <option name="ScrollBar.background" value="F5F5F5"/>
+      <option name="ScrollBar.trackColor" value="80808000"/>
+      <option name="ScrollBar.thumbColor" value="73737333"/>
+      <option name="ScrollBar.thumbBorderColor" value="59595933"/>
+      <option name="ScrollBar.hoverTrackColor" value="80808000"/>
+      <option name="ScrollBar.hoverThumbColor" value="73737347"/>
+      <option name="ScrollBar.hoverThumbBorderColor" value="59595947"/>
+      <option name="ScrollBar.Transparent.trackColor" value="80808000"/>
+      <option name="ScrollBar.Transparent.thumbColor" value="73737333"/>
+      <option name="ScrollBar.Transparent.thumbBorderColor" value="59595933"/>
+      <option name="ScrollBar.Transparent.hoverTrackColor" value="8080801A"/>
+      <option name="ScrollBar.Transparent.hoverThumbColor" value="73737347"/>
+      <option name="ScrollBar.Transparent.hoverThumbBorderColor" value="59595947"/>
+      <option name="ScrollBar.Mac.trackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.thumbColor" value="00000033"/>
+      <option name="ScrollBar.Mac.thumbBorderColor" value="00000033"/>
+      <option name="ScrollBar.Mac.hoverTrackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.hoverThumbColor" value="00000080"/>
+      <option name="ScrollBar.Mac.hoverThumbBorderColor" value="00000080"/>
+      <option name="ScrollBar.Mac.Transparent.trackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.Transparent.thumbColor" value="00000000"/>
+      <option name="ScrollBar.Mac.Transparent.thumbBorderColor" value="00000000"/>
+      <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
+      <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="00000080"/>
+      <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
     </colors>
 
     <attributes>
@@ -75,7 +99,7 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ff56" deuteranopia="cccccc" protanopia="cccccc"/>
+          <option name="FOREGROUND" value="a9b7d6" deuteranopia="cccccc" protanopia="cccccc"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
@@ -308,6 +332,13 @@
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e56000" protanopia="e56000"/>
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
+        </value>
+      </option>
       <option name="RUNTIME_ERROR">
         <value>
           <option name="EFFECT_COLOR" value="f49810" />
@@ -336,6 +367,12 @@
           <option name="FOREGROUND" value="0000ff" deuteranopia="55ff" protanopia="55ff"/>
           <option name="BACKGROUND" value="e9e9e9"/>
           <option name="EFFECT_COLOR" value="0000ff" deuteranopia="55ff" protanopia="55ff"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="INACTIVE_HYPERLINK_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="808080"/>
           <option name="EFFECT_TYPE" value="1"/>
         </value>
       </option>
@@ -810,6 +847,21 @@
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cccc"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="0000ee"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cd00"/>
+        </value>
+      </option>
       <option name="LOG_WARNING_OUTPUT">
         <value>
           <option name="FOREGROUND" value="a66f00" deuteranopia="a89c11" protanopia="a89c11"/>
@@ -1149,8 +1201,9 @@
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
+      <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
       <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
-      <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
+      <option name="NOTIFICATION_BACKGROUND" value="1d3857" />
       <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
       <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
@@ -1162,9 +1215,7 @@
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
-      <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
-      <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
-      <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
 
@@ -1173,6 +1224,32 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
+
+      <option name="ScrollBar.background" value="3F4244"/>
+      <option name="ScrollBar.trackColor" value="80808000"/>
+      <option name="ScrollBar.thumbColor" value="A6A6A647"/>
+      <option name="ScrollBar.thumbBorderColor" value="38383847"/>
+      <option name="ScrollBar.hoverTrackColor" value="80808000"/>
+      <option name="ScrollBar.hoverThumbColor" value="A6A6A659"/>
+      <option name="ScrollBar.hoverThumbBorderColor" value="38383859"/>
+      <option name="ScrollBar.Transparent.trackColor" value="80808000"/>
+      <option name="ScrollBar.Transparent.thumbColor" value="A6A6A647"/>
+      <option name="ScrollBar.Transparent.thumbBorderColor" value="38383847"/>
+      <option name="ScrollBar.Transparent.hoverTrackColor" value="8080801A"/>
+      <option name="ScrollBar.Transparent.hoverThumbColor" value="A6A6A659"/>
+      <option name="ScrollBar.Transparent.hoverThumbBorderColor" value="38383859"/>
+      <option name="ScrollBar.Mac.trackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.thumbColor" value="80808059"/>
+      <option name="ScrollBar.Mac.thumbBorderColor" value="26262659"/>
+      <option name="ScrollBar.Mac.hoverTrackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.hoverThumbColor" value="8080808C"/>
+      <option name="ScrollBar.Mac.hoverThumbBorderColor" value="2626268C"/>
+      <option name="ScrollBar.Mac.Transparent.trackColor" value="80808000"/>
+      <option name="ScrollBar.Mac.Transparent.thumbColor" value="80808000"/>
+      <option name="ScrollBar.Mac.Transparent.thumbBorderColor" value="26262600"/>
+      <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
+      <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="8080808C"/>
+      <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
@@ -1395,14 +1472,14 @@
       </option>
       <option name="DEBUGGER_INLINED_VALUES">
         <value>
-          <option name="FOREGROUND" value="3d8065" deuteranopia="737373" protanopia="737373"/>
+          <option name="FOREGROUND" value="666d75" deuteranopia="737373" protanopia="737373"/>
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEBUGGER_INLINED_VALUES_EXECUTION_LINE">
         <value>
-          <option name="FOREGROUND" value="ffeb09" />
+          <option name="FOREGROUND" value="7b94b3" />
           <option name="FONT_TYPE" value="2" />
           <option name="EFFECT_TYPE" value="0" />
         </value>
@@ -1624,6 +1701,13 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
+          <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
+        </value>
+      </option>
       <option name="RUNTIME_ERROR">
         <value>
           <option name="EFFECT_COLOR" value="f49810"/>
@@ -1661,6 +1745,12 @@
         <value>
           <option name="FOREGROUND" value="287bde" />
           <option name="EFFECT_COLOR" value="287bde" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="INACTIVE_HYPERLINK_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
           <option name="EFFECT_TYPE" value="1" />
         </value>
       </option>
@@ -1835,6 +1925,21 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="299999"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="5394ec"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="abc023"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">

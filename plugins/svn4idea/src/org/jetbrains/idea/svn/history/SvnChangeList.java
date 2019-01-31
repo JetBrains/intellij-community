@@ -65,7 +65,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private final CommonPathSearcher myCommonPathSearcher;
   private final Set<String> myKnownAsDirectories;
 
-  public SvnChangeList(@NotNull final List<CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
+  public SvnChangeList(@NotNull final List<? extends CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
 
     final SvnChangeList sample = (SvnChangeList) lists.get(0);
     myVcs = sample.myVcs;
@@ -156,10 +156,12 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return myListsHolder.getByPath(path);
   }
 
+  @Override
   public String getCommitterName() {
     return myAuthor;
   }
 
+  @Override
   @Nullable
   public Date getCommitDate() {
     return myDate;
@@ -176,6 +178,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     myRevisionNumber = new SvnRevisionNumber(Revision.of(revision));
   }
 
+  @Override
   public Collection<Change> getChanges() {
     if (myListsHolder == null) {
       createLists();
@@ -185,7 +188,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private void createLists() {
     myListsHolder = new ChangesListCreationHelper();
-    
+
     // key: copied-from
     final Map<String, ExternallyRenamedChange> copiedAddedChanges = new HashMap<>();
 
@@ -219,9 +222,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         final FilePath source = addedChange.getAfterRevision().getFile();
         deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, path);
         ((ExternallyRenamedChange) deletedChange).setCopied(false);
-        //noinspection ConstantConditions
         //addedChange.setRenamedOrMovedTarget(deletedChange.getBeforeRevision().getFile());
-        //noinspection ConstantConditions
         ((ExternallyRenamedChange) deletedChange).setRenamedOrMovedTarget(source);
       } else {
         deletedChange = new Change(myListsHolder.createDeletedItemRevision(path, true), null);
@@ -557,15 +558,18 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myMessage;
   }
 
+  @Override
   public String getComment() {
     return myMessage;
   }
 
+  @Override
   public long getNumber() {
     return myRevision;
   }
@@ -575,10 +579,12 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     return null;
   }
 
+  @Override
   public AbstractVcs getVcs() {
     return myVcs;
   }
 
+  @Override
   public Collection<Change> getChangesWithMovedTrees() {
     if (myListsHolder == null) {
       createLists();

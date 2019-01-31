@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
  * Defines contract for callback to listen external task notifications.
  *
  * @author Denis Zhdanov
- * @since 11/10/11 11:57 AM
  */
 public interface ExternalSystemTaskNotificationListener {
 
@@ -17,6 +16,7 @@ public interface ExternalSystemTaskNotificationListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   void onQueued(@NotNull ExternalSystemTaskId id, String workingDir);
 
   /**
@@ -33,6 +33,7 @@ public interface ExternalSystemTaskNotificationListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Deprecated
   void onStart(@NotNull ExternalSystemTaskId id);
 
   /**

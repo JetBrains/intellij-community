@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.palette.ComponentItem;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,39 +25,48 @@ public class ComponentItemDragObject implements ComponentDragObject {
     return myItem;
   }
 
+  @Override
   public int getComponentCount() {
     return 1;
   }
 
+  @Override
   public boolean isHGrow() {
     return (myItem.getDefaultConstraints().getHSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
   }
 
+  @Override
   public boolean isVGrow() {
     return (myItem.getDefaultConstraints().getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0;
   }
 
+  @Override
   public int getRelativeRow(int componentIndex) {
     return 0;
   }
 
+  @Override
   public int getRelativeCol(int componentIndex) {
     return 0;
   }
 
+  @Override
   public int getRowSpan(int componentIndex) {
     return 1;
   }
 
+  @Override
   public int getColSpan(int componentIndex) {
     return 1;
   }
 
+  @Override
   @Nullable
   public Point getDelta(int componentIndex) {
     return null;
   }
 
+  @Override
   @NotNull
   public Dimension getInitialSize(final RadContainer targetContainer) {
     final ClassLoader loader = LoaderFactory.getInstance(targetContainer.getProject()).getLoader(targetContainer.getModule());

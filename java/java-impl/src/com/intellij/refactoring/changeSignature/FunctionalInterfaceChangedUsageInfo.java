@@ -23,7 +23,7 @@ class FunctionalInterfaceChangedUsageInfo extends UsageInfo {
 
   private final PsiMethod myMethod;
 
-  public FunctionalInterfaceChangedUsageInfo(PsiElement element, PsiMethod method) {
+  FunctionalInterfaceChangedUsageInfo(PsiElement element, PsiMethod method) {
     super(element);
     myMethod = method;
   }

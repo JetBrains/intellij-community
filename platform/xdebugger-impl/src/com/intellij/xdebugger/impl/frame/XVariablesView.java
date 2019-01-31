@@ -114,7 +114,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return getCurrentFile(getTree());
     }
@@ -160,7 +160,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       private final long myOffset;
       private final XValueNodeImpl myNode;
 
-      public Entry(long offset, @NotNull XValueNodeImpl node) {
+      Entry(long offset, @NotNull XValueNodeImpl node) {
         myOffset = offset;
         myNode = node;
       }

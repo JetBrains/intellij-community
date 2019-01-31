@@ -57,11 +57,6 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return false;
   }
@@ -84,7 +79,7 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return myRoots.hashCode();
   }
 

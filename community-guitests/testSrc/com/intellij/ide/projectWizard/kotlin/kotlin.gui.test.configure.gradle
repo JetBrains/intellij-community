@@ -1,5 +1,5 @@
 plugins {
-    id "de.undercouch.download" version "3.4.0"
+    id "de.undercouch.download" version "3.4.3"
 }
 
 import de.undercouch.gradle.tasks.download.Download
@@ -21,6 +21,7 @@ task downloadUpdateXml(type: Download, dependsOn: setBaseProperties) {
             project.ext.updateXmlName
     src url
     dest project.ext.updateXmlFile
+    timeout 5000
 }
 
 task updateXmlParsing(dependsOn: downloadUpdateXml) {
@@ -28,15 +29,16 @@ task updateXmlParsing(dependsOn: downloadUpdateXml) {
         ext.srcFile = file(project.ext.updateXmlFile)
         def plugins = new XmlParser().parse(srcFile)
         project.ext.url = plugins.plugin[0].@url
-        def versionParts = plugins.plugin[0].@version =~ /(\d+\.\d+\.\d+)-(release|(eap|dev)-\d+)-(IJ|AS)(\d{4}\.\d)-(\d+)/
+        def versionParts = plugins.plugin[0].@version =~ /(\d+\.\d+(\.\d+)?(-M\d)?)-(release|(eap|dev|rc)-\d+)-(IJ|AS)(\d{4}\.\d)-(\d+)/
         project.ext.releaseVersion = versionParts[0][1]
-        project.ext.versionKind = versionParts[0][2]
+        project.ext.versionKind = versionParts[0][4]
         project.ext.idePluginVersion = releaseVersion + "-" + versionKind
-        project.ext.microVersion = versionParts[0][6]
+        project.ext.microVersion = versionParts[0][8]
         project.ext.pluginZipName = 'kotlin-plugin-' + plugins.plugin[0].@version + '.zip'
         project.ext.pluginInstallPath = project.ext.downloadPath + File.separator + project.ext.pluginZipName
         project.ext.fullVersion = plugins.plugin[0].@version
-        project.ext.isFinalRelease = (project.ext.versionKind == "release").toString()
+        project.ext.isOnlyDevRepository = System.getenv("kotlin.artifact.isOnlyDevRep").toBoolean()
+        project.ext.isFinalRelease = (!project.ext.isOnlyDevRepository && (project.ext.versionKind == "release") && (!project.ext.releaseVersion.contains("M"))).toString()
     }
 }
 
@@ -64,7 +66,7 @@ task createPropertiesFile(dependsOn: getKotlinArtifactVersion) {
         props.setProperty("kotlin.plugin.version.full", project.ext.fullVersion)
         props.setProperty("kotlin.artifact.version", project.ext.kotlin_artifact_version)
         props.setProperty("kotlin.artifact.isFinalRelease", project.ext.isFinalRelease)
-        props.setProperty("kotlin.artifact.isOnlyDevRep", System.getenv("kotlin.artifact.isOnlyDevRep"))
+        props.setProperty("kotlin.artifact.isOnlyDevRep", project.ext.isOnlyDevRepository.toString())
         props.setProperty("kotlin.artifact.isPresentInConfigureDialog", System.getenv("kotlin.artifact.isPresentInConfigureDialog"))
 
         props.store(dstFile.newWriter(), null)
@@ -83,6 +85,7 @@ task downloadPluginZip(dependsOn: createPropertiesFile) {
             src project.ext.url
             dest project.ext.pluginInstallPath
             overwrite true
+            timeout 300000
         }
     }
 }

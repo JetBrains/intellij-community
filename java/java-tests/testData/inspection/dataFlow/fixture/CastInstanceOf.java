@@ -32,7 +32,7 @@ class Test {
 
   void testTwoObj(boolean b, Object o1, Object o2) {
     if((b && o1 instanceof String) || o2 instanceof String) {
-      String x = (<warning descr="Casting '(b ? o1 : o2)' to 'String' may produce 'java.lang.ClassCastException'">String</warning>)(b ? o1 : o2);
+      String x = (<warning descr="Casting '(b ? o1 : o2)' to 'String' may produce 'ClassCastException'">String</warning>)(b ? o1 : o2);
     }
   }
 

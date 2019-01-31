@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -18,11 +17,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -63,6 +62,14 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
+    visitElement(block);
+  }
+
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    visitExpression(expression);
+  }
+
+  public void visitLambdaBlock(@NotNull GrCodeBlock block) {
     visitElement(block);
   }
 
@@ -114,16 +121,20 @@ public abstract class GroovyElementVisitor {
     visitExpression(callExpression);
   }
 
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    visitCallExpression(methodCallExpression);
-  }
-
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     visitCallExpression(newExpression);
   }
 
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    visitCallExpression(call);
+  }
+
+  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
+    visitMethodCall(methodCallExpression);
+  }
+
   public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    visitStatement(applicationStatement);
+    visitMethodCall(applicationStatement);
   }
 
   public void visitArrayDeclaration(@NotNull GrArrayDeclaration arrayDeclaration) {
@@ -402,6 +413,10 @@ public abstract class GroovyElementVisitor {
     visitStatement(tryCatchStatement);
   }
 
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    visitElement(resourceList);
+  }
+
   public void visitBlockStatement(@NotNull GrBlockStatement blockStatement) {
     visitStatement(blockStatement);
   }
@@ -439,7 +454,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitRangeExpression(@NotNull GrRangeExpression range) {
-    visitBinaryExpression(range);
+    visitExpression(range);
   }
 
   public void visitGStringInjection(@NotNull GrStringInjection injection) {
@@ -464,5 +479,13 @@ public abstract class GroovyElementVisitor {
 
   public void visitSpreadArgument(@NotNull GrSpreadArgument spreadArgument) {
     visitExpression(spreadArgument);
+  }
+
+  public void visitExpressionList(@NotNull GrExpressionList expressionList) {
+    visitElement(expressionList);
+  }
+
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    visitElement(arrayInitializer);
   }
 }

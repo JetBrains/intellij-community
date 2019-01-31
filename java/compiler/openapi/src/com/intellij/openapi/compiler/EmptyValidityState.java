@@ -30,6 +30,7 @@ public final class EmptyValidityState implements ValidityState {
    * @param otherState the state to compare with.
    * @return true if and only if otherState == this
    */
+  @Override
   public boolean equalsTo(ValidityState otherState) {
       return otherState == this;
   }
@@ -37,6 +38,7 @@ public final class EmptyValidityState implements ValidityState {
   /**
    * Do nothing here
    */
+  @Override
   public void save(DataOutput dataOutput) throws IOException {
   }
 }

@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Calendar;
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -47,18 +46,26 @@ class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_STRING, "contains", "indexOf", "startsWith", "endsWith", "lastIndexOf", "length", "trim",
                  "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
-    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max")
+    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max"),
+    staticCall(JAVA_LANG_INTEGER, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("int"),
+    staticCall(JAVA_LANG_LONG, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("long"),
+    staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
+    staticCall(JAVA_LANG_FLOAT, "toString", "toHexString").parameterTypes("float"),
+    staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
+    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short")
   );
   private static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 1024;
 
   interface CustomMethodHandler {
 
-    List<DfaMemoryState> handle(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
+    @Nullable
+    DfaValue getMethodResult(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
+
     default CustomMethodHandler compose(CustomMethodHandler other) {
       if (other == null) return this;
       return (args, memState, factory) -> {
-        List<DfaMemoryState> result = this.handle(args, memState, factory);
-        return result.isEmpty() ? other.handle(args, memState, factory) : result;
+        DfaValue result = this.getMethodResult(args, memState, factory);
+        return result == null ? other.getMethodResult(args, memState, factory) : result;
       };
     }
 
@@ -71,16 +78,31 @@ class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true));
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
+    .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
+              (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory))
+    .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
+              (args, memState, factory) -> calendarGet(args.myArguments, memState, factory))
+    .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
+                    instanceCall("java.io.Reader", "skip").parameterTypes("long")),
+              (args, memState, factory) -> skip(args.myArguments, memState, factory))
+    .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_INTEGER, "toBinaryString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Integer.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toHexString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 4, Long.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toOctalString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 3, Long.SIZE))
+    .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
+              (args, memState, factory) -> numberAsString(args, memState, factory, 1, Long.SIZE));
 
-  public static CustomMethodHandler find(MethodCallInstruction instruction) {
-    PsiMethod method = instruction.getTargetMethod();
+  public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
-      handler = (args, memState, factory) -> {
-        DfaValue value = handleConstantCall(args, memState, factory, method);
-        return value == null ? Collections.emptyList() : singleResult(memState, value);
-      };
+      handler = (args, memState, factory) -> handleConstantCall(args, memState, factory, method);
     }
     CustomMethodHandler handler2 = CUSTOM_METHOD_HANDLERS.mapFirst(method);
     return handler == null ? handler2 : handler.compose(handler2);
@@ -122,7 +144,7 @@ class CustomMethodHandlers {
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       return null;
     }
-    return factory.getConstFactory().createFromValue(result, returnType, null);
+    return factory.getConstFactory().createFromValue(result, returnType);
   }
 
   private static Method toJvmMethod(PsiMethod method) {
@@ -190,27 +212,73 @@ class CustomMethodHandlers {
     });
   }
 
-  private static List<DfaMemoryState> indexOf(DfaValue qualifier,
-                                              DfaMemoryState memState,
-                                              DfaValueFactory factory,
-                                              SpecialField specialField) {
+  private static DfaValue indexOf(DfaValue qualifier,
+                                  DfaMemoryState memState,
+                                  DfaValueFactory factory,
+                                  SpecialField specialField) {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1)));
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1));
   }
 
-  private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
+  private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
+    if (state.isNull(argument)) {
+      return DfaOptionalSupport.getOptionalValue(factory, false);
+    }
+    if (state.isNotNull(argument)) {
+      return DfaOptionalSupport.getOptionalValue(factory, true);
+    }
+    return null;
+  }
+
+  private static DfaValue mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
-    if(arg == null) return Collections.emptyList();
+    if (arg == null) return null;
     LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
-    if (range == null) return Collections.emptyList();
-    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, range.abs(isLong)));
+    if (range == null) return null;
+    return factory.getFactValue(DfaFactType.RANGE, range.abs(isLong));
   }
 
-  private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {
-    state.push(value);
-    return Collections.singletonList(state);
+  private static DfaValue calendarGet(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.length != 1) return null;
+    DfaConstValue arg = state.getConstantValue(arguments[0]);
+    if (arg == null || !(arg.getValue() instanceof Long)) return null;
+    LongRangeSet range = null;
+    switch (((Long)arg.getValue()).intValue()) {
+      case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
+      case Calendar.MONTH: range = LongRangeSet.range(0, 12); break;
+      case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
+      case Calendar.DAY_OF_YEAR: range = LongRangeSet.range(1, 366); break;
+      case Calendar.HOUR: range = LongRangeSet.range(0, 11); break;
+      case Calendar.HOUR_OF_DAY: range = LongRangeSet.range(0, 23); break;
+      case Calendar.MINUTE:
+      case Calendar.SECOND: range = LongRangeSet.range(0, 59); break;
+      case Calendar.MILLISECOND: range = LongRangeSet.range(0, 999); break;
+    }
+    return range == null ? null : factory.getFactValue(DfaFactType.RANGE, range);
+  }
+
+  private static DfaValue skip(DfaValue[] arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.length != 1) return null;
+    LongRangeSet range = state.getValueFact(arguments[0], DfaFactType.RANGE);
+    if (range == null || range.isEmpty()) return null;
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(0, Math.max(0, range.max())));
+  }
+
+
+  private static DfaValue numberAsString(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, int bitsPerChar,
+                                         int maxBits) {
+    DfaValue arg = args.myArguments[0];
+    if (arg == null) return null;
+    LongRangeSet range = state.getValueFact(arg, DfaFactType.RANGE);
+    if (range == null || range.isEmpty()) return null;
+    int usedBits = range.min() >= 0 ? Long.SIZE - Long.numberOfLeadingZeros(range.max()) : maxBits;
+    int max = Math.max(1, (usedBits - 1) / bitsPerChar + 1);
+    DfaValue lengthRange = factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(1, max));
+    DfaFactMap map = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.STRING_LENGTH.withValue(lengthRange));
+    return factory.getFactFactory().createValue(map);
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
@@ -220,11 +288,9 @@ class CustomMethodHandlers {
         return fact.min();
       }
     }
-    if (value instanceof DfaVariableValue) {
-      value = memoryState.getConstantValue((DfaVariableValue)value);
-    }
-    if (value instanceof DfaConstValue) {
-      Object constant = ((DfaConstValue)value).getValue();
+    DfaConstValue dfaConst = memoryState.getConstantValue(value);
+    if (dfaConst != null) {
+      Object constant = dfaConst.getValue();
       if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
       return constant;
     }

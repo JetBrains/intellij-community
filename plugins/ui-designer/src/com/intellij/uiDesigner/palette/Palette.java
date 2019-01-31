@@ -778,7 +778,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
     }
 
     @Override
-    public void lookAndFeelChanged(final LafManager source) {
+    public void lookAndFeelChanged(@NotNull final LafManager source) {
       for (final IntrospectedProperty[] properties : myClass2Properties.values()) {
         LOG.assertTrue(properties != null);
         for (int j = properties.length - 1; j >= 0; j--) {
@@ -789,6 +789,6 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   interface Listener {
-    void groupsChanged(Palette palette);
+    void groupsChanged(@NotNull Palette palette);
   }
 }

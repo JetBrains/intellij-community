@@ -77,7 +77,7 @@ public class JDParamListOwnerComment extends JDComment {
    */
   protected void generateList(@NotNull final String prefix,
                               @NotNull StringBuilder sb,
-                              @NotNull List<TagDescription> tagBlocks,
+                              @NotNull List<? extends TagDescription> tagBlocks,
                               @NotNull String tag,
                               boolean align_comments,
                               boolean generate_empty_tags,
@@ -110,7 +110,7 @@ public class JDParamListOwnerComment extends JDComment {
     }
   }
 
-  private static int maxTagDescriptionNameLength(@NotNull List<TagDescription> tagBlocks,
+  private static int maxTagDescriptionNameLength(@NotNull List<? extends TagDescription> tagBlocks,
                                                  boolean align_comments,
                                                  boolean generate_empty_tags,
                                                  boolean descriptionOnNewLine)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +38,7 @@ public class Mappings {
   private static final IntInlineKeyDescriptor INT_KEY_DESCRIPTOR = new IntInlineKeyDescriptor();
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
+  private static final String IMPORT_WILDCARD_SUFFIX = ".*";
 
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
@@ -133,6 +120,7 @@ public class Mappings {
     myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
     final CollectionFactory<File> fileCollectionFactory = new CollectionFactory<File>() {
+      @Override
       public Collection<File> create() {
         return new THashSet<>(FileUtil.FILE_HASHING_STRATEGY); // todo: do we really need set and not a list here?
       }
@@ -239,7 +227,7 @@ public class Mappings {
       for (Pair<ClassFileRepr, File> pair : deleted) {
         final int deletedClassName = pair.first.name;
         final Collection<File> sources = myClassToSourceFile.get(deletedClassName);
-        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved 
+        if (sources == null || sources.isEmpty()) { // if really deleted and not e.g. moved
           myChangedClasses.remove(deletedClassName);
         }
       }
@@ -311,24 +299,16 @@ public class Mappings {
     }
 
     TIntHashSet propagateFieldAccess(final int name, final int className) {
-      return propagateMemberAccess(true, new MemberComparator() {
-        @Override
-        public boolean isSame(ProtoMember member) {
-          return member.name == name;
-        }
-      }, className);
+      return propagateMemberAccess(true, member -> member.name == name, className);
     }
 
     TIntHashSet propagateMethodAccess(final MethodRepr m, final int className) {
-      return propagateMemberAccess(false, new MemberComparator() {
-        @Override
-        public boolean isSame(ProtoMember member) {
-          if (member instanceof MethodRepr) {
-            final MethodRepr memberMethod = (MethodRepr)member;
-            return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
-          }
-          return false;
+      return propagateMemberAccess(false, member -> {
+        if (member instanceof MethodRepr) {
+          final MethodRepr memberMethod = (MethodRepr)member;
+          return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
         }
+        return false;
       }, className);
     }
 
@@ -451,7 +431,7 @@ public class Mappings {
         visitedClasses.add(fromClass.name);
       }
       for (int superName : fromClass.getSupers()) {
-        if (!visitedClasses.add(superName)) {
+        if (!visitedClasses.add(superName) || superName == myObjectClassName) {
           continue;  // prevent SOE
         }
         final ClassRepr superClass = classReprByName(superName);
@@ -689,6 +669,36 @@ public class Mappings {
       });
     }
 
+    void affectStaticMemberImportUsages(final int memberName, int ownerName, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+      debug("Affect static member import usage referenced of class ", ownerName);
+      affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, ownerName));
+
+      classes.forEach(cls -> {
+        final TIntHashSet deps = myClassToClassDependency.get(cls);
+        if (deps != null) {
+          addAll(dependents, deps);
+        }
+        debug("Affect static member import usage referenced of class ", cls);
+        affectedUsages.add(UsageRepr.createImportStaticMemberUsage(myContext, memberName, cls));
+        return true;
+      });
+    }
+
+    void affectStaticMemberOnDemandUsages(int ownerClass, final TIntHashSet classes, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
+      debug("Affect static member on-demand import usage referenced of class ", ownerClass);
+      affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, ownerClass));
+      
+      classes.forEach(cls -> {
+        final TIntHashSet deps = myClassToClassDependency.get(cls);
+        if (deps != null) {
+          addAll(dependents, deps);
+        }
+        debug("Affect static member on-demand import usage referenced of class ", cls);
+        affectedUsages.add(UsageRepr.createImportStaticOnDemandUsage(myContext, cls));
+        return true;
+      });
+    }
+
     void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
       if (subclasses != null) {
@@ -762,6 +772,7 @@ public class Mappings {
         myFilter = filter;
       }
 
+      @Override
       public boolean checkResidence(int residence) {
         final Collection<File> fNames = myClassToSourceFile.get(residence);
         if (fNames == null || fNames.isEmpty()) {
@@ -940,7 +951,7 @@ public class Mappings {
 
   public interface DependentFilesFilter {
     boolean accept(File file);
-    
+
     boolean belongsToCurrentTargetChunk(File file);
   }
 
@@ -1220,6 +1231,10 @@ public class Mappings {
             propagated = myFuture.propagateMethodAccess(m, it.name);
           }
 
+          if (m.isStatic()) {
+            myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+          }
+
           final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
 
           for (final MethodRepr mm : lessSpecific) {
@@ -1319,6 +1334,11 @@ public class Mappings {
         final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
         final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
 
+        if (!m.isPrivate() && m.isStatic()) {
+          debug("The method was static --- affecting static method import usages");
+          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+        }
+
         if (overridenMethods.size() == 0) {
           debug("No overridden methods found, affecting method usages");
           myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
@@ -1356,7 +1376,7 @@ public class Mappings {
           }
         }
 
-        if (!m.isAbstract()) {
+        if (!m.isAbstract() && !m.isStatic()) {
           propagated.forEach(p -> {
             if (p != it.name) {
               final ClassRepr s = myFuture.classReprByName(p);
@@ -1501,6 +1521,17 @@ public class Mappings {
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
                 debug("Added static specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
+
+                if (!m.isPrivate()) {
+                  debug("Added static modifier --- affecting static member on-demand import usages");
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+              }
+              else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                if (!m.isPrivate()) {
+                  debug("Removed static modifier --- affecting static method import usages");
+                  myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
               }
             }
             else {
@@ -1511,7 +1542,7 @@ public class Mappings {
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
 
-              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) != 0)) {
+              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && (d.removedModifiers() & Opcodes.ACC_PRIVATE) == 0) {
                 if (!constrained) {
                   debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {
@@ -1608,6 +1639,9 @@ public class Mappings {
             debug("Affecting field usages referenced from subclass ", subClass);
             final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, subClass);
             myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+            if (f.isStatic()) {
+              myFuture.affectStaticMemberOnDemandUsages(subClass, propagated, state.myAffectedUsages, state.myDependants);
+            }
 
             final TIntHashSet deps = myClassToClassDependency.get(subClass);
 
@@ -1666,7 +1700,7 @@ public class Mappings {
       if (removed.isEmpty()) {
         return true;
       }
-      assert myFuture != null;
+      assert myPresent != null;
 
       debug("Processing removed fields:");
 
@@ -1687,8 +1721,12 @@ public class Mappings {
           }
         }
 
-        final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, it.name);
-        myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        final TIntHashSet propagated = myPresent.propagateFieldAccess(f.name, it.name);
+        myPresent.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        if (!f.isPrivate() && f.isStatic()) {
+          debug("The field was static --- affecting static field import usages");
+          myPresent.affectStaticMemberImportUsages(f.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+        }
       }
       debug("End of removed fields processing");
 
@@ -1708,9 +1746,9 @@ public class Mappings {
         final FieldRepr field = f.first;
 
         debug("Field: ", field.name);
-        
+
         // only if the field was a compile-time constant
-        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) { 
+        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) {
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) != 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) != 0;
@@ -1750,6 +1788,16 @@ public class Mappings {
               myFuture.affectFieldUsages(
                 field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
               );
+              if (!field.isPrivate()) {
+                if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                  debug("Added static modifier --- affecting static member on-demand import usages");
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+                else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+                  debug("Removed static modifier --- affecting static field import usages");
+                  myFuture.affectStaticMemberImportUsages(field.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                }
+              }
             }
             else {
               final Set<UsageRepr.Usage> usages = new THashSet<>();
@@ -1955,7 +2003,7 @@ public class Mappings {
               state.myAffectedUsages.add(changedClass.createUsage());
             }
           }
-          
+
           if (changedClass.isAnnotation()) {
             debug("Class is annotation, performing annotation-specific analysis");
 
@@ -2052,9 +2100,9 @@ public class Mappings {
       assert myDelta.myChangedFiles != null;
 
       myDelta.myChangedFiles.add(fileName);
-      
+
       debug("Processing removed classes:");
-      
+
       for (final ClassRepr c : removed) {
         myDelta.addDeletedClass(c, fileName);
         if (!myEasyMode) {
@@ -2280,7 +2328,7 @@ public class Mappings {
                 }
               }
             }
-            
+
             final DiffState state = new DiffState(
               Difference.make(pastClasses, compiledFile.myFileClasses),
               Difference.make(pastModules, compiledFile.myFileModules)
@@ -2295,10 +2343,10 @@ public class Mappings {
                 return false;
               }
             }
-  
+
             processRemovedClases(state, fileName);
             processAddedClasses(state, fileName);
-  
+
             if (!myEasyMode) {
               calculateAffectedFiles(state);
             }
@@ -2348,7 +2396,7 @@ public class Mappings {
         finally {
           if (myFilesToCompile != null) {
             assert myDelta.myChangedFiles != null;
-            // if some class is associated with several sources, 
+            // if some class is associated with several sources,
             // some of them may not have been compiled in this round, so such files should be considered unchanged
             myDelta.myChangedFiles.retainAll(myFilesToCompile);
           }
@@ -2368,7 +2416,7 @@ public class Mappings {
         // because necessary 'require' directives may be missing from the newly added module-info file
         myFuture.affectModule(moduleRepr, myAffectedFiles);
       }
-      
+
       for (ModuleRepr removedModule : modulesDiff.removed()) {
         myDelta.addDeletedClass(removedModule, fileName); // need this for integrate
         myPresent.affectDependentModules(state, removedModule.name, null, true);
@@ -2386,6 +2434,7 @@ public class Mappings {
         if (d.versionChanged()) {
           final int version = moduleRepr.getVersion();
           myPresent.affectDependentModules(state, moduleRepr.name, new UsageConstraint() {
+            @Override
             public boolean checkResidence(int dep) {
               final ModuleRepr depModule = myPresent.moduleReprByName(dep);
               if (depModule != null) {
@@ -2646,7 +2695,7 @@ public class Mappings {
             mySourceFileToClasses.replace(fileName, classes);
             return true;
           });
-          
+
           // some classes may be associated with multiple sources.
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
@@ -2693,6 +2742,7 @@ public class Mappings {
           myClassToSourceFile.replaceAll(delta.myClassToSourceFile);
           mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
           delta.mySourceFileToClasses.forEachEntry(new TObjectObjectProcedure<File, Collection<ClassFileRepr>>() {
+            @Override
             public boolean execute(File src, Collection<ClassFileRepr> classes) {
               for (ClassFileRepr repr : classes) {
                 if (repr instanceof ClassRepr) {
@@ -2756,6 +2806,7 @@ public class Mappings {
   public Callbacks.Backend getCallback() {
     return new Callbacks.Backend() {
 
+      @Override
       public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
         synchronized (myLock) {
           final int classFileNameS = myContext.get(classFileName);
@@ -2786,42 +2837,50 @@ public class Mappings {
         }
       }
 
+      @Override
       public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
         associate(classFileName, Collections.singleton(sourceFileName), cr);
       }
 
       @Override
-      public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
-        final List<String> allImports = new ArrayList<>();
-        for (String anImport : imports) {
-          if (!anImport.endsWith("*")) {
-            allImports.add(anImport); // filter out wildcard imports
-          }
-        }
-        for (final String s : staticImports) {
-          int i = s.length() - 1;
-          while (s.charAt(i) != '.') {
-            i--;
-          }
-          final String anImport = s.substring(0, i);
-          if (!anImport.endsWith("*")) {
-            allImports.add(anImport); // filter out wildcard imports
-          }
-        }
-
-        if (!allImports.isEmpty()) {
+      public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
+        if (!classImports.isEmpty() || !staticImports.isEmpty()) {
           myPostPasses.offer(() -> {
             final int rootClassName = myContext.get(className.replace(".", "/"));
             final Collection<File> fileNames = myClassToSourceFile.get(rootClassName);
             final ClassRepr repr = fileNames != null && !fileNames.isEmpty()? getClassReprByName(fileNames.iterator().next(), rootClassName) : null;
+            boolean usageAdded = false;
 
-            for (final String i : allImports) {
-              final int iname = myContext.get(i.replace('.', '/'));
-              myClassToClassDependency.put(iname, rootClassName);
-              if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
-                for (File fileName : fileNames) {
-                  mySourceFileToClasses.put(fileName, repr);
+            for (final String anImport : classImports) {
+              if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+                final int iname = myContext.get(anImport.replace('.', '/'));
+                myClassToClassDependency.put(iname, rootClassName);
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+              }
+            }
+
+            for (String anImport : staticImports) {
+              if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+                final int iname = myContext.get(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/'));
+                myClassToClassDependency.put(iname, rootClassName);
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+                usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticOnDemandUsage(myContext, iname));
+              }
+              else {
+                final int i = anImport.lastIndexOf('.');
+                if (i > 0 && i < anImport.length() - 1) {
+                  final int iname = myContext.get(anImport.substring(0, i).replace('.', '/'));
+                  final int memberName = myContext.get(anImport.substring(i+1));
+                  myClassToClassDependency.put(iname, rootClassName);
+                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname));
+                  usageAdded |= repr != null && repr.addUsage(UsageRepr.createImportStaticMemberUsage(myContext, memberName, iname));
                 }
+              }
+            }
+
+            if (usageAdded) {
+              for (File fileName : fileNames) {
+                mySourceFileToClasses.put(fileName, repr);
               }
             }
           });
@@ -3055,14 +3114,8 @@ public class Mappings {
     for (int i = 0; i < data.length; i++) {
       final File file = new File(outputRoot, info[i]);
       FileUtil.createIfDoesntExist(file);
-      try {
-        final PrintStream stream = new PrintStream(file);
-        try {
-          data[i].toStream(myContext, stream);
-        }
-        finally {
-          stream.close();
-        }
+      try (PrintStream stream = new PrintStream(file)) {
+        data[i].toStream(myContext, stream);
       }
       catch (FileNotFoundException e) {
         e.printStackTrace();

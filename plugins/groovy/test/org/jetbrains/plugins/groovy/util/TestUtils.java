@@ -45,7 +45,6 @@ public abstract class TestUtils {
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
   public static final String GROOVY_JAR = "groovy-all.jar";
-  public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
   public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
   public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
   public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
@@ -58,18 +57,6 @@ public abstract class TestUtils {
 
   public static String getMockGroovyLibraryHome() {
     return getAbsoluteTestDataPath() + "/mockGroovyLib";
-  }
-
-  public static String getMockGroovy1_6LibraryName() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib1.6/lib/groovy-all-1.6.jar";
-  }
-
-  public static String getMockGroovy1_7LibraryHome() {
-    return getAbsoluteTestDataPath() + "/mockGroovyLib1.7";
-  }
-
-  public static String getMockGroovy1_7LibraryName() {
-    return getMockGroovy1_7LibraryHome()+"/groovy-all-1.7.3.jar";
   }
 
   public static String getMockGroovy1_8LibraryHome() {
@@ -144,6 +131,12 @@ public abstract class TestUtils {
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 
+  /**
+   * Reads input file which consists at least of two sections separated with "-----" line
+   * @param filePath file to read
+   * @return a list of sections read from the file
+   * @throws RuntimeException if any IO problem occurs
+   */
   public static List<String> readInput(String filePath) {
     String content;
     try {
@@ -173,7 +166,7 @@ public abstract class TestUtils {
     input.add(content);
 
     Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertNotNull("Test output points to null", input.size() > 1);
+    Assert.assertTrue("Test output points to null", input.size() > 1);
 
     return input;
   }
@@ -211,7 +204,7 @@ public abstract class TestUtils {
     }
 
     if (missedVariants.size() > 0) {
-      Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
+      Assert.fail("Some completion variants are missed " + missedVariants);
     }
   }
 

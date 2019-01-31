@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Upcoming push information holder for one repository
+ * Push information for one repository, available from the push dialog.
  */
 public interface PushInfo {
   /**
@@ -33,8 +33,6 @@ public interface PushInfo {
 
   /**
    * Specifies what would be pushed and where for this repository
-   *
-   * @return push specification
    */
   @NotNull
   PushSpec<PushSource, PushTarget> getPushSpec();
@@ -42,6 +40,9 @@ public interface PushInfo {
   /**
    * Returns list of commits to be pushed.
    * Commits are ordered so that the most recent come last, e.g. as in the output of git log source..target but in reverse order
+   * <br/><br/>
+   * <b>NB: </b> The list of commits reflects the state of the push dialog, it can be empty, if the push info is requested before
+   * the outgoing list of commits is populated.
    */
   @NotNull
   List<VcsFullCommitDetails> getCommits();

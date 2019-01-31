@@ -22,10 +22,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  */
 public class ConvertCollectionToArrayFixTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/convertCollectionToArray";

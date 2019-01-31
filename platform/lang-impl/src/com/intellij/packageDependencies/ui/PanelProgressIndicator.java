@@ -29,13 +29,14 @@ import java.util.concurrent.TimeUnit;
 public class PanelProgressIndicator extends ProgressIndicatorBase {
   private final MyProgressPanel myProgressPanel;
   private boolean myPaintInQueue;
-  private final Consumer<JComponent> myComponentUpdater;
+  private final Consumer<? super JComponent> myComponentUpdater;
   private Future<?> myAlarm = CompletableFuture.completedFuture(null);
 
-  public PanelProgressIndicator(Consumer<JComponent> componentUpdater) {
+  public PanelProgressIndicator(Consumer<? super JComponent> componentUpdater) {
     myProgressPanel = new MyProgressPanel();
     myProgressPanel.myFractionProgress.setMaximum(100);
     myComponentUpdater = componentUpdater;
+    setIndeterminate(false);
   }
 
   @Override

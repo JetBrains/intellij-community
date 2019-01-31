@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 8/26/12 11:21 PM
  */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
@@ -37,7 +36,7 @@ public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatche
     myModifiers.add(interestedModifier);
   }
   
-  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementAtomMatchCondition> interestedModifiers) {
+  public ByModifierArrangementEntryMatcher(@NotNull Collection<? extends ArrangementAtomMatchCondition> interestedModifiers) {
     myModifiers.addAll(interestedModifiers);
   }
 

@@ -32,8 +32,8 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
-  public JavaModifierListElementType() {
+class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
+  JavaModifierListElementType() {
     super("MODIFIER_LIST");
   }
 
@@ -53,8 +53,9 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
     return new PsiModifierListImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiModifierListStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiModifierListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     return new PsiModifierListStubImpl(parentStub, RecordUtil.packModifierList(tree, node));
   }
 
@@ -70,7 +71,7 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   @Override
-  public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public boolean shouldCreateStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     final LighterASTNode parent = tree.getParent(node);
     final IElementType parentType = parent != null ? parent.getTokenType() : null;
     return shouldCreateStub(parentType);

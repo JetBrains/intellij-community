@@ -16,8 +16,8 @@ import java.nio.file.Paths;
  * Represents legacy bash.exe WSL, see RUBY-20359
  */
 public class WSLDistributionLegacy extends WSLDistribution {
-  private static final WSLDistribution.Description LEGACY_WSL =
-    new WSLDistribution.Description("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
+  private static final WslDistributionDescriptor LEGACY_WSL =
+    new WslDistributionDescriptor("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
 
   private static final String WSL_ROOT_CHUNK = "\\lxss\\rootfs";
 
@@ -36,11 +36,11 @@ public class WSLDistributionLegacy extends WSLDistribution {
    * @return legacy WSL ("Bash-on-Windows") if it's available, <code>null</code> otherwise
    */
   @Nullable
-  static WSLDistribution getInstance() {
+  public static WSLDistributionLegacy getInstance() {
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return null;
 
-    final Path executablePath = executableRoot.resolve(LEGACY_WSL.exeName);
+    final Path executablePath = executableRoot.resolve(LEGACY_WSL.getExecutablePath());
     if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
       return new WSLDistributionLegacy(executablePath);
     }

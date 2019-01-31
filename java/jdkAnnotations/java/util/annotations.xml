@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.util.AbstractCollection T[] toArray(T[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.AbstractCollection T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
@@ -835,11 +841,6 @@
       <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
     </annotation>
   </item>
-  <item name="java.util.Calendar int get(int)">
-    <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="intValues" val="{java.util.Calendar.SUNDAY, java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY, java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY}" />
-    </annotation>
-  </item>
   <item name="java.util.Calendar int get(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
@@ -1376,6 +1377,160 @@
   <item name="java.util.Collections void swap(java.util.List&lt;?&gt;, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Comparator int compare(T, T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date Date(int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date Date(int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name='java.util.Date Date(int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date Date(int, int, int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name='java.util.Date Date(int, int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date Date(int, int, int, int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name='java.util.Date Date(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date boolean after(java.util.Date)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date boolean before(java.util.Date)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getDate()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getDay()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getHours()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getMinutes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date int getMonth()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getSeconds()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date int getYear()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date java.lang.Object clone()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date long UTC(int, int, int, int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date long UTC(int, int, int, int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name='java.util.Date long getTime()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date long parse(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setDate(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setHours(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setMinutes(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setMonth(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name="java.util.Date void setMonth(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name='java.util.Date void setSeconds(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setTime(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setYear(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name='java.util.Deque E pollFirst()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -1442,6 +1597,21 @@
   <item name='java.util.Formatter java.util.Formatter format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
+  <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+  </item>
   <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -1502,6 +1672,7 @@
   </item>
   <item name='java.util.List boolean add(E)'>
     <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;true&quot;"/>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
@@ -1793,6 +1964,12 @@
   <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Objects java.lang.String toString(java.lang.Object, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;null, _ -&gt; param2&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Optional T get()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1804,6 +1981,9 @@
       <val name="value" val="&quot;!null -&gt; !null&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.util.Properties void store(java.io.OutputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Queue E element()'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2059,6 +2239,96 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Spliterator boolean hasCharacteristics(int) 0'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterator int characteristics()'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliterator(java.util.Collection&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliterator(java.util.Iterator&lt;? extends T&gt;, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator&lt;T&gt; spliteratorUnknownSize(java.util.Iterator&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(double[], int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(double[], int, int, int) 3'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliterator(java.util.PrimitiveIterator.OfDouble, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfDouble spliteratorUnknownSize(java.util.PrimitiveIterator.OfDouble, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfInt spliterator(java.util.PrimitiveIterator.OfInt, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfInt spliteratorUnknownSize(java.util.PrimitiveIterator.OfInt, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfLong spliterator(java.util.PrimitiveIterator.OfLong, long, int) 2'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators java.util.Spliterator.OfLong spliteratorUnknownSize(java.util.PrimitiveIterator.OfLong, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractDoubleSpliterator AbstractDoubleSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractIntSpliterator AbstractIntSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractLongSpliterator AbstractLongSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.AbstractSpliterator AbstractSpliterator(long, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.Spliterators.IteratorSpliterator IteratorSpliterator(java.util.Iterator&lt;? extends T&gt;, int) 1'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="flagsFromClass" val="java.util.Spliterator.class" />
     </annotation>
   </item>
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">

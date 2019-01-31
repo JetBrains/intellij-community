@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -31,14 +17,18 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
@@ -57,15 +47,24 @@ import javax.imageio.ImageReader;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Base64;
-import java.util.Iterator;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static com.intellij.util.ui.UIUtil.drawImage;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 
 /**
  * @author dsl
@@ -87,7 +86,7 @@ public class TipUIUtil {
   }
 
   @Nullable
-  private static TipAndTrickBean getTip(String tipFileName) {
+  public static TipAndTrickBean getTip(String tipFileName) {
     TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
@@ -104,19 +103,30 @@ public class TipUIUtil {
   private static String getTipText(@Nullable TipAndTrickBean tip, Component component) {
     if (tip == null) return "";
     try {
-      PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
-      ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
-                              ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+      StringBuilder text = new StringBuilder();
+      String cssText;
+      File tipFile = new File(tip.fileName);
+      if (tipFile.isAbsolute() && tipFile.exists()) {
+        text.append(FileUtil.loadFile(tipFile));
+        updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
+        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css"));
+      }
+      else {
+        PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+        ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
+                                ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
 
-      URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
-
-      if (url == null) {
-        return getCantReadText(tip);
+        URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
+        if (url == null) {
+          return getCantReadText(tip);
+        }
+        text.append(ResourceUtil.loadText(url));
+        updateImages(text, tipLoader, "", component);
+        URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
+        cssText = cssResource != null ? new String(readBytes(cssResource), StandardCharsets.UTF_8) : "";
       }
 
-      StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
-      updateImages(text, tipLoader, component);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       String major = ApplicationInfo.getInstance().getMajorVersion();
       replaced = replaced.replace("&majorVersion;", major);
@@ -124,29 +134,14 @@ public class TipUIUtil {
       replaced = replaced.replace("&minorVersion;", minor);
       replaced = replaced.replace("&majorMinorVersion;", major + ("0".equals(minor) ? "" : ("." + minor)));
       replaced = replaced.replace("&settingsPath;", CommonBundle.settingsActionPath());
-      URL cssResource = ResourceUtil.getResource(tipLoader, "/tips/", UIUtil.isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
-      if (cssResource != null) {
-        try {
-          String inlinedCSS = new String(readBytes(cssResource), "utf-8");
-          inlinedCSS += "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground())+ ";overflow:hidden;}";
-          replaced = replaced.replaceFirst("<link.*\\.css\">",
-                                      "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
-        }
-        catch (IOException e) {
-          //ok, don't change CSS tags
-        }
-      }
+      String inlinedCSS = cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground())+ ";overflow:hidden;}";
+      replaced = replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
       return replaced;
     }
-    catch (IOException e) {                                
+    catch (IOException e) {
       return getCantReadText(tip);
     }
 
-  }
-
-  @Deprecated
-  public static void openTipInBrowser(String tipFileName, TipUIUtil.Browser browser, Class providerClass) {
-    openTipInBrowser(getTip(tipFileName), browser);
   }
 
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
@@ -162,26 +157,36 @@ public class TipUIUtil {
     return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
   }
 
-  private static void updateImages(StringBuffer text, ClassLoader tipLoader, Component component) {
-    final boolean dark = UIUtil.isUnderDarcula();
+  private static void updateImages(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
+    final boolean dark = isUnderDarcula();
 
     int index = text.indexOf("<img", 0);
     while (index != -1) {
       final int end = text.indexOf(">", index + 1);
       if (end == -1) return;
       final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n',' ');
-      final int srcIndex = img.indexOf("src=\"");
+      int srcIndex = img.indexOf("src=\"");
       int endIndex = img.indexOf("\"", srcIndex + 6);
+      if (srcIndex == -1 && endIndex == -1) {
+        srcIndex = img.indexOf("src=\'");
+        endIndex = img.indexOf("\'", srcIndex + 6);
+      }
       if (endIndex != -1) {
         String path = img.substring(srcIndex + 5, endIndex);
-        URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
+        URL url;
+        try {
+          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
+        }
+        catch (MalformedURLException e) {
+          url = null;
+        }
         if (url != null) {
           path = url.toExternalForm();
         }
         int extPoint = path.lastIndexOf('.');
         String pathWithoutExtension = extPoint != -1 ? path.substring(0, extPoint) : path;
         String fileExtension = extPoint != -1 ? path.substring(extPoint) : "";
-        if (!pathWithoutExtension.endsWith("_dark") && !pathWithoutExtension.endsWith("@2x")) {
+        if (!pathWithoutExtension.endsWith("_dark") && !pathWithoutExtension.endsWith("@2x") || tipLoader == null) {
           boolean hidpi =  JBUI.isPixHiDPI(component);
           path = pathWithoutExtension + (hidpi ? "@2x" : "") + (dark ? "_dark" : "") + fileExtension;
           if (url != null) {
@@ -195,7 +200,9 @@ public class TipUIUtil {
                 trinity = read(actualURL);
               }
               catch (IOException e) {
-                LOG.warn("Cannot find icon with path [" + path + "]");
+                if (!path.endsWith(".svg")) {
+                  LOG.warn("Cannot find icon with path [" + path + "]");
+                }
                 fallbackUpscale = hidpi;
                 actualURL = url;
                 trinity = read(url);
@@ -211,19 +218,25 @@ public class TipUIUtil {
               int h = image.getHeight();
               if (hidpi) {
                 // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
-                w /= 2;
-                h /= 2;
+                float k = 2f;
+                if (UIUtil.isJreHiDPI(component)) {
+                  // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
+                  k = JBUI.sysScale(component);
+                }
+                w /= k;
+                h /= k;
               }
-              // fit the user scale
-              w = (int)(JBUI.scale((float)w));
-              h = (int)(JBUI.scale((float)h));
+              // round the user scale for better quality
+              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUI.scale(1f));
+              w = userScale * w;
+              h = userScale * h;
               if (fallbackUpscale) {
                 w *= 2;
                 h *= 2;
               }
               newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
             } catch (Exception ignore) {
-              newImgTag += "width=\"400\" height=\"200\"";
+              //newImgTag += "width=\"400\" height=\"200\"";
             }
             newImgTag += ">";
             text.replace(index, end + 1, newImgTag);
@@ -242,25 +255,23 @@ public class TipUIUtil {
       formatName = readers.next().getFormatName();
     }
 
-    return Trinity.create(formatName, ImageIO.read(new ByteArrayInputStream(bytes)), bytes);
+    BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+    if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
+    return Trinity.create(formatName, image, bytes);
   }
 
   private static byte[] readBytes(@NotNull URL url) throws IOException{
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     byte[] buffer = new byte[16384];
-    InputStream stream = null;
-    try {
-      stream = url.openStream();
-      for (int len = stream.read(buffer); len >0 ; len = stream.read(buffer)) {
+    try (InputStream stream = url.openStream()) {
+      for (int len = stream.read(buffer); len > 0; len = stream.read(buffer)) {
         baos.write(buffer, 0, len);
       }
       return baos.toByteArray();
-    } finally {
-      if (stream != null) stream.close();
     }
   }
 
-  private static void updateShortcuts(StringBuffer text) {
+  private static void updateShortcuts(StringBuilder text) {
     int lastIndex = 0;
     while(true) {
       lastIndex = text.indexOf(SHORTCUT_ENTITY, lastIndex);
@@ -320,6 +331,7 @@ public class TipUIUtil {
       setBackground(UIUtil.getTextFieldBackground());
       addHyperlinkListener(
         new HyperlinkListener() {
+          @Override
           public void hyperlinkUpdate(HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               BrowserUtil.browse(e.getURL());
@@ -327,8 +339,120 @@ public class TipUIUtil {
           }
         }
       );
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      HTMLEditorKit kit = UIUtil.getHTMLEditorKit(false);
+      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit(false) {
+        private final ViewFactory myFactory = createViewFactory();
+        //SVG support
+        private ViewFactory createViewFactory() {
+          return new HTMLEditorKit.HTMLFactory() {
+            @Override
+            public View create(Element elem) {
+              View view = super.create(elem);
+              if (view instanceof ImageView) {
+                String src = (String)view.getElement().getAttributes().getAttribute(HTML.Attribute.SRC);
+                if (src != null /*&& src.endsWith(".svg")*/) {
+                  final Image image;
+                  try {
+                    final URL url = new URL(src);
+                    Dictionary cache = (Dictionary)elem.getDocument().getProperty("imageCache");
+                    if (cache == null) {
+                      elem.getDocument().putProperty("imageCache", cache = new Dictionary() {
+                        private final HashMap myMap = new HashMap();
+                        @Override
+                        public int size() {
+                          return myMap.size();
+                        }
+
+                        @Override
+                        public boolean isEmpty() {
+                          return size() ==0;
+                        }
+
+                        @Override
+                        public Enumeration keys() {
+                          return Collections.enumeration(myMap.keySet());
+                        }
+
+                        @Override
+                        public Enumeration elements() {
+                          return Collections.enumeration(myMap.values());
+                        }
+
+                        @Override
+                        public Object get(Object key) {
+                          return myMap.get(key);
+                        }
+
+                        @Override
+                        public Object put(Object key, Object value) {
+                          return myMap.put(key, value);
+                        }
+
+                        @Override
+                        public Object remove(Object key) {
+                          return myMap.remove(key);
+                        }
+                      });
+                    }
+                    image = src.endsWith(".svg")
+                            ? SVGLoader.load(url, JBUI.isPixHiDPI((Component)null) ? 2f : 1f)
+                            : Toolkit.getDefaultToolkit().createImage(url);
+                    cache.put(url, image);
+                    if (src.endsWith(".svg"))
+                      return new ImageView(elem) {
+                        @Override
+                        public Image getImage() {
+                          return image;
+                        }
+
+                        @Override
+                        public URL getImageURL() {
+                          return url;
+                        }
+
+                        @Override
+                        public void paint(Graphics g, Shape a) {
+                          Rectangle bounds = a.getBounds();
+                          int width = (int)getPreferredSpan(View.X_AXIS);
+                          int height = (int)getPreferredSpan(View.Y_AXIS);
+                          @SuppressWarnings("UndesirableClassUsage")
+                          BufferedImage buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                          Graphics2D graphics = buffer.createGraphics();
+                          super.paint(graphics, new Rectangle(buffer.getWidth(), buffer.getHeight()));
+                          drawImage(g, ImageUtil.ensureHiDPI(image, JBUI.ScaleContext.create((Component)null)), bounds.x, bounds.y, null);
+                        }
+
+                        @Override
+                        public float getMaximumSpan(int axis) {
+                          return getPreferredSpan(axis);
+                        }
+
+                        @Override
+                        public float getMinimumSpan(int axis) {
+                          return getPreferredSpan(axis);
+                        }
+
+                        @Override
+                        public float getPreferredSpan(int axis) {
+                          return (axis == View.X_AXIS ? image.getWidth(null) : image.getHeight(null))/ JBUI.sysScale();
+                        }
+                      };
+                  }
+                  catch (IOException e) {
+                    //ignore
+                  }
+                }
+              }
+              return view;
+            }
+          };
+        }
+
+        @Override
+        public ViewFactory getViewFactory() {
+          return myFactory;
+        }
+      };
       kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }
@@ -357,7 +481,7 @@ public class TipUIUtil {
     private WebView myWebView;
     private String myRecentText = "";
 
-    public JFXBrowser() {
+    JFXBrowser() {
       setLayout(new GridLayout(1, 1));
       setBackground(UIUtil.getTextFieldBackground());
       Long mask = ReflectionUtil.getField(Component.class, this, long.class, "eventMask");
@@ -402,9 +526,7 @@ public class TipUIUtil {
     @Override
     public void setText(String html) {
       myRecentText = html;
-      Platform.runLater(() -> {
-        myWebView.getEngine().loadContent(html);
-      });
+      Platform.runLater(() -> myWebView.getEngine().loadContent(html));
     }
 
     @Override

@@ -17,26 +17,32 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author stathik
- * @since Jan 8, 2004
+ * Represents an internal error caused by a plugin. It may happen if the plugin's code fails with an exception, or if the plugin violates
+ * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link com.intellij.openapi.diagnostic.Logger#error(Throwable)}
+ * method and reported to JetBrains by user, they may be automatically attributed to corresponding plugins.
+ *
+ * <p> If the problem is caused by a class, use {@link com.intellij.ide.plugins.PluginManagerCore#createPluginException} to create
+ * an instance. If the problem is caused by an extension, implement {@link com.intellij.openapi.extensions.PluginAware} in its extension class
+ * to get the plugin ID.
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
 
-  public PluginException(String message, Throwable cause, @Nullable PluginId pluginId) {
+  public PluginException(@NotNull String message, Throwable cause, @Nullable PluginId pluginId) {
     super(message, cause);
     myPluginId = pluginId;
   }
 
-  public PluginException(Throwable e, @Nullable PluginId pluginId) {
+  public PluginException(@NotNull Throwable e, @Nullable PluginId pluginId) {
     super (e.getMessage(), e);
     myPluginId = pluginId;
   }
 
-  public PluginException(final String message, @Nullable PluginId pluginId) {
+  public PluginException(@NotNull String message, @Nullable PluginId pluginId) {
     super(message);
     myPluginId = pluginId;
   }
@@ -47,8 +53,9 @@ public class PluginException extends RuntimeException {
   }
 
   @Override
+  @NotNull 
   public String getMessage() {
     String message = super.getMessage();
-    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId.toString() + "]" : message;
+    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId + "]" : message;
   }
 }

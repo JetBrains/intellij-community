@@ -81,7 +81,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
   private class MyPropertyEditor extends PropertyEditor {
     private final TextFieldWithBrowseButton myTf = new TextFieldWithBrowseButton();
 
-    public MyPropertyEditor() {
+    MyPropertyEditor() {
       myTf.setText(UIDesignerBundle.message("client.properties.configure"));
       myTf.getTextField().setEditable(false);
       myTf.getTextField().setBorder(null);

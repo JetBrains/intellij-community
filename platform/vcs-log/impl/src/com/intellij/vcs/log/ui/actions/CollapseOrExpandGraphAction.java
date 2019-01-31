@@ -22,9 +22,9 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
@@ -33,13 +33,13 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String MERGES = "Merges";
   private static final String MERGES_DESCRIPTION = "merges";
 
-  public CollapseOrExpandGraphAction(@NotNull String action) {
+  CollapseOrExpandGraphAction(@NotNull String action) {
     super(action + " " + LINEAR_BRANCHES, action + " " + LINEAR_BRANCHES_DESCRIPTION, null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     executeAction((VcsLogUiImpl)ui);

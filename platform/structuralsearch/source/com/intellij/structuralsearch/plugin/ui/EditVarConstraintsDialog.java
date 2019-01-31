@@ -54,8 +54,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -116,7 +116,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, wholeWordsOnly));
     regexp.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
       }
     });
@@ -305,7 +305,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
-    final ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getReplaceOptions();
+    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
     final String realVariableName = stripReplacementVarDecoration(varName);
     ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
 
@@ -325,7 +325,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (varName == null) return;
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
-        ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
+        myConfiguration.getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
 
       restoreScriptCode(definition);
       textConstraintsPanel.setVisible(false);
@@ -362,6 +362,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       expectedTypeConstraints.setVisible(typeComponent &&
                                          myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
       referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
+      partOfSearchResults.setVisible(true);
       containedInConstraints.setVisible(completePattern);
       scriptConstraints.setVisible(true);
 
@@ -440,7 +441,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateRegExp(EditorTextField field) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(field.getText());
     } catch (PatternSyntaxException e) {
       return showError(field, e.getDescription());
@@ -562,7 +562,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       final boolean enable = e.getDocument().getTextLength() > 0;
       for (JComponent component : components) {
         component.setEnabled(enable);
@@ -649,7 +649,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     private final Project myProject;
     private final TextAccessor myTextField;
 
-    public SelectTemplateListener(Project project, TextAccessor textField) {
+    SelectTemplateListener(Project project, TextAccessor textField) {
       myProject = project;
       myTextField = textField;
     }

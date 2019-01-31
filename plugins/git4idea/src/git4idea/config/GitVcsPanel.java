@@ -4,7 +4,6 @@ package git4idea.config;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
@@ -12,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,9 +48,6 @@ import static com.intellij.util.containers.ContainerUtil.sorted;
  */
 public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSettingsHolder> {
 
-  private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
-  private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
-
   @NotNull private final Project myProject;
   @NotNull private final GitExecutableManager myExecutableManager;
   private String myApplicationGitPath;
@@ -60,7 +57,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JComponent myRootPanel;
   private TextFieldWithBrowseButton myGitField;
   private JBCheckBox myProjectGitPathCheckBox;
-  private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncControl;
   private JCheckBox myAutoCommitOnCherryPick;
@@ -82,11 +78,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
     myExecutableManager = executableManager;
-    mySSHExecutableComboBox.addItem(IDEA_SSH);
-    mySSHExecutableComboBox.addItem(NATIVE_SSH);
-    mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
-    mySSHExecutableComboBox
-      .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
     myTestButton.addActionListener(e -> testExecutable());
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
@@ -188,7 +179,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     String projectSettingsPathToGit = projectSettings.getPathToGit();
     myGitField.setText(ObjectUtils.coalesce(projectSettingsPathToGit, myApplicationGitPath));
     myProjectGitPathCheckBox.setSelected(projectSettingsPathToGit != null);
-    mySSHExecutableComboBox.setSelectedItem(projectSettings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
     myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
@@ -197,13 +187,23 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
+    myUpdateBranchInfoCheckBox.setSelected(projectSettings.shouldUpdateBranchInfo());
     boolean branchInfoSupported = isBranchInfoSupported();
-    myUpdateBranchInfoCheckBox.setSelected(branchInfoSupported && projectSettings.shouldUpdateBranchInfo());
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
+    updateSupportedBranchInfo();
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
     myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
     myPreviewPushProtectedOnly.setSelected(projectSettings.isPreviewPushProtectedOnly());
     updateEnabled();
+  }
+
+  private void updateSupportedBranchInfo() {
+    boolean branchInfoSupported = isBranchInfoSupported();
+    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
+    mySupportedBranchUpLabel.setForeground(!branchInfoSupported && myUpdateBranchInfoCheckBox.isSelected()
+                                           ? DialogWrapper.ERROR_FOREGROUND_COLOR
+                                           : UIUtil.getContextHelpForeground());
   }
 
   private boolean isBranchInfoSupported() {
@@ -217,7 +217,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     GitSharedSettings sharedSettings = settings.getSharedSettings();
 
     return isGitPathModified(applicationSettings, projectSettings) ||
-           (projectSettings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
             projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
@@ -252,10 +251,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       applicationSettings.setPathToGit(getCurrentExecutablePath());
       projectSettings.setPathToGit(null);
     }
-
-    applicationSettings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
-                                   GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
-                                   GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
 
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
@@ -293,9 +288,8 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
     boolean branchInfoSupported = isBranchInfoSupported();
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
-    if (!branchInfoSupported) {
-      myUpdateBranchInfoCheckBox.setSelected(false);
-    }
+    UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected() && branchInfoSupported, true);
+    updateSupportedBranchInfo();
     if (isUpdateBranchSettingsModified(projectSettings)) {
       projectSettings.setBranchInfoUpdateTime((Integer)myBranchUpdateTimeField.getValue());
       projectSettings.setUpdateBranchInfo(myUpdateBranchInfoCheckBox.isSelected());
@@ -331,7 +325,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       }
     });
     myIncomingOutgoingSettingPanel = new JPanel(new BorderLayout());
-    myIncomingOutgoingSettingPanel.setVisible(false);
     NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
     numberFormatter.setMinimum(1);
     numberFormatter.setAllowsInvalid(true);

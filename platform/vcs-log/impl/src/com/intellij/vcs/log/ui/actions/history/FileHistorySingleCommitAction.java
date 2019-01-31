@@ -24,10 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public abstract class FileHistorySingleCommitAction extends AnAction implements DumbAware {
+public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -49,25 +50,25 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
 
     e.getPresentation().setVisible(true);
 
-    List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
+    List<T> details = getSelection(ui);
     if (details.isEmpty()) {
       e.getPresentation().setEnabled(false);
       return;
     }
 
-    VcsFullCommitDetails detail = getFirstItem(details);
+    T detail = getFirstItem(details);
     if (detail instanceof LoadingDetails) detail = null;
     e.getPresentation().setEnabled(details.size() == 1 && isEnabled(ui, detail, e));
   }
 
-  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable T detail, @NotNull AnActionEvent e) {
     return true;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
-    
+    VcsLogUsageTriggerCollector.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
 
@@ -76,7 +77,7 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
     CommitId commit = notNull(getFirstItem(commits));
 
     List<Integer> commitIndex = Ints.asList(ui.getLogData().getCommitIndex(commit.getHash(), commit.getRoot()));
-    ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIndex, details -> {
+    getDetailsGetter(ui).loadCommitsData(commitIndex, details -> {
       if (!details.isEmpty()) {
         performAction(project, ui, notNull(getFirstItem(details)), e);
       }
@@ -84,8 +85,14 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
                                                           MessageType.ERROR), null);
   }
 
+  @NotNull
+  protected abstract List<T> getSelection(@NotNull FileHistoryUi ui);
+
+  @NotNull
+  protected abstract DataGetter<T> getDetailsGetter(@NotNull FileHistoryUi ui);
+
   protected abstract void performAction(@NotNull Project project,
                                         @NotNull FileHistoryUi ui,
-                                        @NotNull VcsFullCommitDetails detail,
+                                        @NotNull T detail,
                                         @NotNull AnActionEvent e);
 }

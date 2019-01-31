@@ -9,8 +9,11 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -23,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -38,7 +42,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     if (project == null) return;
@@ -58,22 +62,30 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
                                                      @NotNull PsiElement target) {
     HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
-    final Content content;
-
     HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
 
     final ContentManager contentManager = hierarchyBrowserManager.getContentManager();
     final Content selectedContent = contentManager.getSelectedContent();
+
+    JComponent browserComponent = hierarchyBrowser.getComponent();
+    if (!DumbService.isDumbAware(hierarchyBrowser)) {
+      browserComponent = DumbService.getInstance(project).wrapGently(browserComponent, project);
+    }
+
+    final Content content;
     if (selectedContent != null && !selectedContent.isPinned()) {
       content = selectedContent;
-      final Component component = content.getComponent();
+      Component component = content.getComponent();
+      if (component instanceof DumbUnawareHider) {
+        component = ((DumbUnawareHider)component).getContent();
+      }
       if (component instanceof Disposable) {
         Disposer.dispose((Disposable)component);
       }
-      content.setComponent(hierarchyBrowser.getComponent());
+      content.setComponent(browserComponent);
     }
     else {
-      content = ContentFactory.SERVICE.getInstance().createContent(hierarchyBrowser.getComponent(), null, true);
+      content = ContentFactory.SERVICE.getInstance().createContent(browserComponent, null, true);
       contentManager.addContent(content);
     }
     content.setHelpId(HierarchyBrowserBaseEx.HELP_ID);
@@ -86,12 +98,16 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       }
       provider.browserActivated(hierarchyBrowser);
     };
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
+    toolWindow.activate(runnable);
+    if (hierarchyBrowser instanceof Disposable) {
+      Disposer.register(toolWindow.getContentManager(), (Disposable)hierarchyBrowser);
+    }
     return hierarchyBrowser;
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     if (!myExtension.hasAnyExtensions()) {
       e.getPresentation().setVisible(false);
     }

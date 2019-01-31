@@ -35,7 +35,7 @@ abstract class ValueManager() : Obsolescent {
 
   fun getCacheStamp(): Int = cacheStamp.get()
 
-  override final fun isObsolete(): Boolean = obsolete
+  final override fun isObsolete(): Boolean = obsolete
 
   fun markObsolete() {
     obsolete = true

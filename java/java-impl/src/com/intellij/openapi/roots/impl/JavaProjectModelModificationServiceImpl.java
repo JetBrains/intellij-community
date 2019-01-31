@@ -62,7 +62,7 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
   }
 
   @Override
-  public Promise<Void> addDependency(@NotNull Collection<Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
+  public Promise<Void> addDependency(@NotNull Collection<? extends Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
     for (JavaProjectModelModifier modifier : getModelModifiers()) {
       Promise<Void> promise = modifier.addExternalLibraryDependency(from, libraryDescriptor, scope);
       if (promise != null) {

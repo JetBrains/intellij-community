@@ -70,7 +70,7 @@ public class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiElement> shouldIgnoreElement) {
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<? super PsiElement> shouldIgnoreElement) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, element, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
@@ -111,8 +111,14 @@ public class SideEffectChecker {
     return false;
   }
 
-  public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element);
+  public static boolean checkSideEffects(@NotNull PsiExpression element, @Nullable List<? super PsiElement> sideEffects) {
+    return checkSideEffects(element, sideEffects, e -> false);
+  }
+
+  public static boolean checkSideEffects(@NotNull PsiExpression element,
+                                         @Nullable List<? super PsiElement> sideEffects,
+                                         @NotNull Predicate<? super PsiElement> ignoreElement) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element, ignoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
@@ -124,16 +130,16 @@ public class SideEffectChecker {
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final @Nullable List<PsiElement> mySideEffects;
+    private final @Nullable List<? super PsiElement> mySideEffects;
     private final @NotNull PsiElement myStartElement;
-    private final @NotNull Predicate<PsiElement> myIgnorePredicate;
+    private final @NotNull Predicate<? super PsiElement> myIgnorePredicate;
     boolean found;
 
-    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, @NotNull PsiElement startElement) {
+    SideEffectsVisitor(@Nullable List<? super PsiElement> sideEffects, @NotNull PsiElement startElement) {
       this(sideEffects, startElement, call -> false);
     }
 
-    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, @NotNull PsiElement startElement, @NotNull Predicate<PsiElement> predicate) {
+    SideEffectsVisitor(@Nullable List<? super PsiElement> sideEffects, @NotNull PsiElement startElement, @NotNull Predicate<? super PsiElement> predicate) {
       myStartElement = startElement;
       myIgnorePredicate = predicate;
       mySideEffects = sideEffects;
@@ -174,7 +180,7 @@ public class SideEffectChecker {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if(!isSideEffectFreeConstructor(expression)) {
+      if (!ExpressionUtils.isArrayCreationExpression(expression) && !isSideEffectFreeConstructor(expression)) {
         if (addSideEffect(expression)) return;
       }
       super.visitNewExpression(expression);
@@ -197,9 +203,10 @@ public class SideEffectChecker {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      PsiStatement exitedStatement = statement.findExitedStatement();
-      if (exitedStatement != null && PsiTreeUtil.isAncestor(myStartElement, exitedStatement, true)) return;
-      if (addSideEffect(statement)) return;
+      PsiElement exitedStatement = statement.findExitedElement();
+      if (exitedStatement == null || !PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) {
+        if (addSideEffect(statement)) return;
+      }
       super.visitBreakStatement(statement);
     }
 
@@ -254,6 +261,13 @@ public class SideEffectChecker {
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {
+    PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    if (anonymousClass != null && anonymousClass.getInitializers().length == 0) {
+      PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+      if (baseClass != null && baseClass.isInterface()) {
+        return true;
+      }
+    }
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();

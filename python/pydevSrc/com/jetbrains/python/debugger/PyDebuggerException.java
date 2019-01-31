@@ -19,7 +19,6 @@ public class PyDebuggerException extends Exception {
         text = lines[lines.length - 1];
       }
     }
-    //noinspection ConstantConditions
     return text;
   }
 

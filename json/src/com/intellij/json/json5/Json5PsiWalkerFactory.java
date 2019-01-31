@@ -23,13 +23,13 @@ public class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   public JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
     return new JsonOriginalPsiWalker() {
       @Override
-      public boolean isNameQuoted() {
+      public boolean requiresNameQuotes() {
         return false;
       }
 
       @Override
-      public boolean onlyDoubleQuotesForStringLiterals() {
-        return false;
+      public boolean allowsSingleQuotes() {
+        return true;
       }
     };
   }

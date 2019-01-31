@@ -241,6 +241,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod")
   }
 
+  void testPreferReturnBeforeExpression2() {
+    checkPreferredItems(0, "return", "retainAll")
+  }
+
   void testPreferReturnInSingleStatementPlace() {
     checkPreferredItems 0, "return", "registerKeyboardAction"
   }
@@ -383,6 +387,8 @@ interface TxANotAnno {}
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
     incUseCount(lookup, 2) //Component
+    assertPreferredItems(1, "Component", "FooBean3", "JComponent")
+    incUseCount(lookup, 0) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -675,6 +681,10 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'false', 'factory'
   }
 
+  void testPreferBooleanKeywordsWhenExpectedBoolean2() {
+    checkPreferredItems 0, 'false', 'factory'
+  }
+
   void testPreferExplicitlyImportedStaticMembers() {
     myFixture.addClass("""
 class ContainerUtilRt {
@@ -855,6 +865,18 @@ class Foo {
 
   void testPreferFinalBeforeVariable() {
     checkPreferredItems 0, 'final', 'find1'
+  }
+
+  void testDispreferMultiMethodInterfaceAfterNew() {
+    checkPreferredItems 1, 'Intf', 'IntfImpl'
+  }
+
+  void testPreferPrintln() {
+    myFixture.configureByText 'a.java', 'class Foo { { System.out.pri<caret>x } }'
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'println', 'print'
+    myFixture.type('\t')
+    myFixture.checkResult 'class Foo { { System.out.println(<caret>); } }'
   }
 
 }

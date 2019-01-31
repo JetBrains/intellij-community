@@ -44,7 +44,7 @@ import java.util.Collection;
 
 public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
@@ -58,7 +58,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
       final Collection<AbstractTreeNode> result = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiClass && checkClassUnderSources(element, project)) {
-          result.add(new ClassSmartPointerNode(project, element, viewSettings));
+          result.add(new ClassSmartPointerNode(project, (PsiClass)element, viewSettings));
         }
       }
       return result.isEmpty() ? null : result;
@@ -66,7 +66,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
-  private boolean checkClassUnderSources(final PsiElement element, final Project project) {
+  private static boolean checkClassUnderSources(final PsiElement element, final Project project) {
     final PsiFile file = element.getContainingFile();
     if (file != null && file.getVirtualFile() != null) {
       final FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
@@ -77,9 +77,9 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
     if (element instanceof PsiClass && checkClassUnderSources((PsiElement)element, project)) {
-      return new ClassSmartPointerNode(project, element, viewSettings);
+      return new ClassSmartPointerNode(project, (PsiClass)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
   }

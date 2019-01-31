@@ -28,11 +28,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt.getReportableTypeId;
+
 /**
  * @author nik
  */
 public class XBreakpointManagerImpl implements XBreakpointManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl");
+  private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
+
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTER = new SkipDefaultValuesSerializationFilters();
   private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<>(true);
   private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<>();
@@ -40,7 +43,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new HashSet<>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<>();
   private XBreakpointsDialogState myBreakpointsDialogSettings;
-  private final EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
+  private volatile EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
@@ -52,15 +55,40 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager) {
     myProject = project;
     myDebuggerManager = debuggerManager;
-    myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
-    myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager);
+    myLineBreakpointManager = new XLineBreakpointManager(project);
     if (!project.isDefault()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HttpFileSystem.getInstance().addFileListener(this::updateBreakpointInFile, project);
       }
       XBreakpointUtil.breakpointTypes().forEach(this::addDefaultBreakpoint);
     }
+
+    myProject.getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointAdded(@NotNull XBreakpoint breakpoint) {
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointAdded(breakpoint);
+        }
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint breakpoint) {
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointRemoved(breakpoint);
+        }
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void breakpointChanged(@NotNull XBreakpoint breakpoint) {
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointChanged(breakpoint);
+        }
+      }
+    });
   }
 
   private void updateBreakpointInFile(final VirtualFile file) {
@@ -119,6 +147,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
     else {
       myBreakpoints.put(type, breakpoint);
+      if (initUI) {
+        BreakpointsUsageCollector.reportUsage(breakpoint, "new.breakpoint");
+        BreakpointsUsageCollector.reportUsage(breakpoint, "new." + getReportableTypeId(type));
+        if (myDebuggerManager.getCurrentSession() != null) {
+          BreakpointsUsageCollector.reportUsage(breakpoint, "new.within.session");
+        }
+      }
     }
     myAllBreakpoints.add(breakpoint);
     if (breakpoint instanceof XLineBreakpointImpl) {
@@ -132,9 +167,10 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     getBreakpointDispatcherMulticaster().breakpointAdded(breakpoint);
   }
 
+  @NotNull
   private XBreakpointListener<XBreakpoint<?>> getBreakpointDispatcherMulticaster() {
     //noinspection unchecked
-    return myAllBreakpointsDispatcher.getMulticaster();
+    return myProject.getMessageBus().syncPublisher(XBreakpointListener.TOPIC);
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
@@ -294,18 +330,27 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
+  public void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable) {
+    myProject.getMessageBus().connect(parentDisposable).subscribe(XBreakpointListener.TOPIC, listener);
+  }
+
+  @Override
   public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
-    myAllBreakpointsDispatcher.addListener(listener);
+    getDispatcher().addListener(listener);
   }
 
   @Override
   public void removeBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
-    myAllBreakpointsDispatcher.removeListener(listener);
+    getDispatcher().removeListener(listener);
   }
 
-  @Override
-  public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener, @NotNull final Disposable parentDisposable) {
-    myAllBreakpointsDispatcher.addListener(listener, parentDisposable);
+  private EventDispatcher<XBreakpointListener> getDispatcher() {
+    synchronized (myDispatchers) {
+      if (myAllBreakpointsDispatcher == null) {
+        myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
+      }
+      return myAllBreakpointsDispatcher;
+    }
   }
 
   @Override
@@ -516,7 +561,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     return state;
   }
 
-  public void rememberRemovedBreakpoint(XBreakpointBase breakpoint) {
+  public void rememberRemovedBreakpoint(@NotNull XBreakpointBase breakpoint) {
     myLastRemovedBreakpoint = new RemovedBreakpointData(breakpoint);
   }
 
@@ -528,35 +573,45 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @Nullable
   public XBreakpoint restoreLastRemovedBreakpoint() {
     if (myLastRemovedBreakpoint != null) {
-      XBreakpointBase breakpoint = myLastRemovedBreakpoint.myBreakpoint;
-      if (breakpoint instanceof XLineBreakpointImpl) {
-        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(((XLineBreakpointImpl)breakpoint).getType(),
-                                                                  ((XLineBreakpointImpl)breakpoint).getFile(),
-                                                                  ((XLineBreakpointImpl)breakpoint).getLine());
-        if (existingBreakpoint != null) {
-          removeBreakpoint(existingBreakpoint);
-        }
-      }
-      XBreakpoint res = myLastRemovedBreakpoint.restore();
+      XBreakpoint breakpoint = myLastRemovedBreakpoint.restore();
       myLastRemovedBreakpoint = null;
-      return res;
+      return breakpoint;
     }
     return null;
+  }
+
+  public boolean canRestoreLastRemovedBreakpoint() {
+    return myLastRemovedBreakpoint != null && myLastRemovedBreakpoint.isRestorable();
   }
 
   private class RemovedBreakpointData {
     private final XBreakpointBase myBreakpoint;
     private final XDependentBreakpointManager.DependenciesData myDependenciesData;
 
-    private RemovedBreakpointData(XBreakpointBase breakpoint) {
+    private RemovedBreakpointData(@NotNull XBreakpointBase breakpoint) {
       myBreakpoint = breakpoint;
       myDependenciesData = myDependentBreakpointManager.new DependenciesData(breakpoint);
     }
 
+    boolean isRestorable() {
+      return !(myBreakpoint instanceof XLineBreakpointImpl) || ((XLineBreakpointImpl)myBreakpoint).getFile() != null;
+    }
+
     @Nullable
     XBreakpoint restore() {
-      XBreakpointBase<?,?,?> breakpoint = createBreakpoint(myBreakpoint.getState());
-      myLastRemovedBreakpoint = null;
+      if (myBreakpoint instanceof XLineBreakpointImpl) {
+        XLineBreakpointImpl<?> lineBreakpoint = (XLineBreakpointImpl)myBreakpoint;
+        VirtualFile file = lineBreakpoint.getFile();
+        if (file == null) { // file was deleted
+          return null;
+        }
+        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file, lineBreakpoint.getLine());
+        if (existingBreakpoint != null) {
+          removeBreakpoint(existingBreakpoint);
+        }
+      }
+
+      XBreakpointBase<?, ?, ?> breakpoint = createBreakpoint(myBreakpoint.getState());
       if (breakpoint != null) {
         addBreakpoint(breakpoint, false, true);
         myDependenciesData.restore(breakpoint);

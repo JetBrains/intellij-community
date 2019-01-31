@@ -1,19 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.TObjectHashingStrategy;
@@ -21,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.JDOMUtil.getAttributes;
+
 public class JDOMInterner {
+  private static final Condition<Object> IS_ELEMENT = Conditions.instanceOf(Element.class);
   private final StringInterner myStrings = new StringInterner();
   private final OpenTHashSet<Element> myElements = new OpenTHashSet<Element>(new TObjectHashingStrategy<Element>() {
     @Override
@@ -70,7 +64,7 @@ public class JDOMInterner {
   });
 
   private static int computeAttributesHashCode(Element e) {
-    List<Attribute> attributes = e.getAttributes();
+    List<Attribute> attributes = getAttributes(e);
     if (attributes instanceof ImmutableSameTypeAttributeList) {
       return attributes.hashCode();
     }
@@ -88,8 +82,8 @@ public class JDOMInterner {
     if (o2 instanceof ImmutableElement)  {
       return ((ImmutableElement)o2).attributesEqual(o1);
     }
-    List<Attribute> a1 = o1.getAttributes();
-    List<Attribute> a2 = o2.getAttributes();
+    List<Attribute> a1 = getAttributes(o1);
+    List<Attribute> a2 = getAttributes(o2);
     if (a1.size() != a2.size()) return false;
     for (int i=0; i<a1.size(); i++) {
       Attribute attr1 = a1.get(i);
@@ -122,6 +116,9 @@ public class JDOMInterner {
   @NotNull
   public synchronized Element internElement(@NotNull final Element element) {
     if (element instanceof ImmutableElement) return element;
+    if (ContainerUtil.exists(element.getContent(), IS_ELEMENT)) {
+      return new ImmutableElement(element, this);
+    }
     Element interned = myElements.get(element);
     if (interned == null) {
       interned = new ImmutableElement(element, this);

@@ -21,9 +21,9 @@ import java.util.Iterator;
  * @author max
  */
 public class UnmodifiableIterator<T> implements Iterator<T> {
-  private final Iterator<T> myOriginalIterator;
+  private final Iterator<? extends T> myOriginalIterator;
 
-  public UnmodifiableIterator(final Iterator<T> originalIterator) {
+  public UnmodifiableIterator(final Iterator<? extends T> originalIterator) {
     myOriginalIterator = originalIterator;
   }
 

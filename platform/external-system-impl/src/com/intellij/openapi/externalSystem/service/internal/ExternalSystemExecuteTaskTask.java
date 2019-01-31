@@ -44,7 +44,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 3/15/13 10:02 PM
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
@@ -70,9 +69,10 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   /**
    * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
    */
+  @Deprecated
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
-                                       @NotNull List<ExternalTaskPojo> tasksToExecute,
+                                       @NotNull List<? extends ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
                                        @Nullable String arguments,
                                        @Nullable String jvmAgentSetup) throws IllegalArgumentException {
@@ -106,7 +106,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @Deprecated
   @NotNull
-  private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
+  private static String getLinkedExternalProjectPath(@NotNull Collection<? extends ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {
       throw new IllegalArgumentException("Can't execute external tasks. Reason: given tasks list is empty");
     }

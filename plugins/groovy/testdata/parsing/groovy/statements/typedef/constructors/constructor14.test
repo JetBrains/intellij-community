@@ -39,8 +39,8 @@ Groovy script
           PsiElement(public)('public')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('ComparableFoo')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -48,7 +48,7 @@ Groovy script
               PsiElement(long)('long')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('theValue')
-        PsiElement())(')')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')
@@ -74,13 +74,13 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('greaterThan')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
             PsiElement(identifier)('anotherFoo')
-        PsiElement())(')')
+          PsiElement())(')')
         Throw clause
           <empty list>
         PsiWhiteSpace(' ')

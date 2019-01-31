@@ -26,7 +26,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
 
     private final ProblemsHolder myProblemsHolder;
 
-    public ExpectedExceptionNeverThrownVisitor(ProblemsHolder problemsHolder) {
+    ExpectedExceptionNeverThrownVisitor(ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;
     }
 

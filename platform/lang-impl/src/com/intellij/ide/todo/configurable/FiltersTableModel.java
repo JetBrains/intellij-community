@@ -32,9 +32,9 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
   };
   private final Class[] ourColumnClasses = new Class[]{String.class, String.class};
 
-  private final List<TodoFilter> myFilters;
+  private final List<? extends TodoFilter> myFilters;
 
-  public FiltersTableModel(List<TodoFilter> filters) {
+  FiltersTableModel(List<? extends TodoFilter> filters) {
     myFilters = filters;
   }
 

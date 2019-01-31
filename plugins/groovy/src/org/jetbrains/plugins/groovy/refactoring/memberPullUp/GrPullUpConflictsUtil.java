@@ -275,7 +275,7 @@ public class GrPullUpConflictsUtil {
     private final Set<GrMember> myMovedMembers;
     private final MultiMap<PsiElement, String> myConflicts;
 
-    public ConflictingUsagesOfSuperClassMembers(PsiMember member, PsiClass aClass,
+    ConflictingUsagesOfSuperClassMembers(PsiMember member, PsiClass aClass,
                                                 PsiPackage targetPackage,
                                                 Set<GrMember> movedMembers,
                                                 MultiMap<PsiElement, String> conflicts) {

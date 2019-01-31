@@ -56,6 +56,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   private AnnotationHolder myHolder;
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
 
     try {

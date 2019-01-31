@@ -15,18 +15,30 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TestMethodIsPublicVoidNoArgInspection extends TestMethodIsPublicVoidNoArgInspectionBase {
+public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
+
+  public final List<String> ignorableAnnotations = new ArrayList<>(Collections.singletonList("mockit.Mocked"));
 
   @Nullable
   @Override
@@ -39,5 +51,83 @@ public class TestMethodIsPublicVoidNoArgInspection extends TestMethodIsPublicVoi
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[1];
     return new MakePublicStaticVoidFix(method, false);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "test.method.is.public.void.no.arg.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "TestMethodWithIncorrectSignature";
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Problem problem = (Problem)infos[0];
+    switch (problem) {
+      case PARAMETER:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor1");
+      case NOT_PUBLIC_VOID:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor2");
+      case STATIC:
+        return InspectionGadgetsBundle.message("test.method.is.public.void.no.arg.problem.descriptor3");
+      default:
+        throw new AssertionError();
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TestMethodIsPublicVoidNoArgVisitor();
+  }
+
+  enum Problem {
+    STATIC, NOT_PUBLIC_VOID, PARAMETER
+  }
+
+  private class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (method.isConstructor()) {
+        return;
+      }
+      if (!TestUtils.isJUnit3TestMethod(method) && !TestUtils.isJUnit4TestMethod(method)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, Problem.STATIC, method);
+        return;
+      }
+      if (!parameterList.isEmpty()) {
+        final PsiParameter[] parameters = parameterList.getParameters();
+        boolean annotated = true;
+        for (PsiParameter parameter : parameters) {
+          if (!AnnotationUtil.isAnnotated(parameter, ignorableAnnotations, 0)) {
+            annotated = false;
+            break;
+          }
+        }
+        if (!annotated) {
+          registerMethodError(method, Problem.PARAMETER, method);
+          return;
+        }
+      }
+      final PsiType returnType = method.getReturnType();
+      if (!PsiType.VOID.equals(returnType) || !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        registerMethodError(method, Problem.NOT_PUBLIC_VOID, method);
+      }
+    }
   }
 }

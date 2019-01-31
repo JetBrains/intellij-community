@@ -122,7 +122,7 @@ public class TemplateEditorUtil {
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private final Lexer myLexer;
 
-    public TemplateHighlighter() {
+    TemplateHighlighter() {
       myLexer = new MergingLexerAdapter(new TemplateTextLexer(), TokenSet.create(TemplateTokenType.TEXT));
     }
 

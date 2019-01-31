@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inline.InlineConstantFieldHandler;
 import com.intellij.refactoring.inline.InlineConstantFieldProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -70,12 +71,24 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testQualifierJava6() {
+    doTest();
+  }
+
   public void testFinalInitializedInConstructor() {
     doTest();
   }
 
   public void testDiamondInitializer() {
     doTest();
+  }
+
+  public void testFieldUsedReflectively() {
+    doTestConflict("Inlined field is used reflectively");
+  }
+
+  public void testFieldUsedInJavadoc() {
+    doTestConflict("Inlined field is used in javadoc");
   }
 
   public void testMultipleInitializers() {
@@ -102,5 +115,15 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     PsiField field = (PsiField)element.getNavigationElement();
     new InlineConstantFieldProcessor(field, getProject(), refExpr, inlineThisOnly || element instanceof PsiCompiledElement).run();
     checkResultByFile(fileName + ".after");
+  }
+
+  private void doTestConflict(final String conflict) {
+    try {
+      doTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals(conflict, e.getMessage());
+    }
   }
 }

@@ -558,7 +558,7 @@ public class Matcher {
   private class MatchOneVirtualFile extends MatchOneFile {
     private final VirtualFile myFile;
 
-    public MatchOneVirtualFile(VirtualFile file) {
+    MatchOneVirtualFile(VirtualFile file) {
       myFile = file;
     }
 

@@ -19,9 +19,11 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -35,10 +37,11 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRequestTitle;
-import static com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRevisionTitle;
 
 public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvider {
   @NotNull
@@ -61,43 +64,6 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
   }
 
   @NotNull
-  private static SimpleDiffRequest createRequest(@Nullable Project project,
-                                                 @NotNull Change leftChange,
-                                                 @NotNull Change rightChange,
-                                                 @NotNull UserDataHolder context,
-                                                 @NotNull ProgressIndicator indicator)
-    throws DiffRequestProducerException {
-    String requestTitle = getRequestTitle(leftChange);
-
-    ContentRevision leftRevision = leftChange.getBeforeRevision();
-    ContentRevision centerRevision = leftChange.getAfterRevision();
-    ContentRevision rightRevision = rightChange.getBeforeRevision();
-
-    if (leftRevision == null) {
-      return createTwoSideRequest(project, centerRevision, rightRevision, requestTitle,
-                                  ChangeDiffRequestProducer.MERGED_VERSION, ChangeDiffRequestProducer.SERVER_VERSION,
-                                  context, indicator);
-    }
-    else if (rightRevision == null) {
-      return createTwoSideRequest(project, leftRevision, centerRevision, requestTitle,
-                                  ChangeDiffRequestProducer.YOUR_VERSION, ChangeDiffRequestProducer.MERGED_VERSION,
-                                  context, indicator);
-    }
-    else if (centerRevision == null) {
-      return createTwoSideRequest(project, leftRevision, rightRevision, requestTitle,
-                                  ChangeDiffRequestProducer.YOUR_VERSION, ChangeDiffRequestProducer.SERVER_VERSION,
-                                  context, indicator);
-    }
-    return new SimpleDiffRequest(requestTitle,
-                                 ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
-                                 ChangeDiffRequestProducer.createContent(project, centerRevision, context, indicator),
-                                 ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                 getRevisionTitle(leftRevision, ChangeDiffRequestProducer.YOUR_VERSION),
-                                 getRevisionTitle(centerRevision, ChangeDiffRequestProducer.MERGED_VERSION),
-                                 getRevisionTitle(rightRevision, ChangeDiffRequestProducer.SERVER_VERSION));
-  }
-
-  @NotNull
   private static SimpleDiffRequest createTwoSideRequest(@Nullable Project project,
                                                         @Nullable ContentRevision leftRevision,
                                                         @Nullable ContentRevision rightRevision,
@@ -110,18 +76,36 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
     return new SimpleDiffRequest(requestTitle,
                                  ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
                                  ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                 getRevisionTitle(leftRevision, leftTitle),
-                                 getRevisionTitle(rightRevision, rightTitle));
+                                 leftTitle, rightTitle);
+  }
+
+  @NotNull
+  private static String getRevisionTitle(@NotNull Map<Key, Object> context,
+                                         @NotNull Key<String> key,
+                                         @Nullable ContentRevision revision,
+                                         @NotNull String defaultTitle) {
+    String titleFromContext = (String)context.get(key);
+    if (titleFromContext != null) return titleFromContext;
+    return ChangeDiffRequestProducer.getRevisionTitle(revision, defaultTitle);
   }
 
   public static class MyProducer implements ChangeDiffRequestChain.Producer {
     @Nullable private final Project myProject;
     @NotNull private final MergedChange myMergedChange;
+    @NotNull private final Map<Key, Object> myContext;
 
-    public MyProducer(@Nullable Project project, @NotNull MergedChange mergedChange) {
+    public MyProducer(@Nullable Project project,
+                      @NotNull MergedChange mergedChange,
+                      @NotNull Map<Key, Object> context) {
       myProject = project;
+      myContext = context;
       assert mergedChange.getSourceChanges().size() == 2;
       myMergedChange = mergedChange;
+    }
+
+    public MyProducer(@Nullable Project project,
+                      @NotNull MergedChange mergedChange) {
+      this(project, mergedChange, Collections.emptyMap());
     }
 
     @NotNull
@@ -132,6 +116,42 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       SimpleDiffRequest request = createRequest(myProject, sourceChanges.get(0), sourceChanges.get(1), context, indicator);
       request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
       return request;
+    }
+
+    @NotNull
+    private SimpleDiffRequest createRequest(@Nullable Project project,
+                                            @NotNull Change leftChange,
+                                            @NotNull Change rightChange,
+                                            @NotNull UserDataHolder context,
+                                            @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException {
+      String requestTitle = getRequestTitle(leftChange);
+
+      ContentRevision leftRevision = leftChange.getBeforeRevision();
+      ContentRevision centerRevision = leftChange.getAfterRevision();
+      ContentRevision rightRevision = rightChange.getBeforeRevision();
+
+      String leftTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, leftRevision,
+                                          ChangeDiffRequestProducer.YOUR_VERSION);
+      String centerTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE, centerRevision,
+                                            ChangeDiffRequestProducer.MERGED_VERSION);
+      String rightTitle = getRevisionTitle(myContext, DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE, rightRevision,
+                                           ChangeDiffRequestProducer.SERVER_VERSION);
+
+      if (leftRevision == null) {
+        return createTwoSideRequest(project, centerRevision, rightRevision, requestTitle, centerTitle, rightTitle, context, indicator);
+      }
+      else if (rightRevision == null) {
+        return createTwoSideRequest(project, leftRevision, centerRevision, requestTitle, leftTitle, centerTitle, context, indicator);
+      }
+      else if (centerRevision == null) {
+        return createTwoSideRequest(project, leftRevision, rightRevision, requestTitle, leftTitle, rightTitle, context, indicator);
+      }
+      return new SimpleDiffRequest(requestTitle,
+                                   ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
+                                   ChangeDiffRequestProducer.createContent(project, centerRevision, context, indicator),
+                                   ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
+                                   leftTitle, centerTitle, rightTitle);
     }
 
     @NotNull

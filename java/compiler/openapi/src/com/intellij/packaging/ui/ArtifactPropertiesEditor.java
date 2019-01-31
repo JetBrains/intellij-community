@@ -22,12 +22,13 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
-  public static final String VALIDATION_TAB = "Validation";  
+  public static final String VALIDATION_TAB = "Validation";
   public static final String POST_PROCESSING_TAB = "Post-processing";
   public static final String PRE_PROCESSING_TAB = "Pre-processing";
 
   public abstract String getTabName();
 
+  @Override
   public abstract void apply();
 
   @Nullable

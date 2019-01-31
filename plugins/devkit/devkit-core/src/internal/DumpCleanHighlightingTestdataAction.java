@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile != null) {
@@ -94,7 +95,7 @@ public class DumpCleanHighlightingTestdataAction extends AnAction implements Dum
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 }

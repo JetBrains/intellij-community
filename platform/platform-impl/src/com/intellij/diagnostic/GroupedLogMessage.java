@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/** @deprecated induced exceptions are now grouped as attachments of the initial one - see {@link MessagePool} for details (to be removed in IDEA 2020) */
+@Deprecated
 public class GroupedLogMessage extends AbstractMessage {
   private final List<AbstractMessage> myMessages;
 

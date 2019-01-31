@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -23,6 +9,7 @@ import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,23 +41,22 @@ public class XIncludeProvider extends FileIncludeProvider {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<>();
-    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
-
+    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlBuilder() {
       boolean isXInclude;
       @Override
-      public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
+      public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
         isXInclude = XmlUtil.XINCLUDE_URI.equals(nsURI) && "include".equals(name);
       }
 
       @Override
-      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
         if (isXInclude && "href".equals(key)) {
           infos.add(new FileIncludeInfo(value));
         }
       }
 
       @Override
-      public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+      public void endElement(String name, String nsPrefix, String nsURI) {
         isXInclude = false;
       }
     });

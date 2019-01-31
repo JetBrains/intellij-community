@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
- * @since 4/12/13 12:27 PM
  */
 public class JavaProjectData extends AbstractExternalEntityData {
 

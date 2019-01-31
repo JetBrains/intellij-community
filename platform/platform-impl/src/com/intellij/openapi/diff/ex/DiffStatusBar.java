@@ -60,7 +60,7 @@ public class DiffStatusBar extends JPanel {
   private final class LegendTypeLabel extends JLabel implements Icon {
     private final LegendTypeDescriptor myType;
 
-    public LegendTypeLabel(LegendTypeDescriptor type) {
+    LegendTypeLabel(LegendTypeDescriptor type) {
       super(type.getDisplayName(), SwingConstants.LEFT);
       myType = type;
       setIconTextGap(5);

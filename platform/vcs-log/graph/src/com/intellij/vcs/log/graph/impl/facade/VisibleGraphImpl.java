@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -35,8 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getCursor;
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
 
 public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final LinearGraphController myGraphController;
@@ -86,20 +73,21 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     return new ActionControllerImpl();
   }
 
-  private void updatePrintElementGenerator() {
+  void updatePrintElementGenerator() {
     myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }
 
   @NotNull
-  public SimpleGraphInfo<CommitId> buildSimpleGraphInfo() {
+  public SimpleGraphInfo<CommitId> buildSimpleGraphInfo(int visibleRow, int visibleRange) {
     return SimpleGraphInfo.build(myGraphController.getCompiledGraph(),
                                  myPermanentGraph.getPermanentGraphLayout(),
                                  myPermanentGraph.getPermanentCommitsInfo(),
                                  myPermanentGraph.getLinearGraph().nodesCount(),
-                                 myPermanentGraph.getBranchNodeIds());
+                                 myPermanentGraph.getBranchNodeIds(), visibleRow, visibleRange);
   }
 
+  @Override
   public int getRecommendedWidth() {
     return myPrintElementGenerator.getRecommendedWidth();
   }
@@ -277,7 +265,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     private final int myNodeId;
     private final int myVisibleRow;
 
-    public RowInfoImpl(int nodeId, int visibleRow) {
+    RowInfoImpl(int nodeId, int visibleRow) {
       myNodeId = nodeId;
       myVisibleRow = visibleRow;
     }
@@ -313,6 +301,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
         default:
           throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
       }
+    }
+
+    @NotNull
+    @Override
+    public List<Integer> getAdjacentRows(boolean parent) {
+      return parent ? getDownNodes(myGraphController.getCompiledGraph(), myVisibleRow)
+                    : getUpNodes(myGraphController.getCompiledGraph(), myVisibleRow);
     }
   }
 }

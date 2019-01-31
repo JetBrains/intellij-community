@@ -2,24 +2,25 @@
 package com.intellij.roots;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,28 +32,21 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  *  @author dsl
  */
 public class ModuleRootsExternalizationTest extends ModuleTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ExternalizationTest");
-
   public void testEmptyModuleWrite() {
-    try {
-      ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
-      Element root = new Element("root");
-      moduleRootManager.getState().writeExternal(root);
-      assertThat(root.getText()).isEmpty();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
+    Element root = new Element("root");
+    moduleRootManager.getState().writeExternal(root);
+    assertThat(root.getText()).isEmpty();
   }
 
-  private ModuleRootManagerImpl createTempModuleRootManager() throws IOException {
+  private ModuleRootManagerImpl createTempModuleRootManager() {
     File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
     myFilesToDelete.add(tmpModule);
     final Module module = createModule(tmpModule);
     return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
   }
 
-  public void testContentWrite() {
+  public void testContentWrite() throws IOException {
     File content = getTestRoot();
     File source = new File(content, "source");
     File testSource = new File(content, "testSource");
@@ -106,7 +100,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         module);
   }
 
-  public void testModuleLibraries() {
+  public void testModuleLibraries() throws IOException {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
@@ -159,7 +153,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "</root>", module);
   }
 
-  public void testCompilerOutputInheritance() {
+  public void testCompilerOutputInheritance() throws IOException {
     File moduleFile = new File(getTestRoot(), "test.iml");
     Module module = createModule(moduleFile);
     final ModuleRootManagerImpl moduleRootManager =
@@ -243,9 +237,13 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     assertEquals(path, substituted);
   }
 
-  public static void assertElementEquals(final Element element, String value, Module module) {
-    PathMacroManager.getInstance(module).collapsePaths(element);
-    assertEquals(value, new XMLOutputter().outputString(element));
+  public static void assertElementEquals(@NotNull Element element, @NotNull String value, @NotNull Module module) throws IOException {
+    try {
+      assertThat(JbXmlOutputter.collapseMacrosAndWrite(element, module)).isEqualTo(JDOMUtil.writeElement(JDOMUtil.load(value)));
+    }
+    catch (JDOMException e) {
+      throw new IOException(e);
+    }
   }
 
   private File getTestRoot() {

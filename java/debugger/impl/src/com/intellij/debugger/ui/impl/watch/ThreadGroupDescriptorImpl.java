@@ -35,6 +35,7 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
     myThreadGroup = threadGroup;
   }
 
+  @Override
   public ThreadGroupReferenceProxyImpl getThreadGroupReference() {
     return myThreadGroup;
   }
@@ -43,10 +44,12 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
     return myIsCurrent;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadGroupReferenceProxyImpl group = getThreadGroupReference();
@@ -59,10 +62,12 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
     }
   }
 
+  @Override
   public boolean isExpandable() {
     return myIsExpandable;
   }
 
+  @Override
   public void setContext(EvaluationContextImpl context) {
     ThreadReferenceProxyImpl threadProxy = context != null? context.getSuspendContext().getThread() : null;
     myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());

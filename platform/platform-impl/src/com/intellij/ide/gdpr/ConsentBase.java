@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 /**
@@ -11,7 +9,7 @@ abstract class ConsentBase {
   private final String myId;
   private final Version myVersion;
 
-  public ConsentBase(String id, Version version) {
+  ConsentBase(String id, Version version) {
     myId = id;
     myVersion = version;
   }
@@ -26,8 +24,10 @@ abstract class ConsentBase {
 
   public abstract boolean isAccepted();
 
+  @Override
   public abstract String toString();
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -48,6 +48,7 @@ abstract class ConsentBase {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myId.hashCode();
     result = 31 * result + myVersion.hashCode();

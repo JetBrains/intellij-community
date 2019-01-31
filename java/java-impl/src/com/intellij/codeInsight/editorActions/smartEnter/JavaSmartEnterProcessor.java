@@ -252,7 +252,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     rangeMarker.dispose();
   }
 
-  private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
+  private static void collectAllElements(PsiElement atCaret, List<? super PsiElement> res, boolean recurse) {
     res.add(0, atCaret);
     if (doNotStepInto(atCaret)) {
       if (!recurse) return;

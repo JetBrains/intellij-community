@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.AWTEventListener;
@@ -44,7 +45,7 @@ public class FocusTracesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeFocusManager manager = IdeFocusManager.getGlobalInstance();
     if (! (manager instanceof FocusManagerImpl)) return;
@@ -73,7 +74,7 @@ public class FocusTracesAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myActive) {
       presentation.setText("Stop Focus Tracing");

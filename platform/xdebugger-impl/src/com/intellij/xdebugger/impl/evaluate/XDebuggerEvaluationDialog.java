@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.*;
@@ -87,7 +86,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                     @NotNull XExpression text,
                                     @Nullable XSourcePosition sourcePosition,
                                     boolean isCodeFragmentEvaluationSupported) {
-    super(WindowManager.getInstance().getFrame(project), true);
+    super(project, true);
     mySession = session;
     myEvaluatorSupplier = evaluatorSupplier;
     myProject = project;
@@ -115,13 +114,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction(){
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         Project project = e.getProject();
         e.getPresentation().setEnabled(session != null && project != null && LookupManager.getInstance(project).getActiveLookup() == null);
       }
 
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();
       }
@@ -129,7 +128,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         IdeFocusManager.getInstance(project).requestFocus(myTreePanel.getTree(), true);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
@@ -300,8 +299,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     //editor is already changed
     editor = inputEditor.getEditor();
-    //selectAll puts focus back
-    inputEditor.selectAll();
+    inputEditor.requestFocusInEditor();
 
     //try to restore caret position and clear selection
     if (offset >= 0 && editor != null) {
@@ -368,7 +366,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private class EvaluationMainPanel extends BorderLayoutPanel implements DataProvider {
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (KEY.is(dataId)) {
         return XDebuggerEvaluationDialog.this;
       }

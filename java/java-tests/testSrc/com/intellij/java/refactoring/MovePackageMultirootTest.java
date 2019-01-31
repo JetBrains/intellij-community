@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MovePackageMultirootTest extends MultiFileTestCase {
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();

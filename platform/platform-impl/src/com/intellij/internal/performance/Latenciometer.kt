@@ -1,69 +1,78 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.ui.tree.TreeUtil
-import javax.swing.Action
-import javax.swing.JComponent
-import javax.swing.JTree
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
+import gnu.trove.TIntArrayList
 
 /**
  * @author yole
  */
 
 class LatencyRecorderImpl : LatencyRecorder {
-  override fun recordLatencyAwareAction(editor: Editor, actionId: String, event: AnActionEvent) {
-    (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, event)
+  override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
+    (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, timestampMs)
   }
 }
 
 class LatencyRecord {
-  var totalKeysTyped: Int = 0
   var totalLatency: Long = 0L
-  var maxLatency: Long = 0L
+  var maxLatency: Int = 0
+  val samples = TIntArrayList()
+  var samplesSorted = false
 
-  fun update(latencyInMS: Long) {
-    totalKeysTyped++
+  fun update(latencyInMS: Int) {
+    samplesSorted = false
+    samples.add(latencyInMS)
     totalLatency += latencyInMS
     if (latencyInMS > maxLatency) {
       maxLatency = latencyInMS
     }
   }
 
-  val averageLatency: Long get() = totalLatency / totalKeysTyped
+  val averageLatency: Long get() = totalLatency / samples.size()
+
+  fun percentile(n: Int): Int {
+    if (!samplesSorted) {
+      samples.sort()
+      samplesSorted = true
+    }
+    val index = (samples.size() * n / 100).coerceAtMost(samples.size() - 1)
+    return samples[index]
+  }
 }
 
-class FileTypeLatencyRecord(val fileType: FileType) {
-  val totalLatency: LatencyRecord = LatencyRecord()
-  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf<String, LatencyRecord>()
+data class LatencyDistributionRecordKey(val name: String) {
+  var details: String? = null
+}
 
-  fun update(action: String, latencyInMS: Long) {
+class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
+  val totalLatency: LatencyRecord = LatencyRecord()
+  val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf()
+
+  fun update(action: String, latencyInMS: Int) {
     totalLatency.update(latencyInMS)
     actionLatencyRecords.getOrPut(action) { LatencyRecord() }.update(latencyInMS)
   }
 }
 
-val latencyMap: MutableMap<FileType, FileTypeLatencyRecord> = mutableMapOf<FileType, FileTypeLatencyRecord>()
+val latencyMap: MutableMap<LatencyDistributionRecordKey, LatencyDistributionRecord> = mutableMapOf()
+
+var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
+
+val latencyRecorderProperties: MutableMap<String, String> = mutableMapOf()
 
 fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
-  val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
-  val latencyRecord = latencyMap.getOrPut(fileType) {
-    FileTypeLatencyRecord(fileType)
+  val key = currentLatencyRecordKey ?: run {
+    val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+    LatencyDistributionRecordKey(fileType.name)
   }
-  latencyRecord.update(getActionKey(action), latencyInMS)
+  val latencyRecord = latencyMap.getOrPut(key) {
+    LatencyDistributionRecord(key)
+  }
+  latencyRecord.update(getActionKey(action), latencyInMS.toInt())
 }
 
 fun getActionKey(action: String): String =
@@ -71,70 +80,9 @@ fun getActionKey(action: String): String =
     when(action[0]) {
       in 'A'..'Z', in 'a'..'z', in '0'..'9' -> "Letter"
       ' ' -> "Space"
+      '\n' -> "Enter"
       else -> action
     }
   }
   else action
 
-class TypingLatencyReportAction : AnAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    TypingLatencyReportDialog(project).show()
-  }
-}
-
-class TypingLatencyReportDialog(project: Project) : DialogWrapper(project) {
-  init {
-    init()
-    title = "Typing Latency Report"
-  }
-
-  override fun createCenterPanel(): JComponent {
-    val root = DefaultMutableTreeNode()
-    for (row in latencyMap.values.sortedBy { it.fileType.name }) {
-      val rowNode = DefaultMutableTreeNode(row)
-      root.add(rowNode)
-      for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
-        rowNode.add(DefaultMutableTreeNode(actionLatencyRecord.toPair()))
-      }
-    }
-    val reportList = Tree(DefaultTreeModel(root))
-    reportList.isRootVisible = false
-    reportList.cellRenderer = object : ColoredTreeCellRenderer() {
-      override fun customizeCellRenderer(tree: JTree,
-                                         value: Any?,
-                                         selected: Boolean,
-                                         expanded: Boolean,
-                                         leaf: Boolean,
-                                         row: Int,
-                                         hasFocus: Boolean) {
-        if (value == null) return
-        val obj = (value as DefaultMutableTreeNode).userObject
-        if (obj is FileTypeLatencyRecord) {
-          append(obj.fileType.name)
-          icon = obj.fileType.icon
-          appendLatencyRecord(obj.totalLatency)
-        }
-        else if (obj is Pair<*, *>) {
-          val pair = obj as Pair<String, LatencyRecord>
-          append(pair.first)
-          appendLatencyRecord(pair.second)
-        }
-      }
-
-      private fun appendLatencyRecord(latencyRecord: LatencyRecord) {
-        append(" - avg ")
-        append(latencyRecord.averageLatency.toString())
-        append("ms, max ")
-        append(latencyRecord.maxLatency.toString())
-        append("ms")
-      }
-    }
-    TreeUtil.expandAll(reportList)
-    return JBScrollPane(reportList)
-  }
-
-  override fun createActions(): Array<Action> {
-    return arrayOf(okAction)
-  }
-}

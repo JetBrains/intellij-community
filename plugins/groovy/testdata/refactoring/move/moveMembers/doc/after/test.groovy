@@ -5,6 +5,7 @@ class A {
 
 class B {
 
+
     /**
      * This is f1
      */

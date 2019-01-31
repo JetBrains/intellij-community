@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,4 +157,13 @@ public interface EditorSettings {
 
   boolean isShowIntentionBulb();
   void setShowIntentionBulb(boolean show);
+
+  /**
+   * Sets the language which determines certain editor settings (right margin and soft margins, 'wrap on reaching right margin').
+   *
+   * @see #getRightMargin(Project)
+   * @see #getSoftMargins()
+   * @see #isWrapWhenTypingReachesRightMargin(Project)
+   */
+  void setLanguage(@Nullable Language language);
 }

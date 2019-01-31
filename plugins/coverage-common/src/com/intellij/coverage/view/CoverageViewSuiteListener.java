@@ -28,6 +28,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     myProject = project;
   }
 
+  @Override
   public void beforeSuiteChosen() {
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
     if (suitesBundle != null) {
@@ -35,6 +36,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     }
   }
 
+  @Override
   public void afterSuiteChosen() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -50,7 +52,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
   private static boolean shouldActivate(CoverageSuitesBundle suitesBundle) {
     final CoverageSuite[] suites = suitesBundle.getSuites();
     for (CoverageSuite suite : suites) {
-      if (!(suite.getCoverageDataFileProvider() instanceof DefaultCoverageFileProvider)) return false; 
+      if (!(suite.getCoverageDataFileProvider() instanceof DefaultCoverageFileProvider)) return false;
     }
     return true;
   }

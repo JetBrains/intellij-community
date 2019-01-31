@@ -37,4 +37,10 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.completeBasicAllCarets('\t')
     myFixture.checkResultByFile("after_test_test.txt")
   }
+
+  fun testRename() {
+    myFixture.configureByFile("test_for_rename.py")
+    myFixture.renameElementAtCaret("spam")
+    myFixture.checkResultByFile("test_for_rename.after.py.txt")
+  }
 }

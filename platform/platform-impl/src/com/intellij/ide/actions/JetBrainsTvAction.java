@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class JetBrainsTvAction extends AnAction implements DumbAware {
   private final String myUrl;
@@ -29,14 +30,14 @@ public class JetBrainsTvAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = myUrl != null;
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     if (myUrl != null) {
       BrowserUtil.browse(myUrl);
     }

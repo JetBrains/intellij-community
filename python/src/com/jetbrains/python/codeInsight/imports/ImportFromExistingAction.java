@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -56,7 +42,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class ImportFromExistingAction implements QuestionAction {
   PsiElement myTarget;
-  List<ImportCandidateHolder> mySources; // list of <import, imported_item>
+  List<? extends ImportCandidateHolder> mySources; // list of <import, imported_item>
   String myName;
   boolean myUseQualifiedImport;
   private Runnable myOnDoneCallback;
@@ -68,7 +54,7 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
-  public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<ImportCandidateHolder> sources, @NotNull String name,
+  public ImportFromExistingAction(@NotNull PsiElement target, @NotNull List<? extends ImportCandidateHolder> sources, @NotNull String name,
                                   boolean useQualified, boolean importLocally) {
     myTarget = target;
     mySources = sources;
@@ -87,6 +73,7 @@ public class ImportFromExistingAction implements QuestionAction {
    * Alters either target (by qualifying a name) or source (by explicitly importing the name).
    * @return true if action succeeded
    */
+  @Override
   public boolean execute() {
     // check if the tree is sane
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
@@ -234,7 +221,7 @@ public class ImportFromExistingAction implements QuestionAction {
     private final Font FONT;
     private final String myName;
 
-    public CellRenderer(String name) {
+    CellRenderer(String name) {
       myName = name;
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
@@ -242,6 +229,7 @@ public class ImportFromExistingAction implements QuestionAction {
     }
 
     // value is a QualifiedHolder
+    @Override
     public Component getListCellRendererComponent(
       JList list,
       Object value, // expected to be

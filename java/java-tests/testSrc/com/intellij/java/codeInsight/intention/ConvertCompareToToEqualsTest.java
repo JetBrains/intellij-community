@@ -40,6 +40,10 @@ public class ConvertCompareToToEqualsTest extends JavaCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testParentheses() {
+    doTest();
+  }
+
   public void testNotAvailable() {
     doTestNotAvailable();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -31,16 +31,13 @@ public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspe
         super.visitRequiresStatement(statement);
         PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
         if (refElement != null) {
-          PsiPolyVariantReference reference = refElement.getReference();
-          if (reference != null) {
-            PsiElement target = reference.resolve();
-            if (target instanceof LightJavaModule) {
-              if (!TRANSITIVE_ONLY) {
-                holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.message"));
-              }
-              else if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) {
-                holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.transitive"));
-              }
+          PsiJavaModule target = statement.resolve();
+          if (target instanceof LightJavaModule) {
+            if (!TRANSITIVE_ONLY) {
+              holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.message"));
+            }
+            else if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) {
+              holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.transitive"));
             }
           }
         }

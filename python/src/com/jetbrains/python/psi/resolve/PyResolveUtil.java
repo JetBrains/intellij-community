@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,10 @@ public class PyResolveUtil {
     }
   }
 
+  /**
+   * Resolves the passed expression in its containing file.
+   * Does not go outside this file.
+   */
   @NotNull
   public static Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
     final String referenceName = referenceExpression.getName();
@@ -132,6 +137,10 @@ public class PyResolveUtil {
     return processor.getElements();
   }
 
+  /**
+   * Resolves the passed name in its containing file starting from the passed scope.
+   * Does not go outside this file.
+   */
   @NotNull
   public static Collection<PsiElement> resolveLocally(@NotNull ScopeOwner scopeOwner, @NotNull String name) {
     final PyResolveProcessor processor = new PyResolveProcessor(name, true);
@@ -140,6 +149,10 @@ public class PyResolveUtil {
     return processor.getElements();
   }
 
+  /**
+   * If the passed expression resolves to import elements, returns their qualified names.
+   * Does not go outside the file containing this expression.
+   */
   @NotNull
   public static List<QualifiedName> resolveImportedElementQNameLocally(@NotNull PyReferenceExpression expression) {
     // SUPPORTED CASES:
@@ -187,26 +200,40 @@ public class PyResolveUtil {
   }
 
   /**
-   * Resolve a symbol by its qualified name, starting from the specified file and then following the chain of type members.
+   * Resolve a symbol by its qualified name, starting from the specified scope and then following the chain of type members.
    * This type of resolve is stub-safe, i.e. it's not supposed to cause any un-stubbing of external files unless it explicitly
    * allowed by the given type evaluation context.
    *
    * @param qualifiedName name of a symbol to resolve
-   * @param file          module which serves as a starting point for resolve
+   * @param scopeOwner    scope which serves as a starting point for resolve
    * @return all possible candidates that can be found by the given qualified name
    */
   @NotNull
-  public static List<PsiElement> resolveQualifiedNameInFile(@NotNull QualifiedName qualifiedName,
-                                                            @NotNull PyFile file,
-                                                            @NotNull TypeEvalContext context) {
+  public static List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                             @NotNull ScopeOwner scopeOwner,
+                                                             @NotNull TypeEvalContext context) {
     final String firstName = qualifiedName.getFirstComponent();
-    if (firstName == null) {
-      return Collections.emptyList();
+    if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
+
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+    final List<? extends RatedResolveResult> unqualifiedResults;
+    if (scopeOwner instanceof PyiFile) {
+      // pyi-stubs are special cased because
+      // `resolveMember` delegates to `multiResolveName(..., true)` and
+      // it skips elements that are imported without `as`
+      unqualifiedResults = ((PyiFile)scopeOwner).multiResolveName(firstName, false);
     }
-    final List<RatedResolveResult> unqualifiedResults = file.multiResolveName(firstName, false);
+    else {
+      final PyType scopeType = context.getType((PyTypedElement)scopeOwner);
+      if (scopeType == null) return Collections.emptyList();
+
+      unqualifiedResults = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+    }
+
     final StreamEx<RatedResolveResult> initialResults;
-    if (unqualifiedResults.isEmpty()) {
-      final PsiElement builtin = PyBuiltinCache.getInstance(file).getByName(firstName);
+    if (ContainerUtil.isEmpty(unqualifiedResults)) {
+      final PsiElement builtin = PyBuiltinCache.getInstance(scopeOwner).getByName(firstName);
       if (builtin == null) {
         return Collections.emptyList();
       }
@@ -215,6 +242,7 @@ public class PyResolveUtil {
     else {
       initialResults = StreamEx.of(unqualifiedResults);
     }
+
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final StreamEx<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(initialResults, (prev, name) ->
       prev
@@ -224,10 +252,10 @@ public class PyResolveUtil {
         .nonNull()
         .flatMap(type -> {
           final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
           final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
+
     return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
   }
 
@@ -260,6 +288,7 @@ public class PyResolveUtil {
 
   /**
    * Follows one of 'target-reference` chain and returns assigned value or null.
+   * Does not go outside the file containing the passed expression.
    *
    * @param referenceExpression expression to resolve
    * @return resolved assigned value.
@@ -271,6 +300,7 @@ public class PyResolveUtil {
 
   /**
    * Runs DFS on assignment chains and returns all reached assigned values.
+   * Does not go outside the file containing the passed expression.
    *
    * @param referenceExpression expression to resolve
    * @param visited             set to store visited references to prevent recursion

@@ -9,10 +9,4 @@ public abstract class JavaDebugAware {
   static final ExtensionPointName<JavaDebugAware> EP_NAME = ExtensionPointName.create("com.intellij.debugger.javaDebugAware");
 
   public abstract boolean isBreakpointAware(@NotNull PsiFile psiFile);
-
-  // IDEA-122113, will be removed when Java debugger will be moved to XDebugger API
-  @Deprecated
-  public boolean isActionAware(@NotNull PsiFile psiFile) {
-    return isBreakpointAware(psiFile);
-  }
 }

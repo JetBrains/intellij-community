@@ -1,11 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -13,12 +9,17 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalRadioButtonUI;
 import javax.swing.text.View;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(19)).asUIResource();
+
+  private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -28,14 +29,32 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
     b.setIconTextGap(textIconGap());
+    updateTextPosition(b);
+  }
+
+  @Override
+  protected void installListeners(AbstractButton b) {
+    super.installListeners(b);
+    b.addPropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
+  }
+
+  @Override
+  protected void uninstallListeners(AbstractButton button) {
+    super.uninstallListeners(button);
+    button.removePropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
   }
 
   protected int textIconGap() {
     return JBUI.scale(4);
   }
 
+  private static void updateTextPosition(AbstractButton b) {
+    b.setVerticalTextPosition(isMultiLineHTML(b.getText()) ? SwingConstants.TOP : SwingConstants.CENTER);
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
   @Override
-  public synchronized void paint(Graphics g2d, JComponent c) {
+  public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     Dimension size = c.getSize();
 
@@ -46,7 +65,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
     Font f = c.getFont();
     g.setFont(f);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -54,7 +73,6 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
       viewRect, iconRect, textRect, b.getIconTextGap());
 
-    // fill background
     if(c.isOpaque()) {
       g.setColor(c.getBackground());
       g.fillRect(0, 0, size.width, size.height);
@@ -84,7 +102,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       } else {
         int mnemonicIndex = b.getDisplayedMnemonicIndex();
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        SwingUtilities2.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
+        UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
       }
     }
 
@@ -97,6 +115,11 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     return updatePreferredSize(c, super.getPreferredSize(c));
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    return getPreferredSize(c);
   }
 
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {

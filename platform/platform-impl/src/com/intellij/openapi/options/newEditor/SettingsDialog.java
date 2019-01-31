@@ -1,23 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.configurationStore.StoreUtil;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,6 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     TransactionGuard.getInstance().submitTransactionAndWait(() -> super.show());
   }
 
-
   private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
@@ -87,7 +87,18 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  protected void setHelpTooltip(JButton helpButton) {
+    //noinspection SpellCheckingInspection
+    if (Registry.is("ide.helptooltip.enabled")) {
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    }
+    else {
+      super.setHelpTooltip(helpButton);
+    }
+  }
+
+  @Override
+  public Object getData(@NotNull String dataId) {
     if (myEditor instanceof DataProvider) {
       DataProvider provider = (DataProvider)myEditor;
       return provider.getData(dataId);
@@ -121,6 +132,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return myEditor;
   }
 
+  @SuppressWarnings("unused") // used in Rider
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
     if (myEditor instanceof SettingsEditor) {
       ((SettingsEditor) myEditor).addOptionsListener(colleague);
@@ -141,29 +153,23 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (reset != null && myResetButtonNeeded) {
       actions.add(reset);
     }
-    String topic = getHelpTopic();
-    if (topic != null) {
+    if (getHelpId() != null) {
       actions.add(getHelpAction());
     }
     return actions.toArray(new Action[0]);
   }
 
-  protected String getHelpTopic() {
-    return myEditor.getHelpTopic();
-  }
-
+  @Nullable
   @Override
-  protected void doHelpAction() {
-    String topic = getHelpTopic();
-    if (topic != null) {
-      HelpManager.getInstance().invokeHelp(topic);
-    }
+  protected String getHelpId() {
+    return myEditor.getHelpTopic();
   }
 
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      StoreUtil.saveProjectsAndApp(true);
+      //SaveAndSyncHandler.getInstance().scheduleSaveDocumentsAndProjectsAndApp(null);
+      StoreUtil.saveDocumentsAndProjectsAndApp(true);
       super.doOKAction();
     }
   }

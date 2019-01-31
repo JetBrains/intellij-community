@@ -57,6 +57,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
     return new CharSequenceSubSequence(myChars, myStart + start, myStart + end);
   }
 
+  @Override
   @NotNull
   public String toString() {
     if (myChars instanceof String) return ((String)myChars).substring(myStart, myEnd);

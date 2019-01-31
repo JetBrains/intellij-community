@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,6 +118,7 @@ public class GitTagDialog extends DialogWrapper {
 
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         fetchTags();
         validateFields();
@@ -139,13 +126,15 @@ public class GitTagDialog extends DialogWrapper {
     });
     fetchTags();
     myTagNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         validateFields();
       }
     });
     myCommitTextFieldValidator = new GitReferenceValidator(project, myGitRootComboBox, myCommitTextField, myValidateButton,
                                                            () -> validateFields());
     myForceCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myForceCheckBox.isEnabled()) {
           validateFields();
@@ -172,12 +161,8 @@ public class GitTagDialog extends DialogWrapper {
       try {
         messageFile = FileUtil.createTempFile(MESSAGE_FILE_PREFIX, MESSAGE_FILE_SUFFIX);
         messageFile.deleteOnExit();
-        Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING);
-        try {
+        try (Writer out = new OutputStreamWriter(new FileOutputStream(messageFile), MESSAGE_FILE_ENCODING)) {
           out.write(message);
-        }
-        finally {
-          out.close();
         }
       }
       catch (IOException ex) {
@@ -217,7 +202,7 @@ public class GitTagDialog extends DialogWrapper {
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
       if (repository != null) {
-        repository.getRepositoryFiles().refresh();
+        repository.getRepositoryFiles().refreshTagsFiles();
       }
       else {
         LOG.error("No repository registered for root: " + getGitRoot());
@@ -291,6 +276,7 @@ public class GitTagDialog extends DialogWrapper {
   /**
    * {@inheritDoc}
    */
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

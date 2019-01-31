@@ -67,15 +67,18 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
     return myLambdaOrdinal;
   }
 
+  @Override
   @Nullable
   public SourcePosition getBreakpointPosition() {
     return myFirstStatementPosition;
   }
 
+  @Override
   public int getLastStatementLine() {
     return myLastStatementLine;
   }
 
+  @Override
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
     final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();

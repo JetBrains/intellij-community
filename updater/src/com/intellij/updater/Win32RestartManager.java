@@ -32,7 +32,6 @@ public interface Win32RestartManager extends Library {
   int CCH_RM_MAX_APP_NAME = 255;
   int CCH_RM_MAX_SVC_NAME = 63;
 
-  @SuppressWarnings("unused")
   class RmUniqueProcess extends Structure {
     private static final List<String> __FIELDS = Arrays.asList("dwProcessId", "ProcessStartTime");
 

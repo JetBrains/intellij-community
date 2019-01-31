@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress.sending;
 
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -27,7 +28,7 @@ public class FileStateRequestsProgressHandler
 
 	// Fields =================================================================
 
-	private final Set fileObjects = new HashSet(2000);
+	private final Set<FileObject> fileObjects = new HashSet<>(2000);
 	private final IProgressViewer progressViewer;
 	private int count;
 	private final int maxCount;
@@ -41,11 +42,13 @@ public class FileStateRequestsProgressHandler
 		this.progressViewer = progressViewer;
 
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
                 fileObjects.add(fileObject);
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 			}
 		});
 
@@ -53,7 +56,8 @@ public class FileStateRequestsProgressHandler
 		maxCount = fileObjects.size();
 	}
 
-	public void requestSent(IRequest request) {
+	@Override
+        public void requestSent(IRequest request) {
 		if (!(request instanceof AbstractFileStateRequest)) {
 			return;
 		}
@@ -70,7 +74,7 @@ public class FileStateRequestsProgressHandler
 
 	// Utils ==================================================================
 
-	private void notifyProgress(int count, int maxCount, IProgressViewer progressViewer) {
+	private static void notifyProgress(int count, int maxCount, IProgressViewer progressViewer) {
 		progressViewer.setProgress((double)count / maxCount);
 	}
 }

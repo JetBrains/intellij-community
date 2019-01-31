@@ -128,7 +128,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     if (match.size() > 1) {
-      final PyClass ourClass = PyiUtil.stubToOriginal(qualifierType.getPyClass(), PyClass.class);
+      final PyClass ourClass = PyiUtil.getOriginalElementOrLeaveAsIs(qualifierType.getPyClass(), PyClass.class);
       final PsiElement theirClass = CompletionUtil.getOriginalOrSelf(match.get(match.size() - 1));
       if (ourClass != theirClass) return true;
     }
@@ -430,7 +430,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     // performance: a qualified reference can never resolve to a local variable or parameter
     if (isLocalScope(element)) {
       return false;

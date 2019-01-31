@@ -7,8 +7,6 @@ import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
@@ -64,7 +62,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   ShowContentAction myShowContent;
 
-  ContentLayout myTabsLayout = new TabContentLayout(this);
+  TabContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
@@ -146,6 +144,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
 
+  @Override
   public JComponent getComponent() {
     return myContent;
   }
@@ -154,6 +153,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return this;
   }
 
+  @Override
   public void setManager(@NotNull final ContentManager manager) {
     if (myManager != null) {
       getCurrentLayout().reset();
@@ -164,23 +164,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     getCurrentLayout().init();
 
     myManager.addContentManagerListener(new ContentManagerListener() {
-      public void contentAdded(final ContentManagerEvent event) {
+      @Override
+      public void contentAdded(@NotNull final ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
         rebuild();
       }
 
-      public void contentRemoved(final ContentManagerEvent event) {
+      @Override
+      public void contentRemoved(@NotNull final ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
       }
 
-      public void contentRemoveQuery(final ContentManagerEvent event) {
+      @Override
+      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       }
 
-      public void selectionChanged(final ContentManagerEvent event) {
+      @Override
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         ensureSelectedContentVisible();
 
         update();
@@ -234,37 +238,46 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
 
+  @Override
   public void doLayout() {
     getCurrentLayout().layout();
   }
 
 
+  @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
     getCurrentLayout().paintComponent(g);
   }
 
+  @Override
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
     getCurrentLayout().paintChildren(g);
   }
 
+  @Override
   public Dimension getMinimumSize() {
     Insets insets = getInsets();
     return new Dimension(insets.left + insets.right + getCurrentLayout().getMinimumWidth(), super.getMinimumSize().height);
   }
 
+  @Override
   public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
+    Dimension size = new Dimension();
     size.height = 0;
+    size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
+      size.width += each.getPreferredSize().width;
     }
-    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
+
+    size.width = Math.max(size.width, getMinimumSize().width);
     return size;
   }
 
+  @Override
   public void propertyChange(final PropertyChangeEvent evt) {
     update();
   }
@@ -276,21 +289,26 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     repaint();
   }
 
+  @Override
   public boolean isSingleSelection() {
     return true;
   }
 
+  @Override
   public boolean isToSelectAddedContent() {
     return false;
   }
 
+  @Override
   public boolean canBeEmptySelection() {
     return false;
   }
 
+  @Override
   public void beforeDispose() {
   }
 
+  @Override
   public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }
@@ -317,6 +335,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   @Override
   public String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
+  }
+
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myTabsLayout.setTabDoubleClickActions(actions);
   }
 
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
@@ -377,8 +399,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+            myPressPoint.set(myLastPoint.get());
             if (allowResize && ui.isResizeable()) {
-              myPressPoint.set(myLastPoint.get());
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
             ui.myWindow.fireActivated();
@@ -404,8 +426,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
 
       @Override
+      public void mouseExited(MouseEvent e) {
+        c.setCursor(null);
+      }
+
+      @Override
       public void mouseDragged(MouseEvent e) {
-        if (myLastPoint.isNull()) return;
+        if (myLastPoint.isNull() || myPressPoint.isNull()) return;
 
         PointerInfo info = MouseInfo.getPointerInfo();
         if (info == null) return;
@@ -441,6 +468,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
 
     c.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
         ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
@@ -486,7 +514,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (selectedContent == null && toolWindowGroup == null) {
       return;
     }
+    DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
+    group.copyFromGroup(configuredGroup);
     if (selectedContent != null) {
       initActionGroup(group, selectedContent);
     }
@@ -495,15 +525,14 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       group.addAll(toolWindowGroup);
     }
 
-    final ActionPopupMenu popupMenu =
-      ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(POPUP_PLACE, group, new MenuItemPresentationFactory(true));
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(POPUP_PLACE, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 
   private static AnAction createSplitTabsAction(final TabbedContent content) {
     return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
       }
     };
@@ -512,7 +541,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   private static AnAction createMergeTabsAction(final ContentManager manager, final String tabPrefix) {
     return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Content selectedContent = manager.getSelectedContent();
         final List<Pair<String, JComponent>> tabs = new ArrayList<>();
         int selectedTab = -1;
@@ -572,9 +601,12 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
   }
 
+  @Override
   @Nullable
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
+      return myWindow;
+    }
 
     if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
@@ -596,6 +628,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private class HideToolwindowTarget implements CloseAction.CloseTarget {
+    @Override
     public void close() {
       myWindow.fireHidden();
     }
@@ -609,11 +642,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       myContent = content;
     }
 
+    @Override
     public void close() {
       myManager.removeContent(myContent, true, true, true);
     }
   }
 
+  @Override
   public void dispose() {
     myContent.removeAll();
   }
@@ -627,7 +662,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     final Content selectedContent = myManager.getSelectedContent();
 
     final SelectContentStep step = new SelectContentStep(contents);
-    step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    if (selectedContent != null) {
+      step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+    }
 
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     getCurrentLayout().showContentPopup(popup);

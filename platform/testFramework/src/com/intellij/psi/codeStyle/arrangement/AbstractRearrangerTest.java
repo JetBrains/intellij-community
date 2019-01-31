@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
@@ -50,7 +49,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 20.07.2012
  */
 public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTestCase {
   private static final RichTextHandler[] RICH_TEXT_HANDLERS = {new RangeHandler(), new FoldingHandler()};
@@ -58,22 +56,6 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   protected FileType fileType;
   protected Language language;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CodeStyle.setTemporarySettings(myFixture.getProject(), new CodeStyleSettings());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeStyle.dropTemporarySettings(myFixture.getProject());
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 
   @NotNull
   protected CommonCodeStyleSettings getCommonSettings() {

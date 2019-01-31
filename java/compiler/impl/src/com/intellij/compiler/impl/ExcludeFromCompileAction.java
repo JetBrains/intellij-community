@@ -29,6 +29,7 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,13 +39,14 @@ class ExcludeFromCompileAction extends AnAction {
   private final Project myProject;
   private final NewErrorTreeViewPanel myErrorTreeView;
 
-  public ExcludeFromCompileAction(Project project, NewErrorTreeViewPanel errorTreeView) {
+  ExcludeFromCompileAction(Project project, NewErrorTreeViewPanel errorTreeView) {
     super(CompilerBundle.message("actions.exclude.from.compile.text"));
     myProject = project;
     myErrorTreeView = errorTreeView;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile file = getSelectedFile();
 
     if (file != null && file.isValid()) {
@@ -67,7 +69,8 @@ class ExcludeFromCompileAction extends AnAction {
     return element instanceof GroupingElement? ((GroupingElement)element).getFile() : null;
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final boolean isApplicable = getSelectedFile() != null;
     presentation.setEnabled(isApplicable);

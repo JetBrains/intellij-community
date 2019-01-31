@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public class GradleViewContributor extends ExternalSystemViewContributor {
   private static final Key<?>[] KEYS = new Key[]{
@@ -93,13 +92,13 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
 
   @Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER - 1)
   private static class SourceSetsNode extends ExternalSystemNode {
-    public SourceSetsNode(ExternalProjectsView externalProjectsView) {
+    SourceSetsNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked
       super(externalProjectsView, null, null);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.ModuleGroup);
     }
@@ -112,12 +111,12 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
 
   private static class SourceSetNode extends ExternalSystemNode<GradleSourceSetData> {
 
-    public SourceSetNode(ExternalProjectsView externalProjectsView, DataNode<GradleSourceSetData> dataNode) {
+    SourceSetNode(ExternalProjectsView externalProjectsView, DataNode<GradleSourceSetData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Modules.SourceFolder);
 

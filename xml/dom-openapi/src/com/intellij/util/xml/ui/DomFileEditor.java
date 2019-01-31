@@ -102,7 +102,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     DomUIFactory.getDomUIFactory().setupErrorOutdatingUserActivityWatcher(this, getDomElement());
     DomManager.getDomManager(getProject()).addDomEventListener(new DomEventListener() {
       @Override
-      public void eventOccured(DomEvent event) {
+      public void eventOccured(@NotNull DomEvent event) {
         checkIsValid();
       }
     }, this);

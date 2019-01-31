@@ -1,23 +1,20 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.CheckedActionGroup;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
@@ -26,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,9 +34,9 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private ShortcutSet myShortcut;
-  private final AnAction myAction = null;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
+  private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
   public AnActionButton(String text) {
     super(text);
@@ -47,14 +46,13 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(text, description, icon);
   }
 
-  @SuppressWarnings("NullableProblems")
   public AnActionButton(String text, Icon icon) {
     this(text, null, icon);
   }
 
   public AnActionButton() {
   }
-  
+
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
     final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
@@ -68,7 +66,10 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public void setEnabled(boolean enabled) {
-    myEnabled = enabled;
+    if (myEnabled != enabled) {
+      myEnabled = enabled;
+      myListeners.forEach(l -> l.isEnabledChanged(enabled));
+    }
   }
 
   public boolean isVisible() {
@@ -76,19 +77,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public void setVisible(boolean visible) {
-    myVisible = visible;
+    if (myVisible != visible) {
+      myVisible = visible;
+      myListeners.forEach(l -> l.isVisibleChanged(visible));
+    }
   }
 
   @Override
-  public final void update(AnActionEvent e) {
-    boolean myActionVisible = true;
-    boolean myActionEnabled = true;
-    if (myAction != null) {      
-      myAction.update(e);
-      myActionEnabled = e.getPresentation().isEnabled();
-      myActionVisible = e.getPresentation().isVisible();
-    }
-    boolean enabled = isEnabled() && isContextComponentOk() && myActionEnabled;
+  public final void update(@NotNull AnActionEvent e) {
+    boolean enabled = isEnabled() && isContextComponentOk();
     if (enabled && myUpdaters != null) {
       for (AnActionButtonUpdater updater : myUpdaters) {
         if (!updater.isEnabled(e)) {
@@ -98,13 +95,13 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       }
     }
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(isVisible() && myActionVisible);
+    e.getPresentation().setVisible(isVisible());
 
     if (enabled) {
       updateButton(e);
     }
   }
-  
+
   public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
     if (myUpdaters == null) {
       myUpdaters = new SmartHashSet<>();
@@ -112,7 +109,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     myUpdaters.add(updater);
   }
 
-  public void updateButton(AnActionEvent e) {
+  public void updateButton(@NotNull AnActionEvent e) {
     final JComponent component = getContextComponent();
     e.getPresentation().setEnabled(component != null && component.isShowing() && component.isEnabled());
   }
@@ -134,6 +131,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myContextComponent;
   }
 
+  @NotNull
   public DataContext getDataContext() {
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
@@ -143,6 +141,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
            || (myContextComponent.isVisible() && UIUtil.getParentOfType(JLayeredPane.class, myContextComponent) != null);
   }
 
+  @Nullable
   public final RelativePoint getPreferredPopupPoint() {
     Container c = myContextComponent;
     ActionToolbar toolbar = null;
@@ -164,6 +163,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       }
     }
     return null;
+  }
+
+  public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
+    myListeners.add(l);
+    Disposer.register(parentDisposable, () -> myListeners.remove(l));
+  }
+
+  public boolean removeActionButtonListener(ActionButtonListener l) {
+    return myListeners.remove(l);
   }
 
   public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
@@ -189,12 +197,12 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myAction.actionPerformed(new AnActionEventWrapper(e, this));
     }
 
     @Override
-    public void updateButton(AnActionEvent e) {
+    public void updateButton(@NotNull AnActionEvent e) {
       myAction.update(e);
       final boolean enabled = e.getPresentation().isEnabled();
       final boolean visible = e.getPresentation().isVisible();
@@ -220,8 +228,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     public void showPopup(JBPopup popup) {
       popup.show(myPeer.getPreferredPopupPoint());
     }
+  }
 
+  public interface ActionButtonListener {
+    default void isVisibleChanged(boolean newValue) {
+      // Nothing
+    }
 
-
+    default void isEnabledChanged(boolean newValue) {
+      // Nothing
+    }
   }
 }

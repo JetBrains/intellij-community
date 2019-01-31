@@ -24,7 +24,8 @@ public class SingleClassesTest {
     fixture = new DecompilerTestFixture();
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                   IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1");
+                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+                  IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
   }
 
   @After
@@ -65,12 +66,12 @@ public class SingleClassesTest {
   @Test public void testAnonymousClass() { doTest("pkg/TestAnonymousClass"); }
   @Test public void testThrowException() { doTest("pkg/TestThrowException"); }
   @Test public void testInnerLocal() { doTest("pkg/TestInnerLocal"); }
-  @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
   @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
   @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
-  @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
+  @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow",
+           "pkg/TestShadowingSuperClass"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
@@ -107,7 +108,11 @@ public class SingleClassesTest {
   @Test public void testSuperInner() { doTest("pkg/TestSuperInner", "pkg/TestSuperInnerBase"); }
   @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
   @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
-
+  @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
+  @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
+  @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
+  @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+  @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
@@ -115,11 +120,13 @@ public class SingleClassesTest {
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
-  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+  @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
+  @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
+  @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

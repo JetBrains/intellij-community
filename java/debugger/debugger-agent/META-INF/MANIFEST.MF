@@ -1,4 +1,3 @@
 Manifest-Version: 1.0
 Premain-Class: com.intellij.rt.debugger.agent.CaptureAgent
 Can-Retransform-Classes: true
-Boot-Class-Path: debugger-agent-storage.jar

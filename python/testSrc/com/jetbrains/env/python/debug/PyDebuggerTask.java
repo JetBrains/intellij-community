@@ -71,7 +71,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
 
     final RunnerAndConfigurationSettings settings =
-      RunManager.getInstance(project).createRunConfiguration("test", factory);
+      RunManager.getInstance(project).createConfiguration("test", factory);
 
     myRunConfiguration = (PythonRunConfiguration)settings.getConfiguration();
 
@@ -125,6 +125,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
       mySession = XDebuggerManager.getInstance(getProject()).
         startSession(env, new XDebugProcessStarter() {
+          @Override
           @NotNull
           public XDebugProcess start(@NotNull final XDebugSession session) {
             myDebugProcess =

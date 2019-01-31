@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman
- * @since Jul 20, 2005
  */
 public class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";
@@ -444,10 +443,16 @@ public class TestNGUtil {
     return aListenerClass != null && psiClass.isInheritor(aListenerClass, true);
   }
 
-  public static boolean isTestngXML(final VirtualFile virtualFile) {
-    if ("xml".equalsIgnoreCase(virtualFile.getExtension()) && virtualFile.isInLocalFileSystem() && virtualFile.isValid()) {
-      final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
-      if (result != null && result.equals(SUITE_TAG_NAME)) {
+  public static boolean isTestngSuiteFile(final VirtualFile virtualFile) {
+    if (virtualFile.isInLocalFileSystem() && virtualFile.isValid()) {
+      String extension = virtualFile.getExtension();
+      if ("xml".equalsIgnoreCase(extension)) {
+        final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
+        if (result != null && result.equals(SUITE_TAG_NAME)) {
+          return true;
+        }
+      }
+      else if ("yaml".equals(extension)) {
         return true;
       }
     }

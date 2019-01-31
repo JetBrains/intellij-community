@@ -23,6 +23,7 @@ public class PointlessArithmeticExpression
         k = j * ONE_CONSTANT;
         System.out.println(k);
         k = <warning descr="'j / 1' can be replaced with 'j'">j / 1</warning>;
+        k = 0/0; // don't warn on division by zero
         System.out.println(k);
         String string = "foo" + 0;
 
@@ -116,12 +117,12 @@ class Main {
   int one = <warning descr="'5/5' can be replaced with '1'">5/5</warning>;
 }
 class Expanded {{
-  int m = <warning descr="'1/**/ - (byte)0 - 9' can be replaced with '1/**/ -  9'">1/**/ - (byte)0 - 9</warning>; // warn
+  int m = <warning descr="'1/**/ - (byte)0 - 9' can be replaced with '1 - 9'">1/**/ - (byte)0 - 9</warning>; // warn
   int j = <warning descr="'8 * 0 * 8' can be replaced with '0'">8 * 0 * 8</warning>;
-  int k = <warning descr="'1 + /*a*/0 +/**/ 9' can be replaced with '1 + /*a*//**/ 9'">1 + /*a*/0 +/**/ 9</warning>;
+  int k = <warning descr="'1 + /*a*/0 +/**/ 9' can be replaced with '1 + 9'">1 + /*a*/0 +/**/ 9</warning>;
   byte l = (byte) (<warning descr="'1L - 1L' can be replaced with '0L'">1L - 1L</warning>);
   byte u = 1;
-  int z = <warning descr="'2 / 1 / 1' can be replaced with '2 /  1'">2 / 1 / 1</warning>;
+  int z = <warning descr="'2 / 1 / 1' can be replaced with '2'">2 / 1 / 1</warning>;
   System.out.println(<warning descr="'u * 1' can be replaced with 'u'">u * 1</warning>);
   long g = <warning descr="'8L / 8L' can be replaced with '1L'">8L / 8L</warning>;
   long h = <warning descr="'9L * 0L' can be replaced with '0L'">9L * 0L</warning>;
@@ -130,7 +131,7 @@ class Expanded {{
   int div = 3 / 2 / 2;
   int mod = 3 % 2 % 2;
 
-  long typePromotion = <warning descr="'1L * Integer.MAX_VALUE * Integer.MAX_VALUE' can be replaced with '(long) Integer.MAX_VALUE * Integer.MAX_VALUE'">1L * Integer.MAX_VALUE * Integer.MAX_VALUE</warning>;
+  long typePromotion = <warning descr="'1L * Integer.MAX_VALUE * Integer.MAX_VALUE' can be replaced with 'Integer.MAX_VALUE * Integer.MAX_VALUE'">1L * Integer.MAX_VALUE * Integer.MAX_VALUE</warning>;
 }}
 class SideEffects {
   public static void main( String args[] ){

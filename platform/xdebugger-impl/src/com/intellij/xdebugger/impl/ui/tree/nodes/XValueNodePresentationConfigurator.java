@@ -110,7 +110,7 @@ public final class XValueNodePresentationConfigurator {
     private final String myType;
     private final NotNullFunction<String, String> valuePresenter;
 
-    public XValuePresentationAdapter(String value, String type, NotNullFunction<String, String> valuePresenter) {
+    XValuePresentationAdapter(String value, String type, NotNullFunction<String, String> valuePresenter) {
       myValue = value;
       myType = type;
       this.valuePresenter = valuePresenter;

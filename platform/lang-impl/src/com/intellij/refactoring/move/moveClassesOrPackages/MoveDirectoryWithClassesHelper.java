@@ -1,7 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.*;
@@ -48,8 +48,8 @@ public abstract class MoveDirectoryWithClassesHelper {
                                PsiDirectory directory,
                                MultiMap<PsiElement, String> conflicts) {}
 
-  public static MoveDirectoryWithClassesHelper[] findAll() {
-    return Extensions.getExtensions(EP_NAME);
+  public static List<MoveDirectoryWithClassesHelper> findAll() {
+    return EP_NAME.getExtensionList();
   }
 
 
@@ -123,7 +123,7 @@ public abstract class MoveDirectoryWithClassesHelper {
     private static class MyUsageInfo extends UsageInfo {
       private final @NotNull PsiFileSystemItem myFile;
 
-      public MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
+      MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
         super(reference);
         myFile = file;
       }

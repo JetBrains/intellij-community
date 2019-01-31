@@ -42,7 +42,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
           () -> CachedValueProvider.Result.create(isGradleProject(), ProjectRootModificationTracker.getInstance(project)));
 
         @Override
-        public Result applyFilter(String line, int entireLength) {
+        public Result applyFilter(@NotNull String line, int entireLength) {
           if (line == null || !FileUtil.isAbsolutePlatformIndependent(line)) return null;
           if (Boolean.FALSE.equals(myIsGradleProject.getValue())) return null;
           Result result = super.applyFilter(line, entireLength);

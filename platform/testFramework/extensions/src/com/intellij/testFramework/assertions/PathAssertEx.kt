@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
 import junit.framework.ComparisonFailure
-import org.assertj.core.api.AbstractCharSequenceAssert
+import org.assertj.core.api.AbstractStringAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
 import org.assertj.core.internal.Iterables
@@ -65,7 +65,7 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
   }
 }
 
-class StringAssertEx(actual: String?) : AbstractCharSequenceAssert<StringAssertEx, String>(actual, StringAssertEx::class.java) {
+class StringAssertEx(actual: String?) : AbstractStringAssert<StringAssertEx>(actual, StringAssertEx::class.java) {
   fun isEqualTo(expected: Path) {
     isNotNull
 

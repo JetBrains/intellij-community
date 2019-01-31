@@ -34,6 +34,7 @@ public class TestNGFramework extends JavaTestFramework {
                                                                                  "org.testng.annotations.BeforeGroups"
                                                                                  );
 
+  @Override
   @NotNull
   public String getName() {
     return "TestNG";
@@ -45,6 +46,7 @@ public class TestNGFramework extends JavaTestFramework {
     return TestngIcons.TestNG;
   }
 
+  @Override
   protected String getMarkerClassFQName() {
     return "org.testng.annotations.Test";
   }
@@ -54,11 +56,13 @@ public class TestNGFramework extends JavaTestFramework {
     return TestNGExternalLibraryResolver.TESTNG_DESCRIPTOR;
   }
 
+  @Override
   @Nullable
   public String getDefaultSuperClass() {
     return null;
   }
 
+  @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
     return TestNGUtil.isTestNGClass(clazz);
@@ -171,14 +175,17 @@ public class TestNGFramework extends JavaTestFramework {
     return new FileTemplateDescriptor("TestNG Test Class.java");
   }
 
+  @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG SetUp Method.java");
   }
 
+  @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG TearDown Method.java");
   }
 
+  @Override
   @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");

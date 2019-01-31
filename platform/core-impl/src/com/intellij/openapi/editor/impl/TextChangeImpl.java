@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Default {@link TextChange} implementation with mutable state.
  *
  * @author Denis Zhdanov
- * @since Jul 7, 2010 5:24:06 PM
  */
 public class TextChangeImpl implements TextChange {
 

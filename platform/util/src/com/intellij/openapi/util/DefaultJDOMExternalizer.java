@@ -21,6 +21,7 @@ import java.util.List;
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
  * @author mike
  */
+@Deprecated
 @SuppressWarnings("HardCodedStringLiteral")
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
@@ -169,7 +170,7 @@ public class DefaultJDOMExternalizer {
         if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
-          if (JDOMExternalizable.class.isInstance(value)) {
+          if (value instanceof JDOMExternalizable) {
             final List children = e.getChildren("value");
             for (Object child : children) {
               Element valueTag = (Element)child;

@@ -1,0 +1,26 @@
+<option>ALIGN_MULTILINE_PARAMETERS_IN_CALLS=true</option>
+foooooooooooooo(   a,
+b,
+                       c,
+     d)
+foooooooooooooo    a,
+b,
+                       c,
+     d
+foooooooooooooo[   a,
+b,
+                       c,
+     d]
+-----
+foooooooooooooo(a,
+                b,
+                c,
+                d)
+foooooooooooooo a,
+                b,
+                c,
+                d
+foooooooooooooo[a,
+                b,
+                c,
+                d]

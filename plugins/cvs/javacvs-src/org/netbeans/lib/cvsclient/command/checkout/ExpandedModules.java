@@ -31,19 +31,22 @@ final class ExpandedModules implements ICvsListener, IModuleExpansionListener {
 
   // Setup ==================================================================
 
-  public ExpandedModules() {
+  ExpandedModules() {
   }
 
   // Implemented ============================================================
 
+  @Override
   public void moduleExpanded(String module) {
     modules.add(module);
   }
 
+  @Override
   public void registerListeners(ICvsListenerRegistry listenerRegistry) {
     listenerRegistry.addModuleExpansionListener(this);
   }
 
+  @Override
   public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
     listenerRegistry.removeModuleExpansionListener(this);
   }

@@ -19,7 +19,7 @@ class MyBaseLanguage extends Language {
 
   public static final Language INSTANCE = new MyBaseLanguage();
 
-  public MyBaseLanguage() {
+  MyBaseLanguage() {
     super("LB");
   }
 }

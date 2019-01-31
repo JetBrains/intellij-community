@@ -19,14 +19,15 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author Irina.Chernushina on 2/20/2017.
  */
 public interface JsonPropertyAdapter {
   @Nullable String getName();
   @Nullable JsonValueAdapter getNameValueAdapter();
-  @Nullable JsonValueAdapter getValue();
+  @NotNull Collection<JsonValueAdapter> getValues();
   @NotNull PsiElement getDelegate();
   @Nullable JsonObjectValueAdapter getParentObject();
-  @Nullable JsonArrayValueAdapter getParentArray();
 }

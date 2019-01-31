@@ -26,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
@@ -49,7 +48,7 @@ val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
-                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, if (tooltipAction == null) comparable else ArrayUtil.append(comparable, tooltipAction)) {
+                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
 
 
   override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
@@ -151,7 +150,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     buttons.add(createKeymapHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         runFixAction.run()
       }
 
@@ -161,7 +160,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     })
 
     actions.add(object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent?) {
+      override fun actionPerformed(e: AnActionEvent) {
         showAllFixes.run()
       }
 
@@ -187,7 +186,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
         graphics2D.fill(RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height / 2).toDouble(), 0.0, 0.0))
 
-        val arc = BalloonImpl.ARC.toDouble()
+        val arc = BalloonImpl.ARC.get().toDouble()
         val double = RoundRectangle2D.Double(1.0, 0.0, bounds.width - 2.5, (bounds.height - 1).toDouble(), arc, arc)
 
         graphics2D.fill(double)
@@ -271,15 +270,6 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
-        val state = popState
-        if (state == ActionButtonComponent.POPPED) {
-          val look = buttonLook
-          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
-          look.paintIcon(g, this, icon)
-          look.paintBorder(g, this)
-          return
-        }
-
         paintButtonLook(g)
       }
     }
@@ -296,7 +286,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Quick fixes"), HintManagerImpl.ActionToIgnore {
+    "Show Quick Fixes"), HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -325,7 +315,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear")
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", this::class.java)
       reloader.reload(state)
     }
 
@@ -359,11 +349,7 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
 }
 
 private fun getKeymapColor(): Color {
-  return JBColor.namedColor("tooltips.actions.keymap.text.color", JBColor(0x99a4ad, 0x919191))
-}
-
-private fun getSettingsIconHoverBackgroundColor(): Color {
-  return JBColor.namedColor("tooltips.actions.settings.icon.background.color", JBColor(0xe9eac0, 0x44494c))
+  return JBColor.namedColor("ToolTip.Actions.infoForeground", JBColor(0x99a4ad, 0x919191))
 }
 
 private fun getActionFont(): Font? {

@@ -31,6 +31,7 @@ import java.util.Map;
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenamePsiPackageProcessor");
 
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiPackage;
   }
@@ -53,6 +54,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return new String[]{((PsiPackage)element).getQualifiedName()};
       }
 
+      @NotNull
       @Override
       public String getNewName() {
         final PsiPackage psiPackage = (PsiPackage)element;
@@ -64,6 +66,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         return StringUtil.getShortName(newName);
       }
 
+      @Override
       protected void doAction() {
         final PsiPackage psiPackage = (PsiPackage)element;
         final String oldName = psiPackage.getQualifiedName();
@@ -108,6 +111,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     };
   }
 
+  @Override
   public void renameElement(@NotNull final PsiElement element,
                             @NotNull final String newName,
                             @NotNull final UsageInfo[] usages,
@@ -118,6 +122,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     RenameUtil.doRenameGenericNamedElement(element, shortName, usages, listener);
   }
 
+  @Override
   public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
     return getPackageQualifiedNameAfterRename((PsiPackage)element, newName, nonJava);
   }
@@ -144,6 +149,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
     preparePackageRenaming((PsiPackage)element, newName, allRenames);
   }
@@ -158,6 +164,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   @Nullable
   public Runnable getPostRenameCallback(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final RefactoringElementListener listener) {
     final Project project = element.getProject();
@@ -172,24 +179,29 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     };
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_PACKAGE;
   }
 
+  @Override
   public boolean isToSearchInComments(@NotNull final PsiElement psiElement) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
   }
 
+  @Override
   public void setToSearchInComments(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = enabled;
   }
 
+  @Override
   public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
   }
 
+  @Override
   public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
   }

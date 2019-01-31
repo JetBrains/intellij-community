@@ -26,7 +26,6 @@ import java.util.Collection;
  * A node in the reference graph corresponding to a PSI element.
  *
  * @author anna
- * @since 6.0
  */
 public interface RefElement extends RefEntity {
   /**
@@ -42,7 +41,14 @@ public interface RefElement extends RefEntity {
    *
    * @return the PSI element.
    */
-  PsiElement getElement();
+  default PsiElement getPsiElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Deprecated
+  default PsiElement getElement() {
+    return getPsiElement();
+  }
 
   SmartPsiElementPointer getPointer();
 

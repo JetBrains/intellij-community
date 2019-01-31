@@ -47,7 +47,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);

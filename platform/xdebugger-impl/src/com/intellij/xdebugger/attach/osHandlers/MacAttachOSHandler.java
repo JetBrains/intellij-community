@@ -5,7 +5,7 @@ import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import org.jetbrains.annotations.NotNull;
 
 class MacAttachOSHandler extends UnixAttachOSHandler {
-  public MacAttachOSHandler(@NotNull EnvironmentAwareHost host) {
+  MacAttachOSHandler(@NotNull EnvironmentAwareHost host) {
     super(host, OSType.MACOSX);
   }
 }

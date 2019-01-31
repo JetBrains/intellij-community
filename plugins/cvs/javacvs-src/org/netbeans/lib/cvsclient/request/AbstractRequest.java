@@ -22,7 +22,8 @@ abstract class AbstractRequest
 
 	// Implemented ============================================================
 
-	public FileDetails getFileForTransmission() {
+	@Override
+        public FileDetails getFileForTransmission() {
 		return null;
 	}
 }

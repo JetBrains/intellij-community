@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.tooling.internal.init;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/21/2014
  */
 public class Init {
   private Init() {

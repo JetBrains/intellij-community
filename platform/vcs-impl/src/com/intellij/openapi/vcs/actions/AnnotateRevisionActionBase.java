@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -56,6 +57,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     return editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
@@ -70,10 +72,13 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
                                   @Nullable VirtualFile file,
                                   @Nullable VcsFileRevision fileRevision) {
     if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
-
     AnnotationProvider provider = vcs.getAnnotationProvider();
-    if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
-    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
+    if (provider == null) return false;
+    if (!provider.isAnnotationValid(fileRevision)) return false;
+
+    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) {
+      return false;
+    }
 
     return true;
   }
@@ -107,6 +112,7 @@ public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
     AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);

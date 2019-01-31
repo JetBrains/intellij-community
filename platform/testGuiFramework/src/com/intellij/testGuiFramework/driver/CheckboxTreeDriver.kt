@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
@@ -22,7 +8,10 @@ import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Container
 import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JCheckBox
+import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
 
@@ -30,23 +19,36 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
     replaceCellReader(ExtendedJTreeCellReader())
   }
 
-  fun getCheckboxComponent(tree: CheckboxTree, pathStrings: List<String>): JCheckBox? {
-    val treePath = matchingPathFor(tree, pathStrings)
-    val rendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, treePath.lastPathComponent, false, false, false,
-                                                                           tree.getRowForPath(treePath),
+  fun getCheckboxComponent(tree: CheckboxTree, path: TreePath): JCheckBox? {
+    val rendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, path.lastPathComponent, false, false, false,
+                                                                           tree.getRowForPath(path),
                                                                            false)
     return GuiTestUtilKt.findAllWithBFS(rendererComponent as Container, JCheckBox::class.java).firstOrNull()
   }
 
-  fun clickCheckbox(tree: CheckboxTree, pathStrings: List<String>) {
-    val treePath = matchingPathFor(tree, pathStrings)
-    val checkBox = getCheckboxComponent(tree, pathStrings) ?: throw ComponentLookupException("Unable to find checkBox for a CheckboxTree with path $pathStrings")
-    val pathBounds = tree.getPathBounds(treePath)
-    val checkBoxCenterPoint = Point(pathBounds.x + checkBox.location.x + checkBox.width / 2,
-                                    pathBounds.y + checkBox.location.y + checkBox.height / 2)
-    scrollToPath(tree, pathStrings)
-    robot.click(tree, checkBoxCenterPoint)
+  private fun CheckboxTree.clickRow(path: TreePath, calculatePoint: (Rectangle, Rectangle) -> Point){
+    val checkbox = getCheckboxComponent(this, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path ${path.path.joinToString()}")
+    val pathBounds = this.getPathBounds(path)
+    val point = calculatePoint(checkbox.bounds, pathBounds)
+    this.scrollToPath(path)
+    this.makeVisible(path)
+    robot.click(this, point)
+    robot.waitForIdle()
+
   }
 
+  fun clickCheckbox(tree: CheckboxTree, path: TreePath) {
+    tree.clickRow(path){
+      checkboxBounds: Rectangle, pathBounds:Rectangle ->
+      Point(pathBounds.x + checkboxBounds.x + checkboxBounds.width / 2,
+            pathBounds.y + checkboxBounds.y + checkboxBounds.height / 2)
+    }
+  }
 
+  override fun getLabelXCoord(jTree: JTree, path: TreePath): Int {
+    val checkBox = getCheckboxComponent(jTree as CheckboxTree, path) ?: throw ComponentLookupException("Unable to find checkBox for a ExtCheckboxTree with path $path")
+    val pathBounds = jTree.getPathBounds(path)
+
+    return pathBounds.x + checkBox.bounds.width + 2
+  }
 }

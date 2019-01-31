@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.*;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -24,13 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +40,7 @@ public abstract class CommandLineState implements RunProfileState {
     return myEnvironment;
   }
 
+  @Nullable
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
   }
@@ -109,10 +89,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   @NotNull
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
-    if (console == null || !console.canPause() || (executor != null && !DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()))) {
-      return AnAction.EMPTY_ARRAY;
-    }
-    return new AnAction[]{new PauseOutputAction(console, processHandler)};
+    return AnAction.EMPTY_ARRAY;
   }
 
   public TextConsoleBuilder getConsoleBuilder() {
@@ -121,50 +98,5 @@ public abstract class CommandLineState implements RunProfileState {
 
   public void setConsoleBuilder(final TextConsoleBuilder consoleBuilder) {
     myConsoleBuilder = consoleBuilder;
-  }
-
-  protected static class PauseOutputAction extends ToggleAction implements DumbAware{
-    private final ConsoleView myConsole;
-    private final ProcessHandler myProcessHandler;
-
-    public PauseOutputAction(final ConsoleView console, final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.pause.output.action.name"), null, AllIcons.Actions.Pause);
-      myConsole = console;
-      myProcessHandler = processHandler;
-    }
-
-    @Override
-    public boolean isSelected(final AnActionEvent event) {
-      return myConsole.isOutputPaused();
-    }
-
-    @Override
-    public void setSelected(final AnActionEvent event, final boolean flag) {
-      myConsole.setOutputPaused(flag);
-      ApplicationManager.getApplication().invokeLater(() -> update(event));
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent event) {
-      super.update(event);
-      final Presentation presentation = event.getPresentation();
-      final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
-      if (isRunning) {
-        presentation.setEnabled(true);
-      }
-      else {
-        if (!myConsole.canPause()) {
-          presentation.setEnabled(false);
-          return;
-        }
-        if (!myConsole.hasDeferredOutput()) {
-          presentation.setEnabled(false);
-        }
-        else {
-          presentation.setEnabled(true);
-          myConsole.performWhenNoDeferredOutput(() -> update(event));
-        }
-      }
-    }
   }
 }

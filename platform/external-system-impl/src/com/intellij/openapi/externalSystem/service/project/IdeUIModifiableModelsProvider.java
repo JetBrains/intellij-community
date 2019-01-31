@@ -79,13 +79,16 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
     return myLibrariesModel.getLibraryModifiableModel(library);
   }
 
+  @Override
   public void commit() {
     processExternalArtifactDependencies();
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public ModalityState getModalityStateForQuestionDialogs() {
     return ModalityState.defaultModalityState();
   }

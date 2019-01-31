@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
-public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
+public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -96,6 +96,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     return getModifiableModel(new RootConfigurationAccessor());
   }
 
+  @Override
   @NotNull
   public ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -204,7 +205,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public boolean isDependsOn(Module module) {
+  public boolean isDependsOn(@NotNull Module module) {
     return myRootModel.findModuleOrderEntry(module) != null;
   }
 
@@ -220,7 +221,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
-  public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
+  public <R> R processOrder(@NotNull RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);
   }

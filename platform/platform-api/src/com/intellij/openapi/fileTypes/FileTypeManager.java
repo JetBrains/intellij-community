@@ -60,6 +60,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   /**
    * @deprecated use {@link FileTypeFactory} instead
    */
+  @Deprecated
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);
 
   /**
@@ -70,6 +71,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *                                    treated as the specified file type. The extensions should not start with '.'.
    * @deprecated use {@link FileTypeFactory} instead
    */
+  @Deprecated
   public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<>();
     if (defaultAssociatedExtensions != null) {
@@ -97,6 +99,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @return The array of extensions associated with the file type.
    * @deprecated since more generic way of associations by means of wildcards exist not every associations matches extension paradigm
    */
+  @Deprecated
   @NotNull
   public abstract String[] getAssociatedExtensions(@NotNull FileType type);
 
@@ -112,6 +115,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
 
+  @Deprecated
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
@@ -122,6 +126,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @deprecated Subscribe to {@link #TOPIC} on any message bus level instead.
    */
 
+  @Deprecated
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
@@ -133,7 +138,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    */
   @Nullable
   @Deprecated() // use getKnownFileTypeOrAssociate(VirtualFile file, Project project) instead
-  public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file);
+  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
+
   @Nullable
   public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);
 
@@ -160,7 +166,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type      the file type to associate the extension with.
    * @param extension the extension to associate.
-   * @since 5.0.2
    */
   public final void associateExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     associate(type, new ExtensionFileNameMatcher(extension));
@@ -177,7 +182,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    *
    * @param type      the file type to remove the extension from.
    * @param extension the extension to remove.
-   * @since 5.0.2
    */
   public final void removeAssociatedExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     removeAssociation(type, new ExtensionFileNameMatcher(extension));

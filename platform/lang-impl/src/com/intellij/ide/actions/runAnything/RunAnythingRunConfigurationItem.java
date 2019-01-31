@@ -33,7 +33,7 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
     setupIcon(component, myIcon);
     component.append(StringUtil.shortenTextWithEllipsis(myWrapper.getText(), 40, 0));
 
-    appendDescription(component, description);
+    appendDescription(component, description, isSelected);
 
     return component;
   }

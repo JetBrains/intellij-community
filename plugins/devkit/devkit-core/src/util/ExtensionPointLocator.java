@@ -41,8 +41,8 @@ public class ExtensionPointLocator {
   }
 
   private static void findExtensionPointCandidatesInHierarchy(PsiClass psiClass,
-                                                              Set<ExtensionPointCandidate> candidates,
-                                                              HashSet<PsiClass> processed) {
+                                                              Set<? super ExtensionPointCandidate> candidates,
+                                                              HashSet<? super PsiClass> processed) {
     for (PsiClass superClass : psiClass.getSupers()) {
       if (!processed.add(superClass) || CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         continue;
@@ -52,7 +52,7 @@ public class ExtensionPointLocator {
     }
   }
 
-  private static void findExtensionPointCandidates(PsiClass psiClass, Set<ExtensionPointCandidate> candidates) {
+  private static void findExtensionPointCandidates(PsiClass psiClass, Set<? super ExtensionPointCandidate> candidates) {
     String name = ClassUtil.getJVMClassName(psiClass);
     if (name == null) return;
 
@@ -65,7 +65,7 @@ public class ExtensionPointLocator {
     }, scope);
   }
 
-  private static void processExtensionPointCandidate(PsiElement element, Set<ExtensionPointCandidate> candidates) {
+  private static void processExtensionPointCandidate(PsiElement element, Set<? super ExtensionPointCandidate> candidates) {
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (tag == null) return;
     if ("extensionPoint".equals(tag.getName())) {

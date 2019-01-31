@@ -7,12 +7,12 @@ class <error descr="Default constructor in 'C' is deprecated and marked for remo
 
 class P {
   void normal() {
-    new <error descr="Default constructor in 'C' is deprecated and marked for removal">C</error>(){};
+    new <error descr="'C()' is deprecated and marked for removal">C</error>(){};
   }
 
   @SuppressWarnings("deprecation")
   void suppressDeprecation() {
-    new <error descr="Default constructor in 'C' is deprecated and marked for removal">C</error>(){};
+    new <error descr="'C()' is deprecated and marked for removal">C</error>(){};
   }
 
   @SuppressWarnings("removal")

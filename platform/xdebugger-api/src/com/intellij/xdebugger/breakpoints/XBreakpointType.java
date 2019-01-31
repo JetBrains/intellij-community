@@ -136,6 +136,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #getInactiveDependentIcon()} instead
    */
+  @Deprecated
   @NotNull
   public Icon getDisabledDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;
@@ -156,6 +157,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #createCustomPropertiesPanel(Project)} instead
    */
+  @Deprecated
   @Nullable
   public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
     return null;
@@ -174,6 +176,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
+  @Deprecated
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
@@ -253,5 +256,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull B breakpoint, @Nullable XDebugSession currentSession) {
     return Collections.emptyList();
+  }
+
+  @Override
+  public String toString() {
+    return myId;
   }
 }

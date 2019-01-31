@@ -30,7 +30,10 @@ import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -161,6 +164,8 @@ class GitNewChangesCollector extends GitChangesCollector {
             reportModified(filepath, head);
           } else if (yStatus == 'D') {
             reportDeleted(filepath, head);
+          } else if (yStatus == 'A') {
+            reportAdded(filepath);
           } else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
           } else if (yStatus == 'U') {

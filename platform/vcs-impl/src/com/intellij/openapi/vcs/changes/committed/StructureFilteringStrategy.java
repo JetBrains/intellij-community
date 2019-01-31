@@ -31,7 +31,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -55,6 +54,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return VcsBundle.message("filter.structure.name");
   }
 
+  @Override
   @Nullable
   public JComponent getFilterUI() {
     if (myUI == null) {
@@ -63,6 +63,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return myUI.getComponent();
   }
 
+  @Override
   public void setFilterBase(List<CommittedChangeList> changeLists) {
     // todo cycle here
     if (myUI == null) {
@@ -72,22 +73,27 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myUI.append(changeLists);
   }
 
+  @Override
   public void addChangeListener(ChangeListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeChangeListener(ChangeListener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public void resetFilterBase() {
     myUI.reset();
   }
 
+  @Override
   public void appendFilterBase(List<CommittedChangeList> changeLists) {
     myUI.append(changeLists);
   }
 
+  @Override
   @NotNull
   public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
@@ -121,11 +127,12 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     private final Set<FilePath> myFilePaths = new HashSet<>();
     private TreeState myState;
 
-    public MyUI() {
+    MyUI() {
       myStructureTree = new Tree();
       myStructureTree.setRootVisible(false);
       myStructureTree.setShowsRootHandles(true);
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
         public void valueChanged(final TreeSelectionEvent e) {
           final List<FilePath> filePaths = new ArrayList<>(mySelection);
 
@@ -156,9 +163,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         result = ContainerUtil.list(((FilePath)userObject));
       }
       else if (userObject instanceof Module) {
-        result = Arrays.stream(ModuleRootManager.getInstance((Module)userObject).getContentRoots())
-          .map(VcsUtil::getFilePath)
-          .collect(Collectors.toList());
+        result = ContainerUtil.map(ModuleRootManager.getInstance((Module)userObject).getContentRoots(), VcsUtil::getFilePath);
       }
 
       return result;
@@ -178,10 +183,10 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     public void reset() {
       myFilePaths.clear();
       myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
-      myStructureTree.setModel(TreeModelBuilder.buildEmpty(myProject));
+      myStructureTree.setModel(TreeModelBuilder.buildEmpty());
     }
 
-    public void append(final List<CommittedChangeList> changeLists) {
+    public void append(final List<? extends CommittedChangeList> changeLists) {
       final TreeState localState = myState != null && myFilePaths.isEmpty()
                                    ? myState
                                    : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
@@ -197,7 +202,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
 
       myStructureTree
         .setModel(TreeModelBuilder.buildFromFilePaths(myProject, new DirectoryChangesGroupingPolicy.Factory(myProject), myFilePaths));
-      localState.applyTo(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
+      localState.applyTo(myStructureTree, myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();
       initRenderer();

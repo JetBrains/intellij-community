@@ -247,6 +247,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     newEditor.setOpaque(false);
   }
 
+  @Override
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     int iconWidth = scale(BUTTON_WIDTH) + i.right;
     int iconHeight = scale(SPINNER_HEIGHT) + i.top + i.bottom;

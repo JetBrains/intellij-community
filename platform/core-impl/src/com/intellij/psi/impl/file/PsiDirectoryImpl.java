@@ -503,6 +503,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     visitor.visitDirectory(this);
   }
 
+  @Override
   public String toString() {
     return "PsiDirectory:" + myFile.getPresentableUrl();
   }

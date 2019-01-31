@@ -19,6 +19,7 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class SelectAllAction extends OccurrenceAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
     search.selectAllOccurrences();
     search.close();

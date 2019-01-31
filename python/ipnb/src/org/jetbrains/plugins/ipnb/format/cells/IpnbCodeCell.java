@@ -52,7 +52,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
     myCellOutputs.add(cellOutput);
   }
 
-  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   @Override
   public Object clone() {
     return new IpnbCodeCell(myLanguage, new ArrayList<>(getSource()), myPromptNumber, new ArrayList<>(myCellOutputs),

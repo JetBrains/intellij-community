@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
@@ -27,7 +13,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.SwingActionLink;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -45,25 +31,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class RepositoryLibraryPropertiesEditor {
   private static final Logger LOG = Logger.getInstance(RepositoryLibraryPropertiesEditor.class);
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
-  @Nullable
-  private VersionKind versionKind;
   private final RepositoryLibraryPropertiesModel initialModel;
   private final RepositoryLibraryPropertiesModel model;
   private final RepositoryLibraryDescription repositoryLibraryDescription;
-  private ComboBox versionKindSelector;
-  private ComboBox versionSelector;
+  private ComboBox<VersionItem> versionSelector;
   private JPanel mainPanel;
   private JButton myReloadButton;
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
+  private JBCheckBox downloadAnnotationsCheckBox;
   private JBLabel mavenCoordinates;
   private final ThreeStateCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
@@ -73,7 +59,7 @@ public class RepositoryLibraryPropertiesEditor {
   private final SwingActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
-    void onChange(RepositoryLibraryPropertiesEditor editor);
+    void onChange(@NotNull RepositoryLibraryPropertiesEditor editor);
   }
 
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
@@ -81,7 +67,7 @@ public class RepositoryLibraryPropertiesEditor {
                                            RepositoryLibraryDescription description) {
     this(project, model, description, true, new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
 
       }
     });
@@ -101,7 +87,7 @@ public class RepositoryLibraryPropertiesEditor {
     myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
     myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
     myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
-    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure") {
+    myManageDependenciesLink = new SwingActionLink(new AbstractAction("Configure...") {
       @Override
       public void actionPerformed(ActionEvent e) {
         configureTransitiveDependencies();
@@ -118,11 +104,12 @@ public class RepositoryLibraryPropertiesEditor {
     });
     this.onChangeListener = new ModelChangeListener() {
       @Override
-      public void onChange(RepositoryLibraryPropertiesEditor editor) {
+      public void onChange(@NotNull RepositoryLibraryPropertiesEditor editor) {
         onChangeListener.onChange(editor);
         mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
     };
+    versionSelector.setRenderer(new VersionSelectorCellRenderer());
     updateManageDependenciesLink();
     reloadVersionsAsync();
   }
@@ -142,98 +129,18 @@ public class RepositoryLibraryPropertiesEditor {
     }
   }
 
-  private static VersionKind getVersionKind(String version) {
+  private static VersionItem toVersionItem(String version) {
     if (Strings.isNullOrEmpty(version)) {
-      return VersionKind.Unselected;
+      return null;
     }
     else if (version.equals(RepositoryLibraryDescription.ReleaseVersionId)) {
-      return VersionKind.Release;
+      return VersionItem.LatestRelease.INSTANCE;
     }
     else if (version.equals(RepositoryLibraryDescription.LatestVersionId)) {
-      return VersionKind.Latest;
+      return VersionItem.LatestVersion.INSTANCE;
     }
     else {
-      return VersionKind.Select;
-    }
-  }
-
-  private static int getSelection(String selectedVersion, List<String> versions) {
-    VersionKind versionKind = getVersionKind(selectedVersion);
-    int releaseIndex = JBIterable.from(versions).takeWhile(version -> version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)).size();
-
-    switch (versionKind) {
-      case Unselected:
-        return -1;
-      case Release:
-        return releaseIndex == versions.size() ? -1 : releaseIndex;
-      case Latest:
-        return 0;
-      case Select:
-        if (versions.indexOf(selectedVersion) == -1) {
-          versions.add(0, selectedVersion);
-        }
-        return versions.indexOf(selectedVersion);
-    }
-    return -1;
-  }
-
-  private void initVersionKindSelector() {
-    final List<String> versionKinds = Arrays.asList(
-      RepositoryLibraryDescription.ReleaseVersionDisplayName, RepositoryLibraryDescription.LatestVersionDisplayName, "Select..."
-    );
-    CollectionComboBoxModel<String> versionKindSelectorModel = new CollectionComboBoxModel<>(versionKinds);
-    //noinspection unchecked
-    versionKindSelector.setModel(versionKindSelectorModel);
-    versionKindSelector.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        VersionKind newVersionKind = getSelectedVersionKind();
-        if (newVersionKind != versionKind) {
-          versionKind = newVersionKind;
-          versionKindChanged();
-        }
-      }
-    });
-    setSelectedVersionKind(getVersionKind(model.getVersion()));
-  }
-
-  private void versionKindChanged() {
-    versionSelector.setEnabled(versionKind == VersionKind.Select);
-    model.setVersion(getSelectedVersion());
-    int selection = getSelection(model.getVersion(), versions);
-    versionSelector.setSelectedIndex(selection);
-    onChangeListener.onChange(this);
-    updateManageDependenciesLink();
-  }
-
-  private VersionKind getSelectedVersionKind() {
-    switch (versionKindSelector.getSelectedIndex()) {
-      case 0:
-        return VersionKind.Release;
-      case 1:
-        return VersionKind.Latest;
-      case 2:
-        return VersionKind.Select;
-      default:
-        return VersionKind.Unselected;
-    }
-  }
-
-  private void setSelectedVersionKind(VersionKind versionKind) {
-    versionSelector.setEnabled(versionKind == VersionKind.Select);
-    switch (versionKind) {
-      case Unselected:
-        versionKindSelector.setSelectedIndex(-1);
-        break;
-      case Release:
-        versionKindSelector.setSelectedItem(0);
-        break;
-      case Latest:
-        versionKindSelector.setSelectedIndex(1);
-        break;
-      case Select:
-        versionKindSelector.setSelectedIndex(2);
-        break;
+      return new VersionItem.ExactVersion(version);
     }
   }
 
@@ -245,17 +152,18 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void reloadVersionsAsync() {
     setState(State.Loading);
-    JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription).onSuccess(result -> versionsLoaded(new ArrayList<>(result)));
+    JarRepositoryManager.getAvailableVersions(project, repositoryLibraryDescription)
+      .onSuccess(result -> versionsLoaded(new ArrayList<>(result)));
   }
 
   private void initVersionsPanel() {
-    final int selection = getSelection(model.getVersion(), versions);
-    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<>(versions);
-    //noinspection unchecked
+    CollectionComboBoxModel<VersionItem> versionSelectorModel = new CollectionComboBoxModel<>();
+    versionSelectorModel.add(VersionItem.LatestRelease.INSTANCE);
+    versionSelectorModel.add(VersionItem.LatestVersion.INSTANCE);
+    versionSelectorModel.add(ContainerUtil.map(versions, VersionItem.ExactVersion::new));
     versionSelector.setModel(versionSelectorModel);
-    versionSelector.setSelectedIndex(selection);
+    versionSelector.setSelectedItem(toVersionItem(model.getVersion()));
     setState(State.Loaded);
-    initVersionKindSelector();
     versionSelector.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -280,6 +188,15 @@ public class RepositoryLibraryPropertiesEditor {
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
+    downloadAnnotationsCheckBox.setSelected(model.isDownloadAnnotations());
+    downloadAnnotationsCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        model.setDownloadAnnotations(downloadAnnotationsCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+      }
+    });
+
     updateIncludeTransitiveDepsCheckBoxState();
     myIncludeTransitiveDepsCheckBox.addChangeListener(new ChangeListener() {
       @Override
@@ -306,9 +223,9 @@ public class RepositoryLibraryPropertiesEditor {
     myManageDependenciesLink.setEnabled(enable);
   }
 
-  private void versionsLoaded(final @Nullable List<String> versions) {
+  private void versionsLoaded(@NotNull List<String> versions) {
     this.versions = versions;
-    if (versions == null || versions.isEmpty()) {
+    if (versions.isEmpty()) {
       versionsFailedToLoad();
       return;
     }
@@ -322,19 +239,8 @@ public class RepositoryLibraryPropertiesEditor {
 
   @Nullable
   public String getSelectedVersion() {
-    if(versionKind == null) return null;
-
-    switch (versionKind) {
-      case Unselected:
-        return null;
-      case Release:
-        return RepositoryLibraryDescription.ReleaseVersionId;
-      case Latest:
-        return RepositoryLibraryDescription.LatestVersionId;
-      case Select:
-        return (String)versionSelector.getSelectedItem();
-    }
-    return null;
+    VersionItem selectedItem = (VersionItem)versionSelector.getSelectedItem();
+    return selectedItem != null ? selectedItem.getVersionId() : null;
   }
 
   public JPanel getMainPanel() {
@@ -347,13 +253,6 @@ public class RepositoryLibraryPropertiesEditor {
 
   public boolean hasChanges() {
     return !model.equals(initialModel);
-  }
-
-  private enum VersionKind {
-    Unselected,
-    Release,
-    Latest,
-    Select
   }
 
   private enum State {

@@ -28,7 +28,6 @@ import java.util.Collection;
 
 /**
  * @author yole
- * @since 7.0
  */
 public interface CachingCommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> extends CommittedChangesProvider<T, U> {
   /**

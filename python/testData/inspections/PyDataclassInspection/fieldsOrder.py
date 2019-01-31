@@ -77,3 +77,15 @@ class C3:
     y: int
 
 C3(1, 2)
+
+
+@dataclasses.dataclass
+class D1:
+    x: int = 0
+    y: int = dataclasses.field(init=False)
+
+
+@dataclasses.dataclass
+class E1:
+    foo = "bar"  # <- has no type annotation, so doesn't count.
+    baz: str

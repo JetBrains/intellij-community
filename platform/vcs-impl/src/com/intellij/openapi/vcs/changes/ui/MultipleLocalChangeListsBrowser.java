@@ -15,7 +15,7 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import com.intellij.openapi.vcs.ex.ExclusionState;
+import com.intellij.openapi.vcs.ex.LocalRange;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +40,6 @@ import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +49,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
@@ -59,7 +58,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FI
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
-public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
+class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
   @NotNull private final MergingUpdateQueue myUpdateQueue =
     new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
 
@@ -77,8 +76,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull private LocalChangeList myChangeList;
 
   @Nullable private Runnable mySelectedListChangeListener;
+  private final RollbackDialogAction myRollbackDialogAction;
 
-  public MultipleLocalChangeListsBrowser(@NotNull Project project,
+  MultipleLocalChangeListsBrowser(@NotNull Project project,
                                          boolean showCheckboxes,
                                          boolean highlightProblems,
                                          boolean enableUnversioned,
@@ -89,6 +89,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
+
+    myRollbackDialogAction = new RollbackDialogAction();
+    myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
     if (Registry.is("vcs.skip.single.default.changelist")) {
       List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
@@ -107,7 +110,8 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    return new MyChangesBrowserTreeList(project, showCheckboxes, highlightProblems);
+    String changelistId = ChangeListManager.getInstance(project).getDefaultChangeList().getId();
+    return new MyChangesBrowserTreeList(project, showCheckboxes, highlightProblems, changelistId, this);
   }
 
   @Nullable
@@ -120,12 +124,29 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
+    AnAction rollbackGroup = createRollbackGroup(true);
     return ContainerUtil.append(
       super.createToolbarActions(),
-      new RollbackDialogAction(),
+      rollbackGroup,
       ActionManager.getInstance().getAction("ChangesView.Refresh"),
       ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar")
     );
+  }
+
+  private AnAction createRollbackGroup(boolean popup) {
+    List<? extends AnAction> rollbackActions = createAdditionalRollbackActions();
+    if (rollbackActions.isEmpty()) {
+      return myRollbackDialogAction;
+    }
+    DefaultActionGroup group = new DefaultActionGroup(myRollbackDialogAction);
+    group.addAll(rollbackActions);
+    ActionUtil.copyFrom(group, IdeActions.CHANGES_VIEW_ROLLBACK);
+    group.setPopup(popup);
+    return group;
+  }
+
+  protected List<? extends AnAction> createAdditionalRollbackActions() {
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -137,11 +158,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     if (myEnableUnversioned) {
       result.add(new ShowHideUnversionedFilesAction());
-
-      // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
-      ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
-      result.add(unversionedGroup);
-      ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
+      result.add(UnversionedViewDialog.registerUnversionedPopupGroup(myViewer));
     }
     else {
       // avoid duplicated actions on toolbar
@@ -150,9 +167,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
-    RollbackDialogAction rollbackAction = new RollbackDialogAction();
-    rollbackAction.registerCustomShortcutSet(this, null);
-    result.add(rollbackAction);
+    result.add(createRollbackGroup(false));
 
     EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(this);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
@@ -176,6 +191,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     super.updateDiffContext(chain);
     chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
     chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
   }
 
 
@@ -216,9 +232,10 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     updateDisplayedChanges();
     if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
 
-    ((MyChangesBrowserTreeList)myViewer).updateExclusionStates();
+    ((MyChangesBrowserTreeList)myViewer).setChangelistId(list.getId());
   }
 
+  @Override
   public void updateDisplayedChangeLists() {
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     myChangeListChooser.setAvailableLists(changeLists);
@@ -277,7 +294,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
       return VcsTreeModelData.selected(myViewer).userObjectsStream(VirtualFile.class);
     }
@@ -358,7 +375,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     public void decorate(Change change, SimpleColoredComponent renderer, boolean isShowFlatten) {
       PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
       if (tracker != null) {
-        List<PartialLocalLineStatusTracker.LocalRange> ranges = tracker.getRanges();
+        List<LocalRange> ranges = tracker.getRanges();
         if (ranges != null) {
           int rangesToCommit = ContainerUtil.count(ranges, it -> {
             return it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit();
@@ -384,7 +401,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     private final static int MAX_NAME_LEN = 35;
     @NotNull private final ComboBox<LocalChangeList> myChooser = new ComboBox<>();
 
-    public ChangeListChooser() {
+    ChangeListChooser() {
       myChooser.setEditable(false);
       myChooser.setRenderer(new ColoredListCellRenderer<LocalChangeList>() {
         @Override
@@ -457,7 +474,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   }
 
   private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
-    public ToggleChangeDiffAction() {
+    ToggleChangeDiffAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
@@ -483,7 +500,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
 
     @Nullable
-    private Object getUserObject(AnActionEvent e) {
+    private Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;
@@ -504,77 +521,20 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   }
 
   private class MyChangesBrowserTreeList extends ChangesBrowserTreeList {
-    private final Set<Object> myIncludedChanges = new THashSet<>();
-    private final Map<Change, ExclusionState> myTrackerExclusionStates = new HashMap<>();
+    private final MyStateHolder myStateHolder;
 
-    public MyChangesBrowserTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    MyChangesBrowserTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems,
+                                    @NotNull String changelistId, @NotNull Disposable disposable) {
       super(MultipleLocalChangeListsBrowser.this, project, showCheckboxes, highlightProblems);
 
-      PartialLocalLineStatusTracker.ListenerAdapter trackerListener = new PartialLocalLineStatusTracker.ListenerAdapter() {
-        @Override
-        public void onExcludedFromCommitChange(@NotNull PartialLocalLineStatusTracker tracker) {
-          scheduleExclusionStatesUpdate();
-        }
-      };
-
-      LineStatusTrackerManager.ListenerAdapter trackerManagerListener = new LineStatusTrackerManager.ListenerAdapter() {
-        @Override
-        public void onTrackerAdded(@NotNull LineStatusTracker<?> tracker) {
-          if (tracker instanceof PartialLocalLineStatusTracker) {
-            PartialLocalLineStatusTracker partialTracker = (PartialLocalLineStatusTracker)tracker;
-
-            Change change = findChangeFor(tracker);
-            if (change != null) {
-              partialTracker.setExcludedFromCommit(!myIncludedChanges.contains(change));
-            }
-
-            partialTracker.addListener(trackerListener, MultipleLocalChangeListsBrowser.this);
-          }
-        }
-
-        @Override
-        public void onTrackerRemoved(@NotNull LineStatusTracker<?> tracker) {
-          if (tracker instanceof PartialLocalLineStatusTracker) {
-            Change change = findChangeFor(tracker);
-            if (change != null) {
-              myTrackerExclusionStates.remove(change);
-
-              ExclusionState exclusionState = ((PartialLocalLineStatusTracker)tracker).getExcludedFromCommitState(myChangeList.getId());
-              if (exclusionState != ExclusionState.NO_CHANGES) {
-                if (exclusionState != ExclusionState.ALL_EXCLUDED) {
-                  myIncludedChanges.add(change);
-                }
-                else {
-                  myIncludedChanges.remove(change);
-                }
-              }
-
-              scheduleExclusionStatesUpdate();
-            }
-          }
-        }
-      };
-
-      LineStatusTrackerManager.getInstanceImpl(project).addTrackerListener(trackerManagerListener, MultipleLocalChangeListsBrowser.this);
-      for (LineStatusTracker<?> tracker : LineStatusTrackerManager.getInstanceImpl(project).getTrackers()) {
-        if (tracker instanceof PartialLocalLineStatusTracker) {
-          ((PartialLocalLineStatusTracker)tracker).addListener(trackerListener, MultipleLocalChangeListsBrowser.this);
-        }
-      }
+      myStateHolder = new MyStateHolder(project, changelistId);
+      Disposer.register(disposable, myStateHolder);
     }
 
     @NotNull
     private State getUserObjectState(@NotNull Object change) {
-      ExclusionState exclusionState = getExclusionState(change);
-      if (exclusionState == ExclusionState.ALL_INCLUDED) {
-        return State.SELECTED;
-      }
-      else if (exclusionState == ExclusionState.ALL_EXCLUDED) {
-        return State.NOT_SELECTED;
-      }
-      else {
-        return State.DONT_CARE;
-      }
+      ExclusionState exclusionState = myStateHolder.getExclusionState(change);
+      return PartialChangesUtil.convertExclusionState(exclusionState);
     }
 
     @NotNull
@@ -584,7 +544,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       boolean hasExcluded = false;
 
       for (Object change : VcsTreeModelData.children(node).userObjects()) {
-        ExclusionState exclusionState = getExclusionState(change);
+        ExclusionState exclusionState = myStateHolder.getExclusionState(change);
 
         if (exclusionState == ExclusionState.ALL_INCLUDED) {
           hasIncluded = true;
@@ -605,153 +565,81 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
 
     @Override
     public boolean isIncluded(Object change) {
-      ExclusionState trackerState = getExclusionState(change);
-      return trackerState != ExclusionState.ALL_EXCLUDED;
+      return myStateHolder.isIncluded(change);
     }
 
     @NotNull
     @Override
     public Set<Object> getIncludedSet() {
-      HashSet<Object> set = new HashSet<>(myIncludedChanges);
-
-      for (Map.Entry<Change, ExclusionState> entry : myTrackerExclusionStates.entrySet()) {
-        Change change = entry.getKey();
-        ExclusionState trackerState = entry.getValue();
-
-        if (trackerState == ExclusionState.ALL_EXCLUDED) {
-          set.remove(change);
-        }
-        else {
-          set.add(change);
-        }
-      }
-
-      return set;
+      return myStateHolder.getIncludedSet();
     }
 
     @Override
     public void setIncludedChanges(@NotNull Collection<?> changes) {
-      HashSet<Object> set = new HashSet<>(changes);
-      getTrackersStream().forEach(pair -> {
-        Change change = pair.first;
-        PartialLocalLineStatusTracker tracker = pair.second;
-        tracker.setExcludedFromCommit(!set.contains(change));
-      });
-
-      myIncludedChanges.clear();
-      myIncludedChanges.addAll(changes);
-
-      updateExclusionStates();
+      myStateHolder.setIncludedElements(changes);
     }
 
     @Override
     public void includeChanges(Collection<?> changes) {
-      for (Object change : changes) {
-        if (change instanceof Change) {
-          PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, (Change)change);
-          if (tracker != null) {
-            tracker.setExcludedFromCommit(false);
-          }
-        }
-      }
-
-      myIncludedChanges.addAll(changes);
-
-      updateExclusionStates();
+      myStateHolder.includeElements(changes);
     }
 
     @Override
     public void excludeChanges(Collection<?> changes) {
-      for (Object change : changes) {
-        if (change instanceof Change) {
-          PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, (Change)change);
-          if (tracker != null) {
-            tracker.setExcludedFromCommit(true);
-          }
-        }
-      }
-
-      myIncludedChanges.removeAll(changes);
-
-      updateExclusionStates();
+      myStateHolder.excludeElements(changes);
     }
 
     @Override
     protected void toggleChanges(Collection<?> changes) {
-      boolean hasExcluded = false;
-      for (Object value : changes) {
-        ExclusionState exclusionState = getExclusionState(value);
-        if (exclusionState != ExclusionState.ALL_INCLUDED) {
-          hasExcluded = true;
-          break;
-        }
-      }
-
-      if (hasExcluded) {
-        includeChanges(changes);
-      }
-      else {
-        excludeChanges(changes);
-      }
+      myStateHolder.toggleElements(changes);
     }
 
-
-    @NotNull
-    private ExclusionState getExclusionState(@NotNull Object change) {
-      //noinspection SuspiciousMethodCalls
-      ExclusionState exclusionState = myTrackerExclusionStates.get(change);
-      if (exclusionState != null) return exclusionState;
-      return myIncludedChanges.contains(change) ? ExclusionState.ALL_INCLUDED : ExclusionState.ALL_EXCLUDED;
-    }
-
-    private void updateExclusionStates() {
-      myTrackerExclusionStates.clear();
-
-      getTrackersStream().forEach(pair -> {
-        Change change = pair.first;
-        PartialLocalLineStatusTracker tracker = pair.second;
-        ExclusionState state = tracker.getExcludedFromCommitState(myChangeList.getId());
-        if (state != ExclusionState.NO_CHANGES) myTrackerExclusionStates.put(change, state);
-      });
-
-      notifyInclusionListener();
-      invalidateNodeSizes();
-      repaint();
-    }
-
-    @Nullable
-    private Change findChangeFor(@NotNull LineStatusTracker<?> tracker) {
-      return VcsTreeModelData.all(this).userObjectsStream(Change.class).filter(change -> {
-        return tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change));
-      }).findFirst().orElse(null);
-    }
-
-    @NotNull
-    private Stream<Pair<Change, PartialLocalLineStatusTracker>> getTrackersStream() {
-      return VcsTreeModelData.all(this).userObjectsStream(Change.class).map(change -> {
-        PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
-        if (tracker != null) {
-          return Pair.create(change, tracker);
-        }
-        else {
-          return null;
-        }
-      }).filter(Objects::nonNull);
-    }
-
-    private void scheduleExclusionStatesUpdate() {
-      myUpdateQueue.queue(new Update("updateExcludedFromCommit") {
-        @Override
-        public void run() {
-          updateExclusionStates();
-        }
-      });
+    public void setChangelistId(@NotNull String changelistId) {
+      myStateHolder.setChangelistId(changelistId);
     }
 
     private void invalidateNodeSizes() {
       TreeUI ui = getUI();
       if (ui instanceof WideSelectionTreeUI) {
         ((WideSelectionTreeUI)ui).invalidateNodeSizes();
+      }
+    }
+
+    private class MyStateHolder extends PartiallyExcludedFilesStateHolder<Object> {
+      MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
+        super(project, changelistId);
+      }
+
+      @NotNull
+      @Override
+      protected Stream<Change> getTrackableElementsStream() {
+        return VcsTreeModelData.all(MyChangesBrowserTreeList.this).userObjectsStream(Change.class);
+      }
+
+      @Nullable
+      @Override
+      protected Object findElementFor(@NotNull PartialLocalLineStatusTracker tracker) {
+        return getTrackableElementsStream().filter(change -> {
+          return tracker.getVirtualFile().equals(PartialChangesUtil.getVirtualFile(change));
+        }).findFirst().orElse(null);
+      }
+
+      @Nullable
+      @Override
+      protected PartialLocalLineStatusTracker findTrackerFor(@NotNull Object element) {
+        if (element instanceof Change) {
+          return PartialChangesUtil.getPartialTracker(myProject, (Change)element);
+        }
+        return null;
+      }
+
+      @Override
+      public void updateExclusionStates() {
+        super.updateExclusionStates();
+
+        MyChangesBrowserTreeList.this.notifyInclusionListener();
+        MyChangesBrowserTreeList.this.invalidateNodeSizes();
+        MyChangesBrowserTreeList.this.repaint();
       }
     }
   }

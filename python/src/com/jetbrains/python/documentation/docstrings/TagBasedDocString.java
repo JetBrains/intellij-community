@@ -115,7 +115,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
       }
       if (tagMatcher != null) {
         final Substring tagName = line.getMatcherGroup(tagMatcher, 1);
-        final Substring argName = line.getMatcherGroup(tagMatcher, 2).trim();
+        Substring argName = line.getMatcherGroup(tagMatcher, 2).trim();
         final TextRange firstArgLineRange = line.getMatcherGroup(tagMatcher, 3).trim().getTextRange();
         final int linesCount = getLineCount();
         final int argStart = firstArgLineRange.getStartOffset();
@@ -136,19 +136,16 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
         else {
           if ("param".equals(tagNameString) || "parameter".equals(tagNameString) ||
               "arg".equals(tagNameString) || "argument".equals(tagNameString)) {
+            // Process declarations that combine type and description, e.g. ":param int foo: bar"
+            // as if there were both ":param foo: bar" and ":type foo: int"
             final Matcher argTypeMatcher = RE_ARG_TYPE.matcher(argName);
             if (argTypeMatcher.matches()) {
-              final Substring type = argName.getMatcherGroup(argTypeMatcher, 1).trim();
-              final Substring arg = argName.getMatcherGroup(argTypeMatcher, 2);
-              getTagValuesMap(TYPE).put(arg, type);
-            }
-            else {
-              getTagValuesMap(tagNameString).put(argName, argValue);
+              final Substring argType = argName.getMatcherGroup(argTypeMatcher, 1).trim();
+              argName = argName.getMatcherGroup(argTypeMatcher, 2);
+              getTagValuesMap(TYPE).put(argName, argType);
             }
           }
-          else {
-            getTagValuesMap(tagNameString).put(argName, argValue);
-          }
+          getTagValuesMap(tagNameString).put(argName, argValue);
         }
       }
     }

@@ -8,12 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -121,7 +120,7 @@ public class GitMergeProvider implements MergeProvider2 {
         GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
         GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
-          mergeData.ORIGINAL = original.getContent();
+          mergeData.ORIGINAL = original.loadContent();
         }
         catch (Exception ex) {
           /// unable to load original revision, use the current instead
@@ -230,7 +229,7 @@ public class GitMergeProvider implements MergeProvider2 {
       h.endOptions();
     }
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
@@ -418,7 +417,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
     try {
-      return revision.getContent();
+      return revision.loadContent();
     } catch (VcsException e) {
       String m = e.getMessage().trim();
       if (m.startsWith("fatal: ambiguous argument ")
@@ -453,7 +452,7 @@ public class GitMergeProvider implements MergeProvider2 {
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
-      GitFileUtils.addFiles(myProject, GitUtil.getGitRoot(file), file);
+      GitFileUtils.addFilesForce(myProject, GitUtil.getGitRoot(file), Collections.singletonList(file));
     }
     catch (VcsException e) {
       LOG.error("Confirming conflict resolution failed", e);
@@ -472,21 +471,15 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Override
-  public void mergeDone(@NotNull List<VirtualFile> files) {
-    for (GitRepository repository : GitUtil.getRepositoriesForFiles(myProject, files)) {
-      repository.update();
-    }
-  }
-
-  @Override
   public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
     return new GitDefaultMergeDialogCustomizer(this);
   }
 
-  private static String calcName(boolean isTheirs, @Nullable String branchName) {
+  @NotNull
+  public static String calcColumnName(boolean isTheirs, @Nullable String branchName) {
     String title = isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status");
     return branchName != null
-           ? title + " (" + StringUtil.shortenTextWithEllipsis(branchName, 15, 7, true) + ")"
+           ? title + " (" + branchName + ")"
            : title;
   }
 
@@ -653,7 +646,7 @@ public class GitMergeProvider implements MergeProvider2 {
         }
 
         try {
-          GitFileUtils.addFiles(myProject, root, toAdd);
+          GitFileUtils.addFilesForce(myProject, root, toAdd);
           GitFileUtils.deleteFiles(myProject, root, toDelete);
         }
         catch (VcsException e) {
@@ -716,8 +709,8 @@ public class GitMergeProvider implements MergeProvider2 {
        */
       private final boolean myIsTheirs;
 
-      public StatusColumn(boolean isTheirs, @Nullable String branchName) {
-        super(calcName(isTheirs, branchName));
+      StatusColumn(boolean isTheirs, @Nullable String branchName) {
+        super(calcColumnName(isTheirs, branchName));
         myIsTheirs = isTheirs;
       }
 

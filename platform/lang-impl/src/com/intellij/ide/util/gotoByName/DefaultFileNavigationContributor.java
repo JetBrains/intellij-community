@@ -20,6 +20,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -87,15 +88,18 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
       return _processor.process(item);
     };
 
-    if (!isDirectoryOnlyPattern(parameters)) {
+    boolean directoriesOnly = isDirectoryOnlyPattern(parameters);
+    if (!directoriesOnly) {
       FilenameIndex.processFilesByName(
         name, false, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
       );
     }
-    
-    FilenameIndex.processFilesByName(
-      name, true, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
-    );
+
+    if (directoriesOnly || Registry.is("ide.goto.file.include.directories")) {
+      FilenameIndex.processFilesByName(
+        name, true, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
+      );
+    }
   }
 
   private static boolean isDirectoryOnlyPattern(@NotNull FindSymbolParameters parameters) {

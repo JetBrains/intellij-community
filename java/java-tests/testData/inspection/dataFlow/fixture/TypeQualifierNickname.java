@@ -6,6 +6,6 @@ interface UnknownInterface {
 
 class ImplWithNotNull implements UnknownInterface {
   public void foo(@bar.NullableNick String s) {
-    System.out.println(s.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(s.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
   }
 }

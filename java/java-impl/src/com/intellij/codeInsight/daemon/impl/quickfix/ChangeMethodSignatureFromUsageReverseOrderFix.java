@@ -65,9 +65,9 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
                                        PsiMethod targetMethod,
                                        PsiSubstitutor substitutor,
                                        StringBuilder buf,
-                                       HashSet<ParameterInfoImpl> newParams,
+                                       HashSet<? super ParameterInfoImpl> newParams,
                                        PsiParameter[] parameters,
-                                       List<ParameterInfoImpl> result) {
+                                       List<? super ParameterInfoImpl> result) {
     // find which parameters to introduce and where
     Set<String> existingNames = new HashSet<>();
     for (PsiParameter parameter : parameters) {

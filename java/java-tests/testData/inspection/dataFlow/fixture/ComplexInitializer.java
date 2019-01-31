@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Contract;
 
 class InitializerTest {
   int x = Math.random() > 0.5 ? 0 : 1;
@@ -13,7 +14,7 @@ class InitializerTest {
     z = "foo";
   }
 
-  boolean b = <warning descr="Condition 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
+  boolean b = <warning descr="Result of 'z.startsWith(\"bar\")' is always 'false'">z.startsWith("bar")</warning>;
 
   static final String ABC;
   static {
@@ -24,7 +25,7 @@ class InitializerTest {
     }
   }
 
-  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'java.lang.NullPointerException'">toLowerCase</warning>();
+  static final String XYZ = ABC.<warning descr="Method invocation 'toLowerCase' may produce 'NullPointerException'">toLowerCase</warning>();
 
   static {
     new InitializerTest(); // INITIALIZED is not initialized yet here
@@ -58,16 +59,11 @@ class Constants {
   static final Object C10 = get();
   static final Object C11 = get();
 
-  static Object get() {
-    System.out.println();
-    return new Object();
-  }
+  @Nullable
+  static native Object get();
 }
 
-class <weak_warning descr="Class initializer is too complex to analyze by data flow algorithm">TooComplexInitializer</weak_warning> {
-  // This test just checks that "too complex" warning is placed correctly on class name,
-  // not that this particular code always must be considered as "too complex".
-  // If in future this code will become not too complex, that's fine, just update test to make it even more complex
+class NotTooComplexInitializer {
   static {
     int i = 1;
     for(Object obj = Constants.get(); obj != Constants.C5; obj = Constants.get()) {
@@ -87,4 +83,14 @@ class <weak_warning descr="Class initializer is too complex to analyze by data f
       }
     }
   }
+}
+class NotTooComplexMergingInitializer {
+  static {
+    foo(Constants.C1 == null, Constants.C2 == null, Constants.C3 == null,
+                  Constants.C4 == null, Constants.C5 == null, Constants.C6 == null,
+                  Constants.C7 == null, Constants.C8 == null, Constants.C9 == null,
+                  Constants.C10 == null, Constants.C11 == null);
+  }
+
+  native static void foo(boolean... args);
 }

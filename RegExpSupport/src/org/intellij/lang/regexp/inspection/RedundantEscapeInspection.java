@@ -37,7 +37,7 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public RedundantEscapeVisitor(ProblemsHolder holder) {
+    RedundantEscapeVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -78,7 +78,7 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
     private static String replacement(RegExpChar aChar) {
       final int codePoint = aChar.getValue();
       return Character.isSupplementaryCodePoint(codePoint)
-             ? Character.toString(Character.highSurrogate(codePoint)) + Character.toString(Character.lowSurrogate(codePoint))
+             ? Character.toString(Character.highSurrogate(codePoint)) + Character.lowSurrogate(codePoint)
              : Character.toString((char)codePoint);
     }
   }

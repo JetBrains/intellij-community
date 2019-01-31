@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -61,8 +59,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
@@ -206,7 +204,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+  protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return FacetStructureConfigurable.getInstance(myProject).updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
 
@@ -309,7 +307,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @NotNull
-  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper(Predicate<MyNode> nodeToBeMovedFilter) {
+  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper(Predicate<? super MyNode> nodeToBeMovedFilter) {
     ModuleGrouper grouper = getModuleGrouper();
     ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
     return ModuleGroupingTreeHelper.forTree(myRoot, node -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
@@ -621,7 +619,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private class ModuleNode extends MyNode implements ModuleGroupNode {
     private final ModuleGroup myModuleAsGroup;
 
-    public ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
+    ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
       super(configurable);
       myModuleAsGroup = moduleAsGroup;
     }
@@ -719,7 +717,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Facet> facets) {
+    public boolean remove(@NotNull Collection<? extends Facet> facets) {
       for (Facet facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
         FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
@@ -734,7 +732,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean remove(@NotNull Collection<Module> modules) {
+    public boolean remove(@NotNull Collection<? extends Module> modules) {
       ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
       List<Module> deleted = modulesConfigurator.deleteModules(modules);
       if (deleted.isEmpty()) {
@@ -761,7 +759,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
@@ -820,12 +818,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHideModuleGroups;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHideModuleGroups = state;
       regroupModules();
     }
@@ -907,7 +905,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final NamedConfigurable namedConfigurable = getSelectedConfigurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
@@ -960,7 +958,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {
             @Override
-            public void setupRootModel(final ModifiableRootModel modifiableRootModel) {
+            public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) {
               if (rootModel.isSdkInherited()) {
                 modifiableRootModel.inheritSdk();
               }
@@ -1012,7 +1010,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       TreePath[] selectionPaths = myTree.getSelectionPaths();
       if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
@@ -1033,7 +1031,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       String defaultModuleName = "untitled";
       MyNode selectedNode = getSelectedNode();
       if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {
@@ -1047,9 +1045,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private static class MergingComparator<T> implements Comparator<T> {
-    private final List<Comparator<T>> myDelegates;
+    private final List<? extends Comparator<T>> myDelegates;
 
-    MergingComparator(final List<Comparator<T>> delegates) {
+    MergingComparator(final List<? extends Comparator<T>> delegates) {
       myDelegates = delegates;
     }
 

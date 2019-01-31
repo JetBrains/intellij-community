@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 /**
  * @author peter
@@ -34,7 +22,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final JavaVariableFindUsagesOptions myFindVariableOptions;
 
   public static JavaFindUsagesHandlerFactory getInstance(@NotNull Project project) {
-    return ContainerUtil.findInstance(Extensions.getExtensions(EP_NAME, project), JavaFindUsagesHandlerFactory.class);
+    return ContainerUtil.findInstance(EP_NAME.getExtensions(project), JavaFindUsagesHandlerFactory.class);
   }
 
   public JavaFindUsagesHandlerFactory(Project project) {
@@ -51,14 +39,23 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   }
 
   @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element,  @NotNull OperationMode operationMode) {
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       return psiPackage == null ? null : new JavaFindUsagesHandler(psiPackage, this);
     }
 
-    if (element instanceof PsiMethod && !forHighlightUsages) {
-      final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaFindUsagesHandler.ACTION_STRING);
+    if (element instanceof PsiMethod && operationMode != OperationMode.HIGHLIGHT_USAGES) {
+      PsiMethod method = (PsiMethod)element;
+      final PsiMethod[] methods;
+
+      if (operationMode == OperationMode.USAGES_WITH_DEFAULT_OPTIONS && 
+          Registry.is("java.find.usages.always.use.top.hierarchy.methods")) {
+        methods = SuperMethodWarningUtil.getTargetMethodCandidates(method, Collections.emptyList());
+      } else {
+        methods = SuperMethodWarningUtil.checkSuperMethods(method, JavaFindUsagesHandler.ACTION_STRING);
+      }
+
       if (methods.length > 1) {
         return new JavaFindUsagesHandler(element, methods, this);
       }
@@ -69,6 +66,11 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     }
 
     return new JavaFindUsagesHandler(element, this);
+  }
+
+  @Override
+  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, boolean forHighlightUsages) {
+    return createFindUsagesHandler(element, forHighlightUsages ? OperationMode.HIGHLIGHT_USAGES : OperationMode.DEFAULT);
   }
 
   @NotNull

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.run;
 
 import com.intellij.execution.ExecutionException;
@@ -53,6 +54,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     setUnbufferedEnv();
   }
 
+  @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
     if (module == null) {
@@ -61,10 +63,12 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     return new IpnbCommandLineState(this, env);
   }
 
+  @Override
   protected SettingsEditor<IpnbRunConfiguration> createConfigurationEditor() {
     return new IpnbConfigurationEditor(this);
   }
 
+  @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     myAdditionalOptions = JDOMExternalizerUtil.readField(element, ATTR_ADDITIONAL_OPTIONS);
@@ -74,6 +78,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     myPort = port != null && port.length() > 0 ? port : null;
   }
 
+  @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, ATTR_ADDITIONAL_OPTIONS, myAdditionalOptions);
@@ -81,6 +86,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     JDOMExternalizerUtil.writeField(element, ATTR_PORT, myPort);
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final Module module = getConfigurationModule().getModule();

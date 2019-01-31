@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -21,17 +7,18 @@ import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -45,6 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
@@ -69,7 +57,7 @@ public class FindPopupDirectoryChooser extends JPanel {
       JTextField field = (JTextField)editorComponent;
       field.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           myFindPopupPanel.scheduleResultsUpdate();
         }
       });
@@ -88,7 +76,8 @@ public class FindPopupDirectoryChooser extends JPanel {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setForcedToUseIdeaFileChooser(true);
       myFindPopupPanel.getCanClose().set(false);
-      FileChooser.chooseFiles(descriptor, myProject, null, null,
+      FileChooser.chooseFiles(descriptor, myProject, null,
+                              VfsUtil.findFileByIoFile(new File(getDirectory()), true),
                               new FileChooser.FileChooserConsumer() {
         @Override
         public void consume(List<VirtualFile> files) {
@@ -130,9 +119,7 @@ public class FindPopupDirectoryChooser extends JPanel {
       myDirectoryComboBox.removeAllItems();
     }
     if (directoryName != null && !directoryName.isEmpty()) {
-      if (strings.contains(directoryName)) {
-        strings.remove(directoryName);
-      }
+      strings.remove(directoryName);
       myDirectoryComboBox.addItem(directoryName);
     }
     for (int i = strings.size() - 1; i >= 0; i--) {
@@ -162,18 +149,18 @@ public class FindPopupDirectoryChooser extends JPanel {
     return null;
   }
 
-  private class MyRecursiveDirectoryAction extends ToggleAction {
+  private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
+      super(FindBundle.message("find.recursively.hint"), null, AllIcons.Actions.ShowAsTree);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myHelper.getModel().isWithSubdirectories();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myHelper.getModel().setWithSubdirectories(state);
       myFindPopupPanel.scheduleResultsUpdate();
     }

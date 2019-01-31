@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
@@ -13,8 +10,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class CatchAllStatement extends Statement {
 
@@ -75,7 +76,7 @@ public class CatchAllStatement extends Statement {
     for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
       Statement exc = edge.getDestination();
 
-      if (edge.getExceptions() == null && setHandlers.contains(exc) && exc.getLastBasicType() == LASTBASICTYPE_GENERAL) {
+      if (edge.getExceptions() == null && exc.getLastBasicType() == LASTBASICTYPE_GENERAL && setHandlers.contains(exc)) {
         List<StatEdge> lstSuccs = exc.getSuccessorEdges(STATEDGE_DIRECT_ALL);
         if (lstSuccs.isEmpty() || lstSuccs.get(0).getType() != StatEdge.TYPE_REGULAR) {
 
@@ -93,6 +94,7 @@ public class CatchAllStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -143,6 +145,7 @@ public class CatchAllStatement extends Statement {
     return buf;
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     if (handler == oldstat) {
@@ -152,6 +155,7 @@ public class CatchAllStatement extends Statement {
     super.replaceStatement(oldstat, newstat);
   }
 
+  @Override
   public Statement getSimpleCopy() {
 
     CatchAllStatement cas = new CatchAllStatement();
@@ -165,8 +169,7 @@ public class CatchAllStatement extends Statement {
     }
 
     if (!this.vars.isEmpty()) {
-      // FIXME: WTF??? vars?!
-      vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
+      cas.vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                               new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                               DecompilerContext.getVarProcessor()));
     }
@@ -174,6 +177,7 @@ public class CatchAllStatement extends Statement {
     return cas;
   }
 
+  @Override
   public void initSimpleCopy() {
     first = stats.get(0);
     handler = stats.get(1);

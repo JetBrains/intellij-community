@@ -48,8 +48,8 @@ public abstract class GenericCompilerInstance<T extends BuildTarget, Item extend
   @NotNull
   public abstract List<Item> getItems(@NotNull T target);
 
-  public abstract void processItems(@NotNull T target, @NotNull List<GenericCompilerProcessingItem<Item, SourceState, OutputState>> changedItems, @NotNull List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems,
-                                    @NotNull OutputConsumer<Item> consumer);
+  public abstract void processItems(@NotNull T target, @NotNull List<? extends GenericCompilerProcessingItem<Item, SourceState, OutputState>> changedItems, @NotNull List<GenericCompilerCacheState<Key, SourceState, OutputState>> obsoleteItems,
+                                    @NotNull OutputConsumer<? super Item> consumer);
 
   public interface OutputConsumer<Item extends CompileItem<?,?,?>> {
     void addFileToRefresh(@NotNull File file);

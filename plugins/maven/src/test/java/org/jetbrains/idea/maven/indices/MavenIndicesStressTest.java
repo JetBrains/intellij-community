@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -147,6 +148,6 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
   }
 
   @Override
-  public void indexIsBroken(MavenIndex index) {
+  public void indexIsBroken(@NotNull MavenIndex index) {
   }
 }

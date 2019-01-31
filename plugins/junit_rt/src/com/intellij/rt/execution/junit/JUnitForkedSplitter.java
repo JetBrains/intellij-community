@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 6.04.2011
  */
 public class JUnitForkedSplitter extends ForkedSplitter {
 
@@ -59,10 +58,11 @@ public class JUnitForkedSplitter extends ForkedSplitter {
   protected List createPerModuleArgs(String packageName,
                                      String workingDir,
                                      List classNames,
-                                     Object rootDescription) throws IOException {
+                                     Object rootDescription, 
+                                     String filters) throws IOException {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
-    JUnitStarter.printClassesList(classNames, packageName, "", "", tempFile);
+    JUnitStarter.printClassesList(classNames, packageName, "", filters, tempFile);
     final List childArgs = new ArrayList();
     childArgs.add("@" + tempFile.getAbsolutePath());
     childArgs.addAll(myNewArgs);

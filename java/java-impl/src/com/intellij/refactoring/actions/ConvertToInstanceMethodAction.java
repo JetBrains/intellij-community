@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && elements[0] instanceof PsiMethod;
   }
@@ -40,6 +42,7 @@ public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
     return element instanceof PsiMethod && ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new ConvertToInstanceMethodHandler();
   }

@@ -30,13 +30,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
 public abstract class AutoScrollToSourceHandler {
-  private Alarm myAutoScrollAlarm;
-
-  protected AutoScrollToSourceHandler() {
-  }
+  private final Alarm myAutoScrollAlarm = new Alarm();
 
   public void install(final JTree tree) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -53,12 +49,14 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(tree);
 
     tree.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(tree);
       }
     });
     tree.addTreeSelectionListener(
       new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           onSelectionChanged(tree);
         }
@@ -67,7 +65,6 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void install(final JTable table) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -83,6 +80,7 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(table);
 
     table.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(table);
       }
@@ -98,7 +96,6 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void install(final JList jList) {
-    myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -114,6 +111,7 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(jList);
 
     jList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         onSelectionChanged(jList);
       }
@@ -121,9 +119,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void cancelAllRequests(){
-    if (myAutoScrollAlarm != null) {
-      myAutoScrollAlarm.cancelAllRequests();
-    }
+    myAutoScrollAlarm.cancelAllRequests();
   }
 
   public void onMouseClicked(final Component component) {
@@ -134,24 +130,19 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
-    if (component != null && !component.isShowing()) return;
-
-    if (!isAutoScrollMode()) {
-      return;
+    if (component != null && component.isShowing() && isAutoScrollMode()) {
+      myAutoScrollAlarm.cancelAllRequests();
+      myAutoScrollAlarm.addRequest(
+        () -> {
+          if (component.isShowing()) { //for tests
+            if (!needToCheckFocus() || component.hasFocus()) {
+              scrollToSource(component);
+            }
+          }
+        },
+        500
+      );
     }
-    if (needToCheckFocus() && !component.hasFocus()) {
-      return;
-    }
-
-    myAutoScrollAlarm.cancelAllRequests();
-    myAutoScrollAlarm.addRequest(
-      () -> {
-        if (component.isShowing()) { //for tests
-          scrollToSource(component);
-        }
-      },
-      500
-    );
   }
 
   protected boolean needToCheckFocus(){
@@ -187,16 +178,18 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    public AutoscrollToSourceAction() {
+    AutoscrollToSourceAction() {
       super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"),
             AllIcons.General.AutoscrollToSource);
     }
 
-    public boolean isSelected(AnActionEvent event) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isAutoScrollMode();
     }
 
-    public void setSelected(AnActionEvent event, boolean flag) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }
   }

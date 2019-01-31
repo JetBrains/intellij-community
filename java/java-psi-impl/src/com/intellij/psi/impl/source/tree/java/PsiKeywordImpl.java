@@ -47,6 +47,7 @@ public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJav
     }
   }
 
+  @Override
   public String toString(){
     return "PsiKeyword:" + getText();
   }

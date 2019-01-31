@@ -31,10 +31,12 @@ public class LocalVariableOccurrenceManager extends BaseOccurrenceManager {
     myLocalVariable = localVariable;
   }
 
+  @Override
   public PsiExpression[] defaultOccurrences() {
     return PsiExpression.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiExpression[] findOccurrences() {
     return CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(myLocalVariable), myLocalVariable);
   }

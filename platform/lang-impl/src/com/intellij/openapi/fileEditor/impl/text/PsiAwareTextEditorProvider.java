@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -8,7 +8,6 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,8 +23,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 public class PsiAwareTextEditorProvider extends TextEditorProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
 
@@ -45,11 +45,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     if (child != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
-        final Element detachedStateCopy = JDOMUtil.internElement(child);
-        state.setDelayedFoldState(() -> {
-          Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
-          return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);
-        });
+        state.setDelayedFoldState(new MyDelayedFoldingState(project, file, child));
       }
       else {
         //PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -76,6 +72,12 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       }
       if (!JDOMUtil.isEmpty(e)) {
         element.addContent(e);
+      }
+    }
+    else {
+      Supplier<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      if (delayedProducer instanceof MyDelayedFoldingState) {
+        element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
       }
     }
   }
@@ -140,6 +142,28 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     @Override
     public boolean isValid() {
       return !getEditor().isDisposed();
+    }
+  }
+
+  private static final class MyDelayedFoldingState implements Supplier<CodeFoldingState> {
+    private final Project myProject;
+    private final VirtualFile myFile;
+    private final Element mySerializedState;
+
+    private MyDelayedFoldingState(Project project, VirtualFile file, Element state) {
+      myProject = project;
+      myFile = file;
+      mySerializedState = JDOMUtil.internElement(state);
+    }
+
+    @Override
+    public CodeFoldingState get() {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+      return document == null ? null : CodeFoldingManager.getInstance(myProject).readFoldingState(mySerializedState, document);
+    }
+
+    private Element getSerializedState() {
+      return mySerializedState.clone();
     }
   }
 }

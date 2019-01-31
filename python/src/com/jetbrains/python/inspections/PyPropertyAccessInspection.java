@@ -49,7 +49,7 @@ public class PyPropertyAccessInspection extends PyInspection {
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 

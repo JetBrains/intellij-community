@@ -21,6 +21,6 @@ public class AssumeNotNull {
   }
 
   public void testNoAssumeSomeStringStartsWithAbc() {
-    Assert.assertTrue(someString.<warning descr="Method invocation 'startsWith' may produce 'java.lang.NullPointerException'">startsWith</warning>("abc"));
+    Assert.assertTrue(someString.<warning descr="Method invocation 'startsWith' may produce 'NullPointerException'">startsWith</warning>("abc"));
   }
 }

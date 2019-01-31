@@ -32,21 +32,16 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author Jeka
- * @since Sep 17, 2001
  */
 public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
@@ -54,6 +49,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   public ChangeSignatureProcessor(Project project,
                                   PsiMethod method,
                                   final boolean generateDelegate,
+                                  @Nullable // null means unchanged
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   PsiType newType,
@@ -66,6 +62,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   public ChangeSignatureProcessor(Project project,
                                   PsiMethod method,
                                   final boolean generateDelegate,
+                                  @Nullable // null means unchanged
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   PsiType newType,
@@ -79,6 +76,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   public ChangeSignatureProcessor(Project project,
                                   PsiMethod method,
                                   boolean generateDelegate,
+                                  @Nullable // null means unchanged
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   CanonicalTypes.Type newType,
@@ -97,6 +95,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   private static JavaChangeInfo generateChangeInfo(PsiMethod method,
                                                    boolean generateDelegate,
+                                                   @Nullable // null means unchanged
                                                    @PsiModifier.ModifierConstant String newVisibility,
                                                    String newName,
                                                    CanonicalTypes.Type newType,
@@ -125,6 +124,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return javaChangeInfo;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
@@ -142,6 +142,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     getChangeInfo().updateMethod((PsiMethod) elements[0]);
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (!processor.setupDefaultValues(myChangeInfo, refUsages, myProject)) return false;
@@ -235,7 +236,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   @Nullable
   public static PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
     final PsiCallExpression callExpression;
@@ -262,7 +263,8 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return callExpression;
   }
 
-  public static PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {
+  @NotNull
+  static PsiSubstitutor calculateSubstitutor(@NotNull PsiMethod derivedMethod, @NotNull PsiMethod baseMethod) {
     PsiSubstitutor substitutor;
     if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
       substitutor = PsiSubstitutor.EMPTY;
@@ -270,7 +272,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     else {
       PsiClass baseClass = baseMethod.getContainingClass();
       PsiClass derivedClass = derivedMethod.getContainingClass();
-      if (baseClass != null && derivedClass != null && InheritanceUtil.isInheritorOrSelf(derivedClass, baseClass, true)) {
+      if (baseClass != null && InheritanceUtil.isInheritorOrSelf(derivedClass, baseClass, true)) {
         PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, derivedClass, PsiSubstitutor.EMPTY);
         MethodSignature superMethodSignature = baseMethod.getSignature(superClassSubstitutor);
         MethodSignature methodSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);

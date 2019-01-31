@@ -28,7 +28,7 @@ import java.util.Set;
  */
 public class PatternValuesIndex {
 
-  public static Set<String> buildStringIndex(Collection<ElementPattern<?>> patterns) {
+  public static Set<String> buildStringIndex(Collection<? extends ElementPattern<?>> patterns) {
     final THashSet<String> result = new THashSet<>();
     processStringValues(patterns, (elementPattern, value) -> {
       for (Object o : value) {
@@ -41,7 +41,7 @@ public class PatternValuesIndex {
     return result;
   }
 
-  public static boolean processStringValues(Collection<ElementPattern<?>> patterns, final PairProcessor<ElementPattern<?>, Collection<Object>> valueProcessor) {
+  public static boolean processStringValues(Collection<? extends ElementPattern<?>> patterns, final PairProcessor<? super ElementPattern<?>, ? super Collection<Object>> valueProcessor) {
     final LinkedList<ElementPattern<?>> stack = new LinkedList<>();
     for (final ElementPattern<?> next : patterns) {
       stack.add(next);
@@ -57,7 +57,8 @@ public class PatternValuesIndex {
             stack.add(((PatternConditionPlus)condition).getValuePattern());
           }
           else if (condition instanceof ValuePatternCondition) {
-            if (!valueProcessor.process(next, ((ValuePatternCondition)condition).getValues())) return false;
+            Collection<Object> values = ((ValuePatternCondition)condition).getValues();
+            if (!valueProcessor.process(next, values)) return false;
           }
         }
       }

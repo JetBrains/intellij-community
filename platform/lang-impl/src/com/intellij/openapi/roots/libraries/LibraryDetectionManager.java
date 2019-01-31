@@ -31,10 +31,10 @@ public abstract class LibraryDetectionManager {
     return ServiceManager.getService(LibraryDetectionManager.class);
   }
 
-  public abstract boolean processProperties(@NotNull List<VirtualFile> files, @NotNull LibraryPropertiesProcessor processor);
+  public abstract boolean processProperties(@NotNull List<? extends VirtualFile> files, @NotNull LibraryPropertiesProcessor processor);
 
   @Nullable
-  public abstract Pair<LibraryType<?>, LibraryProperties<?>> detectType(@NotNull List<VirtualFile> files);
+  public abstract Pair<LibraryType<?>, LibraryProperties<?>> detectType(@NotNull List<? extends VirtualFile> files);
 
   public interface LibraryPropertiesProcessor {
     <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties);

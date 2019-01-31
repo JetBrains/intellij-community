@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/11/2016
  */
 public interface GradleBuildTasksProvider {
   ExtensionPointName<GradleBuildTasksProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.buildTasksProvider");

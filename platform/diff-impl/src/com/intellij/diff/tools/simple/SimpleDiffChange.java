@@ -18,7 +18,6 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -282,7 +281,7 @@ public class SimpleDiffChange {
   }
 
   private class AcceptGutterOperation extends GutterOperation {
-    public AcceptGutterOperation(@NotNull Side side) {
+    AcceptGutterOperation(@NotNull Side side) {
       super(side);
     }
 
@@ -309,7 +308,17 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), () -> {
+    String text;
+    Icon icon = DiffUtil.getArrowIcon(side);
+
+    if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
+      text = "Revert";
+    }
+    else {
+      text = "Accept";
+    }
+
+    return createIconRenderer(side, text, icon, () -> {
       myViewer.replaceChange(this, side);
     });
   }
@@ -330,9 +339,9 @@ public class SimpleDiffChange {
     if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(AnActionEvent e) {
+      protected void handleMouseClick() {
         if (!myIsValid) return;
-        final Project project = e.getProject();
+        final Project project = myViewer.getProject();
         final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
         DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
       }

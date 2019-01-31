@@ -27,7 +27,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since 23-Apr-2009
  */
 @SuppressWarnings("CallToPrintStackTrace")
 public class ReorderJarsMain {

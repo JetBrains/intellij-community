@@ -17,15 +17,9 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder;
 
-import java.awt.*;
-
 /**
  * @author Konstantin Bulenkov
+ * @deprecated Use {@link DarculaTableSelectedCellHighlightBorder} instead
  */
-public class IntelliJTableSelectedCellHighlightBorder extends DarculaTableSelectedCellHighlightBorder {
-  @SuppressWarnings("UseJBColor")
-  @Override
-  protected Color getFocusColor() {
-    return Color.black;
-  }
-}
+@Deprecated
+public class IntelliJTableSelectedCellHighlightBorder extends DarculaTableSelectedCellHighlightBorder {}

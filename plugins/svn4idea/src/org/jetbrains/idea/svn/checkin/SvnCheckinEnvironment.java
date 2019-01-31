@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -41,8 +40,8 @@ import org.jetbrains.idea.svn.status.StatusType;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SvnCheckinEnvironment implements CheckinEnvironment {
 
@@ -53,16 +52,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
+  @Override
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new KeepLocksComponent();
   }
 
-  @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    return null;
-  }
-
+  @Override
   @Nullable
   public String getHelpId() {
     return null;
@@ -100,11 +96,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     final StringBuilder committedRevisions = new StringBuilder();
     for (CommitInfo result : results) {
-      if (result != CommitInfo.EMPTY && result.getRevision() > 0) {
+      if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
         if (committedRevisions.length() > 0) {
           committedRevisions.append(", ");
         }
-        committedRevisions.append(result.getRevision());
+        committedRevisions.append(result.getRevisionNumber());
       }
     }
     if (committedRevisions.length() > 0) {
@@ -164,10 +160,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return result;
   }
 
+  @Override
   public String getCheckinOperationName() {
     return SvnBundle.message("checkin.operation.name");
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes,
                                    final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -191,10 +189,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
+  @Override
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<>();
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
@@ -211,15 +211,16 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
+  @Override
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 
-  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files) {
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(vcs, files, false);
   }
 
-  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
     ProgressTracker eventHandler = new SvnProgressCanceller() {
@@ -251,10 +252,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
-  }
-
   @Override
   public boolean isRefreshAfterCommitNeeded() {
     return true;
@@ -267,7 +264,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     @NotNull private final JPanel myPanel;
     @NotNull private final JCheckBox myAutoUpdate;
 
-    public KeepLocksComponent() {
+    KeepLocksComponent() {
 
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
@@ -278,6 +275,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
     }
 
+    @Override
     public JComponent getComponent() {
       return myPanel;
     }
@@ -290,15 +288,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return myAutoUpdate.isSelected();
     }
 
+    @Override
     public void refresh() {
     }
 
+    @Override
     public void saveState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       configuration.setKeepLocks(isKeepLocks());
       configuration.setAutoUpdateAfterCommit(isAutoUpdate());
     }
 
+    @Override
     public void restoreState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
       myIsKeepLocks = configuration.isKeepLocks();

@@ -40,13 +40,13 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     return project != null && ShelveChangesManager.getInstance(project).isShowRecycled();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Project project = getEventProject(e);
     if (project != null) {
       ShelveChangesManager.getInstance(project).setShowRecycled(state);

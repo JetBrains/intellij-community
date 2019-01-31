@@ -16,10 +16,12 @@
 package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +48,20 @@ public class NumpyDocString extends SectionBasedDocString {
                                                                                 "References",
                                                                                 "Examples",
                                                                                 "Notes",
-                                                                                "Warnings"); 
+                                                                                "Warnings");
+
+  private static final ImmutableMap<String, FieldType> ourSectionFieldMapping =
+    ImmutableMap.<String, FieldType>builder()
+      .put(RETURNS_SECTION, FieldType.TYPE_WITH_OPTIONAL_NAME)
+      .put(YIELDS_SECTION, FieldType.TYPE_WITH_OPTIONAL_NAME)
+      .put(RAISES_SECTION, FieldType.ONLY_TYPE)
+      .put(METHODS_SECTION, FieldType.ONLY_NAME)
+      .put(KEYWORD_ARGUMENTS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(PARAMETERS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(ATTRIBUTES_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .put(OTHER_PARAMETERS_SECTION, FieldType.NAME_WITH_OPTIONAL_TYPE)
+      .build();
+
 
   private Substring mySignature;
 
@@ -63,6 +78,12 @@ public class NumpyDocString extends SectionBasedDocString {
       return nextNonEmptyLineNum + 1;
     }
     return nextNonEmptyLineNum;
+  }
+
+  @Nullable
+  @Override
+  protected FieldType getFieldType(@NotNull String title) {
+    return ourSectionFieldMapping.get(title);
   }
 
   @NotNull
@@ -85,13 +106,10 @@ public class NumpyDocString extends SectionBasedDocString {
   }
 
   @Override
-  protected Pair<SectionField, Integer> parseSectionField(int lineNum,
-                                                          int sectionIndent,
-                                                          boolean mayHaveType,
-                                                          boolean preferType) {
+  protected Pair<SectionField, Integer> parseSectionField(int lineNum, int sectionIndent, @NotNull FieldType kind) {
     final Substring line = getLine(lineNum);
     Substring namesPart, type = null, description = null;
-    if (mayHaveType) {
+    if (kind.canHaveBothNameAndType) {
       final List<Substring> colonSeparatedParts = splitByFirstColon(line);
       namesPart = colonSeparatedParts.get(0).trim();
       if (colonSeparatedParts.size() == 2) {
@@ -101,7 +119,7 @@ public class NumpyDocString extends SectionBasedDocString {
     else {
       namesPart = line.trim();
     }
-    if (preferType && type == null) {
+    if (kind.preferType && type == null) {
       type = namesPart;
       namesPart = null;
     }

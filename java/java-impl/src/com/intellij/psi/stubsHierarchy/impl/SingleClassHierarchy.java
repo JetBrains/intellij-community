@@ -23,13 +23,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
 import com.intellij.psi.stubsHierarchy.impl.Symbol.ClassSymbol;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -188,8 +189,7 @@ public class SingleClassHierarchy extends ClassHierarchy {
   private int[] mkByFileId() {
     // using a boxed array since there seems to be no easy way to sort int[] with custom comparator
     Integer[] ids = getAnchorsFromDistinctFiles();
-    Arrays.sort(ids, (a1, a2) -> Integer.compare(myClassAnchors.getFileId(a1), myClassAnchors.getFileId(a2)));
-    return ArrayUtils.toPrimitive(ids);
+    return Arrays.stream(ids).sorted(Comparator.comparingInt(myClassAnchors::getFileId)).mapToInt(Integer::intValue).toArray();
   }
 
   private void connectSubTypes(ClassSymbol[] classSymbols) {
@@ -259,15 +259,8 @@ public class SingleClassHierarchy extends ClassHierarchy {
   }
 
   private int getFirst(int fileId) {
-    int lo = 0;
-    int hi = myClassAnchorsByFileIds.length - 1;
-    while (lo <= hi) {
-      int mid = lo + (hi - lo) / 2;
-      int midFileId = myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]);
-      if      (fileId < midFileId) hi = mid - 1;
-      else if (fileId > midFileId) lo = mid + 1;
-      else return myClassAnchorsByFileIds[mid];
-    }
-    return -1;
+    int i = ObjectUtils.binarySearch(0, myClassAnchorsByFileIds.length,
+                                     mid -> Integer.compare(myClassAnchors.getFileId(myClassAnchorsByFileIds[mid]), fileId));
+    return i < 0 ? -1 : myClassAnchorsByFileIds[i];
   }
 }

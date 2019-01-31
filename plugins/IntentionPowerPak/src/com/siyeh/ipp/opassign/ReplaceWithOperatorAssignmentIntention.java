@@ -15,9 +15,9 @@
  */
 package com.siyeh.ipp.opassign;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntention {
 
+  @Override
   public String getTextForElement(PsiElement element) {
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -34,14 +35,16 @@ public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntentio
     final PsiJavaToken sign = expression.getTokenBeforeOperand(expression.getOperands()[1]);
     assert sign != null;
     final String operator = sign.getText();
-    return IntentionPowerPackBundle.message("replace.assignment.with.operator.assignment.intention.name", operator);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", operator + "=");
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ReplaceableWithOperatorAssignmentPredicate();
   }
 
+  @Override
   public void processIntention(@NotNull PsiElement element){
     final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
     final PsiExpression rhs = expression.getRExpression();

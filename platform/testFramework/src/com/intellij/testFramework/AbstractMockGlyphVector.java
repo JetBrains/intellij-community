@@ -125,7 +125,6 @@ public abstract class AbstractMockGlyphVector extends GlyphVector {
     throw new UnsupportedOperationException();
   }
 
-  @SuppressWarnings("CovariantEquals")
   @Override
   public boolean equals(GlyphVector set) {
     throw new UnsupportedOperationException();

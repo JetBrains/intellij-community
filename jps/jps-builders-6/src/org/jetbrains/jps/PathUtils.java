@@ -38,14 +38,16 @@ public class PathUtils {
 
   public static URI toURI(String localPath) {
     try {
-      String p = FileUtilRt.toSystemIndependentName(localPath);
+      final String p = FileUtilRt.toSystemIndependentName(localPath);
+      final StringBuilder buf = new StringBuilder(p.length() + 3);
       if (!p.startsWith("/")) {
-        p = "/" + p;
+        buf.append("///");
       }
-      if (!p.startsWith("//")) {
-        p = "//" + p;
+      else if (!p.startsWith("//")) {
+        buf.append("//");
       }
-      return new URI("file", null, p, null);
+      buf.append(p);
+      return new URI("file", null, buf.toString(), null);
     }
     catch (URISyntaxException e) {
       throw new Error(e);

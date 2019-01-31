@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/24/2015
  */
 public class BuildScriptDataBuilder {
   @NotNull private final VirtualFile myBuildScriptFile;
@@ -65,6 +64,7 @@ public class BuildScriptDataBuilder {
   /**
    * @deprecated use {@link #buildMainPart()} and {@link #buildConfigurationPart()} instead
    */
+  @Deprecated
   public String build() {
     return buildMainPart();
   }

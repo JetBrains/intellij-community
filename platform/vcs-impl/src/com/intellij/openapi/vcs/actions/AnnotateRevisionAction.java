@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,7 +29,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
   private int currentLine;
 
-  public AnnotateRevisionAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
+  AnnotateRevisionAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
                                 @NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super(text, description, icon);
     myAnnotation = annotation;
@@ -54,6 +55,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Nullable
   protected abstract VcsFileRevision getRevision(int lineNumber);
 
+  @Override
   @Nullable
   protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
     return myVcs;
@@ -97,7 +99,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   private static class MyVcsVirtualFile extends VcsVirtualFile {
     @NotNull private final FileType myCurrentFileType;
 
-    public MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
+    MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
       super(filePath.getPath(), revision, VcsFileSystem.getInstance());
       myCurrentFileType = currentFileType;
     }

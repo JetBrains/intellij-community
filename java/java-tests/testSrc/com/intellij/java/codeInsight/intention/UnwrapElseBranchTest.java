@@ -26,8 +26,4 @@ public class UnwrapElseBranchTest extends LightIntentionActionTestCase {
   protected String getBasePath() {
     return "/codeInsight/unwrapElseBranch/";
   }
-
-  public void test() {
-    doAllTests();
-  }
 }

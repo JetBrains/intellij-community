@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * This class provides a generic graph infrastructure with ability to store particular data. The main purpose is to
@@ -24,7 +25,6 @@ import java.util.*;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 4/12/13 11:53 AM
  */
 public class DataNode<T> implements Serializable, UserDataHolderEx {
 
@@ -97,10 +97,14 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
    *
    * @param loaders  class loaders which are assumed to be able to build object of the target content class
    */
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public void prepareData(@NotNull final ClassLoader ... loaders) {
     if (myData != null) {
       return;
+    }
+
+    if (myRawData == null) {
+      throw new IllegalStateException(String.format("Data node of key '%s' does not contain raw or prepared data", myKey));
     }
 
     try {
@@ -112,6 +116,21 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
             String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
             e
           );
+    }
+  }
+
+  /**
+   * Allows to replace or modify data. If function returns null, data is left unchanged
+   * @param visitor visitor. Must accept argument of type T and return value of type T
+   */
+  public void visitData(@Nullable Function visitor) {
+    if (visitor == null) {
+      return;
+    }
+    final T newData = (T) visitor.apply(getData());
+    if (newData != null) {
+      myData = newData;
+      myRawData = null;
     }
   }
 
@@ -194,12 +213,8 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   public void checkIsSerializable() throws IOException {
     if (myRawData != null) return;
-    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
-    try {
+    try (ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance())) {
       oOut.writeObject(myData);
-    }
-    finally {
-      oOut.close();
     }
   }
 
@@ -286,7 +301,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   @Nullable
   @Override
   public <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
-    return (U)myUserData.getUserData(key);
+    return myUserData.getUserData(key);
   }
 
   @Override

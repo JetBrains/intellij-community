@@ -85,7 +85,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     init();
   }
 
-  public LibraryOrderEntryImpl(@NotNull String name,
+  LibraryOrderEntryImpl(@NotNull String name,
                                @NotNull String level,
                                @NotNull RootModelImpl rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager) {
@@ -250,7 +250,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
   }
 
-  private void beforeLibraryRemoved(Library library) {
+  private void beforeLibraryRemoved(@NotNull Library library) {
     if (library == myLibrary) {
       myLibraryName = myLibrary.getName();
       myLibraryLevel = myLibrary.getTable().getTableLevel();

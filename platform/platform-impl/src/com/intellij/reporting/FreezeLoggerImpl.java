@@ -97,7 +97,7 @@ class ThreadDumpInfo {
   public final boolean isEAP;
   public final boolean isInDumbMode;
 
-  public ThreadDumpInfo(ThreadInfo[] threadInfos, boolean isInDumbMode) {
+  ThreadDumpInfo(ThreadInfo[] threadInfos, boolean isInDumbMode) {
     this.threadInfos = threadInfos;
     this.product = ApplicationNamesInfo.getInstance().getFullProductName();
     this.version = ApplicationInfo.getInstance().getFullVersion();

@@ -5,18 +5,20 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.Locale;
 
 
 public class InspectionSeverityGroupNode extends InspectionTreeNode{
-
   private final HighlightDisplayLevel myLevel;
   private final SeverityRegistrar mySeverityRegistrar;
 
-  public InspectionSeverityGroupNode(final SeverityRegistrar severityRegistrar, final HighlightDisplayLevel level) {
-    super(level);
+  public InspectionSeverityGroupNode(@NotNull SeverityRegistrar severityRegistrar,
+                                     @NotNull HighlightDisplayLevel level,
+                                     @NotNull InspectionTreeNode parent) {
+    super(parent);
     myLevel = level;
     mySeverityRegistrar = severityRegistrar;
   }
@@ -31,8 +33,9 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
     return true;
   }
 
-  public String toString() {
-    return StringUtil.capitalize(myLevel.toString().toLowerCase());
+  @Override
+  public String getPresentableText() {
+    return StringUtil.capitalize(myLevel.toString().toLowerCase(Locale.ENGLISH));
   }
 
   public HighlightDisplayLevel getSeverityLevel() {

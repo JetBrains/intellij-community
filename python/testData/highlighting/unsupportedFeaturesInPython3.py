@@ -24,4 +24,9 @@ try:
     pass
 except:
     raise
+
+def exception_handler():
+    if undefined:
+        raise
+    log_somehow()
     

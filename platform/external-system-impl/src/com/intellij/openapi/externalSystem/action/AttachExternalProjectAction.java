@@ -25,15 +25,15 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 6/14/13 1:28 PM
  */
 public class AttachExternalProjectAction extends AnAction {
 
@@ -43,7 +43,7 @@ public class AttachExternalProjectAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     // todo [Vlad, IDEA-187835]: provide java subsystem independent implementation
     if (!ExternalSystemApiUtil.isJavaCompatibleIde()) {
@@ -63,7 +63,7 @@ public class AttachExternalProjectAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
     if (externalSystemId == null) {
       return;
@@ -78,6 +78,7 @@ public class AttachExternalProjectAction extends AnAction {
     if (project == null) {
       return;
     }
+    ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
     
     ProjectImportProvider[] projectImportProviders = new ProjectImportProvider[1];
     for (ProjectImportProvider provider : ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions()) {

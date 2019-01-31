@@ -27,7 +27,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependenciesEnumerationHandler {
   private static final JpsGradleDependenciesEnumerationHandler SOURCE_SET_TYPE_INSTANCE = new JpsGradleDependenciesEnumerationHandler(true);
@@ -69,7 +68,7 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
       for (JpsModule module : modules) {
         JpsGradleModuleExtension gradleModuleExtension = service.getExtension(module);
         if (gradleModuleExtension != null) {
-          if ("sourceSet".equals(gradleModuleExtension.getModuleType())) {
+          if (JpsGradleModuleExtension.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(gradleModuleExtension.getModuleType())) {
             handler = SOURCE_SET_TYPE_INSTANCE;
             break;
           }

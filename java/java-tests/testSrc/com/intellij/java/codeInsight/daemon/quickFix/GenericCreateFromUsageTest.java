@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GenericCreateFromUsageTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/genericCreateFromUsage";

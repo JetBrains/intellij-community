@@ -7,7 +7,10 @@ import com.intellij.ide.actions.CutAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,7 +53,7 @@ public class NavBarListener
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
-  private boolean shouldFocusEditor = false;
+  private boolean shouldFocusEditor;
 
   static void subscribeTo(NavBarPanel panel) {
     if (panel.getClientProperty(LISTENER) != null) {
@@ -63,9 +66,9 @@ public class NavBarListener
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(listener);
     FileStatusManager.getInstance(project).addFileStatusListener(listener);
     PsiManager.getInstance(project).addPsiTreeChangeListener(listener);
-    ActionManager.getInstance().addAnActionListener(listener);
 
     final MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(AnActionListener.TOPIC, listener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     connection.subscribe(ProblemListener.TOPIC, listener);
@@ -91,7 +94,6 @@ public class NavBarListener
       KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(listener);
       FileStatusManager.getInstance(project).removeFileStatusListener(listener);
       PsiManager.getInstance(project).removePsiTreeChangeListener(listener);
-      ActionManager.getInstance().removeAnActionListener(listener);
       final MessageBusConnection connection = (MessageBusConnection)panel.getClientProperty(BUS);
       panel.putClientProperty(BUS, null);
       if (connection != null) {
@@ -177,14 +179,18 @@ public class NavBarListener
     final DialogWrapper dialog = DialogWrapper.findInstance(e.getOppositeComponent());
     shouldFocusEditor =  dialog != null;
     if (dialog != null) {
-      Disposer.register(dialog.getDisposable(), new Disposable() {
-        @Override
-        public void dispose() {
-          if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
-            shouldFocusEditor = false;
-          }
+      Disposable parent = dialog.getDisposable();
+      Disposable onParentDispose = () -> {
+        if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
+          shouldFocusEditor = false;
         }
-      });
+      };
+      if (dialog.isDisposed()) {
+        Disposer.dispose(onParentDispose);
+      }
+      else {
+        Disposer.register(parent, onParentDispose);
+      }
     }
 
     // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
@@ -262,7 +268,7 @@ public class NavBarListener
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     updateModel();
   }
 
@@ -297,7 +303,7 @@ public class NavBarListener
     }
   }
   @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
     if (shouldSkipAction(action)) return;
 
     if (myPanel.isInFloatingMode()) {
@@ -356,7 +362,7 @@ public class NavBarListener
   }
 
   @Override
-  public void lookAndFeelChanged(LafManager source) {
+  public void lookAndFeelChanged(@NotNull LafManager source) {
     myPanel.getNavBarUI().clearItems();
     myPanel.revalidate();
     myPanel.repaint();
@@ -375,9 +381,6 @@ public class NavBarListener
 
   @Override
   public void keyReleased(KeyEvent e) {}
-
-  @Override
-  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}

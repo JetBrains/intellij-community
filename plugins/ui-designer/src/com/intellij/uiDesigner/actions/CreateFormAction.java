@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -50,6 +36,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
           UIDesignerBundle.message("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
   }
 
+  @Override
   @NotNull
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     final MyInputValidator validator = new JavaNameValidator(project, directory);
@@ -60,8 +47,9 @@ public class CreateFormAction extends AbstractCreateFormAction {
     return validator.getCreatedElements();
   }
 
+  @Override
   @NotNull
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     PsiElement createdFile;
     PsiClass newClass = null;
     try {
@@ -98,10 +86,12 @@ public class CreateFormAction extends AbstractCreateFormAction {
     return new PsiElement[] { createdFile };
   }
 
+  @Override
   protected String getErrorTitle() {
     return UIDesignerBundle.message("error.cannot.create.form");
   }
 
+  @Override
   protected String getCommandName() {
     return UIDesignerBundle.message("command.create.form");
   }
@@ -119,7 +109,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
     private final Project myProject;
     private final MyInputValidator myValidator;
 
-    public MyDialog(final Project project,
+    MyDialog(final Project project,
                     final MyInputValidator validator) {
       super(project, true);
       myProject = project;
@@ -131,13 +121,15 @@ public class CreateFormAction extends AbstractCreateFormAction {
       setOKActionEnabled(false);
 
       myCreateBoundClassCheckbox.addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           myClassNameTextField.setEnabled(myCreateBoundClassCheckbox.isSelected());
         }
       });
 
       myFormNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(DocumentEvent e) {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
           setOKActionEnabled(myFormNameTextField.getText().length() > 0);
           if (myNeedAdjust) {
             myAdjusting = true;
@@ -148,7 +140,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
       });
 
       myClassNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(DocumentEvent e) {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
           if (!myAdjusting) {
             myNeedAdjust = false;
           }
@@ -162,10 +155,12 @@ public class CreateFormAction extends AbstractCreateFormAction {
       myBaseLayoutManagerCombo.setSelectedName(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return myTopPanel;
     }
 
+    @Override
     protected void doOKAction() {
       if (myCreateBoundClassCheckbox.isSelected()) {
         myLastClassName = myClassNameTextField.getText();
@@ -181,6 +176,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       }
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myFormNameTextField;
     }

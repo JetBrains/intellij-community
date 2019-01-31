@@ -79,6 +79,8 @@ public class ResolveProfiler {
   }
 
   public static void write(String prefix, @NotNull PsiElement expression, long time) {
+    if (DISABLED) return;
+
     write(getInfo(prefix, expression, time));
   }
 
@@ -86,16 +88,10 @@ public class ResolveProfiler {
     if (DISABLED) return;
 
     final ThreadInfo threadInfo = getThreadInfo();
-    try {
-      final FileWriter writer = new FileWriter(threadInfo.getName(), true);
-      try {
-        writer.write(threadInfo.getPrefix());
-        writer.write(s);
-        writer.write('\n');
-      }
-      finally {
-        writer.close();
-      }
+    try (FileWriter writer = new FileWriter(threadInfo.getName(), true)) {
+      writer.write(threadInfo.getPrefix());
+      writer.write(s);
+      writer.write('\n');
     }
     catch (IOException e) {
       e.printStackTrace();

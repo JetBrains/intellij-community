@@ -54,7 +54,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   @Override
-  public boolean isModified() { 
+  public boolean isModified() {
     return isServiceListModified() || isRepoListModified();
   }
 
@@ -205,24 +205,28 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
 
+  @Override
   public String getDisplayName() {
     return "Remote Jar Repositories";
   }
 
   @Override
   public String getHelpTopic() {
-    return "reference.jar.repositories"; 
+    return "reference.jar.repositories";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getClass().getName();
   }
 
+  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     List<String> newUrls = ContainerUtil.map(myReposModel.getItems(), RemoteRepositoryDescription::getUrl);
     List<String> oldUrls = ContainerUtil.map(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories(), RemoteRepositoryDescription::getUrl);
@@ -233,6 +237,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     }
   }
 
+  @Override
   public void reset() {
     resetServicesModel(MavenRepositoryServicesManager.getInstance(myProject).getUrls());
     resetReposModel(RemoteRepositoriesConfiguration.getInstance(myProject).getRepositories());

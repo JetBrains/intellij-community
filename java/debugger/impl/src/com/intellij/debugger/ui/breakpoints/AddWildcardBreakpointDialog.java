@@ -35,6 +35,7 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void doOKAction() {
     if (getClassPattern().length() == 0) {
       Messages.showErrorDialog(myPanel, "Class pattern not specified");
@@ -47,6 +48,7 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassPatternField;
   }
@@ -59,6 +61,7 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
     return myMethodNameField.getText().trim();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

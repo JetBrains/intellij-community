@@ -14,10 +14,12 @@ public class PatternFilterEditor extends ClassFilterEditor {
     getEmptyText().setText(DebuggerBundle.message("filters.not.configured"));
   }
 
+  @Override
   protected void addClassFilter() {
     addPatternFilter();
   }
 
+  @Override
   protected String getAddButtonText() {
     return DebuggerBundle.message("button.add");
   }

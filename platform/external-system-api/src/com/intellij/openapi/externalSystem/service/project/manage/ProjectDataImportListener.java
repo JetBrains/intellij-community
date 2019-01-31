@@ -19,7 +19,6 @@ import com.intellij.util.messages.Topic;
 
 /**
  * @author Vladislav Soroka
- * @since 4/13/17 11:38 AM
  */
 public interface ProjectDataImportListener {
   Topic<ProjectDataImportListener> TOPIC = new Topic<>("project data import listener", ProjectDataImportListener.class);

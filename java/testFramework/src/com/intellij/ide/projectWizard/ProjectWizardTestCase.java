@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -25,10 +11,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
@@ -36,8 +25,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,10 +50,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Nullable
   private Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
+  private LanguageLevel myOldLevel;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myOldLevel = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel();
     myOldDefaultProjectSdk = ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -70,6 +63,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
       }
     }
+    ProjectTypeStep.resetGroupForTests();
   }
 
   @Override
@@ -80,23 +74,30 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         myWizard = null;
       }
       if (myCreatedProject != null) {
-        myProjectManager.closeProject(myCreatedProject);
-        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
+        PlatformTestUtil.forceCloseProjectWithoutSaving(myCreatedProject);
         myCreatedProject = null;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
+        LanguageLevelProjectExtension extension =
+          LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+        extension.setDefault(null);
+        extension.setLanguageLevel(myOldLevel);
         ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       });
       SelectTemplateSettings.getInstance().setLastTemplate(null, null);
       UIUtil.dispatchAllInvocationEvents(); // let vfs update pass
       LaterInvocator.dispatchPendingFlushes();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
     }
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<Step> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
@@ -115,16 +116,25 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   @Nullable
-  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<Step> adjuster) throws IOException {
-    runWizard(group, name, getProject(), adjuster);
-    return createModuleFromWizard();
+  protected Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
+    return createModuleFromTemplate(group, name, getProject(), adjuster);
   }
 
-  protected Module createModuleFromWizard() {
-    return new NewModuleAction().createModuleFromWizard(myProject, null, myWizard);
+  @Nullable
+  protected Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
+    throws IOException {
+    runWizard(group, name, project, adjuster);
+    return createModuleFromWizard(project);
   }
 
-  protected void runWizard(@NotNull String group, @Nullable final String name, Project project, @Nullable final Consumer<Step> adjuster) throws IOException {
+  protected Module createModuleFromWizard(@NotNull Project project) {
+    return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+  }
+
+  protected void runWizard(@NotNull String group,
+                           @Nullable final String name,
+                           @Nullable Project project,
+                           @Nullable final Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     if (!step.setSelectedTemplate(group, name)) {
@@ -141,7 +151,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     });
   }
 
-  protected void runWizard(@Nullable Consumer<Step> adjuster) {
+  protected void runWizard(@Nullable Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
@@ -158,14 +168,18 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     myWizard.doFinishAction();
   }
 
-  protected void createWizard(Project project) throws IOException {
+  protected void createWizard(@Nullable Project project) throws IOException {
     File directory = FileUtil.createTempDirectory(getName(), "new", false);
     myFilesToDelete.add(directory);
+    if (myWizard != null) {
+      Disposer.dispose(myWizard.getDisposable());
+      myWizard = null;
+    }
     myWizard = createWizard(project, directory);
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
-  protected Project createProject(Consumer<Step> adjuster) throws IOException {
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
@@ -194,7 +208,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, Consumer<Step> adjuster, ProjectImportProvider... providers) {
+  protected Module importProjectFrom(String path, Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
     Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
@@ -203,12 +217,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private Module importFrom(String path,
-                            @Nullable Project project, Consumer<Step> adjuster,
+                            @Nullable Project project, Consumer<? super Step> adjuster,
                             final ProjectImportProvider... providers) {
     return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
   }
 
-  private Module doImportModule(String path, @Nullable Project project, Consumer<Step> adjuster, ProjectImportProvider[] providers) {
+  private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));

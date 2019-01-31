@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  *
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
 public abstract class ProjectTaskManager {
   protected final @NotNull Project myProject;
@@ -140,11 +139,4 @@ public abstract class ProjectTaskManager {
                                                      boolean includeRuntimeDependencies);
 
   public abstract ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts);
-
-  /**
-   * @deprecated use {@link #createBuildTask(boolean, ProjectModelBuildableElement...)}
-   */
-  public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts) {
-    return createBuildTask(isIncrementalBuild, artifacts);
-  }
 }

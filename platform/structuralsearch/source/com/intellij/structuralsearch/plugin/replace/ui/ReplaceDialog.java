@@ -17,7 +17,6 @@ import java.awt.*;
 import java.util.List;
 
 
-@SuppressWarnings({"RefusedBequest"})
 public class ReplaceDialog extends SearchDialog {
   private Editor replaceCriteriaEdit;
   private JCheckBox shortenFQN;
@@ -147,7 +146,7 @@ public class ReplaceDialog extends SearchDialog {
     if (!super.isValid()) return false;
 
     try {
-      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getReplaceOptions());
+      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), myConfiguration.getReplaceOptions());
     }
     catch (UnsupportedPatternException ex) {
       reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);

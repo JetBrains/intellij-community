@@ -49,6 +49,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   }
 
   public void clearCache() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     mySourcePositionCache.clear();
   }
 
@@ -98,7 +99,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
 
       return iterate(positionManager -> {
         SourcePosition res1 = positionManager.getSourcePosition(location);
-        mySourcePositionCache.put(location, res1);
+        try {
+          mySourcePositionCache.put(location, res1);
+        }
+        catch (IllegalArgumentException ignored) { // Invalid method id
+        }
         return res1;
       }, null, null, false);
     });

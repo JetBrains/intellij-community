@@ -34,20 +34,21 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -71,7 +72,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
   private volatile boolean myDisposed;
-  private final TransferToEDTQueue<Runnable> myLaterInvocator;
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
@@ -105,11 +105,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myViewMap = ContainerUtil.newConcurrentMap();
     myBuildsMap = ContainerUtil.newConcurrentMap();
     myProgressWatcher = new ProgressWatcher();
-
-    myLaterInvocator = new TransferToEDTQueue<>("Multiple builds view queue", runnable -> {
-      runnable.run();
-      return true;
-    }, o -> myDisposed);
   }
 
   @Override
@@ -130,7 +125,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   }
 
   @Override
-  public void onEvent(BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
     if (event instanceof StartBuildEvent) {
       StartBuildEvent startBuildEvent = (StartBuildEvent)event;
@@ -238,7 +233,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     if (myContent == null) {
       myPostponedRunnables.addAll(runOnEdt);
       if (isInitializeStarted.compareAndSet(false, true)) {
-        myLaterInvocator.offer(() -> {
+        EdtExecutorService.getInstance().execute(() -> {
+          if (myDisposed) return;
           myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
           myBuildsList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -282,7 +278,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
           myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
           Disposer.register(myContent, this);
-          myContent.setCloseable(false);
+          Disposer.register(myContent, new Disposable() {
+            @Override
+            public void dispose() {
+              myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
+            }
+          });
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);
@@ -299,7 +300,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       }
     }
     else {
-      myLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
+        if (myDisposed) return;
         for (Runnable runnable : runOnEdt) {
           runnable.run();
         }

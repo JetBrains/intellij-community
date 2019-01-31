@@ -49,6 +49,7 @@ public class TextChunk {
     return myText;
   }
 
+  @Override
   public String toString() {
     return getText();
   }

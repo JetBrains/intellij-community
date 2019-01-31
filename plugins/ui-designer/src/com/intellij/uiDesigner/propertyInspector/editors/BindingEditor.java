@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,6 +20,7 @@ import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -56,6 +43,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
     myCbx.addActionListener(
       new ActionListener(){
+        @Override
         public void actionPerformed(final ActionEvent e){
           fireValueCommitted(true, false);
         }
@@ -63,7 +51,8 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     );
 
     new AnAction(){
-      public void actionPerformed(final AnActionEvent e) {
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
@@ -142,7 +131,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     if (text != null) {
       String binding = BindingProperty.suggestBindingFromText(component, text);
       if (binding != null && !result.contains(binding)) {
-        result.add(binding);        
+        result.add(binding);
       }
     }
 
@@ -151,11 +140,13 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     return names;
   }
 
+  @Override
   public String getValue() throws Exception {
     final String value = super.getValue();
     return value != null ? value.replace('$', '.') : null; // PSI works only with dots
   }
 
+  @Override
   public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext){
     final String[] fieldNames = getFieldNames(component, value);
     myCbx.setModel(new DefaultComboBoxModel(fieldNames));

@@ -1,0 +1,2 @@
+[foo]
+charset = utf-16, utf-8<caret>, utf-32, utf-64

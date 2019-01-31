@@ -2,6 +2,8 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.LogMessage;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -17,7 +19,9 @@ import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 
 /**
@@ -65,11 +69,13 @@ public class IdeaLogger extends Log4jBasedLogger {
     };
   }
 
-  public static @Nullable String getOurCompilationTimestamp() {
+  @Nullable
+  public static String getOurCompilationTimestamp() {
     return ourCompilationTimestamp;
   }
 
-  public static @NotNull ThrowableRenderer getThrowableRenderer() {
+  @NotNull
+  public static ThrowableRenderer getThrowableRenderer() {
     return ourThrowableRenderer;
   }
 
@@ -97,36 +103,49 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
+  public void warn(String message, @Nullable Throwable t) {
+    super.warn(message, checkException(t));
+  }
+
+  @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t));
+      myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);
     }
 
     String detailString = StringUtil.join(details, "\n");
 
-    if (ourErrorsOccurred == null) {
-      String s = message != null && !message.isEmpty() ? "Error message is '" + message + "'" : "";
-      String mess = "Logger errors occurred. See IDEA logs for details. " + s;
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourErrorsOccurred = new Exception(mess + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
+    if (!detailString.isEmpty()) {
+      detailString = "\nDetails: " + detailString;
     }
 
-    myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
-    logErrorHeader();
+    if (ourErrorsOccurred == null) {
+      String mess = "Logger errors occurred. See IDEA logs for details. " +
+                    (StringUtil.isEmpty(message) ? "" : "Error message is '" + message + "'");
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourErrorsOccurred = new Exception(mess + detailString, t);
+    }
+    myLogger.error(message + detailString, t);
+    logErrorHeader(t);
   }
 
-  private void logErrorHeader() {
+  private void logErrorHeader(@Nullable Throwable t) {
     myLogger.error(ourApplicationInfoProvider.getInfo());
 
     if (ourCompilationTimestamp != null) {
       myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);
     }
 
-    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown"));
-    myLogger.error("VM: " + System.getProperties().getProperty("java.vm.name", "unknown"));
-    myLogger.error("Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
+    myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown")+
+                   "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
+                   "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
+    
+    IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
+    if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
+      myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
+    }
 
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     if (application != null && application.isComponentsCreated() && !application.isDisposed()) {

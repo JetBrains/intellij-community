@@ -49,7 +49,7 @@ public <T> void exec(T t, Action<T> f) {
 
 def foo() {
     exec('foo') {print it.toUpperCase() ;print 2 }
-    exec('foo') {print it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>() ;print 2 }
+    exec('foo') {print <warning descr="Method call is ambiguous">it.<warning descr="Cannot resolve symbol 'intValue'">intValue</warning>()</warning> ;print 2 }
 }
 ''')
   }

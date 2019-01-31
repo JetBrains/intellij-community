@@ -141,7 +141,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   }
 
   @Nullable
-  private ASTNode processCaseAndStatementAfter(final List<Block> result,
+  private ASTNode processCaseAndStatementAfter(final List<? super Block> result,
                                                ASTNode child,
                                                final Alignment childAlignment,
                                                final Wrap childWrap,

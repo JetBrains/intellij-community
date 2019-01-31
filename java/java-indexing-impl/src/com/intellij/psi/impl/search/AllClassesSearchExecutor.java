@@ -75,7 +75,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
+  public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<? super String> consumer) {
     DumbService.getInstance(project).runReadActionInSmartMode((Computable<Void>)() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(s -> {
         ProgressManager.checkCanceled();

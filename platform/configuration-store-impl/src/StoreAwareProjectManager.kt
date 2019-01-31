@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.configurationStore.schemeManager.SchemeFileTracker
+import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -18,6 +20,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
@@ -25,12 +28,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.ui.AppUIUtil
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 private val CHANGED_FILES_KEY = Key.create<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key.create<MultiMap<SchemeFileTracker, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
@@ -40,6 +45,7 @@ private val CHANGED_SCHEMES_KEY = Key.create<MultiMap<SchemeFileTracker, SchemeC
  */
 class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager) {
   private val reloadBlockCount = AtomicInteger()
+  private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
 
   private val restartApplicationOrReloadProjectTask = Runnable {
@@ -70,9 +76,11 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
       runBatchUpdate(project.messageBus) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          for ((tracker, files) in changedSchemes.entrySet()) {
-            LOG.runAndLogException {
-              tracker.reload(files)
+          useSchemeLoader { schemeLoaderRef ->
+            for ((tracker, files) in changedSchemes.entrySet()) {
+              LOG.runAndLogException {
+                tracker.reload(files, schemeLoaderRef)
+              }
             }
           }
         }
@@ -102,12 +110,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
-        if (event is VFilePropertyChangeEvent) {
-          // ignore because doesn't affect content
-          return
-        }
-
-        if (event.requestor is StateStorage.SaveSession || event.requestor is StateStorage || event.requestor is ProjectManagerImpl) {
+        if (event.requestor is ProjectManagerEx) {
           return
         }
 
@@ -141,12 +144,23 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   override fun blockReloadingProjectOnExternalChanges() {
-    reloadBlockCount.incrementAndGet()
+    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationInfoImpl.isInStressTest()) {
+      blockStackTrace.set(ExceptionUtil.currentStackTrace())
+    }
   }
 
   override fun unblockReloadingProjectOnExternalChanges() {
-    assert(reloadBlockCount.get() > 0)
-    if (reloadBlockCount.decrementAndGet() == 0 && changedFilesAlarm.isEmpty) {
+    val counter = reloadBlockCount.get()
+    if (counter <= 0) {
+      LOG.error("Block counter $counter must be > 0, first block stack trace: ${blockStackTrace.get()}")
+    }
+
+    if (reloadBlockCount.decrementAndGet() != 0) {
+      return
+    }
+
+    blockStackTrace.set(null)
+    if (changedFilesAlarm.isEmpty) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // todo fix test to handle invokeLater
         changedFilesAlarm.request(true)
@@ -158,7 +172,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   override fun flushChangedProjectFileAlarm() {
-    changedFilesAlarm.flush()
+    changedFilesAlarm.drainRequestsInTest()
   }
 
   override fun reloadProject(project: Project) {
@@ -251,7 +265,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -260,7 +274,9 @@ fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): 
     }
     catch (e: Throwable) {
       LOG.warn(e)
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
+      AppUIUtil.invokeOnEdt {
+        Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
+      }
       return ReloadComponentStoreStatus.ERROR
     }
 

@@ -32,8 +32,7 @@ public class CommittedChangesFilterKey implements Comparable<CommittedChangesFil
 
   @Override
   public int compareTo(final CommittedChangesFilterKey o) {
-    final int comp = myPriority.getPriority() - o.myPriority.getPriority();
-    return comp < 0 ? -1 : (comp == 0 ? 0 : 1);
+    return Integer.compare(myPriority.getPriority(), o.myPriority.getPriority());
   }
 
   @Override

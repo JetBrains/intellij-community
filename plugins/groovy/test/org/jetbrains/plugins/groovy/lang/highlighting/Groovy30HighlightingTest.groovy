@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -62,5 +63,10 @@ interface I {
 
 I i = {3}
 '''
+  }
+
+  void 'test constructor reference static access'() {
+    fixture.enableInspections GrUnresolvedAccessInspection
+    highlightingTest()
   }
 }

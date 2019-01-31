@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.parser;
 
@@ -267,6 +253,24 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
+  public static boolean consumeToken(PsiBuilder builder, TokenSet tokens) {
+    addVariantSmart(builder, tokens.getTypes(), true);
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder, TokenSet tokens) {
+    addCompletionVariantSmart(builder, tokens.getTypes());
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenFast(PsiBuilder builder, TokenSet tokens) {
+    if (nextTokenIsFast(builder, tokens)) {
+      builder.advanceLexer();
+      return true;
+    }
+    return false;
+  }
+
   public static boolean nextTokenIsFast(PsiBuilder builder, IElementType token) {
     return builder.getTokenType() == token;
   }
@@ -277,6 +281,10 @@ public class GeneratedParserUtilBase {
       if (token == tokenType) return true;
     }
     return false;
+  }
+
+  public static boolean nextTokenIsFast(PsiBuilder builder, TokenSet tokens) {
+    return tokens.contains(builder.getTokenType());
   }
 
   public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType token) {
@@ -561,16 +569,6 @@ public class GeneratedParserUtilBase {
       PsiBuilderImpl.ProductionMarker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
         eatMoreFlagOnce ? (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker() : null;
-      PsiBuilder.Marker extensionMarker = null;
-      IElementType extensionTokenType = null;
-      // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
-      if (latestDoneMarker != null &&
-          frame.position >= latestDoneMarker.getStartIndex() &&
-          frame.position <= latestDoneMarker.getEndIndex()) {
-        extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
-        extensionTokenType = latestDoneMarker.getTokenType();
-        ((PsiBuilder.Marker)latestDoneMarker).drop();
-      }
       // advance to the last error pos
       // skip tokens until lastErrorPos. parseAsTree might look better here...
       int parenCount = 0;
@@ -602,8 +600,11 @@ public class GeneratedParserUtilBase {
       else if (!result && pinned && frame.errorReportedAt < 0) {
         errorReported = reportError(builder, state, frame, elementType != null, false, false);
       }
-      if (extensionMarker != null) {
-        extensionMarker.done(extensionTokenType);
+      // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
+      if (latestDoneMarker != null &&
+          frame.position >= latestDoneMarker.getStartIndex() &&
+          frame.position <= latestDoneMarker.getEndIndex()) {
+        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
       }
       state.suppressErrors = false;
       if (errorReported || result) {
@@ -672,8 +673,7 @@ public class GeneratedParserUtilBase {
         }
         else if ((frame.modifiers & _LEFT_INNER_) != 0 && frame.leftMarker != null) {
           marker.done(elementType);
-          frame.leftMarker.precede().done(((LighterASTNode)frame.leftMarker).getTokenType());
-          frame.leftMarker.drop();
+          extend_marker_impl(frame.leftMarker);
         }
         else if ((frame.modifiers & _LEFT_) != 0 && frame.leftMarker != null) {
           marker.drop();
@@ -691,13 +691,24 @@ public class GeneratedParserUtilBase {
     else if (result || pinned) {
       if (marker != null) marker.drop();
       if ((frame.modifiers & _LEFT_INNER_) != 0 && frame.leftMarker != null) {
-        frame.leftMarker.precede().done(((LighterASTNode)frame.leftMarker).getTokenType());
-        frame.leftMarker.drop();
+        extend_marker_impl(frame.leftMarker);
       }
     }
     else {
       close_marker_impl_(frame, marker, null, false);
     }
+  }
+
+  private static void extend_marker_impl(PsiBuilder.Marker marker) {
+    PsiBuilder.Marker precede = marker.precede();
+    IElementType elementType = ((LighterASTNode)marker).getTokenType();
+    if (elementType == TokenType.ERROR_ELEMENT) {
+      precede.error(notNullize(PsiBuilderImpl.getErrorMessage((LighterASTNode)marker)));
+    }
+    else {
+      precede.done(elementType);
+    }
+    marker.drop();
   }
 
   private static void close_marker_impl_(Frame frame, PsiBuilder.Marker marker, IElementType elementType, boolean result) {
@@ -781,18 +792,13 @@ public class GeneratedParserUtilBase {
       mark.error(message);
     }
     else if (inner) {
-      PsiBuilder.Marker extensionMarker = null;
-      IElementType extensionTokenType = null;
       PsiBuilderImpl.ProductionMarker latestDoneMarker = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+      builder.error(message);
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
-        extensionTokenType = latestDoneMarker.getTokenType();
-        ((PsiBuilder.Marker)latestDoneMarker).drop();
+        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
       }
-      builder.error(message);
-      if (extensionMarker != null) extensionMarker.done(extensionTokenType);
     }
     else {
       builder.error(message);
@@ -956,7 +962,7 @@ public class GeneratedParserUtilBase {
 
     public static void initState(ErrorState state, PsiBuilder builder, IElementType root, TokenSet[] extendsSets) {
       state.extendsSets = extendsSets;
-      PsiFile file = builder.getUserDataUnprotected(FileContextUtil.CONTAINING_FILE_KEY);
+      PsiFile file = builder.getUserData(FileContextUtil.CONTAINING_FILE_KEY);
       state.completionState = file == null? null: file.getUserData(COMPLETION_STATE_KEY);
       Language language = file == null? root.getLanguage() : file.getLanguage();
       state.caseSensitive = language.isCaseSensitive();
@@ -973,7 +979,7 @@ public class GeneratedParserUtilBase {
       int count = 0;
       loop: for (Variant variant : list) {
         if (position == variant.position) {
-          String text = variant.object.toString();
+          String text = String.valueOf(variant.object);
           long hash = StringHash.calc(text);
           for (int i=0; i<count; i++) {
             if (hashes[i] == hash) continue loop;
@@ -1098,26 +1104,6 @@ public class GeneratedParserUtilBase {
     public String toString() {
       return "<" + position + ", " + object + ">";
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Variant variant = (Variant)o;
-
-      if (position != variant.position) return false;
-      if (!this.object.equals(variant.object)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = position;
-      result = 31 * result + object.hashCode();
-      return result;
-    }
   }
 
   private static class Hooks<T> {
@@ -1196,7 +1182,7 @@ public class GeneratedParserUtilBase {
         }
         if (tokenType == lBrace) {
           Pair<PsiBuilder.Marker, Integer> prev = siblings.peek();
-          parens.addFirst(Pair.create(builder.mark(), prev == null ? null : prev.first));
+          parens.addFirst(Pair.create(builder.mark(), Pair.getFirst(prev)));
         }
         checkSiblings(chunkType, parens, siblings);
         state.tokenAdvancer.parse(builder, level);

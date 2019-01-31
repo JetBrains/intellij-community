@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
@@ -31,18 +32,16 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   };
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(YAMLLanguage.INSTANCE);
-    CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     indentOptions.INDENT_SIZE = 2;
     indentOptions.CONTINUATION_INDENT_SIZE = 2;
     indentOptions.USE_TAB_CHARACTER = false;
-    return defaultSettings;
   }
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new YAMLIndentOptionsEditor();
+    return new YAMLIndentOptionsEditor(this);
   }
 
   @NotNull
@@ -75,6 +74,11 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "BLOCK_MAPPING_ON_NEW_LINE",
                                 YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.block.mapping.on.new.line"),
                                 YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.group.sequence.value"));
+
+      consumer.showCustomOption(YAMLCodeStyleSettings.class,
+                                "AUTOINSERT_SEQUENCE_MARKER",
+                                YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.autoinsert.sequence.marker"),
+                                YAMLBundle.message("YAMLLanguageCodeStyleSettingsProvider.group.sequence.value"));
     }
   }
 
@@ -85,6 +89,10 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static class YAMLIndentOptionsEditor extends SmartIndentOptionsEditor {
     private JCheckBox myIndentSequence;
+
+    YAMLIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+      super(provider);
+    }
 
     @Override
     protected void addComponents() {

@@ -18,6 +18,7 @@ package com.intellij.designer.palette;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public class DefaultPaletteItem implements PaletteItem {
+  @NotNull
   private final String myTitle;
   protected final String myIconPath;
   protected Icon myIcon;
@@ -46,7 +48,7 @@ public class DefaultPaletteItem implements PaletteItem {
          palette.getAttributeValue("deprecatedHint"));
   }
 
-  public DefaultPaletteItem(String title,
+  public DefaultPaletteItem(@NotNull String title,
                             String iconPath,
                             String tooltip,
                             String version,
@@ -60,6 +62,7 @@ public class DefaultPaletteItem implements PaletteItem {
     myDeprecatedHint = deprecatedHint;
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return myTitle;

@@ -69,7 +69,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnoreComparisonToZero;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreComparisonToZero) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreComparisonToZero) {
       super(holder, session);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
@@ -87,7 +87,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   private static class PyBinaryExpressionVisitor extends PyInspectionVisitor {
     private final boolean myIgnoreComparisonToZero;
 
-    public PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
+    PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
                                      @NotNull LocalInspectionToolSession session,
                                      boolean ignoreComparisonToZero) {
       super(holder, session);

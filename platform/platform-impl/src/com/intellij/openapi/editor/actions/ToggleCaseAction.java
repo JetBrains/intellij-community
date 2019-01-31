@@ -43,34 +43,28 @@ public class ToggleCaseAction extends TextComponentEditorAction {
     @Override
     public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Ref<Boolean> toLowerCase = new Ref<>(Boolean.FALSE);
-      runForCaret(editor, caret, new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          if (!caret.hasSelection()) {
-            caret.selectWordAtCaret(true);
-          }
-          int selectionStartOffset = caret.getSelectionStart();
-          int selectionEndOffset = caret.getSelectionEnd();
-          String originalText = editor.getDocument().getText(new TextRange(selectionStartOffset, selectionEndOffset));
-          if (!originalText.equals(toCase(editor, selectionStartOffset, selectionEndOffset, true))) {
-            toLowerCase.set(Boolean.TRUE);
-          }
+      runForCaret(editor, caret, c -> {
+        if (!c.hasSelection()) {
+          c.selectWordAtCaret(true);
+        }
+        int selectionStartOffset = c.getSelectionStart();
+        int selectionEndOffset = c.getSelectionEnd();
+        String originalText = editor.getDocument().getText(new TextRange(selectionStartOffset, selectionEndOffset));
+        if (!originalText.equals(toCase(editor, selectionStartOffset, selectionEndOffset, true))) {
+          toLowerCase.set(Boolean.TRUE);
         }
       });
-      runForCaret(editor, caret, new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          VisualPosition caretPosition = caret.getVisualPosition();
-          int selectionStartOffset = caret.getSelectionStart();
-          int selectionEndOffset = caret.getSelectionEnd();
-          VisualPosition selectionStartPosition = caret.getSelectionStartPosition();
-          VisualPosition selectionEndPosition = caret.getSelectionEndPosition();
-          caret.removeSelection();
-          editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
-                                             toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
-          caret.moveToVisualPosition(caretPosition);
-          caret.setSelection(selectionStartPosition, selectionStartOffset, selectionEndPosition, selectionEndOffset);
-        }
+      runForCaret(editor, caret, c -> {
+        VisualPosition caretPosition = c.getVisualPosition();
+        int selectionStartOffset = c.getSelectionStart();
+        int selectionEndOffset = c.getSelectionEnd();
+        VisualPosition selectionStartPosition = c.getSelectionStartPosition();
+        VisualPosition selectionEndPosition = c.getSelectionEndPosition();
+        c.removeSelection();
+        editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
+                                           toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
+        c.moveToVisualPosition(caretPosition);
+        c.setSelection(selectionStartPosition, selectionStartOffset, selectionEndPosition, selectionEndOffset);
       });
     }
 

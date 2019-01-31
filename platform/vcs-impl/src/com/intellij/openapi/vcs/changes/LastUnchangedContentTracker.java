@@ -135,18 +135,12 @@ public class LastUnchangedContentTracker {
     }
 
     Integer oldContentId = null;
-    try {
-      final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file);
+    try(final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("getSavedContentId for " + file + "; stream=" + stream);
       }
       if (stream != null) {
-        try {
-          oldContentId = stream.readInt();
-        }
-        finally {
-          stream.close();
-        }
+        oldContentId = stream.readInt();
         if (LOG.isDebugEnabled()) {
           LOG.debug("oldContentId=" + oldContentId);
         }
@@ -163,15 +157,9 @@ public class LastUnchangedContentTracker {
   private static Long getLastSavedStamp(VirtualFile file) {
     Long l = file.getUserData(LAST_TS_KEY);
     if (l == null) {
-      try {
-        final DataInputStream stream = LAST_TS_ATTR.readAttribute(file);
+      try (final DataInputStream stream = LAST_TS_ATTR.readAttribute(file)) {
         if (stream != null) {
-          try {
-            l = stream.readLong();
-          }
-          finally {
-            stream.close();
-          }
+          l = stream.readLong();
         }
       }
       catch (IOException e) {

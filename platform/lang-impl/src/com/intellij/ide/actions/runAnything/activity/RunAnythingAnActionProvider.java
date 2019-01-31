@@ -45,10 +45,7 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
   private static void performAction(@NotNull AnAction action, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataContext);
 
-    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, dataContext, event);
-    ActionUtil.performActionDumbAware(action, event);
-    manager.fireAfterActionPerformed(action, dataContext, event);
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
   }
 
   @Nullable

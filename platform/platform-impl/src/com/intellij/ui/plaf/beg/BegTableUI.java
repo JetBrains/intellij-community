@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -18,6 +18,7 @@ import java.awt.event.KeyListener;
  */
 public class BegTableUI extends BasicTableUI {
   private final KeyAdapter myAdapter= new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           if (table.isEditing()) {
@@ -37,6 +38,7 @@ public class BegTableUI extends BasicTableUI {
     return new BegTableUI();
   }
 
+  @Override
   public void installUI(JComponent c) {
     super.installUI(c);
     c.getActionMap().put(START_EDITING_ACTION_KEY, new StartEditingAction());
@@ -44,11 +46,13 @@ public class BegTableUI extends BasicTableUI {
     c.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("pressed ESCAPE"), "cancel");
   }
 
+  @Override
   protected KeyListener createKeyListener() {
     return myAdapter;
   }
 
   private class StartEditingAction extends AbstractAction {
+    @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();
       if (!table.hasFocus()) {

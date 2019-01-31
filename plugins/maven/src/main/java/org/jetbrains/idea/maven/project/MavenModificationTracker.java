@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
@@ -34,33 +35,33 @@ public class MavenModificationTracker extends SimpleModificationTracker {
       }
 
       @Override
-      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
         incModificationCount();
       }
 
       @Override
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
         incModificationCount();
       }
 
       @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
         incModificationCount();
       }
 
       @Override
-      public void pluginsResolved(MavenProject project) {
+      public void pluginsResolved(@NotNull MavenProject project) {
         incModificationCount();
       }
 
       @Override
-      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+      public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         incModificationCount();
       }
 
       @Override
-      public void artifactsDownloaded(MavenProject project) {
+      public void artifactsDownloaded(@NotNull MavenProject project) {
         incModificationCount();
       }
     });

@@ -24,7 +24,7 @@ public class FormLayoutUtils {
   }
 
   public static String getEncodedRowSpecs(final FormLayout formLayout) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for(int i=1; i<=formLayout.getRowCount(); i++) {
       if (result.length() > 0) {
         result.append(",");
@@ -35,7 +35,7 @@ public class FormLayoutUtils {
   }
 
   public static String getEncodedColumnSpecs(final FormLayout formLayout) {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     for(int i=1; i<=formLayout.getColumnCount(); i++) {
       if (result.length() > 0) {
         result.append(",");

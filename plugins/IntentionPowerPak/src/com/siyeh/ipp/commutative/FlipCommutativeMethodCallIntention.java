@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
 
+  @Override
   protected String getTextForElement(PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression =
@@ -44,11 +45,13 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new FlipCommutativeMethodCallPredicate();
   }
 
+  @Override
   public void processIntention(PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();

@@ -64,7 +64,7 @@ public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalIns
     private final FileTemplate myTemplateToEdit;
     private final ReplaceWithFileTemplateFix myReplaceTemplateFix;
 
-    public EditFileTemplateFix(FileTemplate templateToEdit, ReplaceWithFileTemplateFix replaceTemplateFix) {
+    EditFileTemplateFix(FileTemplate templateToEdit, ReplaceWithFileTemplateFix replaceTemplateFix) {
       myTemplateToEdit = templateToEdit;
       myReplaceTemplateFix = replaceTemplateFix;
     }

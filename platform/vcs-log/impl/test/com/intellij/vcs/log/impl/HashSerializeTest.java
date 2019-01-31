@@ -58,14 +58,10 @@ public class HashSerializeTest {
   @NotNull
   private static File writeToTempFile(@NotNull HashImpl... hashes) throws IOException {
     File file = FileUtil.createTempFile("", "");
-    DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
-    try {
+    try (DataOutputStream out = new DataOutputStream(new FileOutputStream(file))) {
       for (HashImpl hash : hashes) {
         hash.write(out);
       }
-    }
-    finally {
-      out.close();
     }
     return file;
   }
@@ -73,14 +69,10 @@ public class HashSerializeTest {
   @NotNull
   private static List<HashImpl> readFromFile(@NotNull File file) throws IOException {
     List<HashImpl> result = ContainerUtil.newArrayList();
-    DataInputStream in = new DataInputStream(new FileInputStream(file));
-    try {
+    try (DataInputStream in = new DataInputStream(new FileInputStream(file))) {
       while (in.available() > 0) {
         result.add((HashImpl)HashImpl.read(in));
       }
-    }
-    finally {
-      in.close();
     }
     return result;
   }

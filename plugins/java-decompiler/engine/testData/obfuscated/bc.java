@@ -150,7 +150,6 @@ public class bc extends DefaultHandler {
          var4.setContentHandler(this);
          var4.parse(new InputSource(var1));
       } catch (a_ var8) {
-         ;
       } finally {
          var1.close();
       }

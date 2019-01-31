@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
@@ -28,11 +14,7 @@ public final class DFSTree {
   public final Set<Edge> nonBack, back;
   public final boolean[] loopEnters;
 
-  DFSTree(int[] preOrder,
-          int[] postOrder,
-          Set<Edge> nonBack,
-          Set<Edge> back,
-          boolean[] loopEnters) {
+  DFSTree(int[] preOrder, int[] postOrder, Set<Edge> nonBack, Set<Edge> back, boolean[] loopEnters) {
     this.preOrder = preOrder;
     this.postOrder = postOrder;
     this.nonBack = nonBack;
@@ -44,8 +26,7 @@ public final class DFSTree {
     return preOrder[parent] <= preOrder[child] && postOrder[child] <= postOrder[parent];
   }
 
-  // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
-  // 11.7.2 DFS of a directed graph
+  // "Graphs: Theory and Algorithms" (ISBN 0471513563), 11.7.2 DFS of a directed graph
   public static DFSTree build(int[][] transitions, int edgeCount) {
     HashSet<Edge> nonBack = new HashSet<>();
     HashSet<Edge> back = new HashSet<>();
@@ -61,13 +42,13 @@ public final class DFSTree {
     boolean[] loopEnters = new boolean[transitions.length];
 
     // enter 0
-    entered ++;
+    entered++;
     preOrder[0] = entered;
     marked[0] = true;
 
-    boolean[] stackFlag = new boolean[edgeCount*2 + 1];
-    int[] stackFrom = new int[edgeCount*2 + 1];
-    int[] stackTo = new int[edgeCount*2 + 1];
+    boolean[] stackFlag = new boolean[edgeCount * 2 + 1];
+    int[] stackFrom = new int[edgeCount * 2 + 1];
+    int[] stackTo = new int[edgeCount * 2 + 1];
 
     int top = 0;
 
@@ -89,7 +70,7 @@ public final class DFSTree {
       //Action action = stack.pop();
       // markScanned
       if (stackFlag[top]) {
-        completed ++;
+        completed++;
         postOrder[stackTo[top]] = completed;
         scanned[stackTo[top]] = true;
       }
@@ -100,7 +81,7 @@ public final class DFSTree {
         if (!marked[to]) {
           nonBack.add(new Edge(from, to));
           // enter to
-          entered ++;
+          entered++;
           preOrder[to] = entered;
           marked[to] = true;
 
@@ -123,7 +104,8 @@ public final class DFSTree {
         else if (preOrder[to] < preOrder[from] && !scanned[to]) {
           back.add(new Edge(from, to));
           loopEnters[to] = true;
-        } else {
+        }
+        else {
           nonBack.add(new Edge(from, to));
         }
       }

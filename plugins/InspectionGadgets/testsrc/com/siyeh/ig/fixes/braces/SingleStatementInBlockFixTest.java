@@ -36,8 +36,14 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testForMalformed() { assertQuickfixNotAvailable(getMessage("for"));}
   public void testDoWhile() { doTest("do"); }
   public void testIfWithLoop() { doTest("if"); }
+  public void testIfWithLoop2() { doTest("else"); }
+  public void testIfWithLoop3() { assertQuickfixNotAvailable(getMessage("else")); }
+  public void testIfWithLoop4() { doTest("if"); }
   public void testElseWithLoop() { doTest("else"); }
   public void testTwoComments() { doTest("if"); }
+  public void testIncompleteIf() { assertQuickfixNotAvailable(getMessage("for")); }
+  public void testNestedFor() { assertQuickfixNotAvailable(getMessage("for")); }
+  public void testNestedFor2() { doTest("for"); }
 
   @Override
   protected void setUp() throws Exception {
@@ -50,6 +56,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
     return new SingleStatementInBlockInspection();
   }
 
+  @Override
   protected void doTest(String keyword) {
     super.doTest(getMessage(keyword));
   }

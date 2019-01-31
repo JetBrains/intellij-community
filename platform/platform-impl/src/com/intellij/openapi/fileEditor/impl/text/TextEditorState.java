@@ -1,28 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.util.Producer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author Vladimir Kondratyev
@@ -37,7 +27,8 @@ public final class TextEditorState implements FileEditorState {
    * This field can be {@code null}.
    */
   private CodeFoldingState myFoldingState;
-  @Nullable private Producer<CodeFoldingState> myDelayedFoldInfoProducer;
+  @Nullable
+  private Supplier<CodeFoldingState> myDelayedFoldInfoProducer;
 
   private static final int MIN_CHANGE_DISTANCE = 4;
 
@@ -53,15 +44,20 @@ public final class TextEditorState implements FileEditorState {
    *
    * @param producer  delayed folding info producer
    */
-  void setDelayedFoldState(@NotNull Producer<CodeFoldingState> producer) {
+  void setDelayedFoldState(@NotNull Supplier<CodeFoldingState> producer) {
     myDelayedFoldInfoProducer = producer;
+  }
+
+  @Nullable
+  Supplier<CodeFoldingState> getDelayedFoldState() {
+    return myDelayedFoldInfoProducer;
   }
 
   @Nullable
   CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
     if (myFoldingState == null && myDelayedFoldInfoProducer != null) {
-      myFoldingState = myDelayedFoldInfoProducer.produce();
+      myFoldingState = myDelayedFoldInfoProducer.get();
       if (myFoldingState != null) {
         myDelayedFoldInfoProducer = null;
       }
@@ -74,6 +70,7 @@ public final class TextEditorState implements FileEditorState {
     myDelayedFoldInfoProducer = null;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof TextEditorState)) {
       return false;
@@ -85,11 +82,12 @@ public final class TextEditorState implements FileEditorState {
     if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
-    if (localFoldingState == null ? theirFoldingState != null : !localFoldingState.equals(theirFoldingState)) return false;
+    if (!Objects.equals(localFoldingState, theirFoldingState)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = 0;
     if (CARETS != null) {
@@ -102,6 +100,18 @@ public final class TextEditorState implements FileEditorState {
     return result;
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public Collection<Integer> getCaretLines() {
+    return ContainerUtil.map(CARETS, caret -> caret.LINE);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public Collection<Integer> getCaretColumns() {
+    return ContainerUtil.map(CARETS, caret -> caret.COLUMN);
+  }
+
   @Override
   public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState)) return false;
@@ -112,6 +122,7 @@ public final class TextEditorState implements FileEditorState {
            && Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
   }
 
+  @Override
   public String toString() {
     return Arrays.toString(CARETS);
   }
@@ -126,6 +137,7 @@ public final class TextEditorState implements FileEditorState {
     int   SELECTION_END_LINE;
     int   SELECTION_END_COLUMN;
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof CaretState)) {
         return false;
@@ -150,6 +162,7 @@ public final class TextEditorState implements FileEditorState {
       return LINE + COLUMN;
     }
 
+    @Override
     public String toString() {
       return "[" + LINE + "," + COLUMN + "]";
     }

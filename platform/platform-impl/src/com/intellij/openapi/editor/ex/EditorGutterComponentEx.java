@@ -1,16 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import gnu.trove.TIntFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
   @Nullable
@@ -41,6 +44,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 
+  /** When set to false, makes {@link #closeAllAnnotations()} a no-op and hides the corresponding context menu action. */
+  public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
+
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
   
   public abstract void setPaintBackground(boolean value);
@@ -55,4 +61,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public GutterMark getGutterRenderer(final Point p) {
     return null;
   }
+
+  @NotNull
+  public abstract List<TextAnnotationGutterProvider> getTextAnnotations();
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.conversion;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
@@ -54,17 +55,17 @@ public class ProjectConversionTestUtil {
     }
 
     @Override
-    public void successfullyConverted(File backupDir) {
+    public void successfullyConverted(@NotNull File backupDir) {
       myConverted = true;
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       Assert.fail(message);
     }
 
     @Override
-    public void cannotWriteToFiles(List<File> readonlyFiles) {
+    public void cannotWriteToFiles(@NotNull List<? extends File> readonlyFiles) {
     }
 
     public boolean isConversionNeeded() {

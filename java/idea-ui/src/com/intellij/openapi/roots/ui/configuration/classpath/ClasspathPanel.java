@@ -32,7 +32,7 @@ import java.util.List;
 public interface ClasspathPanel {
   void runClasspathPanelAction(Runnable action);
 
-  void addItems(List<ClasspathTableItem<?>> toAdd);
+  void addItems(List<? extends ClasspathTableItem<?>> toAdd);
 
   ModifiableRootModel getRootModel();
 

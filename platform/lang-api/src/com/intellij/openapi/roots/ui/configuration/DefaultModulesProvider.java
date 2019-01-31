@@ -49,7 +49,7 @@ public class DefaultModulesProvider implements ModulesProvider {
   }
 
   @Override
-  public Module getModule(String name) {
+  public Module getModule(@NotNull String name) {
     return ModuleManager.getInstance(myProject).findModuleByName(name);
   }
 
@@ -58,6 +58,7 @@ public class DefaultModulesProvider implements ModulesProvider {
     return ModuleRootManager.getInstance(module);
   }
 
+  @NotNull
   @Override
   public FacetModel getFacetModel(@NotNull Module module) {
     return FacetManager.getInstance(module);

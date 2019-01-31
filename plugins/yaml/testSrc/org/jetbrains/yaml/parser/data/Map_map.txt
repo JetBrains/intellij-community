@@ -46,6 +46,6 @@ YAML file
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('0.288')
-          PsiElement(Eol)('\n')
-          PsiElement(indent)('  ')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('  ')
           PsiElement(})('}')

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.todo.AllTodosTreeBuilder;
@@ -15,19 +16,21 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myPrintInfo = new Queryable.PrintInfo(new String[] {"className", "fileName", "fieldName", "methodName", "packageName"}, new String[] {"toDoFileCount", "toDoItemCount"});
+    myPrintInfo = new Queryable.PrintInfo(
+      new String[]{"className", "fileName", "fieldName", "methodName", "packageName"},
+      new String[]{"toDoFileCount", "toDoItemCount"}
+    );
   }
 
   public void testToDo1() {
-    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
+    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     all.init();
 
-    AbstractTreeStructure structure = all.getTreeStructure();
-    ((TodoTreeStructure)structure).setFlattenPackages(true);
+    TodoTreeStructure structure = all.getTodoTreeStructure();
+    structure.setFlattenPackages(true);
     ProjectViewTestUtil.assertStructureEqual(structure,
                                              "Root\n" +
                                              " Summary\n" +
@@ -43,10 +46,10 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
   //todo kirillk
   public void testToDo() {
-    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
+    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     all.init();
 
-    AbstractTreeStructure structure = all.getTreeStructure();
+    AbstractTreeStructure structure = all.getTodoTreeStructure();
     ProjectViewTestUtil.assertStructureEqual(structure,
                                              "Root\n" +
                                              " Summary\n" +
@@ -73,13 +76,12 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     final JTree currentFileTree = new Tree(treeModel);
     CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(currentFileTree,
-                                                                          treeModel,
                                                                           myProject);
 
     builder.init();
     builder.setFile(getSrcDirectory().findSubdirectory("package1").findFile("JavaClass.java"));
-    builder.updateFromRoot();
-    ProjectViewTestUtil.assertStructureEqual(builder.getTreeStructure(),
+    builder.updateTree();
+    ProjectViewTestUtil.assertStructureEqual(builder.getTodoTreeStructure(),
                                              "JavaClass.java\n" +
                                              " JavaClass.java\n" +
                                              "  Item: (52,68)\n" +
@@ -91,7 +93,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
   }
 
   private static void checkOccurrences(final AllTodosTreeBuilder all, final String[] strings) {
-    AbstractTreeStructure allTreeStructure = all.getTreeStructure();
+    AbstractTreeStructure allTreeStructure = all.getTodoTreeStructure();
     TodoItemNode current = all.getFirstPointerForElement(allTreeStructure.getRootElement());
     for (String string : strings) {
       assertNotNull(current);

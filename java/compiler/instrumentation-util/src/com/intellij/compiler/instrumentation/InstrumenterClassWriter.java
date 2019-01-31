@@ -19,6 +19,7 @@ public class InstrumenterClassWriter extends ClassWriter {
     myFinder = finder;
   }
 
+  @Override
   protected String getCommonSuperClass(final String type1, final String type2) {
     try {
       final InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);

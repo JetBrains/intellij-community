@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 class WrapReturnValueHandler implements RefactoringActionHandler {
     public static final String REFACTORING_NAME = RefactorJBundle.message("wrap.return.value");
 
+    @Override
     public void invoke(@NotNull Project project,
                        Editor editor,
                        PsiFile file,
@@ -73,6 +74,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
         return HelpID.WrapReturnValue;
     }
 
+    @Override
     public void invoke(@NotNull Project project,
                        @NotNull PsiElement[] elements,
                        DataContext dataContext){

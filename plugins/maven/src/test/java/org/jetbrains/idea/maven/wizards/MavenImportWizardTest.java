@@ -34,6 +34,9 @@ public class MavenImportWizardTest extends ProjectWizardTestCase {
       MavenServerManager.getInstance().shutdown(true);
       JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

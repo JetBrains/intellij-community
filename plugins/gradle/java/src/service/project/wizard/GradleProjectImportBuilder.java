@@ -44,18 +44,18 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * @since 4/15/13 2:29 PM
  */
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
   /**
    * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
    */
+  @Deprecated
   public GradleProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager dataManager) {
     this((ProjectDataManager)dataManager);
   }
 
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
-    super(dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
+    super(dataManager, () -> new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
   }
 
   @NotNull

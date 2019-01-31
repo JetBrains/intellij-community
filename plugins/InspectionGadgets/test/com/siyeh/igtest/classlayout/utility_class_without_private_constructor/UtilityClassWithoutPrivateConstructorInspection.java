@@ -1,7 +1,7 @@
 package com.siyeh.igtest.classlayout.utility_class_without_private_constructor;
 
 
-public class UtilityClassWithoutPrivateConstructorInspection
+public class <warning descr="Class 'UtilityClassWithoutPrivateConstructorInspection' has only 'static' members, and lacks a 'private' constructor">UtilityClassWithoutPrivateConstructorInspection</warning>
 {
     public static final int CONSTANT = 1;
     public static int barangus()

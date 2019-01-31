@@ -34,7 +34,7 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
   private JCheckBox myCbUseFQClassNames;
   private JCheckBox myCbUseSingleClassImports;
-  private JCheckBox myCbInsertInnerClassImports;
+  protected JCheckBox myCbInsertInnerClassImports;
   private JTextField myClassCountField;
   private JTextField myNamesCountField;
   private JBTable myPackageTable;

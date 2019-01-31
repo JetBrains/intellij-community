@@ -102,7 +102,7 @@ public class ArtifactSorter {
   }
 
   @NotNull
-  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<JpsArtifact> artifacts) {
+  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<? extends JpsArtifact> artifacts) {
     Set<JpsArtifact> result = new HashSet<>();
     for (JpsArtifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, new HashSet<>(), result, true);
@@ -111,8 +111,8 @@ public class ArtifactSorter {
   }
 
   private static void collectIncludedArtifacts(JpsArtifact artifact,
-                                               final Set<JpsArtifact> processed,
-                                               final Set<JpsArtifact> result,
+                                               final Set<? super JpsArtifact> processed,
+                                               final Set<? super JpsArtifact> result,
                                                final boolean withOutputPathOnly) {
     if (!processed.add(artifact)) {
       return;
@@ -128,7 +128,7 @@ public class ArtifactSorter {
     return GraphGenerator.generate(CachingSemiGraph.cache(new ArtifactsGraph(myModel)));
   }
 
-  private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<JpsArtifact> consumer) {
+  private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<? super JpsArtifact> consumer) {
     JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
       if (element instanceof JpsArtifactOutputPackagingElement) {
         JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
@@ -144,15 +144,17 @@ public class ArtifactSorter {
   private static class ArtifactsGraph implements InboundSemiGraph<JpsArtifact> {
     private final Set<JpsArtifact> myArtifactNodes;
 
-    public ArtifactsGraph(final JpsModel model) {
+    ArtifactsGraph(final JpsModel model) {
       myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
+    @NotNull
     @Override
     public Collection<JpsArtifact> getNodes() {
       return myArtifactNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
       final Set<JpsArtifact> included = new LinkedHashSet<>();

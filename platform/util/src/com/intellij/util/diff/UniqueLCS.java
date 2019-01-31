@@ -17,6 +17,8 @@ package com.intellij.util.diff;
 
 import gnu.trove.TIntIntHashMap;
 
+import java.util.Arrays;
+
 class UniqueLCS {
   private final int[] myFirst;
   private final int[] mySecond;
@@ -26,11 +28,11 @@ class UniqueLCS {
   private final int myCount1;
   private final int myCount2;
 
-  public UniqueLCS(int[] first, int[] second) {
+  UniqueLCS(int[] first, int[] second) {
     this(first, second, 0, first.length, 0, second.length);
   }
 
-  public UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
+  UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
     myFirst = first;
     mySecond = second;
     myStart1 = start1;
@@ -116,19 +118,9 @@ class UniqueLCS {
   // find max i: a[i] < val
   // return i + 1
   // assert a[i] != val
-  private static int binarySearch(int[] sequence, int val, int length) {
-    int left = -1;
-    int right = length;
-
-    while (right - left > 1) {
-      int middle = (left + right) / 2;
-      if (sequence[middle] > val) {
-        right = middle;
-      }
-      else {
-        left = middle;
-      }
-    }
-    return left + 1;
+  private static int binarySearch(final int[] sequence, final int val, int length) {
+    int i = Arrays.binarySearch(sequence, 0, length, val);
+    assert i < 0;
+    return -i - 1;
   }
 }

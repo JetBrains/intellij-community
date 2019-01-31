@@ -18,91 +18,90 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
 public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
-
   public void testWorkingDirsFileWhenConfigurationSpansToMultipleModules() throws Exception {
     final Module mod1 = setupModule("mod1", "T1");
     final Module mod2 = setupModule("mod2", "T2");
-    CompilerTester compiler = new CompilerTester(myFixture.getProject(), Arrays.asList(ModuleManager.getInstance(myFixture.getProject()).getModules()));
+    CompilerTester compiler = createCompilerTester();
     compiler.rebuild();
-    try {
-      final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
-      configuration.setWorkingDirectory("$MODULE_DIR$");
-      final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
-      persistentData.setScope(TestSearchScope.SINGLE_MODULE);
-      configuration.setModule(mod1);
-      persistentData.PACKAGE_NAME = "p";
-      persistentData.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
 
-      final ExecutionEnvironment environment =
-        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
-      final TestPackage aPackage = new TestPackage(configuration, environment) {
-        @Override
-        protected boolean createTempFiles() {
-          return true;
-        }
-      };
+    final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
+    configuration.setWorkingDirectory("$MODULE_DIR$");
+    final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
+    persistentData.setScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(mod1);
+    persistentData.PACKAGE_NAME = "p";
+    persistentData.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
 
-      //ensure no fork if single module is selected
-      aPackage.createSearchingForTestsTask().startSearch();
-      File workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      assertEmpty(FileUtil.loadFile(workingDirsFile));
+    final ExecutionEnvironment environment =
+      ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    final TestPackage aPackage = new TestPackage(configuration, environment) {
+      @Override
+      protected boolean createTempFiles() {
+        return true;
+      }
+    };
 
-      //ensure fork when whole project is used
-      persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      String file;
-      aPackage.createSearchingForTestsTask().startSearch();
-      workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
-      assertEquals("p\n" +
-                   "MODULE_1\n" +
-                   "mod1\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T1\n" +
-                   "MODULE_2\n" +
-                   "mod2\n" +
-                   "CLASSPATH\n" +
-                   "1\n" +
-                   "p.T2", file);
-    }
-    finally {
-      compiler.tearDown();
-    }
+    //ensure no fork if single module is selected
+    aPackage.createSearchingForTestsTask().startSearch();
+    File workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    assertEmpty(FileUtil.loadFile(workingDirsFile));
+
+    //ensure fork when whole project is used
+    persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    String file;
+    aPackage.createSearchingForTestsTask().startSearch();
+    workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
+    assertEquals("p\n" + //package name
+                 "MODULE_1\n" +   //working dir
+                 "mod1\n" +       //module name
+                 "CLASSPATH\n" +
+                 "1\n" +          //number of classes
+                 "p.T1\n" +       //list of classes 
+                 "\n" +           //empty filters
+                 //second module
+                 "MODULE_2\n" +   //working dir
+                 "mod2\n" +       //module name
+                 "CLASSPATH\n" +
+                 "1\n" +          //number of classes
+                 "p.T2",          //class names 
+                 file);
+  }
+
+  @NotNull
+  private CompilerTester createCompilerTester() throws Exception {
+    return new CompilerTester(myFixture, Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
   }
 
   public void testNoWorkingDirsFileWhenOnlyOneModuleExist() throws Exception {
     setupModule("mod1", "T1");
-    CompilerTester compiler = new CompilerTester(getProject(), Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
+    CompilerTester compiler = createCompilerTester();
     compiler.rebuild();
-    try {
-      final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
-      configuration.setWorkingDirectory("$MODULE_DIR$");
-      final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
-      persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-      persistentData.PACKAGE_NAME = "p";
-      persistentData.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-      final ExecutionEnvironment environment =
-        ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
-      final TestPackage aPackage = new TestPackage(configuration, environment);
-      aPackage.createSearchingForTestsTask().startSearch();
-      final File workingDirsFile = aPackage.getWorkingDirsFile();
-      assertNotNull(workingDirsFile);
-      assertEmpty(FileUtil.loadFile(workingDirsFile));
-    }
-    finally {
-      compiler.tearDown();
-    }
+    final JUnitConfiguration configuration = new JUnitConfiguration("p", getProject());
+    configuration.setWorkingDirectory("$MODULE_DIR$");
+    final JUnitConfiguration.Data persistentData = configuration.getPersistentData();
+    persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
+    persistentData.PACKAGE_NAME = "p";
+    persistentData.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
+    final ExecutionEnvironment environment =
+      ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    final TestPackage aPackage = new TestPackage(configuration, environment);
+    aPackage.createSearchingForTestsTask().startSearch();
+    final File workingDirsFile = aPackage.getWorkingDirsFile();
+    assertNotNull(workingDirsFile);
+    assertEmpty(FileUtil.loadFile(workingDirsFile));
   }
 
   private Module setupModule(String moduleName, final String className) throws IOException {
@@ -130,7 +129,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = StringUtil.convertLineSeparators(fileContent);
     final String[] lines = fileContent.split("\n");
     lines[3] = "CLASSPATH";
-    lines[8] = "CLASSPATH";
+    lines[9] = "CLASSPATH";
     return StringUtil.join(lines, "\n");
   }
 

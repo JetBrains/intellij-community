@@ -18,12 +18,15 @@ package com.intellij.ide;
 
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
 /**
  * @author max
@@ -36,26 +39,35 @@ public class CopyPasteUtil {
     return elts != null ? elts : PsiElement.EMPTY_ARRAY;
   }
 
-  public static void addDefaultListener(@NotNull Disposable parent, @NotNull Consumer<PsiElement> consumer) {
+  public static void addDefaultListener(@NotNull Disposable parent, @NotNull Consumer<? super PsiElement> consumer) {
     CopyPasteManager.getInstance().addContentChangedListener(new DefaultCopyPasteListener(consumer), parent);
   }
 
   public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
-    private final Consumer<PsiElement> consumer;
+    private final Consumer<? super PsiElement> consumer;
 
     @Deprecated
     public DefaultCopyPasteListener(AbstractTreeUpdater updater) {
       this(element -> updater.addSubtreeToUpdateByElement(element));
     }
 
-    public DefaultCopyPasteListener(@NotNull Consumer<PsiElement> consumer) {
+    private DefaultCopyPasteListener(@NotNull Consumer<? super PsiElement> consumer) {
       this.consumer = consumer;
     }
 
     @Override
     public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
-      updateByTransferable(oldTransferable);
-      updateByTransferable(newTransferable);
+      Application application = getApplication();
+      if (application == null || application.isReadAccessAllowed()) {
+        updateByTransferable(oldTransferable);
+        updateByTransferable(newTransferable);
+      }
+      else {
+        application.runReadAction(() -> {
+          updateByTransferable(oldTransferable);
+          updateByTransferable(newTransferable);
+        });
+      }
     }
 
     private void updateByTransferable(final Transferable t) {

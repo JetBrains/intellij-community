@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
-
 public enum VcsBackgroundableActions {
   ANNOTATE,
   COMPARE_WITH, // common for compare with (selected/latest/same) revision
   CREATE_HISTORY_SESSION,
   HISTORY_FOR_SELECTION,
-  COMMITTED_CHANGES_DETAILS;
+  COMMITTED_CHANGES_DETAILS
 }

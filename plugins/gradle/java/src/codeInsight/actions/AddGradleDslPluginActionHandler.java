@@ -49,12 +49,11 @@ import java.util.List;
 
 /**
 * @author Vladislav.Soroka
-* @since 10/24/13
 */
 class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
-  private final List<Pair<String, String>> myPlugins;
+  private final List<? extends Pair<String, String>> myPlugins;
 
-  public AddGradleDslPluginActionHandler(List<Pair<String, String>> plugins) {
+  AddGradleDslPluginActionHandler(List<? extends Pair<String, String>> plugins) {
     myPlugins = plugins;
   }
 
@@ -88,7 +87,6 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
                           if (document != null) {
                             documentManager.commitDocument(document);
                           }
-                          ;
                         });
     };
 
@@ -117,7 +115,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
     private final JLabel myNameLabel;
     private final JLabel myDescLabel;
 
-    public MyListCellRenderer() {
+    MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(JBUI.Borders.emptyLeft(2));
       myNameLabel = new JLabel();

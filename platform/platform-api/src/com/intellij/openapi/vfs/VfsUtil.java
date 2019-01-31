@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
@@ -21,21 +21,35 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
+  /**
+   * Specifies an average delay between a file system event and a moment the IDE gets pinged about it by fsnotifier.
+   */
+  public static final long NOTIFICATION_DELAY_MILLIS = 300;
+
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));
+  }
+
+  @NotNull
+  public static byte[] toByteArray(@NotNull VirtualFile file, @NotNull String text) throws IOException {
+    if (text.isEmpty()) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
+
+    Charset charset = file.getCharset();
+    return text.getBytes(charset.name());
   }
 
   /**
@@ -186,6 +200,11 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @Nullable
+  public static VirtualFile findFile(@NotNull Path path, boolean refreshIfNeeded) {
+    return findFileByIoFile(path.toFile(), refreshIfNeeded);
+  }
+
+  @Nullable
   public static VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     VirtualFile virtualFile = fileSystem.findFileByIoFile(file);
@@ -193,6 +212,14 @@ public class VfsUtil extends VfsUtilCore {
       virtualFile = fileSystem.refreshAndFindFileByIoFile(file);
     }
     return virtualFile;
+  }
+
+  @Nullable
+  public static VirtualFile refreshAndFindChild(@NotNull VirtualFile directory, @NotNull String name) {
+    if (directory instanceof NewVirtualFile) {
+      return ((NewVirtualFile)directory).refreshAndFindChild(name);
+    }
+    return findFileByIoFile(new File(virtualToIoFile(directory), name), true);
   }
 
   /**
@@ -259,7 +286,7 @@ public class VfsUtil extends VfsUtilCore {
 
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
-    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == FileTypes.ARCHIVE) {
+    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
       return VirtualFileManager.constructUrl(JarFileSystem.getInstance().getProtocol(), path + JarFileSystem.JAR_SEPARATOR);
     }
     else {
@@ -362,7 +389,7 @@ public class VfsUtil extends VfsUtilCore {
     return result;
   }
 
-  public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
+  public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<? super VirtualFile> processor) {
     FileTypeManager ftm = FileTypeManager.getInstance();
     visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull
@@ -506,12 +533,14 @@ public class VfsUtil extends VfsUtilCore {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }
 
   /** @deprecated to be removed in IDEA 2018 */
+  @Deprecated
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -532,6 +561,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
+  @Deprecated
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -551,6 +581,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @Deprecated
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();

@@ -4,7 +4,7 @@ public class FieldsAndLocals {
         int a = -1;
         new B(){
             public void run(){
-                int b = <ref>a
+                int b = <caret>a
             }
         }
     }

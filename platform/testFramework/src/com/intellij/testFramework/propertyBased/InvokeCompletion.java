@@ -18,6 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
@@ -28,13 +29,11 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -54,7 +53,7 @@ public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
   private final CompletionPolicy myPolicy;
 
-  public InvokeCompletion(PsiFile file, CompletionPolicy policy) {
+  public InvokeCompletion(@NotNull PsiFile file, @NotNull CompletionPolicy policy) {
     super(file);
     myPolicy = policy;
   }
@@ -84,7 +83,6 @@ public class InvokeCompletion extends ActionOnFile {
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
-        //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
         performCompletion(caretEditor, Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(caretEditor, project)), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
@@ -111,9 +109,9 @@ public class InvokeCompletion extends ActionOnFile {
     PsiElement leaf = file.findElementAt(TargetElementUtil.adjustOffset(file, getDocument(), caretOffset));
     PsiReference ref = TargetElementUtil.findReference(editor);
 
-    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
+    String expectedVariant = leaf == null || leaf instanceof PsiPlainText ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
-    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, leaf);
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, file.findElementAt(caretOffset));
     long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
@@ -128,13 +126,21 @@ public class InvokeCompletion extends ActionOnFile {
         return;
       }
       env.logMessage("No lookup");
-      if (expectedVariant == null || prefixEqualsExpected) return;
+      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+        return;
+      }
+
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
-      LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
+      LookupElement sameItem = ContainerUtil.find(items, e ->
+        e.getAllLookupStrings().stream().anyMatch(
+          s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
+      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+        return;
+      }
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
@@ -145,11 +151,26 @@ public class InvokeCompletion extends ActionOnFile {
     LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
     env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
 
+    lookup.setCurrentItem(item);
     if (LookupEvent.isSpecialCompletionChar(completionChar)) {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {
       EditorActionManager.getInstance().getTypedAction().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
     }
+  }
+
+  private boolean checkAnnotatorErrorsAtCaret(@NotNull Editor editor,
+                                              @NotNull PsiFile file,
+                                              Environment env,
+                                              String expectedVariant) {
+    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), editor);
+    int caretOffset = editor.getCaretModel().getOffset();
+    boolean hasErrors = ContainerUtil.exists(infos, i -> i.getStartOffset() <= caretOffset && caretOffset <= i.getEndOffset());
+    if (hasErrors) {
+      env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
+      return false;
+    }
+    return true;
   }
 
   private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {

@@ -32,13 +32,14 @@ import java.util.Arrays;
 
 public class ContentHashesUtil {
   public static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+    @NotNull
     @Override
     public MessageDigest create() {
       return createHashDigest();
     }
 
     @Override
-    protected void init(MessageDigest value) {
+    protected void init(@NotNull MessageDigest value) {
       value.reset();
     }
   };

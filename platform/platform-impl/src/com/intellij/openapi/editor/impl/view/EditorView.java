@@ -63,7 +63,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private int myLineHeight; // guarded by myLock
   private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
-  private int myMaxCharWidth; // guarded by myLock
+  private float myMaxCharWidth; // guarded by myLock
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
@@ -139,7 +139,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   @Override
-  public void visibleAreaChanged(VisibleAreaEvent e) {
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     checkFontRenderContext(null);
   }
   public int yToVisualLine(int y) {
@@ -454,7 +454,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  int getMaxCharWidth() {
+  float getMaxCharWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myMaxCharWidth;
@@ -497,6 +497,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     float verticalScalingFactor = getVerticalScalingFactor();
 
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
+    int lineHeight;
     if (Registry.is("editor.text.xcode.vertical.spacing")) {
       //Here we approximate line calculation to the variant used in Xcode 9 editor
       LineMetrics metrics = font.getLineMetrics("", myFontRenderContext);
@@ -510,11 +511,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       else {
         spacing = ((int)Math.ceil((height * delta) / 2)) * 2;
       }
-      myLineHeight = (int)Math.ceil(height) + spacing;
+      lineHeight = (int)Math.ceil(height) + spacing;
     }
     else {
-      myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+      lineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
     }
+    myLineHeight = Math.max(1, lineHeight);
     int descent = FontLayoutService.getInstance().getDescent(fm);
     myDescent = descent + (myLineHeight - fontMetricsHeight) / 2;
     myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
@@ -522,7 +524,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
-    myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
+    myMaxCharWidth = FontLayoutService.getInstance().charWidth2D(fmBI, 'W');
   }
   
   public int getTabSize() {

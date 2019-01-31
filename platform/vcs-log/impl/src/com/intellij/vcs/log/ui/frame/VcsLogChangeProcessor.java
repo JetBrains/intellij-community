@@ -23,7 +23,7 @@ import java.util.List;
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
-  public VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
+  VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, @NotNull Disposable disposable) {
     super(project, DiffPlaces.VCS_LOG_VIEW);
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
@@ -38,8 +38,8 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull
   @Override
   protected List<Wrapper> getSelectedChanges() {
-    List<Change> changes = myBrowser.getSelectedChanges();
-    if (changes.isEmpty()) changes = myBrowser.getAllChanges();
+    boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
+    List<Change> changes = hasSelection ? myBrowser.getSelectedChanges() : myBrowser.getAllChanges();
     return ContainerUtil.map(changes, MyChangeWrapper::new);
   }
 
@@ -73,7 +73,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   private class MyChangeWrapper extends Wrapper {
     @NotNull private final Change myChange;
 
-    public MyChangeWrapper(@NotNull Change change) {
+    MyChangeWrapper(@NotNull Change change) {
       myChange = change;
     }
 
@@ -86,7 +86,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return myBrowser.getDiffRequestProducer(myChange);
+      return myBrowser.getDiffRequestProducer(myChange, true);
     }
   }
 }

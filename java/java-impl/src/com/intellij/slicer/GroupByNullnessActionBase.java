@@ -32,7 +32,7 @@ public abstract class GroupByNullnessActionBase extends AnAction {
   protected abstract boolean isAvailable();
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
     e.getPresentation().setEnabled(
       !myTreeBuilder.analysisInProgress && myTreeBuilder.dataFlowToThis && !myTreeBuilder.splitByLeafExpressions && isAvailable()
@@ -40,7 +40,7 @@ public abstract class GroupByNullnessActionBase extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myTreeBuilder.switchToLeafNulls();
   }
 }

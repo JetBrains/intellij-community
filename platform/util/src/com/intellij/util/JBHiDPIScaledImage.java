@@ -57,10 +57,10 @@ public class JBHiDPIScaledImage extends BufferedImage {
   }
 
   /**
-   * @see #JBHiDPIScaledImage(Graphics2D, double, double, int)
+   * @see #JBHiDPIScaledImage(Graphics2D, double, double, int, RoundingMode rm)
    */
   public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
-    this(g, (double)width, (double)height, type);
+    this(g, (double)width, (double)height, type, RoundingMode.FLOOR);
   }
 
   /**
@@ -70,13 +70,10 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param width the width in user coordinate space
    * @param height the height in user coordinate space
    * @param type the type
+   * @param rm the rounding mode
    */
-  public JBHiDPIScaledImage(@Nullable Graphics2D g, double width, double height, int type) {
-    super((int)(width * JBUI.sysScale(g)), (int)(height * JBUI.sysScale(g)), type);
-    myImage = null;
-    myUserWidth = width;
-    myUserHeight = height;
-    myScale = JBUI.sysScale(g);
+  public JBHiDPIScaledImage(@Nullable Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
+    this(JBUI.sysScale(g), width, height, type, rm);
   }
 
   /**
@@ -175,9 +172,38 @@ public class JBHiDPIScaledImage extends BufferedImage {
     if (myImage != null) {
       return new JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, getType());
     }
-    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(newUserWidth, newUserHeight, getType());
+    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(myScale, newUserWidth, newUserHeight, getType(), RoundingMode.ROUND);
     Graphics2D g = newImg.createGraphics();
     g.drawImage(scaled, 0, 0, (int)round(newUserWidth), (int)round(newUserHeight),
+                0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
+    g.dispose();
+    return newImg;
+  }
+
+  /**
+   * Returns JBHiDPIScaledImage of the same structure scaled to the provided dimensions.
+   * Dimensions are in user-space coordinates (unscaled)
+   *
+   * @return scaled instance
+   */
+  public JBHiDPIScaledImage scale(int targetUserWidth, int targetUserHeight) {
+    Image img = myImage == null ? this : myImage;
+
+    int w = getUserWidth(null);
+    int h = getUserHeight(null);
+    if (w <= 0 || h <= 0 || w == targetUserWidth && h == targetUserHeight) return this;
+
+    int targetWidth = (int)round(targetUserWidth * myScale);
+    int targetHeight = (int)round(targetUserHeight * myScale);
+
+    Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, targetWidth, targetHeight);
+
+    if (myImage != null) {
+      return new JBHiDPIScaledImage(scaled, targetUserWidth, targetUserHeight, getType());
+    }
+    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(myScale, targetUserWidth, targetUserHeight, getType(), RoundingMode.ROUND);
+    Graphics2D g = newImg.createGraphics();
+    g.drawImage(scaled, 0, 0, targetUserWidth, targetUserHeight,
                 0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
     g.dispose();
     return newImg;

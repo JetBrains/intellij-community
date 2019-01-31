@@ -32,11 +32,13 @@ public abstract class DeleteUnusedElementBase<T extends XsltVariable> extends Lo
         myName = name;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "Delete unused element";
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Delete unused " + getType() + " '" + myName + "'";

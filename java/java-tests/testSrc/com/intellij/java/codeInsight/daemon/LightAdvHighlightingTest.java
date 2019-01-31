@@ -418,6 +418,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testUnreachableArrayElementAssignment() { doTest(false); }
+
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
@@ -461,6 +463,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIllegalWhitespaces() { doTest(false); }
+  
+  public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest(true);
+  }
 
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {

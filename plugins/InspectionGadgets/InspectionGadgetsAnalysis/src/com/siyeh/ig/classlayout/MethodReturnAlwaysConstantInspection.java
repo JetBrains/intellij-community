@@ -26,8 +26,6 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
@@ -54,7 +52,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
       return null;
     }
 
-    PsiModifierListOwner element = refMethod.getElement();
+    PsiElement element = refMethod.getPsiElement();
     if (!(element instanceof PsiMethod)) {
       return null;
     }
@@ -65,13 +63,17 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
     final Set<RefMethod> allScopeInheritors = MethodInheritanceUtils.calculateSiblingMethods(refMethod);
     for (RefMethod siblingMethod : allScopeInheritors) {
-      final PsiMethod siblingPsiMethod = (PsiMethod)siblingMethod.getElement();
+      PsiElement psi = siblingMethod.getPsiElement();
+      if (!(psi instanceof PsiMethod)) continue;
+      final PsiMethod siblingPsiMethod = (PsiMethod)psi;
       if (siblingPsiMethod.getBody() != null && !alwaysReturnsConstant(siblingPsiMethod)) {
         return null;
       }
     }
     for (RefMethod siblingRefMethod : allScopeInheritors) {
-      final PsiMethod siblingMethod = (PsiMethod)siblingRefMethod.getElement();
+      PsiElement psi = siblingRefMethod.getPsiElement();
+      if (!(psi instanceof PsiMethod)) continue;
+      final PsiMethod siblingMethod = (PsiMethod)psi;
       final PsiIdentifier identifier = siblingMethod.getNameIdentifier();
       if (identifier == null) {
         continue;
@@ -103,12 +105,9 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                processor.ignoreElement(refMethod);
+                return false;
               });
             }
           });

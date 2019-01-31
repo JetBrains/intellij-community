@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,20 +13,41 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTestCase {
 
+  public void testTopLevel() {
+    doTest("class X {" +
+           "  void x(Object one, Object two) {" +
+           "    one./*_*/equals(two);" +
+           "  }" +
+           "}");
+    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("equals.to.equality.quickfix"));
+  }
+
   public void testClass() {
     doTest("class X {" +
            "  boolean m(Class c1, Class c2) {" +
-           "    return c1./*'equals()' can be replaced with '=='*/equals/**/(c2);" +
+           "    return c1./*'equals()' can be replaced with '=='*//*_*/equals/**/(c2);" +
            "  }" +
            "}");
+    checkQuickFix(InspectionGadgetsBundle.message("equals.to.equality.quickfix"),
+                 "class X {" +
+                 "  boolean m(Class c1, Class c2) {" +
+                 "    return c1 == c2;" +
+                 "  }" +
+                 "}");
   }
 
   public void testClassObjects() {
     doTest("class X {" +
            "  boolean m(Class c1, Class c2) {" +
-           "    return java.util.Objects./*'equals()' can be replaced with '=='*/equals/**/(c1, c2);" +
+           "    return !java.util.Objects./*'!equals()' can be replaced with '!='*//*_*/equals/**/(c1, c2);" +
            "  }" +
            "}");
+    checkQuickFix(InspectionGadgetsBundle.message("not.equals.to.equality.quickfix"),
+                  "class X {" +
+                  "  boolean m(Class c1, Class c2) {" +
+                  "    return c1 != c2;" +
+                  "  }" +
+                  "}");
   }
 
   public void testObject() {

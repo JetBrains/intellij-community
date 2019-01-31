@@ -36,7 +36,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
- * @since 07/18/2012
  */
 public class DefaultArrangementEntryMatcherSerializerTest {
 

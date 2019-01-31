@@ -20,8 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveAssignmentQuickFix implements LocalQuickFix {
@@ -37,7 +36,10 @@ public class PyRemoveAssignmentQuickFix implements LocalQuickFix {
     if (assignment instanceof PyAssignmentStatement) {
       final PyExpression value = ((PyAssignmentStatement)assignment).getAssignedValue();
       if (value != null) {
-        assignment.replace(value);
+        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+        final PyExpressionStatement newStatement =
+          elementGenerator.createFromText(LanguageLevel.forElement(assignment), PyExpressionStatement.class, value.getText());
+        assignment.replace(newStatement);
       }
     }
   }

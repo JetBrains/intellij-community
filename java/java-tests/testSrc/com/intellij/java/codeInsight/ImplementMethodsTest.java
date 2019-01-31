@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author anna
  */
 public class ImplementMethodsTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
 
   @Override
   protected String getBasePath() {

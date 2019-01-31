@@ -23,6 +23,7 @@ echo "Unzipping $1.sit to ${EXPLODED}..."
 unzip -q $1.sit -d ${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ${EXPLODED}/)
+cp product-info.json ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
 
 if [ $# -eq 7 ] && [ -f $7 ]; then
   archiveJDK="$7"
@@ -32,7 +33,6 @@ if [ $# -eq 7 ] && [ -f $7 ]; then
   if [[ $1 == *custom-jdk-bundled* ]]; then
     jdk=custom-"$jdk"
   fi
-  sed -i -e 's/NoJavaDistribution/'$jdk'/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   rm -f ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist-e
   echo "Info.plist has been modified"
   echo "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
@@ -63,6 +63,13 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
   if [ -f "$f" ]; then
     echo "Moving $f"
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
+  fi
+done
+
+for f in ${EXPLODED}/"$BUILD_NAME"/Contents/* ; do
+  if [ -f "$f" ] && [ $(basename -- "$f") != "Info.plist" ] ; then
+    echo "Only Info.plist file is allowed in Contents directory but $f is found"
+    exit 1
   fi
 done
 shopt -u nullglob

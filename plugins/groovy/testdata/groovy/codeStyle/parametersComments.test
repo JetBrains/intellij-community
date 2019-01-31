@@ -1,0 +1,3 @@
+def foo(/*foo*/ /*foo*/ a, b /*foo*/ /*foo*/) {}
+-----
+def foo(/*foo*/ /*foo*/ a, b /*foo*/ /*foo*/) {}

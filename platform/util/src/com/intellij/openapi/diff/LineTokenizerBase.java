@@ -25,7 +25,7 @@ public abstract class LineTokenizerBase<T> {
   private int myLineSeparatorStart = -1;
   private int myLineSeparatorEnd = -1;
 
-  protected abstract void addLine(List<T> lines, int start, int end, boolean appendNewLine);
+  protected abstract void addLine(List<? super T> lines, int start, int end, boolean appendNewLine);
 
   protected abstract char charAt(int index);
 
@@ -34,7 +34,7 @@ public abstract class LineTokenizerBase<T> {
   @NotNull
   protected abstract String substring(int start, int end);
 
-  public void doExecute(List<T> lines) {
+  public void doExecute(List<? super T> lines) {
     while (notAtEnd()) {
       int begin = myIndex;
       skipToEOL();

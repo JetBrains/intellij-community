@@ -4,7 +4,6 @@ package com.intellij.ui.components.fields;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -21,7 +20,7 @@ public interface ExtendableTextComponent {
 
   void setExtensions(Extension... extensions);
 
-  void setExtensions(Collection<Extension> extensions);
+  void setExtensions(Collection<? extends Extension> extensions);
 
   void addExtension(@NotNull Extension extension);
 
@@ -34,16 +33,7 @@ public interface ExtendableTextComponent {
       return scale(5);
     }
 
-    default int getPreferredSpace() {
-      Icon icon1 = getIcon(true);
-      Icon icon2 = getIcon(false);
-      if (icon1 == null && icon2 == null) return 0;
-      if (icon1 == null) return getIconGap() + icon2.getIconWidth();
-      if (icon2 == null) return getIconGap() + icon1.getIconWidth();
-      return getIconGap() + Math.max(icon1.getIconWidth(), icon2.getIconWidth());
-    }
-
-    default int getBeforeIconOffset() {
+    default int getAfterIconOffset() {
       return 0;
     }
 
@@ -57,6 +47,29 @@ public interface ExtendableTextComponent {
 
     default String getTooltip() {
       return null;
+    }
+
+    static Extension create(@NotNull Icon icon, String tooltip, Runnable action) {
+      return create(icon, icon, tooltip, action);
+    }
+
+    static Extension create(@NotNull Icon defaultIcon, @NotNull Icon hoveredIcon, String tooltip, Runnable action) {
+      return new Extension() {
+        @Override
+        public Icon getIcon(boolean hovered) {
+          return hovered ? hoveredIcon : defaultIcon;
+        }
+
+        @Override
+        public String getTooltip() {
+          return tooltip;
+        }
+
+        @Override
+        public Runnable getActionOnClick() {
+          return action;
+        }
+      };
     }
   }
 }

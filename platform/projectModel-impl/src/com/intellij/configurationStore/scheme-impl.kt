@@ -65,7 +65,7 @@ abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val 
 
   abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
                             name: String,
-                            attributeProvider: Function<String, String?>,
+                            attributeProvider: Function<in String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
@@ -88,9 +88,13 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
   override fun toString(): String = "[Digest Output Stream] $digest"
 }
 
+private val sha1Provider = java.security.Security.getProvider("SUN")
+
+// sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
+fun createDataDigest(): MessageDigest = MessageDigest.getInstance("SHA-1", sha1Provider)
+
 fun Element.digest(): ByteArray {
-  // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
-  val digest = MessageDigest.getInstance("SHA-1")
+  val digest = createDataDigest()
   serializeElementToBinary(this, DigestOutputStream(digest))
   return digest.digest()
 }
@@ -111,7 +115,7 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
 abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
-  override final fun writeScheme(): Element {
+  final override fun writeScheme(): Element {
     val dataHolder = dataHolder.get()
     @Suppress("IfThenToElvis")
     return if (dataHolder == null) writer(scheme) else dataHolder.read()

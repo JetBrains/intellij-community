@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
@@ -23,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
@@ -106,9 +106,9 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     //todo:check it for multiple assignments
-    if ((GroovyElementTypes.VARIABLE_DEFINITION.equals(leftType) || GroovyElementTypes.VARIABLE_DEFINITION.equals(rightType)) &&
+    if ((GroovyStubElementTypes.VARIABLE_DECLARATION.equals(leftType) || GroovyStubElementTypes.VARIABLE_DECLARATION.equals(rightType)) &&
         !(leftNode.getTreeNext() instanceof PsiErrorElement)) {
-      return Spacing.createSpacing(0, 0, 1, false, 100);
+      return getStatementSpacing(context);
     }
 
     // For regexes
@@ -151,7 +151,7 @@ public abstract class GroovySpacingProcessorBasic {
         right instanceof GrStatement &&
         left.getParent() instanceof GrStatementOwner &&
         right.getParent() instanceof GrStatementOwner) {
-      return COMMON_SPACING_WITH_NL;
+      return getStatementSpacing(context);
     }
 
     if (rightType == GroovyDocTokenTypes.mGDOC_INLINE_TAG_END ||
@@ -183,6 +183,11 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
     return COMMON_SPACING;
+  }
+
+  @NotNull
+  private static Spacing getStatementSpacing(FormattingContext context) {
+    return Spacing.createSpacing(0, 0, 1, context.getSettings().KEEP_LINE_BREAKS, context.getSettings().KEEP_BLANK_LINES_IN_CODE);
   }
 
   @NotNull

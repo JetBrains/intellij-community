@@ -236,7 +236,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   private static class WithAutoDetectCombo<S extends ServerConfiguration> extends RemoteServerCombo<S> {
     private AutoDetectedItem myAutoDetectedItem;
 
-    public WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
+    WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
       super(serverType);
     }
 
@@ -294,7 +294,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       private volatile RemoteServer<S> myServerInstance;
       private volatile long myLastStartedTestConnectionMillis = -1;
 
-      public AutoDetectedItem() {
+      AutoDetectedItem() {
         super(null);
       }
 
@@ -350,20 +350,20 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
-        final RemoteServer testedServer = myServerInstance;
-        myServerInstance = null;
-
         if (wasConnected) {
           setTestConnectionState(TestConnectionState.SUCCESSFUL);
           UIUtil.invokeLaterIfNeeded(() -> {
             if (!Disposer.isDisposed(WithAutoDetectCombo.this)) {
-              RemoteServersManager.getInstance().addServer(testedServer);
-              refillModel(testedServer);
+              assert myServerInstance != null;
+              RemoteServersManager.getInstance().addServer(myServerInstance);
+              refillModel(myServerInstance);
             }
+            myServerInstance = null;
           });
         }
         else {
           setTestConnectionState(TestConnectionState.FAILED);
+          myServerInstance = null;
         }
       }
 

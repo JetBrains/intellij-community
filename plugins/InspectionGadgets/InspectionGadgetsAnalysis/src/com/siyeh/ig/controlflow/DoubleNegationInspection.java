@@ -167,7 +167,9 @@ public class DoubleNegationInspection extends BaseInspection {
   }
 
   static boolean isBinaryNegation(PsiPolyadicExpression expression) {
-    for (PsiExpression operand : expression.getOperands()) {
+    PsiExpression[] operands = expression.getOperands();
+    if (operands.length == 1) return false;
+    for (PsiExpression operand : operands) {
       if (TypeUtils.hasFloatingPointType(operand)) return false; // don't change semantics for NaNs
     }
     return JavaTokenType.NE.equals(expression.getOperationTokenType());

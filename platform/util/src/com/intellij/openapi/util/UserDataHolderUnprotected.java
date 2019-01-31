@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +7,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Like UserDataHolder, but stores data in non-thread-safe way.
  * Should not be accessed across threads.
+ *
+ * @deprecated use {@link UserDataHolder}. <br/>
+ * This interface is extended only by {@link com.intellij.lang.PsiBuilder} which is used in a single thread always.
+ * {@link UserDataHolder} doesn't make any restrictions on thread-safety, so it's now used in PsiBuilder instead,
+ * and this interface is left for binary compatibility.
  */
+@Deprecated
 public interface UserDataHolderUnprotected {
+
+  @Deprecated
   @Nullable
   <T> T getUserDataUnprotected(@NotNull Key<T> key);
 
+  @Deprecated
   <T> void putUserDataUnprotected(@NotNull Key<T> key, @Nullable T value);
 }

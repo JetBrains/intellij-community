@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -271,8 +269,7 @@ public class ExprProcessor implements CodeConstants {
   public void processBlock(BasicBlockStatement stat, PrimitiveExprsList data, StructClass cl) {
 
     ConstantPool pool = cl.getPool();
-    StructBootstrapMethodsAttribute bootstrap =
-      (StructBootstrapMethodsAttribute)cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
+    StructBootstrapMethodsAttribute bootstrap = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
 
     BasicBlock block = stat.getBlock();
 
@@ -794,7 +791,7 @@ public class ExprProcessor implements CodeConstants {
     return res;
   }
 
-  public static TextBuffer listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
+  public static TextBuffer listToJava(List<? extends Exprent> lst, int indent, BytecodeMappingTracer tracer) {
     if (lst == null || lst.isEmpty()) {
       return new TextBuffer();
     }
@@ -855,7 +852,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          BytecodeMappingTracer tracer) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, tracer);
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, false, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -865,7 +862,21 @@ public class ExprProcessor implements CodeConstants {
                                          boolean castNull,
                                          boolean castAlways,
                                          boolean castNarrowing,
+                                         boolean unbox,
                                          BytecodeMappingTracer tracer) {
+
+    if (unbox) {
+      // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+      if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
+        InvocationExprent invocationExprent = (InvocationExprent)exprent;
+        exprent = invocationExprent.getLstParameters().get(0);
+        int paramType = invocationExprent.getDescriptor().params[0].type;
+        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().type != paramType) {
+          leftType = new VarType(paramType);
+        }
+      }
+    }
+
     VarType rightType = exprent.getExprType();
 
     boolean cast =

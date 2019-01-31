@@ -2,7 +2,7 @@
 
     <application-components>
         <component>
-            <implementation-class>UnregisteredApplicationComponent</implementation-class>
+            <implementation-class>UnregisteredBaseComponent</implementation-class>
             <interface-class>UnregisteredApplicationComponentInterface</interface-class>
         </component>
     </application-components>

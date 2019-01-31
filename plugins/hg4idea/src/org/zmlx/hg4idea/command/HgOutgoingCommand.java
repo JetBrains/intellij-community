@@ -31,6 +31,7 @@ public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
     super(project, "outgoing");
   }
 
+  @Override
   @Nullable
   protected String getRepositoryUrl(VirtualFile root) {
     return HgUtil.getRepositoryDefaultPushPath(project, root);

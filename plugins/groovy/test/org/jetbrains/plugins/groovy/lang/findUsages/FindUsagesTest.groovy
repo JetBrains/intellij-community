@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Query
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ven
  */
+@CompileStatic
 class FindUsagesTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
@@ -416,6 +418,16 @@ new C().T__field
 new C().field             //unresolved
 
 ''')
+  }
+
+  void testImports() {
+    doTest 2, '''\
+package com.foo
+import static com.foo.Bar.foo
+import static com.foo.Bar.getFoo
+import static com.foo.Bar.isFoo // is not proper ref 
+class Bar { static def <caret>getFoo() {} }
+'''
   }
 
   private void doSuperMethodTest(String... firstParameterTypes) {

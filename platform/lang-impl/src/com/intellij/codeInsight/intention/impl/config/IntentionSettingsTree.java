@@ -70,7 +70,7 @@ public abstract class IntentionSettingsTree {
         CheckedTreeNode node = (CheckedTreeNode)value;
         SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         final String text = getNodeText(node);
-        final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color background = UIUtil.getTreeBackground(selected, true);
         UIUtil.changeBackGround(this, background);
         if (text != null) {
           SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
@@ -353,7 +353,7 @@ public abstract class IntentionSettingsTree {
   private class MyFilterComponent extends FilterComponent {
     private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
 
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("INTENTION_FILTER_HISTORY", 10);
     }
 

@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/7/2016
  */
 public class GradleExecutionWorkspace implements Serializable {
   private static final long serialVersionUID = 1L;

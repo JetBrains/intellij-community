@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,15 +80,13 @@ public class InspectionUtil {
         }
         if (prevSibling instanceof XmlComment) {
             final XmlComment comment = (XmlComment)prevSibling;
-            final String text = XmlUtil.getCommentText(comment);
-            if (text != null) {
-                final Matcher matcher = SUPPRESSION_PATTERN.matcher(text);
-                if (matcher.matches()) {
-                    final String[] strings = matcher.group(1).split(",");
-                    final String toolId = tool.getID();
-                    for (String s : strings) {
-                        if (s.trim().equals(toolId) || ALL_ID.equals(s.trim())) return true;
-                    }
+            final String text = comment.getCommentText();
+            final Matcher matcher = SUPPRESSION_PATTERN.matcher(text);
+            if (matcher.matches()) {
+                final String[] strings = matcher.group(1).split(",");
+                final String toolId = tool.getID();
+                for (String s : strings) {
+                    if (s.trim().equals(toolId) || ALL_ID.equals(s.trim())) return true;
                 }
             }
         }

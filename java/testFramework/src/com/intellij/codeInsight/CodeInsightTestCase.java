@@ -80,12 +80,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
       }
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       myEditor = null;
       super.tearDown();
     }
   }
 
+  @NotNull
   @Override
   protected PsiTestData createData() {
     return new CodeInsightTestData();
@@ -118,11 +122,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), filePath);
-  }
-
-  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(@NotNull String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
@@ -310,7 +310,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return editorInfos;
   }
 
-  private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<OutputStream> streamsToClose) throws IOException {
+  private EditorInfo copyContent(@NotNull VirtualFile from, @NotNull VirtualFile to, @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     byte[] content = from.getFileType().isBinary() ? from.contentsToByteArray(): null;
     final String fileText = from.getFileType().isBinary() ? null : StringUtil.convertLineSeparators(VfsUtilCore.loadText(from));
 
@@ -352,7 +352,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   private void doWrite(final String newFileText,
                        @NotNull VirtualFile newVFile,
                        byte[] content,
-                       @NotNull List<OutputStream> streamsToClose) throws IOException {
+                       @NotNull List<? super OutputStream> streamsToClose) throws IOException {
     if (newFileText == null) {
       final OutputStream outputStream = newVFile.getOutputStream(this, -1, -1);
       outputStream.write(content);
@@ -500,7 +500,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   @NotNull
   protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
-    allowRootAccess(absolutePath);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 
@@ -583,7 +583,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return aPackage;
   }
 
-  protected void setLanguageLevel(LanguageLevel level) {
+  protected void setLanguageLevel(@NotNull LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

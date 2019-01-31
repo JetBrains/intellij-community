@@ -11,7 +11,7 @@ public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
     SearchSession session = e.getData(SearchSession.KEY);

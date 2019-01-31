@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
@@ -34,12 +19,13 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
+@CompileStatic
 class NormalCompletionTest extends NormalCompletionTestCase {
 
   @NotNull
@@ -176,18 +162,13 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
-    try{
+    JavaCodeStyleSettings.getInstance(getProject()).PREFER_LONGER_NAMES = false
       configureByFile("PreferLongerNamesOption.java")
 
       assertEquals(3, myItems.length)
       assertEquals("ijk", myItems[0].getLookupString())
       assertEquals("efghIjk", myItems[1].getLookupString())
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
-    }
-    finally{
-      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
-    }
   }
 
   void testSCR7208() throws Exception {
@@ -483,12 +464,12 @@ public class Outer {
 
   void testLocalClassTwice() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testLocalTopLevelConflict() throws Throwable {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
   void testFinalBeforeMethodCall() throws Throwable {
@@ -553,7 +534,35 @@ public class Outer {
     checkResult()
   }
 
-  void testContinueLabel() throws Throwable { doTest() }
+  void testBreakLabel() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) break <caret>
+      }}""".stripIndent())
+    complete()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
+
+  void testContinueLabel() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) continue <caret>
+      }}""".stripIndent())
+    complete()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
+
+  void testContinueLabelTail() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        foo: while (true) con<caret>
+      }}""".stripIndent())
+    complete()
+    myFixture.checkResult("""
+      class a {{
+        foo: while (true) continue <caret>
+      }}""".stripIndent())
+  }
 
   void testAnonymousProcess() {
     myFixture.addClass 'package java.lang; public class Process {}'
@@ -1225,7 +1234,7 @@ public class ListUtils {
   void testInstanceMagicMethod() throws Exception { doTest() }
 
   void testNoDotOverwrite() throws Exception { doTest('.') }
-  
+
   void testNoModifierListOverwrite() { doTest('\t') }
 
   void testStaticInnerExtendingOuter() throws Exception { doTest() }
@@ -1658,25 +1667,6 @@ class Bar {
 
   void testIndentingForSwitchCase() { doTest() }
 
-  void testIncrementalCopyReparse() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
-    
-    myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
-    def items = myFixture.completeBasic()
-    PsiClass c1 = items[0].object
-    assert !c1.physical
-    assert CompletionUtil.getOriginalElement(c1)
-    
-    getLookup().hide()
-    myFixture.type('x')
-    items = myFixture.completeBasic()
-    PsiClass c2 = items[0].object
-    assert !c2.physical
-    assert CompletionUtil.getOriginalElement(c2)
-
-    assert c1.is(c2)
-  }
-
   void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
@@ -1685,6 +1675,11 @@ class Bar {
   void testShowMostSpecificOverrideOnlyFromClass() {
     configure()
     assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+  }
+
+  void testNoOverrideWithMiddleMatchedName() {
+    configure()
+    assert !('public void removeTemporaryEditorNode' in myFixture.lookupElementStrings)
   }
 
   void testShowVarInitializers() {
@@ -1748,7 +1743,7 @@ class Bar {
     myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
     doTest('\n')
   }
-  
+
   void testPairAngleBracketDisabled() {
     CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
     doTest('<')
@@ -1761,9 +1756,9 @@ class Bar {
 
   void testDuplicateEnumValueOf() {
     configure()
-    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement(it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
   }
-  
+
   void testTypeArgumentInCast() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'String'
@@ -1826,6 +1821,8 @@ class Bar {{
 
   void testMethodReferenceCallContext() { doTest('\n') }
 
+  void testDestroyingCompletedClassDeclaration() { doTest('\n') }
+
   void testResourceParentInResourceList() {
     configureByTestName()
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
@@ -1874,4 +1871,40 @@ class Bar {{
     assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
   }
 
+  void "test no duplication for inner class on second invocation"() {
+    myFixture.configureByText 'a.java', '''
+class Abc {
+    class FooBar {}
+    void foo() {
+        FooBar<caret>x
+    }
+}'''
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert myFixture.lookupElements.size() == 1
+  }
+
+  void "test smart enter wraps type arguments"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { F<caret>List<String> }'
+    myFixture.completeBasic()
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)
+    myFixture.checkResult 'class Foo<T> { Foo<List<String>><caret> }'
+  }
+
+  void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
+
+  void testPutCaretInsideParensInFixedPlusVarargOverloads() { doTest('\n') }
+
+  void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
+    myFixture.addClass("class Super {}")
+    myFixture.addClass("class Sub extends Super {}")
+    myFixture.addClass("package foo; public class SubOther {}")
+    myFixture.configureByText('a.java', "class C { Super s = new SubO<caret>x }")
+
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+    myFixture.type('\b')
+    myFixture.assertPreferredCompletionItems 0, 'Sub'
+    myFixture.type('O')
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+  }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Identifies a line separator:
@@ -50,10 +49,6 @@ public enum LineSeparator {
   @NotNull
   public byte[] getSeparatorBytes() {
     return myBytes;
-  }
-
-  public static boolean knownAndDifferent(@Nullable LineSeparator separator1, @Nullable LineSeparator separator2) {
-    return separator1 != null && separator2 != null && !separator1.equals(separator2);
   }
 
   @NotNull

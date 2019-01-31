@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.module.Module;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -28,19 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaModuleGraphUtil {
-  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
-
   private JavaModuleGraphUtil() { }
 
   @Nullable
@@ -63,13 +55,7 @@ public class JavaModuleGraphUtil {
     if (index.isInLibrary(file)) {
       VirtualFile root = index.getClassRootForFile(file);
       if (root != null) {
-        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-        if (descriptorFile == null) {
-          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
-          if (alt != null && isMultiReleaseJar(root)) {
-            descriptorFile = alt;
-          }
-        }
+        VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
         if (descriptorFile != null) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
           if (psiFile instanceof PsiJavaFile) {
@@ -86,20 +72,6 @@ public class JavaModuleGraphUtil {
     }
 
     return null;
-  }
-
-  private static boolean isMultiReleaseJar(VirtualFile root) {
-    if (root.getFileSystem() instanceof JarFileSystem) {
-      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifest != null) {
-        try (InputStream stream = manifest.getInputStream()) {
-          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
-        }
-        catch (IOException ignored) { }
-      }
-    }
-
-    return false;
   }
 
   @Nullable
@@ -175,9 +147,15 @@ public class JavaModuleGraphUtil {
       MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
       for (PsiJavaModule module : projectModules) {
         for (PsiRequiresStatement statement : module.getRequires()) {
-          PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), true);
-          if (dependency != null && projectModules.contains(dependency)) {
-            relations.putValue(module, dependency);
+          PsiJavaModuleReference ref = statement.getModuleReference();
+          if (ref != null) {
+            ResolveResult[] results = ref.multiResolve(true);
+            if (results.length == 1) {
+              PsiJavaModule dependency = (PsiJavaModule)results[0].getElement();
+              if (dependency != null && projectModules.contains(dependency)) {
+                relations.putValue(module, dependency);
+              }
+            }
           }
         }
       }
@@ -187,7 +165,7 @@ public class JavaModuleGraphUtil {
         DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
         Collection<Collection<PsiJavaModule>> components = builder.getComponents();
         if (!components.isEmpty()) {
-          return components.stream().map(ContainerUtil::newLinkedHashSet).collect(Collectors.toList());
+          return ContainerUtil.map(components, ContainerUtil::newLinkedHashSet);
         }
       }
     }
@@ -218,6 +196,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
+
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
@@ -230,21 +209,25 @@ public class JavaModuleGraphUtil {
     return new RequiresGraph(graph, transitiveEdges);
   }
 
-  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> transitiveEdges) {
+  private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<? super String> transitiveEdges) {
     if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
       boolean explicitJavaBase = false;
       for (PsiRequiresStatement statement : module.getRequires()) {
-        String moduleName = statement.getModuleName();
-        if (PsiJavaModule.JAVA_BASE.equals(moduleName)) explicitJavaBase = true;
-        for (PsiJavaModule dependency : PsiJavaModuleReference.multiResolve(statement, moduleName, false)) {
-          relations.putValue(module, dependency);
-          if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
-          visit(dependency, relations, transitiveEdges);
+        PsiJavaModuleReference ref = statement.getModuleReference();
+        if (ref != null) {
+          if (PsiJavaModule.JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
+          for (ResolveResult result : ref.multiResolve(false)) {
+            PsiJavaModule dependency = (PsiJavaModule)result.getElement();
+            assert dependency != null : result;
+            relations.putValue(module, dependency);
+            if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
+            visit(dependency, relations, transitiveEdges);
+          }
         }
       }
       if (!explicitJavaBase) {
-        PsiJavaModule javaBase = PsiJavaModuleReference.resolve(module, PsiJavaModule.JAVA_BASE, false);
+        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(PsiJavaModule.JAVA_BASE, module.getResolveScope());
         if (javaBase != null) relations.putValue(module, javaBase);
       }
     }
@@ -254,7 +237,7 @@ public class JavaModuleGraphUtil {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myTransitiveEdges;
 
-    public RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
+    private RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
       myGraph = graph;
       myTransitiveEdges = transitiveEdges;
     }
@@ -285,15 +268,15 @@ public class JavaModuleGraphUtil {
       return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
-    private <T> T processExports(PsiJavaModule start, BiFunction<String, PsiJavaModule, T> processor) {
+    private <T> T processExports(PsiJavaModule start, BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, 0, ContainerUtil.newHashSet(), processor) : null;
     }
 
     private <T> T processExports(String name,
                                  PsiJavaModule module,
                                  int layer,
-                                 Set<PsiJavaModule> visited,
-                                 BiFunction<String, PsiJavaModule, T> processor) {
+                                 Set<? super PsiJavaModule> visited,
+                                 BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
       if (visited.add(module)) {
         if (layer == 1) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {
@@ -329,7 +312,7 @@ public class JavaModuleGraphUtil {
     private final MultiMap<N, N> myEdges;
     private final boolean myInbound;
 
-    public ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
       myNodes = new THashSet<>();
       edges.entrySet().forEach(e -> {
         myNodes.add(e.getKey());
@@ -339,16 +322,19 @@ public class JavaModuleGraphUtil {
       myInbound = inbound;
     }
 
+    @NotNull
     @Override
     public Collection<N> getNodes() {
       return myNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<N> getIn(N n) {
       return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
+    @NotNull
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();

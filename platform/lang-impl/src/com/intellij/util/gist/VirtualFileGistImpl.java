@@ -90,7 +90,6 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
     }
   }
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final Map<Pair<String, Integer>, FileAttribute> ourAttributes =
     FactoryMap.create(key -> new FileAttribute(key.first, key.second, false));
 

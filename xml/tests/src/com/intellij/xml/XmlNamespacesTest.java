@@ -21,11 +21,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -38,6 +37,11 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testUnusedDefaultNamespace() {
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(this::doTestUnusedDefaultNamespace);
+  }
+
+  // TODO: remove this temporary private method and inline its content into the tests when duplication problem will be fixed
+  private void doTestUnusedDefaultNamespace() {
     doUnusedDeclarationTest("<schema:schema \n" +
                             "            xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "            <warning descr=\"Namespace declaration is never used\">xmlns=\"http://www.w3.org/2001/X<caret>Include\"</warning>\n" +

@@ -61,9 +61,10 @@ public interface RunAnythingProvider<V> {
    * Gets completions variants for input command prefix. E.g. "rvm use" provider should return list of sdk versions.
    *
    * @param dataContext use it to fetch project, module, working directory
+   * @param pattern     input string, use it to provide specific variants for the input command if needed, e.g. for command arguments completion
    */
   @NotNull
-  Collection<V> getValues(@NotNull DataContext dataContext);
+  Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern);
 
   /**
    * Execute actual matched {@link #findMatchingValue(DataContext, String)} value.

@@ -86,6 +86,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testCallInFor() { doTest(); }
 
   public void testSCR20655() { doTest(); }
+  public void testGenericArrayCreation() { doTest(); }
 
 
   public void testFieldInitializer() { doTest(); }
@@ -94,8 +95,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
 
   public void testStaticFieldInitializer() { doTest(); }
   public void testSCR22644() { doTest(); }
+  public void testChangeContextForThisInNestedClasses() { doTest(); }
 
   public void testCallUnderIf() { doTest(); }
+  public void testInlineEnumArgsChangeContext() { doTest(); }
 
   //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
   //public void testLocalVariableResult() throws Exception { doTest(); }
@@ -107,13 +110,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testChainingConstructor() { doTest(); }
 
   public void testChainingConstructor1() {
-    BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-    try {
-      doTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest());
   }
 
   public void testNestedCall() { doTest(); }
@@ -228,6 +225,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in javadoc");
   }
 
+  public void testMethodUsedReflectively() {
+    doTestConflict("Inlined method is used reflectively");
+  }
+
   public void testNotAStatement() {
     doTestConflict("Inlined result would contain parse errors");
   }
@@ -308,6 +309,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
   
   public void testReturnStatementWithoutBraces() {
+    doTestInlineThisOnly();
+  }
+
+  public void testIfElseIfWithSingleStatement() {
     doTestInlineThisOnly();
   }
 
@@ -412,6 +417,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testTailCallInsideLambda() {
+    doTest();
+  }
+
+  public void testChainedBuilderCall() {
+    doTest();
+  }
+
+  public void testMissedQualifierWithSideEffectsOnInliningEmptyMethod() {
     doTest();
   }
 

@@ -76,6 +76,13 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         compilerConfiguration.setBuildProcessHeapSize(processHeapSize.intValue());
         changed = true;
       }
+
+      Boolean useReleaseOption = getBoolean(configurationMap, "useReleaseOption");
+      if (useReleaseOption != null && compilerConfiguration.useReleaseOption() != useReleaseOption) {
+        compilerConfiguration.setUseReleaseOption(useReleaseOption);
+        changed = true;
+      }
+
       Boolean autoShowFirstErrorInEditor = getBoolean(configurationMap, "autoShowFirstErrorInEditor");
       if (autoShowFirstErrorInEditor != null && workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR != autoShowFirstErrorInEditor) {
         workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = autoShowFirstErrorInEditor;

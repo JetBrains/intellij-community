@@ -9,7 +9,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Feb 13, 2005
  */
 public class CycleFinder<Node> {
   private final Graph<Node> myGraph;
@@ -23,6 +22,7 @@ public class CycleFinder<Node> {
     final Set<List<Node>> result = new HashSet<>();
 
     final Graph<Node> graphWithoutNode = new Graph<Node>() {
+      @NotNull
       @Override
       public Collection<Node> getNodes() {
         final Collection<Node> nodes = myGraph.getNodes();
@@ -30,6 +30,7 @@ public class CycleFinder<Node> {
         return nodes;
       }
 
+      @NotNull
       @Override
       public Iterator<Node> getIn(final Node n) {
         final Set<Node> nodes = ContainerUtil.newHashSet(myGraph.getIn(n));
@@ -37,6 +38,7 @@ public class CycleFinder<Node> {
         return nodes.iterator();
       }
 
+      @NotNull
       @Override
       public Iterator<Node> getOut(final Node n) {
         final Set<Node> nodes = ContainerUtil.newHashSet(myGraph.getOut(n));

@@ -9,7 +9,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -17,20 +16,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
 public class GrSuperReferenceResolver {
+
   @Nullable("null if ref is not 'super' reference")
   public static Collection<GroovyResolveResult> resolveSuperExpression(@NotNull GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifier();
 
     if (qualifier == null) {
-      final PsiElement parent = ref.getParent();
-      if (parent instanceof GrConstructorInvocation) {
-        return Arrays.asList(((GrConstructorInvocation)parent).multiResolve(false));
-      }
       PsiClass aClass = PsiUtil.getContextClass(ref);
       if (aClass != null) {
         return getSuperClass(aClass);

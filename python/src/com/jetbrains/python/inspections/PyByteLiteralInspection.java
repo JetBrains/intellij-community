@@ -52,8 +52,8 @@ public class PyByteLiteralInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  private class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+  private static class Visitor extends PyInspectionVisitor {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 

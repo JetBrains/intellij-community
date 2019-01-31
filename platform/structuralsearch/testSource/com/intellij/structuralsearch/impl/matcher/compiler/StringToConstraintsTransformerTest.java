@@ -1,16 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.openapi.util.Version;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
@@ -142,9 +143,18 @@ public class StringToConstraintsTransformerTest {
 
   @Test
   public void testInvalidRegularExpression() {
-    expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
-                              "x!(%n" +
-                              "   ^"));
+    Version version = getJavaVersion();
+
+    if (version != null && (version.lessThan(8, 0, 181) || version.major == 9)) {
+
+      expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
+                                              "x!(%n" +
+                                              "   ^"));
+    } else {
+      expectException("'a:x!(", String.format("Invalid regular expression: Unclosed group near index 3%n" +
+                                              "x!("));
+
+    }
   }
 
   @Test
@@ -299,19 +309,50 @@ public class StringToConstraintsTransformerTest {
   }
 
   @Test
+  public void testPresenceOfContext() {
+    test("a");
+    assertNotNull(myOptions.getVariableConstraint(Configuration.CONTEXT_VAR_NAME));
+  }
+
+  @Test
   public void testBrackets() {
     test("'_x:[exprtype( java\\.lang\\.String\\[\\]\\[\\] )]");
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint("x");
     assertEquals("java.lang.String[][]", constraint.getNameOfExprType());
   }
 
-  private void expectException(String criteria, String exceptionMessage) {
+  private void expectException(@NotNull String criteria, @NotNull String exceptionMessage) {
     thrown.expect(MalformedPatternException.class);
     thrown.expectMessage(equalTo(exceptionMessage));
     test(criteria);
   }
 
-  private void test(String criteria) {
+  @Nullable
+  private static Version getJavaVersion() {
+    String version = System.getProperty("java.runtime.version");
+    if (version == null) return null;
+
+    String[] javaVersionElements = version.split("\\.|_|-b|\\+|-");
+
+    if (javaVersionElements.length > 3) {
+      try {
+        if (Integer.parseInt(javaVersionElements[0]) == 1) {
+          return new Version(Integer.parseInt(javaVersionElements[1]),  // Major
+                             Integer.parseInt(javaVersionElements[2]),  // Minor
+                             Integer.parseInt(javaVersionElements[3])); // Update
+        } else { // 9, 10, 11
+          return new Version(Integer.parseInt(javaVersionElements[0]),  // Major
+                             Integer.parseInt(javaVersionElements[1]),  // Minor
+                             Integer.parseInt(javaVersionElements[2])); // Update
+        }
+      } catch (NumberFormatException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  private void test(@NotNull String criteria) {
     StringToConstraintsTransformer.transformCriteria(criteria, myOptions);
   }
 }

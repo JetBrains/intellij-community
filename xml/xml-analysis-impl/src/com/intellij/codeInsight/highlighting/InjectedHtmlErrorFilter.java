@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class InjectedHtmlErrorFilter extends HighlightErrorFilter {
+  @Override
   public boolean shouldHighlightErrorElement(@NotNull final PsiErrorElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile.getLanguage() == HTMLLanguage.INSTANCE && containingFile.getContext() != null) {

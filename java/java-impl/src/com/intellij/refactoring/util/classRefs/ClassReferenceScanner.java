@@ -35,8 +35,8 @@ public abstract class ClassReferenceScanner {
       myReferences = findReferences();
     }
 
-    for (int i = 0; i < myReferences.length; i++) {
-      processUsage(myReferences[i].getElement(), visitor);
+    for (PsiReference reference : myReferences) {
+      processUsage(reference.getElement(), visitor);
     }
   }
 

@@ -8,6 +8,6 @@ class Test {
   }
 
   public void test(Object o) {
-    work(o <caret>== null? "" : o);
+    work(/*1*/o/*2*/ <caret>== /*3*/null/*4*/?/*5*/ ""/*6*/ :/*7*/ o/*8*/);
   }
 }

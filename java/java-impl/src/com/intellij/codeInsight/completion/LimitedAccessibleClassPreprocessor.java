@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -30,17 +31,18 @@ import java.util.Set;
  * @author peter
  */
 class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
+  private static final Logger LOG = Logger.getInstance(LimitedAccessibleClassPreprocessor.class);
   private final PsiElement myContext;
   private final CompletionParameters myParameters;
   private final boolean myFilterByScope;
-  private final Consumer<PsiClass> myConsumer;
+  private final Consumer<? super PsiClass> myConsumer;
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private int myCount;
   private final Set<String> myQNames = new THashSet<>();
   private final boolean myPkgContext;
   private final String myPackagePrefix;
 
-  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Consumer<PsiClass> consumer) {
+  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Consumer<? super PsiClass> consumer) {
     myContext = parameters.getPosition();
     myParameters = parameters;
     myFilterByScope = filterByScope;
@@ -76,9 +78,13 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
     assert psiClass != null;
     if (AllClassesGetter.isAcceptableInContext(myContext, psiClass, myFilterByScope, myPkgContext)) {
       String qName = psiClass.getQualifiedName();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processing class " + qName);
+      }
       if (qName != null && qName.startsWith(myPackagePrefix) && myQNames.add(qName)) {
         myConsumer.consume(psiClass);
         if (++myCount > myLimit) {
+          LOG.debug("Limit reached");
           return false;
         }
       }

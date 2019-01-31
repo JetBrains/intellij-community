@@ -24,24 +24,30 @@ import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
+
+fun LinearGraph.assert(process: (CollapsedGraph) -> Unit, result: TestGraphBuilder.() -> Unit) {
+  val nodesVisibility = UnsignedBitSet()
+  for (nodeIndex in 0 until nodesCount()) {
+    val graphNode = getGraphNode(nodeIndex)
+    nodesVisibility.set(getNodeId(nodeIndex), graphNode.type == GraphNodeType.USUAL)
+  }
+  val collapsedGraph = CollapsedGraph.newInstance(this, nodesVisibility)
+  process(collapsedGraph)
+
+  val expectedResultGraph = graph(result)
+  val actualResultGraph = collapsedGraph.compiledGraph
+
+  assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
+}
 
 class DottedFilterEdgesGeneratorTest {
 
-  fun LinearGraph.assert(upIndex: Int = 0, downIndex: Int = nodesCount() - 1, result: TestGraphBuilder.() -> Unit) {
-    val nodesVisibility = UnsignedBitSet()
-    for (nodeIndex in 0 until nodesCount()) {
-      val graphNode = getGraphNode(nodeIndex)
-      nodesVisibility.set(getNodeId(nodeIndex), graphNode.type == GraphNodeType.USUAL)
-    }
-    val collapsedGraph = CollapsedGraph.newInstance(this, nodesVisibility)
-    DottedFilterEdgesGenerator.update(collapsedGraph, upIndex, downIndex)
-
-    val expectedResultGraph = graph(result)
-    val actualResultGraph = collapsedGraph.compiledGraph
-
-    assertEquals(expectedResultGraph.asTestGraphString(true), actualResultGraph.asTestGraphString(true))
-  }
+  fun LinearGraph.assert(upIndex: Int = 0, downIndex: Int = nodesCount() - 1, result: TestGraphBuilder.() -> Unit) =
+    assert({ collapsedGraph ->
+             DottedFilterEdgesGenerator.update(collapsedGraph, upIndex, downIndex)
+           }, result)
 
   @Test
   fun simple() = graph {
@@ -176,4 +182,33 @@ class DottedFilterEdgesGeneratorTest {
     5()
   }
 
+  /*
+  0
+  |
+  1
+  |\
+  | 2
+  3
+  | 4
+  |/
+  5
+  |
+  6
+  */
+  @Test
+  @Ignore("This test fails, there has to be a 0-6 dotted edge, but there isn't")
+  fun anotherRoot() = graph {
+    0(1)
+    1.UNM(2, 3)
+    2()
+    3.UNM(5)
+    4(5)
+    5.UNM(6)
+    6()
+  }.assert {
+    0(2.dot, 6.dot)
+    2()
+    4(6.dot)
+    6()
+  }
 }

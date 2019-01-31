@@ -15,13 +15,8 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 /**
  * @deprecated use {@link com.intellij.diff.DiffManager} instead
@@ -45,32 +40,5 @@ public abstract class DiffManager {
    */
   public abstract DiffTool getIdeaDiffTool();
 
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   * Adds new diff tool.
-   *
-   * @param tool diff tool to register
-   * @return false iff tool already registered (tool won't be registered twice). Otherwise true.
-   * @throws NullPointerException iff tool == null
-   */
-  public abstract boolean registerDiffTool(DiffTool tool) throws NullPointerException;
-
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   * Unregister tool, registered with {@link #registerDiffTool(DiffTool)}
-   *
-   * @param tool diff tool to unregister
-   */
-  public abstract void unregisterDiffTool(DiffTool tool);
-
   public abstract MarkupEditorFilter getDiffEditorFilter();
-
-  /**
-   * @param window     this window will be disposed, when user clicks on the line number
-   *                   You must call Disposer.dispose() when done.
-   * @param parentTool @deprecated use {@link #createDiffPanel(Window, Project, Disposable)} instead
-   */
-  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool);
-
-  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool);
 }

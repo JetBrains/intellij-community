@@ -60,21 +60,23 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false, null);
       if (init != null) {
         PsiElement element = resolveParameter(init);
-        if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) ||
-                                myType.equals(ReferenceType.PARAMETER_TYPE)))
+        if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
           element = resolveClassVariable((PyClass)owner);
-        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) ||
-                                myType.equals(ReferenceType.PARAMETER_TYPE)))
+        }
+        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
           element = resolveInstanceVariable((PyClass)owner);
+        }
         return element;
       }
       else {
-        if (myType.equals(ReferenceType.CLASS_VARIABLE) ||
-            myType.equals(ReferenceType.PARAMETER_TYPE))
-          return resolveClassVariable((PyClass)owner);
-        if (myType.equals(ReferenceType.INSTANCE_VARIABLE) ||
-            myType.equals(ReferenceType.PARAMETER_TYPE))
-          return resolveInstanceVariable((PyClass)owner);
+        PsiElement element = null;
+        if (myType.equals(ReferenceType.CLASS_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE)) {
+          element = resolveClassVariable((PyClass)owner);
+        }
+        if (element == null && (myType.equals(ReferenceType.INSTANCE_VARIABLE) || myType.equals(ReferenceType.PARAMETER_TYPE))) {
+          element = resolveInstanceVariable((PyClass)owner);
+        }
+        return element;
       }
     }
     if (owner instanceof PyFile && myType == ReferenceType.GLOBAL_VARIABLE) {
@@ -97,8 +99,9 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   private PsiElement resolveInstanceVariable(final PyClass owner) {
     final List<PyTargetExpression> attributes = owner.getInstanceAttributes();
     for (PyTargetExpression element : attributes) {
-      if (getCanonicalText().equals(element.getName()))
+      if (getCanonicalText().equals(element.getName())) {
         return element;
+      }
     }
     return null;
   }
@@ -107,8 +110,9 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   private PsiElement resolveClassVariable(@NotNull final PyClass owner) {
     final List<PyTargetExpression> attributes = owner.getClassAttributes();
     for (PyTargetExpression element : attributes) {
-      if (getCanonicalText().equals(element.getName()))
+      if (getCanonicalText().equals(element.getName())) {
         return element;
+      }
     }
     return null;
   }
@@ -149,13 +153,15 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       if (expression != null) {
         PsiReference[] references = expression.getReferences();
         for (PsiReference ref : references) {
-          if (ref instanceof DocStringParameterReference && ((DocStringParameterReference)ref).getType().equals(myType))
+          if (ref instanceof DocStringParameterReference && ((DocStringParameterReference)ref).getType().equals(myType)) {
             usedParameters.add(ref.getCanonicalText());
+          }
         }
       }
       for (PyNamedParameter param : namedParameters) {
-        if (!usedParameters.contains(param.getName()))
+        if (!usedParameters.contains(param.getName())) {
           result.add(param);
+        }
       }
 
       return result;
@@ -185,7 +191,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     TextRange range = getRangeInElement();
     Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(range.substring(myElement.getText()));
 

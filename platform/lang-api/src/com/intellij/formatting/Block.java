@@ -124,4 +124,16 @@ public interface Block {
    * @return true if the block is a leaf block and may not contain child blocks, false otherwise.
    */
   boolean isLeaf();
+
+  /**
+   * Returns an internal debug name, used in the Block Structure of PSI Viewer.
+   *
+   * By default it returns null, in this case the PSI Viewer uses the simple class name.
+   *
+   * @return debug name, or null for default one.
+   */
+  @Nullable
+  default String getDebugName() {
+    return null;
+  }
 }

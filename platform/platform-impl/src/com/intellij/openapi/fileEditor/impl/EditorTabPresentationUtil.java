@@ -1,25 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 
 public class EditorTabPresentationUtil {
   @NotNull
   public static String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file, @Nullable EditorWindow editorWindow) {
-    List<EditorTabTitleProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabTitleProvider.EP_NAME));
-    for (EditorTabTitleProvider provider : providers) {
+    for (EditorTabTitleProvider provider : DumbService.getDumbAwareExtensions(project, EditorTabTitleProvider.EP_NAME)) {
       String result = provider.getEditorTabTitle(project, file, editorWindow);
-      if (result != null) {
+      if (StringUtil.isNotEmpty(result)) {
         return result;
       }
     }
@@ -39,9 +36,7 @@ public class EditorTabPresentationUtil {
   @Nullable
   public static Color getEditorTabBackgroundColor(@NotNull Project project, @NotNull VirtualFile file,
                                                   @Nullable EditorWindow editorWindow) {
-    List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
-    for (EditorTabColorProvider provider : providers) {
+    for (EditorTabColorProvider provider : DumbService.getDumbAwareExtensions(project, EditorTabColorProvider.EP_NAME)) {
       Color result = provider.getEditorTabColor(project, file, editorWindow);
       if (result != null) {
         return result;
@@ -52,9 +47,7 @@ public class EditorTabPresentationUtil {
 
   @Nullable
   public static Color getFileBackgroundColor(@NotNull Project project, @NotNull VirtualFile file) {
-    List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
-    for (EditorTabColorProvider provider : providers) {
+    for (EditorTabColorProvider provider : DumbService.getDumbAwareExtensions(project, EditorTabColorProvider.EP_NAME)) {
       Color result = provider.getProjectViewColor(project, file);
       if (result != null) {
         return result;

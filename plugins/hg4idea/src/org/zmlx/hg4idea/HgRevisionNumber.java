@@ -30,7 +30,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @NotNull private final String commitMessage;
   @NotNull private final String author;
   @NotNull private final String email;
-  @NotNull private final List<HgRevisionNumber> parents;
+  @NotNull private final List<? extends HgRevisionNumber> parents;
   @NotNull private final String mySubject;
 
   private final boolean isWorkingVersion;
@@ -56,7 +56,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, changeset, "", "", Collections.emptyList());
   }
 
-  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull  List<HgRevisionNumber> parents) {
+  public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull List<? extends HgRevisionNumber> parents) {
     return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
 
@@ -68,7 +68,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String changeset,
                           @NotNull String authorInfo,
                           @NotNull String commitMessage,
-                          @NotNull List<HgRevisionNumber> parents) {
+                          @NotNull List<? extends HgRevisionNumber> parents) {
     this(revision, changeset, HgUtil.parseUserNameAndEmail(authorInfo).getFirst(), HgUtil.parseUserNameAndEmail(authorInfo).getSecond(),
          commitMessage, parents);
   }
@@ -78,7 +78,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String author,
                           @NotNull String email,
                           @NotNull String commitMessage,
-                          @NotNull List<HgRevisionNumber> parents) {
+                          @NotNull List<? extends HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
     this.author = author;
     this.email = email;
@@ -127,6 +127,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return isWorkingVersion;
   }
 
+  @Override
   public String asString() {
     if (revision.isEmpty()) {
       return changeset;
@@ -135,10 +136,11 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   @NotNull
-  public List<HgRevisionNumber> getParents() {
+  public List<? extends HgRevisionNumber> getParents() {
     return parents;
   }
 
+  @Override
   public int compareTo(VcsRevisionNumber o) {
     // boundary cases
     if (this == o) {

@@ -75,7 +75,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
 
     private final boolean put;
 
-    public UseOfPropertiesAsHashtableFix(boolean put) {
+    UseOfPropertiesAsHashtableFix(boolean put) {
       this.put = put;
     }
 

@@ -56,7 +56,7 @@ public class CustomFileTypeFoldingBuilder extends CustomFoldingBuilder {
     buildBraceMatcherBasedFolding(descriptors, root, document, highlighter);
   }
 
-  public static void buildBraceMatcherBasedFolding(List<FoldingDescriptor> descriptors,
+  public static void buildBraceMatcherBasedFolding(List<? super FoldingDescriptor> descriptors,
                                                    PsiElement root,
                                                    Document document,
                                                    SyntaxHighlighter highlighter) {

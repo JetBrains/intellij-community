@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StripTestDataMarkup extends ActionOnFile {
 
-  public StripTestDataMarkup(PsiFile file) {
+  public StripTestDataMarkup(@NotNull PsiFile file) {
     super(file);
   }
 
@@ -37,7 +37,12 @@ public class StripTestDataMarkup extends ActionOnFile {
     env.logMessage(toString());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = getDocument();
-      new ExpectedHighlightingData(document, true, true, true, true, getFile()).init();
+      try {
+        new ExpectedHighlightingData(document, true, true, true, true, getFile()).init();
+      }
+      catch (AssertionError ignore) {
+        // can fail on unpaired markups
+      }
       removeMarkup(document, "<caret>");
       removeMarkup(document, "<ref>");
       removeMarkup(document, "<selection>");

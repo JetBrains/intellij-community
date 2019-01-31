@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,41 @@
  */
 package com.siyeh.ig.serialization;
 
-import javax.swing.*;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
+import org.jetbrains.annotations.NotNull;
 
-public class SerializableInnerClassHasSerialVersionUIDFieldInspection
-  extends SerializableInnerClassHasSerialVersionUIDFieldInspectionBase {
+public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends SerializableInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
-    return SerializableInspectionUtil.createOptions(this);
+  @NotNull
+  public String getID() {
+    return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
   }
 
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.has.serial.version.uid.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new AddSerialVersionUIDFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
+  }
 }

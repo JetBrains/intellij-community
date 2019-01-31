@@ -85,7 +85,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   private GlobalInspectionContextImpl getGlobalInspectionContext(Project project) {
     if (myGlobalInspectionContext == null) {
-      myGlobalInspectionContext = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext(false);
+      myGlobalInspectionContext = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext();
     }
     return myGlobalInspectionContext;
   }
@@ -230,7 +230,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   private static class MySingleConfigurableEditor extends SingleConfigurableEditor {
     private final InspectionManagerEx myManager;
 
-    public MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {
+    MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {
       super(project, configurable, createDimensionKey(configurable));
       myManager = manager;
     }

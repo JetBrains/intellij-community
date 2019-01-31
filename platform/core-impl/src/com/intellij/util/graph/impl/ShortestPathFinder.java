@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -10,12 +11,15 @@ import java.util.*;
  * @author nik
  */
 public class ShortestPathFinder<Node> {
-  private final Graph<Node> myGraph;
+  private final InboundSemiGraph<Node> myGraph;
 
   public ShortestPathFinder(Graph<Node> graph) {
     myGraph = graph;
   }
 
+  public ShortestPathFinder(InboundSemiGraph<Node> graph) {
+    myGraph = graph;
+  }
 
   @Nullable
   public List<Node> findPath(Node start, Node finish) {
@@ -44,6 +48,7 @@ public class ShortestPathFinder<Node> {
     if (!found) {
       return null;
     }
+
     List<Node> path = new ArrayList<>();
     Node current = start;
     while (!current.equals(finish)) {

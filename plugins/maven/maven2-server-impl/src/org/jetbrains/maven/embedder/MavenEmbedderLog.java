@@ -19,50 +19,62 @@ import org.jetbrains.annotations.NotNull;
 
 public class MavenEmbedderLog {
   public static final MavenEmbedderLogger LOG = new MavenEmbedderLogger() {
+    @Override
     public void debug(final CharSequence msg) {
       if (ourDelegate != null) ourDelegate.debug(msg);
     }
 
+    @Override
     public void debug(final CharSequence msg, final Throwable e) {
       if (ourDelegate != null) ourDelegate.debug(msg, e);
     }
 
+    @Override
     public void debug(final Throwable e) {
       if (ourDelegate != null) ourDelegate.debug(e);
     }
 
+    @Override
     public void info(final CharSequence msg) {
       if (ourDelegate != null) ourDelegate.info(msg);
     }
 
+    @Override
     public void info(final CharSequence msg, final Throwable e) {
       if (ourDelegate != null) ourDelegate.info(msg, e);
     }
 
+    @Override
     public void info(final Throwable e) {
       if (ourDelegate != null) ourDelegate.info(e);
     }
 
+    @Override
     public void warn(final CharSequence msg) {
       if (ourDelegate != null) ourDelegate.warn(msg);
     }
 
+    @Override
     public void warn(final CharSequence msg, final Throwable e) {
       if (ourDelegate != null) ourDelegate.warn(msg, e);
     }
 
+    @Override
     public void warn(final Throwable e) {
       if (ourDelegate != null) ourDelegate.warn(e);
     }
 
+    @Override
     public void error(final CharSequence msg) {
       if (ourDelegate != null) ourDelegate.error(msg);
     }
 
+    @Override
     public void error(final CharSequence msg, final Throwable e) {
       if (ourDelegate != null) ourDelegate.error(msg, e);
     }
 
+    @Override
     public void error(final Throwable e) {
       if (ourDelegate != null) ourDelegate.error(e);
     }

@@ -38,7 +38,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   }
 
   @NotNull
-  public T getProcess() {
+  public final T getProcess() {
     return myProcess;
   }
 

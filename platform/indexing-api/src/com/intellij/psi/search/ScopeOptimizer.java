@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  *    {@link PsiSearchHelperImpl#USE_SCOPE_OPTIMIZER_EP_NAME}
  * to perform optimization of PsiElement's use scope.
  *
- * 2. {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, String, RequestResultProcessor, PsiElement)},
+ * 2. {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, PsiElement)},
  *    {@link SearchRequestCollector#CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME}
  * to exclude a scope without references in code from a usages search when the search with {@link UsageSearchContext#IN_CODE} or {@link UsageSearchContext#ANY}
  *  context was requested.

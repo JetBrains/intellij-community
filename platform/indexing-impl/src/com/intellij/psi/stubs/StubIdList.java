@@ -16,8 +16,9 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-// List of nonnegative ints, monotonically increasing, optimized for one int case (90% of our lists one element)
+// List of non-negative ints, monotonically increasing, optimized for one int case (90% of our lists are one-element)
 public final class StubIdList {
   private final int myData;
   private final int[] myArray;
@@ -33,7 +34,7 @@ public final class StubIdList {
     myArray = null;
   }
 
-  public StubIdList(int[] array, int size) {
+  public StubIdList(@NotNull int[] array, int size) {
     myArray = array;
     myData = size;
   }
@@ -55,13 +56,12 @@ public final class StubIdList {
     StubIdList other = (StubIdList)obj;
     if (myArray == null) {
       return other.myArray == null && other.myData == myData;
-    } else {
-      if (other.myArray == null || myData != other.myData) return false;
-      for(int i = 0; i < myData; ++i) {
-        if (myArray[i] != other.myArray[i]) return false;
-      }
-      return true;
     }
+    if (other.myArray == null || myData != other.myData) return false;
+    for(int i = 0; i < myData; ++i) {
+      if (myArray[i] != other.myArray[i]) return false;
+    }
+    return true;
   }
 
   public int size() {
@@ -73,9 +73,8 @@ public final class StubIdList {
       assert myData >= 0;
       if (i == 0) return myData;
       throw new IncorrectOperationException();
-    } else {
-      if (i >= myData) throw new IncorrectOperationException();
-      return myArray[i];
     }
+    if (i >= myData) throw new IncorrectOperationException();
+    return myArray[i];
   }
 }

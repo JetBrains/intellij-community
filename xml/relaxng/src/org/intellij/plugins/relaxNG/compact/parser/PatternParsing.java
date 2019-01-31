@@ -27,7 +27,6 @@ import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
 public class PatternParsing extends DeclarationParsing {
 
-  @SuppressWarnings({"unchecked"})
   protected static final Map<IElementType, IElementType> TOKEN_MAP =
     ContainerUtil.newIdentityTroveMap();
 

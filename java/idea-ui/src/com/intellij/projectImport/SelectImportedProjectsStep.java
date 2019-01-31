@@ -41,10 +41,12 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
   public SelectImportedProjectsStep(WizardContext context) {
     super(context);
     fileChooser = new ElementsChooser<T>(true) {
+      @Override
       protected String getItemText(@NotNull T item) {
         return getElementText(item);
       }
 
+      @Override
       protected Icon getItemIcon(@NotNull final T item) {
         return getElementIcon (item);
       }
@@ -59,13 +61,13 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
     final AnAction selectAllAction = new AnAction(RefactoringBundle.message("select.all.button")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         fileChooser.setAllElementsMarked(true);
       }
     };
     final AnAction unselectAllAction = new AnAction(RefactoringBundle.message("unselect.all.button")) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         fileChooser.setAllElementsMarked(false);
       }
     };
@@ -83,11 +85,12 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
   @Nullable
   protected Icon getElementIcon(final T item) {
-    return null;    
+    return null;
   }
 
   protected abstract String getElementText(final T item);
 
+  @Override
   public JComponent getComponent() {
     return panel;
   }
@@ -96,6 +99,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return true;
   }
 
+  @Override
   public void updateStep() {
     fileChooser.clear();
     for (T element : getContext().getList()) {
@@ -111,6 +115,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     getContext().setList(fileChooser.getMarkedElements());
     if (fileChooser.getMarkedElements().size() == 0) {
@@ -119,8 +124,10 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return true;
   }
 
+  @Override
   public void updateDataModel() {}
 
+  @Override
   public void onStepLeaving() {
     super.onStepLeaving();
     getContext().setOpenProjectSettingsAfter(openModuleSettingsCheckBox.isSelected());

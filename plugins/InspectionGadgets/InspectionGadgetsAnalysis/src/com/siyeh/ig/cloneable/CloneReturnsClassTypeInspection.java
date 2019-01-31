@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -51,7 +49,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
     final String myClassName;
 
-    public CloneReturnsClassTypeFix(String className) {
+    CloneReturnsClassTypeFix(String className) {
       myClassName = className;
     }
 
@@ -120,7 +118,12 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       }
       final PsiType returnType = typeElement.getType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
-      final PsiClass containingClass = method.getContainingClass();
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
+        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)containingClass;
+        final PsiClassType baseClassType = anonymousClass.getBaseClassType();
+        containingClass = PsiUtil.resolveClassInClassTypeOnly(baseClassType);
+      }
       if (containingClass == null || containingClass.equals(aClass)) {
         return;
       }

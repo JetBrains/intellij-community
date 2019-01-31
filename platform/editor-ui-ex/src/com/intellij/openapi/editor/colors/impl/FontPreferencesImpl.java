@@ -34,14 +34,13 @@ import java.util.List;
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
  *
  * @author Denis Zhdanov
- * @since 12/20/12 9:37 PM
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
   @NotNull private final List<String> myRealFontFamilies = ContainerUtilRt.newArrayList();
-  
+
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
 
@@ -92,6 +91,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
   }
 
+  @Override
   public int getSize(@NotNull String fontFamily) {
     int result = myFontSizes.get(fontFamily);
     if (result <= 0) {
@@ -99,7 +99,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     }
     return result > 0 ? result : DEFAULT_FONT_SIZE;
   }
-  
+
   public void setSize(@NotNull String fontFamily, int size) {
     myFontSizes.put(fontFamily, size);
     myTemplateFontSize = size;
@@ -235,7 +235,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
         return false;
       }
     }
-    
+
     if (myUseLigatures != that.myUseLigatures) return false;
     if (myLineSpacing != that.myLineSpacing) return false;
 

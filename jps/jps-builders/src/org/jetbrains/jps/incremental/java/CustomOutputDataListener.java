@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.CompileContext;
 
 /**
  * An extension for processing custom messages that had been sent by {@link org.jetbrains.jps.javac.DiagnosticOutputConsumer#customOutputData}
@@ -28,8 +29,9 @@ public interface CustomOutputDataListener {
 
   /**
    * Custom data passed through DiagnosticOutputConsumer object with pluginId == thisExtension.getId() will be passed to this method
+   * @param context
    * @param dataName
    * @param content
    */
-  void processData(@Nullable String dataName, @NotNull byte[] content);
+  void processData(CompileContext context, @Nullable String dataName, @NotNull byte[] content);
 }

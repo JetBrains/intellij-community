@@ -21,16 +21,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-/**
- * @author Dmitry Batkovich.
- */
-abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnAction {
+abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
   private final static Logger LOG = Logger.getInstance(TreeNodeExclusionAction.class);
 
   private final boolean myIsExclude;
@@ -41,7 +39,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final ExclusionHandler<T> exclusionProcessor = ExclusionHandler.EXCLUSION_HANDLER.getData(e.getDataContext());
     if (exclusionProcessor == null) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -64,7 +62,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
       final T node = (T)path.getLastPathComponent();
       TreeUtil.traverse(node, n -> {
         if (!exclusionProcessor.isNodeExclusionAvailable((T)n)) return true;
-        final Boolean isNodeExcluded = exclusionProcessor.isNodeExcluded((T)n);
+        boolean isNodeExcluded = exclusionProcessor.isNodeExcluded((T)n);
         if (myIsExclude != isNodeExcluded) {
           isEnabled[0] = true;
           return false;
@@ -83,7 +81,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final JTree tree = (JTree)PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     LOG.assertTrue(tree != null);
     final TreePath[] paths = tree.getSelectionPaths();
@@ -94,7 +92,7 @@ abstract class TreeNodeExclusionAction<T extends MutableTreeNode> extends AnActi
       final T node = (T)path.getLastPathComponent();
       TreeUtil.traverse(node, n -> {
         if (!exclusionProcessor.isNodeExclusionAvailable((T)n)) return true;
-        if (Boolean.valueOf(myIsExclude) != exclusionProcessor.isNodeExcluded((T)n)) {
+        if (myIsExclude != exclusionProcessor.isNodeExcluded((T)n)) {
           if (myIsExclude) {
             exclusionProcessor.excludeNode(node);
           } else {

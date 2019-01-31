@@ -32,12 +32,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class VirtualFilePointerRootsTest extends PlatformTestCase {
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private int numberOfPointersBefore, numberOfListenersBefore;
+  private int numberOfPointersBefore;
+  private int numberOfListenersBefore;
 
   @Override
   protected void setUp() throws Exception {
@@ -53,6 +52,9 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
       Disposer.dispose(disposable);
       assertEquals(numberOfPointersBefore, myVirtualFilePointerManager.numberOfPointers());
       assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners());
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       myVirtualFilePointerManager = null;
@@ -90,7 +92,7 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
     myVirtualFilePointerManager.shelveAllPointersIn(() -> {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
-        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
+        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, null, true, false));
       }
       PlatformTestUtil.startPerformanceTest("vfp update", 7_000, () -> {
         for (int i = 0; i < 100; i++) {
@@ -135,16 +137,18 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
   private void assertSourceIs(VirtualFile dir) {
     VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
     if (dir == null) {
-      assertThat(roots).isEmpty();
+      assertEmpty(roots);
     }
     else {
-      assertThat(roots).containsExactly(dir);
+      VirtualFile root = assertOneElement(roots);
+      assertEquals(dir, root);
     }
   }
 
   private void assertLibIs(VirtualFile dir) {
     VirtualFile[] roots = OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(getModule())).get(0).getFiles(OrderRootType.CLASSES);
-    assertThat(roots).containsExactly(dir);
+    VirtualFile root = assertOneElement(roots);
+    assertEquals(dir, root);
   }
 
   public void testVirtualPointersMustBeAlreadyUpToDateInVFSChangeListeners() throws IOException {

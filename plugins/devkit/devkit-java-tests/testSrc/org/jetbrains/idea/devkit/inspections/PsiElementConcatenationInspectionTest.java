@@ -49,10 +49,6 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
     return DevkitJavaTestsUtil.TESTDATA_ABSOLUTE_PATH;
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspections/psiElementConcatenation";

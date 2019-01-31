@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * @author Mikhail Golubev
@@ -67,13 +66,9 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
    */
   @NotNull
   public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
-    final List<PsiNamedElement> members = ContainerUtil.concat(pyClass.getInstanceAttributes(),
+    List<PsiNamedElement> members = ContainerUtil.concat(pyClass.getInstanceAttributes(),
                                                                pyClass.getClassAttributes(),
                                                                Arrays.asList(pyClass.getMethods()));
-
-    return ContainerUtil.mapNotNull(members, expression -> {
-      final String attrName = expression.getName();
-      return attrName != null ? attrName : null;
-    });
+    return ContainerUtil.mapNotNull(members, expression -> expression.getName());
   }
 }

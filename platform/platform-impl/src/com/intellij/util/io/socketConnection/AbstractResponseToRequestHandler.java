@@ -15,9 +15,14 @@
  */
 package com.intellij.util.io.socketConnection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
-public abstract class AbstractResponseToRequestHandler<R extends AbstractResponse> {
-  public abstract boolean processResponse(R response);
+public interface AbstractResponseToRequestHandler<R extends AbstractResponse> {
+  /**
+   * @return true if no further responses to this request are expected, false if more responses are coming
+   */
+  boolean processResponse(@NotNull R response);
 }

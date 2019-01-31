@@ -12,6 +12,7 @@ public interface EditorColors {
   ColorKey CARET_COLOR = ColorKey.createColorKey("CARET_COLOR");
   ColorKey RIGHT_MARGIN_COLOR = ColorKey.createColorKey("RIGHT_MARGIN_COLOR");
   ColorKey LINE_NUMBERS_COLOR = ColorKey.createColorKey("LINE_NUMBERS_COLOR");
+  ColorKey LINE_NUMBER_ON_CARET_ROW_COLOR = ColorKey.createColorKey("LINE_NUMBER_ON_CARET_ROW_COLOR");
   ColorKey ANNOTATIONS_COLOR = ColorKey.createColorKey("ANNOTATIONS_COLOR");
   ColorKey READONLY_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_BACKGROUND");
   ColorKey READONLY_FRAGMENT_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_FRAGMENT_BACKGROUND");
@@ -45,8 +46,6 @@ public interface EditorColors {
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
   ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
   ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
-  @Deprecated ColorKey FOLDING_TREE_COLOR = TEARLINE_COLOR;
-  @Deprecated ColorKey SELECTED_FOLDING_TREE_COLOR = SELECTED_TEARLINE_COLOR;
 
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
   ColorKey MODIFIED_LINES_COLOR = ColorKey.createColorKey("MODIFIED_LINES_COLOR");

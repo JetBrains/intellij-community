@@ -54,7 +54,7 @@ class MarginOptionsUtil {
   static class WrapOnTypingListCellRenderer extends ListCellRendererWrapper<String> {
     private final CodeStyleSettings mySettings;
 
-    public WrapOnTypingListCellRenderer(@NotNull CodeStyleSettings settings) {
+    WrapOnTypingListCellRenderer(@NotNull CodeStyleSettings settings) {
       mySettings = settings;
     }
 

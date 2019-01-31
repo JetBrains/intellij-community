@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
@@ -67,17 +65,12 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         HTMLComposer.appendAfterHeaderIndention(anchor);
         HTMLComposer.appendAfterHeaderIndention(anchor);
         anchor.append("<a HREF=\"");
-        try {
-          final PsiFile file = element.getContainingFile();
-          if (file != null) {
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile != null) {
-              anchor.append(new URL(virtualFile.getUrl() + "#" + elementToLink.getTextRange().getStartOffset()));
-            }
+        final PsiFile file = element.getContainingFile();
+        if (file != null) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            anchor.append(virtualFile.getUrl()).append("#").append(elementToLink.getTextRange().getStartOffset());
           }
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
         }
         anchor.append("\">");
         anchor.append(elementToLink.getText().replaceAll("\\$", "\\\\\\$"));
@@ -103,16 +96,11 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
         lineAnchor.append(" ").append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
         lineAnchor.append("<a HREF=\"");
-        try {
-          int offset = doc.getLineStartOffset(lineNumber - 1);
-          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
-        }
-        catch (MalformedURLException e) {
-          LOG.error(e);
-        }
+        int offset = doc.getLineStartOffset(lineNumber - 1);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(vFile.getUrl()).append("#").append(offset);
         lineAnchor.append("\">");
-        lineAnchor.append(Integer.toString(lineNumber));
+        lineAnchor.append(lineNumber);
         lineAnchor.append("</a>");
       }
     }
@@ -188,7 +176,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
 
   private static void prepareDuplicateValuesByFile(final Map<String, Set<PsiFile>> valueToFiles,
                                                    final InspectionManager manager,
-                                                   final List<ProblemDescriptor> problemDescriptors,
+                                                   final List<? super ProblemDescriptor> problemDescriptors,
                                                    final PsiFile psiFile,
                                                    final ProgressIndicator progress) {
     for (final String value : valueToFiles.keySet()) {
@@ -229,7 +217,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private void prepareDuplicateKeysByFile(final Map<String, Set<PsiFile>> keyToFiles,
                                           final InspectionManager manager,
                                           final Map<String, Set<String>> keyToValues,
-                                          final List<ProblemDescriptor> problemDescriptors,
+                                          final List<? super ProblemDescriptor> problemDescriptors,
                                           final PsiFile psiFile,
                                           final ProgressIndicator progress) {
     for (String key : keyToFiles.keySet()) {
@@ -269,7 +257,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
 
   private static void processDuplicateKeysWithDifferentValues(final Map<String, Set<String>> keyToDifferentValues,
                                                               final Map<String, Set<PsiFile>> keyToFiles,
-                                                              final List<ProblemDescriptor> problemDescriptors,
+                                                              final List<? super ProblemDescriptor> problemDescriptors,
                                                               final InspectionManager manager,
                                                               final PsiFile psiFile,
                                                               final ProgressIndicator progress) {
@@ -305,7 +293,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private static void findFilesWithText(String stringToFind,
                                         PsiSearchHelper searchHelper,
                                         GlobalSearchScope scope,
-                                        final Set<PsiFile> resultFiles) {
+                                        final Set<? super PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
     Collections.sort(words, (o1, o2) -> o2.length() - o1.length());

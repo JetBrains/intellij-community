@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.hierarchy;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
@@ -134,7 +120,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     for (StubElement el : classStub.getChildrenStubs()) {
       if (el instanceof GrReferenceListStub) {
         GrReferenceListStub refList = (GrReferenceListStub)el;
-        if (el.getStubType() == GroovyElementTypes.IMPLEMENTS_CLAUSE || el.getStubType() == GroovyElementTypes.EXTENDS_CLAUSE) {
+        if (el.getStubType() == GroovyStubElementTypes.IMPLEMENTS_CLAUSE || el.getStubType() == GroovyStubElementTypes.EXTENDS_CLAUSE) {
           for (String extName : refList.getBaseClasses()) {
             superList.add(id(extName, true, namesCache));
           }
@@ -161,16 +147,15 @@ public class GrStubIndexer extends StubHierarchyIndexer {
     return flags;
   }
 
-  private static void processImport(GrImportStatementStub imp, List<Import> imports, Set<String> namesCache) {
-    String referenceText = imp.getReferenceText();
-    if (referenceText == null) return;
-    String fullName = PsiNameHelper.getQualifiedClassName(referenceText, true);
+  private static void processImport(GrImportStatementStub imp, List<? super Import> imports, Set<String> namesCache) {
+    String fullName = imp.getFqn();
+    if (fullName == null) return;
     if (imp.isOnDemand() || namesCache.contains(shortName(fullName))) {
       imports.add(new Import(fullName, imp.isStatic(), imp.isOnDemand(), imp.getAliasName()));
     }
   }
 
-  private static String id(String s, boolean cacheFirstId, Set<String> namesCache) {
+  private static String id(String s, boolean cacheFirstId, Set<? super String> namesCache) {
     String id = PsiNameHelper.getQualifiedClassName(s, true);
     if (cacheFirstId) {
       int index = id.indexOf('.');

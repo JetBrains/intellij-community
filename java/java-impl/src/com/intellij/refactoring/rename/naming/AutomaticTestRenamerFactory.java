@@ -51,7 +51,7 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
   }
 
   private static class TestsRenamer extends AutomaticRenamer {
-    public TestsRenamer(PsiClass aClass, String newClassName) {
+    TestsRenamer(PsiClass aClass, String newClassName) {
       Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependentsScope(module);

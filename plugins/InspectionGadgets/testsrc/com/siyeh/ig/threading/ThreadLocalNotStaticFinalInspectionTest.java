@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("AnonymousHasLambdaAlternative")
 public class ThreadLocalNotStaticFinalInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

@@ -41,6 +41,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     myProject = project;
   }
 
+  @Override
   public String getDisplayName() {
     return "Annotation Processors";
   }
@@ -50,16 +51,19 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     return "reference.projectsettings.compiler.annotationProcessors";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     myMainPanel = new AnnotationProcessorsPanel(myProject);
     return myMainPanel;
   }
 
+  @Override
   public boolean isModified() {
     final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
 
@@ -85,6 +89,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     try {
       final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -96,11 +101,13 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     }
   }
 
+  @Override
   public void reset() {
     final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     myMainPanel.initProfiles(config.getDefaultProcessorProfile(), config.getModuleProcessorProfiles());
   }
 
+  @Override
   public void disposeUIResources() {
     myMainPanel = null;
   }

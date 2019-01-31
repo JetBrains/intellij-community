@@ -98,6 +98,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     if (value.getData().length == 0) return;
 
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
+    if (foldingManager == null) return; // default project
     foldingManager.updateFoldRegions(editor, true);
 
     Runnable operation = () -> {

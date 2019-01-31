@@ -71,14 +71,15 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiElement result;
     if (toReplace != null) {
       result = ct.replace(toReplace, stream);
+      terminal.cleanUp(ct);
       removeLoop(ct, loopStatement);
     }
     else {
       PsiVariable variable = terminal.getTargetVariable();
       LOG.assertTrue(variable != null);
+      terminal.cleanUp(ct);
       result = replaceInitializer(loopStatement, variable, variable.getInitializer(), stream, terminal.getStatus(), ct);
     }
-    terminal.cleanUp();
     return result;
   }
 
@@ -158,11 +159,11 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   abstract static class CollectTerminal {
-    private final PsiLocalVariable myTargetVariable;
+    private final @Nullable PsiLocalVariable myTargetVariable;
     private final InitializerUsageStatus myStatus;
     private final PsiStatement myLoop;
 
-    protected CollectTerminal(PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
+    protected CollectTerminal(@Nullable PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
       myTargetVariable = variable;
       myLoop = loop;
       myStatus = status;
@@ -179,6 +180,7 @@ class CollectMigration extends BaseStreamApiMigration {
     abstract String generateIntermediate(CommentTracker ct);
 
     StreamEx<? extends PsiExpression> targetReferences() {
+      if (myTargetVariable == null) return StreamEx.empty();
       List<PsiElement> usedElements = usedElements().toList();
       return StreamEx.of(ReferencesSearch.search(myTargetVariable).findAll()).select(PsiReferenceExpression.class)
         .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
@@ -216,7 +218,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     public InitializerUsageStatus getStatus() { return myStatus; }
 
-    void cleanUp() {}
+    void cleanUp(CommentTracker ct) {}
 
     boolean isTrivial() {
       return generateIntermediate(new CommentTracker()).isEmpty();
@@ -670,9 +672,9 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public void cleanUp() {
-      myDownstream.cleanUp();
-      myStatement.delete();
+    public void cleanUp(CommentTracker ct) {
+      myDownstream.cleanUp(ct);
+      ct.delete(myStatement);
     }
 
     @Override
@@ -754,12 +756,12 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public void cleanUp() {
+    public void cleanUp(CommentTracker ct) {
       PsiLocalVariable variable = myUpstream.getTargetVariable();
       if (variable != null && myUpstream.getStatus() != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE) {
-        variable.delete();
+        ct.delete(variable);
       }
-      myUpstream.cleanUp();
+      myUpstream.cleanUp(ct);
     }
   }
 
@@ -966,7 +968,7 @@ class CollectMigration extends BaseStreamApiMigration {
     private final PsiType myType;
     private final PsiLocalVariable myVar;
 
-    public WrapperCandidate(PsiExpression candidate, PsiType type, PsiLocalVariable var) {
+    WrapperCandidate(PsiExpression candidate, PsiType type, PsiLocalVariable var) {
       myCandidate = candidate;
       myType = type;
       myVar = var;

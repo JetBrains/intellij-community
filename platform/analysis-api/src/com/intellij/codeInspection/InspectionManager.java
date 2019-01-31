@@ -166,18 +166,14 @@ public abstract class InspectionManager {
                                                             final LocalQuickFix... fixes);
 
   /**
-   * use {@link #createProblemDescriptor(PsiElement, String, boolean, ProblemHighlightType, boolean, LocalQuickFix...)} instead
+   * @deprecated use {@link #createNewGlobalContext()}
    */
   @Deprecated
   @NotNull
   @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            @NotNull final String descriptionTemplate,
-                                                            final boolean showTooltip,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            final LocalQuickFix... fixes);
+  public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
 
   @NotNull
   @Contract(pure = true)
-  public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
+  public abstract GlobalInspectionContext createNewGlobalContext();
 }

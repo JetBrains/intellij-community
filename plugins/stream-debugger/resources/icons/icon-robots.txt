@@ -1,0 +1,1 @@
+deprecated: tab.png -> com.intellij.icons.AllIcons@/debugger/console.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Console

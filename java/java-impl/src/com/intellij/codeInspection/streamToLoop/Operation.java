@@ -18,6 +18,7 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -49,7 +50,7 @@ abstract class Operation {
     return null;
   }
 
-  public void registerReusedElements(Consumer<PsiElement> consumer) {}
+  public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
 
@@ -113,7 +114,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myFn.registerReusedElements(consumer);
     }
 
@@ -137,7 +138,7 @@ abstract class Operation {
   }
 
   static class FilterOperation extends LambdaIntermediateOperation {
-    public FilterOperation(FunctionHelper fn) {
+    FilterOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -148,7 +149,7 @@ abstract class Operation {
   }
 
   static class TakeWhileOperation extends LambdaIntermediateOperation {
-    public TakeWhileOperation(FunctionHelper fn) {
+    TakeWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -160,7 +161,7 @@ abstract class Operation {
   }
 
   static class DropWhileOperation extends LambdaIntermediateOperation {
-    public DropWhileOperation(FunctionHelper fn) {
+    DropWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -175,7 +176,7 @@ abstract class Operation {
   }
 
   static class PeekOperation extends LambdaIntermediateOperation {
-    public PeekOperation(FunctionHelper fn) {
+    PeekOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -186,7 +187,7 @@ abstract class Operation {
   }
 
   static class MapOperation extends LambdaIntermediateOperation {
-    public MapOperation(FunctionHelper fn) {
+    MapOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -259,7 +260,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       myRecords.forEach(or -> or.myOperation.registerReusedElements(consumer));
       if(myCondition != null) {
         consumer.accept(myCondition);
@@ -300,14 +301,14 @@ abstract class Operation {
       if(fn == null) return null;
       String varName = fn.tryLightTransform();
       if(varName == null) return null;
-      PsiExpression body = fn.getExpression();
+      PsiExpression body = PsiUtil.skipParenthesizedExprDown(fn.getExpression());
       PsiExpression condition = null;
       boolean inverted = false;
       if(body instanceof PsiConditionalExpression) {
         PsiConditionalExpression ternary = (PsiConditionalExpression)body;
         condition = ternary.getCondition();
-        PsiExpression thenExpression = ternary.getThenExpression();
-        PsiExpression elseExpression = ternary.getElseExpression();
+        PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(ternary.getThenExpression());
+        PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
         if(StreamApiUtil.isNullOrEmptyStream(thenExpression)) {
           body = elseExpression;
           inverted = true;
@@ -319,8 +320,8 @@ abstract class Operation {
       }
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
-      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall,
-                                                                                                      supportUnknownSources);
+      List<StreamToLoopInspection.OperationRecord> records =
+        StreamToLoopInspection.extractOperations(outVar, terminalCall, supportUnknownSources);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
       return new FlatMapOperation(varName, fn, records, condition, inverted);
     }
@@ -349,7 +350,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
@@ -377,7 +378,7 @@ abstract class Operation {
     }
 
     @Override
-    public void registerReusedElements(Consumer<PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myLimit);
     }
 

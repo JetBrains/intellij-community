@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Roman.Shein
- * @since 04.08.2015.
  */
 public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @NotNull
@@ -35,11 +34,13 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
     myValues = values;
   }
 
+  @Override
   @NotNull
   public List<Value> getValues() {
     return myValues;
   }
 
+  @Override
   public void applySelected() {
     for (Value value : myValues) {
       if (value.state == Value.STATE.SELECTED) {
@@ -49,7 +50,7 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   }
 
   @Override
-  public void applyConditioned(Condition<Value> c, Map<Value, Object> backup) {
+  public void applyConditioned(Condition<? super Value> c, Map<Value, Object> backup) {
     for (Value value: myValues) {
       if (c.value(value)) {
         value.write(false);
@@ -60,6 +61,7 @@ public class ValuesExtractionResultImpl implements ValuesExtractionResult {
     }
   }
 
+  @Override
   @Contract("false -> null")
   public ValuesExtractionResult apply(boolean retPrevValue) {
     if (retPrevValue) {

@@ -34,6 +34,7 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SubstrateRef;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -338,7 +339,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return stub.getParentStub().getPsi();
     }
 
-    return SharedImplUtil.getParent(getNode());
+    return SourceTreeToPsiMap.treeElementToPsi(getNode().getTreeParent());
   }
 
   @NotNull
@@ -403,7 +404,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public <S extends StubElement, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
-    assert result != null: "Missing required child of type " + elementType + "; tree: "+DebugUtil.psiToString(this, false);
+    if (result == null) {
+      throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, false));
+    }
     return result;
   }
 

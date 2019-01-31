@@ -83,10 +83,11 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
     }
 
     private static class EditAssociationsFix extends Fix<XPathNodeTest> {
-        public EditAssociationsFix(XPathNodeTest test) {
+        EditAssociationsFix(XPathNodeTest test) {
             super(test);
         }
 
+        @Override
         public boolean startInWriteAction() {
             return false;
         }
@@ -96,11 +97,13 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
             FileAssociationsConfigurable.editAssociations(project, PsiTreeUtil.getContextOfType(file, XmlFile.class, false));
         }
 
+        @Override
         @NotNull
         public String getText() {
             return "Edit File Associations";
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return "Edit File Associations";

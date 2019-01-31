@@ -41,10 +41,10 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = findMethod(file, offset);
 
-    if (method == null || !method.isValid()) return false;
+    if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
 
-    if (!method.getManager().isInProject(method)) return false;
+    if (!canModify(method)) return false;
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;

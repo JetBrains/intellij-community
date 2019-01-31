@@ -8,7 +8,7 @@ public class Main {
 
     public void test(List<String> list) {
         long i = 0L;
-        for (String s: list) {
+        for (String s : list) {
             if (s.isEmpty()) {
                 i++;
             }
@@ -21,7 +21,7 @@ public class Main {
 
         {
             long j = 0L;
-            for (String s: list) {
+            for (String s : list) {
                 if (s.isEmpty()) {
                     j++;
                 }
@@ -36,7 +36,7 @@ public class Main {
         System.out.println(j);
 
         StringJoiner joiner = new StringJoiner(",");
-        for (String s1: list) {
+        for (String s1 : list) {
             joiner.add(s1);
         }
         for(String s = joiner.toString(); !s.isEmpty(); s = s.substring(1)) {

@@ -64,7 +64,7 @@ public class ErrorDiffTool implements FrameDiffTool {
 
     @NotNull private final JPanel myPanel;
 
-    public MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
       myContext = context;
       myRequest = request;
 

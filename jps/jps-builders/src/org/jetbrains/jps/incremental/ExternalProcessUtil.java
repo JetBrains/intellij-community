@@ -30,7 +30,6 @@ import java.util.jar.Manifest;
 
 /**
  * @author Eugene Zhuravlev
- * @since 28.10.2011
  */
 public class ExternalProcessUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.ExternalProcessUtil");

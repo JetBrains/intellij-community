@@ -33,10 +33,11 @@ import org.jetbrains.annotations.Nullable;
 class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
-  public XsltFormattingModelBuilder(FormattingModelBuilder builder) {
+  XsltFormattingModelBuilder(FormattingModelBuilder builder) {
     myBuilder = builder;
   }
 
+  @Override
   public boolean isEngagedToFormat(PsiElement context) {
     final PsiFile file = context.getContainingFile();
     if (file == null) {
@@ -49,11 +50,13 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
     return false;
   }
 
+  @Override
   @Nullable
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
   }
 
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     FormattingModel baseModel = myBuilder.createModel(element, settings);

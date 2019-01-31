@@ -196,9 +196,9 @@ class PassExecutorService implements Disposable {
     }
   }
 
-  private void assertConsistency(List<ScheduledPass> freePasses,
-                                   Map<Pair<FileEditor, Integer>, ScheduledPass> toBeSubmitted,
-                                   AtomicInteger threadsToStartCountdown) {
+  private void assertConsistency(List<? extends ScheduledPass> freePasses,
+                                 Map<Pair<FileEditor, Integer>, ScheduledPass> toBeSubmitted,
+                                 AtomicInteger threadsToStartCountdown) {
     assert threadsToStartCountdown.get() == toBeSubmitted.size();
     TIntObjectHashMap<Pair<ScheduledPass, Integer>> id2Visits = new TIntObjectHashMap<>();
     for (ScheduledPass freePass : freePasses) {
@@ -250,6 +250,13 @@ class PassExecutorService implements Disposable {
         @Override
         public void doApplyInformationToEditor() {
           pass.applyInformationToEditor();
+          if (document != null) {
+            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            FileEditor[] editors = file == null ? new FileEditor[0] : FileEditorManager.getInstance(myProject).getEditors(file);
+            for (FileEditor editor : editors) {
+              repaintErrorStripeAndIcon(editor);
+            }
+          }
         }
       };
       textEditorHighlightingPass.setId(id.incrementAndGet());
@@ -261,7 +268,7 @@ class PassExecutorService implements Disposable {
   }
 
   @NotNull
-  private FileEditor getPreferredFileEditor(Document document, @NotNull Collection<FileEditor> fileEditors) {
+  private FileEditor getPreferredFileEditor(Document document, @NotNull Collection<? extends FileEditor> fileEditors) {
     assert !fileEditors.isEmpty();
     if (document != null) {
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -343,7 +350,7 @@ class PassExecutorService implements Disposable {
     return predecessor;
   }
 
-  private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
+  private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<? extends TextEditorHighlightingPass> textEditorHighlightingPasses) {
     return ContainerUtil.find(textEditorHighlightingPasses, pass -> pass.getId() == id);
   }
 
@@ -490,6 +497,7 @@ class PassExecutorService implements Disposable {
       try {
         if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
           pass.applyInformationToEditor();
+          repaintErrorStripeAndIcon(fileEditor);
           FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
           if (document != null) {
             fileStatusMap.markFileUpToDate(document, pass.getId());
@@ -520,6 +528,12 @@ class PassExecutorService implements Disposable {
     }, updateProgress.getModalityState());
   }
 
+  private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(((TextEditor)fileEditor).getEditor(), myProject);
+    }
+  }
+
   protected boolean isDisposed() {
     return isDisposed;
   }
@@ -536,7 +550,7 @@ class PassExecutorService implements Disposable {
     return result;
   }
 
-  private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
+  private static void sortById(@NotNull List<? extends TextEditorHighlightingPass> result) {
     ContainerUtil.quickSort(result, Comparator.comparingInt(TextEditorHighlightingPass::getId));
   }
 

@@ -38,7 +38,7 @@ public class OpenProjectSetProcessor extends ProjectSetProcessor {
   }
 
   @Override
-  public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull final Context context, @NotNull Runnable runNext) {
+  public void processEntries(@NotNull List<? extends Pair<String, String>> entries, @NotNull final Context context, @NotNull Runnable runNext) {
     final String root = context.directory == null || context.directoryName == null ? null : context.directory.getPath() + "/" + context.directoryName;
     for (final Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {

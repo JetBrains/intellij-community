@@ -27,6 +27,7 @@ import java.awt.*;
  *  @author dsl
  */
 public class MethodCellRenderer extends DefaultListCellRenderer {
+  @Override
   public Component getListCellRendererComponent(
           JList list,
           Object value,

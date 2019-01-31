@@ -62,7 +62,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
         return fileType;
       }
     }
-    return getFileTypeByFileName(file.getName());
+    return getFileTypeByFileName(file.getNameSequence());
   }
 
   @NotNull
@@ -89,12 +89,6 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     for (final String ext : extension.split(";")) {
       myExtensionsMap.put(ext, fileType);
     }
-  }
-
-  @NotNull
-  @Override
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return UnknownFileType.INSTANCE;
   }
 
   @Nullable

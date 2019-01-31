@@ -199,10 +199,11 @@ public class RefactoringHierarchyUtil {
     return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {
+  private static void _findImplementingClasses(PsiClass anInterface, final Set<? super PsiClass> visited, final Collection<? super PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
     ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+      @Override
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);

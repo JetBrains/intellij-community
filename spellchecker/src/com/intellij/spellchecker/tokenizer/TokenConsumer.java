@@ -32,6 +32,14 @@ public abstract class TokenConsumer {
     consumeToken(element, text, useRename, 0, TextRange.allOf(text), splitter);
   }
 
+  /**
+   * @param element      PSI element on which problem descriptor will be set
+   * @param text         literal text that will be analyzed by spellchecker
+   * @param useRename    whether rename quick fix should be suggested instead of "change to"
+   * @param offset       offset inside element that serves as an anchor point for {@code rangeToCheck}
+   * @param rangeToCheck range text value corresponds to
+   * @param splitter
+   */
   public abstract void consumeToken(PsiElement element,
                                     String text,
                                     boolean useRename,

@@ -125,11 +125,11 @@ public class JavacResourcesReader {
     public final String category;
     public final String[] keys;
 
-    public BundleKey(final String category, final String key) {
+    BundleKey(final String category, final String key) {
       this(category, new String[] {key});
     }
 
-    public BundleKey(final String category, final String[] composite) {
+    BundleKey(final String category, final String[] composite) {
       this.category = category;
       this.keys = composite;
     }
@@ -147,7 +147,7 @@ public class JavacResourcesReader {
   }
 
   private static class IgnoredWarningBundleKey extends BundleKey {
-    public IgnoredWarningBundleKey(final String messageKey) {
+    IgnoredWarningBundleKey(final String messageKey) {
       super(MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
     }
 

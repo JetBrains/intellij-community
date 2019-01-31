@@ -267,7 +267,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA108287() { doTest5(false); }
   public void testIDEA77128() { doTest7(false); }
   public void testDisableCastingToNestedWildcards() { doTest5(false); }
-  public void testBooleanInferenceFromIfCondition() { doTest5(false); }
+  public void testBooleanInferenceFromIfCondition() { doTest7(false); }
   public void testMethodCallOnRawTypesExtended() { doTest5(false); }
   public void testIDEA104100() {doTest7(false);}
   public void testIDEA104160() {doTest7(false);}
@@ -415,6 +415,9 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() { doTest7(false); }
   public void testCaptureConversionWithWildcardBounds() { doTest7(false); }
+  public void testIDEA106811() { doTest7(false); }
+  public void testTypeParameterDistinction() { doTest7(false); }
+  public void testRawTypeCheckForNestedClassWithOuterClassTypeParameters() { doTest7(false); }
   public void testArrayContainsInTypeParameterWithSerializableBound() { doTest7(true); }
   public void testIntersectTypeParameterBounds() { doTest7(false); }
   public void testTopLevelCaptureConversion() { doTest7(false); }
@@ -432,4 +435,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGetClassInAnonymous() { doTest6(false); }
   public void testInheritFromDifferentParameterizations() { doTest6(false); }
   public void testCheckAccessibilityBeforeSuperFieldReferenceInSuperCall() { doTest6(false); }
+  public void testIDEA128159() { doTest6(false); }
+  public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
 }

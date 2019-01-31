@@ -187,15 +187,12 @@ public class VcsDirtyScopeTest extends FileBasedTest {
           listener.consume(dirtyFile.getVirtualFile());
         }
       }
-      final Collection<VirtualFile> roots = modifier.getAffectedVcsRoots();
-      for (VirtualFile root : roots) {
-        final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator(root);
-        while (dirIterator.hasNext()) {
-          final FilePath dir = dirIterator.next();
-          if ((dir.getVirtualFile() != null) && ignored.contains(dir.getVirtualFile())) {
-            dirIterator.remove();
-            listener.consume(dir.getVirtualFile());
-          }
+      final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator();
+      while (dirIterator.hasNext()) {
+        final FilePath dir = dirIterator.next();
+        if ((dir.getVirtualFile() != null) && ignored.contains(dir.getVirtualFile())) {
+          dirIterator.remove();
+          listener.consume(dir.getVirtualFile());
         }
       }
       modifier.recheckDirtyKeys();

@@ -58,7 +58,8 @@ public class MoveGroovyFileHandler extends MoveFileHandler {
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
     for (PsiClass aClass : ((GroovyFile)psiFile).getClasses()) {
       Collections.addAll(result, MoveClassesOrPackagesUtil
-        .findUsages(aClass, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName, aClass.getName())));
+        .findUsages(aClass, searchInComments, searchInNonJavaFiles, StringUtil.getQualifiedName(qualifiedName,
+                                                                                                StringUtil.notNullize(aClass.getName()))));
     }
     return result.isEmpty() ? null : result;
   }

@@ -26,8 +26,6 @@ import java.util.regex.Pattern;
  * @author Andrey Cheptsov
  */
 public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
-  private static final String GROUP = "statistics.javaLibraries";
-
   private static final String DIGIT_VERSION_PATTERN_PART = "(\\d+.\\d+|\\d+)";
   private static final Pattern JAR_FILE_NAME_PATTERN = Pattern.compile("[\\w|\\-|\\.]+-(" + DIGIT_VERSION_PATTERN_PART + "[\\w|\\.]*)jar");
 
@@ -77,6 +75,6 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return GROUP;
+    return "javaLibraries";
   }
 }

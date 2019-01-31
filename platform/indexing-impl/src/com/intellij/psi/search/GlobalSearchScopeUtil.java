@@ -28,13 +28,11 @@ import java.util.Set;
 
 public class GlobalSearchScopeUtil {
   @NotNull
-  public static GlobalSearchScope toGlobalSearchScope(@NotNull final SearchScope scope,
-                                                      @NotNull Project project) {
+  public static GlobalSearchScope toGlobalSearchScope(@NotNull final SearchScope scope, @NotNull Project project) {
     if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
-    return ReadAction
-      .compute(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
+    return ReadAction.compute(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
   }
 
   @NotNull

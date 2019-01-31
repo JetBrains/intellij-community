@@ -27,6 +27,7 @@ public abstract class FrameworkGroup<V extends FrameworkVersion> implements Fram
     return myId;
   }
 
+  @Override
   @NotNull
   public abstract Icon getIcon();
 

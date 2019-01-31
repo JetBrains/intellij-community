@@ -50,8 +50,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -263,7 +263,7 @@ public class PySkeletonRefresher {
       mySkeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), mySdk.getHomePath());
       final File skeletonsDir = new File(mySkeletonsPath);
       if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-        throw new InvalidSdkException("Can't create skeleton dir " + String.valueOf(mySkeletonsPath));
+        throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);
       }
     }
     return mySkeletonsPath;

@@ -36,7 +36,7 @@ class UsageHolder {
   private int myUnsafeUsages;
   private int myNonCodeUnsafeUsages;
 
-  public UsageHolder(PsiElement element, UsageInfo[] usageInfos) {
+  UsageHolder(PsiElement element, UsageInfo[] usageInfos) {
     Project project = element.getProject();
     myElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
 

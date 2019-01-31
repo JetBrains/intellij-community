@@ -4,11 +4,13 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
+
 /**
  * @author Irina.Chernushina on 7/15/2015.
  */
 public enum JsonSchemaType {
-  _string, _number, _integer, _object, _array, _boolean, _null, _any;
+  _string, _number, _integer, _object, _array, _boolean, _null, _any, _string_number;
 
   public String getName() {
     return name().substring(1);
@@ -20,6 +22,7 @@ public enum JsonSchemaType {
         return "\"\"";
       case _number:
       case _integer:
+      case _string_number:
         return "0";
       case _object:
         return "{}";
@@ -35,11 +38,29 @@ public enum JsonSchemaType {
     }
   }
 
+  public boolean isSimple() {
+    switch (this) {
+      case _string:
+      case _number:
+      case _integer:
+      case _boolean:
+      case _null:
+        return true;
+      case _object:
+      case _array:
+      case _any:
+      default:
+        return false;
+    }
+  }
+
   @Nullable
   static JsonSchemaType getType(@NotNull final JsonValueAdapter value) {
     if (value.isNull()) return _null;
     if (value.isBooleanLiteral()) return _boolean;
-    if (value.isStringLiteral()) return _string;
+    if (value.isStringLiteral()) {
+      return value.isNumberLiteral() ? _string_number : _string;
+    }
     if (value.isArray()) return _array;
     if (value.isObject()) return _object;
     if (value.isNumberLiteral()) {
@@ -48,14 +69,22 @@ public enum JsonSchemaType {
     return null;
   }
 
-  private static boolean isInteger(@NotNull String text) {
+  public static boolean isInteger(@NotNull String text) {
+    return getIntegerValue(text) != null;
+  }
+
+  @Nullable
+  public static Number getIntegerValue(@NotNull String text) {
     try {
-      //noinspection ResultOfMethodCallIgnored
-      Integer.parseInt(text);
-      return true;
+      return Integer.parseInt(text);
     }
     catch (NumberFormatException e) {
-      return false;
+      try {
+        return BigInteger.valueOf(Long.parseLong(text));
+      }
+      catch (NumberFormatException e2) {
+        return null;
+      }
     }
   }
 

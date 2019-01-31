@@ -38,7 +38,7 @@ public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExte
   }
 
   private static class JpsAppEngineModuleExtensionSerializer extends JpsFacetConfigurationSerializer<JpsAppEngineModuleExtension> {
-    public JpsAppEngineModuleExtensionSerializer() {
+    JpsAppEngineModuleExtensionSerializer() {
       super(JpsAppEngineModuleExtensionImpl.ROLE, "google-app-engine", "Google App Engine");
     }
 

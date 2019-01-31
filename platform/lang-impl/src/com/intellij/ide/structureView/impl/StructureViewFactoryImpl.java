@@ -5,11 +5,11 @@ package com.intellij.ide.structureView.impl;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,8 +48,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     protected MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> compute() {
       MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map =
         new MultiValuesMap<>();
-      StructureViewExtension[] extensions = Extensions.getExtensions(StructureViewExtension.EXTENSION_POINT_NAME);
-      for (StructureViewExtension extension : extensions) {
+      for (StructureViewExtension extension : StructureViewExtension.EXTENSION_POINT_NAME.getExtensionList()) {
         map.put(extension.getType(), extension);
       }
       return map;
@@ -76,7 +76,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     myState = state;
   }
 
-  public void initToolWindow(ToolWindowEx toolWindow) {
+  public void initToolWindow(@NotNull ToolWindowEx toolWindow) {
     myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
@@ -122,7 +122,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     return StringUtil.join(activeActions, ",");
   }
 
-  private Collection<String> collectActiveActions() {
+  public Collection<String> collectActiveActions() {
     return ContainerUtil.newLinkedHashSet(myState.ACTIVE_ACTIONS.split(","));
   }
 
@@ -156,5 +156,11 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
                                            @NotNull Project project,
                                            final boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myState = new State();
   }
 }

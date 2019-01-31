@@ -1,0 +1,5 @@
+deprecated: text.png; to be removed in IDEA 2020
+deprecated: tree_black_right_arrow.png; to be removed in IDEA 2020
+deprecated: tree_white_down_arrow.png; to be removed in IDEA 2020
+deprecated: tree_white_right_arrow.png; to be removed in IDEA 2020
+deprecated: yosemiteOptionButtonSelector.png; to be removed in IDEA 2020

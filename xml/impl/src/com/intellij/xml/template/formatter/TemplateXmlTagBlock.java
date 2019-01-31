@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlFormattingPolicy;
 import com.intellij.psi.formatter.xml.XmlTagBlock;
 import com.intellij.xml.util.HtmlUtil;
@@ -59,7 +60,7 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
 
 
   @Override
-  protected Block createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
+  protected XmlBlock createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
     return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null);
   }
 

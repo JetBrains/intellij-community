@@ -15,7 +15,9 @@
  */
 package com.intellij.lang.html;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
@@ -26,5 +28,9 @@ public class HTMLLanguage extends XMLLanguage {
 
   private HTMLLanguage() {
     super(XMLLanguage.INSTANCE, "HTML", "text/html", "text/htmlh");
+  }
+
+  protected HTMLLanguage(Language baseLanguage, @NonNls String name, @NonNls String... mime) {
+    super(baseLanguage, name, mime);
   }
 }

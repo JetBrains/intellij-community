@@ -13,7 +13,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
   private JCheckBox myCheckBox;
   private final String myCheckboxText;
   private final boolean myChecked;
-  private final PairFunction<Integer, JCheckBox, Integer> myExitFunc;
+  private final PairFunction<? super Integer, ? super JCheckBox, Integer> myExitFunc;
 
   public TwoStepConfirmationDialog(String message,
                                    @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -23,7 +23,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
                                    final int defaultOptionIndexed,
                                    final int focusedOptionIndex,
                                    Icon icon,
-                                   @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
+                                   @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     myCheckboxText = checkboxText;
     myChecked = checked;
     myExitFunc = exitFunc;

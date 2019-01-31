@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -21,7 +7,6 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
@@ -49,19 +34,11 @@ public class SelectWordUtil {
   private SelectWordUtil() {
   }
 
-  /**
-   * @see ExtendWordSelectionHandler#EP_NAME
-   */
-  @Deprecated
-  public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
-    SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
-  }
-
   static ExtendWordSelectionHandler[] getExtendWordSelectionHandlers() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
-      for (ExtendWordSelectionHandler handler : Extensions.getExtensions(ExtendWordSelectionHandler.EP_NAME)) {
-        registerSelectioner(handler);        
+      for (ExtendWordSelectionHandler handler : ExtendWordSelectionHandler.EP_NAME.getExtensionList()) {
+        SELECTIONERS = ArrayUtil.append(SELECTIONERS, handler);
       }
     }
     return SELECTIONERS;
@@ -69,18 +46,18 @@ public class SelectWordUtil {
 
   public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = ch -> Character.isJavaIdentifierPart(ch);
 
-  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
+  public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<? super TextRange> ranges) {
     addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
   }
 
-  public static void addWordOrLexemeSelection(boolean camel, @NotNull Editor editor, int cursorOffset, @NotNull List<TextRange> ranges) {
+  public static void addWordOrLexemeSelection(boolean camel, @NotNull Editor editor, int cursorOffset, @NotNull List<? super TextRange> ranges) {
     addWordOrLexemeSelection(camel, editor, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
   }
 
   public static void addWordSelection(boolean camel,
                                       CharSequence editorText,
                                       int cursorOffset,
-                                      @NotNull List<TextRange> ranges,
+                                      @NotNull List<? super TextRange> ranges,
                                       CharCondition isWordPartCondition) {
     TextRange camelRange = camel ? getCamelSelectionRange(editorText, cursorOffset, isWordPartCondition) : null;
     if (camelRange != null) {
@@ -96,7 +73,7 @@ public class SelectWordUtil {
   public static void addWordOrLexemeSelection(boolean camel,
                                               @NotNull Editor editor,
                                               int cursorOffset,
-                                              @NotNull List<TextRange> ranges,
+                                              @NotNull List<? super TextRange> ranges,
                                               CharCondition isWordPartCondition) {
     TextRange camelRange = camel ? getCamelSelectionRange(editor.getDocument().getImmutableCharSequence(),
                                                           cursorOffset, isWordPartCondition) : null;
@@ -188,7 +165,7 @@ public class SelectWordUtil {
                                    @NotNull CharSequence text,
                                    int cursorOffset,
                                    @NotNull Editor editor,
-                                   @NotNull Processor<TextRange> consumer) {
+                                   @NotNull Processor<? super TextRange> consumer) {
     if (element == null) return;
 
     PsiFile file = element.getContainingFile();
@@ -221,7 +198,7 @@ public class SelectWordUtil {
   }
 
   private static void processInFile(@NotNull final PsiElement element,
-                                    @NotNull Processor<TextRange> consumer,
+                                    @NotNull Processor<? super TextRange> consumer,
                                     @NotNull CharSequence text,
                                     final int cursorOffset,
                                     @NotNull Editor editor) {
@@ -235,7 +212,7 @@ public class SelectWordUtil {
   }
 
   private static boolean processElement(@NotNull PsiElement element,
-                                        @NotNull Processor<TextRange> processor,
+                                        @NotNull Processor<? super TextRange> processor,
                                         @NotNull CharSequence text,
                                         int cursorOffset,
                                         @NotNull Editor editor) {
@@ -289,7 +266,7 @@ public class SelectWordUtil {
                                                     TextRange literalTextRange,
                                                     int cursorOffset,
                                                     Lexer lexer,
-                                                    List<TextRange> result) {
+                                                    List<? super TextRange> result) {
     lexer.start(editorText, literalTextRange.getStartOffset(), literalTextRange.getEndOffset());
 
     while (lexer.getTokenType() != null) {

@@ -25,6 +25,9 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
   fun testEnumSwitch() = doTest("Simple/EnumSwitch.java")
 
   @Test
+  fun testEnhancedSwitch() = doTest("Simple/EnhancedSwitch.java")
+
+  @Test
   fun testLocalClass() = doTest("Simple/LocalClass.java")
 
   @Test
@@ -62,4 +65,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
+
+  @Test
+  fun testImports() = doTest("Simple/External.java")
 }

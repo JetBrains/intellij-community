@@ -20,9 +20,10 @@ import org.jetbrains.jps.model.JpsElement;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public interface JpsGradleModuleExtension extends JpsElement {
+  String GRADLE_SOURCE_SET_MODULE_TYPE_KEY = "sourceSet";//copy of org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
+
   @Nullable
   String getModuleType();
 }

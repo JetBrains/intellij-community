@@ -6,22 +6,20 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.BaseReference
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeProviderBase
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
-private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
-  private val functionRef = SmartPointerManager.createPointer(fixture.function)
-  private val resolveRef = SmartPointerManager.createPointer(fixture.resolveTarget)
+class PyTestFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
+  private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
+  private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
 
-  override fun resolve() = resolveRef.element
+  override fun resolve() = resolveRef?.element
 
-  fun getFunction() = functionRef.element
-
-  override fun getVariants() = emptyArray<Any>()
+  fun getFunction() = functionRef?.element
 
   override fun isSoft() = true
 
@@ -31,11 +29,27 @@ private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: 
 
 
 object PyTextFixtureTypeProvider : PyTypeProviderBase() {
-  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    val param = referenceTarget as? PyNamedParameter ?: return null
-    val fixtureFunc = param.references.filterIsInstance(PyTextFixtureReference::class.java).firstOrNull()?.getFunction() ?: return null
-    return context.getReturnType(fixtureFunc)?.let { Ref(it) }
-
+  override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    if (! context.maySwitchToAST(func)) {
+      return null
+    }
+    val fixtureFunc = param.references.filterIsInstance<PyTestFixtureReference>().firstOrNull()?.getFunction() ?: return null
+    val returnType = context.getReturnType(fixtureFunc)
+    if (!fixtureFunc.isGenerator) {
+      return Ref(returnType)
+    }
+    else {
+      //If generator function returns collection this collection is generator
+      // which generates iteratedItemType.
+      // We also must open union (toStream)
+      val itemTypes = PyTypeUtil.toStream(returnType)
+        .map {
+          if (it is PyCollectionType && PyTypingTypeProvider.isGenerator(it))
+            it.iteratedItemType
+          else it
+        }.toList()
+      return Ref(PyUnionType.union(itemTypes))
+    }
   }
 }
 
@@ -43,7 +57,7 @@ private object PyTestReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
     val fixture = getFixture(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()
-    return arrayOf(PyTextFixtureReference(namedParam, fixture))
+    return arrayOf(PyTestFixtureReference(namedParam, fixture))
   }
 }
 

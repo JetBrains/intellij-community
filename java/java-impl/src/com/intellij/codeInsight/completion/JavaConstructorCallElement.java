@@ -49,7 +49,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     markClassItemWrapped(getDelegate());
     super.handleInsert(context);
 
@@ -66,13 +66,19 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
       }
     }
     if (callExpression != null) {
-      JavaMethodCallElement.showParameterHints(context, myConstructor, callExpression);
+      JavaMethodCallElement.showParameterHints(this, context, myConstructor, callExpression);
     }
   }
 
   @NotNull
   @Override
   public PsiMethod getObject() {
+    return myConstructor;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
     return myConstructor;
   }
 
@@ -90,6 +96,11 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   @Override
   public PsiType getType() {
     return myType;
+  }
+
+  @Override
+  public boolean isValid() {
+    return myConstructor.isValid() && myType.isValid();
   }
 
   @Override
@@ -111,7 +122,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   }
 
   static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
-                                            @NotNull PsiElement position, @NotNull Supplier<PsiClassType> type) {
+                                            @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
     if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) && 
         isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));
@@ -131,7 +142,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     return !constructor.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  private static boolean isConstructorCallPlace(@NotNull PsiElement position) {
+  static boolean isConstructorCallPlace(@NotNull PsiElement position) {
     return CachedValuesManager.getCachedValue(position, () -> {
       boolean result = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) &&
                        !JavaClassNameInsertHandler.isArrayTypeExpected(PsiTreeUtil.getParentOfType(position, PsiNewExpression.class));

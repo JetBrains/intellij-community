@@ -3,17 +3,17 @@ class CallOnOtherInstance2 {
   private Something something;
   private CallOnOtherInstance2 original;
 
-    public Something foo() //comment
-    {
-        CallOnOtherInstance2 other = this;
-        while (true) {
-            if (!other.duplicate) {
-                return other.something;
-            } else {
-                other = other.getOriginal();
-            }
-        }
-    }
+  public Something foo() {
+      CallOnOtherInstance2 other = this;
+      while (true) {
+          if (!other.duplicate) {
+              return other.something;
+          } else {
+              //comment
+              other = other.getOriginal();
+          }
+      }
+  }
 
   private CallOnOtherInstance2 getOriginal() {
     return original;

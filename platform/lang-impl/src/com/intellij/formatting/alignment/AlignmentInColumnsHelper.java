@@ -43,7 +43,6 @@ import java.util.List;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since May 24, 2010 3:09:52 PM
  */
 public class AlignmentInColumnsHelper {
 
@@ -61,7 +60,6 @@ public class AlignmentInColumnsHelper {
    * @param blankLinesToBeKeptOnReformat corresponding KEEP_LINE_IN_* formatting setting
    * @return {@code true} if given node should be aligned to the previous one; {@code false} otherwise
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   public boolean useDifferentVarDeclarationAlignment(ASTNode node, AlignmentInColumnsConfig config, int blankLinesToBeKeptOnReformat) {
     ASTNode prev = getPreviousAdjacentNodeOfTargetType(node, config, blankLinesToBeKeptOnReformat);
     if (prev == null) {
@@ -143,7 +141,6 @@ public class AlignmentInColumnsHelper {
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
    *         {@code null} otherwise
    */
-  @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
   private static ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode,
                                                              AlignmentInColumnsConfig config,
@@ -274,7 +271,6 @@ public class AlignmentInColumnsHelper {
     }
   }
 
-  @SuppressWarnings({"StatementWithEmptyBody"})
   @Nullable
   private static ASTNode getSubNodeThatStartsNewLine(@Nullable ASTNode startNode, AlignmentInColumnsConfig config) {
     if (startNode == null) {

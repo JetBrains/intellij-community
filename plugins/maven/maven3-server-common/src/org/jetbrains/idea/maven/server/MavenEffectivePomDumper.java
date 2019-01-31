@@ -240,6 +240,7 @@ public class MavenEffectivePomDumper {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Set keySet() {
       Set keynames = super.keySet();
       Vector list = new Vector(keynames);

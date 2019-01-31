@@ -29,12 +29,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
@@ -47,8 +48,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final List<Content> myContents = new ArrayList<>();
   private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<>();
 
-  private final Comparator<Content> myContentComparator =
-    (o1, o2) -> getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
+  private final Comparator<Content> myContentComparator = Comparator.comparing(o -> getCellFor(o).getPlaceInGrid());
 
   private final ViewContextEx myViewContext;
 
@@ -224,28 +224,72 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     return getCellFor(content).isMinimized(content);
   }
 
+  public interface ContentProvider {
+    Content[] getContents();
+  }
 
   static class Placeholder extends Wrapper implements NullableComponent {
 
-    private JComponent myContent;
+    private ContentProvider myContentProvider;
+    private JComponent myComponent;
+
+    {
+      setFocusTraversalPolicyProvider(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          Component content = getContent(true);
+          if (content != null) {
+            return content;
+          }
+          return super.getDefaultComponent(aContainer);
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+          Component content = getContent(false);
+          if (content != null) {
+            return content;
+          }
+          return super.getLastComponent(aContainer);
+        }
+
+        private Component getContent(boolean first) {
+          if (myContentProvider != null) {
+            Content[] contents = myContentProvider.getContents();
+            if (contents != null && contents.length > 0) {
+              Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
+              if (preferred != null && accept(preferred)) {
+                return preferred;
+              }
+            }
+          }
+          return null;
+        }
+      });
+    }
+
+    void setContentProvider(@NotNull ContentProvider provider) {
+      myContentProvider = provider;
+    }
 
     public CellTransform.Restore detach() {
       if (getComponentCount() == 1) {
-        myContent = (JComponent)getComponent(0);
+        myComponent = (JComponent)getComponent(0);
         removeAll();
       }
 
       if (getParent() instanceof JComponent) {
-        ((JComponent)getParent()).revalidate();
+        getParent().revalidate();
         getParent().repaint();
       }
 
       return new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
-          if (myContent != null) {
-            setContent(myContent);
-            myContent = null;
+          if (myComponent != null) {
+            setContent(myComponent);
+            myComponent = null;
           }
           return ActionCallback.DONE;
         }
@@ -360,13 +404,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public List<Content> getAttachedContents() {
-    ArrayList<Content> result = new ArrayList<>();
-
-    for (Content each : getContents()) {
-      result.add(each);
-    }
-
-    return result;
+    return new ArrayList<>(getContents());
   }
 
   @Override
@@ -385,7 +423,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
     }

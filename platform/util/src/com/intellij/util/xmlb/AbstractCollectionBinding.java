@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -32,7 +33,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Serializer serializer;
 
-  public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
+  AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
 
     itemType = elementType;
@@ -149,7 +150,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
   @Nullable
   @Override
-  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList(context, elements);
     }
@@ -160,7 +161,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @NotNull
-  protected abstract Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements);
+  protected abstract Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements);
 
   @Nullable
   private Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
@@ -185,7 +186,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
         }
       }
       else {
-        serializedItem.setAttribute(attributeName, XmlSerializerImpl.removeControlChars(serialized));
+        serializedItem.setAttribute(attributeName, JDOMUtil.removeControlChars(serialized));
       }
       return serializedItem;
     }

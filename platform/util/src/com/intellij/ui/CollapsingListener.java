@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface CollapsingListener {
-  void onCollapsingChanged(CollapsiblePanel panel, boolean newValue);
+  void onCollapsingChanged(@NotNull CollapsiblePanel panel, boolean newValue);
 }

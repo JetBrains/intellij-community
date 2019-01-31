@@ -11,13 +11,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
@@ -25,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -211,12 +213,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<File> files) {
+  public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
     refreshIoFiles(files, false, false, null);
   }
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     Application app = ApplicationManager.getApplication();
@@ -241,12 +243,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void refreshFiles(@NotNull Iterable<VirtualFile> files) {
+  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) {
     refreshFiles(files, false, false, null);
   }
 
   @Override
-  public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     RefreshQueue.getInstance().refresh(async, recursive, onFinish, ContainerUtil.toCollection(files));
   }
 
@@ -263,22 +265,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!myHandlers.remove(handler)) {
       LOG.error("Handler " + handler + " haven't been registered or already unregistered.");
     }
-  }
-
-  @Override
-  public boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor) {
-    return file.getFileSystem() != this
-           || processFile((NewVirtualFile)file, processor);
-  }
-
-  private static boolean processFile(@NotNull NewVirtualFile file, @NotNull Processor<VirtualFile> processor) {
-    if (!processor.process(file)) return false;
-    if (file.isDirectory()) {
-      for (VirtualFile child : file.getCachedChildren()) {
-        if (!processFile((NewVirtualFile)child, processor)) return false;
-      }
-    }
-    return true;
   }
 
   private boolean auxDelete(@NotNull VirtualFile file) throws IOException {
@@ -459,7 +445,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") OutputStream stream =
+    OutputStream stream =
       useSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
@@ -760,5 +746,23 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, ManagingFS.getInstance().getRoots(this));
+  }
+
+  @Override
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    return hasChildren(Paths.get(file.getPath()));
+  }
+
+  /**
+   * @return true if {@code path} represents a directory which has children.
+   */
+  public static boolean hasChildren(@NotNull Path path) {
+    // make sure to not load all children
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+      return stream.iterator().hasNext();
+    }
+    catch (IOException | SecurityException e) {
+      return true;
+    }
   }
 }

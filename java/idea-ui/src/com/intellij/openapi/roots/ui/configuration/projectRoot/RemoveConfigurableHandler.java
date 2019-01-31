@@ -34,9 +34,9 @@ public abstract class RemoveConfigurableHandler<T> {
     return myConfigurableClass;
   }
 
-  public boolean canBeRemoved(@NotNull Collection<T> objects) {
+  public boolean canBeRemoved(@NotNull Collection<? extends T> objects) {
     return true;
   }
 
-  public abstract boolean remove(@NotNull Collection<T> objects);
+  public abstract boolean remove(@NotNull Collection<? extends T> objects);
 }

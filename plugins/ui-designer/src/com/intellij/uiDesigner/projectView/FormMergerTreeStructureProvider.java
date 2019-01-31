@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.DeleteProvider;
@@ -26,7 +12,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -46,6 +31,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent.getValue() instanceof Form) return children;
@@ -80,18 +66,11 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       if (psiClass == null) continue;
       String qName = psiClass.getQualifiedName();
       if (qName == null) continue;
-      List<PsiFile> forms;
-      try {
-        forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
-      }
-      catch (ProcessCanceledException e) {
-        continue;
-      }
+      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
       Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
       if (!formNodes.isEmpty()) {
         Collection<PsiFile> formFiles = convertToFiles(formNodes);
         Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<>();
-        //noinspection unchecked
         subNodes.add((BasePsiNode<? extends PsiElement>) element);
         subNodes.addAll(formNodes);
         result.add(new FormNode(myProject, new Form(psiClass, formFiles), settings, subNodes));
@@ -102,7 +81,8 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return result;
   }
 
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataId) {
+  @Override
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
       for(AbstractTreeNode node: selected) {
@@ -138,7 +118,6 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     HashSet<PsiFile> psiFiles = new HashSet<>(forms);
     for (final AbstractTreeNode child : children) {
       if (child instanceof BasePsiNode) {
-        //noinspection unchecked
         BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
         //noinspection SuspiciousMethodCalls
         if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);
@@ -150,15 +129,17 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private static class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
-    public MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
+    MyDeleteProvider(final Collection<AbstractTreeNode> selected) {
       myElements = collectFormPsiElements(selected);
     }
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       DeleteHandler.deletePsiElement(myElements, project);
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       return DeleteHandler.shouldEnableDeleteAction(myElements);
     }

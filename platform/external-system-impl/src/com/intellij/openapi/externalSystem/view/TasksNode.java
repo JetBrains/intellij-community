@@ -33,7 +33,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/6/2014
  */
 @Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER)
 public class TasksNode extends ExternalSystemNode {
@@ -41,7 +40,7 @@ public class TasksNode extends ExternalSystemNode {
   private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<>();
 
   @SuppressWarnings("unchecked")
-  public TasksNode(ExternalProjectsView externalProjectsView, final Collection<DataNode<?>> dataNodes) {
+  public TasksNode(ExternalProjectsView externalProjectsView, final Collection<? extends DataNode<?>> dataNodes) {
     super(externalProjectsView, null, null);
 
     if (dataNodes != null && !dataNodes.isEmpty()) {
@@ -55,7 +54,7 @@ public class TasksNode extends ExternalSystemNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(ExternalSystemIcons.TaskGroup);
   }
@@ -82,7 +81,7 @@ public class TasksNode extends ExternalSystemNode {
         final ExternalSystemNode tasksGroupNode = new ExternalSystemNode(getExternalProjectsView(), null, null) {
 
           @Override
-          protected void update(PresentationData presentation) {
+          protected void update(@NotNull PresentationData presentation) {
             super.update(presentation);
             presentation.setIcon(ExternalSystemIcons.TaskGroup);
           }

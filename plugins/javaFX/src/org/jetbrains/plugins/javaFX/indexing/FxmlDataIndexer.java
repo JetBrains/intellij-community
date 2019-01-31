@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -20,6 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +45,13 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
     endDocument(path, sourceRoot, map, handler);
     return map;
   }
-  
+
   protected void endDocument(String math, VirtualFile sourceRoot, Map<String, Set<String>> map, IXMLBuilder handler){}
 
   protected IXMLBuilder createParseHandler(final String path, final Map<String, Set<String>> map) {
-    return new NanoXmlUtil.IXMLBuilderAdapter() {
+    return new NanoXmlBuilder() {
       @Override
-      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
         if (value != null && FxmlConstants.FX_ID.equals(nsPrefix + ":" + key)) {
           Set<String> paths = map.get(value);
           if (paths == null) {

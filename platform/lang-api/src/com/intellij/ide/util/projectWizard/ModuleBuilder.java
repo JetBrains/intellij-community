@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -155,11 +155,13 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
+  @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
+  @NotNull
   protected List<WizardInputField> getAdditionalFields() {
     return Collections.emptyList();
   }
@@ -258,7 +260,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     myDispatcher.getMulticaster().moduleCreated(module);
   }
 
-  public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
+  public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+  }
 
   public abstract ModuleType getModuleType();
 
@@ -330,6 +333,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
+  @Override
   public Icon getNodeIcon() {
     return getModuleType().getNodeIcon(false);
   }

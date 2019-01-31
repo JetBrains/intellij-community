@@ -39,12 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
-  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return false;
-    }
-  };
+  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
 
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT =

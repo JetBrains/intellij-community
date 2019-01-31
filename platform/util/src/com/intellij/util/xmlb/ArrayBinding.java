@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 class ArrayBinding extends AbstractCollectionBinding  {
-  public ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
+  ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
     super(valueClass.getComponentType(), accessor);
   }
 
@@ -22,8 +22,9 @@ class ArrayBinding extends AbstractCollectionBinding  {
     return "array";
   }
 
+  @Override
   @NotNull
-  protected Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  protected Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     int size = elements.size();
     Object[] result = (Object[])Array.newInstance(itemType, size);
     for (int i = 0; i < size; i++) {

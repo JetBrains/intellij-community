@@ -27,6 +27,7 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression, PsiParamet
    *
    * @return parameter list.
    */
+  @Override
   @NotNull
   PsiParameterList getParameterList();
 
@@ -36,6 +37,7 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression, PsiParamet
    *
    * @return lambda expression body.
    */
+  @Override
   @Nullable
   PsiElement getBody();
 

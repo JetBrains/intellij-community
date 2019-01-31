@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/14
  */
 public interface ExternalSystemExecutionConsoleManager<
   ExternalSystemRunConfiguration extends RunConfiguration,
@@ -47,6 +46,7 @@ public interface ExternalSystemExecutionConsoleManager<
   /**
    * @deprecated use {@link ExternalSystemExecutionConsoleManager#attachExecutionConsole(Project, ExternalSystemTask, ExecutionEnvironment, ProcessHandler)}
    */
+  @Deprecated
   @Nullable
   default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
                                                                 @NotNull Project project,

@@ -59,7 +59,7 @@ public class GotoSuperAction extends PresentableActionHandlerBasedAction impleme
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     if (CodeInsightActions.GOTO_SUPER.hasAnyExtensions()) {
       event.getPresentation().setVisible(true);
       super.update(event);

@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -42,13 +43,15 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -113,7 +116,7 @@ public class SearchDialog extends DialogWrapper {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         close(CANCEL_EXIT_CODE);
       }
     });
@@ -153,7 +156,7 @@ public class SearchDialog extends DialogWrapper {
 
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(final DocumentEvent event) {
+      public void documentChanged(@NotNull final DocumentEvent event) {
         initiateValidation();
       }
     });
@@ -170,7 +173,7 @@ public class SearchDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(() -> {
           myEditVariablesButton.setEnabled(compiled);
           getOKAction().setEnabled(valid);
-        });
+        }, ModalityState.stateForComponent(getRootPane()));
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -610,7 +613,7 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      removeUnusedVariableConstraints(myConfiguration);
+      myConfiguration.removeUnusedVariables();
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
@@ -620,14 +623,7 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeUnusedVariableConstraints(Configuration configuration) {
-    final List<String> variableNames = getVariablesFromListeners();
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
-    configuration.getMatchOptions().retainVariableConstraints(variableNames);
-  }
-
   public Configuration getConfiguration() {
-    removeUnusedVariableConstraints(myConfiguration);
     setValuesToConfig(myConfiguration);
     return myConfiguration;
   }

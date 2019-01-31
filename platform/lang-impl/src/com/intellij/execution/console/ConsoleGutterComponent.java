@@ -52,7 +52,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
   private final boolean atLineStart;
 
-  public ConsoleGutterComponent(@NotNull Editor editor, @NotNull GutterContentProvider gutterContentProvider, boolean atLineStart) {
+  ConsoleGutterComponent(@NotNull Editor editor, @NotNull GutterContentProvider gutterContentProvider, boolean atLineStart) {
     this.editor = (EditorImpl)editor;
     this.gutterContentProvider = gutterContentProvider;
     this.atLineStart = atLineStart;

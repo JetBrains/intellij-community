@@ -19,7 +19,7 @@ public class MavenModelPropertiesPatcher {
   /*
    * Add properties those should be added by plugins.
    */
-  public static void patch(Properties modelProperties, @Nullable Collection<MavenPlugin> plugins) {
+  public static void patch(Properties modelProperties, @Nullable Collection<? extends MavenPlugin> plugins) {
     if (plugins == null) return;
 
     Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> map = MavenPluginDescriptor.getDescriptorsMap();

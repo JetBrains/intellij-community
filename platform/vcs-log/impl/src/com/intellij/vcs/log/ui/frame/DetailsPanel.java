@@ -48,7 +48,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -57,6 +57,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,8 +201,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     repaint();
   }
 
-  private void resolveHashes(@NotNull List<CommitId> ids,
-                             @NotNull List<CommitPresentation> presentations,
+  private void resolveHashes(@NotNull List<? extends CommitId> ids,
+                             @NotNull List<? extends CommitPresentation> presentations,
                              @NotNull Set<String> unResolvedHashes,
                              @NotNull Condition<Object> expired) {
     if (!unResolvedHashes.isEmpty()) {
@@ -209,7 +210,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
         MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
 
         Set<String> fullHashes =
-          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == HashImpl.FULL_HASH_LENGTH));
+          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
         for (String fullHash : fullHashes) {
           Hash hash = HashImpl.build(fullHash);
           for (VirtualFile root : myLogData.getRoots()) {
@@ -252,7 +253,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
   }
 
-  private void setPresentations(@NotNull List<CommitId> ids,
+  private void setPresentations(@NotNull List<? extends CommitId> ids,
                                 @NotNull List<? extends CommitPresentation> presentations) {
     assert ids.size() == presentations.size();
     for (int i = 0; i < mySelection.size(); i++) {
@@ -277,13 +278,13 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     cancelResolve();
   }
 
-  private class CommitSelectionListenerForDetails extends CommitSelectionListener {
-    public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(DetailsPanel.this.myLogData, graphTable);
+  private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
+    CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
+      super(graphTable, DetailsPanel.this.myLogData.getMiniDetailsGetter());
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+    protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
       Set<String> unResolvedHashes = ContainerUtil.newHashSet();

@@ -70,6 +70,7 @@ public class InstrumentationClassFinder {
     final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
     loader = new ClassLoader(cpLoader) {
 
+      @Override
       public InputStream getResourceAsStream(String name) {
         InputStream is = null;
         is = super.getResourceAsStream(name);
@@ -83,6 +84,7 @@ public class InstrumentationClassFinder {
         return is;
       }
 
+      @Override
       protected Class findClass(String name) throws ClassNotFoundException {
         final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
         if (is == null) {
@@ -437,6 +439,7 @@ public class InstrumentationClassFinder {
       super(Opcodes.API_VERSION);
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PUBLIC) > 0) {
         myMethods.add(new PseudoMethod(access, name, desc));
@@ -444,6 +447,7 @@ public class InstrumentationClassFinder {
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
+    @Override
     public void visit(int version, int access, String pName, String signature, String pSuperName, String[] pInterfaces) {
       mySuperclassName = pSuperName;
       myInterfaces = pInterfaces;
@@ -462,7 +466,7 @@ public class InstrumentationClassFinder {
     private final List<Loader> myLoaders = new ArrayList<Loader>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
 
-    public ClassFinderClasspath(URL[] urls) {
+    ClassFinderClasspath(URL[] urls) {
       if (urls.length > 0) {
         for (int i = urls.length - 1; i >= 0; i--) {
           myUrls.push(urls[i]);
@@ -580,7 +584,6 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      @SuppressWarnings({"HardCodedStringLiteral"})
       FileLoader(URL url, int index) throws IOException {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {
@@ -592,9 +595,11 @@ public class InstrumentationClassFinder {
         }
       }
 
+      @Override
       public void releaseResources() {
       }
 
+      @Override
       public Resource getResource(final String name) {
         try {
           final URL url = new URL(getBaseURL(), name);
@@ -635,6 +640,7 @@ public class InstrumentationClassFinder {
         myURL = url;
       }
 
+      @Override
       public void releaseResources() {
         final ZipFile zipFile = myZipFile;
         if (zipFile != null) {
@@ -660,15 +666,15 @@ public class InstrumentationClassFinder {
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
-          if (!new File(s).exists()) {
-            throw new FileNotFoundException(s);
+          if (new File(s).exists()) {
+            return new ZipFile(s);
           }
-          return new ZipFile(s);
         }
 
         return null;
       }
 
+      @Override
       public Resource getResource(String name) {
         try {
           final ZipFile file = acquireZipFile();

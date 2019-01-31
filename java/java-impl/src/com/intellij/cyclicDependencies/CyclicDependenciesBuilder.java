@@ -27,10 +27,12 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.graph.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class CyclicDependenciesBuilder{
+  @NotNull
   private final Project myProject;
   private final AnalysisScope myScope;
   private final Map<String, PsiPackage> myPackages = new HashMap<>();
@@ -44,14 +46,16 @@ public class CyclicDependenciesBuilder{
 
   private String myRootNodeNameInUsageView;
 
-  public CyclicDependenciesBuilder(final Project project, final AnalysisScope scope) {
+  public CyclicDependenciesBuilder(@NotNull Project project, final AnalysisScope scope) {
     myProject = project;
     myScope = scope;
     myForwardBuilder = new ForwardDependenciesBuilder(myProject, myScope){
+      @Override
       public String getRootNodeNameInUsageView() {
         return CyclicDependenciesBuilder.this.getRootNodeNameInUsageView();
       }
 
+      @Override
       public String getInitialUsagesPosition() {
         return AnalysisScopeBundle.message("cyclic.dependencies.usage.view.initial.text");
       }
@@ -66,6 +70,7 @@ public class CyclicDependenciesBuilder{
     myRootNodeNameInUsageView = rootNodeNameInUsageView;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -204,14 +209,13 @@ public class CyclicDependenciesBuilder{
       myGraph = buildGraph();
     }
     final HashMap<PsiPackage, Set<List<PsiPackage>>> result = new HashMap<>();
-    for (Iterator<PsiPackage> iterator = packages.iterator(); iterator.hasNext();) {
-      PsiPackage psiPackage = iterator.next();
-        Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
-        if (paths2Pack == null) {
-          paths2Pack = new HashSet<>();
-          result.put(psiPackage, paths2Pack);
-        }
-        paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
+    for (PsiPackage psiPackage : packages) {
+      Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
+      if (paths2Pack == null) {
+        paths2Pack = new HashSet<>();
+        result.put(psiPackage, paths2Pack);
+      }
+      paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
     }
     return result;
   }
@@ -236,14 +240,18 @@ public class CyclicDependenciesBuilder{
 
   private Graph<PsiPackage> buildGraph() {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PsiPackage>() {
+      @Override
+      @NotNull
       public Collection<PsiPackage> getNodes() {
         return getAllScopePackages().values();
       }
 
+      @NotNull
+      @Override
       public Iterator<PsiPackage> getIn(PsiPackage psiPack) {
         final Set<PsiPackage> psiPackages = myPackageDependencies.get(psiPack);
         if (psiPackages == null) {     //for packs without java classes
-          return new HashSet<PsiPackage>().iterator();
+          return Collections.emptyIterator();
         }
         return psiPackages.iterator();
       }

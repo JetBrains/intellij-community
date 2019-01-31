@@ -10,10 +10,12 @@ import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 public interface ICvsRootProvider {
 
   ICvsRootProvider DUMMY = new ICvsRootProvider(){
+    @Override
     public IConnection getConnection(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
       return null;
     }
 
+    @Override
     public CvsRoot getCvsRoot(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
       return null;
     }

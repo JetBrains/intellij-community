@@ -210,6 +210,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
 
+  @Override
   public void dispose() {
     if (wordsPanel != null) {
       Disposer.dispose(wordsPanel);
@@ -227,6 +228,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
 
 
+    @Override
     protected String findItemToAdd() {
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
@@ -251,6 +253,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
 
 
+    @Override
     public void dispose() {
       myListModel.removeAllElements();
     }

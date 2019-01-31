@@ -92,11 +92,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see Application#runReadAction(Runnable)
  * @see Application#runWriteAction(Runnable)
- * @since 2016.2
  * @author peter
  */
 public abstract class TransactionGuard {
-  private static volatile TransactionGuard ourInstance;
+  private static volatile TransactionGuard ourInstance = CachedSingletonsRegistry.markCachedField(TransactionGuard.class);
 
   public static TransactionGuard getInstance() {
     TransactionGuard instance = ourInstance;

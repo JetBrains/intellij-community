@@ -64,6 +64,7 @@ public class ExternallyRenamedChange extends Change {
     return super.getOriginText(project);
   }
 
+  @Override
   @Nullable
   protected String getRenamedText() {
     if (myRenamedTargetName != null) {
@@ -72,6 +73,7 @@ public class ExternallyRenamedChange extends Change {
     return super.getRenamedText();
   }
 
+  @Override
   @Nullable
   protected String getMovedText(final Project project) {
     if (myRenamedTargetName != null) {

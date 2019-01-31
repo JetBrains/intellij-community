@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -37,8 +23,6 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -82,7 +66,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       return null;
     }
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
-      if (generator.isMyContext(callback, wrapping) && generator.isAppliedByDefault(callback.getContext())) {
+      if (generator.isMyContext(callback, wrapping) && generator.isAppliedByDefault(context)) {
         return generator;
       }
     }
@@ -126,7 +110,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, false);
     if (defaultGenerator == null) {
-      LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset", 
+      LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset",
                 AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return;
     }
@@ -141,7 +125,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   @Nullable
   private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
     ZenCodingGenerator defaultGenerator = null;
-    ZenCodingGenerator[] generators = ZenCodingGenerator.getInstances();
+    List<ZenCodingGenerator> generators = ZenCodingGenerator.getInstances();
     PsiElement context = callback.getContext();
     for (ZenCodingGenerator generator : generators) {
       if (generator.isMyContext(callback, wrapping) && generator.isAppliedByDefault(context)) {
@@ -164,6 +148,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return defaultGenerator;
   }
 
+  @NotNull
   private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
     List<ZenCodingFilter> result = new ArrayList<>();
 
@@ -215,7 +200,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     filters.addAll(extraFilters);
 
     checkTemplateOutputLength(node, callback);
-    
+
     callback.deleteTemplateKey(key);
     expand(node, generator, filters, null, callback, expandPrimitiveAbbreviations, segmentsLimit);
   }
@@ -225,7 +210,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                              List<ZenCodingFilter> filters,
                              String surroundedText,
                              CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
-    
+
     checkTemplateOutputLength(node, callback);
 
     GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, 1, surroundedText, true, null);
@@ -273,7 +258,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
       final TemplateToken token = ((TemplateNode)node).getTemplateToken();
       if (token != null) {
         final Map<String, String> attributes = token.getAttributes();
-        return attributes.isEmpty() || 
+        return attributes.isEmpty() ||
                attributes.containsKey(HtmlUtil.CLASS_ATTRIBUTE_NAME) && StringUtil.isEmpty(attributes.get(HtmlUtil.CLASS_ATTRIBUTE_NAME));
       }
     }
@@ -290,7 +275,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                                    }
                                  }, CONTEXT_HELP).show(callback);
   }
-  
+
   public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback, true);
     if (generator == null) {
@@ -317,9 +302,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, true);
     assert defaultGenerator != null;
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(
+      __ -> {
         String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
         if (selectedText != null) {
           ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selectedText);
@@ -338,8 +322,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
           }
         }
-      }
-    }), CodeInsightBundle.message("insert.code.template.command"), null));
+      }), CodeInsightBundle.message("insert.code.template.command"), null));
   }
 
   @Override
@@ -409,7 +392,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                   presentation.setTailText("\t Emmet abbreviation", true);
                 }
               };
-            
+
             result.addElement(lookupElement);
           }
         }

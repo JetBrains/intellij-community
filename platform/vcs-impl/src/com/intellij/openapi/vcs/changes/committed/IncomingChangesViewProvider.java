@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -57,6 +43,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     });
   }
 
+  @Override
   public JComponent initContent() {
     myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.emptyList());
     myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.not.loaded.message"));
@@ -71,6 +58,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     return myBrowser;
   }
 
+  @Override
   public void disposeContent() {
     myConnection.disconnect();
     Disposer.dispose(myBrowser);
@@ -105,10 +93,12 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   }
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {
+    @Override
     public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
       updateModel(true, true);
     }
 
+    @Override
     public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
       updateModel(true, true);
     }
@@ -124,6 +114,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
       myBrowser.setItems(Collections.emptyList(), CommittedChangesBrowserUseCase.INCOMING);
     }
 
+    @Override
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
       if (lastError != null) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);

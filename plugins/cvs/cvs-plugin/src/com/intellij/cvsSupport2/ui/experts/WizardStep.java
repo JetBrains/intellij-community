@@ -67,6 +67,7 @@ public abstract class WizardStep extends StepAdapter{
 
   public void saveState(){}
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myComponent;
   }

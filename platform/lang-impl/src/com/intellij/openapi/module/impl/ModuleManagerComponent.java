@@ -84,7 +84,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   }
 
   @Override
-  protected void showUnknownModuleTypeNotification(@NotNull List<Module> modulesWithUnknownTypes) {
+  protected void showUnknownModuleTypeNotification(@NotNull List<? extends Module> modulesWithUnknownTypes) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
       String message;
       if (modulesWithUnknownTypes.size() == 1) {
@@ -114,7 +114,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
-    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject);
+    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject, filePath);
   }
 
   @NotNull

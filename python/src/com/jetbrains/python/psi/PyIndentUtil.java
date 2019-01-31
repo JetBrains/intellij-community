@@ -16,20 +16,16 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Iterables;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +106,7 @@ public class PyIndentUtil {
 
   @NotNull
   private static String getExpectedBlockIndent(@NotNull PyStatementList anchor) {
-    final String indentStep = getIndentFromSettings(anchor.getProject());
+    final String indentStep = getIndentFromSettings(anchor.getContainingFile());
     final PyStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, true);
     if (parentBlock != null) {
       return getElementIndent(parentBlock) + indentStep;
@@ -129,49 +125,32 @@ public class PyIndentUtil {
       statementList = PsiTreeUtil.getParentOfType(element, PyStatementList.class, false);
     }
     return statementList;
-  } 
-
-  private static int getExpectedElementIndentSize(@NotNull PsiElement anchor) {
-    int depth = 0;
-    PyStatementList block = getAnchorStatementList(anchor);
-    while (block != null) {
-      depth += 1;
-      block = PsiTreeUtil.getParentOfType(block, PyStatementList.class);
-    }
-    return depth * getIndentSizeFromSettings(anchor.getProject());
   }
 
-  public static boolean areTabsUsedForIndentation(@NotNull Project project) {
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    return codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
-  }
-
-  public static char getIndentCharacter(@NotNull Project project) {
-    return areTabsUsedForIndentation(project) ? '\t' : ' ';
+  public static boolean areTabsUsedForIndentation(@NotNull PsiFile file) {
+    return CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER;
   }
 
   /**
    * Returns indentation size configured in the Python code style settings.
    * 
-   * @see #getIndentFromSettings(Project) 
+   * @see #getIndentFromSettings(PsiFile)
    */
-  public static int getIndentSizeFromSettings(@NotNull Project project) {
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    final CommonCodeStyleSettings.IndentOptions indentOptions = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE);
-    return indentOptions.INDENT_SIZE;
+  public static int getIndentSizeFromSettings(@NotNull PsiFile file) {
+    return CodeStyle.getIndentSize(file);
   }
 
   /**
    * Returns indentation configured in the Python code style settings either as space character repeated number times specified there
    * or a single tab character if tabs are set to use for indentation.
    * 
-   * @see #getIndentSizeFromSettings(Project) 
-   * @see #areTabsUsedForIndentation(Project) 
+   * @see #getIndentSizeFromSettings(PsiFile)
+   * @see #areTabsUsedForIndentation(PsiFile)
    */
   @NotNull
-  public static String getIndentFromSettings(@NotNull Project project) {
-    final boolean useTabs = areTabsUsedForIndentation(project);
-    return useTabs ? "\t" : StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(project));
+  public static String getIndentFromSettings(@NotNull PsiFile file) {
+    final boolean useTabs = areTabsUsedForIndentation(file);
+    return useTabs ? "\t" : StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(file));
   }
 
   @NotNull

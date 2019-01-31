@@ -15,8 +15,9 @@
  */
 package com.intellij.formatting.templateLanguages;
 
-import com.intellij.formatting.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -53,16 +54,16 @@ class BlockUtil {
   public static Pair<List<DataLanguageBlockWrapper>, List<DataLanguageBlockWrapper>> splitBlocksByRightBound(@NotNull Block parent, @NotNull TextRange bounds) {
     final List<Block> subBlocks = parent.getSubBlocks();
     if (subBlocks.size() == 0) return Pair
-      .create(Collections.<DataLanguageBlockWrapper>emptyList(), Collections.<DataLanguageBlockWrapper>emptyList());
+      .create(Collections.emptyList(), Collections.emptyList());
     final ArrayList<DataLanguageBlockWrapper> before = new ArrayList<>(subBlocks.size() / 2);
     final ArrayList<DataLanguageBlockWrapper> after = new ArrayList<>(subBlocks.size() / 2);
     splitByRightBoundAndCollectBlocks(subBlocks, before, after, bounds);
     return new Pair<>(before, after);
   }
 
-  private static void splitByRightBoundAndCollectBlocks(@NotNull List<Block> blocks,
-                                                        @NotNull List<DataLanguageBlockWrapper> before,
-                                                        @NotNull List<DataLanguageBlockWrapper> after,
+  private static void splitByRightBoundAndCollectBlocks(@NotNull List<? extends Block> blocks,
+                                                        @NotNull List<? super DataLanguageBlockWrapper> before,
+                                                        @NotNull List<? super DataLanguageBlockWrapper> after,
                                                         @NotNull TextRange bounds) {
     for (Block block : blocks) {
       final TextRange textRange = block.getTextRange();
@@ -80,7 +81,7 @@ class BlockUtil {
   }
 
   @Nullable
-  private static DataLanguageBlockWrapper createAndAddBlock(List<DataLanguageBlockWrapper> list, Block block, @Nullable final Indent indent) {
+  private static DataLanguageBlockWrapper createAndAddBlock(List<? super DataLanguageBlockWrapper> list, Block block, @Nullable final Indent indent) {
     DataLanguageBlockWrapper wrapper = DataLanguageBlockWrapper.create(block, indent);
     if (wrapper != null) {
       list.add(wrapper);
@@ -89,7 +90,7 @@ class BlockUtil {
   }
 
 
-  public static List<Block> mergeBlocks(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+  public static List<Block> mergeBlocks(@NotNull List<? extends TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
     ArrayList<Block> result = new ArrayList<>(tlBlocks.size() + foreignBlocks.size());
     int vInd = 0;
     int fInd = 0;
@@ -163,7 +164,7 @@ class BlockUtil {
     return result;
   }
 
-  private static int getEndOffset(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+  private static int getEndOffset(@NotNull List<? extends TemplateLanguageBlock> tlBlocks, @NotNull List<? extends DataLanguageBlockWrapper> foreignBlocks) {
     return Math.max(foreignBlocks.get(foreignBlocks.size() - 1).getTextRange().getEndOffset(),
                     tlBlocks.get(tlBlocks.size() - 1).getTextRange().getEndOffset());
   }
@@ -188,7 +189,7 @@ class BlockUtil {
     return list;
   }
 
-  static List<Block> splitBlockIntoFragments(@NotNull Block block, @NotNull List<TemplateLanguageBlock> subBlocks) {
+  static List<Block> splitBlockIntoFragments(@NotNull Block block, @NotNull List<? extends TemplateLanguageBlock> subBlocks) {
     final List<Block> children = new ArrayList<>(5);
     final TextRange range = block.getTextRange();
     int childStartOffset = range.getStartOffset();
@@ -212,17 +213,6 @@ class BlockUtil {
       }
     }
     return children;
-  }
-
-  static void printBlocks(@Nullable TextRange textRange, @NotNull List<Block> list) {
-    StringBuilder sb = new StringBuilder(String.valueOf(textRange)).append(": ");
-    for (Block block : list) {
-      ASTNode node = block instanceof ASTBlock ? ((ASTBlock)block).getNode() : null;
-      TextRange r = block.getTextRange();
-      sb.append(" [").append(node != null ? node.getElementType() : null)//.append(" ").append(((BlockWithParent)block).getParent() != null)
-          .append(r).append(block.getIndent()).append(block.getAlignment()).append("] ");
-    }
-    System.out.println(sb);
   }
 
   static List<Block> setParent(List<Block> children, BlockWithParent parent) {

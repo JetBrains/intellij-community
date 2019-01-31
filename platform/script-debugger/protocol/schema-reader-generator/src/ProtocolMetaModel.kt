@@ -1,15 +1,16 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol
 
 import org.jetbrains.io.JsonReaderEx
 
-val STRING_TYPE: String = "string"
-val INTEGER_TYPE: String = "integer"
-val NUMBER_TYPE: String = "number"
-val BOOLEAN_TYPE: String = "boolean"
-public val OBJECT_TYPE: String = "object"
-val ARRAY_TYPE: String = "array"
-val UNKNOWN_TYPE: String = "unknown"
-val ANY_TYPE: String = "any"
+const val STRING_TYPE: String = "string"
+const val INTEGER_TYPE: String = "integer"
+const val NUMBER_TYPE: String = "number"
+const val BOOLEAN_TYPE: String = "boolean"
+public const val OBJECT_TYPE: String = "object"
+const val ARRAY_TYPE: String = "array"
+const val UNKNOWN_TYPE: String = "unknown"
+const val ANY_TYPE: String = "any"
 
 interface ItemDescriptor {
   val description: String?
@@ -71,7 +72,7 @@ interface ProtocolMetaModel {
     val description: String?
 
     val hidden: Boolean
-    
+
     val experimental: Boolean
   }
 

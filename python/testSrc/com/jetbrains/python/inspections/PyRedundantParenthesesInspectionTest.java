@@ -78,8 +78,23 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-31795
+  public void testSyntaxErrorInside() {
+    doTest();
+  }
+
+  // PY-31795
+  public void testSingleLeftParenthesis() {
+    doTest();
+  }
+
   // PY-20324
   public void testReturn() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-33266
+  public void testNestedParentheses() {
+    doTest();
   }
 }

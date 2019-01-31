@@ -5,15 +5,16 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -24,6 +25,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
@@ -31,19 +33,18 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   InspectionToolWrapper getToolWrapper();
 
-  void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext,
-                      @NotNull InspectionNode node,
-                      @NotNull InspectionRVContentProvider provider,
-                      @NotNull InspectionTreeNode parentNode,
-                      boolean showStructure,
-                      boolean groupBySeverity);
+  default void patchToolNode(@NotNull InspectionTreeNode node,
+                             @NotNull InspectionRVContentProvider provider,
+                             boolean showStructure,
+                             boolean groupBySeverity) {
 
-  @Nullable
-  InspectionNode getToolNode();
+  }
 
   @NotNull
-  default RefElementNode createRefNode(@Nullable RefEntity entity) {
-    return new RefElementNode(entity, this);
+  default RefElementNode createRefNode(@Nullable RefEntity entity,
+                                       @NotNull InspectionTreeModel model,
+                                       @NotNull InspectionTreeNode parent) {
+    return new RefElementNode(entity, this, parent);
   }
 
   void updateContent();
@@ -76,10 +77,12 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   void cleanup();
   @Nullable
-  IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
+  QuickFix findQuickFixes(@NotNull CommonProblemDescriptor descriptor,
+                          RefEntity entity,
+                          String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
+
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
@@ -91,12 +94,29 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   GlobalInspectionContextImpl getContext();
 
-  void exportResults(@NotNull Element parentNode,
-                     @NotNull Predicate<RefEntity> isEntityExcluded,
-                     @NotNull Predicate<CommonProblemDescriptor> isProblemExcluded);
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
+                     @NotNull RefEntity refEntity,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
 
+  void exportResults(@NotNull Consumer<Element> resultConsumer,
+                     @NotNull Predicate<? super RefEntity> isEntityExcluded,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
+
+  /** Override the preview panel for the entity. */
   @Nullable
   default JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+    return null;
+  }
+
+  /** Override the preview panel for the problem descriptor. */
+  @Nullable
+  default JComponent getCustomPreviewPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
+    return null;
+  }
+
+  /** Additional actions applicable to the problem descriptor. May be (but not necessarily) related to the custom preview panel. */
+  @Nullable
+  default JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
 
@@ -108,8 +128,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
     return false;
   }
 
-  default int getProblemsCount(@NotNull InspectionTree tree) {
-    return tree.getSelectedDescriptors().length;
+  default boolean showProblemCount() {
+    return true;
   }
 
   @Nullable

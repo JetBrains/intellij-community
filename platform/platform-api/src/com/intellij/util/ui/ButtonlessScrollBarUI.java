@@ -98,6 +98,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private double myMacScrollbarFadeLevel;
   private boolean myMacScrollbarHidden;
 
+  @SuppressWarnings("deprecation")
+  private final RegionPainter<Float> myThumbPainter = JBScrollPane.getThumbPainter(() -> scrollbar);
   private ScrollbarRepaintCallback myRepaintCallback;
   private boolean myDisposed;
 
@@ -221,7 +223,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           if (scrollpane != null) {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
-            if (scrollpane.contains(loc) && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            if (!myMacScrollbarHidden && myMacScrollbarFadeLevel == 0 && scrollpane.contains(loc)) {
               startMacScrollbarFadeout();
             }
           }
@@ -734,16 +736,26 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           bounds.y += (bounds.height - max) / 2;
           bounds.height = max;
         }
-        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        float value = fixAnimationValue((float)myThumbFadeColorShift / getAnimationColorShift());
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
       else {
-        float value = (float)myThumbFadeColorShift / getAnimationColorShift();
-        RegionPainter<Float> painter = isDark() ? JBScrollPane.THUMB_DARK_PAINTER : JBScrollPane.THUMB_PAINTER;
-        painter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
+        float value = fixAnimationValue((float)myThumbFadeColorShift / getAnimationColorShift());
+        myThumbPainter.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, value);
       }
     }
+  }
+
+  private static float fixAnimationValue(float value) {
+    if (value < 0 || Double.isNaN(value)) {
+      LOG.debug("unexpected animation value: ", value);
+      return 0;
+    }
+    if (value > 1) {
+      LOG.debug("animation value is too big: ", value);
+      return 1;
+    }
+    return value;
   }
 
   @Deprecated
@@ -773,13 +785,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   private void paintMacThumb(Graphics g, Rectangle thumbBounds) {
     if (isMacScrollbarHiddenAndXcodeLikeScrollbar()) return;
 
-    thumbBounds = getMacScrollBarBounds(thumbBounds, true);
-    Graphics2D g2d = (Graphics2D)g;
-
-    float value = (float)(1 - myMacScrollbarFadeLevel);
     if (!myMacScrollbarHidden || alwaysPaintThumb()) {
-      RegionPainter<Float> painter = isDark() ? JBScrollPane.MAC_THUMB_DARK_PAINTER : JBScrollPane.MAC_THUMB_PAINTER;
-      painter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
+      thumbBounds = getMacScrollBarBounds(thumbBounds, true);
+      Graphics2D g2d = (Graphics2D)g;
+
+      float value = fixAnimationValue((float)(1 - myMacScrollbarFadeLevel));
+      myThumbPainter.paint(g2d, thumbBounds.x - 2, thumbBounds.y - 2, thumbBounds.width + 4, thumbBounds.height + 4, value);
     }
   }
   

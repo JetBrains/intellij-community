@@ -104,6 +104,7 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
     }
   }
 
+  @Override
   public void applyChanges(@NotNull JpsJavaModuleExtensionImpl modified) {
     setLanguageLevel(modified.myLanguageLevel);
     setInheritOutput(modified.myInheritOutput);

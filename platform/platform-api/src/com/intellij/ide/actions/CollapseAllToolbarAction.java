@@ -33,6 +33,7 @@ public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
     getTemplatePresentation().setDescription(description);
   }
 
+  @Override
   protected TreeExpander getExpander(DataContext dataContext) {
     return myTreeExpander;
   }

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated
  */
+@Deprecated
 public abstract class RuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
@@ -35,6 +36,7 @@ public abstract class RuntimeConfiguration extends LocatableConfigurationBase im
   /**
    * @deprecated use {@link #suggestedName()} instead
    */
+  @Deprecated
   @Nullable
   public String getGeneratedName() {
     return suggestedName();

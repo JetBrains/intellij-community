@@ -83,7 +83,7 @@ public class PyConfigurableInterpreterList {
   private static class PyInterpreterComparator implements Comparator<Sdk> {
     @Nullable private final Project myProject;
 
-    public PyInterpreterComparator(@Nullable final Project project) {
+    PyInterpreterComparator(@Nullable final Project project) {
       myProject = project;
     }
 
@@ -135,7 +135,7 @@ public class PyConfigurableInterpreterList {
     private static boolean associatedWithCurrent(Sdk o1, Project project) {
       final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
       if (data != null) {
-        final String path = data.getAssociatedProjectPath();
+        final String path = data.getAssociatedModulePath();
         final String projectBasePath = project.getBasePath();
         if (path != null && path.equals(projectBasePath)) {
           return true;

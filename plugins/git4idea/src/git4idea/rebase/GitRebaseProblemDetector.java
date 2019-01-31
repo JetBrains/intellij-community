@@ -17,7 +17,7 @@ package git4idea.rebase;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
 
 /**
  * <p>
@@ -30,7 +30,7 @@ import git4idea.commands.GitLineHandlerAdapter;
  * To use the detector add it as a {@link git4idea.commands.GitLineHandlerListener} to {@link git4idea.commands.GitLineHandler}
  * </p>
  */
-public class GitRebaseProblemDetector extends GitLineHandlerAdapter {
+public class GitRebaseProblemDetector implements GitLineHandlerListener {
   private final static String[] REBASE_CONFLICT_INDICATORS = {
     "Merge conflict in",
     "hint: after resolving the conflicts, mark the corrected paths",

@@ -22,8 +22,8 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 
@@ -66,6 +66,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   JpsDependenciesList getDependenciesList();
 
+  @Override
   @NotNull
   JpsModuleReference createReference();
 

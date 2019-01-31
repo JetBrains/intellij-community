@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2014
  */
 public class NotSupportedException extends ExternalSystemException {
   public NotSupportedException(@Nullable String message) {

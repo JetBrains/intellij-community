@@ -25,8 +25,6 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
 
   @NonNls
   private long mySentTime = 0;
-  @NonNls
-  private long myEventLogSentTime = 0;
 
   @Override
   public boolean isAllowed() {
@@ -45,13 +43,5 @@ public class BasicSentUsagesPersistenceComponent extends SentUsagesPersistence {
 
   public void setSentTime(long time) {
     mySentTime = time;
-  }
-
-  public long getEventLogLastTimeSent() {
-    return myEventLogSentTime;
-  }
-
-  public void setEventLogSentTime(long time) {
-    myEventLogSentTime = time;
   }
 }

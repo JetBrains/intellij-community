@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,6 +13,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +31,7 @@ public class PyQuickFixTest extends PyTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     myFixture.setCaresAboutInjection(false);
+    PyRenameElementQuickFixTest.registerTestNameSuggestionProvider(getTestRootDisposable());
   }
 
   @Override
@@ -247,9 +248,12 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
+  public void testRedundantParenthesesMultipleParentheses() {
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
   // PY-15506
   public void testEmptyListOfBaseClasses() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
@@ -265,13 +269,11 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3126
   public void testChainedComparison1() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison2() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -282,7 +284,6 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-5623
   public void testChainedComparison4() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -293,7 +294,6 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20004
   public void testChainedComparison7() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -688,6 +688,15 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
   }
 
+  // PY-30789
+  public void testSetImportedABCMetaAsMetaclassPy2() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/SetImportedABCMetaAsMetaclassPy2/main.py",
+                     PyAbstractClassInspection.class,
+                     "Set '" + PyNames.ABC_META + "' as metaclass",
+                     true,
+                     true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
@@ -719,7 +728,6 @@ public class PyQuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  @SuppressWarnings("Duplicates")
   protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,

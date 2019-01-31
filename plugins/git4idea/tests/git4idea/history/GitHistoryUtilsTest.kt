@@ -16,6 +16,8 @@
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
+import com.intellij.util.Consumer
+import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitRevisionNumber
 import git4idea.test.*
@@ -173,6 +175,29 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     val history = GitHistoryUtils.history(myProject, projectRoot)
     TestCase.assertNotNull("History does not contain merge commit", history.find { it.id.asString() == mergeCommit })
     TestCase.assertEquals("Merge commit is not the first", mergeCommit, history.first().id.asString())
+  }
+
+  fun testCollectCommitsMetadataFromReference() {
+    val branchName = "newBranch"
+    repo.checkoutNew(branchName, revisions.last().hash)
+    overwrite(afile, "new branch content")
+    val commitMessage = "change a file"
+    val hash = repo.addCommit(commitMessage)
+
+    val commit = GitHistoryUtils.collectCommitsMetadata(myProject, projectRoot, branchName)!!.single()
+    TestCase.assertEquals(hash, commit.id.asString())
+    TestCase.assertEquals(commitMessage, commit.fullMessage)
+  }
+
+  fun testLoadTimedCommits() {
+    val branchName = "newBranch"
+    repo.checkoutNew(branchName, revisions.last().hash)
+    repo.checkout(revisions.first().hash)
+
+    val hashes = mutableListOf<String>()
+    GitHistoryUtils.loadTimedCommits(myProject, projectRoot, Consumer<TimedVcsCommit> { hashes.add(it.id.asString()) }, "$branchName..HEAD")
+
+    TestCase.assertEquals(revisions.subList(0, revisions.size - 1).map { it.hash }, hashes)
   }
 
   private fun timeStampToDate(timestamp: String): Date {

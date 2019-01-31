@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/18/2015
  */
 public abstract class AbstractExternalDependency implements ExternalDependency {
 
@@ -46,7 +45,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
 
   public AbstractExternalDependency(ExternalDependencyId id,
                                     String selectionReason,
-                                    Collection<ExternalDependency> dependencies) {
+                                    Collection<? extends ExternalDependency> dependencies) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
     myDependencies = dependencies == null ? new ArrayList<ExternalDependency>() : ModelFactory.createCopy(dependencies);

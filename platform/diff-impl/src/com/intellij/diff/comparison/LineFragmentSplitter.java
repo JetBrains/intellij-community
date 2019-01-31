@@ -40,7 +40,7 @@ class LineFragmentSplitter {
 
   @NotNull private final List<WordBlock> myResult = new ArrayList<>();
 
-  public LineFragmentSplitter(@NotNull CharSequence text1,
+  LineFragmentSplitter(@NotNull CharSequence text1,
                               @NotNull CharSequence text2,
                               @NotNull List<InlineChunk> words1,
                               @NotNull List<InlineChunk> words2,
@@ -198,7 +198,7 @@ class LineFragmentSplitter {
     public final boolean hasWordsInside;
     public final boolean isEqualIgnoreWhitespaces;
 
-    public PendingChunk(@NotNull WordBlock block, boolean hasEqualWords, boolean hasWordsInside, boolean isEqualIgnoreWhitespaces) {
+    PendingChunk(@NotNull WordBlock block, boolean hasEqualWords, boolean hasWordsInside, boolean isEqualIgnoreWhitespaces) {
       this.block = block;
       this.hasEqualWords = hasEqualWords;
       this.hasWordsInside = hasWordsInside;

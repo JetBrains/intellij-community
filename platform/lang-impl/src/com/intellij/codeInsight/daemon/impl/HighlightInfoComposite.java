@@ -17,14 +17,14 @@ import java.util.List;
 class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
-  static HighlightInfoComposite create(@NotNull List<HighlightInfo> infos) {
+  static HighlightInfoComposite create(@NotNull List<? extends HighlightInfo> infos) {
     // derive composite's offsets from an info with tooltip, if present
     HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
     if (anchorInfo == null) anchorInfo = infos.get(0);
     return new HighlightInfoComposite(infos, anchorInfo);
   }
 
-  private HighlightInfoComposite(@NotNull List<HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
+  private HighlightInfoComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
     super(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
           createCompositeDescription(infos), createCompositeTooltip(infos), anchorInfo.type.getSeverity(null), false, null, false, 0,
           anchorInfo.getProblemGroup(), anchorInfo.getGutterIconRenderer());
@@ -47,7 +47,7 @@ class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeDescription(List<HighlightInfo> infos) {
+  private static String createCompositeDescription(List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
@@ -67,7 +67,7 @@ class HighlightInfoComposite extends HighlightInfo {
   }
 
   @Nullable
-  private static String createCompositeTooltip(@NotNull List<HighlightInfo> infos) {
+  private static String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
       String toolTip = info.getToolTip();

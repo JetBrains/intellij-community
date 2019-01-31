@@ -15,7 +15,8 @@
  */
 package com.siyeh.ipp.forloop;
 
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.psi.PsiKeyword;
 import com.siyeh.ig.controlflow.ForLoopReplaceableByWhileInspection;
 import com.siyeh.ipp.IPPTestCase;
 
@@ -29,11 +30,12 @@ public class ReplaceForLoopWithWhileLoopFixTest extends IPPTestCase {
   public void testDoubleLabelNoBraces() { doTest(); }
   public void testUpdatingMuch() { doTest(); }
   public void testContinuing() { doTest(); }
+  public void testConflictingNames() { doTest(); }
   public void testNoInit() { doTest(); }
 
   @Override
   protected String getIntentionName() {
-    return InspectionGadgetsBundle.message("for.loop.replaceable.by.while.replace.quickfix");
+    return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.WHILE);
   }
 
   @Override

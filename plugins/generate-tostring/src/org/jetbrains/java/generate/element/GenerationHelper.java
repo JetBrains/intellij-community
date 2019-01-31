@@ -32,7 +32,7 @@ public class GenerationHelper {
 
   //used in generate equals/hashCode
   @SuppressWarnings("unused")
-  public static String getUniqueLocalVarName(String base, List<Element> elements, JavaCodeStyleSettings settings) {
+  public static String getUniqueLocalVarName(String base, List<? extends Element> elements, JavaCodeStyleSettings settings) {
     base = settings.LOCAL_VARIABLE_NAME_PREFIX + base;
     String id = base;
     int index = 0;

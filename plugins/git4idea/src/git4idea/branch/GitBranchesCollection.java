@@ -67,12 +67,13 @@ public final class GitBranchesCollection {
 
   @Nullable
   public GitLocalBranch findLocalBranch(@NotNull String name) {
-    return findByName(myLocalBranches.keySet(), name);
+    GitLocalBranch branch = new GitLocalBranch(name);
+    return myLocalBranches.containsKey(branch) ? branch : null;
   }
 
   @Nullable
   public GitBranch findBranchByName(@NotNull String name) {
-    GitLocalBranch branch = findByName(myLocalBranches.keySet(), name);
+    GitLocalBranch branch = findLocalBranch(name);
     return branch != null ? branch : findByName(myRemoteBranches.keySet(), name);
   }
 
@@ -80,5 +81,4 @@ public final class GitBranchesCollection {
   private static <T extends GitBranch> T findByName(Collection<T> branches, @NotNull final String name) {
     return ContainerUtil.find(branches, branch -> GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName()));
   }
-
 }

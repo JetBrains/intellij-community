@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.extractMethodObject;
 
@@ -27,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -60,6 +47,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -72,6 +60,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   protected final MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
+  @NotNull
   private String myInnerClassName;
 
   private boolean myMultipleExitPoints;
@@ -89,20 +78,22 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
-  public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
+  public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull String innerClassName) {
     super(project);
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
-    myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(project);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -152,10 +143,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   public void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
-        myInnerClass = (PsiClass)getMethod().getContainingClass().add(myElementFactory.createClass(getInnerClassName()));
+        myInnerClass = (PsiClass)addInnerClass(getMethod().getContainingClass(), myElementFactory.createClass(getInnerClassName()));
         final boolean isStatic = copyMethodModifiers() && notHasGeneratedFields();
         for (UsageInfo usage : usages) {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(usage.getElement(), PsiMethodCallExpression.class);
@@ -373,7 +365,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());
-      for (PsiReference reference : ReferencesSearch.search(var)) {
+      for (PsiReference reference : ReferencesSearch.search(var, var.getUseScope())) {
         reference.handleElementRename(fieldName);
       }
     }
@@ -527,6 +519,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return "";
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
@@ -622,7 +615,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       parameterList.add(parm);
 
       final PsiField field = createField(parm, constructor, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, parameter.getUseScope())) {
         reference.handleElementRename(field.getName());
       }
     }
@@ -689,6 +682,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return myExtractProcessor.getExtractedMethod();
   }
 
+  @NotNull
   public String getInnerClassName() {
     return myInnerClassName;
   }
@@ -718,10 +712,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     };
   }
 
+  protected PsiElement addInnerClass(PsiClass containingClass, PsiClass innerClass) {
+    return containingClass.add(innerClass);
+  }
+
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
-  
+
   protected boolean isFoldingApplicable() {
     return true;
   }
@@ -749,7 +747,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected void initDuplicates() {
+    protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
       myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
                              .map(finder -> finder.findDuplicates(myTargetClass))
                              .orElse(new ArrayList<>());
@@ -865,8 +863,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null 
-                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput]) 
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null
+                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput])
                                     : GenerateMembersUtil.suggestGetterName(pureName, variable.getType(), myProject);
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
@@ -909,7 +907,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     private void rebindExitStatement(final String objectName) {
       final PsiStatement exitStatementCopy = myExtractProcessor.myFirstExitStatementCopy;
       if (exitStatementCopy != null) {
-        myExtractProcessor.getDuplicates().clear();
+        myExtractProcessor.myDuplicates = new ArrayList<>();
         final Map<String, PsiVariable> outVarsNames = new HashMap<>();
         for (PsiVariable variable : myOutputVariables) {
           outVarsNames.put(variable.getName(), variable);

@@ -87,7 +87,6 @@ public class PathInterner {
       int oldLen = sb.length();
       sb.setLength(oldLen + len);
       byte[] bytes = (byte[]) encodedString;
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0, len = bytes.length; i < len; i++) {
         sb.setCharAt(oldLen + i, (char)bytes[i]);
       }

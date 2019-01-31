@@ -33,6 +33,7 @@ public class PropertyStubImpl extends StubBase<Property> implements PropertyStub
     myKey = key;
   }
 
+  @Override
   public String getKey() {
     return myKey;
   }

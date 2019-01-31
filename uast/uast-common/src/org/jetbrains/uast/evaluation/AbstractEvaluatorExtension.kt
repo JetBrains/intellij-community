@@ -60,7 +60,7 @@ abstract class AbstractEvaluatorExtension(override val language: Language) : UEv
 }
 
 abstract class SimpleEvaluatorExtension : AbstractEvaluatorExtension(Language.ANY) {
-  override final fun evaluatePostfix(operator: UastPostfixOperator, operandValue: UValue, state: UEvaluationState): UEvaluationInfo {
+  final override fun evaluatePostfix(operator: UastPostfixOperator, operandValue: UValue, state: UEvaluationState): UEvaluationInfo {
     val result = evaluatePostfix(operator, operandValue)
     return if (result != UUndeterminedValue)
       result.toConstant() to state
@@ -70,7 +70,7 @@ abstract class SimpleEvaluatorExtension : AbstractEvaluatorExtension(Language.AN
 
   open fun evaluatePostfix(operator: UastPostfixOperator, operandValue: UValue): Any? = UUndeterminedValue
 
-  override final fun evaluatePrefix(operator: UastPrefixOperator, operandValue: UValue, state: UEvaluationState): UEvaluationInfo {
+  final override fun evaluatePrefix(operator: UastPrefixOperator, operandValue: UValue, state: UEvaluationState): UEvaluationInfo {
     val result = evaluatePrefix(operator, operandValue)
     return if (result != UUndeterminedValue)
       result.toConstant() to state
@@ -80,7 +80,7 @@ abstract class SimpleEvaluatorExtension : AbstractEvaluatorExtension(Language.AN
 
   open fun evaluatePrefix(operator: UastPrefixOperator, operandValue: UValue): Any? = UUndeterminedValue
 
-  override final fun evaluateBinary(binaryExpression: UBinaryExpression,
+  final override fun evaluateBinary(binaryExpression: UBinaryExpression,
                                     leftValue: UValue,
                                     rightValue: UValue,
                                     state: UEvaluationState): UEvaluationInfo {
@@ -93,7 +93,7 @@ abstract class SimpleEvaluatorExtension : AbstractEvaluatorExtension(Language.AN
 
   open fun evaluateBinary(binaryExpression: UBinaryExpression, leftValue: UValue, rightValue: UValue): Any? = UUndeterminedValue
 
-  override final fun evaluateMethodCall(target: PsiMethod, argumentValues: List<UValue>, state: UEvaluationState): UEvaluationInfo {
+  final override fun evaluateMethodCall(target: PsiMethod, argumentValues: List<UValue>, state: UEvaluationState): UEvaluationInfo {
     val result = evaluateMethodCall(target, argumentValues)
     return if (result != UUndeterminedValue)
       result.toConstant() to state
@@ -103,7 +103,7 @@ abstract class SimpleEvaluatorExtension : AbstractEvaluatorExtension(Language.AN
 
   open fun evaluateMethodCall(target: PsiMethod, argumentValues: List<UValue>): Any? = UUndeterminedValue
 
-  override final fun evaluateVariable(variable: UVariable, state: UEvaluationState): UEvaluationInfo {
+  final override fun evaluateVariable(variable: UVariable, state: UEvaluationState): UEvaluationInfo {
     val result = evaluateVariable(variable)
     return if (result != UUndeterminedValue)
       result.toConstant() to state

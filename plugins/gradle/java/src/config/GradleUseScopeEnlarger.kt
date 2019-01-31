@@ -45,8 +45,9 @@ class GradleUseScopeEnlarger : UseScopeEnlarger() {
       val rootProjectPath = getExternalRootProjectPath(module) ?: return null
       return if (!isApplicable(element, module, rootProjectPath, virtualFile, fileIndex)) null
       else object : GlobalSearchScope(element.project) {
-        override fun contains(file: VirtualFile) = GradleConstants.EXTENSION == file.extension
-        override fun compare(file1: VirtualFile, file2: VirtualFile) = 0
+        override fun contains(file: VirtualFile): Boolean {
+          return GradleConstants.EXTENSION == file.extension || file.name.endsWith(GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+        }
         override fun isSearchInModuleContent(aModule: Module) = rootProjectPath == getExternalRootProjectPath(module)
         override fun isSearchInLibraries() = false
       }

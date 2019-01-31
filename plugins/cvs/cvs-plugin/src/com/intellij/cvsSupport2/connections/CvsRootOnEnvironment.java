@@ -27,10 +27,12 @@ public class CvsRootOnEnvironment extends CvsRootProvider{
     super(rootFile, env);
   }
 
+  @Override
   public String getRepository() {
     return myCvsEnvironment.getRepository();
   }
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return myCvsEnvironment.getRevisionOrDate();
   }

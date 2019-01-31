@@ -29,6 +29,7 @@ import java.util.Collection;
 
 public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory {
 
+  @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     if (element.getLanguage() == JavaLanguage.INSTANCE && element instanceof PsiMethod && !((PsiMethod)element).isConstructor()) {
       final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
@@ -37,18 +38,22 @@ public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory
     return false;
   }
 
+  @Override
   public String getOptionName() {
     return RefactoringBundle.message("rename.overloads");
   }
 
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isRenameOverloads();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     JavaRefactoringSettings.getInstance().setRenameOverloads(enabled);
   }
 
+  @Override
   @NotNull
   public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new AutomaticOverloadsRenamer((PsiMethod)element, newName);

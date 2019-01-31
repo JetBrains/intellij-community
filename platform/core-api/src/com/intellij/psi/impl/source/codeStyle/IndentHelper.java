@@ -33,7 +33,6 @@ public abstract class IndentHelper {
   /**
    * @deprecated Use {@link #getIndent(PsiFile, ASTNode)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public final int getIndent(Project project, FileType fileType, ASTNode element) {
     return getIndent(getFile(element), element);
@@ -42,7 +41,6 @@ public abstract class IndentHelper {
   /**
    * @deprecated Use {@link #getIndent(PsiFile, ASTNode, boolean)}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public final int getIndent(Project project, FileType fileType, ASTNode element, boolean includeNonSpace) {
     return getIndent(getFile(element), element, includeNonSpace);

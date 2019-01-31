@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -34,6 +33,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
@@ -94,7 +94,7 @@ public class EditorWindow {
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON);
 
   private boolean myIsDisposed;
-  static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
+  public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
@@ -292,12 +292,12 @@ public class EditorWindow {
     }, myOwner);
   }
 
-  private void removeFromSplitter() {
+  void removeFromSplitter() {
     if (!inSplitter()) return;
 
     if (myOwner.getCurrentWindow() == this) {
       EditorWindow[] siblings = findSiblings();
-      myOwner.setCurrentWindow(siblings[0], false);
+      myOwner.setCurrentWindow(siblings[0], true);
     }
 
     Splitter splitter = (Splitter)myPanel.getParent();
@@ -314,9 +314,13 @@ public class EditorWindow {
       }
     }
     else if (parent instanceof EditorsSplitters) {
+      Component currentFocusComponent = getGlobalInstance().getFocusedDescendantFor(parent);
+
       parent.removeAll();
       parent.add(otherComponent, BorderLayout.CENTER);
       parent.revalidate();
+
+      if (currentFocusComponent != null) currentFocusComponent.requestFocusInWindow();
     }
     else {
       throw new IllegalStateException("Unknown container: " + parent);
@@ -325,14 +329,14 @@ public class EditorWindow {
     dispose();
   }
 
-  private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
+  int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
     final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
     if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
       return currentlySelectedIndex;
     }
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getActiveMruEditorOnClose()) {
+    if (uiSettings.getState().getActiveMruEditorOnClose()) {
       // try to open last visited file
       final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
       for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
@@ -562,7 +566,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
@@ -580,7 +584,7 @@ public class EditorWindow {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       // this is essential for ability to close opened file
       if (DATA_KEY.is(dataId)){
         return myWindow;
@@ -606,13 +610,13 @@ public class EditorWindow {
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     final TComp comp;
     if (myTabbedPane != null) {
-      comp = (TComp)myTabbedPane.getSelectedComponent(ignorePopup);
+      comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);
@@ -774,7 +778,7 @@ public class EditorWindow {
           final VirtualFile file = selectedEditor.getFile();
 
           if (virtualFile == null) {
-            for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+            for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
               VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
 
               if (associatedFile != null) {
@@ -930,8 +934,7 @@ public class EditorWindow {
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
     if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
-      modifiedIcon =
-        settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+      modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
     }
     else {
@@ -1000,7 +1003,7 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null &&
-        getTabCount() < UISettings.getInstance().getEditorTabLimit() &&
+        getTabCount() < UISettings.getInstance().getState().getEditorTabLimit() &&
         findFileComposite(siblingEditor.getFile()) == null || myTabbedPane == null && getTabCount() == 0) {
       setEditor(siblingEditor, true);
     }
@@ -1112,7 +1115,7 @@ public class EditorWindow {
       if (myTabbedPane == null) return;
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
-        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getCloseNonModifiedFilesFirst(), transferFocus);
+        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
       }
       finally {
         setSelectedEditor(selectedComposite, false);
@@ -1231,11 +1234,11 @@ public class EditorWindow {
 
   public void clear() {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-    
+
     FileEditorManagerImpl manager = getManager();
-    FileEditorManagerListener.Before beforePublisher = 
+    FileEditorManagerListener.Before beforePublisher =
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
-    FileEditorManagerListener afterPublisher = 
+    FileEditorManagerListener afterPublisher =
       manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
     for (EditorWithProviderComposite composite : getEditors()) {
       VirtualFile file = composite.getFile();

@@ -1,20 +1,21 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
  */
-//todo generic? #UX-1
 public interface SearchEverywhereContributor<F> {
 
   ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
@@ -25,27 +26,81 @@ public interface SearchEverywhereContributor<F> {
   @NotNull
   String getGroupName();
 
+  @NotNull
+  default String getFullGroupName() {
+    return getGroupName();
+  }
+
+  @Nullable
   String includeNonProjectItemsText();
 
   int getSortWeight();
 
   boolean showInFindResults();
 
-  ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                                         ProgressIndicator progressIndicator, int elementsLimit);
-
-  default List<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter,
-                              ProgressIndicator progressIndicator) {
-    return search(pattern, everywhere, filter, progressIndicator, -1).getItems();
+  default boolean isShownInSeparateTab() {
+    return false;
   }
 
-  boolean processSelectedItem(Object selected, int modifiers, String searchText);
+  default int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return 0;
+  }
 
-  ListCellRenderer getElementsRenderer(JList<?> list);
+  @NotNull
+  default List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    return Collections.emptyList();
+  }
 
-  Object getDataForItem(Object element, String dataId);
+  @Nullable
+  default String getAdvertisement() { return null; }
 
-  default String filterControlSymbols(String pattern) {
+  void fetchElements(@NotNull String pattern,
+                     boolean everywhere,
+                     @Nullable SearchEverywhereContributorFilter<F> filter,
+                     @NotNull ProgressIndicator progressIndicator,
+                     @NotNull Function<Object, Boolean> consumer);
+
+  @NotNull
+  default ContributorSearchResult<Object> search(@NotNull String pattern,
+                                                 boolean everywhere,
+                                                 @Nullable SearchEverywhereContributorFilter<F> filter,
+                                                 @NotNull ProgressIndicator progressIndicator,
+                                                 int elementsLimit) {
+    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
+    fetchElements(pattern, everywhere, filter, progressIndicator, element -> {
+      if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
+        builder.addItem(element);
+        return true;
+      }
+      else {
+        builder.setHasMore(true);
+        return false;
+      }
+    });
+
+    return builder.build();
+  }
+
+  @NotNull
+  default List<Object> search(@NotNull String pattern,
+                              boolean everywhere,
+                              @Nullable SearchEverywhereContributorFilter<F> filter,
+                              @NotNull ProgressIndicator progressIndicator) {
+    List<Object> res = new ArrayList<>();
+    fetchElements(pattern, everywhere, filter, progressIndicator, o -> res.add(o));
+    return res;
+  }
+
+  boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText);
+
+  @NotNull
+  ListCellRenderer getElementsRenderer(@NotNull JList<?> list);
+
+  @Nullable
+  Object getDataForItem(@NotNull Object element, @NotNull String dataId);
+
+  @NotNull
+  default String filterControlSymbols(@NotNull String pattern) {
     return pattern;
   }
 
@@ -53,6 +108,15 @@ public interface SearchEverywhereContributor<F> {
     return false;
   }
 
+  default boolean isDumbModeSupported() {
+    return true;
+  }
+
+  default boolean isEmptyPatternSupported() {
+    return false;
+  }
+
+  @NotNull
   static List<SearchEverywhereContributorFactory<?>> getProviders() {
     return Arrays.asList(EP_NAME.getExtensions());
   }

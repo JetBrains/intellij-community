@@ -54,7 +54,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/29/13
  */
 class ImportMavenRepositoriesTask {
 
@@ -212,7 +211,7 @@ class ImportMavenRepositoriesTask {
 
     try {
       if (expression instanceof PsiLiteral) {
-        URI uri = new URI(String.valueOf(PsiLiteral.class.cast(expression).getValue()));
+        URI uri = new URI(String.valueOf(((PsiLiteral)expression).getValue()));
         if (uri.getScheme() != null && StringUtil.startsWith(uri.getScheme(), "http")) return uri;
       }
     }

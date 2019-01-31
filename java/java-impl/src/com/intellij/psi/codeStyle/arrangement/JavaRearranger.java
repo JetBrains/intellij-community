@@ -43,8 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
@@ -54,7 +54,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 7/20/12 2:31 PM
  */
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
                                        ArrangementSectionRuleAwareSettings,
@@ -175,9 +174,13 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     Collection<JavaArrangementPropertyInfo> properties = info.getProperties();
     for (JavaArrangementPropertyInfo propertyInfo : properties) {
       JavaElementArrangementEntry getter = propertyInfo.getGetter();
-      JavaElementArrangementEntry setter = propertyInfo.getSetter();
-      if (getter != null && setter != null && setter.getDependencies() == null) {
-        setter.addDependency(getter);
+      List<JavaElementArrangementEntry> setters = propertyInfo.getSetters();
+      if (getter != null) {
+        JavaElementArrangementEntry previous = getter;
+        for (JavaElementArrangementEntry setter: setters) {
+          setter.addDependency(previous);
+          previous = setter;
+        }
       }
     }
   }
@@ -247,10 +250,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     @NotNull ArrangementSettings settings)
   {
     JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, settings));
+    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, settings, false));
 
     JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
-    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), settings));
+    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), settings, false));
     if (newEntryInfo.getEntries().size() != 1) {
       return null;
     }
@@ -266,7 +269,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   {
     // Following entries are subject to arrangement: class, interface, field, method.
     JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, settings));
+    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, settings, true));
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
         setupGettersAndSetters(parseInfo);
@@ -285,7 +288,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return parseInfo.getEntries();
   }
 
-  public void setupFieldInitializationDependencies(@NotNull List<ArrangementEntryDependencyInfo> fieldDependencyRoots,
+  public void setupFieldInitializationDependencies(@NotNull List<? extends ArrangementEntryDependencyInfo> fieldDependencyRoots,
                                                    @NotNull ArrangementSettings settings,
                                                    @NotNull JavaArrangementParseInfo parseInfo)
   {
@@ -419,7 +422,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     return MUTEXES;
   }
 
-  private static void and(@NotNull List<StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
+  private static void and(@NotNull List<? super StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
       if (conditions.length == 1) {
         matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
           conditions[0]

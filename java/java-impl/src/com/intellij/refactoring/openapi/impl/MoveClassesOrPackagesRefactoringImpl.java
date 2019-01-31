@@ -17,7 +17,10 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.MoveClassesOrPackagesRefactoring;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 
 import java.util.List;
@@ -32,26 +35,32 @@ public class MoveClassesOrPackagesRefactoringImpl extends RefactoringImpl<MoveCl
     super(new MoveClassesOrPackagesProcessor(project, elements, moveDestination, true, true, null));
   }
 
+  @Override
   public List<PsiElement> getElements() {
     return myProcessor.getElements();
   }
 
+  @Override
   public PackageWrapper getTargetPackage() {
     return myProcessor.getTargetPackage();
   }
 
+  @Override
   public void setSearchInComments(boolean value) {
     myProcessor.setSearchInComments(value);
   }
 
+  @Override
   public void setSearchInNonJavaFiles(boolean value) {
     myProcessor.setSearchInNonJavaFiles(value);
   }
 
+  @Override
   public boolean isSearchInComments() {
     return myProcessor.isSearchInComments();
   }
 
+  @Override
   public boolean isSearchInNonJavaFiles() {
     return myProcessor.isSearchInNonJavaFiles();
   }

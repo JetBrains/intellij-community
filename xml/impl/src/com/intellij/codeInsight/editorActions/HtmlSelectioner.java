@@ -90,7 +90,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return result;
   }
 
-  private static void addTagSelection2(PsiElement e, List<TextRange> result) {
+  private static void addTagSelection2(PsiElement e, List<? super TextRange> result) {
     XmlTag tag = PsiTreeUtil.getParentOfType(e, XmlTag.class, true);
     while (tag != null) {
       result.add(tag.getTextRange());
@@ -112,8 +112,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
   }
 
-  private void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
-                                            @NotNull CharSequence editorText, @Nullable PsiElement e) {
+  private void addAttributeSelection(@NotNull List<? super TextRange> result, @NotNull Editor editor, int cursorOffset,
+                                     @NotNull CharSequence editorText, @Nullable PsiElement e) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
 
     if (attribute != null) {
@@ -171,8 +171,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
-  public static void addClassAttributeRanges(@NotNull List<TextRange> result, @NotNull Editor editor, int cursorOffset,
-                                              @NotNull CharSequence editorText, @NotNull XmlAttributeValue attributeValue) {
+  public static void addClassAttributeRanges(@NotNull List<? super TextRange> result, @NotNull Editor editor, int cursorOffset,
+                                             @NotNull CharSequence editorText, @NotNull XmlAttributeValue attributeValue) {
     final TextRange attributeValueTextRange = attributeValue.getTextRange();
     final LinkedList<TextRange> wordRanges = ContainerUtil.newLinkedList();
     SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, wordRanges,

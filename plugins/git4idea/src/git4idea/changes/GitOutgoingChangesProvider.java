@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +18,6 @@ import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,22 +34,24 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     myProject = project;
   }
 
+  @Override
   public Pair<VcsRevisionNumber, List<CommittedChangeList>> getOutgoingChanges(final VirtualFile vcsRoot, final boolean findRemote)
     throws VcsException {
     LOG.debug("getOutgoingChanges root: " + vcsRoot.getPath());
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, findRemote);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
-      return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
+      return new Pair<>(null, Collections.emptyList());
     }
     final GitRevisionNumber base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
     if (base == null) {
-      return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
+      return new Pair<>(null, Collections.emptyList());
     }
-    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
-                                                                                handler -> handler.addParameters(base.asString() + "..HEAD"));
+    List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
+                                                                          handler -> handler.addParameters(base.asString() + "..HEAD"));
     return new Pair<>(base, map(lists, identity()));
   }
 
+  @Override
   @Nullable
   public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
@@ -85,7 +72,9 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return base;
   }
 
-  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException {
+  @Override
+  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot)
+    throws VcsException {
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
@@ -93,27 +82,23 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final GitRevisionNumber base;
     try {
       base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       LOG.info(e);
       return new ArrayList<>(localChanges);
     }
     if (base == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
-    final List<Pair<SHAHash, Date>> hashes = GitHistoryUtils.onlyHashesHistory(myProject,
-                                                                               VcsUtil.getFilePath(vcsRoot), vcsRoot, (base.asString() + "..HEAD"));
 
-    if (hashes.isEmpty()) return Collections.emptyList(); // no local commits
-    final String first = hashes.get(0).getFirst().getValue(); // optimization
-    final Set<String> localHashes = new HashSet<>();
-    for (Pair<SHAHash, Date> hash : hashes) {
-      localHashes.add(hash.getFirst().getValue());
-    }
-    final Collection<Change> result = new ArrayList<>();
+    Set<String> localHashes = new HashSet<>();
+    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commit -> localHashes.add(commit.getId().asString()), base.asString() + "..HEAD");
+    if (localHashes.isEmpty()) return Collections.emptyList();
+
+    Collection<Change> result = new ArrayList<>();
     for (Change change : localChanges) {
       if (change.getBeforeRevision() != null) {
-        final String changeBeforeRevision = change.getBeforeRevision().getRevisionNumber().asString().trim();
-        if (first.equals(changeBeforeRevision) || localHashes.contains(changeBeforeRevision)) {
+        if (localHashes.contains(change.getBeforeRevision().getRevisionNumber().asString().trim())) {
           result.add(change);
         }
       }
@@ -121,11 +106,13 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return result;
   }
 
+  @Override
   @Nullable
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;
     try {
-      return new Date(GitHistoryUtils.getAuthorTime(myProject, file, revision.asString()));
+      VirtualFile root = GitUtil.getGitRoot(VcsUtil.getLastCommitPath(myProject, file));
+      return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
     }
     catch (VcsException e) {
       return null;
@@ -134,6 +121,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
 
   /**
    * Get a merge base between the current branch and specified branch.
+   *
    * @return the common commit or null if the there is no common commit
    */
   @Nullable

@@ -32,13 +32,14 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
   private final String myBranch;
   private final long myTime;
 
-  public RevisionWrapper(final String file, @NotNull final Revision revision, @Nullable String branch) {
+  RevisionWrapper(final String file, @NotNull final Revision revision, @Nullable String branch) {
     myFile = stripAttic(file);
     myRevision = revision;
     myTime = revision.getDate().getTime();
     myBranch = branch;
   }
 
+  @Override
   public int compareTo(final RevisionWrapper o) {
     final long diff = myTime - o.myTime;
     if (diff < 0) {

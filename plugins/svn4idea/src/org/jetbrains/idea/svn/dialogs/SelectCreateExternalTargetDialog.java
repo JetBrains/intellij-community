@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -68,6 +68,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     getOKAction().setEnabled(enabled);
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction()};
@@ -78,10 +79,12 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     super.doOKAction();
   }
 
+  @Override
   public String getSelectedURL() {
     return mySelectedURL;
   }
 
+  @Override
   protected JPopupMenu createPopup(boolean toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
     DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);

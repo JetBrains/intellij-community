@@ -17,6 +17,7 @@ package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -74,7 +75,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     if (module.isDisposed()) {
       return;
     }
-    Application application = ApplicationManager.getApplication();
+    final Application application = ApplicationManager.getApplication();
     assert !application.isDispatchThread() : "This method should not be called on AWT";
 
     final PyDocumentationSettings docSettings = PyDocumentationSettings.getInstance(module);
@@ -83,10 +84,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
     @NotNull DocStringFormat docFormat = DocStringFormat.PLAIN;
     //check setup.py
-    final Ref<String> testRunnerRef = new Ref<>();
-    ApplicationManager.getApplication().runReadAction(() -> testRunnerRef.set(detectTestRunnerFromSetupPy(module)));
-
-    String testRunner = testRunnerRef.get();
+    String testRunner = ReadAction.compute(() -> detectTestRunnerFromSetupPy(module));
     assert testRunner != null: "detectTestRunnerFromSetupPy can't return null";
     if (!testRunner.isEmpty()) {
       LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleFilePath() + "'");
@@ -98,21 +96,22 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     final GlobalSearchScope searchScope = module.getModuleScope();
 
 
-    final Collection<VirtualFile> pyFiles = application.runReadAction(
-      (Computable<Collection<VirtualFile>>)() -> FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope));
+    final Collection<VirtualFile> pyFiles =
+      ReadAction.compute(() -> FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope));
 
 
     for (VirtualFile file : pyFiles) {
       if (file.getName().startsWith("test")) {
         if (testRunner.isEmpty()) {
-          testRunner = checkImports(file, module); //find test runner import
+          //find test runner import
+          testRunner = application.runReadAction((Computable<String>)() -> checkImports(file, module));
           if (!testRunner.isEmpty()) {
             LOG.debug("Test runner '" + testRunner + "' was detected from imports in the file '" + file.getPath() + "'");
           }
         }
       }
       else if (docFormat == DocStringFormat.PLAIN) {
-        docFormat = checkDocstring(file, module);    // detect docstring type
+        docFormat = ReadAction.compute(() -> checkDocstring(file, module));    // detect docstring type
         if (docFormat != DocStringFormat.PLAIN) {
           LOG.debug("Docstring format '" + docFormat + "' was detected from content of the file '" + file.getPath() + "'");
         }
@@ -129,16 +128,14 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-        if (packages != null) {
-          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-            if (PyPackageUtil.findPackage(packages, framework) != null) {
-              testRunner = PyTestFrameworkService.getSdkReadableNameByFramework(framework);
-              break;
-            }
+        for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+          if (PyPackageUtil.findPackage(packages, framework) != null) {
+            testRunner = PyTestFrameworkService.getSdkReadableNameByFramework(framework);
+            break;
           }
-          if (!testRunner.isEmpty()) {
-            LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
-          }
+        }
+        if (!testRunner.isEmpty()) {
+          LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
         }
       }
     }
@@ -206,6 +203,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
   @NotNull
   private static String checkImports(@NotNull VirtualFile file, @NotNull Module module) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();

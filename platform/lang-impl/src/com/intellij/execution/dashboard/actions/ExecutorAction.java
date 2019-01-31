@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -66,17 +53,39 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
     }
   }
 
-  private boolean canRun(RunDashboardRunConfigurationNode node) {
+  private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
     final String executorId = getExecutor().getId();
     final RunnerAndConfigurationSettings configurationSettings = node.getConfigurationSettings();
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, configurationSettings);
     final ExecutionTarget target = ExecutionTargetManager.getActiveTarget(node.getProject());
 
+    RunConfiguration configuration = configurationSettings.getConfiguration();
     return isValid(node) &&
            runner != null &&
-           runner.canRun(executorId, configurationSettings.getConfiguration()) &&
-           ExecutionTargetManager.canRun(configurationSettings, target) &&
-           !ExecutorRegistry.getInstance().isStarting(node.getProject(), executorId, runner.getRunnerId());
+           runner.canRun(executorId, configuration) &&
+           ExecutionTargetManager.canRun(configuration, target) &&
+           !isStarting(node.getProject(), configurationSettings, executorId, runner.getRunnerId());
+  }
+
+  private static boolean isStarting(Project project, RunnerAndConfigurationSettings configurationSettings, String executorId, String runnerId) {
+    ExecutorRegistry executorRegistry = ExecutorRegistry.getInstance();
+    if (executorRegistry.isStarting(project, executorId, runnerId)) {
+      return true;
+    }
+
+    if (configurationSettings.getConfiguration().isAllowRunningInParallel()) {
+      return false;
+    }
+
+    for (Executor executor : executorRegistry.getRegisteredExecutors()) {
+      if (executor.getId().equals(executorId)) continue;
+
+      ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configurationSettings);
+      if (runner == null) continue;
+
+      if (executorRegistry.isStarting(project, executor.getId(), runner.getRunnerId())) return true;
+    }
+    return false;
   }
 
   private boolean isValid(RunDashboardRunConfigurationNode node) {

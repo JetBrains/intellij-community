@@ -180,6 +180,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     super.doOKAction();
   }
 
+  @Nullable
+  @Override
+  protected String getLoggedDialogId() {
+    return null;
+  }
+
   private void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
@@ -215,6 +221,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   @Contract("!null->!null")
   private static String ensureHTML(@Nullable String s) {
-    return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXml(s) + "</html>";
+    return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXmlEntities(s) + "</html>";
   }
 }

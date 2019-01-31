@@ -20,7 +20,7 @@ abstract class NavigationAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void update(final AnActionEvent e) {
+  public final void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e) != null);
     if (e.getPresentation().isEnabled()) {
       doUpdate(e);

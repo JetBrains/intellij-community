@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
 
 /**
  * @author Vladislav.Soroka
- * @since 12/12/2016
  */
 class PropertiesTasksCompletionContributor : AbstractGradleCompletionContributor() {
   class PropertiesTasksCompletionProvider : CompletionProvider<CompletionParameters>() {

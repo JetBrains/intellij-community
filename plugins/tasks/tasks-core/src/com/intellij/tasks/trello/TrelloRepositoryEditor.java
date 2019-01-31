@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.trello;
 
@@ -53,7 +39,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
   public TrelloRepositoryEditor(Project project,
                                 TrelloRepository repository,
-                                Consumer<TrelloRepository> changeListener) {
+                                Consumer<? super TrelloRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myURLText.setVisible(false);
@@ -65,7 +51,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
     myPasswordText.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         final String password = String.valueOf(myPasswordText.getPassword());
         if (password.isEmpty() || password.equals(myRepository.getPassword())) {
           return;
@@ -229,7 +215,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
 
   private class BoardsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloBoard> {
-    public BoardsComboBoxUpdater() {
+    BoardsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello boards...", myBoardComboBox);
     }
 
@@ -264,7 +250,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
   }
 
   private class ListsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloList> {
-    public ListsComboBoxUpdater() {
+    ListsComboBoxUpdater() {
       super(TrelloRepositoryEditor.this.myProject, "Downloading Trello lists...", myListComboBox);
     }
 

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.inheritance.ImplicitSubclassInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
@@ -63,6 +64,11 @@ public class DevKitImplicitUsageProviderTest extends LightCodeInsightFixtureTest
   public void testImplementedAtRuntimeJamElementImpl() {
     enableImplementedAtRuntimeInspections();
     myFixture.testHighlighting("ImplementedAtRuntimeJamElementImpl.java");
+  }
+
+  public void testManualJamElementInstantiation() {
+    myFixture.enableInspections(ImplicitSubclassInspection.class);
+    myFixture.testHighlighting("ManualJamElementInstantiation.java");
   }
 
   private void enableImplementedAtRuntimeInspections() {

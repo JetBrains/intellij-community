@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +234,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
           return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
         }
-        if (isNewArrayCreation(psiNewExpression)) {
+        if (ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
           return UsageType.CLASS_NEW_ARRAY;
         }
         return UsageType.CLASS_NEW_OPERATOR;
@@ -241,10 +242,6 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     }
 
     return null;
-  }
-
-  private static boolean isNewArrayCreation(@NotNull PsiNewExpression expression){
-    return expression.getArrayDimensions().length > 0 || expression.getArrayInitializer() != null;
   }
 
   private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {

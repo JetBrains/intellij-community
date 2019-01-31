@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil.findComponentOfType
@@ -26,6 +27,8 @@ import com.intellij.util.ui.UIUtil.findComponentsOfType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.fixture.ContainerFixture
+import org.fest.swing.timing.Timeout
 import org.fest.swing.util.TextMatcher
 import org.junit.Assert.assertNotNull
 import javax.swing.JComponent
@@ -35,7 +38,7 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   class ContentFixture(val myParentToolWindow: CustomToolWindowFixture,
                        val myRobot: Robot,
-                       val myContent: Content) : ComponentFixture<ContentFixture, JComponent>(ContentFixture::class.java, myRobot, myContent.component) {
+                       private val myContent: Content) : ComponentFixture<ContentFixture, JComponent>(ContentFixture::class.java, myRobot, myContent.component), ContainerFixture<JComponent> {
 
     private val toolbarButtons: List<ActionButton>
       get() {
@@ -53,6 +56,15 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
       })
       return EditorFixture(myRobot,editor.editor)
     }
+
+    fun findEditorContainingText(text: String): EditorFixture {
+      val editor = GuiTestUtil.waitUntilFound(myRobot, myContent.component, object : GenericTypeMatcher<EditorComponentImpl>(EditorComponentImpl::class.java, true){
+        override fun isMatching(component: EditorComponentImpl): Boolean {
+          return EditorFixture(myRobot, component.editor).getCurrentFileContents(false)?.contains(text) ?: false
+        }
+      })
+      return EditorFixture(myRobot,editor.editor)
+    }
   }
 
   private fun selectedContent() : ContentFixture {
@@ -61,14 +73,15 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
     return ContentFixture(this, myRobot, content!!)
   }
 
-  private fun findContent(tabName: String, timeoutInSeconds: Int): ContentFixture {
-    selectContentWithTimeout(tabName, timeoutInSeconds)
-    val content = getContent(tabName) ?: throw ComponentLookupException("Unable to find content with a tab name: \"$tabName\" for a toolwindow with id: \"$toolWindowId\"")
+  private fun findContent(tabName: String, timeout: Timeout): ContentFixture {
+    selectContentWithTimeout(tabName, timeout)
+    val content = getContent(tabName) ?: throw ComponentLookupException(
+      "Unable to find content with a tab name: \"$tabName\" for a toolwindow with id: \"$toolWindowId\"")
     return ContentFixture(this, myRobot, content)
   }
 
-  private fun selectContentWithTimeout(tabName: String, timeoutInSeconds: Int) {
-    GuiTestUtilKt.waitUntil("content with a tab name '$tabName' is appeared for a toolwindow with id: \"$toolWindowId\"", timeoutInSeconds) {
+  private fun selectContentWithTimeout(tabName: String, timeout: Timeout) {
+    GuiTestUtilKt.waitUntil("content with a tab name '$tabName' is appeared for a toolwindow with id: \"$toolWindowId\"", timeout) {
       try {
         selectContent(tabName)
         true
@@ -87,7 +100,7 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   /**----------EXTENSION FUNCTIONS FOR GuiTestCase APi----------**/
 
-  fun content(tabName: String, timeoutInSeconds: Int = 30, func: ContentFixture.() -> Unit) {
+  fun content(tabName: String, timeoutInSeconds: Timeout = Timeouts.seconds30, func: ContentFixture.() -> Unit) {
     func.invoke(findContent(tabName, timeoutInSeconds))
   }
 

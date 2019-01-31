@@ -17,6 +17,8 @@ package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines the model for the data displayed in the standard structure view or file structure
  * popup component. The model of the standard structure view is represented as a tree of elements.
  *
- * @see TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel(Editor)
  * @see TextEditorBasedStructureViewModel
  */
 public interface StructureViewModel extends TreeModel, Disposable {
@@ -80,6 +82,7 @@ public interface StructureViewModel extends TreeModel, Disposable {
   /**
    * Disposes of the model.
    */
+  @Override
   void dispose();
 
   boolean shouldEnterElement(Object element);
@@ -92,5 +95,16 @@ public interface StructureViewModel extends TreeModel, Disposable {
   interface ExpandInfoProvider {
     boolean isAutoExpand(@NotNull StructureViewTreeElement element);
     boolean isSmartExpand();
+
+    /**
+     * @return number of levels that would be always expanded in structure view.
+     * Returns 2 by default: root node and its immediate children.
+     *
+     * @apiNote Be careful with using this method because this approach is planned to be rewritten.
+     */
+    @ApiStatus.Experimental
+    default int getMinimumAutoExpandDepth() {
+      return 2;
+    }
   }
 }

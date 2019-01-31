@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class JBListUpdater implements ListComponentUpdater {
-  private JBList myComponent;
+  private final JBList myComponent;
 
   public JBListUpdater(JBList component) {
     myComponent = component;
@@ -29,7 +29,7 @@ public class JBListUpdater implements ListComponentUpdater {
   }
 
   @Override
-  public void replaceModel(@NotNull List<PsiElement> data) {
+  public void replaceModel(@NotNull List<? extends PsiElement> data) {
     final Object selectedValue = myComponent.getSelectedValue();
     final int index = myComponent.getSelectedIndex();
     ListModel model = myComponent.getModel();

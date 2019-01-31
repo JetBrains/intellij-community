@@ -80,7 +80,7 @@ public class StaticInheritanceInspection extends BaseInspection {
       }
     }
 
-    private static boolean interfaceContainsOnlyConstants(PsiClass anInterface, Set<PsiClass> visitedInterfaces) {
+    private static boolean interfaceContainsOnlyConstants(PsiClass anInterface, Set<? super PsiClass> visitedInterfaces) {
       if (!visitedInterfaces.add(anInterface)) {
         return true;
       }

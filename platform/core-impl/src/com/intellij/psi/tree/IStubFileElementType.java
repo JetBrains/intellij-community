@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +39,17 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   public IStubFileElementType(@NonNls final String debugName, final Language language) {
     super(debugName, language);
+    if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
+      IStubElementType.checkNotInstantiatedTooLate();
+    }
+  }
+
+  private boolean hasNonTrivialExternalId() {
+    return ReflectionUtil.getMethodDeclaringClass(getClass(), "getExternalId") != IStubFileElementType.class;
+  }
+
+  private boolean isOutOfOurControl() {
+    return getClass().getName().contains(".kotlin."); // KT-28732
   }
 
   /**

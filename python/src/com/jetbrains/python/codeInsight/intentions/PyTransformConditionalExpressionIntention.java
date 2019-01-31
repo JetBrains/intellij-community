@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
@@ -39,16 +25,19 @@ import org.jetbrains.annotations.NotNull;
  *    x = b
  */
 public class PyTransformConditionalExpressionIntention extends PyBaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.transform.into.if.else.statement");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return PyBundle.message("INTN.transform.into.if.else.statement");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile)) {
       return false;
@@ -62,6 +51,7 @@ public class PyTransformConditionalExpressionIntention extends PyBaseIntentionAc
     return false;
   }
 
+  @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PyAssignmentStatement assignmentStatement =
           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyAssignmentStatement.class);

@@ -20,10 +20,6 @@ public class CastCanBeRemovedNarrowingVariableTypeInspectionTest extends LightQu
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/castCanBeRemovedNarrowingVariableType/";

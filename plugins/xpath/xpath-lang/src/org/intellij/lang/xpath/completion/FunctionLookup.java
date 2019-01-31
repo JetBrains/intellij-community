@@ -36,22 +36,27 @@ public class FunctionLookup extends AbstractLookup implements Iconable {
         this.hasParameters = hasParams;
     }
 
+    @Override
     public String getTypeHint() {
         return type == null ? "" : type;
     }
 
+    @Override
     public boolean isFunction() {
         return true;
     }
 
+    @Override
     public boolean hasParameters() {
         return hasParameters;
     }
 
+    @Override
     public boolean isKeyword() {
         return type == null;
     }
 
+    @Override
     public Icon getIcon(int flags) {
         return XpathIcons.Function;
     }

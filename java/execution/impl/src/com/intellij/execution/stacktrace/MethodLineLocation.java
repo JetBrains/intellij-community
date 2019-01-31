@@ -31,6 +31,7 @@ public class MethodLineLocation extends MethodLocation {
     myLineNumber = lineNumber;
   }
 
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor() {
     final VirtualFile virtualFile = getContainingClass().getContainingFile().getVirtualFile();
     return new OpenFileDescriptor(getProject(), virtualFile, myLineNumber, 0);

@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -76,7 +77,11 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
                                                          "    -dependencies\n" +
                                                          "     -src\n" +
                                                          "      com/package1\n",
-                            "Root\n");
+                            "-Root\n" +
+                            " -External Dependencies\n" +
+                            "  -src.zip\n" +
+                            "   -java/lang\n" +
+                            "    String.java");
   }
 
   private void doTestDependenciesTrees(AnalysisScope scope, String expectedLeftTree, String expectedRightTree) {
@@ -103,6 +108,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     return "dependencies";
   }
 
+  @NotNull
   @Override
   protected String getTestDirectoryName() {
     return "dependencies";

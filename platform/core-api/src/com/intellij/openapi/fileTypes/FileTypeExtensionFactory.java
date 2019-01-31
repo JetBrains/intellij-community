@@ -31,6 +31,7 @@ public class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, FileTy
     super(interfaceClass, epName, ApplicationManager.getApplication().getPicoContainer());
   }
 
+  @NotNull
   @Override
   public String getKey(@NotNull final FileType key) {
     return key.getName();

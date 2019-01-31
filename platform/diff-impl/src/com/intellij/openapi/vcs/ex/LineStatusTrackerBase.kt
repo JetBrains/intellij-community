@@ -20,15 +20,12 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
@@ -39,19 +36,19 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-abstract class LineStatusTrackerBase<R : Range> {
+abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   protected val application: Application = ApplicationManager.getApplication()
 
   open val project: Project?
 
-  val document: Document
-  val vcsDocument: Document
+  final override val document: Document
+  final override val vcsDocument: Document
 
   protected val disposable: Disposable = Disposer.newDisposable()
   protected val documentTracker: DocumentTracker
   protected abstract val renderer: LineStatusMarkerRenderer
 
-  var isReleased: Boolean = false
+  final override var isReleased: Boolean = false
     private set
 
   protected var isInitialized: Boolean = false
@@ -64,7 +61,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     this.project = project
     this.document = document
 
-    vcsDocument = DocumentImpl(this.document.immutableCharSequence)
+    vcsDocument = DocumentImpl(this.document.immutableCharSequence, true)
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
     vcsDocument.setReadOnly(true)
 
@@ -81,14 +78,14 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   protected open fun fireLinesUnchanged(startLine: Int, endLine: Int) {}
 
-  open val virtualFile: VirtualFile? get() = null
+  override val virtualFile: VirtualFile? get() = null
 
-  abstract protected fun Block.toRange(): R
+  protected abstract fun Block.toRange(): R
 
   protected open fun createDocumentTrackerHandler(): DocumentTracker.Handler = MyDocumentTrackerHandler()
 
 
-  fun getRanges(): List<R>? {
+  override fun getRanges(): List<R>? {
     application.assertReadAccessAllowed()
     LOCK.read {
       if (!isValid()) return null
@@ -139,11 +136,9 @@ abstract class LineStatusTrackerBase<R : Range> {
     if (side.isLeft) {
       vcsDocument.setReadOnly(false)
       try {
-        runWriteAction {
           CommandProcessor.getInstance().runUndoTransparentAction {
             task(vcsDocument)
           }
-        }
         return true
       }
       finally {
@@ -156,7 +151,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  fun doFrozen(task: Runnable) {
+  override fun doFrozen(task: Runnable) {
     documentTracker.doFrozen({ task.run() })
   }
 
@@ -166,7 +161,6 @@ abstract class LineStatusTrackerBase<R : Range> {
       if (isReleased) return@Runnable
       isReleased = true
 
-      updateHighlighters()
       Disposer.dispose(disposable)
     }
 
@@ -180,33 +174,23 @@ abstract class LineStatusTrackerBase<R : Range> {
 
 
   protected open inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
-    override fun onRangeRemoved(block: Block) {
-      destroyHighlighter(block)
-    }
-
     override fun onRangeShifted(before: Block, after: Block) {
       after.ourData.innerRanges = before.ourData.innerRanges
     }
 
-    override fun afterRefresh() {
-      checkIfFileUnchanged()
-      calcInnerRanges()
-      installMissingHighlighters()
-    }
-
     override fun afterRangeChange() {
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
-    override fun afterExplicitChange() {
+    override fun afterBulkRangeChange() {
       checkIfFileUnchanged()
       calcInnerRanges()
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     override fun onUnfreeze(side: Side) {
       calcInnerRanges()
-      installMissingHighlighters()
+      updateHighlighters()
     }
 
     private fun checkIfFileUnchanged() {
@@ -221,15 +205,8 @@ abstract class LineStatusTrackerBase<R : Range> {
         for (block in blocks) {
           if (block.ourData.innerRanges == null) {
             block.ourData.innerRanges = calcInnerRanges(block)
-            destroyHighlighter(block)
           }
         }
-      }
-    }
-
-    private fun installMissingHighlighters() {
-      for (block in blocks) {
-        installHighlighter(block)
       }
     }
   }
@@ -241,21 +218,8 @@ abstract class LineStatusTrackerBase<R : Range> {
                              vcsDocument.lineOffsets, document.lineOffsets)
   }
 
-  @CalledInAwt
   protected fun updateHighlighters() {
-    LOCK.write {
-      for (block in blocks) {
-        updateHighlighter(block)
-      }
-    }
-  }
-
-  @CalledInAwt
-  protected fun updateHighlighter(block: Block) {
-    LOCK.write {
-      destroyHighlighter(block)
-      installHighlighter(block)
-    }
+    renderer.scheduleUpdate()
   }
 
   @CalledInAwt
@@ -276,42 +240,16 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  @CalledInAwt
-  private fun installHighlighter(block: Block) {
-    if (block.ourData.rangeHighlighter != null) return
-    if (!isValid() || block.range.isEmpty) return
-    try {
-      block.ourData.rangeHighlighter = renderer.createHighlighter(block.toRange())
-    }
-    catch (ignore: ProcessCanceledException) {
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-  }
-
-  @CalledInAwt
-  private fun destroyHighlighter(block: Block) {
-    val highlighter = block.ourData.rangeHighlighter ?: return
-    try {
-      block.ourData.rangeHighlighter = null
-      highlighter.dispose()
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-  }
-
-  fun isOperational(): Boolean = LOCK.read {
+  override fun isOperational(): Boolean = LOCK.read {
     return isInitialized && !isReleased
   }
 
-  fun isValid(): Boolean = LOCK.read {
+  override fun isValid(): Boolean = LOCK.read {
     return isOperational() && !documentTracker.isFrozen()
   }
 
 
-  fun findRange(range: Range): R? = findBlock(range)?.toRange()
+  override fun findRange(range: Range): R? = findBlock(range)?.toRange()
 
   protected fun findBlock(range: Range): Block? {
     LOCK.read {
@@ -328,7 +266,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  fun getNextRange(line: Int): R? {
+  override fun getNextRange(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks) {
@@ -340,7 +278,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  fun getPrevRange(line: Int): R? {
+  override fun getPrevRange(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks.reversed()) {
@@ -352,7 +290,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  fun getRangesForLines(lines: BitSet): List<R>? {
+  override fun getRangesForLines(lines: BitSet): List<R>? {
     LOCK.read {
       if (!isValid()) return null
       val result = ArrayList<R>()
@@ -365,7 +303,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  fun getRangeForLine(line: Int): R? {
+  override fun getRangeForLine(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
       for (block in blocks) {
@@ -379,7 +317,7 @@ abstract class LineStatusTrackerBase<R : Range> {
 
 
   @CalledInAwt
-  fun rollbackChanges(range: Range) {
+  override fun rollbackChanges(range: Range) {
     val newRange = findBlock(range)
     if (newRange != null) {
       runBulkRollback { it == newRange }
@@ -387,7 +325,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  fun rollbackChanges(lines: BitSet) {
+  override fun rollbackChanges(lines: BitSet) {
     runBulkRollback { it.isSelectedByLine(lines) }
   }
 
@@ -403,11 +341,11 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
 
-  fun isLineModified(line: Int): Boolean {
+  override fun isLineModified(line: Int): Boolean {
     return isRangeModified(line, line + 1)
   }
 
-  fun isRangeModified(startLine: Int, endLine: Int): Boolean {
+  override fun isRangeModified(startLine: Int, endLine: Int): Boolean {
     if (startLine == endLine) return false
     assert(startLine < endLine)
 
@@ -421,11 +359,11 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
-  fun transferLineToFromVcs(line: Int, approximate: Boolean): Int {
+  override fun transferLineFromVcs(line: Int, approximate: Boolean): Int {
     return transferLine(line, approximate, true)
   }
 
-  fun transferLineToVcs(line: Int, approximate: Boolean): Int {
+  override fun transferLineToVcs(line: Int, approximate: Boolean): Int {
     return transferLine(line, approximate, false)
   }
 
@@ -456,11 +394,10 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
 
-  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null,
-                                 internal var rangeHighlighter: RangeHighlighter? = null)
+  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null)
 
-  open protected fun createBlockData(): BlockData = BlockData()
-  open protected val Block.ourData: BlockData get() = getBlockData(this)
+  protected open fun createBlockData(): BlockData = BlockData()
+  protected open val Block.ourData: BlockData get() = getBlockData(this)
   protected fun getBlockData(block: Block): BlockData {
     if (block.data == null) block.data = createBlockData()
     return block.data as BlockData

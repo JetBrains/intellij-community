@@ -12,15 +12,19 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
-@SuppressWarnings("MethodMayBeStatic")
-@State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
+@State(name = "GithubSettings", storages = {
+  @Storage(value = "github.xml"),
+  @Storage(value = "github_settings.xml", deprecated = true)
+})
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private State myState = new State();
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }
@@ -31,6 +35,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     @Nullable public AuthType AUTH_TYPE = null;
 
     public boolean OPEN_IN_BROWSER_GIST = true;
+    public boolean COPY_URL_GIST = false;
     // "Secret" in UI, "Public" in API. "Private" here to preserve user settings after refactoring
     public boolean PRIVATE_GIST = true;
     public int CONNECTION_TIMEOUT = 5000;
@@ -52,6 +57,14 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public boolean isOpenInBrowserGist() {
     return myState.OPEN_IN_BROWSER_GIST;
+  }
+
+  public boolean isCopyURLGist() {
+    return myState.COPY_URL_GIST;
+  }
+
+  public void setCopyURLGist(boolean copyLink) {
+    myState.COPY_URL_GIST = copyLink;
   }
 
   public boolean isPrivateGist() {

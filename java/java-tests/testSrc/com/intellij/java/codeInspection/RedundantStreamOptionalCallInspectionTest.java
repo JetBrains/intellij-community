@@ -54,10 +54,6 @@ public class RedundantStreamOptionalCallInspectionTest extends LightInspectionTe
       return new LocalInspectionTool[]{new RedundantStreamOptionalCallInspection()};
     }
 
-    public void test() {
-      doAllTests();
-    }
-
     @Override
     protected String getBasePath() {
       return TEST_DATA_DIR;

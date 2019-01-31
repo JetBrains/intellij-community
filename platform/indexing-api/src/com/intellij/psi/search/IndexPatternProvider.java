@@ -28,7 +28,6 @@ import java.beans.PropertyChangeListener;
  * as extensions for the {@code indexPatternProvider} extension point.
  *
  * @author yole
- * @since 5.1
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {
@@ -40,7 +39,7 @@ public interface IndexPatternProvider {
    * The property the change of which should be reported to the property change listener
    * when the list of index patterns is changed.
    *
-   * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+   * @see #INDEX_PATTERNS_CHANGED
    */
   @NonNls String PROP_INDEX_PATTERNS = "indexPatterns";
 

@@ -31,32 +31,35 @@ import java.util.List;
 /**
  * @author max
  */
-public class FilteringListModel<T> extends AbstractListModel {
-  private final ListModel myOriginalModel;
+public class FilteringListModel<T> extends AbstractListModel<T> {
+  private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
-  private Condition<T> myCondition = null;
+  private Condition<? super T> myCondition = null;
 
 
   private final ListDataListener myListDataListener = new ListDataListener() {
+    @Override
     public void contentsChanged(ListDataEvent e) {
       refilter();
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
       refilter();
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
       refilter();
     }
   };
 
-  public FilteringListModel(ListModel originalModel) {
+  public FilteringListModel(ListModel<T> originalModel) {
     myOriginalModel = originalModel;
     myOriginalModel.addListDataListener(myListDataListener);
   }
 
-  protected FilteringListModel(JList list) {
+  protected FilteringListModel(JList<T> list) {
     this(list.getModel());
     list.setModel(this);
   }
@@ -65,7 +68,7 @@ public class FilteringListModel<T> extends AbstractListModel {
     myOriginalModel.removeListDataListener(myListDataListener);
   }
 
-  public void setFilter(Condition<T> condition) {
+  public void setFilter(Condition<? super T> condition) {
     myCondition = condition;
     refilter();
   }
@@ -82,7 +85,7 @@ public class FilteringListModel<T> extends AbstractListModel {
     removeAllElements();
     int count = 0;
     for (int i = 0; i < myOriginalModel.getSize(); i++) {
-      final T elt = (T)myOriginalModel.getElementAt(i);
+      final T elt = myOriginalModel.getElementAt(i);
       if (passElement(elt)) {
         addToFiltered(elt);
         count++;
@@ -98,10 +101,12 @@ public class FilteringListModel<T> extends AbstractListModel {
     myData.add(elt);
   }
 
+  @Override
   public int getSize() {
     return myData.size();
   }
 
+  @Override
   public T getElementAt(int index) {
     return myData.get(index);
   }
@@ -122,18 +127,18 @@ public class FilteringListModel<T> extends AbstractListModel {
     return myOriginalModel;
   }
 
-  public void addAll(List elements) {
+  public void addAll(List<T> elements) {
     myData.addAll(elements);
-    ((CollectionListModel)myOriginalModel).add(elements);
+    ((CollectionListModel<T>)myOriginalModel).add(elements);
   }
 
-  public void replaceAll(List elements) {
+  public void replaceAll(List<T> elements) {
     myData.clear();
     myData.addAll(elements);
-    ((CollectionListModel)myOriginalModel).replaceAll(elements);
+    ((CollectionListModel<T>)myOriginalModel).replaceAll(elements);
   }
-  
+
   public void remove(int index) {
-    ((DefaultListModel)myOriginalModel).removeElement(myData.get(index));
+    ((DefaultListModel<T>)myOriginalModel).removeElement(myData.get(index));
   }
 }

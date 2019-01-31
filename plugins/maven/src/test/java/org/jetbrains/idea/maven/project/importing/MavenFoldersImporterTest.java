@@ -22,6 +22,8 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -45,7 +47,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     assertExcludes("project", "target");
     assertGeneratedSources("project", "target/generated-sources/xxx");
-    
+
     assertNull(myProjectRoot.findChild("target"));
   }
 
@@ -189,7 +191,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         count[0]++;
       }
     });
@@ -225,7 +227,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     final int[] count = new int[]{0};
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         count[0]++;
       }
     });
@@ -384,6 +386,106 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
 
     assertContentRoots("m1-pom", getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
     assertContentRoots("m1-custom", getProjectPath() + "/custom-sources");
+  }
+
+  public void testOverrideLanguageLevelFromParentPom() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "       <source>7</source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createProjectSubFile("m1/pom.xml", createPomXml(
+      "<artifactId>m1-pom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <plugins>" +
+      "    <plugin>" +
+      "      <groupId>org.apache.maven.plugins</groupId>" +
+      "      <artifactId>maven-compiler-plugin</artifactId>" +
+      "      <configuration>" +
+      "        <release>11</release>" +
+      "      </configuration>" +
+      "    </plugin>" +
+      "  </plugins>" +
+      "</build>"));
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
+  }
+
+  public void testReleaseHasPriorityInParentPom() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "       <release>9</release>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createProjectSubFile("m1/pom.xml", createPomXml(
+      "<artifactId>m1-pom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <plugins>" +
+      "    <plugin>" +
+      "      <groupId>org.apache.maven.plugins</groupId>" +
+      "      <artifactId>maven-compiler-plugin</artifactId>" +
+      "      <configuration>" +
+      "        <source>11</source>" +
+      "      </configuration>" +
+      "    </plugin>" +
+      "  </plugins>" +
+      "</build>"));
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelModuleExtensionImpl.getInstance(getModule("m1-pom")).getLanguageLevel());
   }
 
   private void updateProjectFolders() {

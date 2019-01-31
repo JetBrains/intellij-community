@@ -93,7 +93,7 @@ public class ArrangementRuleAliasesPanel extends JPanel implements DataProvider 
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (ArrangementRuleAliasControl.KEY.is(dataId)) {
       return myControl;
     }

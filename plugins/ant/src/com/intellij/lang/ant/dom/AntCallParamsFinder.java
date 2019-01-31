@@ -33,12 +33,14 @@ public class AntCallParamsFinder extends AntDomRecursiveVisitor {
     myPropertyName = propertyName;
   }
 
+  @Override
   public void visitAntDomElement(AntDomElement element) {
     if (!element.isDataType()) { // optimization
       super.visitAntDomElement(element);
     }
   }
 
+  @Override
   public void visitAntDomAntCallParam(AntDomAntCallParam antCallParam) {
     if (myPropertyName.equals(antCallParam.getName().getStringValue())) {
       final PsiElement elem = antCallParam.getNavigationElement(myPropertyName);

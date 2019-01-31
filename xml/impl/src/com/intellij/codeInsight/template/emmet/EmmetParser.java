@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -25,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class EmmetParser {
-  private final List<ZenCodingToken> myTokens;
+  private final List<? extends ZenCodingToken> myTokens;
   protected final CustomTemplateCallback myCallback;
   protected final ZenCodingGenerator myGenerator;
 
   private int myIndex = 0;
 
-  public EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public EmmetParser(List<? extends ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     myTokens = tokens;
     myCallback = callback;
     myGenerator = generator;
@@ -102,24 +88,24 @@ public abstract class EmmetParser {
     return null;
   }
 
+  @Nullable
   protected ZenCodingNode parseClimbUpOperation(@Nullable ZenCodingNode leftPart) {
     advance();
-    leftPart = notNullNode(leftPart);
     ZenCodingNode rightPart = parseAddOrMore();
     if (rightPart == null) {
       return leftPart;
     }
-    return new ClimbUpOperationNode(leftPart, rightPart);
+    return new ClimbUpOperationNode(notNullNode(leftPart), rightPart);
   }
 
+  @Nullable
   protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     advance();
-    leftPart = notNullNode(leftPart);
     ZenCodingNode rightPart = parseAddOrMore();
     if (rightPart == null) {
       return leftPart;
     }
-    return new MoreOperationNode(leftPart, rightPart);
+    return new MoreOperationNode(notNullNode(leftPart), rightPart);
   }
 
   private static ZenCodingNode notNullNode(ZenCodingNode node) {

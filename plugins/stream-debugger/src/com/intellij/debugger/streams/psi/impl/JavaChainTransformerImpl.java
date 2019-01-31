@@ -28,9 +28,6 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   @Override
   public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions,
                                @NotNull PsiElement context) {
-    // TODO: support variable.sum() where variable has a stream type
-    // TODO: add test
-
     final PsiMethodCallExpression firstCall = streamExpressions.get(0);
 
     final PsiExpression qualifierExpression = firstCall.getMethodExpression().getQualifierExpression();

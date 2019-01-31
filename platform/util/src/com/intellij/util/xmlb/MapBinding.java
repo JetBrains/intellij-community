@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -20,7 +21,7 @@ import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding extends Binding implements MultiNodeBinding {
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
-    @SuppressWarnings({"unchecked", "NullableProblems"})
+    @SuppressWarnings({"unchecked"})
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
@@ -43,7 +44,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  public MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
+  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
     super(accessor);
 
     oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
@@ -130,8 +131,8 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
-    List<Element> childNodes;
+  public Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+    List<? extends Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
@@ -157,12 +158,27 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
   }
 
+  private static boolean isMutableMap(@NotNull Map object) {
+    if (object == Collections.emptyMap()) {
+      return false;
+    }
+    else {
+      String simpleName = object.getClass().getSimpleName();
+      return !simpleName.equals("EmptyMap") && !simpleName.equals("UnmodifiableMap");
+    }
+  }
+
   @Nullable
-  private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
+  private Map deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
     // if accessor is null, it is sub-map and we must not use context
     Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {
-      map.clear();
+      if (isMutableMap(map)) {
+        map.clear();
+      }
+      else {
+        map = null;
+      }
     }
 
     for (Element childNode : childNodes) {
@@ -203,7 +219,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
 
     if (binding == null) {
-      entry.setAttribute(attributeName, XmlSerializerImpl.removeControlChars(XmlSerializerImpl.convertToString(value)));
+      entry.setAttribute(attributeName, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
     }
     else {
       Object serialized = binding.serialize(value, entry, filter);

@@ -1,14 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.util.loadElement
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 // unless stated otherwise, the behavior described in cases is true for 162+
 class UpdateStrategyTest : BareTestFixtureTestCase() {
@@ -29,15 +27,15 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `patch exclusions`() {
-    val result = check("IU-145.258", ChannelStatus.RELEASE, """
+    val channels = """
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="145.597" version="2016.1.1">
           <patch from="145.596"/>
           <patch from="145.258" exclusions="win,mac,unix"/>
         </build>
-      </channel>""")
-    assertNotNull(result.findPatchForBuild(BuildNumber.fromString("145.596")))
-    assertNull(result.findPatchForBuild(BuildNumber.fromString("145.258")))
+      </channel>"""
+    assertNotNull(check("IU-145.596", ChannelStatus.RELEASE, channels).patches)
+    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).patches)
   }
 
   @Test fun `order of builds does not matter`() {
@@ -148,7 +146,10 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertBuild("143.2332", result.newBuild)
   }
 
-  // since 163
+  /*
+   * Since 163.
+   */
+
   @Test fun `updates from the same baseline are preferred (per-release channels)`() {
     val result = check("IU-143.2287", ChannelStatus.EAP, """
       <channel id="IDEA_143_EAP" status="eap" licensing="eap">
@@ -215,21 +216,76 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
   }
 
+  /*
+   * Since 183.
+   */
+
+  @Test fun `building linear patch chain`() {
+    val result = check("IU-182.3569.1", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="182.3684.40" version="2018.2 RC2">
+          <patch from="182.3684.2" size="from 1 to 8"/>
+        </build>
+        <build number="182.3684.2" version="2018.2 RC">
+          <patch from="182.3569.1" size="2"/>
+        </build>
+      </channel>""")
+    assertBuild("182.3684.40", result.newBuild)
+    assertThat(result.patches?.chain).isEqualTo(listOf("182.3569.1", "182.3684.2", "182.3684.40").map(BuildNumber::fromString))
+    assertThat(result.patches?.size).isEqualTo("10")
+  }
+
+  @Test fun `building patch chain across channels`() {
+    val result = check("IU-182.3684.40", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="182.3684.40" version="2018.2 RC2">
+          <patch from="182.3684.2"/>
+        </build>
+      </channel>
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="182.3684.41" version="2018.2">
+          <patch from="182.3684.40"/>
+        </build>
+      </channel>
+      <channel id="IDEA_Stable_EAP" status="eap" licensing="release">
+        <build number="182.3911.2" version="2018.2.1 EAP">
+          <patch from="182.3684.41"/>
+        </build>
+      </channel>""")
+    assertBuild("182.3911.2", result.newBuild)
+    assertThat(result.patches?.chain).isEqualTo(listOf("182.3684.40", "182.3684.41", "182.3911.2").map(BuildNumber::fromString))
+    assertThat(result.patches?.size).isNull()
+  }
+
+  @Test fun `allow ignored builds in the middle of a chain`() {
+    val result = check("IU-183.3795.13", ChannelStatus.EAP, """
+      <channel id="IDEA_EAP" status="eap" licensing="eap">
+        <build number="183.4139.22" version="2018.3 EAP">
+          <patch from="183.3975.18" size="1"/>
+        </build>
+        <build number="183.3975.18" version="2018.3 EAP">
+          <patch from="183.3795.13" size="1"/>
+        </build>
+      </channel>""", listOf("183.3975.18"))
+    assertBuild("183.4139.22", result.newBuild)
+    assertThat(result.patches?.chain).isEqualTo(listOf("183.3795.13", "183.3975.18", "183.4139.22").map(BuildNumber::fromString))
+  }
+
+  //<editor-fold desc="Helpers.">
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,
                     ignoredBuilds: List<String> = emptyList()): CheckForUpdateResult {
-    val updates = UpdatesInfo(loadElement("""
-      <products>
-        <product name="IntelliJ IDEA">
-          <code>IU</code>
-          ${testData}
-        </product>
-      </products>"""))
-    val settings = object : UserUpdateSettings {
-      override fun getSelectedChannelStatus() = selectedChannel
-      override fun getIgnoredBuildNumbers() = ignoredBuilds
-    }
+    val updates = UpdatesInfo(JDOMUtil.load("""
+          <products>
+            <product name="IntelliJ IDEA">
+              <code>IU</code>
+              ${testData}
+            </product>
+          </products>"""))
+    val settings = UpdateSettings()
+    settings.selectedChannelStatus = selectedChannel
+    settings.ignoredBuildNumbers += ignoredBuilds
     val result = UpdateStrategy(BuildNumber.fromString(currentBuild), updates, settings).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result
@@ -238,4 +294,5 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
   private fun assertBuild(expected: String, build: BuildInfo?) {
     assertEquals(expected, build?.number?.asStringWithoutProductCode())
   }
+  //</editor-fold>
 }

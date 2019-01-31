@@ -8,14 +8,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
-import java.lang.reflect.Field;
 
 public class MacUIUtil {
 
@@ -68,7 +68,7 @@ public class MacUIUtil {
                          USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
     int _y = MAC_COMBO_BORDER_V_OFFSET;
-    
+
     final GeneralPath path1 = new GeneralPath();
     path1.moveTo(2, _y + 4);
     path1.quadTo(2, +_y + 2, 4, _y + 2);
@@ -128,21 +128,7 @@ public class MacUIUtil {
     }
   }
 
-  @Deprecated
-  public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
-    if (WideSelectionTreeUI.isWideSelection(tree)) {
-        renderer.setOpaque(false);
-        try {
-          final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");
-          fillBackground.setAccessible(true);
-          fillBackground.set(renderer, false);
-        }
-        catch (Exception e) {
-          // nothing
-        }
-    }
-  }
-
+  @NotNull
   public static Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -150,5 +136,20 @@ public class MacUIUtil {
       INVERTED_TEXT_CURSOR = toolkit.createCustomCursor(cursorImage, new Point(15, 13), "InvertedTextCursor");
     }
     return INVERTED_TEXT_CURSOR;
+  }
+
+  /**
+   * By default, ctrl+click changes selection in swing trees and tables
+   * (see {@link javax.swing.plaf.basic.BasicTreeUI#selectPathForEvent(TreePath, MouseEvent)}
+   * or {@link javax.swing.plaf.basic.BasicTableUI.Handler#mousePressed(MouseEvent)}),
+   * while it should leave the selection intact and show context menu.
+   */
+  public static MouseEvent fixMacContextMenuIssue(MouseEvent e) {
+    if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
+      int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
+      return new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
+                            true, MouseEvent.BUTTON3);
+    }
+    return e;
   }
 }

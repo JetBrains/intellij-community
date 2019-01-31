@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +33,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -175,15 +173,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       statement.accept(visitor);
     }
 
-    if (conflicts.isEmpty()) return false;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-    }
-
-    ConflictsDialog dialog = new ConflictsDialog(info.getProject(), conflicts);
-    dialog.show();
-    return !dialog.isOK();
+    return !BaseRefactoringProcessor.processConflicts(info.getProject(), conflicts);
   }
 
   private void performRefactoring(@NotNull final InitialInfo initialInfo, @Nullable final Editor editor) {

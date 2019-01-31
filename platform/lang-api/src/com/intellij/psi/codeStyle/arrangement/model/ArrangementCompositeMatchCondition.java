@@ -28,7 +28,6 @@ import java.util.Set;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 1:18 PM
  */
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 

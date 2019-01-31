@@ -7,30 +7,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Irina.Chernushina
- * @since 3.08.2011
- */
-@State(
-  name = "VcsContentAnnotationSettings",
-  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "VcsContentAnnotationSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
   public static final int ourMaxDays = 31; // approx
-  public static final long ourAbsoluteLimit = TimeUnit.DAYS.toMillis(ourMaxDays);
+  static final long ourAbsoluteLimit = TimeUnit.DAYS.toMillis(ourMaxDays);
 
   private State myState = new State();
-  {
-    myState.myLimit = ourAbsoluteLimit;
-  }
 
   public static VcsContentAnnotationSettings getInstance(final Project project) {
     return ServiceManager.getService(project, VcsContentAnnotationSettings.class);
   }
-  
-  public static class State {
+
+  final static class State {
     public boolean myShow1;
-    public long myLimit;
+    public long myLimit = ourAbsoluteLimit;
   }
 
   @Override

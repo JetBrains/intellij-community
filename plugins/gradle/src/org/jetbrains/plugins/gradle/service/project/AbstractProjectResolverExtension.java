@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,6 @@ import java.util.Set;
  * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
  *
  * @author Vladislav.Soroka
- * @since 10/14/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public abstract class AbstractProjectResolverExtension implements GradleProjectResolverExtension {
@@ -163,4 +163,7 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
   }
+
+  @ApiStatus.Experimental
+  public void onResolveEnd(@NotNull DataNode<ProjectData> projectDataNode) {}
 }

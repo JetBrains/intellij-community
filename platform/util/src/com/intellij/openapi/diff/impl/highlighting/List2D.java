@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.highlighting;
 import com.intellij.openapi.diff.ex.DiffFragment;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class List2D {
@@ -54,9 +55,6 @@ class List2D {
 
   public void addAll(DiffFragment[] line) {
     ensureRowExists();
-    for (int i = 0; i < line.length; i++) {
-      DiffFragment value = line[i];
-      myCurrentRow.add(value);
-    }
+    Collections.addAll(myCurrentRow, line);
   }
 }

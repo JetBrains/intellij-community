@@ -87,7 +87,7 @@ public class UnusedDefineInspection extends BaseInspection {
       }
     };
 
-    public MyElementVisitor(ProblemsHolder holder) {
+    MyElementVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -201,7 +201,7 @@ public class UnusedDefineInspection extends BaseInspection {
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
       private final T myTag;
 
-      public MyFix(T tag) {
+      MyFix(T tag) {
         myTag = tag;
       }
 

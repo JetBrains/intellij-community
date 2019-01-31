@@ -13,6 +13,6 @@ class A {
 
     public static void main(String[] args) {
         //resolves to nonvarargs method
-        List<String> uhoh =   <ref>listOf("");
+        List<String> uhoh =   <caret>listOf("");
     }
 }

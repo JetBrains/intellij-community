@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.navigator.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -26,7 +27,7 @@ import javax.swing.*;
 
 public abstract class MavenTreeAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && MavenActionUtil.isMavenizedProject(e.getDataContext()) && getTree(e) != null;
   }
 
@@ -36,7 +37,9 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class CollapseAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
       JTree tree = getTree(e);
       if (tree == null) return;
 
@@ -49,7 +52,9 @@ public abstract class MavenTreeAction extends MavenAction {
   }
 
   public static class ExpandAll extends MavenTreeAction {
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
       JTree tree = getTree(e);
       if (tree == null) return;
 

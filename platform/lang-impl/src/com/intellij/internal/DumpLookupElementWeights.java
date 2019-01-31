@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
@@ -43,13 +44,13 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpLookupElementWeights");
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     dumpLookupElementWeights((LookupImpl)LookupManager.getActiveLookup(editor));
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     presentation.setEnabled(editor != null && LookupManager.getActiveLookup(editor) != null);

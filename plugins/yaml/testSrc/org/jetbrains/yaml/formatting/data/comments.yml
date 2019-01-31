@@ -7,8 +7,8 @@ top:
     # value comment
     value2
   list:
-  # list item comment
-  - x
-  # - y # commented list item
+      # list item comment
+      - x
+      # - y # commented list item
 
 # last comment

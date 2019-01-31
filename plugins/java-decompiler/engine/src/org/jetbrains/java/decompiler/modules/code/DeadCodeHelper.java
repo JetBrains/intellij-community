@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.code;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
@@ -216,14 +217,14 @@ public class DeadCodeHelper {
 
       for (int i = 0; i < node.getPreds().size(); i++) {
         BasicBlock pred = node.getPreds().get(i);
-        if (!marked.contains(pred) && pred != dom) {
+        if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
       }
 
       for (int i = 0; i < node.getPredExceptions().size(); i++) {
         BasicBlock pred = node.getPredExceptions().get(i);
-        if (!marked.contains(pred) && pred != dom) {
+        if (pred != dom && !marked.contains(pred)) {
           lstNodes.add(pred);
         }
       }
@@ -253,6 +254,152 @@ public class DeadCodeHelper {
       block.addSuccessor(exit);
     }
   }
+
+  public static void extendSynchronizedRangeToMonitorexit(ControlFlowGraph graph) {
+
+    while(true) {
+
+      boolean range_extended = false;
+
+      for (ExceptionRangeCFG range : graph.getExceptions()) {
+
+        Set<BasicBlock> setPreds = new HashSet<>();
+        for (BasicBlock block : range.getProtectedRange()) {
+          setPreds.addAll(block.getPreds());
+        }
+        setPreds.removeAll(range.getProtectedRange());
+
+        if(setPreds.size() != 1) {
+          continue; // multiple predecessors, obfuscated range
+        }
+
+        BasicBlock predBlock = setPreds.iterator().next();
+        InstructionSequence predSeq = predBlock.getSeq();
+        if(predSeq.isEmpty() || predSeq.getLastInstr().opcode != CodeConstants.opc_monitorenter) {
+          continue; // not a synchronized range
+        }
+
+        boolean monitorexit_in_range = false;
+        Set<BasicBlock> setProtectedBlocks = new HashSet<>();
+        setProtectedBlocks.addAll(range.getProtectedRange());
+        setProtectedBlocks.add(range.getHandler());
+
+        for (BasicBlock block : setProtectedBlocks) {
+          InstructionSequence blockSeq = block.getSeq();
+          for (int i = 0; i < blockSeq.length(); i++) {
+            if (blockSeq.getInstr(i).opcode == CodeConstants.opc_monitorexit) {
+              monitorexit_in_range = true;
+              break;
+            }
+          }
+          if(monitorexit_in_range) {
+            break;
+          }
+        }
+
+        if(monitorexit_in_range) {
+          continue; // protected range already contains monitorexit
+        }
+
+        Set<BasicBlock> setSuccs = new HashSet<>();
+        for (BasicBlock block : range.getProtectedRange()) {
+          setSuccs.addAll(block.getSuccs());
+        }
+        setSuccs.removeAll(range.getProtectedRange());
+
+        if(setSuccs.size() != 1) {
+          continue; // non-unique successor
+        }
+
+        BasicBlock succBlock = setSuccs.iterator().next();
+        InstructionSequence succSeq = succBlock.getSeq();
+
+        int succ_monitorexit_index = -1;
+        for (int i = 0; i < succSeq.length(); i++) {
+          if (succSeq.getInstr(i).opcode == CodeConstants.opc_monitorexit) {
+            succ_monitorexit_index = i;
+            break;
+          }
+        }
+
+        if(succ_monitorexit_index < 0) {
+          continue; // monitorexit not found in the single successor block
+        }
+
+        BasicBlock handlerBlock = range.getHandler();
+        if(handlerBlock.getSuccs().size() != 1) {
+          continue; // non-unique handler successor
+        }
+        BasicBlock succHandler = handlerBlock.getSuccs().get(0);
+        InstructionSequence succHandlerSeq = succHandler.getSeq();
+        if(succHandlerSeq.isEmpty() || succHandlerSeq.getLastInstr().opcode != CodeConstants.opc_athrow) {
+          continue; // not a standard synchronized range
+        }
+
+        int handler_monitorexit_index = -1;
+        for (int i = 0; i < succHandlerSeq.length(); i++) {
+          if (succHandlerSeq.getInstr(i).opcode == CodeConstants.opc_monitorexit) {
+            handler_monitorexit_index = i;
+            break;
+          }
+        }
+
+        if(handler_monitorexit_index < 0) {
+          continue; // monitorexit not found in the handler successor block
+        }
+
+        // checks successful, prerequisites satisfied, now extend the range
+        if(succ_monitorexit_index < succSeq.length() - 1) { // split block
+
+          SimpleInstructionSequence seq = new SimpleInstructionSequence();
+          for(int counter = 0; counter < succ_monitorexit_index; counter++) {
+            seq.addInstruction(succSeq.getInstr(0), -1);
+            succSeq.removeInstruction(0);
+          }
+
+          // build a separate block
+          BasicBlock newblock = new BasicBlock(++graph.last_id);
+          newblock.setSeq(seq);
+
+          // insert new block
+          for (BasicBlock block : succBlock.getPreds()) {
+            block.replaceSuccessor(succBlock, newblock);
+          }
+
+          newblock.addSuccessor(succBlock);
+          graph.getBlocks().addWithKey(newblock, newblock.id);
+
+          succBlock = newblock;
+        }
+
+        // copy exception edges and extend protected ranges (successor block)
+        BasicBlock rangeExitBlock = succBlock.getPreds().get(0);
+        for (int j = 0; j < rangeExitBlock.getSuccExceptions().size(); j++) {
+          BasicBlock hd = rangeExitBlock.getSuccExceptions().get(j);
+          succBlock.addSuccessorException(hd);
+
+          ExceptionRangeCFG rng = graph.getExceptionRange(hd, rangeExitBlock);
+          rng.getProtectedRange().add(succBlock);
+        }
+
+        // copy instructions (handler successor block)
+        InstructionSequence handlerSeq = handlerBlock.getSeq();
+        for(int counter = 0; counter < handler_monitorexit_index; counter++) {
+          handlerSeq.addInstruction(succHandlerSeq.getInstr(0), -1);
+          succHandlerSeq.removeInstruction(0);
+        }
+
+        range_extended = true;
+        break;
+      }
+
+      if(!range_extended) {
+        break;
+      }
+    }
+
+  }
+
 
   public static void incorporateValueReturns(ControlFlowGraph graph) {
 

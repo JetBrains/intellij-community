@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -27,8 +28,17 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     showToolbar();
   }
 
+
   @Override
-  protected void addGroupByActions(DefaultActionGroup result) {
+  public void setActionActive(String name, boolean state) {
+    if (GroupByWordPrefixes.ID.equals(name)) {
+      ((PropertiesGroupingStructureViewModel)getTreeModel()).setGroupingActive(state);
+    }
+    super.setActionActive(name, state);
+  }
+
+  @Override
+  protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {
@@ -44,12 +54,12 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     actionGroup.add(new ToggleAction(PropertiesBundle.message("show.only.incomplete.action.text"), null, AllIcons.General.Error) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return ((ResourceBundleStructureViewModel)getTreeModel()).isShowOnlyIncomplete();
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         ((ResourceBundleStructureViewModel)getTreeModel()).setShowOnlyIncomplete(state);
         rebuild();
       }
@@ -61,20 +71,17 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   private class ChangeGroupSeparatorAction extends DefaultActionGroup {
     private final Set<String> myPredefinedSeparators = new LinkedHashSet<>();
 
-    public ChangeGroupSeparatorAction() {
+    ChangeGroupSeparatorAction() {
       super("Group by: ", true);
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
       myPredefinedSeparators.add("/");
-      String currentSeparator = getCurrentSeparator();
-      if (!myPredefinedSeparators.contains(currentSeparator)) {
-        myPredefinedSeparators.add(currentSeparator);
-      }
+      myPredefinedSeparators.add(getCurrentSeparator());
       refillActionGroup();
     }
 
     @Override
-    public final void update(AnActionEvent e) {
+    public final void update(@NotNull AnActionEvent e) {
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
       presentation.setText("Group by: " + separator, false);
@@ -91,7 +98,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         if (separator.equals(getCurrentSeparator())) continue;
         AnAction action = new AnAction() {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
             setActionActive(GroupByWordPrefixes.ID, true);
             refillActionGroup();
@@ -106,12 +113,12 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private final class SelectSeparatorAction extends AnAction {
 
-      public SelectSeparatorAction() {
+      SelectSeparatorAction() {
         super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
       }
 
       @Override
-      public final void actionPerformed(AnActionEvent e) {
+      public final void actionPerformed(@NotNull AnActionEvent e) {
         String[] strings = ArrayUtil.toStringArray(myPredefinedSeparators);
         String current = getCurrentSeparator();
         String separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),

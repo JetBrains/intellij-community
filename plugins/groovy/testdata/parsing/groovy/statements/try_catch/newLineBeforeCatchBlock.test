@@ -1,0 +1,24 @@
+try {} catch (e)
+{}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')
+    PsiWhiteSpace(' ')
+    Catch clause
+      PsiElement(catch)('catch')
+      PsiWhiteSpace(' ')
+      PsiElement(()('(')
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('e')
+      PsiElement())(')')
+      PsiElement(new line)('\n')
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

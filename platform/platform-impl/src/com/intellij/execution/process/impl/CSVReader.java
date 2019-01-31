@@ -66,7 +66,7 @@ class CSVReader {
      * @param reader
      *            the reader to an underlying CSV source.
      */
-    public CSVReader(Reader reader) {
+    CSVReader(Reader reader) {
         this(reader, DEFAULT_SEPARATOR);
     }
 
@@ -78,7 +78,7 @@ class CSVReader {
      * @param separator
      *            the delimiter to use for separating entries.
      */
-    public CSVReader(Reader reader, char separator) {
+    CSVReader(Reader reader, char separator) {
         this(reader, separator, DEFAULT_QUOTE_CHARACTER);
     }
 
@@ -92,7 +92,7 @@ class CSVReader {
      * @param quotechar
      *            the character to use for quoted elements
      */
-    public CSVReader(Reader reader, char separator, char quotechar) {
+    CSVReader(Reader reader, char separator, char quotechar) {
         this(reader, separator, quotechar, DEFAULT_SKIP_LINES);
     }
 
@@ -108,7 +108,7 @@ class CSVReader {
      * @param line
      *            the line number to skip for start reading 
      */
-    public CSVReader(Reader reader, char separator, char quotechar, int line) {
+    CSVReader(Reader reader, char separator, char quotechar, int line) {
         this.br = new BufferedReader(reader);
         this.separator = separator;
         this.quotechar = quotechar;

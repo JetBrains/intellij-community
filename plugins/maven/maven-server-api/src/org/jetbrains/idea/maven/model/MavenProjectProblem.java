@@ -47,7 +47,7 @@ public class MavenProjectProblem implements Serializable {
     return createProblemsList(Collections.<MavenProjectProblem>emptySet());
   }
 
-  public static Collection<MavenProjectProblem> createProblemsList(Collection<MavenProjectProblem> copyThis) {
+  public static Collection<MavenProjectProblem> createProblemsList(Collection<? extends MavenProjectProblem> copyThis) {
     return new LinkedHashSet<MavenProjectProblem>(copyThis);
   }
 

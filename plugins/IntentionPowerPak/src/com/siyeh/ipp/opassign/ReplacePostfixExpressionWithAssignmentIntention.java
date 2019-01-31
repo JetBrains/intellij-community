@@ -15,9 +15,9 @@
  */
 package com.siyeh.ipp.opassign;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -34,9 +34,7 @@ public class ReplacePostfixExpressionWithAssignmentIntention
     final PsiJavaToken sign = postfixExpression.getOperationSign();
     final String signText = sign.getText();
     final String replacementText = "=";
-    return IntentionPowerPackBundle.message(
-      "replace.some.operator.with.other.intention.name",
-      signText, replacementText);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", signText, replacementText);
   }
 
   @NotNull

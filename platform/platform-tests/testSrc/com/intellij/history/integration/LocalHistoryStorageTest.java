@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,15 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myStorage);
-    super.tearDown();
+    try {
+      Disposer.dispose(myStorage);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testBasic() throws Exception {
@@ -138,11 +145,11 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
 
   private int createRecord(int size) throws IOException {
     int r = myStorage.createNextRecord();
-    AbstractStorage.StorageDataOutput s = myStorage.writeStream(r, true);
-    for (int i = 0; i < size; i++) {
-      s.writeInt(r);
+    try (AbstractStorage.StorageDataOutput s = myStorage.writeStream(r, true)) {
+      for (int i = 0; i < size; i++) {
+        s.writeInt(r);
+      }
     }
-    s.close();
     return r;
   }
 
@@ -154,14 +161,10 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
   private void assertRecord(int id, int prev, int next) throws IOException {
     assertEquals(prev, myStorage.getPrevRecord(id));
     assertEquals(next, myStorage.getNextRecord(id));
-    DataInputStream s = myStorage.readStream(id);
-    try {
+    try (DataInputStream s = myStorage.readStream(id)) {
       for (int i = 0; i < 1000; i++) {
         assertEquals(id, s.readInt());
       }
-    }
-    finally {
-      s.close();
     }
   }
 }

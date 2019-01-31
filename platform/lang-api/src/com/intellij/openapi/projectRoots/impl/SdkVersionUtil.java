@@ -10,7 +10,6 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 /**
  * @author Anna.Kozlova
- * @since 12-Aug-2006
  */
 public class SdkVersionUtil {
   private static final JdkVersionDetector.ActionRunner ACTION_RUNNER = (r) -> ApplicationManager.getApplication().executeOnPooledThread(r);
@@ -18,6 +17,7 @@ public class SdkVersionUtil {
   private SdkVersionUtil() { }
 
   /** @deprecated use {@link #getJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @Deprecated
   @Nullable
   public static String detectJdkVersion(@NotNull String homePath) {
     return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);

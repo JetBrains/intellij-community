@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -58,7 +59,7 @@ public class RunInspectionAction extends GotoActionBase {
   }
 
   @Override
-  protected void gotoActionPerformed(final AnActionEvent e) {
+  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
@@ -81,7 +82,7 @@ public class RunInspectionAction extends GotoActionBase {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(
-          () -> runInspection(project, ((InspectionToolWrapper)element).getShortName(), virtualFile, psiElement, psiFile));
+          () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFile, psiElement, psiFile));
       }
     }, false);
   }
@@ -124,10 +125,11 @@ public class RunInspectionAction extends GotoActionBase {
     fileFilterPanel.init(options);
 
     final AnalysisScope initialAnalysisScope = analysisScope;
-    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
-      "Run '" + toolWrapper.getDisplayName() + "'",
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project, analysisScope, module, true, options, psiElement) {
+    List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Run '" + toolWrapper.getDisplayName() + "'",
+                                                                         AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle
+                                                                           .message("inspection.action.noun")), project,
+                                                                         items, options, true) {
 
       private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 
@@ -201,7 +203,7 @@ public class RunInspectionAction extends GotoActionBase {
             public void actionPerformed(ActionEvent e) {
               InspectionToolWrapper wrapper = getToolWrapper();
               InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
-              managerEx.createNewGlobalContext(false)
+              managerEx.createNewGlobalContext()
                 .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
               close(DialogWrapper.OK_EXIT_CODE);
             }

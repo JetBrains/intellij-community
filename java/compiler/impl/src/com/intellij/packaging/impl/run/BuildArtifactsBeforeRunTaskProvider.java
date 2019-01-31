@@ -45,6 +45,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
     super(BuildArtifactsBeforeRunTask.class, project);
   }
 
+  @Override
   public Key<BuildArtifactsBeforeRunTask> getId() {
     return ID;
   }

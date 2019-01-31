@@ -1,10 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.*
+import com.intellij.util.ArrayUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
 import java.util.*
@@ -17,9 +21,11 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
   private val lock = ReentrantReadWriteLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
 
+  override val isExclusive = false
+
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     lock.read {
-      nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream).let { consumer(it) }
+      consumer(nameToData.get(PathUtilRt.getFileName(fileSpec))?.let(ByteArray::inputStream))
     }
     return true
   }
@@ -106,7 +112,20 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         names.sortWith(comparator)
       }
       for (name in names) {
-        nameToData.get(name)?.let { state.addContent(loadElement(it.inputStream())) }
+        nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it.inputStream())) }
+      }
+    }
+  }
+
+  // copy not existent data from this provider to specified
+  fun copyIfNotExists(provider: SchemeManagerIprProvider) {
+    lock.read {
+      provider.lock.write {
+        for (key in nameToData.keys) {
+          if (!provider.nameToData.containsKey(key)) {
+            provider.nameToData.put(key, nameToData.get(key)!!)
+          }
+        }
       }
     }
   }

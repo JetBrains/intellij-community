@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,6 +15,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -119,12 +120,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return;
 
-          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(XDebugView.getSession(getTree()));
+          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
           if (data == null) {
             return;
           }
 
-          if (!showAsInlay(file, position, debuggerPosition)) {
+          if (!showAsInlay(session, position, debuggerPosition)) {
             data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
             myTree.updateEditor();
@@ -140,15 +141,27 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  private boolean showAsInlay(VirtualFile file, XSourcePosition position, XSourcePosition debuggerPosition) {
-    if (!Registry.is("debugger.show.values.inplace")) return false;
-    if (!debuggerPosition.getFile().equals(position.getFile()) || debuggerPosition.getLine() != position.getLine()) return false;
-    XValue container = getValueContainer();
-    if (!(container instanceof XValueWithInlinePresentation)) return false;
-    String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
-    if (presentation == null) return false;
-    XDebuggerInlayUtil.createInlay(myTree.getProject(), file, position.getOffset(), presentation);
-    return true;
+  private boolean showAsInlay(XDebugSession session,
+                              XSourcePosition position,
+                              XSourcePosition debuggerPosition) {
+    if (!Registry.is("debugger.show.values.between.lines") && !Registry.is("debugger.show.values.inplace")) return false;
+
+    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
+      if (XDebuggerInlayUtil.showValueInBlockInlay((XDebugSessionImpl)session, this, position)) {
+        return true;
+      }
+    }
+    if (Registry.is("debugger.show.values.inplace")) {
+      XValue container = getValueContainer();
+      if (debuggerPosition.getLine() == position.getLine() && container instanceof XValueWithInlinePresentation) {
+        String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
+        if (presentation != null) {
+          XDebuggerInlayUtil.createInlay(myTree.getProject(), position.getFile(), position.getOffset(), presentation);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -172,7 +185,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
-    appendName();
+    if (myValuePresentation.isShowName()) {
+      appendName();
+    }
     buildText(myValuePresentation, myText);
   }
 

@@ -23,7 +23,7 @@ import java.util.EventObject;
 /**
  * Provides data for a virtual file system change event.
  *
- * @see com.intellij.openapi.vfs.VirtualFileListener
+ * @see VirtualFileListener
  */
 public class VirtualFileEvent extends EventObject {
   private final VirtualFile myFile;
@@ -47,11 +47,11 @@ public class VirtualFileEvent extends EventObject {
   }
 
   private VirtualFileEvent(@Nullable Object requestor,
-                          @NotNull VirtualFile file,
-                          @NotNull String fileName,
-                          @Nullable VirtualFile parent,
-                          long oldModificationStamp,
-                          long newModificationStamp) {
+                           @NotNull VirtualFile file,
+                           @NotNull String fileName,
+                           @Nullable VirtualFile parent,
+                           long oldModificationStamp,
+                           long newModificationStamp) {
     super(file);
     myFile = file;
     myFileName = fileName;
@@ -107,7 +107,7 @@ public class VirtualFileEvent extends EventObject {
    * Returns the modification stamp of the file before the event.
    *
    * @return the modification stamp of the file before the event.
-   * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
+   * @see VirtualFile#getModificationStamp()
    */
   public long getOldModificationStamp() {
     return myOldModificationStamp;
@@ -117,7 +117,7 @@ public class VirtualFileEvent extends EventObject {
    * Returns the modification stamp of the file after the event.
    *
    * @return the modification stamp of the file after the event.
-   * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
+   * @see VirtualFile#getModificationStamp()
    */
   public long getNewModificationStamp() {
     return myNewModificationStamp;

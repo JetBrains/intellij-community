@@ -28,6 +28,7 @@ public final class ThrownExceptionValueData extends DescriptorData<ThrownExcepti
     myExceptionObj = exceptionObj;
   }
 
+  @Override
   protected ThrownExceptionValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThrownExceptionValueDescriptorImpl(project, myExceptionObj);
   }
@@ -50,6 +51,7 @@ public final class ThrownExceptionValueData extends DescriptorData<ThrownExcepti
     return myExceptionObj.hashCode();
   }
 
+  @Override
   public DisplayKey<ThrownExceptionValueDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myExceptionObj);
   }

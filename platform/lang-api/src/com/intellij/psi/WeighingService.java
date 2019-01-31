@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,9 +44,9 @@ public class WeighingService {
   }
 
   @NotNull
-  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<T> element, @Nullable final Loc location) {
+  public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<? extends T> element, @Nullable final Loc location) {
     final List<Weigher> weighers = getWeighers(key);
-    return new WeighingComparable<>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
+    return new WeighingComparable<>(element, location, weighers.toArray(new Weigher[0]));
   }
 
   public static <T,Loc> List<Weigher> getWeighers(Key<? extends Weigher<T, Loc>> key) {

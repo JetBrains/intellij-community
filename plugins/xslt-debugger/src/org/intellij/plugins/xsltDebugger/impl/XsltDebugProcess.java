@@ -181,7 +181,7 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
     private final Debugger.StyleFrame myStyleFrame;
     private final Debugger.SourceFrame mySourceFrame;
 
-    public MySuspendContext(XsltDebuggerSession debuggerSession, Debugger.StyleFrame styleFrame, Debugger.SourceFrame sourceFrame) {
+    MySuspendContext(XsltDebuggerSession debuggerSession, Debugger.StyleFrame styleFrame, Debugger.SourceFrame sourceFrame) {
       myDebuggerSession = debuggerSession;
       myStyleFrame = styleFrame;
       mySourceFrame = sourceFrame;

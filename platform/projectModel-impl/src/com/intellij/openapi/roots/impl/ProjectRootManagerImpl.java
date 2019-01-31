@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +7,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -39,8 +36,9 @@ import java.util.*;
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
-  @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
+  private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  private static final String ATTRIBUTE_VERSION = "version";
 
   protected final Project myProject;
 
@@ -49,8 +47,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private String myProjectSdkName;
   private String myProjectSdkType;
 
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
-
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
@@ -58,10 +54,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
 
   protected class BatchSession {
+    private final boolean myFileTypes;
     private int myBatchLevel;
     private boolean myChanged;
-
-    private final boolean myFileTypes;
 
     private BatchSession(final boolean fileTypes) {
       myFileTypes = fileTypes;
@@ -183,6 +178,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new ModulesOrderEnumerator(modules);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
@@ -197,7 +193,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public Sdk getProjectSdk() {
-    return myProjectSdkName == null ? null : ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
+    return myProjectSdkName == null ? null :
+           myProjectSdkType == null ? ProjectJdkTable.getInstance().findJdk(myProjectSdkName) :
+           ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
   }
 
   @Override
@@ -223,7 +221,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     incModificationCount();
     mergeRootsChangesDuring(() -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged());
     Sdk sdk = getProjectSdk();
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
     }
   }
@@ -248,7 +246,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void loadState(@NotNull Element element) {
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.readExternal(element);
     }
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
@@ -260,7 +258,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public Element getState() {
     Element element = new Element("state");
     element.setAttribute(ATTRIBUTE_VERSION, "2");
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.writeExternal(element);
     }
     if (myProjectSdkName != null) {
@@ -361,8 +359,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return false;
   }
 
-  protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
-  }
+  protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
   private boolean fireRootsChanged(boolean fileTypes) {
     if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return false;
@@ -395,27 +392,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return true;
   }
 
-  protected void fireRootsChangedEvent(boolean fileTypes) {
-  }
+  protected void fireRootsChangedEvent(boolean fileTypes) { }
 
-  protected void addRootsToWatch() {
-  }
+  protected void addRootsToWatch() { }
 
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
-  protected void doSynchronizeRoots() {
-  }
+  protected void doSynchronizeRoots() { }
 
-  public static String extractLocalPath(final String url) {
-    final String path = VfsUtilCore.urlToPath(url);
-    final int jarSeparatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
-    if (jarSeparatorIndex > 0) {
-      return path.substring(0, jarSeparatorIndex);
-    }
-    return path;
+  public static String extractLocalPath(String url) {
+    String path = VfsUtilCore.urlToPath(url);
+    int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
+    return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
   }
 
   private ModuleManager getModuleManager() {
@@ -642,7 +633,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  public void markRootsForRefresh() { }
+  @Override
+  public void markRootsForRefresh() {
+
+  }
 
   @NotNull
   public VirtualFilePointerListener getRootsValidityChangedListener() {

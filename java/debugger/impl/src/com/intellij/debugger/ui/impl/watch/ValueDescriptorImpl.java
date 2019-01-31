@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -16,8 +16,8 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -197,7 +198,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
             myIsDirty = !(value instanceof FloatValue);
           }
           else {
-            myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
+            myIsDirty = !Objects.equals(value, myValue);
           }
         }
         catch (ObjectCollectedException ignored) {
@@ -412,6 +413,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
+  public Renderer getLastLabelRenderer() {
+    Renderer lastRenderer = getLastRenderer();
+    if (lastRenderer instanceof CompoundTypeRenderer) {
+      lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
+    }
+    return lastRenderer;
+  }
+
   public NodeRenderer getChildrenRenderer(DebugProcessImpl debugProcess) {
     return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
   }
@@ -457,7 +466,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {
     private final JavaValue value;
 
-    public DebuggerTreeNodeMock(JavaValue value) {
+    DebuggerTreeNodeMock(JavaValue value) {
       this.value = value;
     }
 
@@ -518,7 +527,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
       if(idx >= 0) {
-        buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+        buf.insert(idx + 1, ((ArrayReference)objRef).length());
       }
     }
 
@@ -541,9 +550,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return null;
   }
 
-  @NotNull
   public String getIdLabel() {
-    return StringUtil.notNullize(myIdLabel);
+    return myIdLabel;
   }
 
   public String getValueLabel() {

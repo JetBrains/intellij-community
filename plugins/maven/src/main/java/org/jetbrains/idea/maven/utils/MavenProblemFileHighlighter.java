@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 
 public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
 
+  @Override
   public boolean value(final VirtualFile file) {
     String fileName = file.getName();
     if (MavenUtil.isPomFileName(fileName)) {

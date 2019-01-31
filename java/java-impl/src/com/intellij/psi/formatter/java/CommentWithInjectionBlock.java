@@ -92,7 +92,7 @@ public class CommentWithInjectionBlock extends AbstractJavaBlock {
   private static class PartialCommentBlock extends LeafBlock {
     private final TextRange myRange;
 
-    public PartialCommentBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
+    PartialCommentBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
       super(node, wrap, alignment, indent);
       myRange = range;
     }

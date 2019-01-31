@@ -31,8 +31,5 @@ trait GdslScopeMethods {
 
   Scope classScope(Map args) { return new ClassScope(args) }
 
-  /**
-   * @since 10
-   */
   Scope annotatedScope(Map args) { return new AnnotatedScope(args) }
 }

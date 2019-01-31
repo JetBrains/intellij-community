@@ -14,7 +14,7 @@ For information on how to use `typeshed`, read below.  Information for
 contributors can be found in [CONTRIBUTING.md](CONTRIBUTING.md).  **Please read
 it before submitting pull requests.**
 
-Typeshed supports Python versions 2.7 and 3.3 and up.
+Typeshed supports Python versions 2.7 and 3.4 and up.
 
 ## Using
 
@@ -114,8 +114,8 @@ $ source .venv3/bin/activate
 (.venv3)$ pip3 install -r requirements-tests-py3.txt
 ```
 This will install mypy (you need the latest master branch from GitHub),
-typed-ast, and flake8. You can then run mypy tests and flake8 tests by
-invoking:
+typed-ast, flake8, and pytype. You can then run mypy, flake8, and pytype tests
+by invoking:
 ```
 (.venv3)$ python3 tests/mypy_test.py
 ...
@@ -123,21 +123,13 @@ invoking:
 ...
 (.venv3)$ flake8
 ...
+(.venv3)$ python3 tests/pytype_test.py
+...
 ```
-(Note that flake8 only works with Python 3.6 or higher.)
-
-To run the pytype tests, you need a separate virtual environment with
-Python 2.7, and a Python 3.6 interpreter somewhere you can point to. Run:
-```
-$ virtualenv --python=python2.7 .venv2
-$ source .venv2/bin/activate
-(.venv2)$ pip install -r requirements-tests-py2.txt
-```
-This will install pytype from its GitHub repo. You can then run pytype
-tests by running:
-```
-(.venv2)$ python tests/pytype_test.py --python36-exe=/path/to/python3.6
-```
+Note that flake8 only works with Python 3.6 or higher, and that to run the
+pytype tests, you will need Python 2.7 and Python 3.6 interpreters. Pytype will
+find these automatically if they're in `PATH`, but otherwise you must point to
+them with the `--python27-exe` and `--python36-exe` arguments, respectively.
 
 For mypy, if you are in the typeshed repo that is submodule of the
 mypy repo (so `..` refers to the mypy repo), there's a shortcut to run

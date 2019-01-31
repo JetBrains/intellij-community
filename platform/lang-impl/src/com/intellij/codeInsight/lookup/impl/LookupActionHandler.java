@@ -216,14 +216,11 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       }
 
       if (!lookup.performGuardedChange(() -> {
-        CaretAction action = new CaretAction() {
-          @Override
-          public void perform(Caret caret1) {
-            caret1.removeSelection();
-            int caretOffset = caret1.getOffset();
-            if (caretOffset < seq.length()) {
-              caret1.moveToOffset(caretOffset + 1);
-            }
+        CaretAction action = lookupCaret -> {
+          lookupCaret.removeSelection();
+          int caretOffset = lookupCaret.getOffset();
+          if (caretOffset < seq.length()) {
+            lookupCaret.moveToOffset(caretOffset + 1);
           }
         };
         if (caret == null) {
@@ -236,8 +233,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
+      lookup.fireBeforeAppendPrefix(c);
       lookup.appendPrefix(c);
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
       if (completion != null) {
         completion.prefixUpdated();
       }

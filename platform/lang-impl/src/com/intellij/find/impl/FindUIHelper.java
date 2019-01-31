@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -67,6 +68,8 @@ public class FindUIHelper implements Disposable {
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
+    } else {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
     return myUI;
   }
@@ -86,6 +89,7 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
+        myModel.copyFrom(FindManager.getInstance(myProject).getFindInProjectModel());
         FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
         ui.initByModel();
@@ -185,26 +189,6 @@ public class FindUIHelper implements Disposable {
     }
 
     findSettings.setFileMask(myModel.getFileFilter());
-  }
-
-  boolean isUseSeparateView() {
-    return FindSettings.getInstance().isShowResultsInSeparateView();
-  }
-
-  boolean isSkipResultsWithOneUsage() {
-    return FindSettings.getInstance().isSkipResultsWithOneUsage();
-  }
-
-  void setUseSeparateView(boolean separateView) {
-    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
-    myModel.setOpenInNewTab(separateView);
-    FindSettings.getInstance().setShowResultsInSeparateView(separateView);
-  }
-
-  void setSkipResultsWithOneUsage(boolean skip) {
-    if (!isReplaceState()) {
-      FindSettings.getInstance().setSkipResultsWithOneUsage(skip);
-    }
   }
 
   String getTitle() {

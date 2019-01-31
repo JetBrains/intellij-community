@@ -38,6 +38,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
     return element instanceof PsiClass;
   }
 
+  @Override
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     if (element.getLanguage() != StdLanguages.JAVA) return false;
@@ -45,6 +46,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
     return inheritors.size() > 0;
   }
 
+  @Override
   public void inlineElement(final Project project, final Editor editor, final PsiElement element) {
     PsiClass superClass = (PsiClass) element;
     if (!superClass.getManager().isInProject(superClass)) {

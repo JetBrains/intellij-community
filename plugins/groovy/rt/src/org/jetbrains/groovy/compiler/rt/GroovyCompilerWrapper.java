@@ -45,10 +45,10 @@ public class GroovyCompilerWrapper {
     "A groovyc error occurred while trying to load one of the classes in project dependencies. " +
     "Please ensure its version is compatible with other jars (including Groovy ones) in the dependencies. " +
     "See the message and the stack trace below for reference\n\n";
-  private final List<CompilerMessage> collector;
+  private final List<? super CompilerMessage> collector;
   private boolean forStubs;
 
-  public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
+  public GroovyCompilerWrapper(List<? super CompilerMessage> collector, boolean forStubs) {
     this.collector = collector;
     this.forStubs = forStubs;
   }
@@ -145,6 +145,7 @@ public class GroovyCompilerWrapper {
   static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
     final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
     compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
+      @Override
       public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
         final String topLevel = classNode.getName();
         String fileName = source.getName();
@@ -183,7 +184,7 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  /** @noinspection ThrowableResultOfMethodCallIgnored*/
+  /** */
   private void processException(Message message) {
     if (message instanceof SyntaxErrorMessage) {
       SyntaxErrorMessage syntaxErrorMessage = (SyntaxErrorMessage) message;
@@ -214,7 +215,6 @@ public class GroovyCompilerWrapper {
     if (!prefix.endsWith("\n")) {
       writer.append("\n\n");
     }
-    //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
     collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
   }
@@ -262,7 +262,6 @@ public class GroovyCompilerWrapper {
   @NotNull
   private static String getStackTrace(GroovyRuntimeException exception) {
     String message;StringWriter stringWriter = new StringWriter();
-    //noinspection IOResourceOpenedButNotSafelyClosed
     PrintWriter writer = new PrintWriter(stringWriter);
     exception.printStackTrace(writer);
     message = stringWriter.getBuffer().toString();

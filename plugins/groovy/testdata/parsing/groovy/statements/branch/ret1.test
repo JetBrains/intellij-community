@@ -30,8 +30,8 @@ Groovy script
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('square')
-        PsiElement(()('(')
         Parameter list
+          PsiElement(()('(')
           Parameter
             Modifiers
               <empty list>
@@ -39,7 +39,7 @@ Groovy script
               PsiElement(int)('int')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('IntegerToSquare')
-        PsiElement())(')')
+          PsiElement())(')')
         Throw clause
           <empty list>
         Open block

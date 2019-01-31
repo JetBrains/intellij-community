@@ -34,6 +34,7 @@ class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected void tearDown() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
     super.tearDown()
   }
 
@@ -1069,6 +1070,10 @@ class X {
     doBasicTest()
   }
 
+  void testClassNameBeforeParentheses2() {
+    doBasicTest()
+  }
+
   void testNewClassGenerics() {
     checkSingleItemCompletion 'new ArrayLi<caret>', 'new ArrayList<<caret>>()'
   }
@@ -1946,5 +1951,21 @@ class C implements T<String> {
     configure('new U<caret>x')
     myFixture.completeBasic()
     assert myFixture.lookupElements[0].object == uClass
+  }
+
+  void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = false
+
+    myFixture.addClass("class Super {}")
+    myFixture.addClass("class Sub extends Super {}")
+    myFixture.addClass("package foo; public class SubOther {}")
+    myFixture.configureByText('a.groovy', "Super s = new SubO<caret>")
+
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
+    myFixture.type('\b')
+    myFixture.assertPreferredCompletionItems 0, 'Sub'
+    myFixture.type('O')
+    myFixture.assertPreferredCompletionItems 0, 'SubOther'
   }
 }

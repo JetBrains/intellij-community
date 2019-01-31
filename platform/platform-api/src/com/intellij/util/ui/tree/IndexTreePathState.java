@@ -28,6 +28,7 @@ public class IndexTreePathState implements TreePathState {
     myIndicies = pathToChildIndecies(path);
   }
 
+  @Override
   public TreePath getRestoredPath() {
     int aliveIndex = findLowestAliveNodeIndex(mySelectionPath);
     if (aliveIndex == mySelectionPath.getPathCount() - 1) return mySelectionPath;

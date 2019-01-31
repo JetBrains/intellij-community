@@ -23,7 +23,6 @@ public class VcsLogActionPlaces {
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
-  public static final String CHANGES_BROWSER_TOOLBAR_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Toolbar";
   public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
 
   // action places
@@ -35,8 +34,6 @@ public class VcsLogActionPlaces {
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
-  public static final String VCS_LOG_PRESENTATION_SETTINGS_ACTION = "Vcs.Log.QuickPresentationSettings";
-  public static final String VCS_LOG_TEXT_FILTER_SETTINGS_ACTION = "Vcs.Log.QuickTextFilterSettings";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
   public static final String CHECKIN_PROJECT_ACTION = "CheckinProject";

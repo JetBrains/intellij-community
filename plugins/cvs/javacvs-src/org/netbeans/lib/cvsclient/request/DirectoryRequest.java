@@ -48,7 +48,8 @@ public final class DirectoryRequest extends AbstractRequest {
 	 * Get the request String that will be passed to the server
 	 * @return the request String
 	 */
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Directory " + localDirectory + "\n" + repository + "\n";
 	}
 

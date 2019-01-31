@@ -65,7 +65,7 @@ public abstract class JavaProjectModelModificationService {
     return addDependency(Collections.singletonList(from), descriptor, scope);
   }
 
-  public abstract Promise<Void> addDependency(@NotNull Collection<Module> from,
+  public abstract Promise<Void> addDependency(@NotNull Collection<? extends Module> from,
                                               @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                               @NotNull DependencyScope scope);
 

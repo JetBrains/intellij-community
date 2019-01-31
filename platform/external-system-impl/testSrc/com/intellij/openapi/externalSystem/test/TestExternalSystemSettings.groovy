@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NotNull
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 4:04 PM
  */
 class TestExternalSystemSettings extends AbstractExternalSystemSettings<
 TestExternalSystemSettings,

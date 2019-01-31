@@ -28,6 +28,7 @@ public abstract class ReferenceRenderer extends TypeRenderer {
     super(className);
   }
 
+  @Override
   public boolean isApplicable(Type type) {
     return type instanceof ReferenceType && DebuggerUtils.instanceOf(type, getClassName());
   }

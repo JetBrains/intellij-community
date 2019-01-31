@@ -34,6 +34,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
 
   protected abstract String getPrimaryText();
 
+  @Override
   public void customize(@NotNull final SimpleColoredComponent component) {
     component.setIcon(getIcon());
     component.append(getPrimaryText(), myTextAttributes);
@@ -43,6 +44,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
     }
   }
 
+  @Override
   public void customize(@NotNull final HtmlListCellRenderer renderer) {
     renderer.setIcon(getIcon());
     renderer.append(getPrimaryText(), myTextAttributes);
@@ -52,6 +54,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
     }
   }
 
+  @Override
   @NotNull
   public String getText() {
     String secondaryText = getSecondaryText();

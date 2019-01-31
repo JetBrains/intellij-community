@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +41,7 @@ import java.util.List;
  * @date Aug 13, 2009
  * @deprecated use {@link AbstractBatchSuppressByNoInspectionCommentFix} and {@link com.intellij.codeInspection.SuppressIntentionActionFromFix}
  */
+@Deprecated
 public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressIntentionAction {
   @NotNull protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;
@@ -80,7 +81,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
+    return context.isValid() && BaseIntentionAction.canModify(context) && getContainer(context) != null;
   }
 
   @Override

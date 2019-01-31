@@ -12,14 +12,15 @@
  */
 package org.netbeans.lib.cvsclient.command.log;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.DualListener;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
@@ -33,7 +34,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.progress.sending.IRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -64,7 +64,8 @@ public class LogCommand extends AbstractCommand {
 
 	// Implemented ============================================================
 
-	public final boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+	@Override
+        public final boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
                                                                                                                                                                                                                        AuthenticationException {
 		final ICvsFiles cvsFiles;
 		try {
@@ -105,14 +106,16 @@ public class LogCommand extends AbstractCommand {
 		return new LogMessageParser(eventSender, cvsFileSystem);
 	}
 
-	public final String getCvsCommandLine() {
+	@Override
+        public final String getCvsCommandLine() {
 		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("log ");
 		cvsCommandLine.append(getCVSArguments());
 		appendFileArguments(cvsCommandLine);
 		return cvsCommandLine.toString();
 	}
 
-	public final void resetCvsCommand() {
+	@Override
+        public final void resetCvsCommand() {
 		super.resetCvsCommand();
 		setRecursive(true);
 		setDefaultBranch(false);
@@ -289,7 +292,8 @@ public class LogCommand extends AbstractCommand {
 
 	// Utils ==================================================================
 
-	protected final void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
+	@Override
+        protected final void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
 		requests.addIsModifiedRequest(fileObject);
 	}
 }

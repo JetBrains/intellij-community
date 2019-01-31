@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -57,7 +57,7 @@ public class RemovePrefixQuickFix implements LocalQuickFix {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       for (ASTNode node : pyString.getStringNodes()) {
         final String nodeText = node.getText();
-        final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+        final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
         if (nodeText.substring(0, prefixLength).equalsIgnoreCase(myPrefix)) {
           final PyStringLiteralExpression replacement = elementGenerator.createStringLiteralAlreadyEscaped(nodeText.substring(prefixLength));
           node.getPsi().replace(replacement.getFirstChild());

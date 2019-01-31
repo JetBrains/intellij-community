@@ -70,7 +70,7 @@ public abstract class TreeNodeEvent {
         buffer.append("'").append(value).append("'");
       }
       else {
-        buffer.append(String.valueOf(value));
+        buffer.append(value);
       }
       buffer.append(", ");
     }

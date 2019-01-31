@@ -22,6 +22,7 @@ package com.intellij.codeInsight;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlBuilderTest extends LightCodeInsightTestCase {
@@ -31,7 +32,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     private final StringBuilder currentDisplayText = new StringBuilder();
     private final ProcessingOrder myTagProcessingOrder;
 
-    public TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
+    TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
       myTagProcessingOrder = tagsAndAttributes;
     }
 
@@ -72,7 +73,7 @@ public class XmlBuilderTest extends LightCodeInsightTestCase {
     }
 
     @Override
-    public void error(String message, int startOffset, int endOffset) {
+    public void error(@NotNull String message, int startOffset, int endOffset) {
       flushText();
       builder.append("ERROR: '").append(message).append("'\n");
     }

@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.util.ui.JBUI.CurrentTheme.ActionButton.hoverBackground;
+import static com.intellij.util.ui.JBUI.CurrentTheme.ActionButton.hoverBorder;
 
 /**
  * A wrapper for an icon which paints it like a selected toggleable action in toolbar
@@ -39,8 +42,8 @@ public class PoppedIcon implements Icon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Rectangle rect = new Rectangle(getIconWidth() + 2*x, getIconHeight() + 2*x);
-    IdeaActionButtonLook.paintBackground(g, rect, ActionButtonComponent.POPPED);
-    IdeaActionButtonLook.paintBorder(g, rect, ActionButtonComponent.POPPED);
+    ActionButtonLook.SYSTEM_LOOK.paintLookBackground(g, rect, hoverBackground());
+    ActionButtonLook.SYSTEM_LOOK.paintLookBorder(g, rect, hoverBorder());
     myIcon.paintIcon(c, g, x + (getIconWidth() - myIcon.getIconWidth())/2, y + (getIconHeight() - myIcon.getIconHeight())/2);
   }
 

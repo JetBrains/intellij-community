@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class EditGroupAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     GroupItem groupToBeEdited = GroupItem.DATA_KEY.getData(e.getDataContext());
     if (groupToBeEdited == null || project == null) return;
@@ -63,7 +64,7 @@ public class EditGroupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     GroupItem groupItem = GroupItem.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());

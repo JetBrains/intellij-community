@@ -22,12 +22,10 @@ package com.intellij.xml.impl.schema;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
-import org.jetbrains.annotations.NotNull;
 
 public class NullElementDescriptor implements XmlElementDescriptor {
   private static final NullElementDescriptor INSTANCE = new NullElementDescriptor();
@@ -112,11 +110,5 @@ public class NullElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public void init(PsiElement element) {
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

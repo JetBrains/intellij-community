@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -55,7 +54,6 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
@@ -407,9 +405,23 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Misc
   //
 
+  boolean isDiffForLocalChanges() {
+    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
+  }
+
+  protected boolean isSomeChangeSelected(@NotNull Side side) {
+    if (myDiffChanges.isEmpty()) return false;
+
+    EditorEx editor = getEditor(side);
+    return DiffUtil.isSomeRangeSelected(editor, lines -> {
+      return ContainerUtil.exists(myDiffChanges, change -> isChangeSelected(change, lines, side));
+    });
   }
 
   @NotNull
@@ -417,13 +429,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
+    return ContainerUtil.filter(myDiffChanges, change -> isChangeSelected(change, lines, side));
+  }
 
-    return ContainerUtil.filter(getDiffChanges(), change -> {
-      int line1 = change.getStartLine(side);
-      int line2 = change.getEndLine(side);
-
-      return DiffUtil.isSelectedByLine(lines, line1, line2);
-    });
+  private static boolean isChangeSelected(SimpleDiffChange change, @NotNull BitSet lines, @NotNull Side side) {
+    int line1 = change.getStartLine(side);
+    int line2 = change.getEndLine(side);
+    return DiffUtil.isSelectedByLine(lines, line1, line2);
   }
 
   @Nullable
@@ -474,7 +486,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
-    public MyReadOnlyLockAction() {
+    MyReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
     }
 
@@ -523,27 +535,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      final Side side = assertNotNull(Side.fromValue(getEditors(), editor));
+      final Side side = Side.fromValue(getEditors(), editor);
+      if (side == null) return;
+
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
       doPerform(e, side, ContainerUtil.reverse(selectedChanges));
-    }
-
-    protected boolean isSomeChangeSelected(@NotNull Side side) {
-      if (myDiffChanges.isEmpty()) return false;
-
-      EditorEx editor = getEditor(side);
-      List<Caret> carets = editor.getCaretModel().getAllCarets();
-      if (carets.size() != 1) return true;
-      Caret caret = carets.get(0);
-      if (caret.hasSelection()) return true;
-      int line = editor.getDocument().getLineNumber(editor.getExpectedCaretOffset());
-
-      for (SimpleDiffChange change : myDiffChanges) {
-        if (change.isSelectedByLine(line, side)) return true;
-      }
-      return false;
     }
 
     protected abstract boolean isVisible(@NotNull Side side);
@@ -561,7 +559,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private abstract class ApplySelectedChangesActionBase extends SelectedChangesActionBase {
     @NotNull protected final Side myModifiedSide;
 
-    public ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
+    ApplySelectedChangesActionBase(@NotNull Side modifiedSide, boolean shortcut) {
       super(shortcut);
       myModifiedSide = modifiedSide;
     }
@@ -591,7 +589,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    ReplaceSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
@@ -599,6 +597,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return "Revert";
       return "Accept";
     }
 
@@ -617,7 +616,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class AppendSelectedChangesAction extends ApplySelectedChangesActionBase {
-    public AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
+    AppendSelectedChangesAction(@NotNull Side focusedSide, boolean shortcut) {
       super(focusedSide.other(), shortcut);
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
     }
@@ -668,7 +667,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
-    public MyToggleExpandByDefaultAction() {
+    MyToggleExpandByDefaultAction() {
       super(getTextSettings());
     }
 
@@ -720,7 +719,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }
@@ -840,7 +839,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private static class MyFoldingModel extends FoldingModelSupport {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
-    public MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
+    MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
       super(toObjectArray(editors, EditorEx.class), disposable);
     }
 

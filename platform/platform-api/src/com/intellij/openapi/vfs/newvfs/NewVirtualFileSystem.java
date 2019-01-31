@@ -115,8 +115,15 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    *
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
-   * @since 11.1
    */
   @Nullable
   public abstract FileAttributes getAttributes(@NotNull VirtualFile file);
+
+  /**
+   * @return true if this file is a directory which contains some children.
+   * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
+   */
+  public boolean hasChildren(@NotNull VirtualFile file) {
+    return file.getChildren().length != 0;
+  }
 }

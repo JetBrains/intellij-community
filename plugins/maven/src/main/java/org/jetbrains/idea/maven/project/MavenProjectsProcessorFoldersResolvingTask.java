@@ -34,6 +34,7 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
     myOnCompletion = onCompletion;
   }
 
+  @Override
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     myTree.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);

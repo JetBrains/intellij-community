@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class SingleLazyInstanceSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   private SyntaxHighlighter myValue;
 
+  @Override
   @NotNull
   public final SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
     if (myValue == null) {

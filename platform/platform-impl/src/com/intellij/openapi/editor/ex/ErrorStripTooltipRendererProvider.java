@@ -30,7 +30,7 @@ import java.util.Collection;
 
 public interface ErrorStripTooltipRendererProvider {
   @Nullable
-  TooltipRenderer calcTooltipRenderer(@NotNull Collection<RangeHighlighter> highlighters);
+  TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters);
   @NotNull
   TooltipRenderer calcTooltipRenderer(@NotNull String text);
   @NotNull

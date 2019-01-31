@@ -18,6 +18,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,27 +32,27 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
-  private final Namer<T> myNamer;
-  private final Factory<T> myFactory;
+  private final Namer<? super T> myNamer;
+  private final Factory<? extends T> myFactory;
   private final Cloner<T> myCloner;
   private final List<T> myItems = new ArrayList<>();
-  private final Equality<T> myComparer;
+  private final Equality<? super T> myComparer;
   private List<T> myResultItems;
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items) {
     this(namer, factory, cloner, comparer, items, true);
   }
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items,
                                  boolean initInConstructor) {
     myNamer = namer;
@@ -170,7 +171,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final T myItem;
     private final UnnamedConfigurable myConfigurable;
 
-    public ItemConfigurable(T item) {
+    ItemConfigurable(T item) {
       super(myNamer.canRename(item), TREE_UPDATER);
       myItem = item;
       myConfigurable = createConfigurable(item);
@@ -267,13 +268,13 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
+    CopyAction() {
       super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final String profileName = askForProfileName("Copy {0}");
       if (profileName == null) return;
 
@@ -286,7 +287,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
     @Override
-    public void update(AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       event.getPresentation().setEnabled(getSelectedObject() != null);
     }
@@ -296,13 +297,13 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   private class AddAction extends DumbAwareAction {
-    public AddAction() {
+    AddAction() {
       super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent event) {
+    public void actionPerformed(@NotNull AnActionEvent event) {
       final T newItem = createItem();
       if (newItem != null) {
         onItemCreated(newItem);

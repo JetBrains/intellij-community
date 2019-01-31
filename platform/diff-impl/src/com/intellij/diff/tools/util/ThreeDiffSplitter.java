@@ -17,7 +17,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -151,19 +151,17 @@ public class ThreeDiffSplitter extends JPanel {
   }
 
   private static int getDividerWidth() {
-    return JBUI.scale(30);
+    return JBUI.scale(Registry.intValue("diff.divider.width"));
   }
 
   private class Divider extends JPanel {
     @NotNull private final Side mySide;
     @Nullable private Painter myPainter;
 
-    public Divider(@NotNull Side side) {
-      super(new GridBagLayout());
+    Divider(@NotNull Side side) {
       mySide = side;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
       setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
-      add(new JLabel(AllIcons.General.SplitGlueH), new GridBagConstraints());
     }
 
     @Override

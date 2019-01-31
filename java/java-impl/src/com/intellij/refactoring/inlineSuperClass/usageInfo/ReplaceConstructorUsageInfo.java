@@ -89,12 +89,13 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression newExpression = (PsiNewExpression)getElement();
     if (newExpression != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
 
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       buf.append("new ").append(myNewType.getCanonicalText());
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       final PsiType newExpressionType = newExpression.getType();
@@ -126,6 +127,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     }
   }
 
+  @Override
   public String getConflictMessage() {
     return myConflict;
   }

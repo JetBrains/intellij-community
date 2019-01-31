@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -58,18 +44,22 @@ public class ProjectNameStep extends ModuleWizardStep {
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNamePathComponent.getNameComponent();
   }
 
+  @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.import.name";
   }
 
+  @Override
   public JComponent getComponent() {
     return myPanel;
   }
 
+  @Override
   public void updateStep() {
     super.updateStep();
     myNamePathComponent.setPath(FileUtil.toSystemDependentName(myWizardContext.getProjectFileDirectory()));
@@ -87,15 +77,18 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
   }
 
+  @Override
   public void updateDataModel() {
     myWizardContext.setProjectName(getProjectName());
     myWizardContext.setProjectFileDirectory(getProjectFileDirectory());
   }
 
+  @Override
   public Icon getIcon() {
     return myWizardContext.getStepIcon();
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
     if (name.length() == 0) {
@@ -154,6 +147,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     return "Name";
   }
 
+  @Override
   public boolean isStepVisible() {
     final ProjectBuilder builder = myWizardContext.getProjectBuilder();
     if (builder != null && builder.isUpdate()) return false;

@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "array",
+      "not": {
+        "items":  {"type":  "string"}
+      }
+    }
+  }
+}

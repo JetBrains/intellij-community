@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -26,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.ASSOCIATIVE_BINARY_OP_SET;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.PARENTHESIZED_BINARY_OP_SET;
 
 /**
  * Precedence documentation - http://groovy-lang.org/operators.html#_operator_precedence
@@ -177,16 +160,16 @@ public class ParenthesesUtils {
     return currentExpression;
   }
 
-  public static boolean checkPrecedenceForBinaryOps(int precedence, @NotNull IElementType parentToken, boolean isRhs) {
+  /**
+   * @return {@code true} if operator with childPrecedence
+   * on the right or left (isRhs) side
+   * inside operator with parentToken
+   * should be parenthesized
+   */
+  public static boolean checkPrecedenceForBinaryOps(int childPrecedence, @NotNull IElementType parentToken, boolean isRhs) {
     int parentPrecedence = precedenceForBinaryOperator(parentToken);
-    if (precedence > parentPrecedence) return true;
-    if (precedence == parentPrecedence && parentPrecedence != 0) {
-      if (!ASSOCIATIVE_BINARY_OP_SET.contains(parentToken) && isRhs ||
-          PARENTHESIZED_BINARY_OP_SET.contains(parentToken)) {
-        return true;
-      }
-    }
-    return false;
+    return parentPrecedence < childPrecedence ||
+           parentPrecedence == childPrecedence && parentPrecedence != 0 && isRhs;
   }
 
   public static boolean checkPrecedenceForNonBinaryOps(@NotNull GrExpression newExpr, int parentPrecedence) {

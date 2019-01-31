@@ -44,7 +44,6 @@
       <element id="archive" name="testFramework.core.jar">
         <element id="module-output" name="intellij.platform.testFramework.core" />
       </element>
-      <element id="library" level="project" name="jetbrains-annotations-java5" />
     </root>
   </artifact>
 </component>

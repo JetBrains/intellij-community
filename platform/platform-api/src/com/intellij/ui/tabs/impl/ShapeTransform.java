@@ -15,8 +15,6 @@
  */
 package com.intellij.ui.tabs.impl;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -153,18 +151,22 @@ public abstract class ShapeTransform {
       myPath = path;
     }
 
+    @Override
     public int getX() {
       return getShapeRect().x;
     }
 
+    @Override
     public int getY() {
       return getShapeRect().y;
     }
 
+    @Override
     public int getMaxX() {
       return (int)getShapeRect().getMaxX();
     }
 
+    @Override
     public int getMaxY() {
       return (int)getShapeRect().getMaxY();
     }
@@ -185,6 +187,7 @@ public abstract class ShapeTransform {
       return new Line2D.Float(x1, y1, x2, y2);
     }
 
+    @Override
     public ShapeTransform copy() {
       return new Top((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
     }
@@ -204,18 +207,22 @@ public abstract class ShapeTransform {
       myPath = path;
     }
 
+    @Override
     public int getX() {
       return getShapeRect().y;
     }
 
+    @Override
     public int getY() {
       return getShapeRect().x;
     }
 
+    @Override
     public int getMaxX() {
       return (int)getShapeRect().getMaxY();
     }
 
+    @Override
     public int getMaxY() {
       return (int)getShapeRect().getMaxX();
     }
@@ -235,6 +242,7 @@ public abstract class ShapeTransform {
       return new Insets(insets.left, insets.top, insets.right, insets.bottom);
     }
 
+    @Override
     public ShapeTransform copy() {
       return new Left((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
     }
@@ -254,22 +262,27 @@ public abstract class ShapeTransform {
       this(null);
     }
 
+    @Override
     public int getX() {
       return getShapeRect().x;
     }
 
+    @Override
     public int getY() {
       return (int)getShapeRect().getMaxY();
     }
 
+    @Override
     public int getMaxX() {
       return (int)getShapeRect().getMaxX();
     }
 
+    @Override
     public int getMaxY() {
       return getShapeRect().y;
     }
 
+    @Override
     public ShapeTransform copy() {
       return new Bottom((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
     }
@@ -308,22 +321,27 @@ public abstract class ShapeTransform {
       this(null);
     }
 
+    @Override
     public int getX() {
       return getShapeRect().y;
     }
 
+    @Override
     public int getY() {
       return (int)getShapeRect().getMaxX();
     }
 
+    @Override
     public int getMaxX() {
       return (int)getShapeRect().getMaxY();
     }
 
+    @Override
     public int getMaxY() {
       return getShapeRect().x;
     }
 
+    @Override
     public ShapeTransform copy() {
       return new Right((Rectangle)getShapeRect().clone(), (GeneralPath)myPath.clone());
     }
@@ -338,6 +356,7 @@ public abstract class ShapeTransform {
       return new Right(innerRec);
     }
 
+    @Override
     public Line2D.Float transformLine(int x1, int y1, int x2, int y2) {
       return new Line2D.Float(y1, x1, y2, x2);
     }

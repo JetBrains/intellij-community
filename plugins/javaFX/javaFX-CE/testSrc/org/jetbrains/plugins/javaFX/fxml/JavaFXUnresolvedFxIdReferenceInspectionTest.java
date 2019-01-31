@@ -17,7 +17,6 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,15 +60,9 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
   }
 
   private void doTest(final String controllerName, final String defaultVisibility) {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    String savedVisibility = settings.VISIBILITY;
-    try {
-      settings.VISIBILITY = defaultVisibility;
-      doTest(controllerName);
-    }
-    finally {
-      settings.VISIBILITY = savedVisibility;
-    }
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.VISIBILITY = defaultVisibility;
+    doTest(controllerName);
   }
 
   private void doTest(final String controllerName) {

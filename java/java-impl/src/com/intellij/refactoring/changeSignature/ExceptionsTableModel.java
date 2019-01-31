@@ -94,23 +94,18 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
 
   @Override
   public String getColumnName(int column) {
-    switch (column) {
-      case 0:
-        return RefactoringBundle.message("column.name.type");
-      default:
-        throw new IllegalArgumentException();
+    if (column == 0) {
+      return RefactoringBundle.message("column.name.type");
     }
+    throw new IllegalArgumentException();
   }
 
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
-    switch (columnIndex) {
-      case 0:
-        return true;
-
-      default:
-        throw new IllegalArgumentException();
+    if (columnIndex == 0) {
+      return true;
     }
+    throw new IllegalArgumentException();
   }
 
   public void setTypeInfos(PsiMethod method) {

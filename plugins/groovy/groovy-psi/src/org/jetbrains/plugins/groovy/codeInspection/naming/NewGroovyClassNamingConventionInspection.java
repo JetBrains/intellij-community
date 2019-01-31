@@ -12,15 +12,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public NewGroovyClassNamingConventionInspection() {
@@ -28,8 +27,8 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
   }
 
   private static List<NamingConvention<PsiClass>> wrapClassExtensions() {
-    return Arrays.stream(NewClassNamingConventionInspection.EP_NAME.getExtensions())
-      .map(ex -> new NamingConvention<PsiClass>() {
+    return ContainerUtil
+      .map(NewClassNamingConventionInspection.EP_NAME.getExtensions(), ex -> new NamingConvention<PsiClass>() {
         @Override
         public boolean isApplicable(PsiClass member) {
           return ex.isApplicable(member);
@@ -51,8 +50,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
         public NamingConventionBean createDefaultBean() {
           return ex.createDefaultBean();
         }
-      })
-      .collect(Collectors.toList());
+      });
   }
 
   @NotNull

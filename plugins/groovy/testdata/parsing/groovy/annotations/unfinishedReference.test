@@ -1,0 +1,25 @@
+@com.foo.
+import stuff
+-----
+Groovy script
+  Modifiers
+    Annotation
+      PsiElement(@)('@')
+      Reference element
+        Reference element
+          PsiElement(identifier)('com')
+        PsiElement(.)('.')
+        PsiElement(identifier)('foo')
+      Annotation arguments
+        <empty list>
+  PsiElement(.)('.')
+  PsiErrorElement:unmatched input
+    <empty list>
+  PsiElement(new line)('\n')
+  Import statement
+    Modifiers
+      <empty list>
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('stuff')

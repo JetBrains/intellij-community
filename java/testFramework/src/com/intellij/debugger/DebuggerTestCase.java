@@ -75,6 +75,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myTearDownRunnables.forEach(Runnable::run);
       myTearDownRunnables.clear();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -128,7 +131,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   @Override
-  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
+  protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     myTestRootDisposable = new TestDisposable();
     super.runBareRunnable(runnable);
     while (needsRestart()) {
@@ -504,11 +507,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public ConfigurationFactory getFactory() {
-      return UnknownConfigurationType.getFactory();
+      return UnknownConfigurationType.getInstance();
     }
 
     @Override
-    public void setName(String name) { }
+    public void setName(@NotNull String name) { }
 
     @NotNull
     @Override
@@ -531,6 +534,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       return null;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "";

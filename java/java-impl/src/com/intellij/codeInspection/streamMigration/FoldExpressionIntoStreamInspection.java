@@ -1,17 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -79,8 +77,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
         if (!StreamApiUtil.isSupportedStreamElement(left.getType()) || !ExpressionUtils.isSafelyRecomputableExpression(left)) {
           return Collections.emptyList();
         }
-        if (operands[0] instanceof PsiBinaryExpression) {
-          PsiBinaryExpression binOp = (PsiBinaryExpression)operands[0];
+        PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(operands[0]), PsiBinaryExpression.class);
+        if (binOp != null) {
           if (ComparisonUtils.isComparison(binOp) &&
               (left == binOp.getLOperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
               (left == binOp.getROperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
@@ -148,9 +146,14 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       PsiExpression delimiter = null;
       PsiExpression rest = null;
       if (operands.length > 4 && ExpressionUtils.isSafelyRecomputableExpression(operands[1]) &&
-          IntStreamEx.range(1, operands.length, 2).elements(operands).pairMap(PsiEquivalenceUtil::areElementsEquivalent)
+          IntStreamEx.range(1, operands.length, 2).elements(operands)
+                     .pairMap(EquivalenceChecker.getCanonicalPsiEquivalence()::expressionsAreEquivalent)
                      .allMatch(Boolean.TRUE::equals)) {
         delimiter = operands[1];
+        if (!InheritanceUtil.isInheritor(delimiter.getType(), "java.lang.CharSequence") &&
+            !(delimiter instanceof PsiLiteralExpression && PsiType.CHAR.equals(delimiter.getType()))) {
+          return null;
+        }
         if (operands.length % 2 == 0) {
           rest = ArrayUtil.getLastElement(operands);
         }
@@ -174,6 +177,13 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
+      return InspectionsBundle.message("inspection.fold.expression.fix.family.name");
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
       return InspectionsBundle.message(myStringJoin ?
                                        "inspection.fold.expression.into.string.fix.name" :
                                        "inspection.fold.expression.into.stream.fix.name");
@@ -197,11 +207,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       PsiExpression operandCopy = (PsiExpression)ct.markUnchanged(operands[0]).copy();
       PsiElement expressionCopy = PsiTreeUtil.releaseMark(operandCopy, marker);
       if (expressionCopy == null) return;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       PsiType elementType = firstExpression.getType();
-      SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, elementType, true);
-      String name = info.names.length > 0 ? info.names[0] : "v";
-      name = codeStyleManager.suggestUniqueVariableName(name, expression, true);
+      String name = new VariableNameGenerator(expression, VariableKind.PARAMETER).byType(elementType).byName("v").generate(true);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression expressionCopyReplaced = (PsiExpression)expressionCopy.replace(factory.createExpressionFromText(name, expressionCopy));
       if (operandCopy == expressionCopy) {
@@ -223,7 +230,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, false);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = codeStyleManager.shortenClassReferences(result);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
   }
 
@@ -233,7 +240,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     private final PsiExpression myDelimiter;
     private final PsiExpression myRest;
 
-    public JoiningTerminalGenerator(PsiType operandType, String mapToString, PsiExpression delimiter, PsiExpression rest) {
+    JoiningTerminalGenerator(PsiType operandType, String mapToString, PsiExpression delimiter, PsiExpression rest) {
       myOperandType = operandType;
       myMapToString = mapToString;
       myDelimiter = delimiter;
@@ -265,8 +272,20 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       String map = (lambda == null ? "" : mapToString(elementType, myOperandType, lambda)) + myMapToString;
       return map +
              ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS +
-             ".joining(" + (myDelimiter == null ? "" : ct.text(myDelimiter)) + "))" +
+             ".joining(" + getDelimiterText(ct) + "))" +
              (myRest == null ? "" : "+" + ct.text(myRest));
+    }
+
+    @NotNull
+    private String getDelimiterText(CommentTracker ct) {
+      if (myDelimiter == null) {
+        return "";
+      }
+      String text = ct.text(myDelimiter);
+      if (text.startsWith("'")) {
+        return PsiLiteralUtil.stringForCharLiteral(text);
+      }
+      return text;
     }
   }
 }

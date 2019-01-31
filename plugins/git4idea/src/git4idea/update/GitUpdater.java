@@ -53,7 +53,6 @@ public abstract class GitUpdater {
   @NotNull protected final Git myGit;
   @NotNull protected final VirtualFile myRoot;
   @NotNull protected final GitRepository myRepository;
-  @NotNull protected final GitBranchPair myBranchPair;
   @NotNull protected final ProgressIndicator myProgressIndicator;
   @NotNull protected final UpdatedFiles myUpdatedFiles;
   @NotNull protected final AbstractVcsHelper myVcsHelper;
@@ -65,14 +64,12 @@ public abstract class GitUpdater {
   protected GitUpdater(@NotNull Project project,
                        @NotNull Git git,
                        @NotNull GitRepository repository,
-                       @NotNull GitBranchPair branchAndTracked,
                        @NotNull ProgressIndicator progressIndicator,
                        @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myGit = git;
     myRoot = repository.getRoot();
     myRepository = repository;
-    myBranchPair = branchAndTracked;
     myProgressIndicator = progressIndicator;
     myUpdatedFiles = updatedFiles;
     myVcsHelper = AbstractVcsHelper.getInstance(project);
@@ -147,8 +144,11 @@ public abstract class GitUpdater {
   public GitUpdateResult update() throws VcsException {
     markStart(myRoot);
     try {
-      return doUpdate();
-    } finally {
+      GitUpdateResult result = doUpdate();
+      myRepository.update();
+      return result;
+    }
+    finally {
       markEnd(myRoot);
     }
   }
@@ -165,8 +165,8 @@ public abstract class GitUpdater {
    * Checks if update is needed, i.e. if there are remote changes that weren't merged into the current branch.
    * @return true if update is needed, false otherwise.
    */
-  public boolean isUpdateNeeded() throws VcsException {
-    GitBranch dest = myBranchPair.getDest();
+  public boolean isUpdateNeeded(@NotNull GitBranchPair branchPair) throws VcsException {
+    GitBranch dest = branchPair.getDest();
     assert dest != null;
     String remoteBranch = dest.getName();
     if (!hasRemoteChanges(remoteBranch)) {
@@ -181,11 +181,6 @@ public abstract class GitUpdater {
    */
   @NotNull
   protected abstract GitUpdateResult doUpdate();
-
-  @NotNull
-  GitBranchPair getSourceAndTarget() {
-    return myBranchPair;
-  }
 
   protected void markStart(VirtualFile root) throws VcsException {
     // remember the current position

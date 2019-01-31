@@ -16,16 +16,19 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
-import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -36,7 +39,10 @@ import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
+import git4idea.changes.GitCommittedChangeList;
+import git4idea.changes.GitCommittedChangeListProvider;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +52,14 @@ import java.util.*;
 public class GitFileAnnotation extends FileAnnotation {
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
+  @NotNull private final FilePath myFilePath;
   @NotNull private final GitVcs myVcs;
   @Nullable private final VcsRevisionNumber myBaseRevision;
 
   @NotNull private final List<LineInfo> myLines;
   @Nullable private List<VcsFileRevision> myRevisions;
   @Nullable private TObjectIntHashMap<VcsRevisionNumber> myRevisionMap;
+  @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
@@ -63,7 +71,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.REVISION, false) {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
-      return String.valueOf(lineInfo.getRevisionNumber().getShortRev());
+      return lineInfo.getRevisionNumber().getShortRev();
     }
   };
 
@@ -81,6 +89,7 @@ public class GitFileAnnotation extends FileAnnotation {
     super(project);
     myProject = project;
     myFile = file;
+    myFilePath = VcsUtil.getFilePath(file);
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
@@ -103,7 +112,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getAnnotatedContent() {
     try {
-      ContentRevision revision = GitContentRevision.createRevision(myFile, myBaseRevision, myProject);
+      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject, null);
       return revision.getContent();
     }
     catch (VcsException e) {
@@ -125,6 +134,10 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
+  public void setCommitMessage(@NotNull VcsRevisionNumber revisionNumber, @NotNull String message) {
+    myCommitMessageMap.put(revisionNumber, message);
+  }
+
   @Override
   public int getLineCount() {
     return myLines.size();
@@ -144,15 +157,29 @@ public class GitFileAnnotation extends FileAnnotation {
 
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    VcsFileRevision fileRevision = null;
-    if (myRevisions != null && myRevisionMap != null &&
-        myRevisionMap.contains(revisionNumber)) {
-      fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+    String path = null;
+    if (!myFilePath.equals(lineInfo.myFilePath)) {
+      path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
     }
 
-    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject() + "\n...";
-    return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
-                             DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()), commitMessage);
+    String commitMessage = getCommitMessage(revisionNumber);
+    if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
+
+    return "commit " + revisionNumber.asString() +
+           "\nAuthor: " + lineInfo.getAuthor() +
+           "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
+           (path != null ? "\nPath: " + path : "") +
+           "\n\n" + commitMessage;
+  }
+
+  @Nullable
+  public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
+    if (myRevisions != null && myRevisionMap != null &&
+        myRevisionMap.contains(revisionNumber)) {
+      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+      return fileRevision.getCommitMessage();
+    }
+    return myCommitMessageMap.get(revisionNumber);
   }
 
   @Nullable
@@ -182,7 +209,7 @@ public class GitFileAnnotation extends FileAnnotation {
    * Revision annotation aspect implementation
    */
   private abstract class GitAnnotationAspect extends LineAnnotationAspectAdapter {
-    public GitAnnotationAspect(String id, boolean showByDefault) {
+    GitAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);
     }
 
@@ -202,7 +229,10 @@ public class GitFileAnnotation extends FileAnnotation {
     protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
-        ShowAllAffectedGenericAction.showSubmittedFiles(myProject, info.getRevisionNumber(), myFile, GitVcs.getKey());
+
+        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, () -> {
+          return getRevisionsChangesProvider().getChangesIn(lineNum);
+        });
       }
     }
   }
@@ -218,7 +248,7 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
-    public LineInfo(@NotNull Project project,
+    LineInfo(@NotNull Project project,
                     @NotNull GitRevisionNumber revision,
                     @NotNull FilePath path,
                     @NotNull Date committerDate,
@@ -298,7 +328,8 @@ public class GitFileAnnotation extends FileAnnotation {
   }
 
   @Override
-  public boolean isBaseRevisionChanged(VcsRevisionNumber number) {
+  public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {
+    if (!myFile.isInLocalFileSystem()) return false;
     final VcsRevisionNumber currentCurrentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
     return myBaseRevision != null && ! myBaseRevision.equals(currentCurrentRevision);
   }
@@ -342,7 +373,7 @@ public class GitFileAnnotation extends FileAnnotation {
       @Override
       public VcsFileRevision getLastRevision() {
         if (myBaseRevision instanceof GitRevisionNumber) {
-          return new GitFileRevision(myProject, VcsUtil.getFilePath(myFile), (GitRevisionNumber)myBaseRevision);
+          return new GitFileRevision(myProject, myFilePath, (GitRevisionNumber)myBaseRevision);
         }
         else {
           return ContainerUtil.getFirstItem(getRevisions());
@@ -390,5 +421,24 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     return () -> orderedRevisions;
+  }
+
+  /**
+   * Do not use {@link CommittedChangesProvider#getOneList} to avoid unnecessary rename detections (as we know FilePath already)
+   */
+  @NotNull
+  @Override
+  public RevisionChangesProvider getRevisionsChangesProvider() {
+    return (lineNumber) -> {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      if (lineInfo == null) return null;
+
+      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(lineInfo.getFilePath());
+      if (repository == null) return null;
+
+      GitCommittedChangeList changeList =
+        GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), lineInfo.getRevisionNumber());
+      return Pair.create(changeList, lineInfo.getFilePath());
+    };
   }
 }

@@ -44,7 +44,7 @@ import java.util.Set;
  */
 public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
@@ -73,7 +73,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setText(IdeBundle.message("goto.custom.region.menu.item"));
     final Editor editor = e.getData(CommonDataKeys.EDITOR);

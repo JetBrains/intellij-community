@@ -55,9 +55,11 @@ public class JavaTestGenerator implements TestGenerator {
   public JavaTestGenerator() {
   }
 
+  @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+        @Override
         public PsiElement compute() {
           try {
             IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
@@ -167,7 +169,7 @@ public class JavaTestGenerator implements TestGenerator {
     final PsiReferenceList extendsList = targetClass.getExtendsList();
     if (extendsList == null) return;
 
-    PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory ef = JavaPsiFacade.getElementFactory(project);
     PsiJavaCodeReferenceElement superClassRef;
 
     PsiClass superClass = findClass(project, superClassName);
@@ -194,7 +196,7 @@ public class JavaTestGenerator implements TestGenerator {
   public static void addTestMethods(Editor editor,
                                     PsiClass targetClass,
                                     final TestFramework descriptor,
-                                    Collection<MemberInfo> methods,
+                                    Collection<? extends MemberInfo> methods,
                                     boolean generateBefore,
                                     boolean generateAfter) throws IncorrectOperationException {
     addTestMethods(editor, targetClass, null, descriptor, methods, generateBefore, generateAfter);
@@ -204,7 +206,7 @@ public class JavaTestGenerator implements TestGenerator {
                                     PsiClass targetClass,
                                     @Nullable PsiClass sourceClass,
                                     final TestFramework descriptor,
-                                    Collection<MemberInfo> methods,
+                                    Collection<? extends MemberInfo> methods,
                                     boolean generateBefore,
                                     boolean generateAfter) throws IncorrectOperationException {
     final Set<String> existingNames = new HashSet<>();
@@ -221,7 +223,7 @@ public class JavaTestGenerator implements TestGenerator {
                                                                             targetClass, sourceClass, null, true, existingNames);
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     final String prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
-    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
+    existingNames.addAll(ContainerUtil.map(targetClass.getAllMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
 
     for (MemberInfo m : methods) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);
@@ -240,7 +242,7 @@ public class JavaTestGenerator implements TestGenerator {
                                           @Nullable PsiClass sourceClass,
                                           Editor editor,
                                           @Nullable String name,
-                                          Set<String> existingNames, PsiMethod anchor) {
+                                          Set<? super String> existingNames, PsiMethod anchor) {
     PsiMethod dummyMethod = TestIntegrationUtils.createDummyMethod(targetClass);
     PsiMethod method = (PsiMethod)(anchor == null ? targetClass.add(dummyMethod) : targetClass.addAfter(dummyMethod, anchor));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());

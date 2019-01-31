@@ -39,7 +39,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
-                         @NotNull List<XExpression> expressions,
+                         @NotNull List<? extends XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
     super(tree, null, false, new XValueContainer() {
@@ -76,6 +76,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   /**
    * @deprecated use {@link #getWatchChildren()} instead
    */
+  @Deprecated
   @NotNull
   public List<? extends WatchNode> getAllChildren() {
     return getWatchChildren();

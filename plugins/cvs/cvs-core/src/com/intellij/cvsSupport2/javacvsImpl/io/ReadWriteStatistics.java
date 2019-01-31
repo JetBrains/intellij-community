@@ -69,19 +69,19 @@ public class ReadWriteStatistics {
   }
 
   private void showProgress(String mesasge) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(mesasge);
     if ((myShownReadKBytes > 0) || (myShownSentKBytes > 0)) {
       buffer.append(": ");
     }
     if (myShownReadKBytes > 0) {
-      buffer.append(String.valueOf(myShownReadKBytes));
+      buffer.append(myShownReadKBytes);
       buffer.append(READ_PROGRESS_MESSAGE);
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
     if (myShownSentKBytes > 0) {
-      buffer.append(String.valueOf(myShownSentKBytes));
+      buffer.append(myShownSentKBytes);
       buffer.append(SENT_PROGRESS_MESSAGE);
     }
 

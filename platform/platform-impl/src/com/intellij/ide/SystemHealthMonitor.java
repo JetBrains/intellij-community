@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,7 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -26,13 +25,11 @@ import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.JavaVersion;
-import com.sun.jna.Library;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import javax.swing.*;
 import java.io.File;
@@ -42,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SystemHealthMonitor implements ApplicationComponent {
+public class SystemHealthMonitor implements BaseComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
@@ -85,7 +82,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
-            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
+            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(e);
           }
         };
 
@@ -139,15 +136,24 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private void checkSignalBlocking() {
-    if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
+    if (SystemInfo.isUnix) {
       try {
-        LibC lib = Native.loadLibrary("c", LibC.class);
-        Memory buf = new Memory(1024);
-        if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
-          long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
-          if (handler == LibC.SIG_IGN) {
-            showNotification("ide.sigint.ignored.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-157989"));
-          }
+        Signal sigInt = new Signal("INT");
+        SignalHandler oldInt = Signal.handle(sigInt, NO_OP_HANDLER);
+        if (oldInt == SignalHandler.SIG_IGN) {
+          showNotification("ide.sigint.ignored.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-157989"));
+        }
+        else {
+          Signal.handle(sigInt, oldInt);
+        }
+
+        Signal sigPipe = new Signal("PIPE");
+        SignalHandler oldPipe = Signal.handle(sigPipe, NO_OP_HANDLER);
+        if (oldPipe == SignalHandler.SIG_IGN) {
+          LOG.info("restored ignored PIPE handler");  // no-op handler unmasks the signal in child processes
+        }
+        else {
+          Signal.handle(sigInt, oldPipe);
         }
       }
       catch (Throwable t) {
@@ -180,7 +186,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
-    public MyNotification(@NotNull String content) {
+    MyNotification(@NotNull String content) {
       super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
     }
   }
@@ -271,10 +277,5 @@ public class SystemHealthMonitor implements ApplicationComponent {
     }, 1, TimeUnit.SECONDS);
   }
 
-  @SuppressWarnings({"SpellCheckingInspection", "SameParameterValue"})
-  private interface LibC extends Library {
-    int SIGINT = 2;
-    long SIG_IGN = 1L;
-    int sigaction(int signum, Pointer act, Pointer oldact);
-  }
+  private static final SignalHandler NO_OP_HANDLER = sig -> { };
 }

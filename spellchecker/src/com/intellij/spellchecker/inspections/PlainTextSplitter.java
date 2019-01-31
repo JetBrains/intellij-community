@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -28,12 +29,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.newBombedCharSequence;
 import static com.intellij.util.io.URLUtil.URL_PATTERN;
 
 public class PlainTextSplitter extends BaseSplitter {
   private static final PlainTextSplitter INSTANCE = new PlainTextSplitter();
-  public static final int DELAY = 500;
 
   public static PlainTextSplitter getInstance() {
     return INSTANCE;
@@ -52,48 +51,53 @@ public class PlainTextSplitter extends BaseSplitter {
     if (StringUtil.isEmpty(text)) {
       return;
     }
-
-    final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
-    if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring, DELAY)).replaceAll("")) != null) {
-      return;
-    }
-
-    final TextSplitter ws = TextSplitter.getInstance();
+     final TextSplitter ws = TextSplitter.getInstance();
     int from = range.getStartOffset();
     int till;
-    Matcher matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(range.substring(text), DELAY));
-    while (true) {
-      checkCancelled();
-      List<TextRange> toCheck;
-      TextRange wRange;
-      String word;
-      if(matcher.find()) {
-        TextRange found = matcherRange(range, matcher);
-        till = found.getStartOffset();
-        if (badSize(from, till)) {
-          continue;
+
+    try {
+      Matcher matcher;
+      final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
+      if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(newBombedCharSequence(substring)).replaceAll("")) != null) {
+        return;
+      }
+      matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(text, range));
+
+      while (true) {
+        checkCancelled();
+        List<TextRange> toCheck;
+        TextRange wRange;
+        String word;
+        if (matcher.find()) {
+          TextRange found = matcherRange(range, matcher);
+          till = found.getStartOffset();
+          if (badSize(from, till)) {
+            continue;
+          }
+          wRange = new TextRange(from, till);
+          word = wRange.substring(text);
+          from = found.getEndOffset();
         }
-        wRange = new TextRange(from, till);
-        word = wRange.substring(text);
-        from = found.getEndOffset();
-      } else { // end hit or zero matches
-        wRange = new TextRange(from, range.getEndOffset());
-        word = wRange.substring(text);
+        else { // end hit or zero matches
+          wRange = new TextRange(from, range.getEndOffset());
+          word = wRange.substring(text);
+        }
+        if (word.contains("@")) {
+          toCheck = excludeByPattern(text, wRange, MAIL, 0);
+        }
+        else if (word.contains("://")) {
+          toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
+        }
+        else {
+          toCheck = Collections.singletonList(wRange);
+        }
+        for (TextRange r : toCheck) {
+          ws.split(text, r, consumer);
+        }
+        if (matcher.hitEnd()) break;
       }
-      if (word.contains("@")) {
-        toCheck = excludeByPattern(text, wRange, MAIL, 0);
-      }
-      else
-      if (word.contains("://")) {
-        toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
-      }
-      else {
-        toCheck = Collections.singletonList(wRange);
-      }
-      for (TextRange r : toCheck) {
-        ws.split(text, r, consumer);
-      }
-      if(matcher.hitEnd()) break;
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

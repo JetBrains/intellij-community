@@ -58,7 +58,7 @@ public class InlineFragment implements Fragment {
   }
 
   @Override
-  public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
+  public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition) {
     LOG.assertTrue(getRange(side).getStartOffset() <= offset &&
                    offset < getRange(side).getEndOffset() &&
                    condition.value(this));

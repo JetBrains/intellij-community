@@ -45,7 +45,7 @@ public class GroovyDocCompletionProvider extends CompletionProvider<CompletionPa
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     GrDocMemberReference reference = PsiTreeUtil.getParentOfType(position, GrDocMemberReference.class);

@@ -16,12 +16,12 @@
 package com.intellij.cvsSupport2.cvsIgnore;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import java.util.HashMap;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,6 +31,7 @@ import java.util.Map;
 public class IgnoreFileFilter implements IIgnoreFileFilter{
   private final Map<File, IgnoredFilesInfo> myParentToFilterMap = new HashMap<>();
 
+  @Override
   public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
     File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
     File parent = file.getParentFile();

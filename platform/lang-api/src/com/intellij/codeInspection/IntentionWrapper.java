@@ -113,7 +113,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   }
 
   @NotNull
-  public static List<LocalQuickFix> wrapToQuickFixes(@NotNull List<IntentionAction> actions, @NotNull PsiFile file) {
+  public static List<LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
     if (actions.isEmpty()) return Collections.emptyList();
     List<LocalQuickFix> fixes = new ArrayList<>(actions.size());
     for (IntentionAction action : actions) {

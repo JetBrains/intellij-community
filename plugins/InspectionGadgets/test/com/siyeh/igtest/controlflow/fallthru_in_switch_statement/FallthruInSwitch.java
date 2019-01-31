@@ -27,3 +27,26 @@ public class FallthruInSwitch
         }
     }
 }
+class Z1 {
+    static int x(String param, int i) {
+        label:
+        switch (i) {
+            case 0:
+                switch (param) {
+                    case "a":
+                        if (i == 0) break label;
+                        return 1;
+                    default:
+                        return 3;
+                }
+            default: // should not report here
+                return 2;
+        }
+        return -1;
+    }
+
+    public static void main(String[] args) {
+        final int x = x("a", 0);
+        System.out.println("x = " + x);
+    }
+}

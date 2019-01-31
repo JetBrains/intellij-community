@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -32,7 +32,7 @@ public class PyWrapTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
     myOldMargin = pythonSettings.RIGHT_MARGIN;
@@ -42,11 +42,18 @@ public class PyWrapTest extends PyTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
-    final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
-    pythonSettings.RIGHT_MARGIN = myOldMargin;
-    super.tearDown();
+    try {
+      final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
+      final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
+      settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
+      pythonSettings.RIGHT_MARGIN = myOldMargin;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testBackslashOnWrap() {
@@ -90,7 +97,7 @@ public class PyWrapTest extends PyTestCase {
 
 
   public void testWrapRightMargin() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     int oldValue = pythonSettings.RIGHT_MARGIN;
     boolean oldMarginValue = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -42,20 +43,20 @@ public class GrGenericTypeConverter extends GrTypeConverter {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
-    if (isCompileStatic(context) ) return null;
-    PsiClass lclass = ((PsiClassType)ltype).resolve();
-    PsiClass rclass = ((PsiClassType)rtype).resolve();
+    if (isCompileStatic(context)) return null;
 
-    if (lclass == null || rclass == null) return null;
+    ClassResolveResult lResult = ((PsiClassType)ltype).resolveGenerics();
+    PsiClass lClass = lResult.getElement();
+    if (lClass == null) return null;
+    if (lClass.getTypeParameters().length == 0) return null;
 
-    if (lclass.getTypeParameters().length == 0) return null;
+    ClassResolveResult rResult = ((PsiClassType)rtype).resolveGenerics();
+    PsiClass rClass = rResult.getElement();
+    if (rClass == null) return null;
 
-    if (!InheritanceUtil.isInheritorOrSelf(rclass, lclass, true)) return null;
-
-    PsiClassType.ClassResolveResult lresult = ((PsiClassType)ltype).resolveGenerics();
-    PsiClassType.ClassResolveResult rresult = ((PsiClassType)rtype).resolveGenerics();
-
-    if (typeParametersAgree(lclass, rclass, lresult.getSubstitutor(), rresult.getSubstitutor(), context)) return ConversionResult.OK;
+    if (!InheritanceUtil.isInheritorOrSelf(rClass, lClass, true)) return null;
+    if (!((PsiClassType)ltype).hasParameters()) return ConversionResult.OK;
+    if (typeParametersAgree(lClass, rClass, lResult.getSubstitutor(), rResult.getSubstitutor(), context)) return ConversionResult.OK;
 
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,14 @@ public abstract class CompilerReferencesTestBase extends AbstractCompilerAwareTe
 
   @Override
   public void tearDown() throws Exception {
-    CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
-    super.tearDown();
+    try {
+      CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

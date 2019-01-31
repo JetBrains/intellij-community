@@ -12,10 +12,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
+@CompileStatic
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
   void testConstructorDoc() {
     configure """\

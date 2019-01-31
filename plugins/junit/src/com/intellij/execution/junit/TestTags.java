@@ -6,6 +6,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,11 +14,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 class TestTags extends TestObject {
-  public TestTags(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestTags(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 
@@ -38,6 +40,13 @@ class TestTags extends TestObject {
     parseAsJavaExpression(tags);
   }
 
+  @Nullable
+  @Override
+  public SourceScope getSourceScope() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    return data.getScope().getSourceScope(getConfiguration());
+  }
+
   /**
    * Parse tag as java polyadic expression with boolean operations as top priority
    * 
@@ -48,7 +57,7 @@ class TestTags extends TestObject {
   private void parseAsJavaExpression(String tags) throws RuntimeConfigurationWarning {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getConfiguration().getProject());
     try {
-      PsiExpression expression = elementFactory.createExpressionFromText(tags.replaceAll("[^)(&|!]", "x"), null);
+      PsiExpression expression = elementFactory.createExpressionFromText(tags.replaceAll("[^)(&|!\\s]", "x"), null);
       if (expression instanceof PsiPolyadicExpression) {
         IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
         if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {

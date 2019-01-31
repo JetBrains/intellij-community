@@ -204,6 +204,7 @@ public class FileReferenceSet {
     return myStartInElement;
   }
 
+  @Nullable
   public FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new FileReference(this, range, index, text);
   }
@@ -250,7 +251,10 @@ public class FileReferenceSet {
     if (curSep >= 0 && decoded.length() == wsHead + sepLen + wsTail) {
       // add extra reference for the only & leading "/"
       TextRange r = TextRange.create(startInElement, offset(curSep + Math.max(0, sepLen - 1), escaper, valueRange) + 1);
-      referencesList.add(createFileReference(r, index ++, decoded.subSequence(curSep, curSep + sepLen).toString()));
+      FileReference reference = createFileReference(r, index++, decoded.subSequence(curSep, curSep + sepLen).toString());
+      if (reference != null) {
+        referencesList.add(reference);
+      }
     }
     curSep = curSep == wsHead ? curSep + sepLen : wsHead; // reset offsets & start again for simplicity
     sepLen = 0;
@@ -268,7 +272,10 @@ public class FileReferenceSet {
         LOG.error("Invalid range: (" + (refText + ", " + refEnd) + "), escaper=" + escaper + "\n" +
                   "text=" + refText + ", start=" + startInElement);
       }
-      referencesList.add(createFileReference(new TextRange(refStart, refEnd), index++, refText));
+      FileReference reference = createFileReference(new TextRange(refStart, refEnd), index++, refText);
+      if (reference != null) {
+        referencesList.add(reference);
+      }
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }
@@ -462,7 +469,7 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null ? manager.findDirectory(file) : null);
+    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

@@ -43,7 +43,7 @@ public class GenericPatchApplier {
   
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
-  private final List<PatchHunk> myHunks;
+  private final List<? extends PatchHunk> myHunks;
   private final boolean myBaseFileEndsWithNewLine;
   private boolean myHadAlreadyAppliedMet;
 
@@ -59,7 +59,7 @@ public class GenericPatchApplier {
     }
   }
 
-  public GenericPatchApplier(final CharSequence text, List<PatchHunk> hunks) {
+  public GenericPatchApplier(final CharSequence text, List<? extends PatchHunk> hunks) {
     debug("GenericPatchApplier created, hunks: " + hunks.size());
     myLines = new ArrayList<>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
@@ -73,7 +73,7 @@ public class GenericPatchApplier {
   }
 
   @Nullable
-  public static AppliedPatch apply(CharSequence text, List<PatchHunk> hunks) {
+  public static AppliedPatch apply(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedPatch(patchedText, SUCCESS);
@@ -88,7 +88,7 @@ public class GenericPatchApplier {
   }
 
   @NotNull
-  public static AppliedSomehowPatch applySomehow(CharSequence text, List<PatchHunk> hunks) {
+  public static AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedSomehowPatch(patchedText, SUCCESS, false);
@@ -148,7 +148,7 @@ public class GenericPatchApplier {
       for (Map.Entry<TextRange, MyAppliedData> entry : myTransformations.entrySet()) {
         final TextRange key = entry.getKey();
         final MyAppliedData value = entry.getValue();
-        LOG.info(String.valueOf(cnt) +
+        LOG.info(cnt +
                  " lines " +
                  key.getStartOffset() +
                  ":" +
@@ -334,8 +334,7 @@ public class GenericPatchApplier {
   // applies in a way that patch _can_ be solved manually even in the case of total mismatch
   public void trySolveSomehow() {
     assert !myNotExact.isEmpty();
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      final SplitHunk hunk = iterator.next();
+    for (final SplitHunk hunk : myNotExact) {
       hunk.cutSameTail();
       if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
         if (complementIfShort(hunk)) {
@@ -730,7 +729,7 @@ public class GenericPatchApplier {
       return myDistance;
     }
 
-    public void go(final List<BeforeAfter<List<String>>> steps) {
+    public void go(final List<? extends BeforeAfter<List<String>>> steps) {
       final Consumer<BeforeAfter<List<String>>> stepConsumer = listBeforeAfter -> {
         if (myDistance == 0) {
           // until this point, it all had being doing well
@@ -948,7 +947,7 @@ public class GenericPatchApplier {
     final int offset = splitHunk.getContextBefore().size();
     final List<BeforeAfter<List<String>>> steps = splitHunk.getPatchSteps();
     if (splitHunk.isInsertion()) {
-      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
+      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().isEmpty();
       if (emptyFile) {
         myNotBound.add(splitHunk);
         processAppliedInfoForUnApplied(splitHunk);
@@ -992,15 +991,12 @@ public class GenericPatchApplier {
     private int myOffsetIdxInHunk;
     // if we set index in hunk != 0, then we will check only one side
     private Boolean myBeforeSide;
-    private boolean myIsInBefore;
-    private final int myIdxInHunk;
     private final BeforeAfter<List<String>> myBeforeAfter;
 
     private FragmentMatcher(int idx, BeforeAfter<List<String>> beforeAfter) {
       myOffsetIdxInHunk = 0;
       myIdx = idx;
       myBeforeAfter = beforeAfter;
-      myIdxInHunk = 0;
       //myBeforeSide = true;
     }
     
@@ -1008,9 +1004,9 @@ public class GenericPatchApplier {
       myOffsetIdxInHunk = startInHunk;
       myBeforeSide = beforeSide;
       if (myBeforeSide) {
-        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getBefore().size() == 0);
+        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getBefore().isEmpty());
       } else {
-        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getAfter().size() == 0);
+        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getAfter().isEmpty());
       }
     }
 
@@ -1122,7 +1118,7 @@ public class GenericPatchApplier {
   }
 
   // indexes are passed inclusive
-  private void iterateTransformations(final Consumer<TextRange> consumerExcluded, final Consumer<TextRange> consumerIncluded) {
+  private void iterateTransformations(final Consumer<? super TextRange> consumerExcluded, final Consumer<? super TextRange> consumerIncluded) {
     if (myTransformations.isEmpty()) {
       consumerExcluded.consume(new UnfairTextRange(0, myLines.size() - 1));
     } else {
@@ -1226,25 +1222,25 @@ public class GenericPatchApplier {
       return result;
     }
     
-    private static int readOne(final List<PatchLine> lines, final List<String> contextBefore, final List<String> contextAfter, 
-                               final List<BeforeAfter<List<String>>> steps, final int startI) {
+    private static int readOne(final List<? extends PatchLine> lines, final List<? super String> contextBefore, final List<? super String> contextAfter,
+                               final List<? super BeforeAfter<List<String>>> steps, final int startI) {
       int i = startI;
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
-        if (! PatchLine.Type.CONTEXT.equals(patchLine.getType())) break;
+        if (PatchLine.Type.CONTEXT != patchLine.getType()) break;
         contextBefore.add(patchLine.getText());
       }
 
-      final boolean addFirst = i < lines.size() && PatchLine.Type.ADD.equals(lines.get(i).getType());
+      final boolean addFirst = i < lines.size() && PatchLine.Type.ADD == lines.get(i).getType();
       List<String> before = new ArrayList<>();
       List<String> after = new ArrayList<>();
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
         final PatchLine.Type type = patchLine.getType();
-        if (PatchLine.Type.CONTEXT.equals(type)) {
+        if (PatchLine.Type.CONTEXT == type) {
           break;
         }
-        if (PatchLine.Type.ADD.equals(type)) {
+        if (PatchLine.Type.ADD == type) {
           if (addFirst && ! before.isEmpty()) {
             // new piece
             steps.add(new BeforeAfter<>(before, after));
@@ -1252,7 +1248,7 @@ public class GenericPatchApplier {
             after = new ArrayList<>();
           }
           after.add(patchLine.getText());
-        } else if (PatchLine.Type.REMOVE.equals(type)) {
+        } else if (PatchLine.Type.REMOVE == type) {
           if (! addFirst && ! after.isEmpty()) {
             // new piece
             steps.add(new BeforeAfter<>(before, after));
@@ -1268,7 +1264,7 @@ public class GenericPatchApplier {
 
       for (; i < lines.size(); i++) {
         final PatchLine patchLine = lines.get(i);
-        if (! PatchLine.Type.CONTEXT.equals(patchLine.getType())) {
+        if (PatchLine.Type.CONTEXT != patchLine.getType()) {
           return i;
         }
         contextAfter.add(patchLine.getText());

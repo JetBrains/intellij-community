@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/7/11 11:59 AM
  */
 public class GenericElementSignatureProvider implements ElementSignatureProvider {
   

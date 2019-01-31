@@ -31,11 +31,11 @@ class JUnit5ConditionsTest {
     String[] disabledClasses = {DisabledClass.class.getName(), MetaDisabledClass.class.getName()};
     Arrays.stream(disabledClasses)
       .flatMap(klass -> Arrays.stream(new String[]{klass, klass + ",test1"}))
-      .forEach(member -> Assertions.assertTrue(JUnit5TestRunnerUtil.isDisabledConditionDisabled(member), member));
+      .forEach(member -> Assertions.assertTrue(JUnit5TestRunnerUtil.getDisabledConditionValue(member) != null, member));
 
     String withDisabledMethodName = WithDisabledMethod.class.getName();
-    Assertions.assertAll(() -> Assertions.assertFalse(JUnit5TestRunnerUtil.isDisabledConditionDisabled(withDisabledMethodName), withDisabledMethodName),
-                         () -> Assertions.assertTrue(JUnit5TestRunnerUtil.isDisabledConditionDisabled(withDisabledMethodName + ",test1"), withDisabledMethodName));
+    Assertions.assertAll(() -> Assertions.assertNull(JUnit5TestRunnerUtil.getDisabledConditionValue(withDisabledMethodName), withDisabledMethodName),
+                         () -> Assertions.assertNotNull(JUnit5TestRunnerUtil.getDisabledConditionValue(withDisabledMethodName + ",test1"), withDisabledMethodName));
   }
 
   class WithDisabledMethod {

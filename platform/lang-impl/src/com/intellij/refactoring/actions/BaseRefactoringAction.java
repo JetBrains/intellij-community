@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseRefactoringAction extends AnAction {
+public abstract class BaseRefactoringAction extends AnAction implements UpdateInBackground {
   private final Condition<Language> myLanguageCondition = this::isAvailableForLanguage;
 
   protected abstract boolean isAvailableInEditorOnly();
@@ -135,12 +135,12 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(true);
     presentation.setEnabled(true);
@@ -154,7 +154,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
-      if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
+      if (file instanceof PsiCompiledElement && disableOnCompiledElement() || !isAvailableForFile(file)) {
         hideAction(e);
         return;
       }
@@ -200,7 +200,11 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  private static void hideAction(AnActionEvent e) {
+  protected boolean disableOnCompiledElement() {
+    return true;
+  }
+
+  private static void hideAction(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
     disableAction(e);
   }
@@ -233,7 +237,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return caret;
   }
 
-  private static void disableAction(AnActionEvent e) {
+  private static void disableAction(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
   }
 

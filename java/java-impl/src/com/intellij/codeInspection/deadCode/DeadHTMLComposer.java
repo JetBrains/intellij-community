@@ -22,14 +22,11 @@ import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.TreeNode;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
@@ -186,7 +183,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
             }
           }
-        } else if (((RefClassImpl)refClass).isSuspicious()) {
+        } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
           if (method.isAbstract()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
@@ -200,7 +197,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           if (nOwnRefs == 0 && nSuperRefs == 0 && nDerivedRefs == 0) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis16"));
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
-            String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
+            String classOrInterface = refClass == null ? "" : HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
           } else if (((RefMethodImpl)method).isSuspiciousRecursive()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));
@@ -259,8 +256,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   private static int getDerivedRefsCount(RefMethod refMethod) {
     int count = 0;
 
-    for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
-      RefMethod refDerived = iterator.next();
+    for (RefMethod refDerived : refMethod.getDerivedMethods()) {
       count += refDerived.getInReferences().size() + getDerivedRefsCount(refDerived);
     }
 
@@ -270,8 +266,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   private static int getSuperRefsCount(RefMethod refMethod) {
     int count = 0;
 
-    for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod refSuper = iterator.next();
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
       count += refSuper.getInReferences().size() + getSuperRefsCount(refSuper);
     }
 
@@ -282,13 +277,11 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (!aClass.isAnonymous()) {
       int count = 0;
 
-      for (Iterator<RefMethod> iterator = aClass.getConstructors().iterator(); iterator.hasNext();) {
-        RefMethod refConstructor = iterator.next();
+      for (RefMethod refConstructor : aClass.getConstructors()) {
         count += refConstructor.getInReferences().size();
       }
 
-      for (Iterator<RefClass> iterator = aClass.getSubClasses().iterator(); iterator.hasNext();) {
-        RefClass subClass = iterator.next();
+      for (RefClass subClass : aClass.getSubClasses()) {
         count += getInstantiationsCount(subClass);
         count -= subClass.getConstructors().size();
       }
@@ -301,8 +294,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
   private static int getImplementationsCount(RefClass refClass) {
     int count = 0;
-    for (Iterator<RefClass> iterator = refClass.getSubClasses().iterator(); iterator.hasNext();) {
-      RefClass subClass = iterator.next();
+    for (RefClass subClass : refClass.getSubClasses()) {
       if (!subClass.isInterface() && !subClass.isAbstract()) {
         count++;
       }
@@ -319,10 +311,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       appendHeading(buf, InspectionsBundle.message("inspection.dead.code.export.results.instantiated.from.heading"));
 
       startList(buf);
-      for (Iterator<RefMethod> iterator = refClass.getConstructors().iterator(); iterator.hasNext();) {
-        RefMethod refMethod = iterator.next();
-        for (Iterator<RefElement> constructorCallersIterator = refMethod.getInReferences().iterator(); constructorCallersIterator.hasNext();) {
-          RefElement refCaller = constructorCallersIterator.next();
+      for (RefMethod refMethod : refClass.getConstructors()) {
+        for (RefElement refCaller : refMethod.getInReferences()) {
           appendListItem(buf, refCaller);
           found = true;
         }
@@ -339,7 +329,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
-    final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myToolPresentation), element);
+    final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
@@ -366,26 +356,24 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  public static Set<RefElement> getPossibleChildren(final RefElementNode refElementNode, RefElement refElement) {
-    final TreeNode[] pathToRoot = refElementNode.getPath();
+  private static Set<RefElement> getPossibleChildren(RefElement refElement) {
+    if (!refElement.isValid()) return Collections.emptySet();
 
     final HashSet<RefElement> newChildren = new HashSet<>();
-
-    if (!refElement.isValid()) return newChildren;
-
     for (RefElement refCallee : refElement.getOutReferences()) {
       if (((RefElementImpl)refCallee).isSuspicious()) {
-        if (notInPath(pathToRoot, refCallee)) newChildren.add(refCallee);
+        newChildren.add(refCallee);
       }
     }
 
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) refElement;
 
-      if (!refMethod.isStatic() && !refMethod.isConstructor() && !refMethod.getOwnerClass().isAnonymous()) {
+      RefClass aClass = refMethod.getOwnerClass();
+      if (!refMethod.isStatic() && !refMethod.isConstructor() && (aClass != null && !aClass.isAnonymous())) {
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
           if (((RefMethodImpl)refDerived).isSuspicious()) {
-            if (notInPath(pathToRoot, refDerived)) newChildren.add(refDerived);
+            newChildren.add(refDerived);
           }
         }
       }
@@ -393,25 +381,16 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       RefClass refClass = (RefClass) refElement;
       for (RefClass subClass : refClass.getSubClasses()) {
         if ((subClass.isInterface() || subClass.isAbstract()) && ((RefClassImpl)subClass).isSuspicious()) {
-          if (notInPath(pathToRoot, subClass)) newChildren.add(subClass);
+          newChildren.add(subClass);
         }
       }
 
       if (refClass.getDefaultConstructor() instanceof RefImplicitConstructor) {
-        Set<RefElement> fromConstructor = getPossibleChildren(refElementNode, refClass.getDefaultConstructor());
+        Set<RefElement> fromConstructor = getPossibleChildren(refClass.getDefaultConstructor());
         newChildren.addAll(fromConstructor);
       }
     }
 
     return newChildren;
-  }
-
-  private static boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
-    for (TreeNode aPathToRoot : pathToRoot) {
-      InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
-      if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;
-    }
-
-    return true;
   }
 }

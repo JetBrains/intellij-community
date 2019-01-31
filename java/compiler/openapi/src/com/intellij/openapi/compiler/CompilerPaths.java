@@ -45,7 +45,6 @@ public class CompilerPaths {
    * @return a root directory where generated files for various compilers are stored
    */
   public static File getGeneratedDataDirectory(Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".generated");
   }
 
@@ -53,7 +52,6 @@ public class CompilerPaths {
    * @return a root directory where compiler caches for the given project are stored
    */
   public static File getCacheStoreDirectory(final Project project) {
-    //noinspection HardCodedStringLiteral
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
@@ -132,16 +130,6 @@ public class CompilerPaths {
       }
     }
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
-  }
-
-  /**
-   * @return path to annotation-processors generated _production_ sources
-    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getAnnotationProcessorsGenerationPath(Module module) {
-    return getAnnotationProcessorsGenerationPath(module, false);
   }
 
   @Nullable

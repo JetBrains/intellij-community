@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.editor;
 
+import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
@@ -20,9 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Ensures that Java attributes are not affected by changes in EditorColorScheme or these changes are planned and intentional.
- */
+import static org.junit.Assert.assertNotEquals;
+
 public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
 
   private static List<AttributesDescriptor> getDescriptors() {
@@ -107,6 +109,9 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
     return dumpBuilder.toString();
   }
 
+  /**
+   * Ensures that Java attributes are not affected by changes in EditorColorScheme or these changes are planned and intentional.
+   */
   public void testDefaultColorScheme() {
     assertEquals(
       "ABSTRACT_CLASS_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }\n" +
@@ -210,5 +215,16 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
 
       dumpDefaultColorScheme("Darcula")
     );
+  }
+
+  public void testInheritanceFlagCanBeOverwrittenWithDefaultAttributes() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorScheme = (EditorColorsScheme)defaultScheme.clone();
+    TextAttributes localVarAttrs = defaultScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
+    editorScheme.setAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES, localVarAttrs);
+    TextAttributes changedAttrs = new TextAttributes(Color.BLUE, Color.WHITE, null, EffectType.BOXED, 0);
+    editorScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, changedAttrs);
+    TextAttributes attributes = editorScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
+    assertNotEquals(attributes, changedAttrs);
   }
 }

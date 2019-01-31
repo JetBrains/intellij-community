@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.project.Project;
@@ -64,8 +50,16 @@ public class VcsLogContentUtil {
 
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
                                                                           @NotNull Class<U> clazz,
-                                                                          @NotNull Condition<U> condition) {
+                                                                          @NotNull Condition<? super U> condition) {
+    return findAndSelect(project, clazz, condition) != null;
+  }
+
+  @Nullable
+  public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
+                                                             @NotNull Class<U> clazz,
+                                                             @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    if (toolWindow == null) return null;
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
@@ -76,10 +70,12 @@ public class VcsLogContentUtil {
       }
       return false;
     });
-    if (component == null) return false;
+    if (component == null) return null;
 
     if (!toolWindow.isVisible()) toolWindow.activate(null);
-    return ContentUtilEx.selectContent(manager, component, true);
+    if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    //noinspection unchecked
+    return (U)getLogUi(component);
   }
 
   public static boolean selectLogUi(@NotNull Project project, @NotNull VcsLogUi ui) {
@@ -121,9 +117,9 @@ public class VcsLogContentUtil {
     }
   }
 
-  public static <U extends AbstractVcsLogUi> void openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                             @NotNull String tabGroupName, @NotNull String shortName,
-                                                             @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+  public static <U extends AbstractVcsLogUi> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
+                                                          @NotNull String tabGroupName, @NotNull String shortName,
+                                                          @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, true);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
@@ -131,6 +127,7 @@ public class VcsLogContentUtil {
                                    new VcsLogPanel(logManager, logUi), tabGroupName, shortName, focus, logUi);
     if (focus) toolWindow.activate(null);
     logManager.scheduleInitialization();
+    return logUi;
   }
 
   public static boolean closeLogTab(@NotNull ContentManager manager, @NotNull String tabId) {
@@ -143,7 +140,7 @@ public class VcsLogContentUtil {
     });
   }
 
-  public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {
+  public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!selectMainLog(window)) {
       VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
@@ -169,5 +166,15 @@ public class VcsLogContentUtil {
       }
     }
     return false;
+  }
+
+  public static void renameLogUi(@NotNull Project project, @NotNull VcsLogUiImpl ui, @NotNull String newName) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    if (toolWindow == null) return;
+
+    ContentManager manager = toolWindow.getContentManager();
+    JComponent component = ContentUtilEx.findContentComponent(manager, c -> ui == getLogUi(c));
+    if (component == null) return;
+    ContentUtilEx.renameTabbedContent(manager, component, newName);
   }
 }

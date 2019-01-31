@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -8,7 +8,6 @@ import com.intellij.util.xmlb.annotations.CollectionBean;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
-import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,20 +254,8 @@ public final class XmlSerializerImpl {
       accessor.setShort(host, Short.parseShort(value));
     }
     else if (valueClass.isEnum()) {
-      Object deserializedValue = null;
-      for (Object enumConstant : valueClass.getEnumConstants()) {
-        if (enumConstant.toString().equals(value)) {
-          deserializedValue = enumConstant;
-        }
-      }
-      if (deserializedValue == null) {
-        for (Object enumConstant : valueClass.getEnumConstants()) {
-          if (enumConstant.toString().equalsIgnoreCase(value)) {
-            deserializedValue = enumConstant;
-          }
-        }
-      }
-      accessor.set(host, deserializedValue);
+      //noinspection unchecked
+      accessor.set(host, XmlSerializerUtil.stringToEnum(value, (Class<? extends Enum<?>>)valueClass, false));
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
       try {
@@ -343,26 +330,6 @@ public final class XmlSerializerImpl {
     else {
       return value.toString();
     }
-  }
-
-  @NotNull
-  static String removeControlChars(@NotNull String text) {
-    StringBuilder result = null;
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (!Verifier.isXMLCharacter(c)) {
-        if (result == null) {
-          result = new StringBuilder(text.length());
-          result.append(text, 0, i);
-        }
-        continue;
-      }
-
-      if (result != null) {
-        result.append(c);
-      }
-    }
-    return result == null ? text : result.toString();
   }
 
   @NotNull

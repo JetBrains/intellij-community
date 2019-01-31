@@ -22,7 +22,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -52,7 +51,6 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -273,18 +272,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     checkLengthConsistency();
   }
 
-  public final void beforeDocumentChanged(@Nullable PsiFile psiCause) {
-    PsiFile psiFile = psiCause != null ? psiCause : getPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileImpl && myContent instanceof VirtualFileContent) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, psiCause == null ? getModificationStamp() : LocalTimeCounter.currentTime()));
-      checkLengthConsistency();
-    }
-  }
-
   public final void onContentReload() {
     List<PsiFile> files = getCachedPsiFiles();
-    List<PsiTreeChangeEventImpl> events = ContainerUtil.newArrayList();
-    List<PsiTreeChangeEventImpl> genericEvents = ContainerUtil.newArrayList();
+    List<PsiTreeChangeEventImpl> events = new ArrayList<>(files.size());
+    List<PsiTreeChangeEventImpl> genericEvents = new ArrayList<>(files.size());
     for (PsiFile file : files) {
       genericEvents.add(createChildrenChangeEvent(file, true));
       events.add(createChildrenChangeEvent(file, false));
@@ -329,8 +320,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public void rootChanged(@NotNull PsiFile psiFile) {
-    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
-      setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded() && psiFile.isValid()) {
+      setContent(new PsiFileContent(((PsiFileImpl)psiFile).calcTreeElement(), LocalTimeCounter.currentTime()));
     }
   }
 
@@ -436,7 +427,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private void forKnownCopies(Consumer<AbstractFileViewProvider> action) {
+  private void forKnownCopies(Consumer<? super AbstractFileViewProvider> action) {
     Set<AbstractFileViewProvider> knownCopies = getUserData(KNOWN_COPIES);
     if (knownCopies != null) {
       for (AbstractFileViewProvider copy : knownCopies) {
@@ -516,41 +507,24 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedStamp(document);
   }
 
-  private class PsiFileContent implements Content {
-    private final PsiFileImpl myFile;
-    private volatile String myContent;
+  private static class PsiFileContent implements Content {
     private final long myModificationStamp;
+    private final FileElement myFileElement;
 
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final List<FileElement> myFileElementHardRefs = new SmartList<>();
-
-    private PsiFileContent(@NotNull PsiFileImpl file, final long modificationStamp) {
-      myFile = file;
+    PsiFileContent(@NotNull FileElement fileElement, long modificationStamp) {
       myModificationStamp = modificationStamp;
-      for (PsiFile aFile : getAllFiles()) {
-        if (aFile instanceof PsiFileImpl) {
-          myFileElementHardRefs.add(((PsiFileImpl)aFile).calcTreeElement());
-        }
-      }
+      myFileElement = fileElement;
     }
 
     @NotNull
     @Override
     public CharSequence getText() {
-      String content = myContent;
-      if (content == null) {
-        myContent = content = ReadAction.compute(() -> myFile.calcTreeElement().getText());
-      }
-      return content;
+      return myFileElement.getText();
     }
 
     @Override
     public int getTextLength() {
-      String content = myContent;
-      if (content != null) {
-        return content.length();
-      }
-      return myFile.calcTreeElement().getTextLength();
+      return myFileElement.getTextLength();
     }
 
     @Override

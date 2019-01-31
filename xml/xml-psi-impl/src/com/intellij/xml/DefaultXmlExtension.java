@@ -97,7 +97,7 @@ public class DefaultXmlExtension extends XmlExtension {
     return set;
   }
 
-  private static boolean hasTag(@NotNull XmlElementDescriptor elementDescriptor, String tagName, Set<XmlElementDescriptor> visited) {
+  private static boolean hasTag(@NotNull XmlElementDescriptor elementDescriptor, String tagName, Set<? super XmlElementDescriptor> visited) {
     final String name = elementDescriptor.getDefaultName();
     if (name == null) {
       LOG.error(elementDescriptor + " returned null as default name");

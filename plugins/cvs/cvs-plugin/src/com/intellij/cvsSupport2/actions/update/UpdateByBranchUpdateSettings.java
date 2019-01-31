@@ -31,42 +31,52 @@ public class UpdateByBranchUpdateSettings implements UpdateSettings{
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;
   }
 
+  @Override
   public boolean getPruneEmptyDirectories() {
     return true;
   }
 
+  @Override
   public String getBranch1ToMergeWith() {
     return null;
   }
 
+  @Override
   public String getBranch2ToMergeWith() {
     return null;
   }
 
+  @Override
   public boolean getResetAllSticky() {
     return false;
   }
 
+  @Override
   public boolean getDontMakeAnyChanges() {
     return false;
   }
 
+  @Override
   public boolean getCreateDirectories() {
     return true;
   }
 
+  @Override
   public boolean getCleanCopy() {
     return false;
   }
 
+  @Override
   public KeywordSubstitution getKeywordSubstitution() {
     return null;
   }
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return new SimpleRevision(myBranchName);
   }
 
+  @Override
   public boolean getMakeNewFilesReadOnly() {
     return myMakeNewFilesReadOnly;
   }

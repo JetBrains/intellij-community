@@ -19,4 +19,5 @@ public class ClassInitializerFixTest extends IGQuickFixesTestCase {
 
   public void testNoConstructor() { doTest(); }
   public void testChainedConstructor() { doTest(); }
+  public void testNonStaticMemberUsed() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("change.modifier.quickfix", "static")); }
 }

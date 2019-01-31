@@ -1,4 +1,4 @@
-package com.package1;
+package javax.servlet;
 
 public class Class1 {
 }

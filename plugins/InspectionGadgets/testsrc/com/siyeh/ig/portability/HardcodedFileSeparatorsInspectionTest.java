@@ -17,7 +17,6 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +27,7 @@ public class HardcodedFileSeparatorsInspectionTest extends LightInspectionTestCa
   public void testHardcodedFileSeparators() {
     doTest();
   }
+  public void testNoCrashOnUnclosedLiteral() { doTest();}
 
   @Nullable
   @Override

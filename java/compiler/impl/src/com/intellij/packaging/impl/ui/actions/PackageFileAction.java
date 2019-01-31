@@ -50,7 +50,7 @@ public class PackageFileAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean visible = false;
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
@@ -89,7 +89,7 @@ public class PackageFileAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 

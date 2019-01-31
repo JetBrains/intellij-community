@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 class CreatePatternFix implements IntentionAction, LocalQuickFix {
   private final PsiReference myReference;
 
-  public CreatePatternFix(PsiReference reference) {
+  CreatePatternFix(PsiReference reference) {
     myReference = reference;
   }
 

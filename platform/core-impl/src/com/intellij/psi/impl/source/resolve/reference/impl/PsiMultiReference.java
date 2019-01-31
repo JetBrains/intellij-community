@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,14 +87,14 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     if (range != null) return range;
 
     final PsiReference chosenRef = chooseReference();
-    return getReferenceRange(chosenRef);
+    return getReferenceRange(chosenRef, myElement);
   }
 
   @Nullable
   private TextRange getRangeInElementIfSameForAll() {
     TextRange range = null;
     for (PsiReference reference : getReferences()) {
-      TextRange refRange = getReferenceRange(reference);
+      TextRange refRange = getReferenceRange(reference, myElement);
       if (range == null) {
         range = refRange;
       }
@@ -106,15 +105,29 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return range;
   }
 
-  private TextRange getReferenceRange(PsiReference reference) {
+  @NotNull
+  public static TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
     TextRange rangeInElement = reference.getRangeInElement();
-    PsiElement element = reference.getElement();
-    while (element != myElement) {
-      rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
+    PsiElement refElement = reference.getElement();
+    PsiElement element = refElement;
+    while (element != inElement) {
+      int start = element.getStartOffsetInParent();
+      if (start + rangeInElement.getStartOffset() < 0) {
+        throw new IllegalArgumentException("Inconsistent reference range in #" + inElement.getLanguage().getID() + ":" +
+                                           "ref of " + reference.getClass() +
+                                           " on " + classAndRange(refElement) +
+                                           " with range " + reference.getRangeInElement() + ", " +
+                                           "requested range in PSI of " + classAndRange(inElement));
+      }
+      rangeInElement = rangeInElement.shiftRight(start);
       element = element.getParent();
       if (element instanceof PsiFile) break;
     }
     return rangeInElement;
+  }
+
+  private static String classAndRange(PsiElement psi) {
+    return psi.getClass() + " " + psi.getTextRange();
   }
 
   @Override
@@ -138,7 +151,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException{
     return chooseReference().handleElementRename(newElementName);
   }
 
@@ -148,7 +161,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element){
+  public boolean isReferenceTo(@NotNull PsiElement element){
     for (PsiReference reference : myReferences) {
       if (reference.isReferenceTo(element)) return true;
     }

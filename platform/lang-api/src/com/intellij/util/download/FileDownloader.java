@@ -61,18 +61,21 @@ public interface FileDownloader {
   /**
    * @deprecated specify target directory in {@link #downloadWithProgress} or {@link #downloadFilesWithProgress} method instead
    */
+  @Deprecated
   @NotNull
   FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
 
   /**
    * @deprecated use {@link #downloadFilesWithProgress} instead
    */
+  @Deprecated
   @Nullable
   VirtualFile[] download();
 
   /**
    * @deprecated use {@link #downloadWithProgress} instead
    */
+  @Deprecated
   @Nullable
   List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions();
 }

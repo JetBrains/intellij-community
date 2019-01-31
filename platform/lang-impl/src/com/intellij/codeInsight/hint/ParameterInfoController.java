@@ -13,6 +13,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -144,8 +145,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditorCaretListener = new CaretListener(){
       @Override
-      public void caretPositionChanged(CaretEvent e) {
-        rescheduleUpdate();
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        UndoManager undoManager = UndoManager.getInstance(myProject);
+        if (!undoManager.isUndoInProgress() && !undoManager.isRedoInProgress()) {
+          syncUpdateOnCaretMove();
+          rescheduleUpdate();
+        }
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -153,7 +158,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         rescheduleUpdate();
       }
     }, this);
@@ -182,6 +187,14 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     updateComponent();
   }
 
+  void setDescriptors(Object[] descriptors) {
+    myComponent.setDescriptors(descriptors);
+  }
+
+  private void syncUpdateOnCaretMove() {
+    myHandler.syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
+  }
+
   private LightweightHint createHint() {
     JPanel wrapper = new WrapperPanel();
     wrapper.add(myComponent);
@@ -201,7 +214,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   @Override
-  public void visibleAreaChanged(VisibleAreaEvent e) {
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     if (Registry.is("editor.keep.completion.hints.even.longer")) rescheduleUpdate();
   }
 
@@ -213,13 +226,16 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
-    
+
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
                                                              null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
+    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+    hintHint.setComponentBorder(JBUI.Borders.empty());
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
@@ -302,7 +318,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) &&
                                myComponent.getCurrentParameterIndex() != -1;
       if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         hideHint();
@@ -372,13 +388,9 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     if (argsList == null && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) return;
 
     if (!myHint.isVisible()) AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
-    
+
     offset = adjustOffsetToInlay(offset);
-    VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
-    if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
-      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column + 1);
-    }
-    myEditor.getCaretModel().moveToVisualPosition(visualPosition);
+    myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     if (argsList != null) {
@@ -388,11 +400,23 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
-    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(whitespaceStart, whitespaceEnd);
+    int hostWhitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
+    int hostWhitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
+    Editor hostEditor = myEditor;
+    if (myEditor instanceof EditorWindow) {
+      hostEditor = ((EditorWindow)myEditor).getDelegate();
+      hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
+      hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
+    }
+    List<Inlay> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
+                                                                                                  hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) return inlay.getOffset();
+      int inlayOffset = inlay.getOffset();
+      if (myEditor instanceof EditorWindow) {
+        if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+        inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
+      }
+      return inlayOffset;
     }
     return offset;
   }
@@ -451,7 +475,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
           final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
           // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
-          final E e = (E) ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
         }
       }
@@ -658,8 +682,29 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
 
     @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;
+    }
+  }
+
+  private class MyLazyUpdateParameterInfoContext extends MyUpdateParameterInfoContext {
+    private PsiFile myFile;
+
+    private MyLazyUpdateParameterInfoContext() {
+      super(myEditor.getCaretModel().getOffset(), null);
+    }
+
+    @Override
+    public PsiFile getFile() {
+      if (myFile == null) {
+        myFile = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
+      }
+      return myFile;
     }
   }
 
@@ -748,7 +793,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       setBorder(JBUI.Borders.empty());
     }
 
-    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint) 
+    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
     @Override
     public Color getForeground() {
       return getComponentCount() == 0 ? super.getForeground() : getComponent(0).getForeground();

@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
@@ -37,7 +38,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @NotNull
   default ConfigurationType getType() {
     ConfigurationFactory factory = getFactory();
-    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
+    return factory == null ? UnknownConfigurationType.getInstance() : factory.getType();
   }
 
   /**
@@ -46,10 +47,9 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   @Nullable
   ConfigurationFactory getFactory();
 
+  // do not annotate as Nullable because in this case Kotlin compiler will forbid field style access (because of different nullability for getter and setter).
   /**
    * Sets the name of the configuration.
-   *
-   * @param name the new name of the configuration.
    */
   void setName(String name);
 
@@ -152,14 +152,44 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void readExternal(@NotNull Element element) {
   }
 
-  default void writeExternal(Element element) {
+  default void writeExternal(@NotNull Element element) {
   }
 
   @NotNull
-  default List<BeforeRunTask> getBeforeRunTasks() {
+  default List<BeforeRunTask<?>> getBeforeRunTasks() {
     return Collections.emptyList();
   }
 
-  default void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+  default void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
+  }
+
+  default boolean isAllowRunningInParallel() {
+    return false;
+  }
+
+  default void setAllowRunningInParallel(boolean value) {
+  }
+
+  /**
+   * Allows to customize handling when restart the run configuration not allowing running in parallel.
+   *
+   * @return the further actions.
+   */
+  default RestartSingletonResult restartSingleton(@NotNull ExecutionEnvironment environment) {
+    return RestartSingletonResult.ASK_AND_RESTART;
+  }
+
+  /**
+   * Further actions to restart the run configuration not allowing running in parallel.
+   *
+   * @see RunConfiguration#restartSingleton
+   */
+  enum RestartSingletonResult {
+    /** Ask user to stop and restart the run configuration. */
+    ASK_AND_RESTART,
+    /** Stop and restart the run configuration without additional interaction with user. */
+    RESTART,
+    /** No further action is needed. */
+    NO_FURTHER_ACTION
   }
 }

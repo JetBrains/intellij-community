@@ -1,15 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isReassigned
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.*
@@ -27,9 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isScriptField
 
-class GroovyDeclarationHighlightingPassFactory(project: Project, registrar: TextEditorHighlightingPassRegistrar)
-  : AbstractProjectComponent(project), TextEditorHighlightingPassFactory {
-
+class GroovyDeclarationHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar) : TextEditorHighlightingPassFactory {
   init {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
@@ -86,10 +82,17 @@ private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>):
   val nameElement = reference.referenceNameElement
   if (nameElement != null && nameElement.isThisOrSuper()) {
     if (resolved is PsiMethod && resolved.isConstructor) {
-      return null // don't highlight this() or super()
+      return null // don't highlight this() or super(), they are already highlighted
     }
     else if (resolved is PsiClass) {
-      return if (shouldBeErased(nameElement)) KEYWORD else null
+      return if (shouldBeErased(nameElement)) {
+        // keyword highlighting was erased, highlight the keyword back
+        KEYWORD
+      }
+      else {
+        // don't highlight, because highlighting of the keyword was not erased
+        null
+      }
     }
   }
 

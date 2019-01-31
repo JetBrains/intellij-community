@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -35,19 +35,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
@@ -56,18 +53,26 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
+  private final HighlightSink myHighlightSink = (highlightElement, highlightType, message, fixes) ->
+    registerError(highlightElement, message, fixes, highlightType);
+  
   private boolean checkCallApplicability(@Nullable PsiType type,
                                          boolean checkUnknownArgs,
                                          @NotNull CallInfo<? extends GroovyPsiElement> info) {
@@ -79,7 +84,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (type instanceof GrClosureType) {
       if (argumentTypes == null) return true;
 
-      ApplicabilityResult result =
+      Applicability result =
         PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, info.getCall());
       switch (result) {
         case inapplicable:
@@ -281,7 +286,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final PsiMethod method = (PsiMethod)element;
 
-    ApplicabilityResult applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
+    Applicability applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
 
     switch (applicable) {
       case inapplicable:
@@ -297,9 +302,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
   }
 
-  private static <T extends GroovyPsiElement> ApplicabilityResult calcApplicability(@NotNull PsiMethod method,
-                                                                                    @NotNull PsiSubstitutor substitutor,
-                                                                                    @NotNull CallInfo<T> info) {
+  private static <T extends GroovyPsiElement> Applicability calcApplicability(@NotNull PsiMethod method,
+                                                                              @NotNull PsiSubstitutor substitutor,
+                                                                              @NotNull CallInfo<T> info) {
     if ("call".equals(method.getName()) && info.getInvokedExpression() instanceof GrReferenceExpression) {
       final GrExpression qualifierExpression = ((GrReferenceExpression)info.getInvokedExpression()).getQualifierExpression();
       if (qualifierExpression != null) {
@@ -310,6 +315,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
     return PsiUtil.isApplicableConcrete(info.getArgumentTypes(), method, substitutor, info.getCall(), false);
+  }
+
+  @Override
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    super.visitMethodCall(call);
+    if (isFake(call)) return;
+    checkMethodCall(new GrMethodCallInfo(call));
   }
 
   private void checkMethodCall(@NotNull CallInfo<? extends GrMethodCall> info) {
@@ -330,7 +342,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
       if (resolved != null) {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-          checkMethodApplicability(resolveResult, true, info);
+          GrMethodCall call = info.getCall();
+          GroovyMethodCallReference reference = call.getImplicitCallReference();
+          if (reference != null) {
+            checkCallApplicability(reference.getReceiver(), true, info);
+          }
+          else {
+            checkMethodApplicability(resolveResult, true, info);
+          }
         }
         else {
           checkCallApplicability(referenceExpression.getType(), true, info);
@@ -404,8 +423,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private void checkOperator(@NotNull CallInfo<? extends GrBinaryExpression> info) {
     if (hasErrorElements(info.getCall())) return;
-
-    if (isSpockTimesOperator(info.getCall())) return;
 
     GroovyResolveResult[] results = info.multiResolve();
     GroovyResolveResult resolveResult = info.advancedResolve();
@@ -539,7 +556,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                            @NotNull PsiElement context,
                                                            @NotNull PsiElement elementToHighlight) {
     if (targetType == null || actualType == null) return;
-    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType, context);
+    final ConversionResult result = TypesUtil.canAssignWithinMultipleAssignment(targetType, actualType);
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,
@@ -651,14 +668,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
-    super.visitEnumConstant(enumConstant);
-    GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
-  }
-
-  @Override
   public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     super.visitReturnStatement(returnStatement);
     final GrExpression value = returnStatement.getReturnValue();
@@ -693,29 +702,48 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    checkMethodCall(new GrMethodCallInfo(methodCallExpression));
-  }
-
-  @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
-    if (newExpression.getArrayCount() > 0) return;
+    if (hasErrorElements(newExpression) || hasErrorElements(newExpression.getArgumentList())) return;
 
-    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-    if (refElement == null) return;
+    final GroovyCallReference reference = newExpression.getConstructorReference();
+    if (reference == null) return;
 
-    GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
-    processConstructorCall(info);
+    final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
+    if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
   }
 
   @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    super.visitApplicationStatement(applicationStatement);
-    checkMethodCall(new GrMethodCallInfo(applicationStatement));
+  public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
+    super.visitEnumConstant(enumConstant);
+    if (hasErrorElements(enumConstant) || hasErrorElements(enumConstant.getArgumentList())) return;
+
+    final GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
+    final GroovyCallReference reference = enumConstant.getConstructorReference();
+    if (processConstructor(reference, enumConstant.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+
+    checkNamedArgumentsType(info);
   }
 
+  @Override
+  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
+    super.visitConstructorInvocation(invocation);
+    if (hasErrorElements(invocation) || hasErrorElements(invocation.getArgumentList())) return;
+
+    final GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
+    final GroovyCallReference reference = invocation.getConstructorReference();
+    if (processConstructor(reference, invocation.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+      return;
+    }
+    checkNamedArgumentsType(info);
+  }
+  
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
@@ -755,6 +783,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression binary) {
     super.visitBinaryExpression(binary);
+    if (isFake(binary)) return;
     checkOperator(new GrBinaryExprInfo(binary));
   }
 
@@ -828,17 +857,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         substitutor.substitute(targetType),
         initializer,
         parameter.getNameIdentifierGroovy(),
-        method
+        parameter
       );
     }
-  }
-
-  @Override
-  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
-    super.visitConstructorInvocation(invocation);
-    GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
-    processConstructorCall(info);
-    checkNamedArgumentsType(info);
   }
 
   @Override

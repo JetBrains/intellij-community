@@ -25,7 +25,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
+    return JBUI.insets(isTableCellEditor(c) || isCompact(c) ? 2 : 3).asUIResource();
   }
 
   @Override
@@ -38,11 +38,13 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     if (((JComponent)c).getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE) return;
 
     Rectangle r = new Rectangle(x, y, width, height);
+    boolean focused = isFocused(c);
 
     if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       paintSearchArea((Graphics2D)g, r, (JTextComponent)c, false);
-    }
-    else if (!(c.getParent() instanceof JComboBox)){
+    } else if (isTableCellEditor(c)) {
+      paintCellEditorBorder((Graphics2D)g, c, r, focused);
+    } else if (!(c.getParent() instanceof JComboBox)){
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -58,8 +60,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         clipForBorder(c, g2, r.width, r.height);
 
         Object op = ((JComponent)c).getClientProperty("JComponent.outline");
-        boolean focused = isFocused(c);
-        if (op != null) {
+        if (c.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
         } else {
           if (focused) {
@@ -70,7 +71,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
           border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
 
           boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
-          g2.setColor(getOutlineColor(c.isEnabled() && editable, c.hasFocus()));
+          g2.setColor(getOutlineColor(c.isEnabled() && editable, focused));
           g2.fill(border);
         }
       }

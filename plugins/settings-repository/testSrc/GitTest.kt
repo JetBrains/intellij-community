@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.ApplicationStoreImpl
@@ -23,6 +9,7 @@ import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.delete
 import com.intellij.util.io.writeChild
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
 import org.jetbrains.settingsRepository.SyncType
@@ -118,29 +105,33 @@ internal class GitTest : GitTestCase() {
     assertThat(repositoryManager.getUpstream()).isEqualTo(url)
   }
 
-  @Test fun pullToRepositoryWithoutCommits() {
+  @Test
+  fun pullToRepositoryWithoutCommits() = runBlocking {
     doPullToRepositoryWithoutCommits(null)
   }
 
-  @Test fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() {
+  @Test
+  fun pullToRepositoryWithoutCommitsAndCustomRemoteBranchName() = runBlocking {
     doPullToRepositoryWithoutCommits("customRemoteBranchName")
   }
 
-  private fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
+  private suspend fun doPullToRepositoryWithoutCommits(remoteBranchName: String?) {
     createLocalAndRemoteRepositories(remoteBranchName)
     repositoryManager.pull()
     compareFiles(repository.workTreePath, remoteRepository.workTreePath)
   }
 
-  @Test fun pullToRepositoryWithCommits() {
+  @Test
+  fun pullToRepositoryWithCommits() = runBlocking {
     doPullToRepositoryWithCommits(null)
   }
 
-  @Test fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() {
+  @Test
+  fun pullToRepositoryWithCommitsAndCustomRemoteBranchName() = runBlocking {
     doPullToRepositoryWithCommits("customRemoteBranchName")
   }
 
-  private fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
+  private suspend fun doPullToRepositoryWithCommits(remoteBranchName: String?) {
     createLocalAndRemoteRepositories(remoteBranchName)
     val file = addAndCommit("local.xml")
 
@@ -151,7 +142,8 @@ internal class GitTest : GitTestCase() {
   }
 
   // never was merged. we reset using "merge with strategy "theirs", so, we must test - what's happen if it is not first merge? - see next test
-  @Test fun resetToTheirsIfFirstMerge() {
+  @Test
+  fun resetToTheirsIfFirstMerge() = runBlocking<Unit> {
     createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.OVERWRITE_LOCAL)
@@ -160,7 +152,7 @@ internal class GitTest : GitTestCase() {
       .compare()
   }
 
-  @Test fun `overwrite local - second merge is null`() {
+  @Test fun `overwrite local - second merge is null`() = runBlocking {
     createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.MERGE)
@@ -188,7 +180,7 @@ internal class GitTest : GitTestCase() {
     testRemote()
   }
 
-  @Test fun `merge - resolve conflicts to my`() {
+  @Test fun `merge - resolve conflicts to my`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories()
 
     val data = MARKER_ACCEPT_MY
@@ -200,7 +192,7 @@ internal class GitTest : GitTestCase() {
     fs.file(SAMPLE_FILE_NAME, data.toString(StandardCharsets.UTF_8)).compare()
   }
 
-  @Test fun `merge - theirs file deleted, my modified, accept theirs`() {
+  @Test fun `merge - theirs file deleted, my modified, accept theirs`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories()
 
     sync(SyncType.MERGE)
@@ -217,7 +209,8 @@ internal class GitTest : GitTestCase() {
     fs.compare()
   }
 
-  @Test fun `merge - my file deleted, theirs modified, accept my`() {
+  @Test
+  fun `merge - my file deleted, theirs modified, accept my`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories()
 
     sync(SyncType.MERGE)
@@ -234,7 +227,8 @@ internal class GitTest : GitTestCase() {
     fs.compare()
   }
 
-  @Test fun `commit if unmerged`() {
+  @Test
+  fun `commit if unmerged`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories()
 
     val data = "<foo />"
@@ -271,7 +265,8 @@ internal class GitTest : GitTestCase() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_LOCAL)
   }
 
-  @Test fun `remove deleted files`() {
+  @Test
+  fun `remove deleted files`() = runBlocking<Unit> {
     createLocalAndRemoteRepositories()
 
     val workDir = repositoryManager.repository.workTree.toPath()
@@ -301,7 +296,8 @@ internal class GitTest : GitTestCase() {
     assertThat(diff.diff()).isFalse()
   }
 
-  @Test fun gitignore() {
+  @Test
+  fun gitignore() = runBlocking {
     createLocalAndRemoteRepositories()
 
     provider.write(".gitignore", "*.html")
@@ -349,26 +345,29 @@ internal class GitTest : GitTestCase() {
     assertStatus()
   }
 
-  @Test fun `initial copy to repository - no local files`() {
+  @Test
+  fun `initial copy to repository - no local files`() = runBlocking {
     createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(false)
   }
 
-  @Test fun `initial copy to repository - some local files`() {
+  @Test
+  fun `initial copy to repository - some local files`() = runBlocking {
     createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(true)
   }
 
-  @Test fun `initial copy to repository - remote files removed`() {
+  @Test
+  fun `initial copy to repository - remote files removed`() = runBlocking {
     createRemoteRepository(initialCommit = true)
 
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(true, SyncType.OVERWRITE_REMOTE)
   }
 
-  private fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
+  private suspend fun testInitialCopy(addLocalFiles: Boolean, syncType: SyncType = SyncType.MERGE) {
     repositoryManager.createRepositoryIfNeed()
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
@@ -387,7 +386,7 @@ internal class GitTest : GitTestCase() {
     store.setPath(localConfigPath.toString())
     store.storageManager.addStreamProvider(provider)
 
-    icsManager.sync(syncType, GitTestCase.projectRule.project, { copyLocalConfig(store.storageManager) })
+    icsManager.sync(syncType, GitTestCase.projectRule.project) { copyLocalConfig(store.storageManager) }
 
     if (addLocalFiles) {
       assertThat(localConfigPath).isDirectory()
@@ -401,7 +400,7 @@ internal class GitTest : GitTestCase() {
     fs.compare()
   }
 
-  private fun doSyncWithUninitializedUpstream(syncType: SyncType) {
+  private fun doSyncWithUninitializedUpstream(syncType: SyncType) = runBlocking<Unit> {
     createRemoteRepository(initialCommit = false)
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 

@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
+import org.jetbrains.annotations.NotNull;
 
 public final class ShowFilesAction extends ToggleAction {
   private final Runnable myUpdate;
@@ -32,12 +33,12 @@ public final class ShowFilesAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
+  public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_FILES;
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean flag) {
+  public void setSelected(@NotNull AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
     myUpdate.run();
   }

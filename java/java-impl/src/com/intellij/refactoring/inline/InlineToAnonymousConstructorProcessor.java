@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -67,13 +68,13 @@ class InlineToAnonymousConstructorProcessor {
   private PsiExpression[] myConstructorArguments;
   private PsiParameterList myConstructorParameters;
 
-  public InlineToAnonymousConstructorProcessor(final PsiClass aClass, final PsiNewExpression psiNewExpression,
+  InlineToAnonymousConstructorProcessor(final PsiClass aClass, final PsiNewExpression psiNewExpression,
                                                final PsiType superType) {
     myClass = aClass;
     myNewExpression = psiNewExpression;
     mySuperType = superType;
     myNewStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class, PsiLambdaExpression.class);
-    myElementFactory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(myClass.getProject());
   }
 
   public void run() throws IncorrectOperationException {
@@ -178,7 +179,7 @@ class InlineToAnonymousConstructorProcessor {
   private void checkInlineChainingConstructor() {
     while(true) {
       PsiMethod constructor = myNewExpression.resolveConstructor();
-      if (constructor == null || !InlineMethodHandler.isChainingConstructor(constructor)) break;
+      if (constructor == null || !InlineUtil.isChainingConstructor(constructor)) break;
       InlineMethodProcessor.inlineConstructorCall(myNewExpression);
     }
   }
@@ -250,7 +251,7 @@ class InlineToAnonymousConstructorProcessor {
   private PsiVariable generateOuterClassLocal() {
     PsiClass outerClass = myClass.getContainingClass();
     assert outerClass != null;
-    return generateLocal(StringUtil.decapitalize(outerClass.getName()),
+    return generateLocal(StringUtil.decapitalize(StringUtil.notNullize(outerClass.getName())),
                          myElementFactory.createType(outerClass), myNewExpression.getQualifier());
   }
 

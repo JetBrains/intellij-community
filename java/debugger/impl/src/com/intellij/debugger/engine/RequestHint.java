@@ -55,7 +55,7 @@ public class RequestHint {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  protected RequestHint(final ThreadReferenceProxyImpl stepThread,
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
                       final SuspendContextImpl suspendContext,
                       @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
                       @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
@@ -70,6 +70,7 @@ public class RequestHint {
       frameCount = stepThread.frameCount();
 
       position = ContextUtil.getSourcePosition(new StackFrameContext() {
+        @Override
         public StackFrameProxy getFrameProxy() {
           try {
             return stepThread.frame(0);
@@ -80,6 +81,7 @@ public class RequestHint {
           }
         }
 
+        @Override
         @NotNull
         public DebugProcess getDebugProcess() {
           return suspendContext.getDebugProcess();
@@ -246,7 +248,7 @@ public class RequestHint {
           }
         }
 
-        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensions()) {
+        for (ExtraSteppingFilter filter : ExtraSteppingFilter.EP_NAME.getExtensionList()) {
           try {
             if (filter.isApplicable(context)) return filter.getStepRequestDepth(context);
           }
@@ -254,8 +256,11 @@ public class RequestHint {
         }
       }
       // smart step feature
-      if (myMethodFilter != null && !mySteppedOut) {
-        return StepRequest.STEP_OUT;
+      if (myMethodFilter != null) {
+        isTheSameFrame(context); // to set mySteppedOut if needed
+        if (!mySteppedOut) {
+          return StepRequest.STEP_OUT;
+        }
       }
     }
     catch (VMDisconnectedException ignored) {

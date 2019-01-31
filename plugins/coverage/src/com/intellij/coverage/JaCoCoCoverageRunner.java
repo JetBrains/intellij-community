@@ -47,11 +47,11 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
       final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
       if (project != null) {
         RunConfigurationBase configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
-        
-        Module mainModule = configuration instanceof ModuleBasedConfiguration 
-                            ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule() 
+
+        Module mainModule = configuration instanceof ModuleBasedConfiguration
+                            ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule()
                             : null;
-      
+
         loadExecutionData(sessionDataFile, data, mainModule, project, baseCoverageSuite);
       }
     }
@@ -65,7 +65,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static void loadExecutionData(@NotNull final File sessionDataFile,
                                         ProjectData data,
                                         @Nullable Module mainModule,
-                                        @NotNull Project project, 
+                                        @NotNull Project project,
                                         CoverageSuite suite) throws IOException {
     ExecFileLoader loader = new ExecFileLoader();
     final CoverageBuilder coverageBuilder = getCoverageBuilder(sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
@@ -118,7 +118,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static CoverageBuilder getCoverageBuilder(@NotNull File sessionDataFile,
                                                     @Nullable Module mainModule,
                                                     @NotNull Project project,
-                                                    ExecFileLoader loader, 
+                                                    ExecFileLoader loader,
                                                     JavaCoverageSuite suite) throws IOException {
     loader.load(sessionDataFile);
 
@@ -218,8 +218,8 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     File targetDirectory = new File(settings.OUTPUT_DIRECTORY);
     File coverageFile = new File(suite.getSuites()[0].getCoverageDataFileName());
     RunConfigurationBase runConfiguration = suite.getRunConfiguration();
-    Module module = runConfiguration instanceof ModuleBasedConfiguration 
-                    ? ((ModuleBasedConfiguration)runConfiguration).getConfigurationModule().getModule() 
+    Module module = runConfiguration instanceof ModuleBasedConfiguration
+                    ? ((ModuleBasedConfiguration)runConfiguration).getConfigurationModule().getModule()
                     : null;
 
     ExecFileLoader loader = new ExecFileLoader();
@@ -244,14 +244,17 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     visitor.visitEnd();
   }
 
+  @Override
   public String getPresentableName() {
     return "JaCoCo";
   }
 
+  @Override
   public String getId() {
     return "jacoco";
   }
 
+  @Override
   public String getDataFileExtension() {
     return "exec";
   }

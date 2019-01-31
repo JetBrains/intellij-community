@@ -60,6 +60,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testNestedTryFinallyInForLoop() { doTest(); }
   public void testFieldInitializer() { doTest(); }
   public void testChainedFieldInitializer() { doTest(); }
+  public void testVarDeclaration() { doTest(); }
   public void testFieldIgnoringRedundantInitializer() {
     DefUseInspection inspection = new DefUseInspection();
     inspection.REPORT_REDUNDANT_INITIALIZER = false;
@@ -68,6 +69,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   }
   public void testFieldInitializerUsedInMethodReference() { doTest(); }
   public void testFieldInitializerChainedConstructor() { doTest(); }
+  public void testUnderAlwaysFalseCondition() { doTest(); }
 
   @NotNull
   @Override

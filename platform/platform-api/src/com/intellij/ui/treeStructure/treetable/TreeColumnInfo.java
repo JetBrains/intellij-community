@@ -26,10 +26,12 @@ public class TreeColumnInfo extends ColumnInfo {
     super(name);
   }
 
+  @Override
   public final Class getColumnClass() {
     return TreeTableModel.class;
   }
 
+  @Override
   public final Object valueOf(final Object object) {
     return object;
   }

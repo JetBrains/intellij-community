@@ -53,14 +53,8 @@ public class CertificateUtil {
 
   @Nullable
   public static X509Certificate loadX509Certificate(@NotNull String path) {
-    try {
-      InputStream stream = new FileInputStream(path);
-      try {
-        return (X509Certificate)ourFactory.generateCertificate(stream);
-      }
-      finally {
-        stream.close();
-      }
+    try (InputStream stream = new FileInputStream(path)) {
+      return (X509Certificate)ourFactory.generateCertificate(stream);
     }
     catch (Exception e) {
       Logger.getInstance(CertificateUtil.class).error("Can't add certificate for path: " + path, e);

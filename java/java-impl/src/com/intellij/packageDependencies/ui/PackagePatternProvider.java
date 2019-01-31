@@ -11,7 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +35,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     return getGroupParent((PackageDependenciesNode)node.getParent());
   }
 
+  @Override
   public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     GeneralGroupNode groupParent = getGroupParent(node);
     String scope1 = PatternPackageSet.SCOPE_ANY;
@@ -50,7 +54,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     final String scope = scope1;
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
-      return new PatternPackageSet("*..*", scope, ProjectPatternProvider.getGroupModulePattern((ModuleGroupNode)node));
+      return new PatternPackageSet("*..*", scope, PatternDialectProvider.getGroupModulePattern((ModuleGroupNode)node));
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String modulePattern = ((ModuleNode)node).getModuleName();
@@ -93,28 +97,34 @@ public class PackagePatternProvider extends PatternDialectProvider {
     return null;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.CopyOfFolder;
   }
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return TreeModelBuilder.createTreeModel(project, false, marker);
   }
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
                                    final DependenciesPanel.DependencyPanelSettings settings) {
     return TreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.packages");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return PACKAGES;
   }
 
+  @Override
   public AnAction[] createActions(Project project, final Runnable update) {
     return new AnAction[]{new GroupByScopeTypeAction(update)};
   }

@@ -90,7 +90,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getCollectionsMethodCall(), myMethodCall);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(myMethodCall.replace(toReplace));
   }

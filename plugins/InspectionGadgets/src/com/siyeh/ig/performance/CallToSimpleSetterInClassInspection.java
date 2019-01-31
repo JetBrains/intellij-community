@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,28 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.InlineCallFix;
+import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CallToSimpleSetterInClassInspection extends CallToSimpleSetterInClassInspectionBase {
+public class CallToSimpleSetterInClassInspection extends BaseInspection {
+
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean ignoreSetterCallsOnOtherObjects = false;
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean onlyReportPrivateSetter = false;
 
   @Override
   @Nullable
@@ -38,6 +52,71 @@ public class CallToSimpleSetterInClassInspection extends CallToSimpleSetterInCla
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new InlineCallFix(InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix"));
+    return new InlineGetterSetterCallFix(false);
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToSimpleSetterFromWithinClass";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CallToSimpleSetterInClassVisitor();
+  }
+
+  private class CallToSimpleSetterInClassVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      final PsiClass containingClass = ClassUtils.getContainingClass(call);
+      if (containingClass == null) {
+        return;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (!containingClass.equals(method.getContainingClass())) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        if (ignoreSetterCallsOnOtherObjects) {
+          return;
+        }
+        final PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+        if (!containingClass.equals(qualifierClass)) {
+          return;
+        }
+      }
+      if (!PropertyUtil.isSimpleSetter(method)) {
+        return;
+      }
+      if (onlyReportPrivateSetter && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      final Query<PsiMethod> query = OverridingMethodsSearch.search(method);
+      final PsiMethod overridingMethod = query.findFirst();
+      if (overridingMethod != null) {
+        return;
+      }
+      registerMethodCallError(call);
+    }
   }
 }

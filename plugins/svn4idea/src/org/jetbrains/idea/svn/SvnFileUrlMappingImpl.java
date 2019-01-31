@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -24,8 +25,10 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
@@ -88,7 +91,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Nullable
   public Url getUrlForFile(@NotNull File file) {
     Url result = null;
-    RootUrlInfo rootUrlInfo = getWcRootForFilePath(file);
+    RootUrlInfo rootUrlInfo = getWcRootForFilePath(getFilePath(file));
 
     if (rootUrlInfo != null) {
       try {
@@ -111,11 +114,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
   @Override
   @Nullable
-  public RootUrlInfo getWcRootForFilePath(@NotNull File file) {
+  public RootUrlInfo getWcRootForFilePath(@NotNull FilePath path) {
     synchronized (myMonitor) {
-      String convertedPath = file.getAbsolutePath();
-      convertedPath = file.isDirectory() && !convertedPath.endsWith(File.separator) ? convertedPath + File.separator : convertedPath;
-      String root = myMoreRealMapping.getRootForPath(convertedPath);
+      String root = myMoreRealMapping.getRootForPath(toSystemDependentName(path.toString()));
 
       return root != null ? myMoreRealMapping.byFile(root) : null;
     }
@@ -323,8 +324,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       SvnVcs vcs = SvnVcs.getInstance(myProject);
       Info info = vcs.getInfo(copyRoot);
 
-      if (info != null && info.getRepositoryRootURL() != null) {
-        Node node = new Node(copyRoot, info.getURL(), info.getRepositoryRootURL());
+      if (info != null && info.getRepositoryRootUrl() != null) {
+        Node node = new Node(copyRoot, info.getUrl(), info.getRepositoryRootUrl());
         mapping.add(new RootUrlInfo(node, findRootAndGetFormat(info.getFile()), vcsRoot));
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -116,15 +117,18 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
               break;
 
             case FIND_VIRTUAL:
-              checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, factoryMethodExpression, holder);
+              checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, true, factoryMethodExpression, holder);
               break;
 
             case FIND_STATIC:
-              checkMethod(ownerClass, memberName, nameExpression, typeExpression, true, factoryMethodExpression, holder);
+              checkMethod(ownerClass, memberName, nameExpression, typeExpression, true, true, factoryMethodExpression, holder);
               break;
 
             case FIND_SPECIAL:
-              checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, factoryMethodExpression, holder);
+              checkMethod(ownerClass, memberName, nameExpression, typeExpression, false, false, factoryMethodExpression, holder);
+              if (arguments.length > 3) {
+                checkSpecial(ownerClass, arguments[3], holder);
+              }
               break;
           }
         }
@@ -145,7 +149,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
           validSignatures = Collections.singletonList(ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE);
         }
       }
-      else if (!matchMethodSignature(constructors, constructorSignature)) {
+      else if (findMethodBySignature(constructors, constructorSignature).isEmpty()) {
         validSignatures = constructors.stream()
           .map(JavaReflectionReferenceUtil::getMethodSignature)
           .filter(Objects::nonNull)
@@ -205,6 +209,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
                                   @NotNull PsiExpression methodNameExpression,
                                   @NotNull PsiExpression methodTypeExpression,
                                   boolean isStaticExpected,
+                                  boolean isAbstractAllowed,
                                   @NotNull PsiReferenceExpression factoryMethodExpression,
                                   @NotNull ProblemsHolder holder) {
     if (!ownerClass.isExact()) return;
@@ -229,7 +234,10 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
 
     final ReflectiveSignature methodSignature = composeMethodSignature(methodTypeExpression);
-    if (methodSignature != null && !matchMethodSignature(filteredMethods, methodSignature)) {
+    if (methodSignature == null) return;
+
+    final List<PsiMethod> matchingMethods = findMethodBySignature(filteredMethods, methodSignature);
+    if (matchingMethods.isEmpty()) {
       final String declarationText = getMethodDeclarationText(methodName, methodSignature);
       final List<ReflectiveSignature> validSignatures = filteredMethods.stream()
         .map(JavaReflectionReferenceUtil::getMethodSignature)
@@ -238,6 +246,36 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       final LocalQuickFix fix =
         ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
       holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fix);
+      return;
+    }
+    if (!isAbstractAllowed) {
+      final boolean allAbstract = matchingMethods.stream().allMatch(method -> method.hasModifierProperty(PsiModifier.ABSTRACT));
+      if (allAbstract) {
+        final String className = ownerClass.getPsiClass().getQualifiedName();
+        if (className != null) {
+          holder.registerProblem(methodNameExpression,
+                                 InspectionsBundle.message("inspection.handle.signature.method.abstract", methodName, className));
+        }
+      }
+    }
+  }
+
+
+  private static void checkSpecial(@NotNull ReflectiveClass ownerClass,
+                                   @NotNull PsiExpression callerClassExpression,
+                                   @NotNull ProblemsHolder holder) {
+    final ReflectiveClass callerClass = getReflectiveClass(callerClassExpression);
+    if (callerClass != null && callerClass.isExact()) {
+      final PsiClass caller = callerClass.getPsiClass();
+      final PsiClass owner = ownerClass.getPsiClass();
+      if (!InheritanceUtil.isInheritorOrSelf(caller, owner, true)) {
+        final String callerName = caller.getQualifiedName();
+        final String ownerName = owner.getQualifiedName();
+        if (callerName != null && ownerName != null) {
+          holder.registerProblem(callerClassExpression,
+                                 InspectionsBundle.message("inspection.handle.signature.not.subclass", callerName, ownerName));
+        }
+      }
     }
   }
 
@@ -284,16 +322,16 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     return fakeReturnType + className + methodSignature.getShortArgumentTypes();
   }
 
-  private static boolean matchMethodSignature(@NotNull List<PsiMethod> methods, @NotNull ReflectiveSignature expectedMethodSignature) {
-    return methods.stream()
-      .map(JavaReflectionReferenceUtil::getMethodSignature)
-      .anyMatch(expectedMethodSignature::equals);
+  @NotNull
+  private static List<PsiMethod> findMethodBySignature(@NotNull List<? extends PsiMethod> methods,
+                                                       @NotNull ReflectiveSignature expectedMethodSignature) {
+    return ContainerUtil.filter(methods, method -> expectedMethodSignature.equals(getMethodSignature(method)));
   }
 
   private static class FieldTypeQuickFix implements LocalQuickFix {
     private final String myFieldTypeText;
 
-    public FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
+    FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
 
     @Nls
     @NotNull
@@ -305,7 +343,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression typeExpression = factory.createExpressionFromText(myFieldTypeText + ".class", element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(typeExpression));
@@ -328,7 +366,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
     private final String myReplacementName;
 
-    public SwitchStaticnessQuickFix(@NotNull String replacementName) {
+    SwitchStaticnessQuickFix(@NotNull String replacementName) {
       myReplacementName = replacementName;
     }
 
@@ -342,7 +380,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiIdentifier identifier = factory.createIdentifier(myReplacementName);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(identifier));
@@ -357,12 +395,12 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
   private static class ReplaceSignatureQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final String myName;
-    private final List<ReflectiveSignature> mySignatures;
+    private final List<? extends ReflectiveSignature> mySignatures;
     private final boolean myIsConstructor;
 
-    public ReplaceSignatureQuickFix(@Nullable PsiElement element,
+    ReplaceSignatureQuickFix(@Nullable PsiElement element,
                                     @NotNull String name,
-                                    @NotNull List<ReflectiveSignature> signatures,
+                                    @NotNull List<? extends ReflectiveSignature> signatures,
                                     boolean isConstructor) {
       super(element);
       myName = name;
@@ -439,9 +477,9 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       final LookupManager lookupManager = LookupManager.getInstance(project);
       final LookupEx lookup = lookupManager.showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
       if (lookup != null) {
-        lookup.addLookupListener(new LookupAdapter() {
+        lookup.addLookupListener(new LookupListener() {
           @Override
-          public void itemSelected(LookupEvent event) {
+          public void itemSelected(@NotNull LookupEvent event) {
             final LookupElement item = event.getItem();
             if (item != null) {
               final PsiElement element = myStartElement.getElement();
@@ -457,7 +495,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
     private static void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ReflectiveSignature signature) {
       final String replacementText = getMethodTypeExpressionText(signature);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression replacement = factory.createExpressionFromText(replacementText, element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(replacement));
@@ -471,7 +509,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     @Nullable
     private static LocalQuickFix createFix(@Nullable PsiElement element,
                                            @NotNull String methodName,
-                                           @NotNull List<ReflectiveSignature> methodSignatures,
+                                           @NotNull List<? extends ReflectiveSignature> methodSignatures,
                                            boolean isConstructor, boolean isOnTheFly) {
       if (isOnTheFly && !methodSignatures.isEmpty() || methodSignatures.size() == 1) {
         return new ReplaceSignatureQuickFix(element, methodName, methodSignatures, isConstructor);

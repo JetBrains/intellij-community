@@ -34,7 +34,6 @@ import static com.intellij.openapi.util.Pair.pair;
  * is used instead of DefaultComboBoxRenderer.
  *
  * @author oleg
- * @since 30.09.2010
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> {
   private final ListCellRenderer myDefaultRenderer;
@@ -58,6 +57,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
     myDefaultRenderer = renderer;
   }
 
+  @Override
   public final Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     mySeparator = false;
     myIcon = null;
@@ -95,12 +95,10 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   public static Component createSeparator(@Nullable String text) {
     final TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-    if (!UIUtil.isUnderGTKLookAndFeel()) {
-      separator.setOpaque(false);
-      separator.setBackground(UIUtil.TRANSPARENT_COLOR);
-      separator.getLabel().setOpaque(false);
-      separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
+    separator.setOpaque(false);
+    separator.setBackground(UIUtil.TRANSPARENT_COLOR);
+    separator.getLabel().setOpaque(false);
+    separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
     return separator;
   }
 

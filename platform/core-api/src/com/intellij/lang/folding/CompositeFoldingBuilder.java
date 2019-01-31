@@ -23,13 +23,12 @@ import java.util.Set;
  *
  * @author Konstantin Bulenkov
  * @see LanguageFolding
- * @since 9.0
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<>("FOLDING_BUILDER");
-  private final List<FoldingBuilder> myBuilders;
+  private final List<? extends FoldingBuilder> myBuilders;
 
-  CompositeFoldingBuilder(List<FoldingBuilder> builders) {
+  CompositeFoldingBuilder(List<? extends FoldingBuilder> builders) {
     myBuilders = builders;
   }
 

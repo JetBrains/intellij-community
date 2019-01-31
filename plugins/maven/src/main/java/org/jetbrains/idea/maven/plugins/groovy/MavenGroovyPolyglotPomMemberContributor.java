@@ -299,7 +299,7 @@ public class MavenGroovyPolyglotPomMemberContributor extends NonCodeMembersContr
     private final String myClassSourcePath;
     private final String[] myPaths;
 
-    public Contributor(@NotNull String classSourcePath, String... paths) {
+    Contributor(@NotNull String classSourcePath, String... paths) {
       myClassSourcePath = classSourcePath;
       myPaths = paths;
     }

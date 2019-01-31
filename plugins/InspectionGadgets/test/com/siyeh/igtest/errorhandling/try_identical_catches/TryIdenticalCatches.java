@@ -107,7 +107,7 @@ class TryIdenticalCatches {
     } catch (E4 e) {
     } <warning descr="'catch' branch identical to 'E4' branch">catch (E2 e)</warning> {
     } <warning descr="'catch' branch identical to 'E4' branch">catch (E3 e)</warning> {
-    } <warning descr="'catch' branch identical to 'E2' branch">catch (E1 e)</warning> {
+    } <warning descr="'catch' branch identical to 'E4' branch">catch (E1 e)</warning> {
     }
   }
 

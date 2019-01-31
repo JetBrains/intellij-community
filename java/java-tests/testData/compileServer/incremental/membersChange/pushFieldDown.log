@@ -1,0 +1,16 @@
+Cleaning output files:
+out/production/PushFieldDown/ppp/Sub.class
+out/production/PushFieldDown/ppp/Super.class
+End of files
+Compiling files:
+src/ppp/Sub.java
+src/ppp/Super.java
+End of files
+Cleaning output files:
+out/production/PushFieldDown/ppp/Main.class
+out/production/PushFieldDown/ppp/Sub.class
+End of files
+Compiling files:
+src/ppp/Main.java
+src/ppp/Sub.java
+End of files

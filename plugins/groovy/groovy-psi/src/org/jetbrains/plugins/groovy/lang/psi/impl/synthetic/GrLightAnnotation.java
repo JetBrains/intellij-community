@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
@@ -32,18 +32,44 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
 
   private final String myQualifiedName;
   private final PsiAnnotationOwner myOwner;
+  private final PsiElement myContext;
   private final GrLightClassReferenceElement myRef;
 
   public GrLightAnnotation(@NotNull PsiManager manager,
                            @NotNull Language language,
                            @NotNull String qualifiedName,
-                           @NotNull PsiAnnotationOwner owner) {
+                           @NotNull PsiModifierList owner) {
     super(manager, language);
     myQualifiedName = qualifiedName;
     myOwner = owner;
+    myContext = owner;
 
     myAnnotationArgList = new GrLightAnnotationArgumentList(manager, language);
     myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
+  }
+
+  public GrLightAnnotation(@NotNull PsiAnnotationOwner owner,
+                           @NotNull PsiElement context,
+                           @NotNull String qualifiedName,
+                           @NotNull Map<String, String> params ) {
+    super(context.getManager(), context.getLanguage());
+    myQualifiedName = qualifiedName;
+    myOwner = owner;
+    myContext = context;
+
+    myAnnotationArgList = new GrLightAnnotationArgumentList(context.getManager(), context.getLanguage());
+    myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
+    params.forEach((key, value) -> addAttribute(key, value));
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return myContext;
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    return myContext.getContainingFile();
   }
 
   @NotNull
@@ -122,11 +148,6 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     return myOwner;
   }
 
-  @Override
-  public PsiMetaData getMetaData() {
-    return null;
-  }
-
   public void addAttribute(PsiNameValuePair pair) {
     if (pair instanceof GrAnnotationNameValuePair) {
       myAnnotationArgList.addAttribute((GrAnnotationNameValuePair)pair);
@@ -136,15 +157,15 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
       if (newValue == null) return;
 
       String name = pair.getName();
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(pair.getProject());
-      String annotationText;
-      annotationText = name != null ? "@A(" + name + "=" + newValue.getText() + ")"
-                                    : "@A(" + newValue.getText() + ")";
-      GrAnnotation annotation = factory.createAnnotationFromText(annotationText);
-      myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
+      addAttribute(name, newValue.getText());
     }
   }
 
+  public void addAttribute(@Nullable String name, @NotNull String value) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    String text = name != null ? name + "=" + value : value;
+    myAnnotationArgList.addAttribute(factory.createAnnotationAttribute(text, this));
+  }
 
   private class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
     private List<GrAnnotationNameValuePair> myAttributes = null;

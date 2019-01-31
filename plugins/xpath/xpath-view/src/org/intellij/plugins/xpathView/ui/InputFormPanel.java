@@ -18,7 +18,7 @@ package org.intellij.plugins.xpathView.ui;
 import javax.swing.*;
 
 public class InputFormPanel extends JPanel implements InputForm {
-    @SuppressWarnings({ "UNUSED_SYMBOL", "FieldCanBeLocal" })
+    @SuppressWarnings({ "UNUSED_SYMBOL"})
     private JPanel myRoot;
 
     private JLabel myIcon;
@@ -32,21 +32,26 @@ public class InputFormPanel extends JPanel implements InputForm {
         myRoot = this;
     }
 
+    @Override
     public JComponent getComponent() {
         return this;
     }
 
+    @Override
     public JLabel getIcon() {
         return myIcon;
     }
 
+    @Override
     public JButton getEditContextButton() {
         return myEditContextButton;
     }
 
+    @Override
     public JPanel getEditorPanel() {
         return myEditorPanel;
     }
 
+    @Override
     public void dispose() {}
 }

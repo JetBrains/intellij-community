@@ -48,6 +48,8 @@ public final class Layout6Test extends TestCase{
     panel.add(field3, new GridConstraints(0,2,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, new Dimension(0,0), null, null, 0));
 
+    panel.doLayout();
+
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(30, preferredSize.width);
     

@@ -27,23 +27,26 @@ import org.junit.runner.notification.RunListener
 /**
  * @author Sergey Karashevich
  */
-class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
+class JUnitClientListener(private val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
 
   val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
 
   override fun testStarted(description: Description?) {
     description ?: throw Exception("Unable to send notification to JUnitServer that test is starter due to null description!")
     //don't send start state to server if it is a resumed test
-    if (GuiTestOptions.getResumeTestName() != JUnitInfo.getClassAndMethodName(description))
+    if (GuiTestOptions.resumeTestName != JUnitInfo.getClassAndMethodName(description))
       sendObjectFun(JUnitInfo(Type.STARTED, description, JUnitInfo.getClassAndMethodName(description)))
   }
 
   override fun testAssumptionFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable(), JUnitInfo.getClassAndMethodName(failure!!.description)))
+    sendObjectFun(
+      JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable(), JUnitInfo.getClassAndMethodName(failure!!.description)))
   }
 
   override fun testFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception, JUnitInfo.getClassAndMethodName(failure.description)))
+    val exception = failure!!.exception
+    sendObjectFun(
+      JUnitInfo(Type.FAILURE, Triple(exception.javaClass.simpleName, exception.message, exception.stackTrace), JUnitInfo.getClassAndMethodName(failure.description)))
   }
 
   override fun testFinished(description: Description?) {

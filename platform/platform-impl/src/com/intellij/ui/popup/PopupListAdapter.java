@@ -17,6 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,10 +34,10 @@ import java.util.Set;
  */
 class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final JList myList;
-  private PopupChooserBuilder myBuilder;
+  private final PopupChooserBuilder myBuilder;
   private ListWithFilter myListWithFilter;
 
-  public PopupListAdapter(PopupChooserBuilder builder, JList list) {
+  PopupListAdapter(PopupChooserBuilder builder, JList list) {
     myBuilder = builder;
     myList = list;
   }
@@ -52,7 +53,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       Object selectedValue = myList.getSelectedValue();
       if (selectedValue != null) {
@@ -62,9 +63,9 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     myBuilder.setItemChoosenCallback(() -> {
-      List list = myList.getSelectedValuesList();
+      List<T> list = myList.getSelectedValuesList();
       callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
     });
   }
@@ -116,7 +117,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemSelectedCallback(Consumer<T> c) {
+  public void setItemSelectedCallback(Consumer<? super T> c) {
     myList.addListSelectionListener(e -> {
       Object selectedValue = myList.getSelectedValue();
       c.consume((T)selectedValue);
@@ -134,7 +135,6 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   private class MyListWrapper extends JBScrollPane implements DataProvider {
-    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 
     private MyListWrapper(final JList list) {
@@ -153,8 +153,9 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       myList = list;
     }
 
+    @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }
@@ -164,16 +165,19 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       return null;
     }
 
+    @Override
     public void setBorder(Border border) {
       if (myList != null){
         myList.setBorder(border);
       }
     }
 
+    @Override
     public void requestFocus() {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
     }
 
+    @Override
     public synchronized void addMouseListener(MouseListener l) {
       myList.addMouseListener(l);
     }

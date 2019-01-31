@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -27,12 +26,8 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 public class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsParsingUtil");
 
-  private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotationValue(builder);
-    }
-  };
+  private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE =
+    builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotationValue(builder);
 
   private ClsParsingUtil() { }
 
@@ -174,11 +169,5 @@ public class ClsParsingUtil {
       return JavaSdkVersion.fromJavaVersion(version);
     }
     return null;
-  }
-
-  /** @deprecated use {@link #getJdkVersionByBytecode(int)} (to be removed in IDEA 2019) */
-  public static LanguageLevel getLanguageLevelByVersion(int major) {
-    JavaSdkVersion sdkVersion = getJdkVersionByBytecode(major);
-    return sdkVersion != null ? sdkVersion.getMaxLanguageLevel() : null;
   }
 }

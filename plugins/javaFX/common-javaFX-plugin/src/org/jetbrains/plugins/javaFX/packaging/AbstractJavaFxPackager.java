@@ -97,11 +97,15 @@ public abstract class AbstractJavaFxPackager {
 
     final File tempDirectory = new File(tempUnzippedArtifactOutput, "deploy");
     try {
-
+      final String taskDefJar = homePath + "/lib/ant-javafx.jar";
+      if (!new File(taskDefJar).exists()) {
+        registerJavaFxPackagerError("Can't build artifact - fx:deploy is not available in this JDK");
+        return;
+      }
       final StringBuilder buf = new StringBuilder();
       buf.append("<project default=\"build artifact\">\n");
       buf.append("<taskdef resource=\"com/sun/javafx/tools/ant/antlib.xml\" uri=\"javafx:com.sun.javafx.tools.ant\" ")
-         .append("classpath=\"").append(homePath).append("/lib/ant-javafx.jar\"/>\n");
+         .append("classpath=\"").append(taskDefJar).append("\"/>\n");
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
       final List<JavaFxAntGenerator.SimpleTag> tags =

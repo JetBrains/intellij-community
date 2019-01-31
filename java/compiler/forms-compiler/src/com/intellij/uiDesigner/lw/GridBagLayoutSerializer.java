@@ -16,8 +16,8 @@
 
 package com.intellij.uiDesigner.lw;
 
-import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.compiler.GridBagConverter;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -28,10 +28,12 @@ public class GridBagLayoutSerializer extends GridLayoutSerializer {
 
   public static GridBagLayoutSerializer INSTANCE = new GridBagLayoutSerializer();
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     container.setLayout(new GridBagLayout());
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
     super.readChildConstraints(constraintsElement, component);
     GridBagConstraints gbc = new GridBagConstraints();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.Lists;
@@ -20,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
@@ -70,7 +56,15 @@ public abstract class PythonSdkFlavor {
     PythonEnvUtil.addToPythonPath(envs, pythonPathList);
   }
 
+  /**
+   * @deprecated Use {@link #suggestHomePaths(Module)}. To be removed in 2019.2.
+   */
+  @Deprecated
   public Collection<String> suggestHomePaths() {
+    return suggestHomePaths(null);
+  }
+
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     return Collections.emptyList();
   }
 
@@ -102,7 +96,7 @@ public abstract class PythonSdkFlavor {
 
   public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isInpedendent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
-    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
+    for (PythonFlavorProvider provider : PythonFlavorProvider.EP_NAME.getExtensionList()) {
       PythonSdkFlavor flavor = provider.getFlavor(isInpedendent);
       if (flavor != null) {
         result.add(flavor);
@@ -161,7 +155,7 @@ public abstract class PythonSdkFlavor {
       if (flavor.isValidSdkHome(sdkPath)) {
         return flavor;
       }
-    }          
+    }
     return null;
   }
 
@@ -247,7 +241,7 @@ public abstract class PythonSdkFlavor {
   }
 
   @NotNull
-  private LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
+  public LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
     final String prefix = getName() + " ";
     if (version != null && version.startsWith(prefix)) {
       return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));

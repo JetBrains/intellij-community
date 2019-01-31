@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class ZipUtil {
     @NotNull String progressTitle,
     @NotNull final File zipArchive,
     @NotNull final File extractToDir,
-    @Nullable final NullableFunction<String, String> pathConvertor,
+    @Nullable final NullableFunction<? super String, String> pathConvertor,
     final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
@@ -62,7 +63,6 @@ public class ZipUtil {
     );
     Boolean result = outcome.get();
     if (result == null) {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Exception e = outcome.getException();
       if (e != null) {
         throw new GeneratorException("Unpacking failed, downloaded archive is broken");
@@ -87,22 +87,18 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull File zipArchive,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
-    ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ);
-    try {
+    try (ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ)) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
-        InputStream entryContentStream = zipFile.getInputStream(entry);
-        unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
-        entryContentStream.close();
+        try (InputStream entryContentStream = zipFile.getInputStream(entry)) {
+          unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
+        }
       }
-    }
-    finally {
-      zipFile.close();
     }
     doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
   }
@@ -110,7 +106,7 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull ZipInputStream stream,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
@@ -144,7 +140,7 @@ public class ZipUtil {
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final InputStream entryContentStream,
                                       @NotNull final File extractToDir,
-                                      @Nullable NullableFunction<String, String> pathConvertor,
+                                      @Nullable NullableFunction<? super String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
     if (pathConvertor != null) {
@@ -154,7 +150,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = com.intellij.util.io.ZipUtil.newFileForEntry(extractToDir, relativeExtractPath);
+    File child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");

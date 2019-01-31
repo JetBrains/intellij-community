@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,15 @@ public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
-    super.tearDown();
+    try {
+      WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
   
   public void testSelectClassNames() {

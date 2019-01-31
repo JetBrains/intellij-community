@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.psi.*;

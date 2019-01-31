@@ -22,7 +22,8 @@ public class KoptRequest extends AbstractRequest {
 
 	// Implemented ============================================================
 
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Kopt -k" + keywordSubstMode.toString() + '\n';
 	}
 }

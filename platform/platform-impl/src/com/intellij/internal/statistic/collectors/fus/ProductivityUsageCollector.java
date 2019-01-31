@@ -5,15 +5,14 @@ import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class ProductivityUsageCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
+public class ProductivityUsageCollector extends ApplicationUsagesCollector {
+  public static final String GROUP_ID = "productivity";
 
-  private static final String GROUP_ID = "statistics.productivity";
   @NotNull
   @Override
   public String getGroupId() {

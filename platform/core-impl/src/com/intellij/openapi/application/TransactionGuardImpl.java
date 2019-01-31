@@ -355,7 +355,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     boolean myFinished;
     final TransactionIdImpl myParent;
 
-    public TransactionIdImpl(@Nullable TransactionIdImpl parent) {
+    TransactionIdImpl(@Nullable TransactionIdImpl parent) {
       myParent = parent;
     }
 

@@ -18,7 +18,10 @@ package com.intellij.ide.structureView;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public interface StructureViewExtension {
 
@@ -29,4 +32,7 @@ public interface StructureViewExtension {
   StructureViewTreeElement[] getChildren(PsiElement parent);
   @Nullable
   Object getCurrentEditorElement(Editor editor, PsiElement parent);
+
+  default void filterChildren(@NotNull Collection<StructureViewTreeElement> baseChildren,
+                              @Nullable StructureViewTreeElement[] extensionChildren) {}
 }

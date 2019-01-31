@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 5:22 PM
  */
 class TestExternalSystemExecutionSettings extends ExternalSystemExecutionSettings {
 }

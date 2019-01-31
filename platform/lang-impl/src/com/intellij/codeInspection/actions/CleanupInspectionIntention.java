@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.actions;
 
@@ -21,7 +21,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
@@ -29,11 +28,16 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   private final InspectionToolWrapper myToolWrapper;
   private final FileModifier myQuickfix;
+  @Nullable private final PsiFile myFile;
   private final String myText;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull FileModifier quickFix, String text) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper,
+                                    @NotNull FileModifier quickFix,
+                                    @Nullable PsiFile file,
+                                    String text) {
     myToolWrapper = toolWrapper;
     myQuickfix = quickFix;
+    myFile = file;
     myText = text;
   }
 
@@ -51,14 +55,14 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-
+    PsiFile targetFile = myFile != null ? myFile : file;
     final List<ProblemDescriptor> descriptions =
       ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);
-        return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
+        return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
       }, new EmptyProgressIndicator());
 
-    if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
+    if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) return;
 
     final AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, "Apply Fixes", descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
 
@@ -67,43 +71,10 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
 
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixes(@NotNull Project project,
-                                                    @NotNull String presentationText,
-                                                    @NotNull List<ProblemDescriptor> descriptions,
-                                                    @Nullable Class quickfixClass,
-                                                             boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixes(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                                          @NotNull String presentationText,
-                                                          @NotNull List<ProblemDescriptor> descriptions,
-                                                          @Nullable Class quickfixClass,
-                                                                    boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
-    Collections.sort(descriptions, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
-  }
-
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfix.getClass() != EmptyIntentionAction.class &&
+           (myQuickfix.startInWriteAction() || myQuickfix instanceof BatchQuickFix) &&
            editor != null &&
            !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }

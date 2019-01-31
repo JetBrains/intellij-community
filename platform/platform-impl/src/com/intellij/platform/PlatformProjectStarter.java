@@ -20,7 +20,6 @@
 package com.intellij.platform;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +29,8 @@ public class PlatformProjectStarter {
     bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
-        for (String arg : commandLineArgs) {
-          if (!arg.equals(StartupUtil.NO_SPLASH)) {
-            willOpenProject.set(true);
-            break;
-          }
+        if (commandLineArgs.length > 0) {
+          willOpenProject.set(Boolean.TRUE);
         }
       }
     });

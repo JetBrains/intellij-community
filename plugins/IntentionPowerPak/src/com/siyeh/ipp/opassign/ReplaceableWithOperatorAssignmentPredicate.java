@@ -25,6 +25,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceableWithOperatorAssignmentPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAssignmentExpression)) {
       return false;

@@ -18,20 +18,13 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
   public abstract void computeDeployments(@NotNull ComputeDeploymentsCallback callback);
 
   @NotNull
-  public String getDeploymentName(@NotNull DeploymentSource source, D configuration) {
-    return getDeploymentName(source);
-  }
-
-  /**
-   * @deprecated use {@link #getDeploymentName(com.intellij.remoteServer.configuration.deployment.DeploymentSource, D configuration)} instead
-   */
-  @NotNull
-  public String getDeploymentName(@NotNull DeploymentSource source) {
+  public String getDeploymentName(@NotNull DeploymentSource source, @NotNull D configuration) {
     return source.getPresentableName();
   }
 
   @NotNull
-  public String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime, @NotNull DeploymentSource source, D configuration) {
+  public String getRuntimeDeploymentName(@NotNull DeploymentRuntime deploymentRuntime,
+                                         @NotNull DeploymentSource source, @NotNull D configuration) {
     return getDeploymentName(source, configuration);
   }
 

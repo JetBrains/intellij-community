@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -21,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,10 +20,11 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
+  @NotNull
   private String myPrefix;
 
-  public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
+  public TabbedContentImpl(JComponent component, @NotNull String displayName, boolean isPinnable, @NotNull String titlePrefix) {
     super(component, displayName, isPinnable);
     myPrefix = titlePrefix;
     addContent(component, displayName, true);
@@ -96,6 +84,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     setComponent(tab.second);
   }
 
+  @Override
   public int getSelectedIndex() {
     JComponent selected = getComponent();
     for (int i = 0; i < myTabs.size(); i++) {
@@ -116,11 +105,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public String getTabName() {
-    String selected = findTabNameByComponent(getComponent());
-    if (myPrefix != null) {
-      selected = myPrefix + ": " + selected;
-    }
-    return selected;
+    return myPrefix + ": " + findTabNameByComponent(getComponent());
   }
 
   private String findTabNameByComponent(JComponent c) {
@@ -132,6 +117,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     return null;
   }
 
+  @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
     return Collections.unmodifiableList(myTabs);
@@ -149,7 +135,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();
@@ -162,6 +148,20 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
       ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
     }
     Disposer.dispose(this);
+  }
+
+  public boolean rename(@NotNull JComponent component, @NotNull String newName) {
+    Pair<String, JComponent> tab = ContainerUtil.find(myTabs, pair -> pair.second == component);
+    if (tab == null) return false;
+    if (newName.equals(tab.first)) return true;
+
+    int index = myTabs.indexOf(tab);
+    myTabs.set(index, new Pair<>(newName, component));
+    if (getComponent() == component) {
+      setDisplayName(newName);
+    }
+
+    return true;
   }
 
   @Override

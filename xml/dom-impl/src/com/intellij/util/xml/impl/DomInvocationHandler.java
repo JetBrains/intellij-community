@@ -606,7 +606,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
+  final IndexedElementInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
     XmlName xmlName = description.getXmlName();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
@@ -665,8 +665,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         AttributeChildInvocationHandler semElement =
           myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
         if (semElement == null) {
-          final AttributeChildInvocationHandler take2 = myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
-          throw new AssertionError("No DOM at XML. Parent=" + tag + "; attribute=" + attribute + "; second attempt=" + take2);
+          throw new AssertionError("No DOM at XML. Parent=" + tag +
+                                   "; ns=" + ns +
+                                   "; description=" + description +
+                                   "; attribute=" + attribute.getName() +
+                                   "; XML consistent=" + (PhysicalDomParentStrategy.getParentTag(attribute) == tag) +
+                                   "; DOM consistent =" + equals(DomSemContributor.getParentDom(tag)) +
+                                   "; re-creation=" + DomSemContributor.createAttributeHandler(attribute));
         }
         return semElement;
       }
@@ -858,7 +863,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final SemKey<? extends DomInvocationHandler> key = description instanceof CustomDomChildrenDescription ? DomManagerImpl.DOM_CUSTOM_HANDLER_KEY : DomManagerImpl.DOM_COLLECTION_HANDLER_KEY;
       final DomInvocationHandler semElement = myManager.getSemService().getSemElement(key, subTag);
       if (semElement == null) {
-        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size();
+        String msg = "No child for subTag '" + subTag.getName() + "' in tag '" + tag.getName() + "' using key " + key + "; subtag count=" + subTags.size() + ", description=" + description + ", subtag.class=" + subTag.getClass().getName();
         DomInvocationHandler anyDom = myManager.getDomHandler(subTag);
         if (anyDom != null) {
           msg += "\n sub-dom=" + anyDom + " with " + anyDom.getChildDescription();
@@ -880,11 +885,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private static class StableCopyFactory<T extends DomElement> implements NullableFactory<T> {
-    private final SmartPsiElementPointer<XmlTag> myPointer;
+    private final SmartPsiElementPointer<? extends XmlTag> myPointer;
     private final Type myType;
     private final Class<? extends DomInvocationHandler> myHandlerClass;
 
-    public StableCopyFactory(final SmartPsiElementPointer<XmlTag> pointer,
+    StableCopyFactory(final SmartPsiElementPointer<? extends XmlTag> pointer,
                              final Type type, final Class<? extends DomInvocationHandler> aClass) {
       myPointer = pointer;
       myType = type;

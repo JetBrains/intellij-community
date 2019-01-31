@@ -20,11 +20,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 
 public class ChangeListTodosTreeBuilder extends TodoTreeBuilder{
-  public ChangeListTodosTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
-    super(tree,treeModel,project);
+  public ChangeListTodosTreeBuilder(JTree tree, Project project){
+    super(tree, project);
   }
 
   @Override

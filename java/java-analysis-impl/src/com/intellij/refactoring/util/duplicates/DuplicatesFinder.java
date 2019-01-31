@@ -19,8 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -48,6 +50,7 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
+  @Nullable private final Set<TextRange> myTextRanges;
   private final MatchType myMatchType;
   private final Set<PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
@@ -58,15 +61,16 @@ public class DuplicatesFinder {
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
                           @NotNull MatchType matchType,
-                          @Nullable Set<PsiVariable> effectivelyLocal) {
+                          @Nullable Set<PsiVariable> effectivelyLocal,
+                          @Nullable Set<TextRange> textRanges) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
-    myParameters = parameters;
     myOutputParameters = outputParameters;
     myMatchType = matchType;
     myEffectivelyLocal = effectivelyLocal != null ? effectivelyLocal : Collections.emptySet();
+    myTextRanges = textRanges;
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -90,18 +94,20 @@ public class DuplicatesFinder {
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
-        myParameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
+        parameters = parameters.copy();
+        parameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
       }
     }
     catch (AnalysisCanceledException ignored) {
     }
+    myParameters = parameters;
   }
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters) {
-    this(pattern, parameters, returnValue, outputParameters, MatchType.EXACT, null);
+    this(pattern, parameters, returnValue, outputParameters, MatchType.EXACT, null, null);
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
@@ -187,11 +193,12 @@ public class DuplicatesFinder {
     }
   }
 
-  private void findPatternOccurrences(List<Match> array, PsiElement scope) {
+  private void findPatternOccurrences(List<? super Match> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
+      ProgressManager.checkCanceled();
       final Match match = isDuplicateFragment(child, false);
-      if (match != null) {
+      if (match != null && (myTextRanges == null || myTextRanges.contains(match.getTextRange()))) {
         array.add(match);
         continue;
       }
@@ -244,6 +251,7 @@ public class DuplicatesFinder {
 
   protected boolean isSelf(@NotNull PsiElement candidate) {
     for (PsiElement pattern : myPattern) {
+      ProgressManager.checkCanceled();
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) {
         return true;
       }
@@ -251,7 +259,7 @@ public class DuplicatesFinder {
     return false;
   }
 
-  private boolean checkPostVariableUsages(final ArrayList<PsiElement> candidates, final Match match) {
+  private boolean checkPostVariableUsages(final ArrayList<? extends PsiElement> candidates, final Match match) {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(candidates.get(0));
     try {
       final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
@@ -498,7 +506,7 @@ public class DuplicatesFinder {
   @Nullable
   private Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
                                         @NotNull PsiJavaCodeReferenceElement candidate,
-                                        @NotNull List<PsiElement> candidates,
+                                        @NotNull List<? extends PsiElement> candidates,
                                         @NotNull Match match) {
     final PsiElement resolveResult1 = pattern.resolve();
     final PsiElement resolveResult2 = candidate.resolve();
@@ -909,7 +917,7 @@ public class DuplicatesFinder {
     return false;
   }
 
-  static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {
+  static boolean isUnder(@Nullable PsiElement element, @NotNull List<? extends PsiElement> parents) {
     if (element == null) return false;
     for (final PsiElement parent : parents) {
       if (PsiTreeUtil.isAncestor(parent, element, false)) return true;

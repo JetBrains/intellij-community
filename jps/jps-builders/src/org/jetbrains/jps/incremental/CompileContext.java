@@ -36,11 +36,13 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderUtil#isCompileJavaIncrementally(CompileContext)} for java-related usages
    */
+  @Deprecated
   boolean isMake();
 
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderUtil#isForcedRecompilationAllJavaModules(CompileContext)} for java-related usages
    */
+  @Deprecated
   boolean isProjectRebuild();
 
   @Nullable
@@ -62,7 +64,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   long getCompilationStartStamp(BuildTarget<?> target);
 
-  void setCompilationStartStamp(Collection<BuildTarget<?>> target, long stamp);
+  void setCompilationStartStamp(Collection<? extends BuildTarget<?>> target, long stamp);
 
   void markNonIncremental(ModuleBuildTarget target);
 

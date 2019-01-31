@@ -28,6 +28,8 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
+import com.jetbrains.python.sdk.pipenv.isPipEnv
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -35,7 +37,10 @@ import javax.swing.JList
 /**
  * @author vlan
  */
-open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificator>?) : ColoredListCellRenderer<Any>() {
+open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifiers: Map<Sdk, SdkModificator>?,
+                                                           private val nullSdkName: String = "<No interpreter>",
+                                                           private val nullSdkValue: Sdk? = null) : ColoredListCellRenderer<Any>() {
+
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
                                             hasFocus: Boolean): Component =
     when (value) {
@@ -48,16 +53,23 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
     when (value) {
       is Sdk -> {
-        appendName(value)
+        appendName(value, sdkModifiers?.get(value)?.name ?: value.name)
         icon = customizeIcon(value)
       }
       is String -> append(value)
-      null -> append("<No interpreter>")
+      null -> {
+        if (nullSdkValue != null) {
+          appendName(nullSdkValue, nullSdkName)
+          icon = customizeIcon(nullSdkValue)
+        }
+        else {
+          append(nullSdkName)
+        }
+      }
     }
   }
 
-  private fun appendName(sdk: Sdk) {
-    val name = sdkModifiers?.get(sdk)?.name ?: sdk.name
+  private fun appendName(sdk: Sdk, name: String) {
     when {
       PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
         append("[invalid] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
@@ -68,7 +80,15 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
       else ->
         append(name)
     }
-    val homePath = sdk.homePath
+    if (PythonSdkType.isRunAsRootViaSudo(sdk)) {
+      append(" [sudo]", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
+    if (sdk.isPipEnv) {
+      sdk.versionString?.let {
+        append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      }
+    }
+    val homePath = sdkModifiers?.get(sdk)?.homePath ?: sdk.homePath
     val relHomePath = homePath?.let { FileUtil.getLocationRelativeToUserHome(it) }
     if (relHomePath != null && homePath !in name && relHomePath !in name) {
       append(" $relHomePath", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
@@ -89,6 +109,11 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
           wrapIconWithWarningDecorator(icon)
         sdk is PyDetectedSdk ->
           IconLoader.getTransparentIcon(icon)
+        // XXX: We cannot provide pipenv SDK flavor by path since it's just a regular virtualenv. Consider
+        // adding the SDK flavor based on the `Sdk` object itself
+        // TODO: Refactor SDK flavors so they can actually provide icons for SDKs in all cases
+        sdk.isPipEnv ->
+          PIPENV_ICON
         else ->
           icon
       }

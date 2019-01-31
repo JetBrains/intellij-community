@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +47,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return false;
 
@@ -67,12 +68,12 @@ public class AnnotateLocalFileAction {
     return true;
   }
 
-  private static boolean isSuspended(AnActionEvent e) {
-    VirtualFile file = assertNotNull(VcsContextFactory.SERVICE.getInstance().createContextOn(e).getSelectedFile());
+  private static boolean isSuspended(@NotNull AnActionEvent e) {
+    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     return VcsAnnotateUtil.getBackgroundableLock(e.getRequiredData(CommonDataKeys.PROJECT), file).isLocked();
   }
 
-  private static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(@NotNull AnActionEvent e) {
     List<Editor> editors = getEditors(e.getDataContext());
     return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
   }
@@ -96,8 +97,15 @@ public class AnnotateLocalFileAction {
             editor = ((TextEditor)fileEditor).getEditor();
           }
         }
+
+        if (editor == null) {
+          LOG.error(String.format("Can't create text editor for file: valid - %s; file type - %s; editors - %s",
+                                  selectedFile.isValid(), selectedFile.getFileType(), Arrays.toString(fileEditors)));
+
+          return;
+        }
       }
-      LOG.assertTrue(editor != null);
+
       doAnnotate(editor, project);
     }
   }
@@ -149,7 +157,7 @@ public class AnnotateLocalFileAction {
         }
 
         if (!fileAnnotationRef.isNull()) {
-          AnnotateToggleAction.doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
+          AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
       }
     };
@@ -175,7 +183,7 @@ public class AnnotateLocalFileAction {
     }
 
     @Override
-    public boolean isSuspended(AnActionEvent e) {
+    public boolean isSuspended(@NotNull AnActionEvent e) {
       return AnnotateLocalFileAction.isSuspended(e);
     }
 
@@ -185,7 +193,7 @@ public class AnnotateLocalFileAction {
     }
 
     @Override
-    public void perform(AnActionEvent e, boolean selected) {
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
       AnnotateLocalFileAction.perform(e, selected);
     }
   }

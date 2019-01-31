@@ -3,8 +3,7 @@ package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.Svn17TestCase;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnTestCase;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -19,9 +18,7 @@ import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class FirstInBranchTest extends Svn17TestCase {
-
-  private SvnVcs myVcs;
+public class FirstInBranchTest extends SvnTestCase {
   private Url myTrunkUrl;
   private Url myBranchesUrl;
   private long myHeadRevision;
@@ -31,7 +28,6 @@ public class FirstInBranchTest extends Svn17TestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myVcs = SvnVcs.getInstance(myProject);
     myRepositoryUrl = createUrl(myRepoUrl);
     myTrunkUrl = myRepositoryUrl.appendPath("trunk", true);
     myBranchesUrl = myRepositoryUrl.appendPath("branches", true);
@@ -39,7 +35,7 @@ public class FirstInBranchTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("mkdir", "-m", "trunk", myTrunkUrl.toString());
     runInAndVerifyIgnoreOutput("mkdir", "-m", "branches", myBranchesUrl.toString());
 
-    myHeadRevision = getHeadRevision(myVcs, myRepositoryUrl).getNumber();
+    myHeadRevision = getHeadRevision(vcs, myRepositoryUrl).getNumber();
   }
 
   @Test
@@ -109,10 +105,10 @@ public class FirstInBranchTest extends Svn17TestCase {
 
   private void assertBranchPoint(@NotNull Url sourceUrl, @NotNull Url targetUrl, long sourceRevision, long targetRevision)
     throws Exception {
-    CopyData branchTrunk = new FirstInBranch(myVcs, myRepositoryUrl, targetUrl, sourceUrl).run();
+    CopyData branchTrunk = new FirstInBranch(vcs, myRepositoryUrl, targetUrl, sourceUrl).run();
     assertBranchPoint(branchTrunk, sourceRevision, targetRevision, true);
 
-    CopyData trunkBranch = new FirstInBranch(myVcs, myRepositoryUrl, sourceUrl, targetUrl).run();
+    CopyData trunkBranch = new FirstInBranch(vcs, myRepositoryUrl, sourceUrl, targetUrl).run();
     assertBranchPoint(trunkBranch, sourceRevision, targetRevision, false);
   }
 

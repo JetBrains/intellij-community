@@ -36,7 +36,9 @@ public abstract class WebBrowserService {
   public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
   public static boolean isHtmlOrXmlLanguage(@NotNull Language language) {
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
+    return language.isKindOf(HTMLLanguage.INSTANCE)
+           || language == XHTMLLanguage.INSTANCE
+           || language == XMLLanguage.INSTANCE;
   }
 
   public static boolean isHtmlOrXmlFile(@NotNull PsiFile psiFile) {

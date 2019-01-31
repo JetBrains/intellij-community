@@ -49,11 +49,6 @@ public class MalformedRegexInspection extends BaseInspection {
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MalformedRegexVisitor();
   }
@@ -96,7 +91,7 @@ public class MalformedRegexInspection extends BaseInspection {
         }
         return;
       }
-      //noinspection UnusedCatchParameter,ProhibitedExceptionCaught
+      // noinspection ProhibitedExceptionCaught
       try {
         Pattern.compile(value);
       }

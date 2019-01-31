@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RangeBuilderTest extends TestCase {
   public void testIdenticalContents() {
@@ -133,11 +134,6 @@ public class RangeBuilderTest extends TestCase {
   }
 
   private static String createContentOn(String[] content) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < content.length; i++) {
-      result.append(content[i]);
-      result.append('\n');
-    }
-    return result.toString();
+    return Arrays.stream(content).map(line -> line + '\n').collect(Collectors.joining());
   }
 }

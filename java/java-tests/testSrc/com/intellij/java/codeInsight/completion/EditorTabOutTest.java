@@ -20,6 +20,9 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     try {
       CodeInsightSettings.getInstance().TAB_EXITS_BRACKETS_AND_QUOTES = mySavedTabOutSetting;
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }

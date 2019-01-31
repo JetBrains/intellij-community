@@ -16,11 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,11 +30,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Objects;
 
 public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
@@ -87,8 +91,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "for.loop.replaceable.by.while.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.WHILE);
     }
 
     @Override
@@ -104,7 +107,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       final PsiExpression whileCondition = whileStatement.getCondition();
       if (forCondition != null) {
         assert whileCondition != null;
-        commentTracker.replace(whileCondition, commentTracker.markUnchanged(forCondition));
+        commentTracker.replace(whileCondition, forCondition);
       }
       final PsiBlockStatement blockStatement = (PsiBlockStatement)whileStatement.getBody();
       if (blockStatement == null) {
@@ -152,9 +155,27 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       }
       else {
         initialization = (PsiStatement)commentTracker.markUnchanged(initialization).copy();
-        final PsiStatement newStatement = (PsiStatement)commentTracker.replaceAndRestoreComments(forStatement, whileStatement);
+        PsiStatement newStatement = (PsiStatement)commentTracker.replaceAndRestoreComments(forStatement, whileStatement);
+        if (initialization instanceof PsiDeclarationStatement) {
+          JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(newStatement.getProject());
+          if (hasConflictingName((PsiDeclarationStatement)initialization, newStatement, manager)) {
+            PsiBlockStatement emptyBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", newStatement);
+            emptyBlockStatement.getCodeBlock().add(newStatement);
+            newStatement = ((PsiBlockStatement)newStatement.replace(emptyBlockStatement)).getCodeBlock().getStatements()[0];
+          }
+        }
         BlockUtils.addBefore(newStatement, initialization);
       }
+    }
+
+    private static boolean hasConflictingName(PsiDeclarationStatement initialization,
+                                              PsiStatement newStatement,
+                                              JavaCodeStyleManager manager) {
+      return StreamEx.of(initialization.getDeclaredElements())
+        .select(PsiNamedElement.class)
+        .map(namedElement -> namedElement.getName())
+        .filter(Objects::nonNull)
+        .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, newStatement, true)));
     }
   }
 

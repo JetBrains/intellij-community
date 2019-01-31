@@ -39,6 +39,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return new ClassFilterEditor(project, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout());
 
@@ -61,6 +62,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return contentPanel;
   }
 
+  @Override
   public void dispose(){
     myClassFilterEditor.stopEditing();
     myClassExclusionFilterEditor.stopEditing();
@@ -72,6 +74,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     myClassExclusionFilterEditor.setFilters(inverseFilters);
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.debugger.ui.breakpoints.EditClassFiltersDialog";
   }
@@ -84,6 +87,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return myClassExclusionFilterEditor.getFilters();
   }
 
+  @Override
   protected String getHelpId() {
     return "reference.viewBreakpoints.classFilters";
   }

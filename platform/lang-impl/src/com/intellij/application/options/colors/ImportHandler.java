@@ -29,5 +29,5 @@ public interface ImportHandler {
   @NotNull
   String getTitle();
 
-  void performImport(@NotNull Component parent, @Nullable Consumer<EditorColorsScheme> consumer);
+  void performImport(@NotNull Component parent, @Nullable Consumer<? super EditorColorsScheme> consumer);
 }

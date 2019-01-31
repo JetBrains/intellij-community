@@ -24,6 +24,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
     super(builder);
   }
 
+  @Override
   public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     return new ModuleWizardStep[]{

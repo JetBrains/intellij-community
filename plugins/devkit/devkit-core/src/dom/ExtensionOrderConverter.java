@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -125,14 +125,14 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     return (trimKeyword ? LoadingOrder.BEFORE_STR.trim() : LoadingOrder.BEFORE_STR).equalsIgnoreCase(str) ||
            (trimKeyword ? LoadingOrder.AFTER_STR.trim(): LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
            LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str) ||
-           LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str);
+           LoadingOrder.AFTER_STR_OLD.equalsIgnoreCase(str);
   }
 
 
   private static class InvalidOrderPartPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     private final String myOrderPart;
 
-    public InvalidOrderPartPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, String orderPart) {
+    InvalidOrderPartPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, String orderPart) {
       super(element, rangeInElement);
       myOrderPart = orderPart;
     }
@@ -141,12 +141,6 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public PsiElement resolve() {
       return null;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     @NotNull
@@ -165,7 +159,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     private final String myReferencedId;
     private final Extension myExtension;
 
-    public OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
+    OrderReferencedIdPsiReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement,
                                          @NotNull String referencedId, @NotNull Extension extension) {
       super(element, rangeInElement);
       myReferencedId = referencedId;

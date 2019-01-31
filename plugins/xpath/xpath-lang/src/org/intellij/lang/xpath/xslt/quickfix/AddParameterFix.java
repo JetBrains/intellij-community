@@ -20,10 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 
 public class AddParameterFix extends AddParamBase {
     private final String myName;
@@ -34,20 +33,24 @@ public class AddParameterFix extends AddParamBase {
         myTemplate = template;
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Add Parameter '" + myName + "' to Template '" + myTemplate.getName() + "'";
     }
 
+    @Override
     protected String getParamName() {
         return myName;
     }
 
+    @Override
     @Nullable
     protected XmlTag findTemplateTag() {
         return PsiTreeUtil.getParentOfType(myTemplate.getNavigationElement(), XmlTag.class, false);
     }
 
+    @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
         return myTemplate.isValid();
     }

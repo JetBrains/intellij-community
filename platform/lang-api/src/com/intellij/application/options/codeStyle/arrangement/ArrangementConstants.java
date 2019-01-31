@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Denis Zhdanov
- * @since 8/13/12 11:48 AM
  */
 public class ArrangementConstants {
 

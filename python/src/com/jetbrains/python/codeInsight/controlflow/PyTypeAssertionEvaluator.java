@@ -103,20 +103,18 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
       final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
 
-      if (leftIsNone && rightIsNone) {
-        return;
-      }
+      if (leftIsNone ^ rightIsNone) {
+        final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
 
-      final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
+        if (node.isOperator(PyNames.IS)) {
+          pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE);
+          return;
+        }
 
-      if (node.isOperator(PyNames.IS)) {
-        pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE);
-        return;
-      }
-
-      if (node.isOperator("isnot")) {
-        pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE);
-        return;
+        if (node.isOperator("isnot")) {
+          pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE);
+          return;
+        }
       }
     }
 

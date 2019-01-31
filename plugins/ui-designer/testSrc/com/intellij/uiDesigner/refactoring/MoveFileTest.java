@@ -16,25 +16,17 @@
 package com.intellij.uiDesigner.refactoring;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
-import org.jetbrains.annotations.NotNull;
 
-public class MoveFileTest extends MultiFileTestCase {
+public class MoveFileTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestRoot() {
-    return "/move/";
+    return PluginPathManager.getPluginHomePath("ui-designer") + "/testData/move/";
   }
 
   public void testMoveIcon() {
@@ -43,27 +35,17 @@ public class MoveFileTest extends MultiFileTestCase {
 
   //Both names are relative to root directory
   private void doTest(final String targetDirName, final String fileToMove) {
-    doTest(new PerformAction() {
-      @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
-        final VirtualFile child = rootDir.findFileByRelativePath(fileToMove);
-        assertNotNull("File " + fileToMove + " not found", child);
-        PsiFile file = myPsiManager.findFile(child);
+    doTest(() -> {
+      final VirtualFile child = myFixture.findFileInTempDir(fileToMove);
+      assertNotNull("File " + fileToMove + " not found", child);
+      PsiFile file = getPsiManager().findFile(child);
 
-        final VirtualFile child1 = rootDir.findChild(targetDirName);
-        assertNotNull("File " + targetDirName + " not found", child1);
-        final PsiDirectory targetDirectory = myPsiManager.findDirectory(child1);
+      final VirtualFile child1 = myFixture.findFileInTempDir(targetDirName);
+      assertNotNull("File " + targetDirName + " not found", child1);
+      final PsiDirectory targetDirectory = getPsiManager().findDirectory(child1);
 
-        new MoveFilesOrDirectoriesProcessor(myProject, new PsiElement[] {file}, targetDirectory,
-                                            false, false, null, null).run();
-        /*assert targetDirectory != null;
-        final PsiFile psiFile = targetDirectory.findFile(fileToMove);
-        assert psiFile != null;
-        final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-        assert document != null;
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);*/
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+      new MoveFilesOrDirectoriesProcessor(getProject(), new PsiElement[]{file}, targetDirectory,
+                                          false, false, null, null).run();
     });
   }
 }

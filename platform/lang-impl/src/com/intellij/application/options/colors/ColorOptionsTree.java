@@ -179,17 +179,17 @@ public class ColorOptionsTree extends Tree {
   private static class MyTreeNode extends DefaultMutableTreeNode {
     private final String myName;
 
-    public MyTreeNode(@NotNull EditorSchemeAttributeDescriptor descriptor, @NotNull String name) {
+    MyTreeNode(@NotNull EditorSchemeAttributeDescriptor descriptor, @NotNull String name) {
       super(descriptor);
       myName = name;
     }
 
-    public MyTreeNode(@NotNull EditorSchemeAttributeDescriptor descriptor) {
+    MyTreeNode(@NotNull EditorSchemeAttributeDescriptor descriptor) {
       super(descriptor);
       myName = descriptor.toString();
     }
 
-    public MyTreeNode(@NotNull String groupName) {
+    MyTreeNode(@NotNull String groupName) {
       super(groupName);
       myName = groupName;
     }

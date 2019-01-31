@@ -3,6 +3,9 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +47,21 @@ public class DfaFactMapValue extends DfaValue {
     }
 
     public <T> DfaValue createValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
+      if (factType == DfaFactType.RANGE && value instanceof LongRangeSet) {
+        LongRangeSet rangeSet = (LongRangeSet)value;
+        if (!rangeSet.isEmpty() && rangeSet.min() == rangeSet.max()) {
+          return myFactory.getConstFactory().createFromValue(rangeSet.min(), PsiType.LONG);
+        }
+      }
       return createValue(DfaFactMap.EMPTY.with(factType, value));
     }
 
     public DfaValue createValue(DfaFactMap facts) {
       if (facts == DfaFactMap.EMPTY) {
         return DfaUnknownValue.getInstance();
+      }
+      if (facts.get(DfaFactType.NULLABILITY) == DfaNullability.NULL) {
+        return myFactory.getConstFactory().getNull();
       }
       return myValues.computeIfAbsent(facts, f -> new DfaFactMapValue(myFactory, f));
     }

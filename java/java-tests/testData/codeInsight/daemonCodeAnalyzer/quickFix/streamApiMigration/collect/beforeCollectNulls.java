@@ -2,6 +2,7 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import static java.util.stream.Collectors.*;
 
 public class Main<T> {
   public static List<String> test() {

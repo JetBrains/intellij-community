@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -30,13 +31,13 @@ import java.util.Arrays;
  */
 public class EditSourceInNewWindowAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     ((FileEditorManagerImpl)manager).openFileInNewWindow(getVirtualFiles(e)[0]);
   }
 
-  protected VirtualFile[] getVirtualFiles(AnActionEvent e) {
+  protected VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) return Arrays.stream(files).filter(file -> !file.isDirectory()).toArray(VirtualFile[]::new);
 
@@ -45,7 +46,7 @@ public class EditSourceInNewWindowAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null && getVirtualFiles(e).length == 1);
   }
 }

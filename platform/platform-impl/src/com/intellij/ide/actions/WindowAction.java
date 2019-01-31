@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +61,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void update(AnActionEvent event) {
+  public final void update(@NotNull AnActionEvent event) {
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     boolean enabled = isEnabledFor(window);
     if (enabled && Registry.is("no.window.actions.in.editor")) {
@@ -82,7 +83,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (mySizeHelper == null) {
         mySizeHelper = new JLabel("W"); // Must be sure to invoke label constructor from EDT thread or it may lead to a deadlock
       }

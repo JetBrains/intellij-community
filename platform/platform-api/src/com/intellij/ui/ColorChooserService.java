@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,22 +32,13 @@ public abstract class ColorChooserService {
   }
 
   /**
-   * @deprecated Use {@link #showDialog(Component, String, Color, boolean, java.util.List, boolean)}
+   * @deprecated this overload does not work with headless implementation, use one with the Project instead
    */
-  @Nullable
   @Deprecated
-  public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
-                                   ColorPickerListener[] listeners);
-
-  /**
-   * @deprecated Use {@link #showDialog(Component, String, Color, boolean, java.util.List, boolean)}
-   */
-  @Nullable
-  @Deprecated
-  public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
-                                   ColorPickerListener[] listeners, boolean opacityInPercent);
-
   @Nullable
   public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
+  @Nullable
+  public abstract Color showDialog(Project project, Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
                                    List<ColorPickerListener> listeners, boolean opacityInPercent);
 }

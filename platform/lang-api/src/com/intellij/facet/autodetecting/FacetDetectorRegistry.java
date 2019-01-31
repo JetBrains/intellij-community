@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author nik
  */
+@Deprecated
 public interface FacetDetectorRegistry<C extends FacetConfiguration> {
   /**
    * Customize text of popup which will be shown when facet is detected
@@ -48,6 +49,7 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
    * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
    * Use {@link #registerUniversalDetector} instead
    */
+  @Deprecated
   void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull Condition<PsiFile> psiFileFilter,
                                 @NotNull FacetDetector<PsiFile, C> detector);
 
@@ -55,6 +57,7 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
    * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
    * Use {@link #registerUniversalDetector} instead
    */
+  @Deprecated
   void registerOnTheFlyDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
                                 @NotNull ElementPattern<? extends PsiFile> psiFilePattern, @NotNull FacetDetector<PsiFile, C> facetDetector);
 
@@ -69,6 +72,7 @@ public interface FacetDetectorRegistry<C extends FacetConfiguration> {
    * @deprecated do not use facet detectors based on PsiFile, because it may slow down facet detection process.
    * Use {@link #registerUniversalSubFacetDetector} instead
    */
+  @Deprecated
   <U extends FacetConfiguration>
   void registerOnTheFlySubFacetDetector(@NotNull FileType fileType, @NotNull VirtualFilePattern virtualFilePattern,
                                         @NotNull ElementPattern<? extends PsiFile> psiFilePattern, @NotNull FacetDetector<PsiFile, C> facetDetector,

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
@@ -14,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
@@ -25,6 +26,7 @@ public class TestDiscoveryIndex implements Disposable {
   private volatile DiscoveredTestDataHolder myHolder;
   private final Object myLock = new Object();
   private final Path myBasePath;
+
 
   public static TestDiscoveryIndex getInstance(Project project) {
     return project.getComponent(TestDiscoveryIndex.class);
@@ -37,7 +39,7 @@ public class TestDiscoveryIndex implements Disposable {
   public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
     myBasePath = basePath;
 
-    if (Files.exists(basePath)) {
+    if (basePath.toFile().exists()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         getHolder(); // proactively init with maybe io costly compact
       }));
@@ -57,6 +59,13 @@ public class TestDiscoveryIndex implements Disposable {
   }
 
   @NotNull
+  public MultiMap<String, String> getTestsByFile(String relativePath, byte frameworkId) {
+    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByFile(relativePath, frameworkId));
+    return map == null ? MultiMap.empty() : map;
+  }
+
+
+  @NotNull
   public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) {
     MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByClassName(classFQName, frameworkId));
     return map == null ? MultiMap.empty() : map;
@@ -74,6 +83,12 @@ public class TestDiscoveryIndex implements Disposable {
     return modules == null ? Collections.emptySet() : modules;
   }
 
+  @NotNull
+  public Collection<String> getAffectedFiles(Couple<String> testQName, byte frameworkId) {
+    Collection<String> files = executeUnderLock(holder -> holder.getAffectedFiles(testQName, frameworkId));
+    return files == null ? Collections.emptySet() : files;
+  }
+
   @Override
   public void dispose() {
     synchronized (myLock) {
@@ -88,10 +103,11 @@ public class TestDiscoveryIndex implements Disposable {
   public void updateTestData(@NotNull String testClassName,
                              @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
+                             @NotNull List<String> usedFiles,
                              @Nullable String moduleName,
                              byte frameworkId) {
     executeUnderLock(holder -> {
-      holder.updateTestData(testClassName, testMethodName, usedMethods, moduleName, frameworkId);
+      holder.updateTestData(testClassName, testMethodName, usedMethods, usedFiles, moduleName, frameworkId);
       return null;
     });
   }

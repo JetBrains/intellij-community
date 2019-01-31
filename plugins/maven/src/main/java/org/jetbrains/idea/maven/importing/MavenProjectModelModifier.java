@@ -61,13 +61,13 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     return addDependency(Collections.singletonList(from), mavenId, scope);
   }
 
-  private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
+  private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @NotNull final DependencyScope scope) {
     return addDependency(fromModules, mavenId, null, null, null, scope);
   }
 
-  private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
+  private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
@@ -126,7 +126,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
   @Nullable
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull Collection<Module> modules,
+  public Promise<Void> addExternalLibraryDependency(@NotNull Collection<? extends Module> modules,
                                                     @NotNull ExternalLibraryDescriptor descriptor,
                                                     @NotNull DependencyScope scope) {
     for (Module module : modules) {

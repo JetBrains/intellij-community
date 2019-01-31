@@ -1,0 +1,24 @@
+/**
+ * @return Foo<Bar, Baz>
+ */
+-----
+Groovy script
+  GrDocComment
+    PsiElement(GDOC_COMMENT_START)('/**')
+    PsiWhiteSpace('\n ')
+    PsiElement(GDOC_LEADING_ASTERISKS)('*')
+    PsiElement(GDOC_COMMENT_DATA)(' ')
+    GroovyDocTag
+      PsiElement(GDOC_TAG_NAME)('@return')
+      PsiWhiteSpace(' ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('Foo')
+      PsiElement(GDOC_TAG_VALUE_LT)('<')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('Bar')
+      PsiElement(GDOC_COMMENT_DATA)(', ')
+      GrDocTagValueToken
+        PsiElement(GDOC_TAG_VALUE_TOKEN)('Baz')
+      PsiElement(GDOC_TAG_VALUE_GT)('>')
+    PsiWhiteSpace('\n ')
+    PsiElement(GDOC_COMMENT_END)('*/')

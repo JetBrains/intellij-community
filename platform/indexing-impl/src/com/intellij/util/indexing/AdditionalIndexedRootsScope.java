@@ -25,17 +25,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AdditionalIndexedRootsScope extends GlobalSearchScope {
   private final GlobalSearchScope myBaseScope;
+  @NotNull
   private final IndexableFileSet myFileSet;
 
-  public AdditionalIndexedRootsScope(GlobalSearchScope baseScope) {
+  public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope) {
     this(baseScope, new AdditionalIndexableFileSet());
   }
 
-  public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, Class<? extends IndexableSetContributor> providerClass) {
+  public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull Class<? extends IndexableSetContributor> providerClass) {
     this(baseScope, new AdditionalIndexableFileSet(IndexableSetContributor.EP_NAME.findExtension(providerClass)));
   }
 
-  public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, IndexableFileSet myFileSet) {
+  public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull IndexableFileSet myFileSet) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
     this.myFileSet = myFileSet;

@@ -1,6 +1,7 @@
 package scrap;
 
 /**
+ *
  */
 public interface A1024 {
 	private static final BusinessClass[] pool_DUMMY79 =

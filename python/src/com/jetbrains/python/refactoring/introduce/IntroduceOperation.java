@@ -19,6 +19,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +44,7 @@ public class IntroduceOperation {
   private Boolean myReplaceAll;
   private PsiElement myElement;
   private PyExpression myInitializer;
-  private List<PsiElement> myOccurrences = Collections.emptyList();
+  private List<SmartPsiElementPointer<PsiElement>> myOccurrences = Collections.emptyList();
   private Collection<String> mySuggestedNames;
 
   public IntroduceOperation(Project project,
@@ -119,11 +122,11 @@ public class IntroduceOperation {
   }
 
   public List<PsiElement> getOccurrences() {
-    return myOccurrences;
+    return ContainerUtil.mapNotNull(myOccurrences, SmartPsiElementPointer::getElement);
   }
 
   public void setOccurrences(List<PsiElement> occurrences) {
-    myOccurrences = occurrences;
+    myOccurrences = ContainerUtil.map(occurrences, SmartPointerManager::createPointer);
   }
 
   public Collection<String> getSuggestedNames() {

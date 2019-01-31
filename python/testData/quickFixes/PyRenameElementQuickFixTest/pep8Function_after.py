@@ -1,1 +1,1 @@
-def a(): pass
+def A_NEW_NAME(): pass

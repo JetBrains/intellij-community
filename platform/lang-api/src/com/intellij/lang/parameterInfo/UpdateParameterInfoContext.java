@@ -24,6 +24,7 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   boolean isPreservedOnHintHidden();
   void setPreservedOnHintHidden(boolean value);
   boolean isInnermostContext();
-  
+  boolean isSingleParameterInfo();
+
   UserDataHolderEx getCustomContext();
 }

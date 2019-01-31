@@ -1,5 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.configuration;
 
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -8,9 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 @State(name = "IpnbSettings")
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
@@ -33,7 +38,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   public boolean hasFx() {
     if (hasFx) {
       try {
-        PlatformImpl.setImplicitExit(false);
+        Platform.setImplicitExit(false);
       }
       catch (NoClassDefFoundError e) {
         hasFx = false;
@@ -52,9 +57,9 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   final String username = getUsername();
     final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
-    final String newStylePassword = PasswordSafe.getInstance().getPassword(IpnbSettings.class, accountName);
-    
-   return StringUtil.notNullize(newStylePassword == null ? PasswordSafe.getInstance().getPassword(IpnbSettings.class, username) : newStylePassword);
+    final String newStylePassword = PasswordSafe.getInstance().getPassword(CredentialAttributesKt.CredentialAttributes(IpnbSettings.class, accountName));
+
+   return StringUtil.notNullize(newStylePassword == null ? PasswordSafe.getInstance().getPassword(CredentialAttributesKt.CredentialAttributes(IpnbSettings.class, username)) : newStylePassword);
   }
 
   @Transient
@@ -62,7 +67,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
     final String username = getUsername();
     final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
-    PasswordSafe.getInstance().setPassword(IpnbSettings.class, accountName, password);
+    PasswordSafe.getInstance().set(CredentialAttributes(IpnbSettings.class, accountName), password == null ? null : new Credentials(accountName, password));
   }
 
   private static String createAccountName(@NotNull String username, @NotNull String url, @NotNull String projectPath) {

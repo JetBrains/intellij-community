@@ -94,6 +94,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
 
     mySelectAggregator.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myAggregator = doSelectProject(myAggregator);
         updateComponents();
@@ -101,6 +102,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     });
 
     mySelectParent.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myParent = doSelectProject(myParent);
         updateComponents();
@@ -108,6 +110,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     });
 
     ActionListener updatingListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateComponents();
       }
@@ -181,6 +184,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     props.setValue(key, value);
   }
 
+  @Override
   public JComponent getComponent() {
     return myMainPanel;
   }

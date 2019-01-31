@@ -4,26 +4,25 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static com.intellij.codeInsight.PsiEquivalenceUtil.areElementsEquivalent;
 
@@ -205,10 +204,8 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
                                        PsiReferenceExpression optionalRef,
                                        PsiElement trueValue) {
     PsiType type = optionalRef.getType();
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(trueValue.getProject());
-    SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-    String baseName = ObjectUtils.coalesce(ArrayUtil.getFirstElement(info.names), "value");
-    String paramName = javaCodeStyleManager.suggestUniqueVariableName(baseName, trueValue, true);
+    String paramName = new VariableNameGenerator(trueValue, VariableKind.PARAMETER)
+      .byType(OptionalUtil.getOptionalElementType(type)).byName("value").generate(true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
@@ -239,8 +236,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
     String lambdaText = generateOptionalLambda(factory, ct, optionalRef, trueValue);
     PsiLambdaExpression lambda = (PsiLambdaExpression)factory.createExpressionFromText(lambdaText, trueValue);
-    return OptionalUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
-                                               (PsiExpression)lambda.getBody(), ct.markUnchanged(falseValue), targetType, true);
+    PsiExpression body = Objects.requireNonNull((PsiExpression)lambda.getBody());
+    return OptionalRefactoringUtil.generateOptionalUnwrap(optionalRef.getText(), lambda.getParameterList().getParameters()[0],
+                                                          body, ct.markUnchanged(falseValue), targetType, true);
   }
 
   static boolean isSimpleOrUnchecked(PsiExpression expression) {
@@ -250,7 +248,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static class OptionalIsPresentFix implements LocalQuickFix {
     private final OptionalIsPresentCase myScenario;
 
-    public OptionalIsPresentFix(OptionalIsPresentCase scenario) {
+    OptionalIsPresentFix(OptionalIsPresentCase scenario) {
       myScenario = scenario;
     }
 
@@ -291,7 +289,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       if (elseElement != null && !PsiTreeUtil.isAncestor(cond, elseElement, true)) ct.delete(elseElement);
       PsiElement result = ct.replaceAndRestoreComments(cond, replacementText);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
   }

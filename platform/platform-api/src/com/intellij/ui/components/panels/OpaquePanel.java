@@ -41,6 +41,7 @@ public class OpaquePanel extends JPanel {
     setBackground(color);
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     if (isOpaqueActive()) {
       final Color bg = getBackground();

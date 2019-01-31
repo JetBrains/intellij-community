@@ -38,7 +38,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/11 1:08 PM
  */
 public class ExternalSystemFacadeManager {
 
@@ -149,7 +148,6 @@ public class ExternalSystemFacadeManager {
     return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
   }
 
-  @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
     final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(key.getExternalSystemId());

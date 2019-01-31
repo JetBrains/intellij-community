@@ -21,37 +21,15 @@ import com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspectio
 
 public class SimplifiableTestNGAssertionFixTest extends IGQuickFixesTestCase {
 
-  public void testTrueToNullable() {
-    doTest();
-  }
-
-  public void testTrueToNullableWithMessage() {
-    doTest();
-  }
-
-  public void testTrueToSameWithMessage() {
-    doTest();
-  }
-
-  public void testTrueToNotSameWithMessage() {
-    doTest();
-  }
-
-  public void testTrueToNotNull() {
-    doTest();
-  }
-
-  public void testTrueToNotNullWithMessage() {
-    doTest();
-  }
-
-  public void testTrueToEquals() {
-    doTest();
-  }
-
-  public void testTrueToFail() {
-    doTest();
-  }
+  public void testTrueToNullable() { doTest(); }
+  public void testTrueToNullableWithMessage() { doTest(); }
+  public void testTrueToSameWithMessage() { doTest(); }
+  public void testTrueToNotSameWithMessage() { doTest(); }
+  public void testTrueToNotNull() { doTest(); }
+  public void testTrueToNotNullWithMessage() { doTest(); }
+  public void testTrueToEquals() { doTest(); }
+  public void testTrueToEqualsConst() { doTest(); }
+  public void testTrueToFail() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

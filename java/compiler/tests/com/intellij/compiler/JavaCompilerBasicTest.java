@@ -3,11 +3,13 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
@@ -28,7 +30,7 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     make(module);
     assertOutput(module, fs().file("A.class"));
 
-    File b = new File(VfsUtil.virtualToIoFile(srcRoot), "B.java");
+    File b = new File(VfsUtilCore.virtualToIoFile(srcRoot), "B.java");
     FileUtil.writeToFile(b, "public class B{}");
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(b));
     make(module);
@@ -37,5 +39,21 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     deleteFile(file);
     make(module);
     assertOutput(module, fs().file("B.class"));
+  }
+
+
+  public void testSymlinksInSources() throws IOException {
+    final VirtualFile file = createFile("src/A.java", "public class A {}");
+    VirtualFile srcRoot = file.getParent();
+    final File linkFile = new File(srcRoot.getParent().getPath(), "src-link");
+    FileUtil.delete(linkFile); // ensure the link does not exist
+    String symlink = Files.createSymbolicLink(linkFile.toPath(), Paths.get(srcRoot.getPath())).getFileName().toString();
+    srcRoot.getParent().refresh(false, true);
+    VirtualFile sourceRoot = srcRoot.getParent().findChild(symlink);
+    assertNotNull(sourceRoot);
+    final Module module = addModule("a", sourceRoot);
+
+    make(module);
+    assertOutput(module, fs().file("A.class"));
   }
 }

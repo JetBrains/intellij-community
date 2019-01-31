@@ -162,6 +162,18 @@ class TestCase(unittest.TestCase):
         finally:
             SetupHolder.setup = original
 
+    # PY-27594
+    def test_skip_stdin(self):
+        original = SetupHolder.setup
+        try:
+            SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
+            check = ['C:\\bin\\python.exe', '-', 'pip', 'setuptools']
+
+            self.assertEqual(pydev_monkey.patch_args(check), [
+                'C:\\bin\\python.exe', '-', 'pip', 'setuptools'])
+        finally:
+            SetupHolder.setup = original
+
 
 if __name__ == '__main__':
     unittest.main()

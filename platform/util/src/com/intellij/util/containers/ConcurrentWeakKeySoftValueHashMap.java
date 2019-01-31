@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
  * Null values are NOT allowed
  * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, TObjectHashingStrategy)} instead
  */
+@Deprecated
 public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
   final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<K>();
@@ -123,7 +124,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
      V v = get();
      Object thatV = ((ValueReference)o).get();
-     return v != null && thatV != null && v.equals(thatV);
+     return v != null && v.equals(thatV);
    }
 
    @NotNull

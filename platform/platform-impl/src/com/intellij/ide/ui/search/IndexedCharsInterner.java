@@ -47,7 +47,7 @@ class IndexedCharsInterner {
   };
 
   public int toId(@NotNull String name) {
-    CharSequence seq = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
+    CharSequence seq = ByteArrayCharSequence.convertToBytesIfPossible(name);
     int index = mySet.index(seq);
     int id;
     if (index == -1) {

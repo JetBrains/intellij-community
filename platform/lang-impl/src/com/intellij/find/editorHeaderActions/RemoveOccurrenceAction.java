@@ -19,6 +19,7 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import org.jetbrains.annotations.NotNull;
 
 public class RemoveOccurrenceAction extends OccurrenceAction {
   public RemoveOccurrenceAction() {
@@ -26,7 +27,7 @@ public class RemoveOccurrenceAction extends OccurrenceAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     e.getRequiredData(EditorSearchSession.SESSION_KEY).removeOccurrence();
   }
 }

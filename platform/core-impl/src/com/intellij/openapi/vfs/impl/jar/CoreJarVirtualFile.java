@@ -62,6 +62,12 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @NotNull
   @Override
+  public CharSequence getNameSequence() {
+    return myName;
+  }
+
+  @NotNull
+  @Override
   public VirtualFileSystem getFileSystem() {
     return myHandler.getFileSystem();
   }

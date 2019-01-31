@@ -20,6 +20,7 @@ import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -137,8 +138,8 @@ public class ArtifactsGenerator {
 
     final Couple<String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());
     final Target artifactTarget =
-        new Target(myContext.getTargetName(artifact), depends.toString(), "Build '" + artifact.getName() + "' artifact", null, 
-                   xmlNs != null ? xmlNs.first : null, xmlNs != null ? xmlNs.second : null);
+        new Target(myContext.getTargetName(artifact), depends.toString(), "Build '" + artifact.getName() + "' artifact", null,
+                   Pair.getFirst(xmlNs), Pair.getSecond(xmlNs));
 
     if (myContext.shouldBuildIntoTempDirectory(artifact)) {
       final String outputDirectory = BuildProperties.propertyRelativePath(ArtifactAntGenerationContextImpl.ARTIFACTS_TEMP_DIR_PROPERTY,

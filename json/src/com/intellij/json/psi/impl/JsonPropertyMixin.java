@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
-  public JsonPropertyMixin(@NotNull ASTNode node) {
+  JsonPropertyMixin(@NotNull ASTNode node) {
     super(node);
   }
 

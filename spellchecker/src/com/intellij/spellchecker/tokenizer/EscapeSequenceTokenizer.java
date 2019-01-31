@@ -35,6 +35,7 @@ public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Toke
     if (element != null) element.putUserData(ESCAPE_OFFSETS, null);
   }
 
+  @Override
   @NotNull
   public TextRange getHighlightingRange(PsiElement element, int offset, TextRange range) {
     final int[] offsets = element.getUserData(ESCAPE_OFFSETS);

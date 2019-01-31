@@ -43,8 +43,12 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class InjectedReferencesContributor extends PsiReferenceContributor {
-
   private static final Key<PsiReference[]> INJECTED_REFERENCES = Key.create("injected references");
+  private final ReferenceInjector[] myExtensions;
+
+  InjectedReferencesContributor() {
+    myExtensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensions();
+  }
 
   public static boolean isInjected(@Nullable PsiReference reference) {
     return reference != null && reference.getElement().getUserData(INJECTED_REFERENCES) != null;
@@ -62,12 +66,11 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
-        ReferenceInjector[] extensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensions();
         final List<PsiReference> references = new SmartList<>();
         Project project = element.getProject();
         Configuration configuration = Configuration.getProjectInstance(project);
         final Ref<Boolean> injected = new Ref<>(Boolean.FALSE);
-        for (ReferenceInjector injector : extensions) {
+        for (ReferenceInjector injector : myExtensions) {
           Collection<BaseInjection> injections = configuration.getInjectionsByLanguageId(injector.getId());
           for (BaseInjection injection : injections) {
             if (injection.acceptForReference(element)) {
@@ -98,7 +101,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
             InjectedLanguageManager
               .getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, new InjectedReferenceVisitor() {
                       @Override
-                      public void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+                      public void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
                           injected.set(Boolean.TRUE);
                           element.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, registry.getLanguageInjectionSupport());
                           for (PsiLanguageInjectionHost.Shred place : places) {

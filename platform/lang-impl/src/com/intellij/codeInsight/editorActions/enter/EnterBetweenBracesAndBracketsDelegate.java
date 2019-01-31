@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 public class EnterBetweenBracesAndBracketsDelegate extends EnterBetweenBracesDelegate {
+  @Override
   protected boolean isBracePair(char lBrace, char rBrace) {
     return super.isBracePair(lBrace, rBrace ) || (lBrace == '[' && rBrace == ']');
   }

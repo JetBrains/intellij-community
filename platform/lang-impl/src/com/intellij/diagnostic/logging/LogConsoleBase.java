@@ -163,7 +163,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return reader;
   }
 
-  @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createToolbar() {
     String customFilter = myModel.getCustomFilter();
 
@@ -180,7 +179,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         }
 
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           myFilter.requestFocusInWindow();
         }
       };
@@ -226,7 +225,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  public void onFilterStateChange(final LogFilter filter) {
+  public void onFilterStateChange(@NotNull final LogFilter filter) {
     filterConsoleOutput();
   }
 
@@ -481,7 +480,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<String, Key> printer) {
+  private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<? super String, ? super Key> printer) {
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
@@ -649,7 +648,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     private boolean myRunning = false;
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);
 
-    public ReaderThread(@Nullable Reader reader) {
+    ReaderThread(@Nullable Reader reader) {
       myReader = reader != null ? new BufferedReader(reader) : null;
     }
 

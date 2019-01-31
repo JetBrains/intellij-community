@@ -17,7 +17,6 @@ package com.intellij.java.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,21 +25,18 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.testFramework.VfsTestUtil.getEvents;
-import static com.intellij.testFramework.VfsTestUtil.print;
-import static java.util.Collections.singletonList;
 
 @PlatformTestCase.WrapInCommand
 public class DirectoryIndexRestoreTest extends IdeaTestCase {
   private VirtualFile myTempVFile;
   private String myTestDirPath;
-  private ProjectFileIndex myFileIndex;
 
   @Override
   protected void setUp() throws Exception {
@@ -63,41 +59,35 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
     PsiTestUtil.addSourceRoot(myModule, srcDir);
 
     myTestDirPath = testDir.getPath();
-    myFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     // to not interfere with previous test firing vfs events
     VirtualFileManager.getInstance().syncRefresh();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myFileIndex = null;
-    super.tearDown();
-  }
-
   public void testDeepDeleteAndRecreate() throws IOException {
     AtomicInteger counter = new AtomicInteger(0);
-    ContentIterator iterator = (file) -> {
+    ContentIterator iterator = file -> {
       boolean found = file.getPath().equals(myTestDirPath);
       if (found) counter.incrementAndGet();
       return !found;
     };
-    File topFile = new File(myTempVFile.getPath(), "top"), bakFile = new File(myTempVFile.getPath(), "top.bak");
-    String topPath = myTempVFile.getPath() + "/top";
+    File topFile = new File(myTempVFile.getPath(), "top");
+    File bakFile = new File(myTempVFile.getPath(), "top.bak");
+    String topPath = FileUtil.toSystemIndependentName(topFile.getPath());
 
-    myFileIndex.iterateContent(iterator);
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(topFile, bakFile);
-    List<String> events1 = print(getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(singletonList("D : " + topPath), events1);
-    myFileIndex.iterateContent(iterator);
+    List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
+    assertEquals(Collections.singletonList("D : " + topPath), events1);
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(bakFile, topFile);
-    List<String> events2 = print(getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(singletonList("C : " + topPath), events2);
-    myFileIndex.iterateContent(iterator);
+    List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
+    assertEquals(Collections.singletonList("C : " + topPath), events2);
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(2, counter.get());
   }
 }

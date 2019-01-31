@@ -28,8 +28,6 @@ public class MethodThrowsTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[] {new RedundantThrowsDeclarationLocalInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/methodThrows";

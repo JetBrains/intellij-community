@@ -4,9 +4,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.VariableTypeCanBeExplicitInspection;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-
 
 public class VariableTypeCanBeExplicitInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
@@ -15,13 +13,6 @@ public class VariableTypeCanBeExplicitInspectionTest extends LightQuickFixParame
     return new LocalInspectionTool[]{
       new VariableTypeCanBeExplicitInspection(),
     };
-  }
-
-  public void test() { doAllTests(); }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_10;
   }
 
   @Override

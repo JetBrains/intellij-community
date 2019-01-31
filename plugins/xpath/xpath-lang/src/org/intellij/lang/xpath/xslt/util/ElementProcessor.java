@@ -54,6 +54,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
         return myIsCyclic;
     }
 
+    @Override
     public boolean process(XmlTag tag) {
         if (myHistory.contains(tag)) {
             myIsCyclic = true;
@@ -96,6 +97,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
         myInclude++;
         try {
             rootTag.processElements(new PsiElementProcessor() {
+                @Override
                 public boolean execute(@NotNull PsiElement element) {
                     if (element instanceof XmlTag) {
                         return process((XmlTag)element);

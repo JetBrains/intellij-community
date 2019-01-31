@@ -138,8 +138,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
-    WhiteSpaceFormattingStrategy strategy = myWhiteSpaceStrategy;
-    if (strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
+    if (myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
       return true;
     }
     PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset);

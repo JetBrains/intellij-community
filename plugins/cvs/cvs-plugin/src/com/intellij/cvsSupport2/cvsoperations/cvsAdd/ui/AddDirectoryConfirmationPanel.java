@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.util.ui.FileLabel;
-import com.intellij.util.ui.FileLabel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,10 +34,12 @@ public class AddDirectoryConfirmationPanel extends AbstractAddFileConfirmationPa
     init();
   }
 
+  @Override
   public Component getPanel() {
     return myPanel;
   }
 
+  @Override
   protected FileLabel getFileLabel() {
     return myFileLabel;
   }

@@ -71,7 +71,7 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     // rainbow generated colors are cached:
     assertNotNull(colorsScheme.getAttributes(generatedRainbowKey));
     
-    // chage in colorsScheme for non-mutable key drops generated cache      
+    // change in colorsScheme for non-mutable key drops generated cache
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, bcOrigAttr);
     // there are no rainbow generated colors:
     assertNull(colorsScheme.getAttributes(generatedRainbowKey));  

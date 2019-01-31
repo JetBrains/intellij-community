@@ -80,7 +80,7 @@ public class XPathExpressionGenerator {
         private String uniquePath;
         private String path;
 
-        public PathVisitor(XmlTag context) {
+        PathVisitor(XmlTag context) {
             this.context = context;
         }
 

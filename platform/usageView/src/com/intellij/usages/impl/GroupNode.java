@@ -26,6 +26,7 @@ import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     String result = getGroup() == null ? "" : getGroup().getText(null);
     synchronized (this) {
       List<Node> children = myChildren;
-      return result + children.subList(0, Math.min(10, children.size()));
+      return result + ContainerUtil.getFirstItems(children, 10);
     }
   }
 
@@ -100,12 +101,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   // >= 0 if found, < 0 if not found
-  private static int getNodeIndex(@NotNull Node newNode, @NotNull List<Node> children) {
+  private static int getNodeIndex(@NotNull Node newNode, @NotNull List<? extends Node> children) {
     return Collections.binarySearch(children, newNode, COMPARATOR);
   }
 
   // always >= 0
-  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<Node> children) {
+  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<? extends Node> children) {
     int i = getNodeIndex(node, children);
     return i >= 0 ? i : -i-1;
   }
@@ -196,7 +197,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param nodes  must all be children of parent
    */
   private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
-                                            @NotNull List<MutableTreeNode> nodes) {
+                                            @NotNull List<? extends MutableTreeNode> nodes) {
     int count = nodes.size();
     if (count == 0) {
       return;

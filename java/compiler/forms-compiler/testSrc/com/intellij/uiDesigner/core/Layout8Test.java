@@ -49,6 +49,8 @@ public final class Layout8Test extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_SHRINK + GridConstraints.SIZEPOLICY_CAN_GROW + GridConstraints.SIZEPOLICY_WANT_GROW,
       GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0));
 
+    panel.doLayout();
+
     assertEquals(20, panel.getMinimumSize().width);
     assertEquals(200, panel.getPreferredSize().width);
 

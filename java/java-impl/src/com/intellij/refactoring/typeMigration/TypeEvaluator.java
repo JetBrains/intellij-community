@@ -93,7 +93,9 @@ public class TypeEvaluator {
 
   @Nullable
   public PsiType getType(PsiElement element) {
-    VirtualFile file = element.getContainingFile().getVirtualFile();
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile file = psiFile.getVirtualFile();
     if (file == null || !myProjectFileIndex.isInContent(file)) {
       return TypeMigrationLabeler.getElementType(element);
     }
@@ -224,7 +226,7 @@ public class TypeEvaluator {
           if (result.getElement() != null) {
             final PsiClass aClass = result.getElement();
 
-            return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
+            return JavaPsiFacade.getElementFactory(aClass.getProject())
                 .createType(aClass, result.getSubstitutor().putAll(qualifierSubs));
           }
         }
@@ -451,7 +453,7 @@ public class TypeEvaluator {
     private final PsiSubstitutor mySubst;
 
 
-    public SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
+    SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
       mySubst = subst;
       myMapping = new HashMap<>();
       myMethod = method;
@@ -515,7 +517,7 @@ public class TypeEvaluator {
           final PsiSubstitutor superClassSubstitutor =
               TypeConversionUtil.getClassSubstitutor(classF, classA, resultA.getSubstitutor());
           if (superClassSubstitutor != null) {
-            final PsiType aligned = JavaPsiFacade.getInstance(classF.getProject()).getElementFactory().createType(classF, superClassSubstitutor);
+            final PsiType aligned = JavaPsiFacade.getElementFactory(classF.getProject()).createType(classF, superClassSubstitutor);
             bindTypeParameters(formal, aligned);
           }
         }

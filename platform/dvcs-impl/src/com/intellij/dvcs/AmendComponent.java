@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -38,8 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,10 +40,10 @@ public abstract class AmendComponent {
   @NotNull private final RepositoryManager<? extends Repository> myRepoManager;
   @NotNull private final CheckinProjectPanel myCheckinPanel;
   @NotNull protected final JCheckBox myAmend;
-  @NotNull private final String myPreviousMessage;
 
   @Nullable private Map<VirtualFile, String> myMessagesForRoots;
   @Nullable private String myAmendedMessage;
+  @Nullable private String myPreviousMessage;
 
   public AmendComponent(@NotNull Project project,
                         @NotNull RepositoryManager<? extends Repository> repoManager,
@@ -74,13 +60,12 @@ public abstract class AmendComponent {
     myAmend = new NonFocusableCheckBox(title);
     myAmend.setMnemonic('m');
     myAmend.setToolTipText(DvcsBundle.message("commit.amend.tooltip"));
-    myPreviousMessage = myCheckinPanel.getCommitMessage();
 
     myAmend.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myAmend.isSelected()) {
-          if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+          if (myCheckinPanel.getCommitMessage().equals(myPreviousMessage)) { // if user has already typed something, don't revert it
             if (myMessagesForRoots == null) {
               loadMessagesInModalTask(project); // load all commit messages for all repositories
             }
@@ -117,6 +102,7 @@ public abstract class AmendComponent {
   }
 
   public void refresh() {
+    myPreviousMessage = myCheckinPanel.getCommitMessage();
     myAmend.setSelected(false);
   }
 
@@ -175,7 +161,7 @@ public abstract class AmendComponent {
   }
 
   @NotNull
-  protected abstract Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files);
+  protected abstract Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files);
 
   @Nullable
   protected abstract String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException;

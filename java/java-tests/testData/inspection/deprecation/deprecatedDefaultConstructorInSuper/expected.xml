@@ -8,7 +8,7 @@
   <problem>
     <file>Test.java</file>
     <line>10</line>
-    <description>Default constructor in C is deprecated</description>
+    <description>'C' is deprecated</description>
   </problem>
 </problems>
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
   private Object myInitialBreakpoint;
@@ -27,7 +28,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
@@ -44,7 +45,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     event.getPresentation().setEnabled(event.getProject() != null);
   }
 

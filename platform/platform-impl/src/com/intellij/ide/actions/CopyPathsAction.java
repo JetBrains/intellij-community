@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -29,7 +30,7 @@ public class CopyPathsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     if (files != null && files.length > 0) {
       CopyPasteManager.getInstance().setContents(new StringSelection(getPaths(files)));
@@ -46,7 +47,7 @@ public class CopyPathsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(event.getDataContext());
     int num = files != null ? files.length : 0;
     Presentation presentation = event.getPresentation();

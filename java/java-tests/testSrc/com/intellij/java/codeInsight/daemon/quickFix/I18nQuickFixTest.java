@@ -34,10 +34,6 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[]{new I18nInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/i18n";

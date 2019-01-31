@@ -1069,6 +1069,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @deprecated As of JDK version Swing1.1
    *             replaced by {@code JScrollPane.getViewportBorderBounds()}.
    */
+  @Deprecated
   @Override
   public Rectangle getViewportBorderBounds(JScrollPane scrollpane) {
     return scrollpane.getViewportBorderBounds();

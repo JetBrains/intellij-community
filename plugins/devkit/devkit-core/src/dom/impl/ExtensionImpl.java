@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
@@ -25,6 +26,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 public abstract class ExtensionImpl implements Extension {
 
   @Override
+  @Nullable
   public ExtensionPoint getExtensionPoint() {
     final DomElement domDeclaration = getChildDescription().getDomDeclaration();
     if (domDeclaration instanceof ExtensionPoint) {

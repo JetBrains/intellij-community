@@ -35,7 +35,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   @NotNull
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
     class T extends HighlightInfoType.HighlightInfoTypeImpl implements HighlightInfoType.Iconable{
-      public T(@NotNull HighlightSeverity severity, TextAttributesKey attributesKey) {
+      private T(@NotNull HighlightSeverity severity, @NotNull TextAttributesKey attributesKey) {
         super(severity, attributesKey);
       }
 

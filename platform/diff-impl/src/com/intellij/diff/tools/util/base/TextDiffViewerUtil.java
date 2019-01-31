@@ -32,14 +32,13 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorPopupHandler;
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +104,7 @@ public class TextDiffViewerUtil {
   }
 
   public static void installDocumentListeners(@NotNull DocumentListener listener,
-                                              @NotNull List<Document> documents,
+                                              @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
     for (Document document : ContainerUtil.newHashSet(documents)) {
       document.addDocumentListener(listener, disposable);
@@ -168,7 +167,7 @@ public class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
     }
@@ -204,7 +203,7 @@ public class TextDiffViewerUtil {
     private class MyAction extends AnAction implements DumbAware {
       @NotNull private final T myOption;
 
-      public MyAction(@NotNull T option) {
+      MyAction(@NotNull T option) {
         super(getText(option));
         myOption = option;
       }
@@ -219,13 +218,13 @@ public class TextDiffViewerUtil {
   private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     @NotNull private final T[] myPolicies;
 
-    public EnumPolicySettingAction(@NotNull T[] policies) {
+    EnumPolicySettingAction(@NotNull T[] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabledAndVisible(myPolicies.length > 1);
     }
@@ -363,7 +362,7 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
-      super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
+      super("Collapse Unchanged Fragments", AllIcons.Actions.Collapseall);
       mySettings = settings;
     }
 
@@ -393,14 +392,14 @@ public class TextDiffViewerUtil {
     @NotNull protected final TextDiffSettings mySettings;
 
     public ReadOnlyLockAction(@NotNull DiffContext context) {
-      super("Disable editing", null, AllIcons.Nodes.Padlock);
+      super("Disable Editing", null, AllIcons.Diff.Lock);
       myContext = context;
       mySettings = getTextSettings(context);
     }
 
     protected void applyDefaults() {
       if (isVisible()) { // apply default state
-        setSelected(null, isSelected(null));
+        setSelected(isSelected());
       }
     }
 
@@ -415,12 +414,20 @@ public class TextDiffViewerUtil {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return isSelected();
+    }
+
+    boolean isSelected() {
       return mySettings.isReadOnlyLock();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      setSelected(state);
+    }
+
+    void setSelected(boolean state) {
       mySettings.setReadOnlyLock(state);
       doApply(state);
     }
@@ -501,7 +508,7 @@ public class TextDiffViewerUtil {
     }
   }
 
-  public static class EditorActionsPopup extends EditorPopupHandler {
+  public static class EditorActionsPopup {
     @NotNull private final List<? extends AnAction> myEditorPopupActions;
 
     public EditorActionsPopup(@NotNull List<? extends AnAction> editorPopupActions) {
@@ -509,18 +516,12 @@ public class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors) {
+      EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
+        myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
+      );
       for (EditorEx editor : editors) {
-        editor.addEditorMouseListener(this);
-        editor.setContextMenuGroupId(null); // disabling default context menu
+        editor.installPopupHandler(handler);
       }
-    }
-
-    @Override
-    public void invokePopup(final EditorMouseEvent event) {
-      if (myEditorPopupActions.isEmpty()) return;
-      ActionGroup group = new DefaultActionGroup(myEditorPopupActions);
-      EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
-      handler.invokePopup(event);
     }
   }
 }

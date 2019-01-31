@@ -185,6 +185,14 @@ class MergeResolveUtilTest : DiffTestCase() {
       "x X Y x",
       "x Y x"
     )
+
+    // IDEA-200696
+    test(
+      "version: 1.0.0",
+      "version: 2.0.0",
+      "version: 1.0.4",
+      "version: 2.0.4"
+    )
   }
 
   fun testRegressions() {

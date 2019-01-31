@@ -3,6 +3,9 @@ package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 
 import java.util.List;
 
@@ -18,13 +21,15 @@ public class ShowGradleDaemonsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myUi == null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    myUi = new DaemonsUi() {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    GradleActionsUsagesCollector.trigger(project, "showGradleDaemonsAction");
+    myUi = new DaemonsUi(project) {
       @Override
       public void dispose() {
         myUi = null;

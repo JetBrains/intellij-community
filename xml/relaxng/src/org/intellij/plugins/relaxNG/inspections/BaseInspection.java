@@ -16,7 +16,10 @@
 
 package org.intellij.plugins.relaxNG.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -35,6 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   @Override
   @Nls
@@ -47,7 +52,6 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return "RELAX NG";
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
@@ -67,7 +71,6 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     }
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
   private boolean isSuppressedAt(RncElement location) {
     PsiElement prev = location.getPrevSibling();
     while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
@@ -144,11 +147,10 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     suppress(file, location, "#suppress " + getID(), text -> text + ", " + getID());
   }
 
-  @SuppressWarnings({ "SSBasedInspection" })
-  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<String, String> replace) {
+  private static void suppress(PsiFile file, @NotNull PsiElement location, String suppressComment, Function<? super String, String> replace) {
     final Project project = file.getProject();
     final VirtualFile vfile = file.getVirtualFile();
-    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles()) {
+    if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vfile)).hasReadonlyFiles()) {
       return;
     }
 
@@ -182,7 +184,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
 
-    public SuppressAction(String location) {
+    SuppressAction(String location) {
       myLocation = location;
     }
 

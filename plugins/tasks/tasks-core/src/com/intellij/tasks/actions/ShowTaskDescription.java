@@ -24,13 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.doc.TaskPsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public class ShowTaskDescription extends BaseTaskAction {
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     super.update(event);
     if (event.getPresentation().isEnabled()) {
       final Presentation presentation = event.getPresentation();
@@ -45,7 +46,7 @@ public class ShowTaskDescription extends BaseTaskAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     assert project != null;
     final LocalTask task = getActiveTask(e);

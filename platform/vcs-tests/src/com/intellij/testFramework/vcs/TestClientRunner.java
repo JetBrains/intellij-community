@@ -35,7 +35,6 @@ import java.util.Map;
 
 /**
  * @author Irina.Chernushina
- * @since 2.05.2012
  */
 public class TestClientRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");
@@ -82,13 +81,9 @@ public class TestClientRunner {
     final Process clientProcess = builder.start();
 
     if (stdin != null) {
-      final OutputStream outputStream = clientProcess.getOutputStream();
-      try {
+      try (OutputStream outputStream = clientProcess.getOutputStream()) {
         final byte[] bytes = stdin.getBytes();
         outputStream.write(bytes);
-      }
-      finally {
-        outputStream.close();
       }
     }
 

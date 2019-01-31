@@ -60,6 +60,7 @@ public class LogMessage extends AbstractMessage {
   }
 
   /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} (to be removed in IDEA 2019) */
+  @Deprecated
   public synchronized void addAttachment(@NotNull Attachment attachment) {
     myAttachments.add(attachment);
   }

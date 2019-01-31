@@ -32,7 +32,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("UseJBColor")
 public class EclipseThemeOptionHandler implements EclipseThemeReader.OptionHandler, EclipseColorThemeElements {
   private final EditorColorsScheme myColorsScheme;
 

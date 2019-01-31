@@ -20,6 +20,7 @@ import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,18 +55,18 @@ public class JUnitUtil {
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
-  public static final Collection<String> TEST5_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(
-    BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME));
+  public static final Collection<String> TEST5_CONFIG_METHODS =
+    ContainerUtil.immutableList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
 
   public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
-  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(
-    BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
+  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS =
+    ContainerUtil.immutableList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
-  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(
-    TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION));
-  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(
-    TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION));
+  public static final Collection<String> TEST5_ANNOTATIONS =
+    ContainerUtil.immutableList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION);
+  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS =
+    ContainerUtil.immutableList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION);
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -74,9 +75,9 @@ public class JUnitUtil {
     BEFORE_CLASS_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, PARAMETRIZED_PARAMETERS_ANNOTATION_NAME);
   private static final List<String> STATIC_5_CONFIGS = Arrays.asList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
-  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(Arrays.asList(
-    DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
-    BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME));
+  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = ContainerUtil
+    .immutableList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME,
+                   BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
   public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
@@ -160,12 +161,18 @@ public class JUnitUtil {
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (psiClass.getQualifiedName() == null) return false;
-    if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
+    if (isJUnit5(psiClass)) {
+      if (isJUnit5TestClass(psiClass, checkAbstract)) {
+        return true;
+      }
+    }
+    else if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+      //no jupiter engine in the classpath
       return true;
     }
-    
+
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
-    
+
     final PsiClass topLevelClass = getTopmostClass(psiClass);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
@@ -215,7 +222,7 @@ public class JUnitUtil {
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
+    if (modifierList == null) return false;
     if (psiClass.getQualifiedName() == null) return false; //skip local and anonymous classes
     PsiClass topLevelClass = getTopmostClass(psiClass);
 
@@ -241,7 +248,7 @@ public class JUnitUtil {
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
-      if (isTestAnnotated(method)) return true;
+      if (isJUnit4TestAnnotated(method)) return true;
     }
 
     return false;
@@ -257,45 +264,40 @@ public class JUnitUtil {
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
-    
+    if (modifierList == null) return false;
+
     if (psiClass.isAnnotationType()) return false;
 
     if (psiClass.getContainingClass() != null && MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(JUNIT5_NESTED))) {
       return true;
     }
 
-    if (MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+    if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
       return true;
     }
 
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
-    Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module != null) {
-      return CachedValuesManager.getCachedValue(psiClass, () -> {
-        boolean hasAnnotation = false;
-        for (final PsiMethod method : psiClass.getAllMethods()) {
-          ProgressManager.checkCanceled();
-          if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      boolean hasAnnotation = false;
+      for (final PsiMethod method : psiClass.getAllMethods()) {
+        ProgressManager.checkCanceled();
+        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+          hasAnnotation = true;
+          break;
+        }
+      }
+
+      if (!hasAnnotation) {
+        for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+          if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
             hasAnnotation = true;
             break;
           }
         }
-
-        if (!hasAnnotation) {
-          for (PsiClass aClass : psiClass.getAllInnerClasses()) {
-            if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
-              hasAnnotation = true;
-              break;
-            }
-          }
-        }
-        return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      });
-    }
-
-    return false;
+      }
+      return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 
   public static boolean isJUnit5(@NotNull PsiElement element) {
@@ -317,11 +319,15 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method, boolean includeCustom) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (isJUnit4TestAnnotated(method)) {
       return true;
     }
 
     return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? TEST5_ANNOTATIONS : TEST5_JUPITER_ANNOTATIONS);
+  }
+
+  public static boolean isJUnit4TestAnnotated(PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, CHECK_HIERARCHY) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method);
   }
 
 
@@ -479,6 +485,7 @@ public class JUnitUtil {
       this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
     }
 
+    @Override
     public boolean value(final PsiMethod method) {
       return framework != null
              ? framework.isTestMethod(method, myClass)

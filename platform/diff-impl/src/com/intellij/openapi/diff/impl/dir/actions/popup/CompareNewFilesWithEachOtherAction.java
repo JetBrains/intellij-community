@@ -7,6 +7,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model == null) return;
 
@@ -27,13 +28,13 @@ public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DirDiffTableModel model = SetOperationToBase.getModel(e);
     if (model != null) {
       Couple<DirDiffElementImpl> target = getSelectedSourceAndTarget(model);
       if (target != null) {
         e.getPresentation().setEnabled(true);
-        e.getPresentation().setDescription("Compare '" + target.first.getSourceName() + "' with '" + target.second.getTargetName() + "'");
+        e.getPresentation().setDescription("Compare '" + target.first.getSourcePresentableName() + "' with '" + target.second.getTargetPresentableName() + "'");
         return;
       }
     }

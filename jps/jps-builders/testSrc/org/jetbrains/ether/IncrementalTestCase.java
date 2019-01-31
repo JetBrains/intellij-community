@@ -16,7 +16,6 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.builders.BuildResult;
@@ -25,6 +24,7 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -43,7 +43,6 @@ import java.util.*;
 
 /**
  * @author db
- * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
@@ -115,7 +114,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (file.getName().endsWith(newSuffix)) {
           File targetFile = getTargetFile(file, newSuffix);
           FileUtil.copyContent(file, targetFile);
-          timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
+          timestamp[0] = Math.max(timestamp[0], FSOperations.lastModified(targetFile));
         }
       }
       catch (IOException e) {
@@ -188,7 +187,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (!reuseProjectId) {
           pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
         }
-        result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
+        result = doBuild(pd, createCompileScope(idx));
       }
 
       File logFile = new File(baseDir.getAbsolutePath() + ".log");
@@ -206,6 +205,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       checkMappingsAreSameAfterRebuild(result);
     }
     return result;
+  }
+
+  protected CompileScopeTestBuilder createCompileScope(int stage) {
+    return CompileScopeTestBuilder.make().allModules();
   }
 
   protected JpsSdk<JpsDummyElement> getOrCreateJdk() {

@@ -25,7 +25,7 @@ import java.awt.*;
 import java.util.List;
 
 class UnifiedContentPanel extends JPanel {
-  public UnifiedContentPanel(@NotNull List<JComponent> titles, @NotNull Editor editor) {
+  UnifiedContentPanel(@NotNull List<? extends JComponent> titles, @NotNull Editor editor) {
     super(new BorderLayout());
     assert titles.size() == 2;
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -99,9 +98,12 @@ class CompletionAssertions {
   static void assertInjectedOffsets(int hostStartOffset, PsiFile injected, DocumentWindow documentWindow) {
     assert documentWindow != null : "no DocumentWindow for an injected fragment";
 
-    TextRange host = InjectedLanguageManager.getInstance(injected.getProject()).injectedToHost(injected, injected.getTextRange());
-    assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
-    assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(injected.getProject());
+    TextRange injectedRange = injected.getTextRange();
+    int hostMinOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getStartOffset(), true);
+    int hostMaxOffset = injectedLanguageManager.injectedToHost(injected, injectedRange.getEndOffset(), false);
+    assert hostStartOffset >= hostMinOffset : "startOffset before injected";
+    assert hostStartOffset <= hostMaxOffset : "startOffset after injected";
   }
 
   static void assertHostInfo(PsiFile hostCopy, OffsetMap hostMap) {
@@ -157,11 +159,10 @@ class CompletionAssertions {
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
-    public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
+    WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR);
+            shouldAddCompletionChar(completionChar));
     }
 
     @Override

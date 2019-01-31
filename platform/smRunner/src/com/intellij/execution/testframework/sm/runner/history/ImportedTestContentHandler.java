@@ -29,21 +29,26 @@ public class ImportedTestContentHandler extends DefaultHandler {
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     if (TestResultsXmlFormatter.ELEM_SUITE.equals(qName)) {
-      final String suiteName = StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
-      myProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, 
-                                                           StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)),
-                                                           StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_METAINFO))));
+      final String suiteName = StringUtil.unescapeXmlEntities(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
+      String locationValue = attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION);
+      String metaValue = attributes.getValue(TestResultsXmlFormatter.ATTR_METAINFO);
+      TestSuiteStartedEvent startedEvent = new TestSuiteStartedEvent(suiteName,
+                                                                     locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
+                                                                     metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
+      myProcessor.onSuiteStarted(startedEvent);
       mySuites.push(suiteName);
     }
     else if (TestResultsXmlFormatter.ELEM_TEST.equals(qName)) {
-      final String name = StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
+      final String name = StringUtil.unescapeXmlEntities(attributes.getValue(TestResultsXmlFormatter.ATTR_NAME));
       myCurrentTest = name;
       myDuration = attributes.getValue(TestResultsXmlFormatter.ATTR_DURATION);
       myStatus = attributes.getValue(TestResultsXmlFormatter.ATTR_STATUS);
       final String isConfig = attributes.getValue(TestResultsXmlFormatter.ATTR_CONFIG);
-      final TestStartedEvent startedEvent = new TestStartedEvent(name, 
-                                                                 StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION)),
-                                                                 StringUtil.unescapeXml(attributes.getValue(TestResultsXmlFormatter.ATTR_METAINFO)));
+      String locationValue = attributes.getValue(TestResultsXmlFormatter.ATTR_LOCATION);
+      String metaValue = attributes.getValue(TestResultsXmlFormatter.ATTR_METAINFO);
+      final TestStartedEvent startedEvent = new TestStartedEvent(name,
+                                                                 locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
+                                                                 metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
       if (isConfig != null && Boolean.valueOf(isConfig)) {
         startedEvent.setConfig(true);
       }
@@ -66,7 +71,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
 
   @Override
   public void endElement(String uri, String localName, String qName) {
-    final String currentText = StringUtil.unescapeXml(currentValue.toString());
+    final String currentText = StringUtil.unescapeXmlEntities(currentValue.toString());
     final boolean isTestOutput = myCurrentTest == null || TestResultsXmlFormatter.STATUS_PASSED.equals(myStatus) || !myErrorOutput;
     if (isTestOutput) {
       currentValue.setLength(0);

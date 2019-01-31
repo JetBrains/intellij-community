@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 
@@ -29,7 +30,7 @@ public interface BuildListener extends EventListener{
    * Note: when parallel build is on, might be called from several simultaneously running threads
    * @param event
    */
-  void filesGenerated(FileGeneratedEvent event);
+  void filesGenerated(@NotNull FileGeneratedEvent event);
 
-  void filesDeleted(FileDeletedEvent event);
+  void filesDeleted(@NotNull FileDeletedEvent event);
 }

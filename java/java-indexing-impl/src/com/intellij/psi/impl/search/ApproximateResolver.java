@@ -83,7 +83,7 @@ public class ApproximateResolver {
   }
 
   @NotNull
-  public static List<PsiMethod> getPossibleMethods(@NotNull Set<PsiClass> symbols, @NotNull String name, int callArgCount) {
+  public static List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name, int callArgCount) {
     return JBIterable.from(symbols).
       flatMap(sym -> Arrays.asList(sym.findMethodsByName(name, true))).
       filter(m -> canHaveArgCount(m, callArgCount)).
@@ -91,7 +91,7 @@ public class ApproximateResolver {
   }
 
   @NotNull
-  public static List<PsiMember> getPossibleNonMethods(@NotNull Set<PsiClass> symbols, @NotNull String name) {
+  public static List<PsiMember> getPossibleNonMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name) {
     List<PsiMember> result = new ArrayList<>();
     for (PsiClass sym : symbols) {
       ContainerUtil.addIfNotNull(result, sym.findFieldByName(name, true));

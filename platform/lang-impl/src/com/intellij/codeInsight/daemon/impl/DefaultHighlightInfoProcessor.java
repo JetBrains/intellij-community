@@ -42,7 +42,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                      @Nullable Editor editor,
-                                                     @NotNull final List<HighlightInfo> infos,
+                                                     @NotNull final List<? extends HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
                                                      final int groupId) {
@@ -71,15 +71,21 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             highlightingPass.doApplyInformationToEditor();
         }
 
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
+  }
+
+  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
+    EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
+    markup.repaintTrafficLightIcon();
+    ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
                                                       @Nullable Editor editor,
-                                                      @NotNull final List<HighlightInfo> infos,
+                                                      @NotNull final List<? extends HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
     final PsiFile psiFile = session.getPsiFile();
@@ -97,23 +103,22 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
-
   }
 
   @Override
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
-                                               @Nullable List<HighlightInfo> infos) {
+                                               @Nullable List<? extends HighlightInfo> infos) {
     PsiFile psiFile = session.getPsiFile();
     killAbandonedHighlightsUnder(psiFile, elementRange, infos, session);
   }
 
   private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
                                                    @NotNull final TextRange range,
-                                                   @Nullable final List<HighlightInfo> infos,
+                                                   @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -164,10 +169,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         if (myeditor == null) {
           myeditor = PsiUtilBase.findEditor(file);
         }
-        if (myeditor == null || myeditor.isDisposed()) return;
-        EditorMarkupModelImpl markup = (EditorMarkupModelImpl)myeditor.getMarkupModel();
-        markup.repaintTrafficLightIcon();
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(myeditor);
+        if (myeditor != null && !myeditor.isDisposed()) {
+          repaintErrorStripeAndIcon(myeditor, myProject);
+        }
       }, 50, null);
     }
   }

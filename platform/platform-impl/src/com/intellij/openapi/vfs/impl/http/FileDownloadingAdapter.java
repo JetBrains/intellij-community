@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FileDownloadingAdapter implements FileDownloadingListener {
   @Override
-  public void fileDownloaded(final VirtualFile localFile) {
+  public void fileDownloaded(@NotNull final VirtualFile localFile) {
   }
 
   @Override

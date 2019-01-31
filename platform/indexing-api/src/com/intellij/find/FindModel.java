@@ -34,9 +34,14 @@ import java.util.regex.PatternSyntaxException;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
+  @Deprecated
   public static void initStringToFindNoMultiline(FindModel findModel, String s) {
+    initStringToFind(findModel, s);
+  }
+
+  public static void initStringToFind(FindModel findModel, String s) {
     if (!StringUtil.isEmpty(s)) {
-      if (!s.contains("\r") && !s.contains("\n")) {
+      if (findModel.isMultiline() || (!s.contains("\r") && !s.contains("\n"))) {
         findModel.setStringToFind(s);
       }
       else {
@@ -81,9 +86,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private boolean isMultipleFiles;
   private boolean isPromptOnReplace = true;
   private boolean isReplaceAll;
-  private boolean isOpenNewTab;
-  private boolean isOpenInNewTabEnabled;
-  private boolean isOpenNewTabVisible;
   private boolean isProjectScope = true;
   private boolean isFindAll;
   private boolean isFindAllEnabled;
@@ -103,10 +105,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void setMultiline(boolean multiline) {
     if (multiline != isMultiline) {
-      if (!multiline) {
-        initStringToFindNoMultiline(this, getStringToFind());
-      }
       isMultiline = multiline;
+      initStringToFind(this, getStringToFind());
       notifyObservers();
     }
   }
@@ -154,9 +154,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isMultipleFiles = model.isMultipleFiles;
     isPromptOnReplace = model.isPromptOnReplace;
     isReplaceAll = model.isReplaceAll;
-    isOpenNewTab = model.isOpenNewTab;
-    isOpenInNewTabEnabled = model.isOpenInNewTabEnabled;
-    isOpenNewTabVisible = model.isOpenNewTabVisible;
     isProjectScope = model.isProjectScope;
     directoryName = model.directoryName;
     isWithSubdirectories = model.isWithSubdirectories;
@@ -193,9 +190,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
     if (isMultiline != findModel.isMultiline) return false;
     if (isMultipleFiles != findModel.isMultipleFiles) return false;
-    if (isOpenInNewTabEnabled != findModel.isOpenInNewTabEnabled) return false;
-    if (isOpenNewTab != findModel.isOpenNewTab) return false;
-    if (isOpenNewTabVisible != findModel.isOpenNewTabVisible) return false;
     if (isPreserveCase != findModel.isPreserveCase) return false;
     if (isProjectScope != findModel.isProjectScope) return false;
     if (isPromptOnReplace != findModel.isPromptOnReplace) return false;
@@ -236,9 +230,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isMultipleFiles ? 1 : 0);
     result = 31 * result + (isPromptOnReplace ? 1 : 0);
     result = 31 * result + (isReplaceAll ? 1 : 0);
-    result = 31 * result + (isOpenNewTab ? 1 : 0);
-    result = 31 * result + (isOpenInNewTabEnabled ? 1 : 0);
-    result = 31 * result + (isOpenNewTabVisible ? 1 : 0);
     result = 31 * result + (isProjectScope ? 1 : 0);
     result = 31 * result + (isFindAll ? 1 : 0);
     result = 31 * result + (isFindAllEnabled ? 1 : 0);
@@ -525,66 +516,53 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * Gets the Open in New Tab flag.
    *
    * @return the value of the Open in New Tab flag.
+   * @deprecated and not used anymore
    */
   public boolean isOpenInNewTab() {
-    return isOpenNewTab;
+    return true;
   }
 
   /**
    * Sets the Open in New Tab flag.
    *
    * @param showInNewTab the value of the Open in New Tab flag.
+   * @deprecated and not used anymore
    */
   public void setOpenInNewTab(boolean showInNewTab) {
-    boolean changed = showInNewTab != isOpenNewTab;
-    isOpenNewTab = showInNewTab;
-    if (changed) {
-      notifyObservers();
-    }
   }
 
   /**
    * Gets the value indicating whether the Open in New Tab flag is enabled for the operation.
    *
    * @return true if Open in New Tab is enabled, false otherwise.
+   * @deprecated and not used anymore
    */
   public boolean isOpenInNewTabEnabled() {
-    return isOpenInNewTabEnabled;
+    return true;
   }
 
   /**
    * Sets the value indicating whether the Open in New Tab flag is enabled for the operation.
    *
    * @param showInNewTabEnabled true if Open in New Tab is enabled, false otherwise.
+   * @deprecated and not used anymore
    */
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
-    boolean changed = isOpenInNewTabEnabled != showInNewTabEnabled;
-    isOpenInNewTabEnabled = showInNewTabEnabled;
-    if (changed) {
-      notifyObservers();
-    }
   }
 
   /**
-   * Gets the value indicating whether the Open in New Tab flag is visible for the operation.
-   *
-   * @return true if Open in New Tab is visible, false otherwise.
+   * @deprecated and not used anymore
    */
+  @Deprecated
   public boolean isOpenInNewTabVisible() {
-    return isOpenNewTabVisible;
+    return true;
   }
 
   /**
-   * Sets the value indicating whether the Open in New Tab flag is enabled for the operation.
-   *
-   * @param showInNewTabVisible true if Open in New Tab is visible, false otherwise.
+   * @deprecated and not used anymore
    */
+  @Deprecated
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
-    boolean changed = showInNewTabVisible != isOpenNewTabVisible;
-    isOpenNewTabVisible = showInNewTabVisible;
-    if (changed) {
-      notifyObservers();
-    }
   }
 
   /**
@@ -685,9 +663,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
            "isMultipleFiles =" + isMultipleFiles + "\n" +
            "isPromptOnReplace =" + isPromptOnReplace + "\n" +
            "isReplaceAll =" + isReplaceAll + "\n" +
-           "isOpenNewTab =" + isOpenNewTab + "\n" +
-           "isOpenInNewTabEnabled =" + isOpenInNewTabEnabled + "\n" +
-           "isOpenNewTabVisible =" + isOpenNewTabVisible + "\n" +
            "isProjectScope =" + isProjectScope + "\n" +
            "directoryName =" + directoryName + "\n" +
            "isWithSubdirectories =" + isWithSubdirectories + "\n" +
@@ -779,7 +754,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * operation.
    *
    * @return true if the operation is a "Find All", false otherwise.
-   * @since 5.1
    */
   public boolean isFindAll() {
     return isFindAll;
@@ -790,7 +764,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * operation.
    *
    * @param findAll true if the operation is a "Find All", false otherwise.
-   * @since 5.1
    */
   public void setFindAll(final boolean findAll) {
     boolean changed = isFindAll != findAll;
@@ -804,7 +777,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * Gets the flag indicating whether "Find All" button is allowed for the operation.
    *
    * @return true if "Find All" is enabled, false otherwise.
-   * @since 5.1
    */
   public boolean isFindAllEnabled() {
     return isFindAllEnabled;
@@ -814,7 +786,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * Sets the flag indicating whether "Find All" button is allowed for the operation.
    *
    * @param findAllEnabled true if "Find All" is enabled, false otherwise.
-   * @since 5.1
    */
   public void setFindAllEnabled(final boolean findAllEnabled) {
     boolean changed = isFindAllEnabled != findAllEnabled;

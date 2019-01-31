@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.compiler;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A callback interface passed to ComplerManager methods. Provides notification similar to
  * {@link CompilationStatusListener}.
@@ -30,5 +32,5 @@ public interface CompileStatusNotification {
    * @param warnings warning count
    * @param compileContext context for the finished compilation
    */
-  void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext);
+  void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext);
 }

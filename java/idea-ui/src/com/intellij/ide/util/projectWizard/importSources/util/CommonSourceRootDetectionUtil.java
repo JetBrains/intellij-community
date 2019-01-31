@@ -108,14 +108,9 @@ public abstract class CommonSourceRootDetectionUtil<F> {
   };
 
   private static char[] loadFileTextSkippingBom(File file) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    InputStream stream = CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
-    Reader reader = new InputStreamReader(stream);
-    try {
+    try (InputStream stream = CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
+         Reader reader = new InputStreamReader(stream)) {
       return FileUtilRt.loadText(reader, (int)file.length());
-    }
-    finally {
-      reader.close();
     }
   }
 

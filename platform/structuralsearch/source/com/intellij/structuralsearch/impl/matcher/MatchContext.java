@@ -56,7 +56,18 @@ public class MatchContext {
   }
 
   public MatchResultImpl getPreviousResult() {
-    return previousResults.isEmpty() ? null : previousResults.peek();
+    if (previousResults.isEmpty()) {
+      return null;
+    }
+    else {
+      int index = previousResults.size() - 1;
+      MatchResultImpl result = previousResults.get(index); // may contain nulls
+      while (result == null && index > 0) {
+        index--;
+        result = previousResults.get(index);
+      }
+      return result;
+    }
   }
 
   public MatchResultImpl getResult() {

@@ -1,19 +1,4 @@
-/*
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -58,8 +43,8 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -250,7 +235,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     FileChooser.chooseFiles(descriptor, myProject, myTable, toSelect, this::doAddFiles);
   }
 
-  private void doAddFiles(@NotNull List<VirtualFile> files) {
+  private void doAddFiles(@NotNull List<? extends VirtualFile> files) {
     Set<VirtualFile> chosen = ContainerUtil.newHashSet(files);
     if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
@@ -454,8 +439,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
     if (maxValueWidth < 300) {
       myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
-      myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
     }
+    myTable.getColumnModel().getColumn(0).setMinWidth(metrics.stringWidth(myTable.getModel().getColumnName(0)) * 2);
     myTable.getColumnModel().getColumn(0).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
       public void acquireState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -569,7 +554,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     AnActionEvent event = AnActionEvent.createFromAnAction(changeAction, null, ActionPlaces.UNKNOWN, dataContext);
     changeAction.update(event);
     panel.revalidate();
-    if (!editor) myResetRunnables.add(() -> changeAction.update(null));
+    if (!editor) myResetRunnables.add(() -> changeAction.update(event));
     return panel;
   }
 
@@ -661,7 +646,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         updateText();
       }
 
@@ -674,6 +659,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       @Override
       protected ComboBoxButton createComboBoxButton(Presentation presentation) {
         return new ComboBoxButton(presentation) {
+          @Override
           protected JBPopup createPopup(Runnable onDispose) {
             JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
               value.set(o);
@@ -699,7 +685,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
                                            @Nullable T value,
                                            @Nullable Runnable onDispose,
                                            @NotNull DataContext dataContext,
-                                           @NotNull Consumer<T> onChosen,
+                                           @NotNull Consumer<? super T> onChosen,
                                            @NotNull Runnable onCommit) {
     return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
       onChosen.consume(chosen);
@@ -711,7 +697,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected final JBPopup createValueEditorActionListPopup(@Nullable Object target,
                                                            @Nullable Runnable onDispose,
                                                            @NotNull DataContext dataContext,
-                                                           @NotNull Consumer<T> onChosen) {
+                                                           @NotNull Consumer<? super T> onChosen) {
     ActionGroup group = createActionListGroup(target, onChosen);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, dataContext, false, false, false,
@@ -740,14 +726,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @NotNull
-  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<T> onChosen) {
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
     DefaultActionGroup group = new DefaultActionGroup();
     String clearText = getClearValueText(target);
     Function<T, AnAction> choseAction = t -> {
       String nullValue = StringUtil.notNullize(clearText);
       AnAction a = new DumbAwareAction(renderValue(t, nullValue), "", getActionListIcon(target, t)) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           onChosen.consume(t);
         }
       };
@@ -779,7 +765,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     final String[] columnNames;
     final List<Pair<Object, T>> data = ContainerUtil.newArrayList();
 
-    public MyModel(String... names) {
+    MyModel(String... names) {
       columnNames = names;
     }
 

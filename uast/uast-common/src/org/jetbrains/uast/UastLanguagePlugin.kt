@@ -104,6 +104,21 @@ interface UastLanguagePlugin {
    * Do not rely on this property too much, its value can be approximate in some cases.
    */
   fun isExpressionValueUsed(element: UExpression): Boolean
+
+  @JvmDefault
+  fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
+    when {
+      requiredTypes.isEmpty() -> convertElementWithParent(element, null)
+      requiredTypes.size == 1 -> convertElementWithParent(element, requiredTypes.single())
+      else -> convertElementWithParent(element, null)
+        ?.takeIf { result -> requiredTypes.any { it.isAssignableFrom(result.javaClass) } }
+    } as? T
+
+
+  @JvmDefault
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
+    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {

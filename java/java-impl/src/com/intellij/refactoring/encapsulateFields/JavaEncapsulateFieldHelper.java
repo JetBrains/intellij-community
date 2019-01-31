@@ -36,6 +36,7 @@ import java.util.List;
 public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(JavaEncapsulateFieldHelper.class);
 
+  @Override
   @Nullable
   public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
                                                @NotNull FieldDescriptor fieldDescriptor,
@@ -72,7 +73,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
 
   public static PsiModifierList createNewModifierList(EncapsulateFieldsDescriptor descriptor) {
     PsiModifierList newModifierList = null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(descriptor.getTargetClass().getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
     try {
       PsiField field = factory.createField("a", PsiType.INT);
       EncapsulateFieldsProcessor.setNewFieldVisibility(field, descriptor);
@@ -96,6 +97,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return false;
   }
 
+  @Override
   public boolean processUsage(@NotNull EncapsulateFieldUsageInfo usage,
                               @NotNull EncapsulateFieldsDescriptor descriptor,
                               PsiMethod setter,
@@ -108,7 +110,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     boolean processGet = descriptor.isToEncapsulateGet();
     boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
     if (!processGet && !processSet) return true;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(descriptor.getTargetClass().getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
 
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)element;
@@ -265,7 +267,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
         text = expr.getText().substring(0, referenceNameElement.getStartOffsetInParent()) + text;
       }
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     return (PsiMethodCallExpression)factory.createExpressionFromText(text, expr);
   }
 
@@ -274,7 +276,7 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
                                                                PsiMethod targetMethod,
                                                                PsiReferenceExpression context,
                                                                PsiClass aClass) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(targetMethod.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(targetMethod.getProject());
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
     if (resolved != targetMethod) {
       PsiClass containingClass;

@@ -40,6 +40,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
 
   private final JLabel myMoreLabel = new JLabel(MORE_LABEL_TEXT){
     private final Cursor myCursor = new Cursor(Cursor.HAND_CURSOR);
+    @Override
     public Cursor getCursor() {
       return myCursor;
     }
@@ -81,6 +82,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
     revalidate();
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     setSelected(isSelected, table);
     if (!(value instanceof Collection)) {

@@ -20,13 +20,12 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * The base abstract class for actions which create new file elements in IDE view
- *
- * @since 15.1
  */
 public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {
@@ -37,15 +36,13 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
+  public void update(@NotNull final AnActionEvent e) {
+    boolean enabled = isAvailable(e);
 
-    final boolean enabled = isAvailable(dataContext);
-
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
+    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabled(enabled);
   }
+
 
   @Override
   public boolean startInTransaction() {
@@ -55,6 +52,11 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   @Override
   public boolean isDumbAware() {
     return false;
+  }
+
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    return isAvailable(dataContext);
   }
 
   protected boolean isAvailable(final DataContext dataContext) {

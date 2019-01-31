@@ -21,8 +21,6 @@ import java.util.EventListener;
 /**
  * <p>Allows to receive notifications about changes in VCS configuration for the project.</p>
  * <p>Use the {@link ProjectLevelVcsManager#VCS_CONFIGURATION_CHANGED} MessageBus topic to subscribe.</p>
- *
- * @since 6.0
  */
 public interface VcsListener extends EventListener {
   /**

@@ -10,7 +10,8 @@ print 2
 0(1) element: null
 1(2) READ n
 2(3) element: Switch statement
-3(6) element: RETURN statement
+3(7) element: RETURN statement
 4(5) READ print
-5(6) element: Call expression MAYBE_RETURN
-6() element: null
+5(6) ARGUMENTS element: Call expression
+6(7) element: Call expression MAYBE_RETURN
+7() element: null

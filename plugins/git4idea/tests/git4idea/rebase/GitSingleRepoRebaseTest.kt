@@ -17,7 +17,6 @@ package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -31,7 +30,6 @@ import git4idea.test.*
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -494,8 +492,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
 
   dialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
-    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
-
     assertNoNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
@@ -511,7 +507,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     dialogManager.onMessage { Messages.CANCEL }
-    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
     assertNoRebaseInProgress(repo)

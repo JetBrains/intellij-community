@@ -35,12 +35,12 @@ import java.util.List;
 class UndoApplyPatchDialog extends DialogWrapper {
 
 
-  private final List<FilePath> myFailedFilePaths;
+  private final List<? extends FilePath> myFailedFilePaths;
   private final Project myProject;
   private final boolean myShouldInformAboutBinaries;
 
   UndoApplyPatchDialog(@NotNull Project project,
-                       @NotNull List<FilePath> filePaths,
+                       @NotNull List<? extends FilePath> filePaths,
                        boolean shouldInformAboutBinaries) {
     super(project, true);
     myProject = project;

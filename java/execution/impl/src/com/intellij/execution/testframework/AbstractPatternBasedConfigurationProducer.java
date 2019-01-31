@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -26,13 +12,23 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> implements Cloneable{
+public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> implements Cloneable {
+  /**
+   * @deprecated Override {@link #getConfigurationFactory()}.
+   */
+  @Deprecated
   public AbstractPatternBasedConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
+
+  protected AbstractPatternBasedConfigurationProducer() {
+    super();
+  }
+
   public boolean isConfiguredFromContext(ConfigurationContext context, Set<String> patterns) {
     final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final DataContext dataContext = context.getDataContext();
@@ -43,8 +39,17 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTe
     if (locationElements == null) {
       collectContextElements(dataContext, true, false, classes, new PsiElementProcessor.CollectElements<>());
     }
-    if (Comparing.equal(classes, patterns)) {
-      if (patterns.size() == 1) {
+    int patternsSize = patterns.size();
+    if (patternsSize == classes.size()) {
+      final Iterator<String> patternsIterator = patterns.iterator();
+      final Iterator<String> classesIterator = classes.iterator();
+      while (patternsIterator.hasNext() && classesIterator.hasNext()) {
+        if (!Comparing.equal(patternsIterator.next(), classesIterator.next())) {
+          return false;
+        }
+      }
+
+      if (patternsSize == 1) {
         final String pattern = patterns.iterator().next();
         if (!pattern.contains(",")) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(CommonDataKeys.PSI_ELEMENT.getData(dataContext), PsiMethod.class);

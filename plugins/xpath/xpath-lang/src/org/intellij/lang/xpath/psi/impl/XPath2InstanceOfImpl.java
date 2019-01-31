@@ -38,6 +38,7 @@ public class XPath2InstanceOfImpl extends XPath2ElementImpl implements XPath2Ins
     return XPath2Type.BOOLEAN;
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2InstanceOf(this);
   }

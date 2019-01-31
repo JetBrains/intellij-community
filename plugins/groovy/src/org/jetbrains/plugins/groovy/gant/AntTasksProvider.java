@@ -54,12 +54,9 @@ public class AntTasksProvider {
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Object ourLock = new Object();
   public static final ParameterizedCachedValueProvider<Map<List<URL>,AntClassLoader>,Project> PROVIDER =
-    new ParameterizedCachedValueProvider<Map<List<URL>, AntClassLoader>, Project>() {
-      @Override
-      public CachedValueProvider.Result<Map<List<URL>, AntClassLoader>> compute(Project project) {
-        final Map<List<URL>, AntClassLoader> map = ContainerUtil.createSoftValueMap();
-        return CachedValueProvider.Result.create(map, ProjectRootManager.getInstance(project));
-      }
+    project -> {
+      final Map<List<URL>, AntClassLoader> map = ContainerUtil.createSoftValueMap();
+      return CachedValueProvider.Result.create(map, ProjectRootManager.getInstance(project));
     };
   public static final Key<ParameterizedCachedValue<Map<List<URL>,AntClassLoader>,Project>> KEY =
     Key.create("ANtClassLoader");
@@ -127,7 +124,7 @@ public class AntTasksProvider {
   private static class AntClassLoader extends UrlClassLoader {
     private final Future<Map<String, Class>> myFuture;
 
-    public AntClassLoader(ArrayList<URL> urls) {
+    AntClassLoader(ArrayList<URL> urls) {
       super(getBuilder(urls));
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {

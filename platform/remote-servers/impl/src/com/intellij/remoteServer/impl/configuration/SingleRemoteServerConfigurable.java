@@ -199,7 +199,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   private class ConnectionTester {
     private final RemoteServerConnectionTester myTester;
 
-    public ConnectionTester() {
+    ConnectionTester() {
       myTester = new RemoteServerConnectionTester(myInnerServer);
     }
 

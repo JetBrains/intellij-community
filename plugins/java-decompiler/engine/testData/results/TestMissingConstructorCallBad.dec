@@ -10,7 +10,6 @@ public class TestMissingConstructorCallBad {
       try {
          new TestMissingConstructorCallBad();
       } catch (Throwable var2) {// 37
-         ;
       }
 
    }// 39
@@ -28,7 +27,7 @@ class 'pkg/TestMissingConstructorCallBad' {
 
    method 'main ([Ljava/lang/String;)V' {
       b      11
-      c      15
+      c      14
    }
 }
 
@@ -40,7 +39,7 @@ Lines mapping:
 20 <-> 6
 21 <-> 7
 37 <-> 12
-39 <-> 16
+39 <-> 15
 Not mapped:
 18
 28

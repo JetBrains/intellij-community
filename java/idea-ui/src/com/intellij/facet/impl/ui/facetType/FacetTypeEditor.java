@@ -139,7 +139,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private static class AllFacetsConfigurable implements Configurable {
     private final MultipleFacetSettingsEditor myEditor;
 
-    public AllFacetsConfigurable(final MultipleFacetSettingsEditor editor) {
+    AllFacetsConfigurable(final MultipleFacetSettingsEditor editor) {
       myEditor = editor;
     }
 

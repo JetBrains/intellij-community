@@ -78,6 +78,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   @Attribute("basedir")
   public abstract GenericAttributeValue<String> getbasedir();
 
+  @Override
   @NotNull
   public final Iterator<String> getNamesIterator() {
     final String prefix = getPropertyPrefixValue();
@@ -86,20 +87,24 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
       return delegate;
     }
     return new Iterator<String>() {
+      @Override
       public boolean hasNext() {
         return delegate.hasNext();
       }
 
+      @Override
       public String next() {
         return prefix + delegate.next();
       }
 
+      @Override
       public void remove() {
         delegate.remove();
       }
     };
   }
 
+  @Override
   public PsiElement getNavigationElement(final String propertyName) {
     DomTarget domTarget = DomTarget.getTarget(this);
     if (domTarget == null) {
@@ -114,7 +119,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         }
       }
     }
-    
+
     if (domTarget != null) {
       final PsiElement psi = PomService.convertToPsi(domTarget);
       if (psi != null) {
@@ -141,6 +146,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return null;
   }
 
+  @Override
   @Nullable
   public final String getPropertyValue(String propertyName) {
     final String prefix = getPropertyPrefixValue();

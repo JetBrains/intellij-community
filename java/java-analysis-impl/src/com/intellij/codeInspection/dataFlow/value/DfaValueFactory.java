@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,7 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
+    myBinOpFactory = new DfaBinOpValue.Factory(this);
   }
 
   public boolean canTrustFieldInitializer(PsiField field) {
@@ -81,7 +83,15 @@ public class DfaValueFactory {
       }
     }
     DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
-      .with(DfaFactType.CAN_BE_NULL, NullabilityUtil.toBoolean(nullability));
+      .with(DfaFactType.NULLABILITY, DfaNullability.fromNullability(nullability));
+    return getFactFactory().createValue(facts);
+  }
+
+  @NotNull
+  public DfaValue createExactTypeValue(@Nullable PsiType type) {
+    if (type == null) return DfaUnknownValue.getInstance();
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     return getFactFactory().createValue(facts);
   }
 
@@ -121,13 +131,14 @@ public class DfaValueFactory {
   }
 
   @Nullable
+  @Contract("null -> null")
   public DfaValue createValue(PsiExpression psiExpression) {
     return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }
 
   @NotNull
   public DfaConstValue getInt(int value) {
-    return getConstFactory().createFromValue(value, PsiType.INT, null);
+    return getConstFactory().createFromValue(value, PsiType.INT);
   }
 
   @Nullable
@@ -160,7 +171,7 @@ public class DfaValueFactory {
     }
     if (dfaLeft instanceof DfaFactMapValue &&
         dfaRight == getConstFactory().getNull() &&
-        Boolean.FALSE.equals(((DfaFactMapValue)dfaLeft).get(DfaFactType.CAN_BE_NULL))) {
+        DfaNullability.isNotNull(((DfaFactMapValue)dfaLeft).getFacts())) {
       if (relationType == RelationType.EQ) {
         return getConstFactory().getFalse();
       }
@@ -230,6 +241,7 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
+  private final DfaBinOpValue.Factory myBinOpFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaFactMapValue.Factory myFactFactory;
@@ -262,17 +274,22 @@ public class DfaValueFactory {
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
   @NotNull
-  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions) {
+  public DfaBinOpValue.Factory getBinOpFactory() {
+    return myBinOpFactory;
+  }
+
+  @NotNull
+  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);
       if (expressionValue == null) {
         expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
-      loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
+      loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;
     }
-    return loopElement == null ? DfaUnknownValue.getInstance() : loopElement;
+    return loopElement == null ? DfaUnknownValue.getInstance() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {
@@ -322,14 +339,15 @@ public class DfaValueFactory {
 
     FieldChecker(PsiElement context) {
       PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      myClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      PsiClass contextClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      myClass = contextClass;
       if (method == null || myClass == null) {
         myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
         return;
       }
       // Indirect instantiation via other class is still possible, but hopefully unlikely
-      ClassInitializationInfo info = CachedValuesManager.getCachedValue(myClass, () -> CachedValueProvider.Result
-        .create(new ClassInitializationInfo(myClass), PsiModificationTracker.MODIFICATION_COUNT));
+      ClassInitializationInfo info = CachedValuesManager.getCachedValue(contextClass, () -> CachedValueProvider.Result
+        .create(new ClassInitializationInfo(contextClass), PsiModificationTracker.MODIFICATION_COUNT));
       myCanInstantiateItself = info.myCanInstantiateItself;
       if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
         myTrustDirectFieldInitializers = true;

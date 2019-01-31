@@ -170,6 +170,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiImportList";
   }

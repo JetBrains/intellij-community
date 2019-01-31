@@ -2,5 +2,6 @@
 package org.w3c.dom;
 
 // Workaround for IDEA-193340
+@SuppressWarnings("unused")
 public interface ElementTraversal extends org.apache.batik.w3c.dom.ElementTraversal {
 }

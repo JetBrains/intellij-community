@@ -41,6 +41,7 @@ public final class EmptyPanelTest extends TestCase {
 
     // add component 
     final JButton button = new JButton();
+    SpansTest.setDefaults(button);
     button.setPreferredSize(new Dimension(100, 40));
     panel.add(button,
               new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_GROW,

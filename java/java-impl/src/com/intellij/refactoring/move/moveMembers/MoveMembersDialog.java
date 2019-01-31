@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
@@ -23,7 +9,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -48,7 +33,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,18 +46,18 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOptions {
-  @NonNls private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
-  private MyMemberInfoModel myMemberInfoModel;
+  private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
 
   private final Project myProject;
   private final PsiClass mySourceClass;
   private final String mySourceClassName;
   private final List<MemberInfo> myMemberInfos;
   private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
-  private MemberSelectionTable myTable;
   private final MoveCallback myMoveCallback;
 
-  JavaVisibilityPanel myVisibilityPanel;
+  private MyMemberInfoModel myMemberInfoModel;
+  private MemberSelectionTable myTable;
+  private JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox myIntroduceEnumConstants = new JCheckBox(RefactoringBundle.message("move.enum.constant.cb"), true);
 
   @Override
@@ -182,7 +167,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
     myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
         validateButtons();
       }
@@ -386,8 +371,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.MOVE_MEMBERS);
+  protected String getHelpId() {
+    return HelpID.MOVE_MEMBERS;
   }
 
   private class ChooseClassAction implements ActionListener {
@@ -421,7 +406,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     PsiClass myTargetClass;
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 

@@ -11,9 +11,6 @@
   </xi:include>
 
   <application-components>
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>-->
-    <!--</component>-->
     <component>
       <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
     </component>
@@ -79,7 +76,7 @@
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
-    <extensionPoint name="xml.html5SchemaProvider" interface="com.intellij.xml.Html5SchemaProvider"/>
+    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter"/>
@@ -104,6 +101,7 @@
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
 
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension"/>
+    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -380,7 +378,7 @@
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
 
-    <moveLeftRightHandler language="XML" 
+    <moveLeftRightHandler language="XML"
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
 
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
@@ -438,6 +436,10 @@
                      bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.deprecated"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDeprecatedElementInspection"/>
 
     <localInspection language="XML" shortName="CheckEmptyScriptTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.check.empty.tag"
@@ -515,6 +517,22 @@
     </intentionAction>
     <intentionAction>
       <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
@@ -556,6 +574,9 @@
     <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
 
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
+
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>
@@ -569,6 +590,7 @@
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
     <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
+    <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
 
     <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
     <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>

@@ -219,7 +219,7 @@ public class HgStatusCommand {
       char statusChar = line.charAt(STATUS_INDEX);
       HgFileStatusEnum status = HgFileStatusEnum.parse(statusChar);
       if (status == null) {
-        LOG.error("Unknown status [" + statusChar + "] in line [" + line + "]" + "\n with arguments " + args);
+        LOG.warn("Unknown status [" + statusChar + "] in line [" + line + "]" + "\n with arguments " + args);
         continue;
       }
       File ioFile = new File(repo.getPath(), line.substring(2));
@@ -238,10 +238,18 @@ public class HgStatusCommand {
 
   @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+    return getFiles(repo, files != null ? ObjectsConvertor.vf2fp(files): null);
+  }
+
+  @NotNull
+  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     Collection<VirtualFile> resultFiles = new HashSet<>();
-    Set<HgChange> change = executeInCurrentThread(repo, files != null ? ObjectsConvertor.vf2fp(files) : null);
+    Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {
-      resultFiles.add(hgChange.afterFile().toFilePath().getVirtualFile());
+      VirtualFile file = hgChange.afterFile().toFilePath().getVirtualFile();
+      if (file != null) {
+        resultFiles.add(file);
+      }
     }
     return resultFiles;
   }

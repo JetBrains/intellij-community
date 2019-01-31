@@ -174,7 +174,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
   }
 
   private fun createEndPositionFunction(visibleRowIndex: Int, up: Boolean): (GraphEdge) -> Int? {
-    if (visibleRowIndex < 0 || visibleRowIndex >= linearGraph.nodesCount()) return { _ -> null }
+    if (visibleRowIndex < 0 || visibleRowIndex >= linearGraph.nodesCount()) return { null }
 
     val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
 

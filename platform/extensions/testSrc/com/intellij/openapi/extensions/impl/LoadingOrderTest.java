@@ -3,7 +3,6 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.SortingException;
-import org.jdom.Element;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -87,7 +86,7 @@ public class LoadingOrderTest {
   private static StringBuffer buildSequence(LoadingOrder.Orderable[] array) {
     StringBuffer sequence = new StringBuffer();
     for (LoadingOrder.Orderable adapter : array) {
-      sequence.append(((MyElement)adapter.getDescribingElement()).getID());
+      sequence.append(((MyOrderable)adapter).getID());
     }
     return sequence;
   }
@@ -120,10 +119,10 @@ public class LoadingOrderTest {
       fail("Should have failed");
     }
     catch (SortingException e) {
-      Element[] conflictingElements = e.getConflictingElements();
+      LoadingOrder.Orderable[] conflictingElements = e.getConflictingElements();
       assertEquals(2, conflictingElements.length);
-      assertEquals("bad", ((MyElement)conflictingElements[0]).getID());
-      assertEquals("bad", ((MyElement)conflictingElements[1]).getID());
+      assertEquals("bad", ((MyOrderable)conflictingElements[0]).getID());
+      assertEquals("bad", ((MyOrderable)conflictingElements[1]).getID());
     }
   }
 
@@ -160,33 +159,32 @@ public class LoadingOrderTest {
   }
 
   private static LoadingOrder.Orderable createElement(final LoadingOrder order, final String idString, final String elementId) {
-    return new LoadingOrder.Orderable() {
-      @Override
-      public String getOrderId() {
-        return idString;
-      }
-
-      @Override
-      public LoadingOrder getOrder() {
-        return order;
-      }
-
-      @Override
-      public Element getDescribingElement() {
-        return new MyElement(elementId);
-      }
-    };
+    return new MyOrderable(order, idString, elementId);
   }
 
-  private static class MyElement extends Element {
-    private final String myID;
+  private static class MyOrderable implements LoadingOrder.Orderable {
+    private final LoadingOrder myOrder;
+    private final String myOrderId;
+    private final String myId;
 
-    public MyElement(String ID) {
-      myID = ID;
+    MyOrderable(LoadingOrder order, String orderId, String id) {
+      myOrder = order;
+      myOrderId = orderId;
+      myId = id;
+    }
+
+    @Override
+    public String getOrderId() {
+      return myOrderId;
+    }
+
+    @Override
+    public LoadingOrder getOrder() {
+      return myOrder;
     }
 
     public String getID() {
-      return myID;
+      return myId;
     }
   }
 }

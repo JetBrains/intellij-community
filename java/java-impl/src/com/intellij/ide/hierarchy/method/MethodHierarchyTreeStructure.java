@@ -20,6 +20,7 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtil;
@@ -33,12 +34,14 @@ import java.util.List;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private final SmartPsiElementPointer myMethod;
+  private final String myScopeType;
 
   /**
    * Should be called in read action
    */
-  public MethodHierarchyTreeStructure(final Project project, final PsiMethod method) {
+  public MethodHierarchyTreeStructure(@NotNull Project project, @NotNull PsiMethod method, String type) {
     super(project, null);
+    myScopeType = type;
     myBaseDescriptor = buildHierarchyElement(project, method);
     ((MethodHierarchyNodeDescriptor)myBaseDescriptor).setTreeStructure(this);
     myMethod = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(method);
@@ -48,7 +51,6 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiMethod method) {
     final PsiClass suitableBaseClass = findSuitableBaseClass(method);
 
-    HierarchyNodeDescriptor descriptor = null;
     final ArrayList<PsiClass> superClasses = createSuperClasses(suitableBaseClass);
 
     if (!suitableBaseClass.equals(method.getContainingClass())) {
@@ -67,6 +69,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       }
     }
 
+    HierarchyNodeDescriptor descriptor = null;
     for(int i = superClasses.size() - 1; i >= 0; i--){
       final PsiClass superClass = superClasses.get(i);
       final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, superClass, false, this);
@@ -182,12 +185,13 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return descriptors.toArray(new HierarchyNodeDescriptor[0]);
   }
 
-  private static Collection<PsiClass> getSubclasses(final PsiClass psiClass) {
+  private Collection<PsiClass> getSubclasses(final PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass || psiClass.hasModifierProperty(PsiModifier.FINAL)) {
       return Collections.emptyList();
     }
 
-    return ClassInheritorsSearch.search(psiClass, false).findAll();
+    final SearchScope searchScope = getSearchScope(myScopeType, psiClass);
+    return ClassInheritorsSearch.search(psiClass, searchScope, false).findAll();
   }
 
   private boolean shouldHideClass(final PsiClass psiClass) {

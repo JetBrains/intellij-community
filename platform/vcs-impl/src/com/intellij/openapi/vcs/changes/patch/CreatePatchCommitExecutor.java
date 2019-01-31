@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
@@ -36,7 +22,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,18 +77,11 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     myChangeListManager.registerCommitExecutor(this);
   }
 
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "CreatePatchCommitExecutor";
-  }
-
   private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
     private CommitContext myCommitContext;
 
-    public CreatePatchCommitSession() {
+    CreatePatchCommitSession() {
     }
 
     @Override
@@ -149,7 +127,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       try {
         if (myPanel.isToClipboard()) {
           String base = myPanel.getBaseDirName();
-          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch());
+          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch(), true);
           writeAsPatchToClipboard(myProject, patches, base, myCommitContext);
           VcsNotifier.getInstance(myProject).notifySuccess("Patch copied to clipboard");
         }
@@ -165,7 +143,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       }
     }
 
-    private void validateAndWritePatchToFile(@NotNull Collection<Change> changes) throws VcsException, IOException {
+    private void validateAndWritePatchToFile(@NotNull Collection<? extends Change> changes) throws VcsException, IOException {
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (!checkIsFileValid(file)) return;
@@ -179,7 +157,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       final boolean reversePatch = myPanel.isReversePatch();
 
       String baseDirName = myPanel.getBaseDirName();
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch);
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch, true);
       PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(), true);
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);

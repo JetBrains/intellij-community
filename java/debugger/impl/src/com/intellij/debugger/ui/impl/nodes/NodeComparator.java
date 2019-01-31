@@ -28,6 +28,7 @@ import java.util.Comparator;
  * Compares given DebuggerTreeTest by name
  */
 public class NodeComparator implements Comparator<DebuggerTreeNode> {
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public int compare(final DebuggerTreeNode node1, final DebuggerTreeNode node2) {
     final String name1 = node1.getDescriptor().getName();

@@ -15,15 +15,16 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -31,6 +32,17 @@ import java.util.List;
  */
 class EqClass extends SortedIntSet {
   private final DfaValueFactory myFactory;
+
+  /**
+   * A comparator which allows to select a "canonical" variable of several variables (which is minimal of them).
+   * Variables with shorter qualifier chain are preferred to be canonical.
+   */
+  static final Comparator<DfaVariableValue> CANONICAL_VARIABLE_COMPARATOR =
+    Comparator.nullsFirst((v1, v2) -> {
+      int result = EqClass.CANONICAL_VARIABLE_COMPARATOR.compare(v1.getQualifier(), v2.getQualifier());
+      if (result != 0) return result;
+      return Integer.compare(v1.getID(), v2.getID());
+    });
 
   EqClass(DfaValueFactory factory) {
     myFactory = factory;
@@ -57,21 +69,36 @@ class EqClass extends SortedIntSet {
 
   List<DfaVariableValue> getVariables(boolean unwrap) {
     List<DfaVariableValue> vars = ContainerUtil.newArrayList();
-    for (DfaValue value : getMemberValues()) {
-      if (unwrap) {
-        value = DfaMemoryStateImpl.unwrap(value);
-      }
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
       if (value instanceof DfaVariableValue) {
         vars.add((DfaVariableValue)value);
       }
-    }
+      else if (unwrap && value instanceof DfaBoxedValue) {
+        vars.add(((DfaBoxedValue)value).getWrappedValue());
+      }
+      return true;
+    });
     return vars;
+  }
+
+  /**
+   * @return the "canonical" variable for this class (according to {@link #CANONICAL_VARIABLE_COMPARATOR}) or
+   * null if the class does not contain variables.
+   */
+  @Nullable
+  DfaVariableValue getCanonicalVariable() {
+    if (size() == 1) {
+      return ObjectUtils.tryCast(myFactory.getValue(get(0)), DfaVariableValue.class);
+    }
+    return IntStreamEx.range(size()).mapToObj(idx -> myFactory.getValue(get(idx)))
+      .select(DfaVariableValue.class).min(CANONICAL_VARIABLE_COMPARATOR).orElse(null);
   }
 
   List<DfaValue> getMemberValues() {
     final List<DfaValue> result = new ArrayList<>(size());
-    forEach(c1 -> {
-      DfaValue value = myFactory.getValue(c1);
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
       result.add(value);
       return true;
     });
@@ -79,29 +106,22 @@ class EqClass extends SortedIntSet {
   }
 
   @Nullable
-  DfaValue findConstant(boolean wrapped) {
-    for (DfaValue value : getMemberValues()) {
-      if (value instanceof DfaConstValue || wrapped && DfaMemoryStateImpl.unwrap(value) instanceof DfaConstValue) {
-        return value;
+  DfaConstValue findConstant() {
+    Ref<DfaConstValue> result = new Ref<>();
+    forEach(id -> {
+      DfaValue value = myFactory.getValue(id);
+      if (value instanceof DfaConstValue) {
+        result.set((DfaConstValue)value);
+        return false;
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static DfaConstValue asConstantValue(DfaValue value) {
-    value = DfaMemoryStateImpl.unwrap(value);
-    return value instanceof DfaConstValue ? (DfaConstValue)value : null;
+      return true;
+    });
+    return result.get();
   }
 
   boolean containsConstantsOnly() {
-    for (int i = 0; i < size(); i++) {
-      if (asConstantValue(myFactory.getValue(get(i))) == null) {
-        return false;
-      }
-    }
-
-    return true;
+    int size = size();
+    return size <= 1 && (size == 0 || myFactory.getValue(get(0)) instanceof DfaConstValue);
   }
 
 }

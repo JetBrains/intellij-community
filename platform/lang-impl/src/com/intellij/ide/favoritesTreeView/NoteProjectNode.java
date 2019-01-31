@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class NoteProjectNode extends ProjectViewNodeWithChildrenList<NoteNode> {
-  public NoteProjectNode(Project project, NoteNode node, ViewSettings viewSettings) {
+  public NoteProjectNode(Project project, @NotNull NoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);
   }
 
@@ -38,7 +38,7 @@ public class NoteProjectNode extends ProjectViewNodeWithChildrenList<NoteNode> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     presentation.setPresentableText(getValue().getText());
     // todo define own color
     presentation.setForcedTextForeground(FileStatus.SWITCHED.getColor());

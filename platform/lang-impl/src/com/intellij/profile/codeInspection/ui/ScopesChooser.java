@@ -30,13 +30,14 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
   public static final String TITLE = "Select a Scope to Change Its Settings";
 
   private final List<Descriptor> myDefaultDescriptors;
+  @NotNull
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final Set<String> myExcludedScopeNames;
 
   public ScopesChooser(final List<Descriptor> defaultDescriptors,
-                       final InspectionProfileImpl inspectionProfile,
-                       final Project project,
+                       @NotNull InspectionProfileImpl inspectionProfile,
+                       @NotNull Project project,
                        final String[] excludedScopeNames) {
     myDefaultDescriptors = defaultDescriptors;
     myInspectionProfile = inspectionProfile;
@@ -72,7 +73,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     group.addSeparator();
     group.add(new DumbAwareAction("Edit Scopes Order...") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final ScopesOrderDialog dlg = new ScopesOrderDialog(component, myInspectionProfile, myProject);
         if (dlg.showAndGet()) {
           onScopesOrderChanged();
@@ -99,7 +100,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
       }
       group.add(new DumbAwareAction(scopeName) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {
             InspectionToolWrapper wrapper = defaultDescriptor.getToolWrapper().createCopy();
             wrapper.getTool().readSettings(Descriptor.createConfigElement(defaultDescriptor.getToolWrapper()));

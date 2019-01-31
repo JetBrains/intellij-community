@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +16,14 @@ public interface ProjectManagerListener extends EventListener {
    *
    * @param project opening project
    */
-  default void projectOpened(Project project) {
+  default void projectOpened(@NotNull Project project) {
   }
 
   /**
    * @deprecated Please use {@link VetoableProjectManagerListener}
    */
-  default boolean canCloseProject(Project project) {
+  @Deprecated
+  default boolean canCloseProject(@NotNull Project project) {
     return true;
   }
 
@@ -45,13 +32,13 @@ public interface ProjectManagerListener extends EventListener {
    *
    * @param project closing project
    */
-  default void projectClosed(Project project) {
+  default void projectClosed(@NotNull Project project) {
   }
 
   /**
    * Invoked on project close before any closing activities
    */
-  default void projectClosing(Project project) {
+  default void projectClosing(@NotNull Project project) {
   }
 
   default void projectClosingBeforeSave(@NotNull Project project) {

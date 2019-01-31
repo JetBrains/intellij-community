@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang.inject;
 
@@ -22,7 +8,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -108,7 +93,7 @@ public class InjectorUtils {
   }
 
   public static void registerInjection(@Nullable Language language,
-                                       @NotNull List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                       @NotNull List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                        @NotNull PsiFile containingFile,
                                        @NotNull MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
@@ -129,7 +114,7 @@ public class InjectorUtils {
     boolean injectionStarted = false;
     for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> t : list) {
       PsiLanguageInjectionHost host = t.first;
-      if (host.getContainingFile() != containingFile) continue;
+      if (host.getContainingFile() != containingFile || !host.isValidHost()) continue;
 
       TextRange textRange = t.third;
       InjectedLanguage injectedLanguage = t.second;
@@ -154,7 +139,7 @@ public class InjectorUtils {
   private static final Map<String, LanguageInjectionSupport> ourSupports;
   static {
     ourSupports = new LinkedHashMap<>();
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+    for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
       ourSupports.put(support.getId(), support);
     }
   }
@@ -249,6 +234,7 @@ public class InjectorUtils {
   /**
    * @deprecated use {@link InjectorUtils#registerSupport(LanguageInjectionSupport, boolean, PsiElement, Language)} instead
    */
+  @Deprecated
   public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
     LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
     putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
@@ -264,6 +250,7 @@ public class InjectorUtils {
   /**
    * @deprecated use {@link InjectorUtils#putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
+  @Deprecated
   public static <T> void putInjectedFileUserData(@NotNull MultiHostRegistrar registrar, @NotNull Key<T> key, T value) {
     InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
@@ -281,12 +268,12 @@ public class InjectorUtils {
   }
 
   @Nullable
-  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
+  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<? super PsiElement> causeRef) {
     return findCommentInjectionData(context, true, causeRef);
   }
 
   @Nullable
-  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<PsiElement> causeRef) {
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
     if (file == null) return null;
@@ -336,7 +323,7 @@ public class InjectorUtils {
   @Nullable
   public static BaseInjection findCommentInjection(@NotNull PsiElement context,
                                                    @NotNull String supportId,
-                                                   @Nullable Ref<PsiElement> causeRef) {
+                                                   @Nullable Ref<? super PsiElement> causeRef) {
     CommentInjectionData data = findCommentInjectionData(context, causeRef);
     if (data == null) return null;
     BaseInjection injection = new BaseInjection(supportId);
@@ -424,7 +411,7 @@ public class InjectorUtils {
       myMap = Collections.unmodifiableMap(map);
       myDisplayName = displayName;
     }
-    
+
     @NotNull
     public String getPrefix() {
       return ObjectUtils.notNull(myMap.get("prefix"), "");

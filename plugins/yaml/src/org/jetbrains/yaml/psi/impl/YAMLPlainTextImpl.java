@@ -94,7 +94,6 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
     }
 
     final char firstChar = input.charAt(0);
-    //noinspection StatementWithEmptyBody
     if ((firstChar == '?' || firstChar == ':' || firstChar == '-') && input.length() > 1 && YAMLGrammarCharUtil.isPlainSafe(input.charAt(1))) {
       // then it's OK
     }
@@ -107,7 +106,6 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
       if (c == '\n' && !isSurroundedByNoSpace(input, i)) {
         throw new IllegalArgumentException("Could not form line with leading/trailing whitespace");
       }
-      //noinspection StatementWithEmptyBody
       if (YAMLGrammarCharUtil.isSpaceLike(c)
         || (YAMLGrammarCharUtil.isPlainSafe(c) && c != ':' && c != '#')
         || (c == '#' && YAMLGrammarCharUtil.isNonSpaceChar(input.charAt(i - 1)))

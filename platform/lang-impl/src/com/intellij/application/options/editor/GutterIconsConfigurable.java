@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SeparatorWithText;
@@ -50,8 +52,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -124,8 +126,13 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     myDescriptors.addAll(options);
     */
     myDescriptors.sort((o1, o2) -> {
-      if (pluginDescriptorMap.get(o1) != pluginDescriptorMap.get(o2)) return 0;
-      return Comparing.compare(o1.getName(), o2.getName());
+      final PluginDescriptor descriptor1 = pluginDescriptorMap.get(o1);
+      final PluginDescriptor descriptor2 = pluginDescriptorMap.get(o2);
+      final int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(descriptor1),
+                                                     getPluginDisplayName(descriptor2));
+      if (byPlugin != 0) return byPlugin;
+
+      return StringUtil.naturalCompare(o1.getName(), o2.getName());
     });
     PluginDescriptor current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
@@ -161,7 +168,9 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
-    EditorOptionsPanel.restartDaemons();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC).changesApplied();
   }
 
@@ -180,6 +189,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     for (ChangeListener listener : myShowGutterIconsJBCheckBox.getChangeListeners()) {
       myShowGutterIconsJBCheckBox.removeChangeListener(listener);
     }
+  }
+
+  private static String getPluginDisplayName(PluginDescriptor pluginDescriptor) {
+    final String name = ((IdeaPluginDescriptor)pluginDescriptor).getName();
+    return "IDEA CORE".equals(name) ? "Common" : name;
   }
 
   private void createUIComponents() {
@@ -206,8 +220,8 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
         PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
         if (pluginDescriptor instanceof IdeaPluginDescriptor) {
           SeparatorWithText separator = new SeparatorWithText();
-          String name = ((IdeaPluginDescriptor)pluginDescriptor).getName();
-          separator.setCaption("IDEA CORE".equals(name) ? "Common" : name);
+          String name = getPluginDisplayName(pluginDescriptor);
+          separator.setCaption(name);
           panel.add(separator, BorderLayout.NORTH);
         }
 
@@ -224,7 +238,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     myList.setBorder(BorderFactory.createEmptyBorder());
     new ListSpeedSearch<>(myList, (Function<JCheckBox, String>)JCheckBox::getText);
   }
-  
+
   @NotNull
   @Override
   public String getId() {
@@ -246,7 +260,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(null, GutterIconsConfigurable.class);
     }
   }

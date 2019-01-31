@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -22,6 +8,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +37,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           final PsiType type = myExpression.getType();
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
         }
-        else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType) && !JavaGenericsUtil.isReifiableType(myT)) {
+        else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType, session) && !JavaGenericsUtil.isReifiableType(myT)) {
           session.setErased();
         }
         return assignmentCompatible;
@@ -96,6 +83,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       return true;
     }
 
+    if (myExpression instanceof PsiSwitchExpression) {
+      PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> constraints.add(new ExpressionCompatibilityConstraint(expression,myT)));
+      return true;
+    }
+
     if (myExpression instanceof PsiCall) {
       final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT, true);
       if (callSession == null) {
@@ -103,7 +95,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
-        session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
+        session.propagateVariables(callSession);
         for (Pair<InferenceVariable[], PsiClassType> pair : callSession.myIncorporationPhase.getCaptures()) {
           session.myIncorporationPhase.addCapture(pair.first, pair.second);
         }
@@ -163,7 +155,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (typeParams != null) {
         PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
         final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
-        callSession.propagateVariables(session.getInferenceVariables(), session.getRestoreNameSubstitution());
+        callSession.propagateVariables(session);
         if (method != null) {
           final PsiExpression[] args = argumentList.getExpressions();
           final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -180,7 +172,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType, expression);
           }
           if (callSession.repeatInferencePhases()) {
-            if (callSession.isErased() && 
+            if (callSession.isErased() &&
                 !JavaGenericsUtil.isReifiableType(targetType) && session.getInferenceVariable(targetType) == null) {
               session.setErased();
             }
@@ -242,9 +234,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     return new ExpressionCompatibilityConstraint(expression, type);
   }
 
+  @Override
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
-                                            PsiType returnType, 
+                                            PsiType returnType,
                                             Set<InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
       if (!PsiType.VOID.equals(returnType)) {

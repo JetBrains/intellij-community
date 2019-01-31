@@ -17,10 +17,10 @@ package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -81,13 +81,13 @@ public class AttributesDefaults {
   @Nullable
   public TextRange getRangeFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
-    return valueAndRange == null ? null : valueAndRange.second;
+    return Pair.getSecond(valueAndRange);
   }
 
   @Nullable
   public String getDefaultValueFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
-    return valueAndRange == null ? null : valueAndRange.first;
+    return Pair.getFirst(valueAndRange);
   }
 
   public boolean isFixedName() {

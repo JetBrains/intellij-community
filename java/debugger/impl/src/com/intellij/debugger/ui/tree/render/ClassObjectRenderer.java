@@ -41,7 +41,7 @@ import java.util.Collections;
 class ClassObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ClassObjectRenderer.class);
 
-  public ClassObjectRenderer(final NodeRendererSettings rendererSettings) {
+  ClassObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Class", null, null);
     setClassName("java.lang.Class");
     setEnabled(true);

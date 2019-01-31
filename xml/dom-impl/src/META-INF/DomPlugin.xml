@@ -2,6 +2,10 @@
   <extensionPoints>
     <extensionPoint name="dom.fileDescription"
                     interface="com.intellij.util.xml.DomFileDescription"/>
+    <extensionPoint name="dom.fileMetaData"
+                    beanClass="com.intellij.util.xml.impl.DomFileMetaData">
+      <with attribute="implementation" implements="com.intellij.util.xml.DomFileDescription"/>
+    </extensionPoint>
 
     <extensionPoint name="dom.implementation"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">

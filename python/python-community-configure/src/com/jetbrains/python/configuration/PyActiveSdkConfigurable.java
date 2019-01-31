@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -44,7 +45,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +129,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkCombo.setPreferredSize(preferredSize);
     notificationsArea.hide();
     myDetailsButton = new FixedSizeButton();
-    myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
+    myDetailsButton.setIcon(AllIcons.General.GearPlain);
     //noinspection SuspiciousNameCombination
     myDetailsButton.setPreferredSize(new Dimension(preferredSize.height, preferredSize.height));
 
@@ -214,7 +214,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                               ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
                                               : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
 
-    PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
+    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
                               myDetailsButton.getLocationOnScreen(), null, myAddSdkCallback);
   }
 
@@ -253,7 +253,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkSettingsWereModified = false;
     final Sdk selectedSdk = getSelectedSdk();
 
-    if (myInitialSdkSet.contains(selectedSdk) && selectedSdk != null) {
+    if (selectedSdk != null && myInitialSdkSet.contains(selectedSdk)) {
       PythonSdkUpdater.updateOrShowError(selectedSdk, null, myProject, null);
     }
 
@@ -306,7 +306,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     final List<Sdk> visibleSdks = StreamEx
       .of(allPythonSdks)
-      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherModule(sdk, myModule))
       .toList();
     final LinkedHashSet<Sdk> virtualEnvironments = StreamEx
       .of(visibleSdks)
@@ -362,17 +362,17 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private class MySdkModelListener implements SdkModel.Listener {
 
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       updateSdkList(true);
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       updateSdkList(true);
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateSdkList(true);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -27,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,20 +51,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testConflictingInnerClassName() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final boolean oldOption = settings.INSERT_INNER_CLASS_IMPORTS;
-    try {
-      settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doTest(new Pass<AbstractInplaceIntroducer>() {
-         @Override
-         public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-           type("constants");
-         }
-       });
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = oldOption;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+       @Override
+       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+         type("constants");
+       }
+     });
   }
 
   public void testInsideInjectedString() {
@@ -272,7 +251,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final AbstractInplaceIntroducer introducer = invokeRefactoring();
@@ -299,7 +278,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final AbstractInplaceIntroducer introducer = invokeRefactoring();
@@ -324,7 +303,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       MyIntroduceHandler handler = createIntroduceHandler();

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.ProfileChangeAdapter
@@ -25,7 +26,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.getAttributeBooleanValue
-import com.intellij.util.loadElement
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
 import com.intellij.util.xmlb.XmlSerializer
@@ -40,11 +40,9 @@ import java.util.*
 import java.util.function.Function
 
 private const val VERSION = "1.0"
-private const val SCOPE = "scope"
-private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
-private val defaultSchemeDigest = loadElement("""<component name="InspectionProjectProfileManager">
+private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
   </profile>
@@ -85,7 +83,7 @@ class ProjectInspectionProfileManager(val project: Project,
   override val schemeManager: SchemeManager<InspectionProfileImpl> = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: Function<in String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
       profile.isProjectLevel = true

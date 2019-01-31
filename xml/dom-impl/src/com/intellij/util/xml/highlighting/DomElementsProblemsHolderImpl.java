@@ -97,11 +97,6 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   }
 
   @Override
-  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-    return getProblems(domElement);
-  }
-
-  @Override
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
@@ -112,7 +107,6 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return ContainerUtil.concat(getProblemsMap(domElement).values());
   }
 
-  @Override
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren,

@@ -129,8 +129,8 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
-                                      final CompletionData completionData){
+  void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
+                               final CompletionData completionData){
     for (final CompletionVariantItem ce : myCompletionsList) {
       if(ce.myCompletion instanceof ElementFilter){
         final ElementFilter filter = (ElementFilter)ce.myCompletion;
@@ -178,7 +178,7 @@ public class CompletionVariant {
     public Object myCompletion;
     public TailType myTailType;
 
-    public CompletionVariantItem(Object completion, TailType tailtype){
+    CompletionVariantItem(Object completion, TailType tailtype){
       myCompletion = completion;
       myTailType = tailtype;
     }

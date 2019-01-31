@@ -1,4 +1,4 @@
-// "Replace '(FooBar)foo' with 'foobar'" "true"
+// "Replace '(FooBar)(foo)' with 'foobar'" "true"
 
 class FooBar {
   public int baz;
@@ -6,6 +6,6 @@ class FooBar {
   int method(Object foo) {
     foobar = null;
     FooBar foobar = (FooBar)foo;
-    return ((FooBar<caret>)foo).baz;
+    return ((FooBar<caret>)(foo)).baz;
   }
 }

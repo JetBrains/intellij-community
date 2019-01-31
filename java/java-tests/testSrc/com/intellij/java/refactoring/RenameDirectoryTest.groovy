@@ -22,9 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
+
 /**
  * @author peter
  */
+@CompileStatic
 class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
 
   void testRenameSrcRootWithTextOccurrences() {

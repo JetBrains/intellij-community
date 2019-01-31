@@ -23,6 +23,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipOutputStream;
 
+/** @noinspection CallToPrintStackTrace*/
 public abstract class ForkedByModuleSplitter {
   protected final ForkedDebuggerHelper myForkedDebuggerHelper = new ForkedDebuggerHelper();
   protected final String myWorkingDirsPath;
@@ -96,50 +97,30 @@ public abstract class ForkedByModuleSplitter {
     builder.setWorkingDir(workingDir);
 
     final Process exec = builder.createProcess();
-    final boolean[] stopped = new boolean[1];
-
-    new Thread(createInputReader(exec.getErrorStream(), System.err, stopped), "Read forked error output").start();
-    new Thread(createInputReader(exec.getInputStream(), System.out, stopped), "Read forked output").start();
-    final int i = exec.waitFor();
-    stopped[0] = true;
-    return i;
+    new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start();
+    new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start();
+    return exec.waitFor();
   }
 
-  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream, final boolean[] stopped) {
+  private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
     return new Runnable() {
-      char[] buf = new char[8192];
-
       public void run() {
-        final InputStreamReader inputReader;
         try {
-          inputReader = new InputStreamReader(inputStream, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e) {
-          return;
-        }
-
-        try {
-          while (true) {
-            if (stopped[0]) break;
-
-            int n;
-            try {
-              while (inputReader.ready() && (n = inputReader.read(buf)) > 0) {
-                outputStream.print(new String(buf, 0, n));
-              }
-            }
-            catch (IOException e) {
-              e.printStackTrace();
+          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+          try {
+            while (true) {
+              String line = inputReader.readLine();
+              if (line == null) break;
+              outputStream.println(line);
             }
           }
-        }
-        finally {
-          try {
+          finally {
             inputReader.close();
           }
-          catch (IOException e) {
-            e.printStackTrace();
-          }
+        }
+        catch (UnsupportedEncodingException ignored) { }
+        catch (IOException e) {
+          e.printStackTrace();
         }
       }
     };
@@ -169,7 +150,8 @@ public abstract class ForkedByModuleSplitter {
             classNames.add(className);
           }
 
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result);
+          String filters = perDirReader.readLine();
+          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result, filters != null ? filters : "");
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
@@ -190,7 +172,9 @@ public abstract class ForkedByModuleSplitter {
                                             String packageName,
                                             String workingDir,
                                             String classpath,
-                                            String repeatCount, int result) throws Exception;
+                                            String repeatCount, 
+                                            int result, 
+                                            String filters) throws Exception;
 
   protected abstract String getStarterName();
 

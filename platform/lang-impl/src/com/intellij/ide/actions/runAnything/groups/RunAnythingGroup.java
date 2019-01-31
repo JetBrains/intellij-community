@@ -73,7 +73,7 @@ public abstract class RunAnythingGroup {
   /**
    * Shifts {@link #myMoreIndex} for all groups starting from {@code baseIndex} by {@code shift}.
    */
-  private static void shiftMoreIndex(Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
+  private static void shiftMoreIndex(Collection<? extends RunAnythingGroup> groups, int baseIndex, int shift) {
     groups.stream().filter(runAnythingGroup -> runAnythingGroup.myMoreIndex >= baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex += shift);
   }
@@ -101,7 +101,7 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myMoreIndex} of all groups.
    */
-  public static void clearMoreIndex(@NotNull Collection<RunAnythingGroup> groups) {
+  public static void clearMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups) {
     groups.forEach(runAnythingGroup -> runAnythingGroup.myMoreIndex = -1);
   }
 
@@ -115,7 +115,7 @@ public abstract class RunAnythingGroup {
   /**
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
-  public static int[] getAllIndexes(@NotNull Collection<RunAnythingGroup> groups) {
+  public static int[] getAllIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
     TIntArrayList list = new TIntArrayList();
     for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myTitleIndex);
@@ -131,14 +131,14 @@ public abstract class RunAnythingGroup {
    * Finds matched by {@link #myMoreIndex} group.
    */
   @Nullable
-  public static RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<RunAnythingGroup> groups, int moreIndex) {
+  public static RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int moreIndex) {
     return groups.stream().filter(runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex).findFirst().orElse(null);
   }
 
   /**
    * Returns {@code true} if {@code index} is a {@link #myMoreIndex} of some group, {@code false} otherwise
    */
-  public static boolean isMoreIndex(@NotNull Collection<RunAnythingGroup> groups, int index) {
+  public static boolean isMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int index) {
     return groups.stream().anyMatch(runAnythingGroup -> runAnythingGroup.myMoreIndex == index);
   }
 
@@ -166,7 +166,7 @@ public abstract class RunAnythingGroup {
    * @param pattern             input search string
    * @param cancellationChecker runnable that should throw a {@code ProcessCancelledException} if 'load more' process was cancelled
    */
-  public final synchronized void collectItems(DataContext dataContext,
+  public final synchronized void collectItems(@NotNull DataContext dataContext,
                                               @NotNull DefaultListModel model,
                                               @NotNull String pattern,
                                               @NotNull Runnable cancellationChecker) {

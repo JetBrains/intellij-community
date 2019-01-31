@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -18,11 +18,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.util.Arrays;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
@@ -34,7 +36,7 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     actionPerformedImpl(event.getDataContext());
   }
 
@@ -57,7 +59,8 @@ public class OptimizeImportsAction extends AnAction {
       dir = file.getContainingDirectory();
     }
     else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(
+        Arrays.asList(files));
       if (!operationStatus.hasReadonlyFiles()) {
         new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
       }
@@ -144,7 +147,7 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     if (!LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
       event.getPresentation().setVisible(false);
       return;
@@ -216,19 +219,19 @@ public class OptimizeImportsAction extends AnAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myProcessVcsChangedFilesInTests;
     }
-    
+
     OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, text, hasChanges);
     if (!dialog.showAndGet()) {
       return null;
     }
-    
+
     return dialog.isProcessOnlyVcsChangedFiles();
   }
-  
+
   @TestOnly
   protected static void setProcessVcsChangedFilesInTests(boolean value) {
     myProcessVcsChangedFilesInTests = value;
-  }  
+  }
 
   private static class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;

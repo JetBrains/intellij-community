@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -44,6 +45,9 @@ import java.io.File;
     try {
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
       super.tearDown();
     }
@@ -73,6 +77,7 @@ import java.io.File;
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @NotNull
   @Override
   protected String getTestDirectoryName() {
     return getTestName(true);

@@ -38,7 +38,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 public class FindInEditorTest extends LightCodeInsightTestCase {
-
   private LivePreviewController myLivePreviewController;
   private FindModel myFindModel;
 
@@ -58,10 +57,20 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myFindModel = null;
-    myOutputStream = null;
-    myLivePreviewController = null;
-    super.tearDown();
+    try {
+      myFindModel = null;
+      myOutputStream = null;
+      if (myLivePreviewController != null) {
+        myLivePreviewController.dispose();
+        myLivePreviewController = null;
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -83,7 +92,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myFindModel.setStringToFind("a");
     checkResults();
     myFindModel.setStringToFind("a2");
-    assertTrue(!myEditor.getSelectionModel().hasSelection());
+    assertFalse(myEditor.getSelectionModel().hasSelection());
   }
 
   public void testEmacsLikeFallback() {
@@ -109,7 +118,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -128,7 +138,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -153,7 +164,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -170,7 +182,8 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myLivePreviewController.performReplace();
       checkResults();
-    } finally {
+    }
+    finally {
       value.resetToDefault();
     }
   }
@@ -195,7 +208,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     configureFromText("abc\n\n\n\n\nabc\n");
     EditorTestUtil.setEditorVisibleSize(myEditor, 100, 3);
     executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
-    
+
     EditorTestUtil.testUndoInEditor(myEditor, () -> {
       initFind();
       myFindModel.setReplaceState(true);

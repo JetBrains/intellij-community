@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link RuntimeExceptionWithAttachments#RuntimeExceptionWithAttachments(String, String, Attachment...)} (to be removed in IDEA 2020) */
+@Deprecated
 @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
 public class LogEventException extends RuntimeException implements ExceptionWithAttachments {
   private final IdeaLoggingEvent myLogMessage;

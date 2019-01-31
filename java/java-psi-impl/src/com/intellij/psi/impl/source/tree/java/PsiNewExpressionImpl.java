@@ -31,7 +31,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
         type = factory.createPrimitiveTypeFromText(child.getText()).annotate(TypeAnnotationProvider.Static.create(copy));
         if (stop) return type;
@@ -87,7 +86,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
@@ -190,19 +189,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) {
+      public PsiElement handleElementRename(@NotNull String newElementName) {
         return null;
       }
 
       @Override
       public PsiElement bindToElement(@NotNull PsiElement element) {
         return null;
-      }
-
-      @Override
-      @NotNull
-      public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       @Override
@@ -396,6 +389,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public String toString() {
     return "PsiNewExpression:" + getText();
   }

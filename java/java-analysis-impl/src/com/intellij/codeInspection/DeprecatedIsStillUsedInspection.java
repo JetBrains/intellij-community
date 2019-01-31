@@ -1,11 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,17 +57,11 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
       return false;
     }
 
-    return !ReferencesSearch.search(element, searchScope, false).forEach(reference -> {
-      PsiElement referenceElement = reference.getElement();
-      return isInsideDeprecated(referenceElement);
-    });
-  }
-
-  private static boolean isInsideDeprecated(PsiElement element) {
-    PsiElement parent = element;
-    while ((parent = PsiTreeUtil.getParentOfType(parent, PsiDocCommentOwner.class, true)) != null) {
-      if (((PsiDocCommentOwner)parent).isDeprecated()) return true;
-    }
-    return false;
+    return ReferencesSearch.search(element, searchScope, false)
+      .anyMatch(reference -> {
+        PsiElement referenceElement = reference.getElement();
+        return !DeprecationInspectionBase.isElementInsideDeprecated(referenceElement) && 
+               !PsiUtil.isInsideJavadocComment(referenceElement);
+      });
   }
 }

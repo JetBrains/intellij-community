@@ -31,11 +31,11 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import os
-import shlex
 import sys
 
 from _pydev_bundle import pydev_imports
 from pydevd_file_utils import get_fullname, rPath
+from _pydevd_bundle.pydevd_utils import save_main_module
 
 
 # The following classes and functions are mainly intended to be used from
@@ -108,7 +108,7 @@ def _set_globals_function(get_globals):
     _get_globals_callback = get_globals
 
 
-def _get_globals():
+def _get_interpreter_globals():
     """Return current Python interpreter globals namespace"""
     if _get_globals_callback is not None:
         return _get_globals_callback()
@@ -155,11 +155,13 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             __umd__.run(verbose=verbose)
 
     if global_vars is None:
-        global_vars = _get_globals()
-    if '__file__' in global_vars:
-        old_file = global_vars['__file__']
-    else:
-        old_file = None
+        m = save_main_module(filename, 'pydev_umd')
+        global_vars = m.__dict__
+        try:
+            global_vars['__builtins__'] = __builtins__
+        except NameError:
+            pass  # Not there on Jython...
+
     local_vars = global_vars
 
     module_name = None
@@ -179,7 +181,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
 
     sys.argv = [filename]
     if args is not None:
-        for arg in shlex.split(args):
+        for arg in args:
             sys.argv.append(arg)
 
     if wdir is not None:
@@ -190,26 +192,25 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             pass
         os.chdir(wdir)
 
-    if not is_module:
-        pydev_imports.execfile(filename, global_vars, local_vars)  # execute the script
-    else:
-        # treat ':' as a seperator between module and entry point function
-        # if there is no entry point we run we same as with -m switch. Otherwise we perform
-        # an import and execute the entry point
-        if entry_point_fn:
-            mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=global_vars, locals=local_vars)
-            func = getattr(mod, entry_point_fn)
-            func()
+    try:
+        if not is_module:
+            pydev_imports.execfile(filename, global_vars, local_vars)  # execute the script
         else:
-            # Run with the -m switch
-            import runpy
-            if hasattr(runpy, '_run_module_as_main'):
-                runpy._run_module_as_main(module_name)
+            # treat ':' as a seperator between module and entry point function
+            # if there is no entry point we run we same as with -m switch. Otherwise we perform
+            # an import and execute the entry point
+            if entry_point_fn:
+                mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=global_vars, locals=local_vars)
+                func = getattr(mod, entry_point_fn)
+                func()
             else:
-                runpy.run_module(module_name)
-
-    sys.argv = ['']
-    if old_file is None:
-        del global_vars['__file__']
-    else:
-        global_vars['__file__'] = old_file
+                # Run with the -m switch
+                import runpy
+                if hasattr(runpy, '_run_module_as_main'):
+                    runpy._run_module_as_main(module_name)
+                else:
+                    runpy.run_module(module_name)
+    finally:
+        sys.argv = ['']
+        interpreter_globals = _get_interpreter_globals()
+        interpreter_globals.update(global_vars)

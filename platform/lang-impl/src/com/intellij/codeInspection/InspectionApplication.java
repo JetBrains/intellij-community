@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -31,12 +32,14 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * @author max
@@ -75,6 +78,8 @@ public class InspectionApplication {
       logError("Profile to inspect with is not defined");
       printHelp();
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.runReadAction(() -> {
@@ -139,7 +144,8 @@ public class InspectionApplication {
 
       final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-      im.createNewGlobalContext(true).setExternalProfile(inspectionProfile);
+      GlobalInspectionContextImpl context = im.createNewGlobalContext();
+      context.setExternalProfile(inspectionProfile);
       im.setProfile(inspectionProfile.getName());
 
       final AnalysisScope scope;
@@ -198,7 +204,7 @@ public class InspectionApplication {
           gracefulExit();
           return;
         }
-        im.createNewGlobalContext(true).launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
         logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
         if (!myErrorCodeRequired) {
           closeProject();
@@ -239,6 +245,11 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
+      File resultsDataFile = new File(resultsDataPath);
+      if (!resultsDataFile.exists() && !resultsDataFile.mkdirs()) {
+        logError("Unable to create output directory " + resultsDataPath);
+        gracefulExit();
+      }
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
                           myRunWithEditorSettings ? null : inspectionProfile.getName(),
@@ -247,7 +258,7 @@ public class InspectionApplication {
       // convert report
       if (reportConverter != null) {
         try {
-          reportConverter.convert(resultsDataPath, myOutPath, im.createNewGlobalContext(true).getTools(), inspectionsResults);
+          reportConverter.convert(resultsDataPath, myOutPath, context.getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
           logError("\n" + e.getMessage());
@@ -378,19 +389,19 @@ public class InspectionApplication {
       }
 
       @Override
-      public void successfullyConverted(final File backupDir) {
+      public void successfullyConverted(@NotNull final File backupDir) {
         logMessageLn(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
                                                   backupDir.getAbsolutePath()));
       }
 
       @Override
-      public void error(final String message) {
+      public void error(@NotNull final String message) {
         logError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
       }
 
       @Override
-      public void cannotWriteToFiles(final List<File> readonlyFiles) {
+      public void cannotWriteToFiles(@NotNull final List<? extends File> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (File file : readonlyFiles) {
           files.append(file.getAbsolutePath()).append("; ");

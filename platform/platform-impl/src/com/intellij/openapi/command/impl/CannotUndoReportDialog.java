@@ -26,7 +26,7 @@ public class CannotUndoReportDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myProblemMessageLabel;
 
-  public CannotUndoReportDialog(Project project, @Nls String problemText, Collection<DocumentReference> files) {
+  public CannotUndoReportDialog(Project project, @Nls String problemText, Collection<? extends DocumentReference> files) {
     super(project, false);
 
     DefaultListModel<String> model = new DefaultListModel<>();
@@ -54,11 +54,13 @@ public class CannotUndoReportDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;

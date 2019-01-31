@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.dashboard.TreeContent;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -35,11 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,6 +103,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
 
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
+  private final Splitter mySplitter;
 
   /**
    * Left for compatibility with 172 stream, will be removed after 173.
@@ -137,26 +138,21 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     getMainPanel().add(createTopToolbar(actionGroups.getSecondaryToolbarID()), BorderLayout.NORTH);
     getMainPanel().add(createMainToolbar(actionGroups.getMainToolbarID()), BorderLayout.WEST);
 
-    Splitter splitter = new Splitter(false, 0.3f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    mySplitter = new Splitter(false, 0.3f);
+    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
     myMessagePanel = new ServersToolWindowMessagePanel();
     myMessagePanel.setEmptyText(EMPTY_SELECTION_MESSAGE);
     myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel.getComponent());
-    splitter.setSecondComponent(myPropertiesPanel);
-    getMainPanel().add(splitter, BorderLayout.CENTER);
+    mySplitter.setSecondComponent(myPropertiesPanel);
+    getMainPanel().add(mySplitter, BorderLayout.CENTER);
 
     setupBuilder(project);
 
     contribution.setupTree(myProject, myTree, myBuilder);
 
-    myTree.addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        onSelectionChanged();
-      }
-    });
+    myTree.addTreeSelectionListener(e -> onSelectionChanged());
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
@@ -203,6 +199,14 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+
+    restoreSplitterProportion();
+    myPropertiesPanel.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        saveSplitterProportion();
+      }
+    });
   }
 
   private void onSelectionChanged() {
@@ -343,21 +347,33 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
 
-    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return ServersToolWindowContent.this;
-        }
-        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return myContribution.getContextHelpId();
-        }
-        return myContribution.getData(dataId, ServersToolWindowContent.this);
+    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (KEY.getName().equals(dataId)) {
+        return ServersToolWindowContent.this;
       }
+      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return myContribution.getContextHelpId();
+      }
+      return myContribution.getData(dataId, ServersToolWindowContent.this);
     });
     actionToolBar.setTargetComponent(myTree);
     return actionToolBar.getComponent();
+  }
+
+  private void saveSplitterProportion() {
+    SplitterProportionsData data = new SplitterProportionsDataImpl();
+    data.saveSplitterProportions(mySplitter);
+    data.externalizeToDimensionService(getDimensionServiceKey());
+  }
+
+  private void restoreSplitterProportion() {
+    SplitterProportionsData data = new SplitterProportionsDataImpl();
+    data.externalizeFromDimensionService(getDimensionServiceKey());
+    data.restoreSplitterProportions(mySplitter);
+  }
+
+  private String getDimensionServiceKey() {
+    return getClass().getName() + ":" + myContribution.getClass().getName();
   }
 
   public JPanel getMainPanel() {
@@ -379,15 +395,13 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     return myProject;
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection) {
-    myBuilder.select(ServersTreeStructure.RemoteServerNode.class, new TreeVisitor<ServersTreeStructure.RemoteServerNode>() {
-      @Override
-      public boolean visit(@NotNull ServersTreeStructure.RemoteServerNode node) {
-        return isServerNodeMatch(node, connection);
-      }
-    }, null, false);
+    myBuilder.select(ServersTreeStructure.RemoteServerNode.class,
+                     (TreeVisitor<ServersTreeStructure.RemoteServerNode>)node -> isServerNodeMatch(node, connection), null, false);
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
     myBuilder.getUi().queueUpdate(connection).doWhenDone(
       () -> myBuilder.<ServersTreeStructure.DeploymentNodeImpl>select(ServersTreeStructure.DeploymentNodeImpl.class,
@@ -395,6 +409,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
                                                                       null, false));
   }
 
+  @Override
   public void select(@NotNull final ServerConnection<?> connection,
                      @NotNull final String deploymentName,
                      @NotNull final String logName) {

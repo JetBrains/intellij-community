@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -57,8 +58,8 @@ public class ParametrizedDuplicates {
 
   private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
                                  @NotNull ExtractMethodProcessor originalProcessor) {
-    pattern = getFilteredElements(pattern);
-    PsiElement firstElement = pattern.length != 0 ? pattern[0] : null;
+    PsiElement[] filteredPattern = getFilteredElements(pattern);
+    PsiElement firstElement = filteredPattern.length != 0 ? filteredPattern[0] : null;
     if (firstElement instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
       myElements = wrapWithCodeBlock(copy, originalProcessor.getInputVariables());
@@ -79,8 +80,10 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor) {
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.PARAMETRIZED);
+  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
+                                                      @NotNull DuplicatesFinder.MatchType matchType,
+                                                      @Nullable Set<TextRange> textRanges) {
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType, textRanges);
     if (finder == null) {
       return null;
     }
@@ -111,7 +114,7 @@ public class ParametrizedDuplicates {
     }
 
     // As folded parameters don't work along with extracted parameters we need to apply the finder again to actually fold the parameters
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.FOLDED);
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.FOLDED, null);
     if (finder == null) {
       return Collections.emptyMap();
     }
@@ -190,7 +193,8 @@ public class ParametrizedDuplicates {
 
   @Nullable
   private static DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
-                                                         @NotNull DuplicatesFinder.MatchType matchType) {
+                                                         @NotNull DuplicatesFinder.MatchType matchType,
+                                                         @Nullable Set<TextRange> textRanges) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
     if (elements.length == 0) {
       return null;
@@ -201,7 +205,7 @@ public class ParametrizedDuplicates {
                                     ? processor.myInputVariables.copyWithoutFolding() : processor.myInputVariables;
     ReturnValue returnValue = processor.myOutputVariable != null ? new VariableReturnValue(processor.myOutputVariable) : null;
     return new DuplicatesFinder(elements, inputVariables, returnValue,
-                                Collections.emptyList(), matchType, effectivelyLocal);
+                                Collections.emptyList(), matchType, effectivelyLocal, textRanges);
   }
 
   @NotNull
@@ -254,7 +258,7 @@ public class ParametrizedDuplicates {
     Map<Match, Map<PsiExpression, PsiExpression>> expressionsMapping = new HashMap<>();
     for (ClusterOfUsages usages : myUsagesList) {
       for (Match match : myMatches) {
-        ExtractedParameter parameter = usages.myParameters.get(match);
+        ExtractedParameter parameter = usages.getParameter(match);
         if (parameter == null) {
           Map<PsiExpression, PsiExpression> expressions =
             expressionsMapping.computeIfAbsent(match, unused -> {
@@ -273,8 +277,34 @@ public class ParametrizedDuplicates {
       }
     }
 
+    mergeDuplicateUsages(myUsagesList, myMatches);
     myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
     return true;
+  }
+
+  private static void mergeDuplicateUsages(@NotNull List<ClusterOfUsages> usagesList, @NotNull List<Match> matches) {
+    Set<ClusterOfUsages> duplicateUsages = new THashSet<>();
+    for (int i = 0; i < usagesList.size(); i++) {
+      ClusterOfUsages usages = usagesList.get(i);
+      if (duplicateUsages.contains(usages)) continue;
+
+      for (int j = i + 1; j < usagesList.size(); j++) {
+        ClusterOfUsages otherUsages = usagesList.get(j);
+
+        if (usages.isEquivalent(otherUsages, matches)) {
+          for (Match match : matches) {
+            ExtractedParameter parameter = usages.getParameter(match);
+            ExtractedParameter otherParameter = otherUsages.getParameter(match);
+            if (parameter != null && otherParameter != null) {
+              parameter.addUsages(otherParameter.myPattern);
+              match.getExtractedParameters().remove(otherParameter);
+            }
+          }
+          duplicateUsages.add(otherUsages);
+        }
+      }
+    }
+    usagesList.removeAll(duplicateUsages);
   }
 
   private static List<Match> filterNestedSubexpressions(List<Match> matches) {
@@ -315,8 +345,8 @@ public class ParametrizedDuplicates {
     List<ExtractedParameter> parameters = match.getExtractedParameters();
     for (ExtractedParameter parameter : parameters) {
       ClusterOfUsages usages = usagesMap.get(parameter.myPattern.getUsage());
-      if (usages != null && !usages.isEquivalent(parameter) ||
-          usages == null && ClusterOfUsages.isPresent(usagesMap, parameter)) {
+      if (usages != null && !usages.arePatternsEquivalent(parameter) ||
+          usages == null && ClusterOfUsages.isPatternPresent(usagesMap, parameter)) {
         return null;
       }
       if (usages == null) {
@@ -414,6 +444,10 @@ public class ParametrizedDuplicates {
     return myMatches;
   }
 
+  boolean isEmpty() {
+    return ContainerUtil.isEmpty(myMatches);
+  }
+
   @NotNull
   private static PsiElement[] wrapWithCodeBlock(@NotNull PsiElement[] elements, @NotNull InputVariables inputVariables) {
     PsiElement fragmentStart = elements[0];
@@ -428,13 +462,25 @@ public class ParametrizedDuplicates {
     statement = (PsiBlockStatement)parent.addBefore(statement, fragmentStart);
     parent.deleteChildRange(fragmentStart, fragmentEnd);
 
-    PsiCodeBlock codeBlock = statement.getCodeBlock();
-    PsiElement[] elementsInBlock = codeBlock.getChildren();
-    LOG.assertTrue(elementsInBlock.length >= elements.length + 2, "wrapper block length is too small");
-    elementsInBlock = Arrays.copyOfRange(elementsInBlock, 1, elementsInBlock.length - 1);
+    PsiElement[] elementsInBlock = trimBracesAndWhitespaces(statement.getCodeBlock());
 
     declareReusedLocalVariables(reusedLocalVariables, statement, factory);
     return elementsInBlock;
+  }
+
+  @NotNull
+  private static PsiElement[] trimBracesAndWhitespaces(@NotNull PsiCodeBlock codeBlock) {
+    PsiElement[] elements = codeBlock.getChildren();
+    int start = 1;
+    while (start < elements.length && elements[start] instanceof PsiWhiteSpace) {
+      start++;
+    }
+    int end = elements.length - 1;
+    while (end > 0 && elements[end - 1] instanceof PsiWhiteSpace) {
+      end--;
+    }
+    LOG.assertTrue(start < end, "wrapper block length is too small");
+    return Arrays.copyOfRange(elements, start, end);
   }
 
   private static void declareReusedLocalVariables(@NotNull List<ReusedLocalVariable> reusedLocalVariables,
@@ -643,23 +689,47 @@ public class ParametrizedDuplicates {
     @NotNull private final ExtractedParameter myParameter;
     private final int myFirstOffset;
 
-    public ClusterOfUsages(@NotNull ExtractedParameter parameter) {
+    ClusterOfUsages(@NotNull ExtractedParameter parameter) {
       myPatterns = parameter.myPatternUsages;
       myParameters = new THashMap<>();
       myParameter = parameter;
       myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
     }
 
-    public void putParameter(Match match, ExtractedParameter parameter) {
+    void putParameter(@NotNull Match match, @NotNull ExtractedParameter parameter) {
       myParameters.put(match, parameter);
     }
 
-    public boolean isEquivalent(ExtractedParameter parameter) {
+    @Nullable
+    ExtractedParameter getParameter(@NotNull Match match) {
+      return myParameters.get(match);
+    }
+
+    boolean arePatternsEquivalent(@NotNull ExtractedParameter parameter) {
       return myPatterns.equals(parameter.myPatternUsages);
     }
 
-    public static boolean isPresent(Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
+    boolean isEquivalent(@NotNull ClusterOfUsages usages, @NotNull Collection<Match> matches) {
+      if (!myParameter.myPattern.isEquivalent(usages.myParameter.myPattern)) {
+        return false;
+      }
+      for (Match match : matches) {
+        ExtractedParameter parameter = getParameter(match);
+        ExtractedParameter otherParameter = usages.getParameter(match);
+        if (parameter == null || otherParameter == null || !parameter.myCandidate.isEquivalent(otherParameter.myCandidate)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    static boolean isPatternPresent(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
       return parameter.myPatternUsages.stream().anyMatch(usagesMap::containsKey);
+    }
+
+    @Override
+    public String toString() {
+      return StreamEx.of(myParameters.values()).map(p -> p.myPattern + "->" + p.myCandidate).joining(", ");
     }
   }
 }

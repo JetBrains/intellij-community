@@ -39,6 +39,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
+  @Override
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ArchiveElementPresentation(this);
@@ -75,6 +76,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return "archive:" + myArchiveFileName;
   }
 
+  @Override
   public ArchivePackagingElement getState() {
     return this;
   }
@@ -83,10 +85,12 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     myArchiveFileName = archiveFileName;
   }
 
+  @Override
   public String getName() {
     return myArchiveFileName;
   }
 
+  @Override
   public void rename(@NotNull String newName) {
     myArchiveFileName = newName;
   }
@@ -96,6 +100,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     return element instanceof ArchivePackagingElement && ((ArchivePackagingElement)element).getArchiveFileName().equals(myArchiveFileName);
   }
 
+  @Override
   public void loadState(@NotNull ArchivePackagingElement state) {
     XmlSerializerUtil.copyBean(state, this);
   }

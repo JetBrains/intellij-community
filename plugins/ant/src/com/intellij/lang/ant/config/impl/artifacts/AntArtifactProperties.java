@@ -36,10 +36,12 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
     myPostProcessing = postProcessing;
   }
 
+  @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
     return new AntArtifactPropertiesEditor(this, context, myPostProcessing);
   }
 
+  @Override
   public AntArtifactExtensionProperties getState() {
     return myExtensionProperties;
   }
@@ -73,6 +75,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
     }
   }
 
+  @Override
   public void loadState(@NotNull AntArtifactExtensionProperties state) {
     myExtensionProperties = state;
   }

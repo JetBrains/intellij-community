@@ -4,10 +4,10 @@ package com.intellij.idea;
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -45,11 +45,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
+import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
+
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
-  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
+  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {REQUIRED_PLUGINS_KEY};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
@@ -63,8 +65,17 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
-  @NotNull
-  private final String[] myArgs;
+  @SuppressWarnings("SSBasedInspection")
+  public static void initApplication(String[] args) {
+    IdeaApplication app = new IdeaApplication(args);
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    SwingUtilities.invokeLater(() -> {
+      PluginManager.installExceptionHandler();
+      app.run();
+    });
+  }
+
+  private final @NotNull String[] myArgs;
   private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
   private volatile boolean myLoaded;
@@ -76,9 +87,12 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
+    boolean isShowSplash = !Boolean.getBoolean(StartupUtil.NO_SPLASH);
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
+
+    myStarter = getStarter();
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
@@ -90,18 +104,11 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      //if (myArgs.length == 0) {
-      myStarter = getStarter();
-      if (myStarter instanceof IdeStarter) {
-        splash = ((IdeStarter)myStarter).showSplash(myArgs);
+      if (isShowSplash && myStarter instanceof IdeStarter) {
+        splash = ((IdeStarter)myStarter).showSplash();
       }
-      //}
 
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
-    }
-
-    if (myStarter == null) {
-      myStarter = getStarter();
     }
 
     if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
@@ -109,7 +116,7 @@ public class IdeaApplication {
       System.exit(Main.NO_GRAPHICS);
     }
 
-    myStarter.premain(args);
+    myStarter.premain(myArgs);
   }
 
   /**
@@ -131,6 +138,10 @@ public class IdeaApplication {
           continue;
         }
       }
+      if (StartupUtil.NO_SPLASH.equals(arg)) {
+        System.setProperty(StartupUtil.NO_SPLASH, "true");
+        continue;
+      }
       arguments.add(arg);
     }
     return ArrayUtil.toStringArray(arguments);
@@ -142,7 +153,8 @@ public class IdeaApplication {
 
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    IdeEventQueue.getInstance(); // replace system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();  // replaces system event queue
 
     if (headless) return;
 
@@ -204,7 +216,6 @@ public class IdeaApplication {
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private static void initLAF() {
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
@@ -239,20 +250,18 @@ public class IdeaApplication {
     }
 
     @Nullable
-    private Splash showSplash(String[] args) {
-      if (StartupUtil.shouldShowSplash(args)) {
-        final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-        final SplashScreen splashScreen = getSplashScreen();
-        if (splashScreen == null) {
-          mySplash = new Splash(appInfo);
-          mySplash.show();
-          return mySplash;
-        }
-        else {
-          updateSplashScreen(appInfo, splashScreen);
-        }
+    private Splash showSplash() {
+      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      final SplashScreen splashScreen = getSplashScreen();
+      if (splashScreen == null) {
+        mySplash = new Splash(appInfo);
+        mySplash.show();
+        return mySplash;
       }
-      return null;
+      else {
+        updateSplashScreen(appInfo, splashScreen);
+        return null;
+      }
     }
 
     private static void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, @NotNull SplashScreen splashScreen) {
@@ -363,7 +372,7 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        FeatureUsageLogger.INSTANCE.log("lifecycle", app.getName() + "app.started");
+        LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
 

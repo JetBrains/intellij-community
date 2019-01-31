@@ -2,17 +2,18 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,17 +37,22 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   protected static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
   protected static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
 
-  protected final Project myProject;
+  //space character in the end of pattern forces full matches search
+  private static final String fullMatchSearchSuffix = " ";
 
-  protected AbstractGotoSEContributor(Project project) {
+  @Nullable protected final Project myProject;
+  @Nullable protected final PsiElement psiContext;
+
+  protected AbstractGotoSEContributor(@Nullable Project project, @Nullable PsiElement context) {
     myProject = project;
+    psiContext = context;
   }
 
   @NotNull
@@ -53,50 +61,52 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return getClass().getSimpleName();
   }
 
+  @Override
+  public boolean isShownInSeparateTab() {
+    return true;
+  }
+
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
-  public ContributorSearchResult<Object> search(String pattern, boolean everywhere, SearchEverywhereContributorFilter<F> filter, ProgressIndicator progressIndicator, int elementsLimit) {
-    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
-      return ContributorSearchResult.empty();
-    }
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+    if (myProject == null) return; //nothing to search
+    if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
+    if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) return;
 
-    String searchString = filterControlSymbols(pattern);
     FilteringGotoByModel<F> model = createModel(myProject);
-    model.setFilterItems(filter.getSelectedElements());
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
-    ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator,
-                                         o -> addFoundElement(o, model, builder, progressIndicator, elementsLimit)
-      );
-    });
-    Disposer.dispose(popup);
-
-    return builder.build();
-  }
-
-  protected boolean addFoundElement(Object element, ChooseByNameModel model, ContributorSearchResult.Builder<Object> resultBuilder,
-                                    ProgressIndicator progressIndicator, int elementsLimit) {
-    if (progressIndicator.isCanceled()) return false;
-    if (element == null) {
-      LOG.error("Null returned from " + model + " in " + this);
-      return true;
+    if (filter != null) {
+      model.setFilterItems(filter.getSelectedElements());
     }
 
-    if (resultBuilder.itemsCount() < elementsLimit ) {
-      resultBuilder.addItem(element);
-      return true;
-    } else {
-      resultBuilder.setHasMore(true);
-      return false;
-    }
+    ProgressIndicatorUtils.yieldToPendingWriteActions();
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+      if (progressIndicator.isCanceled()) return;
+
+      PsiElement context = psiContext != null && psiContext.isValid() ? psiContext : null;
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, context);
+      try {
+        popup.getProvider().filterElements(popup, pattern, everywhere, progressIndicator, element -> {
+          if (progressIndicator.isCanceled()) return false;
+          if (element == null) {
+            LOG.error("Null returned from " + model + " in " + this);
+            return true;
+          }
+          return consumer.apply(element);
+        });
+      } finally {
+        Disposer.dispose(popup);
+      }
+    }, progressIndicator);
   }
 
-  //todo param is unnecessary #UX-1
-  protected abstract FilteringGotoByModel<F> createModel(Project project);
+  @NotNull
+  protected abstract FilteringGotoByModel<F> createModel(@NotNull Project project);
 
-  public String filterControlSymbols(String pattern) {
+  @NotNull
+  @Override
+  public String filterControlSymbols(@NotNull String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
@@ -119,9 +129,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiElement) {
-      if (((PsiElement)selected).isValid()) {
+      if (!((PsiElement)selected).isValid()) {
         LOG.warn("Cannot navigate to invalid PsiElement");
         return true;
       }
@@ -143,9 +153,18 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
-      return element;
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (element instanceof PsiElement) {
+        return element;
+      }
+      if (element instanceof DataProvider) {
+        return ((DataProvider)element).getData(dataId);
+      }
+    }
+
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiElement) {
+      return QualifiedNameProviderUtil.getQualifiedName((PsiElement) element);
     }
 
     return null;
@@ -156,13 +175,15 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return true;
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
-    return new SearchEverywherePsiRenderer(list);
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
+    return new SERenderer(list);
   }
 
-  protected boolean isDumbModeSupported() {
-    return false;
+  @Override
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
+    return 50;
   }
 
   @Nullable
@@ -211,5 +232,22 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected static boolean openInCurrentWindow(int modifiers) {
     return (modifiers & InputEvent.SHIFT_MASK) == 0;
+  }
+
+  protected static class SERenderer extends SearchEverywherePsiRenderer {
+
+    public SERenderer(JList list) {
+      super(list);
+    }
+
+    @Override
+    public String getElementText(PsiElement element) {
+      if (element instanceof NavigationItem) {
+        return Optional.ofNullable(((NavigationItem)element).getPresentation())
+          .map(presentation -> presentation.getPresentableText())
+          .orElse(super.getElementText(element));
+      }
+      return super.getElementText(element);
+    }
   }
 }

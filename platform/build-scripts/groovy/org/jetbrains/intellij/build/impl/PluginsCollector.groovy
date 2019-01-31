@@ -16,9 +16,12 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.json.JsonSlurper
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 
+@CompileStatic
 class PluginsCollector {
   private final String myProvidedModulesFilePath
   private final BuildContext myBuildContext
@@ -56,12 +59,14 @@ class PluginsCollector {
     return true
   }
 
+  @CompileDynamic
   private Map<String, PluginDescriptor> collectPluginDescriptors() {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
+    def allBundledPlugins = productLayout.allBundledPluginsModules
     myBuildContext.project.modules.each {
-      if (productLayout.bundledPluginModules.contains(it.name)) {
+      if (allBundledPlugins.contains(it.name)) {
         return
       }
       if (productLayout.compatiblePluginsToIgnore.contains(it.name)) {

@@ -33,12 +33,14 @@ public abstract class OrderEnumerationHandler {
     /**
      * @deprecated this method isn't called anymore, override {@link #isApplicable(Module)} instead
      */
+    @Deprecated
     public boolean isApplicable(@NotNull Project project) {
       return true;
     }
 
     public abstract boolean isApplicable(@NotNull Module module);
 
+    @NotNull
     public abstract OrderEnumerationHandler createHandler(@NotNull Module module);
   }
 

@@ -36,7 +36,7 @@ import java.util.regex.Matcher;
 class InclusionProvider implements CachedValueProvider<PsiElement[]> {
   private final XmlTag myXincludeTag;
 
-  public InclusionProvider(XmlTag xincludeTag) {
+  InclusionProvider(XmlTag xincludeTag) {
     myXincludeTag = xincludeTag;
   }
 

@@ -104,8 +104,7 @@ public class FavoritesTreeUtil {
 
   @Nullable
   public static FavoritesListNode extractParentList(FavoritesTreeNodeDescriptor descriptor) {
-    final AbstractTreeNode node = descriptor.getElement();
-    AbstractTreeNode current = node;
+    AbstractTreeNode current = descriptor.getElement();
     while (current != null) {
       if (current instanceof FavoritesListNode) {
         return (FavoritesListNode)current;

@@ -23,6 +23,8 @@ Object $paramName){
        #addPrimitiveFieldComparisonConditionDirect($field) ##
      #elseif ($field.array)
 java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
+     #elseif ($field.notNull)
+${field.accessor}.equals(${classInstanceName}.$field.accessor)##
      #else
 java.util.Objects.equals($field.accessor, ${classInstanceName}.$field.accessor)##
      #end

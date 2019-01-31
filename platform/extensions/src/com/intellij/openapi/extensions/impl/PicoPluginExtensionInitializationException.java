@@ -21,7 +21,7 @@ import org.picocontainer.PicoInitializationException;
 public class PicoPluginExtensionInitializationException extends PicoInitializationException {
   private final PluginId myPluginId;
 
-  public PicoPluginExtensionInitializationException(String message, Throwable cause, PluginId id) {
+  PicoPluginExtensionInitializationException(String message, Throwable cause, PluginId id) {
     super(message, cause);
     myPluginId = id;
   }

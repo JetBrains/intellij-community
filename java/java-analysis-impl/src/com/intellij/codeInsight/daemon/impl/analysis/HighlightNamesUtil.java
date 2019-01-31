@@ -172,19 +172,6 @@ public class HighlightNamesUtil {
            : builder.create();
   }
 
-  @Nullable
-  static HighlightInfo highlightClassNameInQualifier(@NotNull PsiJavaCodeReferenceElement element,
-                                                     @NotNull TextAttributesScheme colorsScheme) {
-    PsiElement qualifierExpression = element.getQualifier();
-    if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
-      PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
-      if (resolved instanceof PsiClass) {
-        return highlightClassName((PsiClass)resolved, qualifierExpression, colorsScheme);
-      }
-    }
-    return null;
-  }
-
   private static HighlightInfoType getMethodNameHighlightType(@NotNull PsiMethod method,
                                                               boolean isDeclaration,
                                                               boolean isInheritedMethod,

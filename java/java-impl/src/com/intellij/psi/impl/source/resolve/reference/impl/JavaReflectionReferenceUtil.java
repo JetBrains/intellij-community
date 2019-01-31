@@ -38,7 +38,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -307,14 +310,14 @@ public class JavaReflectionReferenceUtil {
   private static PsiExpression getAssignedExpression(@NotNull PsiMember maybeContainsAssignment, @NotNull PsiField field) {
     final PsiAssignmentExpression assignment = SyntaxTraverser.psiTraverser(maybeContainsAssignment)
       .filter(PsiAssignmentExpression.class)
-      .find(expression -> VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field));
+      .find(expression -> ExpressionUtils.isReferenceTo(expression.getLExpression(), field));
     return assignment != null ? assignment.getRExpression() : null;
   }
 
   @Nullable
   private static PsiPrimitiveType tryUnbox(@Nullable PsiClass psiClass, @NotNull PsiClassType originalType) {
     if (psiClass != null && TypeConversionUtil.isPrimitiveWrapper(psiClass.getQualifiedName())) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       final PsiClassType classType = factory.createType(psiClass, PsiSubstitutor.EMPTY, originalType.getLanguageLevel());
       final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(classType);
       if (unboxedType != null) {
@@ -657,7 +660,7 @@ public class JavaReflectionReferenceUtil {
     @Nullable
     public static ReflectiveType create(@Nullable PsiClass psiClass, boolean isExact) {
       if (psiClass != null) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
         return new ReflectiveType(factory.createType(psiClass), isExact);
       }
       return null;
@@ -729,11 +732,11 @@ public class JavaReflectionReferenceUtil {
       myArgumentTypes = argumentTypes;
     }
 
-    public String getText(boolean withReturnType, @NotNull Function<String, String> transformation) {
+    public String getText(boolean withReturnType, @NotNull Function<? super String, String> transformation) {
       return getText(withReturnType, true, transformation);
     }
 
-    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<String, String> transformation) {
+    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<? super String, String> transformation) {
       final StringJoiner joiner = new StringJoiner(", ", withParentheses ? "(" : "", withParentheses ? ")" : "");
       if (withReturnType) {
         joiner.add(transformation.apply(myReturnType));

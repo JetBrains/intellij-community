@@ -40,7 +40,6 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/31/12 12:06 PM
  */
 public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 

@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.PositionTrackingListener
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -32,90 +20,97 @@ import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 import java.beans.PropertyChangeListener
 
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
+  companion object {
+    // Log only 10% of all completion sessions
+    private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 10
+    var isEnabledInTests: Boolean = false
+  }
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): ApplicationComponent {
-    companion object {
-        // Log only 10% of all completion sessions
-        private const val SKIP_SESSIONS_BEFORE_LOG_IN_EAP = 10
-        var isEnabledInTests: Boolean = false
+  private var loggingStrategy: LoggingStrategy = createDefaultLoggingStrategy(experimentHelper)
+  private val actionListener = LookupActionsListener()
+  private val lookupTrackerInitializer = PropertyChangeListener {
+    val lookup = it.newValue
+    if (lookup == null) {
+      actionListener.listener = CompletionPopupListener.Adapter()
     }
+    else if (lookup is LookupImpl) {
+      if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
 
-  private var loggingStrategy: LoggingStrategy = if (isEAP()) LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP) else LogAllSessions
-    private val actionListener = LookupActionsListener()
+      val globalStorage = UserFactorStorage.getInstance()
+      val projectStorage = UserFactorStorage.getInstance(lookup.project)
 
-    private val lookupTrackerInitializer = PropertyChangeListener {
-        val lookup = it.newValue
-        if (lookup == null) {
-            actionListener.listener = CompletionPopupListener.Adapter()
-        }
-        else if (lookup is LookupImpl) {
-            if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
+      val userFactorValues = mutableMapOf<String, String?>()
+      userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
+      userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
 
-            val globalStorage = UserFactorStorage.getInstance()
-            val projectStorage = UserFactorStorage.getInstance(lookup.project)
+      lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
+      val shownTimesTracker = PositionTrackingListener(lookup)
+      lookup.setPrefixChangeListener(shownTimesTracker)
 
-            val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
-            val userFactorValues = mutableMapOf<String, String?>()
-            userFactors.asSequence().map { "${it.id}:App" to it.compute(globalStorage) }.toMap(userFactorValues)
-            userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+      UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
+        it.fireCompletionUsed()
+      }
 
-            lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
-            val shownTimesTracker = PositionTrackingListener(lookup)
-            lookup.setPrefixChangeListener(shownTimesTracker)
+      if (loggingStrategy.shouldBeLogged(lookup, experimentHelper)) {
+        val tracker = actionsTracker(lookup, experimentHelper)
+        actionListener.listener = tracker
+        lookup.addLookupListener(tracker)
+        lookup.setPrefixChangeListener(tracker)
+      }
 
-            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
-                it.fireCompletionUsed()
-            }
-
-            if (loggingStrategy.shouldBeLogged(lookup, experimentHelper)) {
-                val tracker = actionsTracker(lookup, experimentHelper)
-                actionListener.listener = tracker
-                lookup.addLookupListener(tracker)
-                lookup.setPrefixChangeListener(tracker)
-            }
-
-            // setPrefixChangeListener has addPrefixChangeListener semantics
-            lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
-            lookup.addLookupListener(LookupCompletedTracker())
-            lookup.addLookupListener(LookupStartedTracker())
-        }
+      // setPrefixChangeListener has addPrefixChangeListener semantics
+      lookup.setPrefixChangeListener(TimeBetweenTypingTracker(lookup.project))
+      lookup.addLookupListener(LookupCompletedTracker())
+      lookup.addLookupListener(LookupStartedTracker())
     }
+  }
 
-    @Suppress("unused")
-    fun setLoggingStrategy(strategy: LoggingStrategy) {
-        loggingStrategy = strategy
-    }
+  @Suppress("unused")
+  fun setLoggingStrategy(strategy: LoggingStrategy) {
+    loggingStrategy = strategy
+  }
 
-    private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
-        val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-        return CompletionActionsTracker(lookup, logger, experimentHelper)
-    }
+  private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
+    return CompletionActionsTracker(lookup, logger, experimentHelper)
+  }
 
-    private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
+  private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
 
-    private fun isEAP(): Boolean = ApplicationManager.getApplication().isEAP && !isUnitTestMode()
+  private fun createDefaultLoggingStrategy(experimentHelper: WebServiceStatus): LoggingStrategy {
+    val application = ApplicationManager.getApplication()
 
-    override fun initComponent() {
-        if (!shouldInitialize()) return
+    if (application.isUnitTestMode) return LogAllSessions
 
-        ActionManager.getInstance().addAnActionListener(actionListener)
-        ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-            override fun projectOpened(project: Project) {
-                val lookupManager = LookupManager.getInstance(project)
-                lookupManager.addPropertyChangeListener(lookupTrackerInitializer)
-            }
+    if (!application.isEAP) return LogNothing
 
-            override fun projectClosed(project: Project) {
-                val lookupManager = LookupManager.getInstance(project)
-                lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
-            }
-        })
-    }
+    val experimentVersion = experimentHelper.experimentVersion()
+    if (PluginManager.BUILD_NUMBER.contains("-183") && experimentVersion == 5 || experimentVersion == 6) return LogAllSessions
 
-    override fun disposeComponent() {
-        if (!shouldInitialize()) return
+    return LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP)
+  }
 
-        ActionManager.getInstance().removeAnActionListener(actionListener)
-    }
+  override fun initComponent() {
+    if (!shouldInitialize()) return
 
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    busConnection.subscribe(AnActionListener.TOPIC, actionListener)
+    busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        val lookupManager = LookupManager.getInstance(project)
+        lookupManager.addPropertyChangeListener(lookupTrackerInitializer)
+      }
+
+      override fun projectClosed(project: Project) {
+        val lookupManager = LookupManager.getInstance(project)
+        lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
+      }
+    })
+  }
+
+  override fun dispose() {
+  }
 }

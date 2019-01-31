@@ -27,8 +27,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
-import com.intellij.util.ObjectUtils;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +176,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
-        return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)", (PsiAssignmentExpression)parent);
+        boolean rightInfected = ((PsiAssignmentExpression)parent).getLExpression() == context;
+        String replacement = rightInfected ? "$qualifier$ = $val$.get()" : "$qualifier$.set($val$)";
+        return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
 
@@ -284,7 +284,7 @@ public class AtomicConversionRule extends TypeConversionRule {
     final PsiElement parent = context.getParent();
     final PsiElement parentParent = parent.getParent();
 
-    if (context instanceof PsiReferenceExpression && isReferenceToLengthField((PsiReferenceExpression)context)) {
+    if (context instanceof PsiReferenceExpression && ExpressionUtils.getArrayFromLengthExpression((PsiReferenceExpression)context) != null) {
       return new TypeConversionDescriptor("$qualifier$.length", "$qualifier$.length()");
     }
     if (parent instanceof PsiAssignmentExpression) {
@@ -440,14 +440,4 @@ public class AtomicConversionRule extends TypeConversionRule {
     }
     return null;
   }
-
-  private static boolean isReferenceToLengthField(@NotNull PsiReferenceExpression refExpr) {
-    if (!"length".equals(refExpr.getReferenceName())) {
-      return false;
-    }
-    PsiClass aClass = JavaPsiFacade.getElementFactory(refExpr.getProject()).getArrayClass(PsiUtil.getLanguageLevel(refExpr));
-    PsiField lengthField = ObjectUtils.notNull(aClass.findFieldByName(HardcodedMethodConstants.LENGTH, false));
-    return refExpr.isReferenceTo(lengthField);
-  }
-
 }

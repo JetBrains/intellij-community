@@ -43,6 +43,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -146,7 +147,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   @Override
-  @SuppressWarnings("ConstantConditions")
   public XmlNSDescriptor getRootTagNSDescriptor() {
     XmlTag rootTag = getRootTag();
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
@@ -194,7 +194,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         }
 
         return new CachedValueProvider.Result<>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                          ? defaultNSDescriptorInner.getDependences()
+                                                                          ? defaultNSDescriptorInner.getDependencies()
                                                                           : ExternalResourceManager.getInstance());
       }));
     }
@@ -257,7 +257,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
                                 ? containingFile
                                 : XmlUtil.findNamespace(containingFile, namespace);
         if (xmlFile != null) {
-          final XmlDocument document = xmlFile.getDocument();
+          final XmlDocument document = AstLoadingFilter.forceAllowTreeLoading(xmlFile, () -> xmlFile.getDocument());
           if (document != null) {
             return (XmlNSDescriptor)document.getMetaData();
           }

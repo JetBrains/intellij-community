@@ -1,7 +1,6 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>1</version>
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -44,6 +43,14 @@
                         testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
+    <applicationService serviceInterface="com.intellij.completion.sorting.Ranker"
+                        serviceImplementation="com.intellij.completion.sorting.MLRanker">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
+                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
+    </applicationService>
+
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
                         serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
                         testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
@@ -53,7 +60,7 @@
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
 
-    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+    <postStartupActivity implementation="com.intellij.completion.NotificationManager"/>
 
     <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
                         serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>

@@ -4,6 +4,7 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
@@ -227,5 +228,46 @@ public class PyOverrideTest extends PyTestCase {
   // PY-19312
   public void testAsyncMethod() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest());
+  }
+
+  // PY-30287
+  public void testMethodWithOverloadsInTheSameFile() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        myFixture.configureByFile("override/" + getTestName(true) + ".py");
+
+        PyOverrideImplementUtil.overrideMethods(
+          myFixture.getEditor(),
+          getTopLevelClass(1),
+          Collections.singletonList(new PyMethodMember(getTopLevelClass(0).getMethods()[2])),
+          false
+        );
+
+        myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+      }
+    );
+  }
+
+  // PY-30287
+  public void testMethodWithOverloadsInAnotherFile() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final PsiFile[] files = myFixture.configureByFiles(
+          "override/" + getTestName(true) + ".py",
+          "override/" + getTestName(true) + "_parent.py"
+        );
+
+        PyOverrideImplementUtil.overrideMethods(
+          myFixture.getEditor(),
+          getTopLevelClass(0),
+          Collections.singletonList(new PyMethodMember(((PyFile)files[1]).getTopLevelClasses().get(0).getMethods()[2])),
+          false
+        );
+
+        myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+      }
+    );
   }
 }

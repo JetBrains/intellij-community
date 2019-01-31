@@ -30,7 +30,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
   @NotNull private final Map<GitRepository, String> myRepositories;
   private final String myTagName;
 
-  public GitDeleteRemoteTagOperation(@NotNull Project project, @NotNull Git git,
+  GitDeleteRemoteTagOperation(@NotNull Project project, @NotNull Git git,
                                      @NotNull GitBranchUiHandler handler,
                                      @NotNull Map<GitRepository, String> repositories,
                                      @NotNull String name) {

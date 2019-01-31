@@ -42,7 +42,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final Semaphore mySteamSemaphore = new Semaphore(0); // The semaphore that waits for stream processing
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
-  public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  public GitBinaryHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
@@ -76,7 +76,6 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
       catch (IOException e) {
-        //noinspection ThrowableInstanceNeverThrown
         if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
           LOG.error("Problem reading stream", e);
         }
@@ -96,19 +95,20 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected void waitForProcess() {
+    int exitCode;
     try {
       mySteamSemaphore.acquire(2);
       myProcess.waitFor();
-      int exitCode = myProcess.exitValue();
-      setExitCode(exitCode);
+      exitCode = myProcess.exitValue();
     }
     catch (InterruptedException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring process exception: ", e);
       }
-      setExitCode(255);
+      exitCode = 255;
     }
-    listeners().processTerminated(getExitCode());
+    setExitCode(exitCode);
+    listeners().processTerminated(exitCode);
   }
 
   /**
@@ -130,7 +130,6 @@ public class GitBinaryHandler extends GitHandler {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
-            //noinspection ThrowableResultOfMethodCallIgnored
             if (myException.get() != null) {
               message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }
@@ -144,7 +143,6 @@ public class GitBinaryHandler extends GitHandler {
             }
           }
           if (message != null) {
-            //noinspection ThrowableInstanceNeverThrown
             VcsException e = myException.getAndSet(new VcsException(message));
             if (e != null) {
               LOG.warn("Dropping previous exception: ", e);
@@ -154,8 +152,7 @@ public class GitBinaryHandler extends GitHandler {
       }
 
       @Override
-      public void startFailed(Throwable exception) {
-        //noinspection ThrowableInstanceNeverThrown
+      public void startFailed(@NotNull Throwable exception) {
         VcsException e = myException.getAndSet(new VcsException("Start failed: " + exception.getMessage(), exception));
         if (e != null) {
           LOG.warn("Dropping previous exception: ", e);
@@ -172,7 +169,6 @@ public class GitBinaryHandler extends GitHandler {
     catch (IOException e) {
       throw new VcsException(e.getMessage(), e);
     }
-    //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();
     }

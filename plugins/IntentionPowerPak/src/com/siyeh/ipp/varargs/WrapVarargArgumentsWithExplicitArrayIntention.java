@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.siyeh.ipp.varargs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -55,13 +57,13 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
     final PsiType componentType = PsiTypesUtil.getParameterType(parameters, varargParameterIndex, true);
     final JavaResolveResult resolveResult = call.resolveMethodGenerics();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiType substitutedType = substitutor.substitute(componentType);
-    if (substitutedType instanceof PsiCapturedWildcardType) {
-      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
-      newExpressionText.append(capturedWildcardType.getLowerBound().getCanonicalText());
-    } else {
-      newExpressionText.append(substitutedType.getCanonicalText());
+    PsiType type = substitutor.substitute(componentType);
+    if (type instanceof PsiCapturedWildcardType) {
+      type = ((PsiCapturedWildcardType)type).getLowerBound();
     }
+    newExpressionText.append(JavaGenericsUtil.isReifiableType(type)
+                             ? type.getCanonicalText()
+                             : TypeConversionUtil.erasure(type).getCanonicalText());
     newExpressionText.append("[]{");
     if (arguments.length > varargParameterIndex) {
       final PsiExpression argument1 = arguments[varargParameterIndex];

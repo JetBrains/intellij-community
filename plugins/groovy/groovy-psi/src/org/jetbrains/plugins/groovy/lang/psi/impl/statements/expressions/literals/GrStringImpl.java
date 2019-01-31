@@ -26,6 +26,7 @@ public class GrStringImpl extends GrAbstractLiteral implements GrString {
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Compound Gstring";
   }

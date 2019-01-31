@@ -71,7 +71,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     @NonNls private static final String IDREF = "idref";
     @NonNls private static final String ENUM = "enum";
 
-    public DtdTreeElement(final PsiNamedElement element) {
+    DtdTreeElement(final PsiNamedElement element) {
       super(element);
     }
 

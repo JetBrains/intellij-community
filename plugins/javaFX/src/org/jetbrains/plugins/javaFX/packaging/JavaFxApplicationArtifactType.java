@@ -77,7 +77,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   private class JavaFxArtifactTemplate extends ArtifactTemplate {
     private final List<Module> myModules;
 
-    public JavaFxArtifactTemplate(List<Module> modules) {
+    JavaFxArtifactTemplate(List<Module> modules) {
       myModules = modules;
     }
 

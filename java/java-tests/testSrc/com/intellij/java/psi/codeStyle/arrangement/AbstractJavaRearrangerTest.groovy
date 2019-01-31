@@ -18,6 +18,7 @@ package com.intellij.java.psi.codeStyle.arrangement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest
+import groovy.transform.CompileStatic
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
@@ -26,6 +27,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 /**
  * @author Denis Zhdanov
  */
+@CompileStatic
 abstract class AbstractJavaRearrangerTest extends AbstractRearrangerTest {
   protected def classic = [rule(INTERFACE),
                            rule(CLASS),

@@ -19,8 +19,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
@@ -36,9 +38,11 @@ import java.util.function.Function;
 /**
  * @author Vitaliy.Bibaev
  */
+@SkipSlowTestLocally
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private static final LibrarySupportProvider DEFAULT_LIBRARY_SUPPORT_PROVIDER = new StandardLibrarySupportProvider();
+  private final Logger LOG = Logger.getInstance(getClass());
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
 
   @Override
@@ -102,6 +106,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   private void doTestImpl(boolean isResultNull, @NotNull String className, @NotNull ChainSelector chainSelector)
     throws ExecutionException {
+    LOG.info("Test started: " + getTestName(false));
     createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
@@ -158,6 +163,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+            LOG.warn("[" + getTestName(false) + "] Compilation failed.");
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });

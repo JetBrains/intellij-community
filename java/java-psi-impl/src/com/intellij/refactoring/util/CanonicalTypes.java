@@ -57,7 +57,7 @@ public class CanonicalTypes {
   private abstract static class AnnotatedType extends Type {
     protected final TypeAnnotationProvider myProvider;
 
-    public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
+    AnnotatedType(@NotNull TypeAnnotationProvider provider) {
       PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
@@ -186,7 +186,7 @@ public class CanonicalTypes {
     @NotNull
     @Override
     public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeFromText(myCanonicalText, context);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(myCanonicalText, context);
     }
 
     @Override
@@ -206,7 +206,7 @@ public class CanonicalTypes {
     private final Map<String, Type> mySubstitutor;
 
     private ClassType(@NotNull PsiType original, @NotNull String classQName, @NotNull Map<String, Type> substitutor) {
-      super(original.getAnnotationProvider());
+      super(TypeAnnotationProvider.Static.create(original.getAnnotations()));
       myPresentableText = original.getPresentableText();
       myClassQName = classQName;
       mySubstitutor = substitutor;

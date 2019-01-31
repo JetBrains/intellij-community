@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
@@ -49,7 +49,8 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   private Map<String, String> myPropertiesToCreateByArtifact;
 
-  public void setupRootModel(ModifiableRootModel rootModel) {
+  @Override
+  public void setupRootModel(@NotNull ModifiableRootModel rootModel) {
     final Project project = rootModel.getProject();
 
     final VirtualFile root = createAndGetContentEntry();
@@ -103,6 +104,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return MavenIcons.MavenLogo;
   }
 
+  @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -126,13 +128,16 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
+  @Override
   public List<Pair<String, String>> getSourcePaths() {
     return Collections.emptyList();
   }
 
+  @Override
   public void setSourcePaths(List<Pair<String, String>> sourcePaths) {
   }
 
+  @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
   }
 

@@ -1,55 +1,56 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CaseBlockMover extends StatementUpDownMover {
+import java.util.List;
+
+public class CaseBlockMover extends LineMover {
+
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     if (!(file instanceof PsiJavaFile)) return false;
+    if (!super.checkAvailable(editor, file, info, down)) return false;
 
-    PsiElement startElement = firstNonWhiteElement(editor.getSelectionModel().getSelectionStart(), file, true);
-    if (startElement == null) return false;
-    PsiElement endElement = firstNonWhiteElement(editor.getSelectionModel().getSelectionEnd(), file, false);
-    if (endElement == null) return false;
+    final Document document = editor.getDocument();
+    int startOffset = document.getLineStartOffset(info.toMove.startLine);
+    int endOffset = document.getLineEndOffset(info.toMove.endLine);
+    List<PsiSwitchLabelStatement> statements = new SmartList<>();
+    for (PsiElement element : CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)) {
+      if (element instanceof PsiSwitchLabelStatement) {
+        statements.add((PsiSwitchLabelStatement)element);
+      }
+      else if (statements.isEmpty()) {
+        return false;  // if first statement is not a label let the regular statement mover handle it.
+      }
+    }
+    if (statements.isEmpty()) return false;
 
-    PsiSwitchLabelStatement caseStatement = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(startElement, endElement),
-                                                                        PsiSwitchLabelStatement.class, false);
-    if (caseStatement == null) return false;
-
-    PsiElement firstToMove = getThisCaseBlockStart(caseStatement);
-    PsiElement nextCaseBlockStart = getNextCaseBlockStart(caseStatement);
+    PsiSwitchLabelStatement firstToMove = getThisCaseBlockStart(statements.get(0));
+    PsiSwitchLabelStatement lastStatement = statements.get(statements.size() - 1);
+    PsiElement nextCaseBlockStart = getNextCaseBlockStart(lastStatement);
     PsiElement lastToMove = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
     assert lastToMove != null;
 
-    LineRange range = createRange(editor.getDocument(), firstToMove, lastToMove);
+    LineRange range = createRange(document, firstToMove, lastToMove);
     if (range == null) return info.prohibitMove();
     info.toMove = range;
 
     PsiElement firstToMove2;
     PsiElement lastToMove2;
     if (down) {
-      if (!(nextCaseBlockStart instanceof PsiSwitchLabelStatement) || nextCaseBlockStart == caseStatement) return info.prohibitMove();
+      if (!(nextCaseBlockStart instanceof PsiSwitchLabelStatement) || nextCaseBlockStart == lastStatement) return info.prohibitMove();
       firstToMove2 = nextCaseBlockStart;
       nextCaseBlockStart = getNextCaseBlockStart((PsiSwitchLabelStatement)firstToMove2);
       lastToMove2 = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
@@ -62,7 +63,7 @@ public class CaseBlockMover extends StatementUpDownMover {
       if (firstToMove2 == null) return info.prohibitMove();
       firstToMove2 = getThisCaseBlockStart((PsiSwitchLabelStatement)firstToMove2);
     }
-    LineRange range2 = createRange(editor.getDocument(), firstToMove2, lastToMove2);
+    LineRange range2 = createRange(document, firstToMove2, lastToMove2);
     if (range2 == null) return info.prohibitMove();
     info.toMove2 = range2;
     return true;

@@ -39,6 +39,7 @@ public class CompilerMessage extends BuildMessage {
   /**
    * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
    */
+  @Deprecated
   public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }

@@ -50,10 +50,12 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     init(injection.copy());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
 
+  @Override
   protected void resetImpl() {
     myNameTextField.setText(myOrigInjection.getDisplayName());
     myLocalName.setText(myOrigInjection.getAttributeName());
@@ -62,6 +64,7 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     myUseGeneratedName = Comparing.equal(myOrigInjection.getDisplayName(), myOrigInjection.getGeneratedName());
   }
 
+  @Override
   protected void apply(XmlAttributeInjection other) {
     other.setAttributeName(myLocalName.getText());
     other.setAttributeNamespace(getNamespace());

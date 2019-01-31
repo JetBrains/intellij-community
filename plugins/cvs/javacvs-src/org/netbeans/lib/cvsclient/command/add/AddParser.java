@@ -23,7 +23,7 @@ final class AddParser extends DefaultEntryParser {
 
 	// Setup ==================================================================
 
-	public AddParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	AddParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		super(eventManager, cvsFileSystem);
 	}
 }

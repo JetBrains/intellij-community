@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -30,16 +33,6 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return LafIconLookup.getIcon(clickable ? "searchWithHistory" : "search");
-  }
-
-  @Override
-  protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : LafIconLookup.getIcon("clear");
-  }
-
-  @Override
   protected int getClearIconPreferredSpace() {
     return super.getClearIconPreferredSpace() - getClearIconGap();
   }
@@ -54,7 +47,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
         g.fillRect(0, 0, component.getWidth(), component.getHeight());
       }
 
-      if (component.getBorder() instanceof DarculaTextBorder) {
+      if (component.getBorder() instanceof DarculaTextBorder && !isTableCellEditor(component)) {
         paintDarculaBackground(g, component);
       } else if (component.isOpaque()) {
         super.paintBackground(g);
@@ -88,7 +81,8 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return isCompact(getComponent()) ? JBUI.insets(0, 5) : JBUI.insets(2, 5);
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 5);
   }
 
   protected float bw() {

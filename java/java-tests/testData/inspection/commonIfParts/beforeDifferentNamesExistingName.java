@@ -1,4 +1,4 @@
-// "Extract common part removing branch " "false"
+// "Extract common part removing branch" "false"
 
 import java.util.Collection;
 import java.util.List;

@@ -22,16 +22,17 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 // The only purpose of this action is to serve as placeholder for assigning keyboard shortcuts.
 // For actual tab switching code, see EditorComposite constructor.
 public class SelectPreviousEditorTabAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     // allow plugins to use the same keyboard shortcut
     e.getPresentation().setEnabled(false);
   }

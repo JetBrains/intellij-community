@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 public class EncodingUtil {
 
@@ -136,12 +137,20 @@ public class EncodingUtil {
     });
   }
 
-  static void reloadIn(@NotNull final VirtualFile virtualFile, @NotNull final Charset charset) {
+  static void reloadIn(@NotNull final VirtualFile virtualFile, @NotNull final Charset charset, final Project project) {
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
 
+    Consumer<VirtualFile> setEncoding = file -> {
+      if (project == null) {
+        EncodingManager.getInstance().setEncoding(file, charset);
+      }
+      else {
+        EncodingProjectManager.getInstance(project).setEncoding(file, charset);
+      }
+    };
     if (documentManager.getCachedDocument(virtualFile) == null) {
       // no need to reload document
-      EncodingManager.getInstance().setEncoding(virtualFile, charset);
+      setEncoding.accept(virtualFile);
       return;
     }
 
@@ -149,11 +158,11 @@ public class EncodingUtil {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
-      public void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
+      public void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;
         Disposer.dispose(disposable); // disconnect
 
-        EncodingManager.getInstance().setEncoding(file, charset);
+        setEncoding.accept(file);
 
         LoadTextUtil.clearCharsetAutoDetectionReason(file);
       }
@@ -195,7 +204,7 @@ public class EncodingUtil {
   }
 
   @Nullable
-  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<Charset> current) {
+  static FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }

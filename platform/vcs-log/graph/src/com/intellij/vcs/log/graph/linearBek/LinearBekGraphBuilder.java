@@ -41,7 +41,7 @@ class LinearBekGraphBuilder {
   @NotNull private final GraphLayout myGraphLayout;
   private final LinearBekGraph myLinearBekGraph;
 
-  public LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
+  LinearBekGraphBuilder(@NotNull LinearBekGraph bekGraph, @NotNull GraphLayout graphLayout) {
     myLinearBekGraph = bekGraph;
     myGraphLayout = graphLayout;
   }

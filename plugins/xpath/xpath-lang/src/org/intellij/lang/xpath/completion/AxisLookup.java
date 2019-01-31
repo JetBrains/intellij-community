@@ -25,10 +25,12 @@ public class AxisLookup extends AbstractLookup implements Iconable {
         super(name + "::", name);
     }
 
+    @Override
     public boolean isKeyword() {
         return true;
     }
 
+    @Override
     public Icon getIcon(int flags) {
         return AllIcons.Nodes.J2eeParameter;
     }

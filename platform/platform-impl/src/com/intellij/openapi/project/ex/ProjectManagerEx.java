@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,6 +24,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
+  @TestOnly
+  @NotNull
+  public final Project newProject(@Nullable String projectName, @NotNull String filePath) {
+    return ObjectUtils.assertNotNull(newProject(projectName, filePath, false, false));
+  }
+
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
@@ -44,6 +37,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
 
   public abstract boolean openProject(@NotNull Project project);
+
+  @TestOnly
+  public abstract boolean isDefaultProjectInitialized();
 
   public abstract boolean isProjectOpened(Project project);
 
@@ -65,7 +61,19 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @NotNull
   public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
-  // returns true on success
+  /**
+   * The project and the app settings will be not saved.
+   */
+  @TestOnly
+  public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
+
+  // return true if successful
+  public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
+
+  /**
+   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
+   * @return true on success
+   */
   public abstract boolean closeAndDispose(@NotNull Project project);
 
   @Nullable
@@ -73,6 +81,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public Project createProject(@Nullable String name, @NotNull String path) {
     return newProject(name, path, true, false);
   }
+
+  @Nullable
+  public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
   @Nullable
   public abstract Project convertAndLoadProject(@NotNull String filePath) throws IOException;

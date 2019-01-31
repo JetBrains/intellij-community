@@ -16,13 +16,14 @@
 package com.intellij.psi.impl.java;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -38,18 +39,13 @@ import java.util.Set;
  * @author peter
  */
 public class FunExprOccurrence {
-  public final int funExprOffset;
   private final int argIndex;
-  private final List<ReferenceChainLink> referenceContext;
+  private final List<? extends ReferenceChainLink> referenceContext;
 
-  public FunExprOccurrence(int funExprOffset,
-                           int argIndex,
-                           List<ReferenceChainLink> referenceContext) {
-    this.funExprOffset = funExprOffset;
+  public FunExprOccurrence(int argIndex, List<? extends ReferenceChainLink> referenceContext) {
     this.argIndex = argIndex;
     this.referenceContext = referenceContext;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -58,7 +54,6 @@ public class FunExprOccurrence {
 
     FunExprOccurrence that = (FunExprOccurrence)o;
 
-    if (funExprOffset != that.funExprOffset) return false;
     if (argIndex != that.argIndex) return false;
     if (!referenceContext.equals(that.referenceContext)) return false;
 
@@ -67,41 +62,25 @@ public class FunExprOccurrence {
 
   @Override
   public int hashCode() {
-    int result = funExprOffset;
-    result = 31 * result + argIndex;
-    result = 31 * result + referenceContext.hashCode();
-    return result;
+    return 31 * argIndex + referenceContext.hashCode();
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-      .add("offset", funExprOffset)
       .add("argIndex", argIndex)
       .add("chain", referenceContext)
       .toString();
   }
 
   void serialize(DataOutput out) throws IOException {
-    DataInputOutputUtil.writeINT(out, funExprOffset);
     DataInputOutputUtil.writeINT(out, argIndex);
-
-    DataInputOutputUtil.writeINT(out, referenceContext.size());
-    for (ReferenceChainLink link : referenceContext) {
-      serializeLink(out, link);
-    }
+    DataInputOutputUtilRt.writeSeq(out, referenceContext, link -> serializeLink(out, link));
   }
 
   static FunExprOccurrence deserialize(DataInput in) throws IOException {
-    int offset = DataInputOutputUtil.readINT(in);
     int argIndex = DataInputOutputUtil.readINT(in);
-
-    int contextSize = DataInputOutputUtil.readINT(in);
-    List<ReferenceChainLink> context = new ArrayList<>(contextSize);
-    for (int i = 0; i < contextSize; i++) {
-      context.add(deserializeLink(in));
-    }
-    return new FunExprOccurrence(offset, argIndex, context);
+    return new FunExprOccurrence(argIndex, DataInputOutputUtilRt.readSeq(in, () -> deserializeLink(in)));
   }
 
   private static void serializeLink(DataOutput out, ReferenceChainLink link) throws IOException {
@@ -119,7 +98,7 @@ public class FunExprOccurrence {
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public boolean canHaveType(@NotNull List<PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+  public boolean canHaveType(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
     if (referenceContext.isEmpty()) return true;
 
     Set<PsiClass> qualifiers = null;
@@ -139,33 +118,51 @@ public class FunExprOccurrence {
     return true;
   }
 
-  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<PsiClass> samClasses) {
+  private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
     if (link.isCall) {
       return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
     }
     if (member instanceof PsiClass) {
-      return ContainerUtil.exists(samClasses, c -> InheritanceUtil.isInheritorOrSelf((PsiClass)member, c, true));
+      return samClasses.contains(member);
     }
     return member instanceof PsiField &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType()));
+           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, ((PsiField)member).getType(), member));
   }
 
-  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<PsiClass> samClasses) {
+  public static boolean hasCompatibleParameter(PsiMethod method, int argIndex, List<? extends PsiClass> samClasses) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int paramIndex = method.isVarArgs() ? Math.min(argIndex, parameters.length - 1) : argIndex;
     return paramIndex < parameters.length &&
-           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, parameters[paramIndex].getType()));
+           ContainerUtil.exists(samClasses, c -> canPassFunctionalExpression(c, parameters[paramIndex].getType(), method));
   }
 
-  private static boolean canPassFunctionalExpression(PsiClass sam, PsiType paramType) {
+  private static boolean canPassFunctionalExpression(PsiClass sam, PsiType paramType, PsiElement place) {
     if (paramType instanceof PsiEllipsisType) {
       paramType = ((PsiEllipsisType)paramType).getComponentType();
     }
-    PsiClass functionalCandidate = PsiUtil.resolveClassInClassTypeOnly(paramType);
-    if (functionalCandidate instanceof PsiTypeParameter) {
-      return InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(paramType)), true);
+    String paramClassName = paramType instanceof PsiClassType ? ((PsiClassType)paramType).getClassName() : null;
+    if (paramClassName == null) return false;
+
+    if (paramClassName.equals(sam.getName()) && sam.equals(((PsiClassType)paramType).resolve())) {
+      return true;
     }
 
-    return InheritanceUtil.isInheritorOrSelf(functionalCandidate, sam, true);
+    return isTypeParameterVisible(paramClassName, place) &&
+           ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter &&
+           hasSuperTypeAssignableFromSam(sam, paramType);
+  }
+
+  private static boolean isTypeParameterVisible(String name, PsiElement fromPlace) {
+    JBIterable<String> typeParameters = JBIterable.generate(fromPlace, PsiElement::getContext)
+      .takeWhile(c -> !(c instanceof PsiFile))
+      .filter(PsiTypeParameterListOwner.class)
+      .flatMap(o -> Arrays.asList(o.getTypeParameters()))
+      .map(PsiNamedElement::getName);
+    return typeParameters.contains(name);
+  }
+
+  private static boolean hasSuperTypeAssignableFromSam(PsiClass sam, PsiType type) {
+    return !InheritanceUtil.processSuperTypes(type, false, superType ->
+      !InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(superType), true));
   }
 }

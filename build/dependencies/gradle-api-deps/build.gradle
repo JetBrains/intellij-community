@@ -1,9 +1,10 @@
 import org.gradle.tooling.GradleConnector
+import org.gradle.util.GradleVersion
 
 plugins {
   id "base"
   id "maven-publish"
-  id "com.jfrog.bintray" version "1.7.3"
+  id "com.jfrog.bintray" version "1.8.4"
 }
 
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
@@ -12,8 +13,9 @@ def gradleApiImplDepArtifactId = 'gradle-api-impldep'
 def gradleWrapperArtifactId = 'gradle-wrapper'
 def gradleLauncherArtifactId = 'gradle-launcher'
 
+def gradleApiBaseVersion = GradleVersion.version(gradleApiVersion).getBaseVersion().getVersion()
 def gradleWrapperFileName = "gradle-wrapper.jar"
-def gradleLauncherFileName = "gradle-launcher-${gradleApiVersion}.jar"
+def gradleLauncherFileName = "gradle-launcher-${gradleApiBaseVersion}.jar"
 
 def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build")
 

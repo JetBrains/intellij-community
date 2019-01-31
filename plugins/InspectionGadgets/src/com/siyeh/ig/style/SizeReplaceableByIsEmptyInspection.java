@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -87,15 +88,15 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("size.replaceable.by.isempty.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
     }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
-      PsiExpression operand = binaryExpression.getLOperand();
+      PsiExpression operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       if (!(operand instanceof PsiMethodCallExpression)) {
-        operand = binaryExpression.getROperand();
+        operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       }
       if (!(operand instanceof PsiMethodCallExpression)) {
         return;
@@ -131,8 +132,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!ComparisonUtils.isComparison(expression)) {
         return;
       }
-      final PsiExpression rhs = expression.getROperand();
-      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final boolean flipped;
       if (lhs instanceof PsiMethodCallExpression) {
         flipped = false;

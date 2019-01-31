@@ -1,8 +1,9 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.CollectionBean
 import org.junit.Test
@@ -21,7 +22,7 @@ internal class AState(languageLevel: String? = null, nestedComplex: NestedState?
 }
 
 internal class NestedState : BaseState() {
-  var childProperty by property<String?>()
+  var childProperty by string()
 }
 
 class StoredPropertyStateTest {
@@ -73,7 +74,7 @@ class StoredPropertyStateTest {
     assertThat(state).isEqualTo(newEqualState)
 
     assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
-    assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
+    assertThat(JDOMUtil.load("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
   }
 
   @Test

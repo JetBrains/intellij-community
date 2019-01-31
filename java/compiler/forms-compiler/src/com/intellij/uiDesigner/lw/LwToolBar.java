@@ -28,14 +28,17 @@ public class LwToolBar extends LwContainer {
     super(className);
   }
 
+  @Override
   protected LayoutManager createInitialLayout() {
     return null;
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     readNoLayout(element, provider);
   }
 
+  @Override
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
   }
 }

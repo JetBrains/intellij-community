@@ -35,10 +35,10 @@ class FileColorConfiguration implements Cloneable {
   private String myScopeName;
   private String myColorName;
 
-  public FileColorConfiguration() {
+  FileColorConfiguration() {
   }
 
-  public FileColorConfiguration(final String scopeName, final String colorName) {
+  FileColorConfiguration(final String scopeName, final String colorName) {
     myScopeName = scopeName;
     myColorName = colorName;
   }

@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -114,7 +114,7 @@ public class FoldingModelSupport {
 
     @NotNull private final int[] myLineCount;
 
-    public FoldingBuilder(@Nullable UserDataHolder context,
+    FoldingBuilder(@Nullable UserDataHolder context,
                           @NotNull Settings settings) {
       FoldingCache cache = context != null ? context.getUserData(CACHE_KEY) : null;
       myExpandSuggester = new ExpandSuggester(cache, settings.defaultExpanded);
@@ -208,7 +208,7 @@ public class FoldingModelSupport {
     FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
     if (value != null) {
       value.setExpanded(expanded);
-      value.putUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS, Boolean.TRUE);
+      value.setInnerHighlightersMuted(true);
     }
     return value;
   }
@@ -256,7 +256,7 @@ public class FoldingModelSupport {
 
   private class MyDocumentListener implements DocumentListener {
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
       if (StringUtil.indexOf(e.getOldFragment(), '\n') != -1 ||
           StringUtil.indexOf(e.getNewFragment(), '\n') != -1) {
         for (int i = 0; i < myCount; i++) {
@@ -323,7 +323,7 @@ public class FoldingModelSupport {
     private final int myIndex;
     @NotNull Set<FoldRegion> myModifiedRegions = new HashSet<>();
 
-    public MyFoldingListener(int index) {
+    MyFoldingListener(int index) {
       myIndex = index;
     }
 
@@ -416,7 +416,7 @@ public class FoldingModelSupport {
     private final int[] myIndex = new int[myCount];
     private final boolean myDefault;
 
-    public ExpandSuggester(@Nullable FoldingCache cache, boolean defaultValue) {
+    ExpandSuggester(@Nullable FoldingCache cache, boolean defaultValue) {
       myCache = cache;
       myDefault = defaultValue;
     }
@@ -516,7 +516,7 @@ public class FoldingModelSupport {
     public final boolean expandByDefault;
     @NotNull public final List<FoldedRangeState>[] ranges;
 
-    public FoldingCache(@NotNull List<FoldedRangeState>[] ranges, boolean expandByDefault) {
+    FoldingCache(@NotNull List<FoldedRangeState>[] ranges, boolean expandByDefault) {
       this.ranges = ranges;
       this.expandByDefault = expandByDefault;
     }
@@ -526,7 +526,7 @@ public class FoldingModelSupport {
     @Nullable public final LineRange expanded;
     @Nullable public final LineRange collapsed;
 
-    public FoldedRangeState(@Nullable LineRange expanded, @Nullable LineRange collapsed) {
+    FoldedRangeState(@Nullable LineRange expanded, @Nullable LineRange collapsed) {
       assert expanded != null || collapsed != null;
 
       this.expanded = expanded;
@@ -673,7 +673,7 @@ public class FoldingModelSupport {
 
   @Nullable
   @Contract("null, _ -> null; !null, _ -> !null")
-  protected static <T, V> Iterator<V> map(@Nullable final List<T> list, @NotNull final Function<T, V> mapping) {
+  protected static <T, V> Iterator<V> map(@Nullable final List<T> list, @NotNull final Function<? super T, ? extends V> mapping) {
     if (list == null) return null;
     final Iterator<T> it = list.iterator();
     return new Iterator<V>() {

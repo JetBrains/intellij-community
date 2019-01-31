@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import java.util.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class InspectionDiff {
@@ -83,8 +70,8 @@ public class InspectionDiff {
       InputStream oldStream = oldPath != null ? new BufferedInputStream(new FileInputStream(oldPath)) : null;
       InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
 
-      Document oldDoc = oldStream != null ? JDOMUtil.loadDocument(oldStream) : null;
-      Document newDoc = JDOMUtil.loadDocument(newStream);
+      Element oldDoc = oldStream != null ? JDOMUtil.load(oldStream) : null;
+      Element newDoc = JDOMUtil.load(newStream);
 
       OutputStream outStream = System.out;
       if (outPath != null) {
@@ -102,9 +89,7 @@ public class InspectionDiff {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Document createDelta(@Nullable Document oldDoc, Document newDoc) {
-    Element newRoot = newDoc.getRootElement();
-
+  private static Document createDelta(@Nullable Element oldRoot, Element newRoot) {
     ourFileToProblem = new HashMap<>();
     List newProblems = newRoot.getChildren("problem");
     for (final Object o : newProblems) {
@@ -112,23 +97,21 @@ public class InspectionDiff {
       addProblem(newProblem);
     }
 
-    if (oldDoc != null) {
-      List oldProblems = oldDoc.getRootElement().getChildren("problem");
-      for (final Object o : oldProblems) {
-        Element oldProblem = (Element)o;
+    if (oldRoot != null) {
+      for (final Element oldProblem : oldRoot.getChildren("problem")) {
         if (!removeIfEquals(oldProblem)) {
           addProblem(oldProblem);
         }
       }
     }
 
-    Element root = new Element("problems");
+    Element root = new Element(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
     Document delta = new Document(root);
 
     for (ArrayList<Element> fileList : ourFileToProblem.values()) {
       if (fileList != null) {
         for (Element element : fileList) {
-          root.addContent((Element)element.clone());
+          root.addContent(element.clone());
         }
       }
     }

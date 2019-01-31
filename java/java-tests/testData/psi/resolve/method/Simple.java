@@ -4,6 +4,6 @@ public class Simple {
 
     static {
         Simple a = new Simple();
-        a.<ref>method("blah");
+        a.<caret>method("blah");
     }
 }

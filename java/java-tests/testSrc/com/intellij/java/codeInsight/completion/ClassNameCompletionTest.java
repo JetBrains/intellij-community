@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -84,7 +70,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
     String path = "/template";
 
-    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
     configureByFile(path + "/before1.java");
     selectItem(myItems[0]);
     TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
@@ -149,6 +135,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
     complete();
     myFixture.checkResult("abc = java.lang.StringBuilder<caret>");
+  }
+
+  public void testInsideForwardReferencingTypeBound() {
+    myFixture.configureByText("a.java", "class F<T extends Zo<caret>o, Zoo> {}");
+    complete();
+    myFixture.assertPreferredCompletionItems(0, "Zoo");
   }
 
   public void testDoubleStringBuffer() {
@@ -253,6 +245,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   private void cleanupVfs() {
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
         for (VirtualFile file : myFixture.getTempDirFixture().getFile("").getChildren()) {
@@ -288,18 +281,20 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/varType-result.java");
   }
 
-  public void testExtraSpace() { doJavaTest(); }
+  public void testExtraSpace() { doJavaTest('\n'); }
 
-  public void testAnnotation() { doJavaTest(); }
+  public void testAnnotation() { doJavaTest('\n'); }
 
-  public void testInStaticImport() { doJavaTest(); }
+  public void testInStaticImport() { doJavaTest('\n'); }
 
-  public void testInCommentWithPackagePrefix() { doJavaTest(); }
+  public void testInCommentWithPackagePrefix() { doJavaTest('\n'); }
 
-  private void doJavaTest() {
+  public void testNestedAnonymousTab() { doJavaTest('\t');}
+
+  private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");
-    performAction();
+    performAction(toType);
     checkResultByFile(path + "/" + getTestName(false) + "-result.java");
   }
 
@@ -309,9 +304,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   private void performAction() {
+    performAction('\n');
+  }
+  private void performAction(char toType) {
     complete();
     if (LookupManager.getActiveLookup(myFixture.getEditor()) != null) {
-      myFixture.type('\n');
+      myFixture.type(toType);
     }
   }
 }

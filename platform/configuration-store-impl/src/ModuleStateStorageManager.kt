@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -23,9 +9,9 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
-import com.intellij.util.loadElement
 import org.jdom.Element
 import java.io.FileNotFoundException
 import java.nio.ByteBuffer
@@ -64,20 +50,20 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
     element.addContent(optionElement)
   }
 
-  override fun beforeElementSaved(element: Element) {
-    val componentIterator = element.getChildren("component").iterator()
+  override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
+    val componentIterator = elements.iterator()
     for (component in componentIterator) {
       if (component.getAttributeValue("name") == "DeprecatedModuleOptionManager") {
         componentIterator.remove()
         for (option in component.getChildren("option")) {
-          element.setAttribute(option.getAttributeValue("key"), option.getAttributeValue("value"))
+          rootAttributes.put(option.getAttributeValue("key"), option.getAttributeValue("value"))
         }
         break
       }
     }
 
     // need be last for compat reasons
-    element.setAttribute(ProjectStateStorageManager.VERSION_OPTION, "4")
+    rootAttributes.put(ProjectStateStorageManager.VERSION_OPTION, "4")
   }
 
   override val isExternalSystemStorageEnabled: Boolean
@@ -91,11 +77,11 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
                                   fileSpec: String,
                                   rootElementName: String?,
                                   roamingType: RoamingType,
-                                  pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                                  pathMacroManager: PathMacroSubstitutor? = null,
                                   provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
     // use VFS to load module file because it is refreshed and loaded into VFS in any case
     override fun loadLocalData(): Element? {
-      blockSavingTheContent = false
+      isBlockSavingTheContent = false
       val virtualFile = virtualFile
       if (virtualFile == null || !virtualFile.exists()) {
         // only on first load
@@ -114,7 +100,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
         runAndHandleExceptions {
           val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
           lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-          return loadElement(charBuffer)
+          return JDOMUtil.load(charBuffer)
         }
       }
       return null

@@ -30,8 +30,12 @@ import javax.swing.*;
 public final class ValidationInfo {
   @NotNull
   public final String message;
+
+  @Nullable
   public final JComponent component;
-  public final boolean disableOk;
+
+  public boolean okEnabled;
+  public boolean warning;
 
   /**
    * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
@@ -41,7 +45,8 @@ public final class ValidationInfo {
    * @param component the component containing the invalid data.
    */
   public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
-    this(message, component, true);
+    this.message = message;
+    this.component = component;
   }
 
   /**
@@ -53,27 +58,14 @@ public final class ValidationInfo {
     this(message, null);
   }
 
-  /**
-   * Creates a validation error message not associated with a specific component.
-   *
-   * @param message   the error message to display.
-   * @param disableOk whether to disable OK button.
-   */
-  public ValidationInfo(@NotNull String message, boolean disableOk) {
-    this(message, null, disableOk);
+  public ValidationInfo withOKEnabled() {
+    okEnabled = true;
+    return this;
   }
 
-  /**
-   * Creates a validation error message
-   *
-   * @param message   the error message to display.
-   * @param component the component containing the invalid data.
-   * @param disableOk whether to disable OK button.
-   */
-  private ValidationInfo(@NotNull String message, @Nullable JComponent component, boolean disableOk) {
-    this.message = message;
-    this.component = component;
-    this.disableOk = disableOk;
+  public ValidationInfo asWarning() {
+    warning = true;
+    return this;
   }
 
   @Override
@@ -83,6 +75,8 @@ public final class ValidationInfo {
 
     ValidationInfo that = (ValidationInfo)o;
     return StringUtil.equals(this.message, that.message) &&
-           this.component == that.component;
+           this.component == that.component &&
+           this.okEnabled == that.okEnabled &&
+           this.warning == that.warning;
   }
 }

@@ -48,6 +48,8 @@ public final class Layout4Test extends TestCase{
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW + GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null,
       0));
 
+    panel.doLayout();
+
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(200, preferredSize.height);
   }

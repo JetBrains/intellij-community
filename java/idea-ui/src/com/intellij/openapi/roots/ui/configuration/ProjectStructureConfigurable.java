@@ -602,7 +602,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myProjectConfig;
   }
 
-  public void registerObsoleteLibraryRoots(@NotNull Collection<VirtualFile> roots) {
+  public void registerObsoleteLibraryRoots(@NotNull Collection<? extends VirtualFile> roots) {
     myObsoleteLibraryFilesRemover.registerObsoleteLibraryRoots(roots);
   }
 
@@ -624,13 +624,13 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private class MyPanel extends JPanel implements DataProvider {
-    public MyPanel() {
+    MyPanel() {
       super(new BorderLayout());
     }
 
     @Override
     @Nullable
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       if (KEY.is(dataId)) {
         return ProjectStructureConfigurable.this;
       } else if (History.KEY.is(dataId)) {

@@ -25,12 +25,12 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JRadioButton myUnlockDirButton;
   private JRadioButton myUnlockAllButton;
 
-  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<VirtualFile> nonProjectFiles) {
+  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
     this(project, nonProjectFiles, "Non-Project Files");
   }
 
   public NonProjectFileWritingAccessDialog(@NotNull Project project,
-                                           @NotNull List<VirtualFile> nonProjectFiles,
+                                           @NotNull List<? extends VirtualFile> nonProjectFiles,
                                            @NotNull String filesType) {
     super(project);
     setTitle(filesType + " Protection");
@@ -55,11 +55,6 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
                                                       + " " + StringUtil.pluralize("directory", dirs), "dir");
 
     setTextAndMnemonicAndListeners(myUnlockAllButton, "I want to edit any non-project file in the current session", "any");
-
-
-    // disable default button to avoid accidental pressing, if user typed something, missed the dialog and pressed 'enter'.
-    getOKAction().putValue(DEFAULT_ACTION, null);
-    getCancelAction().putValue(DEFAULT_ACTION, null);
 
     getRootPane().registerKeyboardAction(e -> doOKAction(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK),
                                          JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -102,6 +97,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK;
   }
 
+  @Override
   protected String getHelpId() {
     return "Non-Project_Files_Access_Dialog";
   }

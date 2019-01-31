@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.google.common.collect.Streams;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.Disposable;
@@ -28,11 +27,12 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider;
 import com.intellij.vcs.log.ui.actions.VcsRefCompletionProvider;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitReference;
+import git4idea.GitTag;
 import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ui.UI.PanelFactory.grid;
@@ -84,7 +83,8 @@ public class GitRefDialog extends DialogWrapper {
         return new MyVcsRefCompletionProvider(dataPack.getRefsModel(), roots, comparator);
       }
     }
-    List<GitBranch> branches = collectCommonBranches(repositories);
+    List<GitBranch> branches = ContainerUtil.concat(GitBranchUtil.getCommonLocalBranches(repositories),
+                                                    GitBranchUtil.getCommonRemoteBranches(repositories));
     FutureResult<Collection<GitTag>> tagsFuture = scheduleCollectCommonTags(repositories, disposable);
     return new MySimpleCompletionListProvider(branches, tagsFuture);
   }
@@ -94,7 +94,7 @@ public class GitRefDialog extends DialogWrapper {
     FutureResult<Collection<GitTag>> futureResult = new FutureResult<>();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> {
-        return collectCommon(repositories.stream().map(repository -> {
+        return GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
           try {
             List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
             return ContainerUtil.map(tags, GitTag::new);
@@ -133,49 +133,11 @@ public class GitRefDialog extends DialogWrapper {
     stream.forEach(ref -> map.putValue(ref.getRoot(), ref));
 
     Stream<Collection<VcsRef>> groups = map.entrySet().stream().map(Map.Entry::getValue);
-    return collectCommon(groups, new NameAndTypeHashingStrategy());
-  }
-
-  @NotNull
-  private static List<GitBranch> collectCommonBranches(@NotNull List<GitRepository> repositories) {
-    Collection<GitLocalBranch> commonLocalBranches = collectCommon(repositories.stream().map(repository -> {
-      return repository.getBranches().getLocalBranches();
-    }));
-
-    Collection<GitRemoteBranch> commonRemoteBranches = collectCommon(repositories.stream().map(repository -> {
-      return repository.getBranches().getRemoteBranches();
-    }));
-
-    return Streams.concat(commonLocalBranches.stream(), commonRemoteBranches.stream())
-                  .collect(Collectors.toList());
-  }
-
-  @NotNull
-  private static <T> Collection<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
-    return collectCommon(groups, ContainerUtil.canonicalStrategy());
-  }
-
-  @NotNull
-  private static <T> Collection<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
-                                                 @NotNull TObjectHashingStrategy<T> hashingStrategy) {
-    List<T> common = new ArrayList<>();
-    boolean[] firstGroup = {true};
-
-    groups.forEach(values -> {
-      if (firstGroup[0]) {
-        firstGroup[0] = false;
-        common.addAll(values);
-      }
-      else {
-        common.retainAll(new THashSet<>(values, hashingStrategy));
-      }
-    });
-
-    return common;
+    return GitBranchUtil.collectCommon(groups, new NameAndTypeHashingStrategy());
   }
 
   private static class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
-    public MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
+    MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
                                       @NotNull Collection<VirtualFile> roots,
                                       @NotNull Comparator<VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));
@@ -198,7 +160,7 @@ public class GitRefDialog extends DialogWrapper {
     @NotNull private final List<GitBranch> myBranches;
     @NotNull private final FutureResult<Collection<GitTag>> myTagsFuture;
 
-    public MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
+    MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
                                           @NotNull FutureResult<Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;

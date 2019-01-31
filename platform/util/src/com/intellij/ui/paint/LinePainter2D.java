@@ -107,7 +107,6 @@ public class LinePainter2D {
    * @param strokeWidth the stroke width
    * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
-  @SuppressWarnings("Duplicates")
   public static void paint(@NotNull final Graphics2D g,
                            double x1, double y1, double x2, double y2,
                            @NotNull StrokeType strokeType,
@@ -420,7 +419,7 @@ public class LinePainter2D {
    * Returns the x (y) coordinate of the center of the stroke.
    *
    * @param g           the graphics
-   * @param coord       the x or y coordinate
+   * @param xy       the x or y coordinate
    * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
    * @return the coordinate of the center of the stroke

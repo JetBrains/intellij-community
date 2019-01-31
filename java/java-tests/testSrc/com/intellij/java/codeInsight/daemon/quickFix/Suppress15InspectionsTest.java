@@ -49,8 +49,6 @@ public class Suppress15InspectionsTest extends LightQuickFixParameterizedTestCas
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/suppress15Inspections";

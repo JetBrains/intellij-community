@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -48,16 +49,19 @@ public class PsiCopyPasteManager {
     myCopyPasteManager = (CopyPasteManagerEx) copyPasteManager;
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        if (myRecentData != null && myRecentData.getProject() == project) {
+      public void projectClosing(@NotNull Project project) {
+        if (myRecentData != null && (!myRecentData.isValid() || myRecentData.getProject() == project)) {
           myRecentData = null;
         }
 
         Transferable[] contents = myCopyPasteManager.getAllContents();
         for (int i = contents.length - 1; i >= 0; i--) {
           Transferable t = contents[i];
-          if (t instanceof MyTransferable && ((MyTransferable)t).myDataProxy.getProject() == project) {
-            myCopyPasteManager.removeContent(t);
+          if (t instanceof MyTransferable) {
+            MyData myData = ((MyTransferable)t).myDataProxy;
+            if (!myData.isValid() || myData.getProject() == project) {
+              myCopyPasteManager.removeContent(t);
+            }
           }
         }
       }
@@ -180,6 +184,10 @@ public class PsiCopyPasteManager {
 
     public boolean isCopied() {
       return myIsCopied;
+    }
+
+    public boolean isValid() {
+      return myElements.length > 0 && myElements[0].isValid();
     }
 
     @Nullable

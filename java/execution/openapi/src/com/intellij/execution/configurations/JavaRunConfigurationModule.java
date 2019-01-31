@@ -81,7 +81,12 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     final PsiClass psiClass = findClass(className);
     if (psiClass == null) {
       throw new RuntimeConfigurationWarning(
-        ExecutionBundle.message("class.not.found.in.module.error.message", className, getModuleName()));
+        ExecutionBundle.message("class.not.found.in.module.error.message", className, getModuleName())) {
+        @Override
+        public boolean shouldShowInDumbMode() {
+          return false;
+        }
+      };
     }
     return psiClass;
   }

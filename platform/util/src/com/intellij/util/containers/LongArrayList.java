@@ -15,17 +15,23 @@
  */
 package com.intellij.util.containers;
 
-@Deprecated // use TLongArrayList instead
+import com.intellij.util.DeprecatedMethodException;
+
+/**
+ * @deprecated use TLongArrayList instead
+ */
+@Deprecated
 public class LongArrayList implements Cloneable {
   private long[] myData;
   private int mySize;
 
-  public LongArrayList(int initialCapacity) {
-    myData = new long[initialCapacity];
-  }
-
+  /**
+   * @deprecated use TLongArrayList instead
+   */
+  @Deprecated
   public LongArrayList() {
-    this(10);
+    myData = new long[10];
+    DeprecatedMethodException.report("Use gnu.trove.TLongArrayList instead");
   }
 
   public void trimToSize() {

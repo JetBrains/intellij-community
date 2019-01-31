@@ -1,14 +1,12 @@
 <html>
 <body>
-<p>Reports a <b>null</b> check followed by an <b>instanceof</b> check or a method call which will surely return <b>false</b> when
-  <b>null</b> is passed (e.g. <b>Class.isInstance</b>).
-  Since the <b>instanceof</b> operator always returns <b>false</b> for <b>null</b>,
-  there is no need to have an additional <b>null</b> check.
+<p>Reports a <b>null</b> check followed by a method call that will definitely return <b>false</b> when  <b>null</b> is passed (e.g. <b>Class.isInstance</b>).
+  Such a check seems excessive as the method call always returns <b>false</b>.
 </p>
 <p>Here is an example of a violation: </p>
-<pre><code>    if (x != null && x instanceof String) { ... }</code></pre>
+<pre><code>    if (x != null && myClass.isInstance(x)) { ... }</code></pre>
 <p>The quickfix changes this code to:</p>
-<pre><code>    if (x instanceof String) { ... }</code></pre>
+<pre><code>    if (myClass.isInstance(x)) { ... }</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -16,6 +17,7 @@ import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
@@ -33,6 +35,8 @@ import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.InvocationHandler;
@@ -52,6 +56,7 @@ import java.util.*;
 public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
   private final DefaultRepositorySystemSession mySession;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
@@ -68,6 +73,7 @@ public class ArtifactRepositoryManager {
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
     locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {
+      @Override
       public void serviceCreationFailed(Class<?> type, Class<?> impl, Throwable exception) {
         if (exception != null) {
           throw new RuntimeException(exception);
@@ -95,6 +101,7 @@ public class ArtifactRepositoryManager {
       session.setTransferListener((TransferListener)Proxy
         .newProxyInstance(session.getClass().getClassLoader(), new Class[]{TransferListener.class}, new InvocationHandler() {
           private final EnumSet<TransferEvent.EventType> checkCancelEvents = EnumSet.of(TransferEvent.EventType.INITIATED, TransferEvent.EventType.STARTED, TransferEvent.EventType.PROGRESSED);
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
           final Object event = args[0];
           if (event instanceof TransferEvent) {
@@ -180,12 +187,18 @@ public class ArtifactRepositoryManager {
                                                           Set<ArtifactKind> artifactKinds, boolean includeTransitiveDependencies,
                                                           List<String> excludedDependencies) throws Exception {
     final List<Artifact> artifacts = new ArrayList<>();
-    final Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
+    final VersionConstraint originalConstraints = asVersionConstraint(versionConstraint);
     for (ArtifactKind kind : artifactKinds) {
       // RepositorySystem.resolveDependencies() ignores classifiers, so we need to set classifiers explicitly for discovered dependencies.
       // Because of that we have to first discover deps and then resolve corresponding artifacts
       try {
         final List<ArtifactRequest> requests;
+        final Set<VersionConstraint> constraints;
+        if (kind == ArtifactKind.ANNOTATIONS) {
+          constraints = relaxForAnnotations(originalConstraints);
+        } else {
+          constraints = Collections.singleton(originalConstraints);
+        }
         if (includeTransitiveDependencies) {
           final CollectResult collectResult = ourSystem.collectDependencies(
             mySession, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
@@ -201,7 +214,17 @@ public class ArtifactRepositoryManager {
         else {
           requests = new ArrayList<>();
           for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
-            requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
+              final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
+              final VersionRangeResult result = ourSystem.resolveVersionRange(mySession, versionRangeRequest);
+              if (!result.getVersions().isEmpty()) {
+                Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
+                requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
+              }
+            }
+            else {
+              requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            }
           }
         }
 
@@ -241,11 +264,58 @@ public class ArtifactRepositoryManager {
     return artifacts;
   }
 
+  /**
+   * Modify version constraint to look for applicable annotations artifact.
+   *
+   * Annotations artifact for a given library is matched by Group Id, Artifact Id
+   * and classifier "annotations". Annotations version is selected using following rules:
+   * <ul>
+   *   <li>it is larger or equal to major component of library version (or lower constraint bound).
+   *   E.g., annotations artifact ver 3.1 is applicable to library ver 3.6.5 (3.1 > 3.0)</li>
+   *   <li>it is smaller or equal to library version with suffix (-an10000).
+   *   E.g., annotations artifact ver 3.2-an3 is applicable to library ver 3.2</li>
+   * </ul>
+   * This allows to re-use existing annotations artifacts across different library versions
+   * @param constraint - version or range constraint of original library
+   * @return resulting relaxed constraint to select annotations artifact.
+   */
+  private static Set<VersionConstraint> relaxForAnnotations(VersionConstraint constraint) {
+    String annotationsConstraint = constraint.toString();
+
+    final Version version = constraint.getVersion();
+    if (version != null) {
+      final String major = version.toString().split("[.\\-_]")[0];
+      annotationsConstraint = "[" + major + ", " + version.toString() + "-an10000]";
+    }
+
+    final VersionRange range = constraint.getRange();
+    if (range != null) {
+      final String majorLower = range.getLowerBound().getVersion().toString().split("[.\\-_]")[0];
+
+      String upper = range.getUpperBound().isInclusive()
+                     ? range.getUpperBound().toString() + "-an10000]"
+                     : range.getUpperBound().toString() + ")";
+      annotationsConstraint = "[" + majorLower + ", " + upper;
+    }
+
+    try {
+      return Collections.singleton(ourVersioning.parseVersionConstraint(annotationsConstraint));
+    } catch (InvalidVersionSpecificationException e) {
+      LOG.info("Failed to parse version constraint " + annotationsConstraint, e);
+    }
+
+    return Collections.singleton(constraint);
+  }
+
   @NotNull
   private static DependencyFilter createScopeFilter() {
     return DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
   }
 
+  /**
+   * Gets the versions (in ascending order) that matched the requested range.
+   */
+  @NotNull
   public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, final ArtifactKind artifactKind) throws Exception {
     final VersionRangeResult result = ourSystem.resolveVersionRange(
       mySession, createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
@@ -276,7 +346,12 @@ public class ArtifactRepositoryManager {
     for (Artifact artifact : toArtifacts(groupId, artifactId, Collections.singleton(versioning), EnumSet.of(artifactKind))) {
       request.setArtifact(artifact); // will be at most 1 artifact
     }
-    return request.setRepositories(Collections.unmodifiableList(myRemoteRepositories));
+    List<RemoteRepository> repositories = new ArrayList<>(myRemoteRepositories.size());
+    for (RemoteRepository repository : myRemoteRepositories) {
+      RepositoryPolicy policy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+      repositories.add(new RemoteRepository.Builder(repository).setPolicy(policy).build());
+    }
+    return request.setRepositories(repositories);
   }
 
   public static Version asVersion(@Nullable String str) throws InvalidVersionSpecificationException {
@@ -303,7 +378,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactWithChangedClassifier extends DelegatingArtifact {
     private final String myClassifier;
 
-    public ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
+    ArtifactWithChangedClassifier(Artifact artifact, String classifier) {
       super(artifact);
       myClassifier = classifier;
     }
@@ -326,10 +401,11 @@ public class ArtifactRepositoryManager {
     private final ArtifactKind myKind;
     private final List<ArtifactRequest> myRequests = new ArrayList<>();
 
-    public ArtifactRequestBuilder(ArtifactKind kind) {
+    ArtifactRequestBuilder(ArtifactKind kind) {
       myKind = kind;
     }
 
+    @Override
     public boolean visitEnter(DependencyNode node) {
       final Dependency dep = node.getDependency();
       if (dep != null) {
@@ -342,6 +418,7 @@ public class ArtifactRepositoryManager {
       return true;
     }
 
+    @Override
     public boolean visitLeave(DependencyNode node) {
       return true;
     }
@@ -355,7 +432,7 @@ public class ArtifactRepositoryManager {
   private static class ExcludeDependenciesFilter implements DependencyFilter {
     private final HashSet<String> myExcludedDependencies;
 
-    public ExcludeDependenciesFilter(List<String> excludedDependencies) {
+    ExcludeDependenciesFilter(List<String> excludedDependencies) {
       myExcludedDependencies = new HashSet<>(excludedDependencies);
     }
 
@@ -378,7 +455,7 @@ public class ArtifactRepositoryManager {
   private static class ArtifactDependencyTreeBuilder implements DependencyVisitor {
     private final List<List<ArtifactDependencyNode>> myCurrentChildren = new ArrayList<>();
 
-    public ArtifactDependencyTreeBuilder() {
+    ArtifactDependencyTreeBuilder() {
       myCurrentChildren.add(new ArrayList<>());
     }
 

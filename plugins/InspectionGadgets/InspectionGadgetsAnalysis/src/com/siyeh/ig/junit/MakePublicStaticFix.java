@@ -31,7 +31,7 @@ class MakePublicStaticFix extends InspectionGadgetsFix {
   private final String myName;
   private final boolean myMakeStatic;
 
-  public MakePublicStaticFix(final String name, final boolean makeStatic) {
+  MakePublicStaticFix(final String name, final boolean makeStatic) {
     myName = name;
     myMakeStatic = makeStatic;
   }

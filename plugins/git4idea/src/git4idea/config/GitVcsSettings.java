@@ -3,6 +3,7 @@ package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ import java.util.*;
  * Git VCS settings
  */
 @State(name = "Git.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings {
+public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
@@ -42,7 +43,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
-    public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
@@ -61,7 +61,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-    public boolean UPDATE_BRANCHES_INFO = false;
+    public boolean UPDATE_BRANCHES_INFO = true;
     public int BRANCH_INFO_UPDATE_TIME = 10;
     public boolean PREVIEW_PUSH_ON_COMMIT_AND_PUSH = true;
     public boolean PREVIEW_PUSH_PROTECTED_ONLY = false;
@@ -119,10 +119,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return ArrayUtil.toStringArray(myState.PREVIOUS_COMMIT_AUTHORS);
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull State state) {
     myState = state;
   }
@@ -152,11 +154,13 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.PUSH_UPDATE_ALL_ROOTS = updateAllRoots;
   }
 
+  @Override
   @NotNull
   public Value getSyncSetting() {
     return myState.ROOT_SYNC;
   }
 
+  @Override
   public void setSyncSetting(@NotNull Value syncSetting) {
     myState.ROOT_SYNC = syncSetting;
   }
@@ -247,7 +251,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return false;
+    return myState.UPDATE_BRANCHES_INFO;
   }
 
   public void setUpdateBranchInfo(boolean state) {
@@ -286,18 +290,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.COMMIT_RENAMES_SEPARATELY = state;
   }
 
-  /**
-   * Provides migration from project settings.
-   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
-   */
-  @Deprecated
-  public boolean isIdeaSsh() {
-    if (getAppSettings().getIdeaSsh() == null) { // app setting has not been initialized yet => migrate the project setting there
-      getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
-    }
-    return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
-  }
-
   @NotNull
   public DvcsBranchSettings getFavoriteBranchSettings() {
     return myState.FAVORITE_BRANCH_SETTINGS;
@@ -311,10 +303,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SET_USER_NAME_GLOBALLY = value;
   }
 
+  @Override
   public boolean shouldSwapSidesInCompareBranches() {
     return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
   }
 
+  @Override
   public void setSwapSidesInCompareBranches(boolean value) {
     myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }
@@ -333,7 +327,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     @Attribute(value = "target-branch") public String targetBranchName;
 
     @SuppressWarnings("unused")
-    public PushTargetInfo() {
+    PushTargetInfo() {
       this("", "", "", "");
     }
 

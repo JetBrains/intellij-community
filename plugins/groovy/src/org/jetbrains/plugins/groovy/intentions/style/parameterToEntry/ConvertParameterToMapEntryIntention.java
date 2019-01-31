@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,7 +21,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -61,8 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -71,6 +53,10 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
 
 /**
  * @author ilyas
@@ -90,7 +76,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   @Override
   protected void processIntention(@NotNull final PsiElement element, @NotNull final Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
-    final GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
+    final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
     final Collection<PsiElement> occurrences = new ArrayList<>();
     // Find all referenced expressions
     final boolean success = collectOwnerOccurrences(project, owner, occurrences);
@@ -176,7 +162,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   private static void performRefactoring(final PsiElement element,
-                                         final GrParametersOwner owner,
+                                         final GrParameterListOwner owner,
                                          final Collection<PsiElement> occurrences,
                                          final boolean createNewFirstParam,
                                          @Nullable final String mapParamName,
@@ -192,7 +178,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       final GrParameterList list = owner.getParameterList();
-      assert list != null;
       final int index = list.getParameterNumber(param);
       if (!createNewFirstParam && index <= 0) { // bad undo
         return;
@@ -227,7 +212,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             }
           }
           if (refExpr == null) continue;
-          final GrClosureSignature signature = generateSignature(owner, refExpr);
+          final GrSignature signature = generateSignature(owner, refExpr);
           if (signature == null) continue;
           GrCall call;
           if (isExplicitGetterCall) {
@@ -337,7 +322,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   @Nullable
-  private static GrClosureSignature generateSignature(GrParametersOwner owner, GrReferenceExpression refExpr) {
+  private static GrSignature generateSignature(GrParameterListOwner owner, GrReferenceExpression refExpr) {
     if (owner instanceof PsiMethod) {
       final GroovyResolveResult resolveResult = refExpr.advancedResolve();
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -354,7 +339,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
    * @param occurrences references to owner
    * @return true if there we use owner's first parameter as map, false if we need to add ne one as fist map
    */
-  private static FIRST_PARAMETER_KIND analyzeForNamedArguments(final GrParametersOwner owner, final Collection<PsiElement> occurrences) {
+  private static FIRST_PARAMETER_KIND analyzeForNamedArguments(final GrParameterListOwner owner, final Collection<PsiElement> occurrences) {
     boolean thereAreNamedArguments = false;
     for (PsiElement occurrence : occurrences) {
       if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall) {
@@ -375,16 +360,16 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return FIRST_PARAMETER_KIND.IS_NOT_MAP;
   }
 
-  private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
+  private static boolean firstOwnerParameterMustBeMap(final GrParameterListOwner owner) {
     final GrParameter first = getFirstParameter(owner);
     final PsiType type = first.getTypeGroovy();
-    final PsiClassType mapType = GrMapType.create(GlobalSearchScope.allScope(owner.getProject()));
+    if (type == null) return true;
     // First parameter may be used as map
-    return type == null || type.isConvertibleFrom(mapType);
+    return type.isConvertibleFrom(createTypeByFQClassName(JAVA_UTIL_LINKED_HASH_MAP, owner));
   }
 
   @NotNull
-  private static GrParameter getFirstParameter(final GrParametersOwner owner) {
+  private static GrParameter getFirstParameter(final GrParameterListOwner owner) {
     final GrParameter[] params = owner.getParameters();
     LOG.assertTrue(params.length > 0);
     return params[0];
@@ -395,7 +380,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   @Nullable
-  private static GrNamedElement getReferencedElement(final GrParametersOwner owner) {
+  private static GrNamedElement getReferencedElement(final GrParameterListOwner owner) {
     if (owner instanceof GrMethodImpl) return ((GrMethodImpl)owner);
     if (owner instanceof GrClosableBlock) {
       final PsiElement parent = owner.getParent();
@@ -423,7 +408,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   private static boolean collectOwnerOccurrences(final Project project,
-                                                 final GrParametersOwner owner,
+                                                 final GrParameterListOwner owner,
                                                  final Collection<PsiElement> occurrences) {
     final PsiElement namedElem = getReferencedElement(owner);
     if (namedElem == null) return true;
@@ -500,13 +485,12 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       if (parameter == null) return false;
       if (parameter.isOptional()) return false;
 
-      GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
-      if (!(owner instanceof GrClosableBlock || owner instanceof GrMethod)) return false;
-      return checkForMapParameters(owner);
+      GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
+      return owner != null && checkForMapParameters(owner);
     }
   }
 
-  private static boolean checkForMapParameters(GrParametersOwner owner) {
+  private static boolean checkForMapParameters(GrParameterListOwner owner) {
     final GrParameter[] parameters = owner.getParameters();
     if (parameters.length != 1) return true;
 

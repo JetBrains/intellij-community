@@ -194,7 +194,8 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
     try {
-      return range.fit(Integer.parseInt(textField.getText().trim())) != value;
+      int currentValue = Integer.parseInt(textField.getText().trim());
+      return range.fit(currentValue) == currentValue && currentValue != value;
     }
     catch (NumberFormatException e) {
       return false;
@@ -224,6 +225,10 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   interface TopComponentProvider {
+    default boolean isAvailable() {
+      return true;
+    }
+
     @NotNull
     Component getCenterComponent(@NotNull TopComponentController controller);
   }

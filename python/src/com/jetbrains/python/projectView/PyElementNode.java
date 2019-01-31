@@ -25,6 +25,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.List;
  * @author yole
  */
 public class PyElementNode extends BasePsiNode<PyElement> {
-  public PyElementNode(Project project, PyElement value, ViewSettings viewSettings) {
+  public PyElementNode(Project project, @NotNull PyElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -59,7 +60,7 @@ public class PyElementNode extends BasePsiNode<PyElement> {
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     final PyElement value = getValue();
     final String name = value.getName();
     final ItemPresentation presentation = value.getPresentation();

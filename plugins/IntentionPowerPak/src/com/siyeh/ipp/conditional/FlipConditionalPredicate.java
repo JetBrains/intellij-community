@@ -24,6 +24,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class FlipConditionalPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiConditionalExpression)) {
       return false;

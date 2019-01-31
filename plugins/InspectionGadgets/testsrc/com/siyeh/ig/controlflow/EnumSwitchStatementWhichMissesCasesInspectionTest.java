@@ -16,21 +16,46 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("EnumSwitchStatementWhichMissesCases")
 public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
     doTest("enum E { A, B, C }" +
            "class X {" +
            "  void m(E e) {" +
-           "    /*'switch' statement on enum type 'E' misses cases*/switch/**/ (e) {" +
+           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/ (e) {" +
            "      case A:" +
            "      case B:" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testTwoMissing() {
+    doTest("enum E { A, B, C, D }" +
+           "class X {" +
+           "  void m(E e) {" +
+           "    /*'switch' statement on enum type 'E' misses cases: 'C', and 'D'*/switch/**/ (e) {" +
+           "      case A:" +
+           "      case B:" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testManyMissing() {
+    doTest("enum E { FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH, NINTH }" +
+           "class X {" +
+           "  void m(E e) {" +
+           "    /*'switch' statement on enum type 'E' misses cases: 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH', ...*/switch/**/ (e) {" +
            "    }" +
            "  }" +
            "}");
@@ -47,6 +72,114 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightInsp
            "    }" +
            "  }" +
            "}");
+  }
+
+  public void testUnresolved() {
+    doTest("enum E { A, B, C }" +
+           "class X {" +
+           "  void m(E e) {" +
+           "    switch(e) {" +
+           "      case <error descr=\"Cannot resolve symbol 'D'\">D</error>:" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testSyntaxErrorInLabel() {
+    doTest("enum E { A, B, C }" +
+           "class X {" +
+           "  void m(E e) {" +
+           "    switch(e) {" +
+           "      case <error descr=\"Constant expression required\">(A)</error>:" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
+  public void testDfaFullyCovered() {
+    doTest("enum E {A, B, C}\n" +
+           "\n" +
+           "class X {\n" +
+           "  void m(E e) {\n" +
+           "    if(e == E.C) return;\n" +
+           "    switch (e) {\n" +
+           "      case A:\n" +
+           "      case B:\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testDfaNotCovered() {
+    doTest("enum E {A, B, C}\n" +
+           "\n" +
+           "class X {\n" +
+           "  void m(E e) {\n" +
+           "    if(e == E.C || e == E.B) return;\n" +
+           "    /*'switch' statement on enum type 'E' misses case 'A'*/switch/**/ (e) {\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testDfaPossibleValues() {
+    doTest("enum E {A, B, C}\n" +
+           "\n" +
+           "class X {\n" +
+           "  void m(E e) {\n" +
+           "    if(e == E.A || e == E.B) {\n" +
+           "      switch (e) {\n" +
+           "        case A:\n" +
+           "        case B:\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testDfaPossibleValuesNotCovered() {
+    doTest("enum E {A, B, C}\n" +
+           "\n" +
+           "class X {\n" +
+           "  void m(E e) {\n" +
+           "    if(e == E.A || e == E.B) {\n" +
+           "      /*'switch' statement on enum type 'E' misses case 'B'*/switch/**/ (e) {\n" +
+           "        case A:\n" +
+           "      }\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testJava12Preview() {
+    doTest("enum E {A, B, C}\n" +
+           "\n" +
+           "class X {\n" +
+           "  void m(E e) {\n" +
+           "    switch(e) {\n" +
+           "      case A -> {}\n" +
+           "      case B -> {}\n" +
+           "      case C -> {}\n" +
+           "    }\n" +
+           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
+           "      case A -> {}\n" +
+           "      case B -> {}\n" +
+           "    }\n" +
+           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
+           "      case A, B -> {}\n" +
+           "    }\n" +
+           "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/(e) {\n" +
+           "      case A, B:break;\n" +
+           "    }\n" +
+           "    \n" +
+           "  }\n" +
+           "}");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_12;
   }
 
   @Nullable

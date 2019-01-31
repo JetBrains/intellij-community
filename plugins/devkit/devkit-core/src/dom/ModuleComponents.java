@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
@@ -21,22 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * plugin.dtd:module-components interface.
- */
 public interface ModuleComponents extends DomElement {
 
-	/**
-	 * Returns the list of component children.
-	 * @return the list of component children.
-	 */
-	@NotNull
-	List<Component.Module> getComponents();
-	/**
-	 * Adds new child to the list of component children.
-	 * @return created child
-	 */
-	Component.Module addComponent();
+  @NotNull
+  List<Component.Module> getComponents();
 
-
+  Component.Module addComponent();
 }

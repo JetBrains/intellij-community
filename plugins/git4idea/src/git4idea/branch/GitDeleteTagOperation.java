@@ -68,7 +68,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
       GitRepository repository = next();
       GitCommandResult result = myGit.deleteTag(repository, myTagName);
       if (result.success()) {
-        repository.getRepositoryFiles().refresh();
+        repository.getRepositoryFiles().refreshTagsFiles();
         markSuccessful(repository);
       }
       else {
@@ -134,7 +134,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
     for (GitRepository repository: getSuccessfulRepositories()) {
       GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
       result.append(repository, res);
-      repository.getRepositoryFiles().refresh();
+      repository.getRepositoryFiles().refreshTagsFiles();
     }
     return result;
   }
@@ -153,6 +153,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   @NotNull
   public String getSuccessMessage() {
     throw new UnsupportedOperationException();

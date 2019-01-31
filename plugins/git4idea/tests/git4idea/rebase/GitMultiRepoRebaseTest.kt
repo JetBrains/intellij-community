@@ -117,7 +117,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
-                 cleanupForAssertion("Do you want just to abort rebase in contrib, or also rollback the successful rebase in community?"),
+                 cleanupForAssertion("Abort rebase in contrib only or also rollback rebase in community?"),
                  cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(allRepositories)
     allRepositories.forEach { it.`assert feature not rebased on master`() }
@@ -132,7 +132,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     var facedConflictInUltimate = false
     var facedConflictInCommunity = false
-    vcsHelper.onMerge({
+    vcsHelper.onMerge {
       assertFalse(facedConflictInCommunity && facedConflictInUltimate)
       if (ultimate.hasConflict("c.txt")) {
         assertFalse(facedConflictInUltimate)
@@ -146,7 +146,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
         assertNoRebaseInProgress(ultimate)
         community.resolveConflicts()
       }
-    })
+    }
 
     rebase("master")
 

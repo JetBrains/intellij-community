@@ -45,23 +45,12 @@ public class DefaultStubBuilder implements StubBuilder {
     return stub;
   }
 
-  /**
-   * @deprecated override and invoke {@link #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)} (to be removed in IDEA 2017)
-   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
-   */
-  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
-    return false;
-  }
-
   @NotNull
   protected final StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
     new StubBuildingWalkingVisitor(root, parentStub).buildStubTree();
     return parentStub;
   }
 
-  /**
-   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(PsiElement, PsiElement)}.
-   */
   @Override
   public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
     return false;
@@ -108,7 +97,7 @@ public class DefaultStubBuilder implements StubBuilder {
         if (type.shouldCreateStub(node)) {
           PsiElement element = node.getPsi();
           if (!(element instanceof StubBasedPsiElement)) {
-            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
+            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element + ", language: #" + type.getLanguage());
           }
           @SuppressWarnings("unchecked") StubElement stub = type.createStub(element, parentStub);
           //noinspection ConstantConditions

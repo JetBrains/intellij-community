@@ -17,14 +17,16 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSuperExpression
+import com.intellij.psi.ResolveResult
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.USuperExpression
 
 class JavaUSuperExpression(
   override val psi: PsiSuperExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), USuperExpression {
+) : JavaAbstractUExpression(givenParent), USuperExpression, UMultiResolvable {
   override val label: String?
     get() = psi.qualifier?.qualifiedName
 
@@ -32,4 +34,6 @@ class JavaUSuperExpression(
     get() = psi.qualifier?.let { UIdentifier(it, this) }
 
   override fun resolve(): PsiElement? = psi.qualifier?.resolve()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    psi.qualifier?.multiResolve(false)?.asIterable() ?: emptyList()
 }

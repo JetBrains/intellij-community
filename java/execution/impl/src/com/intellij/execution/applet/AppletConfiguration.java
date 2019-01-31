@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet;
 
 import com.intellij.execution.*;
@@ -22,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,20 +31,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 
-public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements SingleClassConfiguration, RefactoringListenerProvider,
-                                                                                                         PersistentStateComponent<Element> {
+public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, AppletConfigurationOptions>
+  implements SingleClassConfiguration, RefactoringListenerProvider, PersistentStateComponent<AppletConfigurationOptions> {
   public AppletConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
   }
 
+  @NotNull
   @Override
   public AppletConfigurationOptions getOptions() {
     return (AppletConfigurationOptions)super.getOptions();
-  }
-
-  @Override
-  protected Class<AppletConfigurationOptions> getOptionsClass() {
-    return AppletConfigurationOptions.class;
   }
 
   @Override
@@ -124,13 +117,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getOptions().getMainClassName());
-  }
-
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    super.writeExternal(element);
-    return element;
   }
 
   @Override
@@ -211,8 +197,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NotNull
   private AppletHtmlFile generateAppletTempPage() throws IOException {
     final File tempFile = FileUtil.createTempFile("AppletPage", ".html");
-    @NonNls final FileWriter writer = new FileWriter(tempFile);
-    try {
+    try (FileWriter writer = new FileWriter(tempFile)) {
       writer.write("<html>\n" +
                    "<head>\n" +
                    "<title>" + getOptions().getMainClassName() + "</title>\n" +
@@ -227,9 +212,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
       }
       writer.write("</applet>\n</body>\n</html>\n");
-    }
-    finally {
-      writer.close();
     }
     return new AppletHtmlFile(tempFile.getAbsolutePath(), tempFile);
   }

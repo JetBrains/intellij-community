@@ -32,7 +32,7 @@ public class ComparableObjectCheck {
     Object[] my = me.getEqualityObjects();
     Object[] his = ((ComparableObject) him).getEqualityObjects();
 
-    if (my.length == 0 || his.length == 0 || my.length != his.length) {
+    if (his.length == 0 || my.length != his.length) {
       return false;
     }
 

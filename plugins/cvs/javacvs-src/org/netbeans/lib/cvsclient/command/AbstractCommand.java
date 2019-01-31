@@ -76,11 +76,13 @@ public abstract class AbstractCommand extends Command {
 
 	protected final void addFileRequests(ICvsFiles cvsFiles, final Requests requests, final IClientEnvironment clientEnvironment) {
 		cvsFiles.visit(new ICvsFilesVisitor() {
-			public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
+			@Override
+                        public void handleFile(FileObject fileObject, Entry entry, boolean exists) {
 				addRequestForFile(fileObject, entry, exists, requests, clientEnvironment);
 			}
 
-			public void handleDirectory(DirectoryObject directoryObject) {
+			@Override
+                        public void handleDirectory(DirectoryObject directoryObject) {
 				requests.addDirectoryStickyRequests(directoryObject, clientEnvironment.getAdminReader(), clientEnvironment.getCvsFileSystem());
 			}
 		});

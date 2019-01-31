@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.test;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
+import com.intellij.debugger.streams.psi.impl.PackageChainDetector;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +22,10 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
-  private final StreamChainBuilder myBuilder = new JavaStreamChainBuilder(new JavaChainTransformerImpl(), "java.util.stream");
+  private final StreamChainBuilder myBuilder = new JavaStreamChainBuilder(
+    new JavaChainTransformerImpl(),
+    PackageChainDetector.Companion.forJavaStreams("java.util.stream")
+  );
 
   @NotNull
   @Override

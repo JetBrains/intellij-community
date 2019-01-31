@@ -25,8 +25,6 @@ import java.awt.event.ContainerListener;
 /**
  * Utility class for adding a specific listener to all components in a Swing component tree,
  * with the possibility to exclude components of specific types.
- *
- * @since 5.1
  */
 public abstract class ComponentTreeWatcher {
   protected final Class[] myControlsToIgnore;
@@ -36,10 +34,12 @@ public abstract class ComponentTreeWatcher {
   }
 
   private final ContainerListener myContainerListener = new ContainerListener() {
+    @Override
     public void componentAdded(ContainerEvent e) {
       register(e.getChild());
     }
 
+    @Override
     public void componentRemoved(ContainerEvent e) {
       unregister(e.getChild());
     }

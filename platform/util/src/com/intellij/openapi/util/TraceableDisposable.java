@@ -41,7 +41,6 @@ public class TraceableDisposable {
   private Throwable KILL_TRACE;
 
   public TraceableDisposable(boolean debug) {
-    //noinspection ThrowableResultOfMethodCallIgnored
     CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable(String.valueOf(System.currentTimeMillis()))) : null;
   }
 
@@ -79,7 +78,6 @@ public class TraceableDisposable {
 
     @Override
     public void printStackTrace(@NotNull PrintStream s) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
       PrintWriter writer = new PrintWriter(s);
       printStackTrace(writer);
       writer.flush();

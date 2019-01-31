@@ -28,6 +28,7 @@ import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,11 +45,13 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     mySettings = settings;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new TypeCookViewDescriptor(myElements);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
@@ -98,6 +101,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     myElements = elements;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final Set<PsiElement> victims = new HashSet<>();
 
@@ -115,12 +119,13 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("type.cook.command");
   }
 
   public List<PsiElement> getElements() {
-    return Collections.unmodifiableList(Arrays.asList(myElements));
+    return ContainerUtil.immutableList(myElements);
   }
 }

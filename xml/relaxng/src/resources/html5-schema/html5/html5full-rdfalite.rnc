@@ -33,6 +33,8 @@ include "meta.rnc" {
                  )
             )
 }
+include "its20-html5.rnc"
+common.attrs &= its-html-attributes
 include "microdata.rnc"
 include "rdfa.rnc" {
         nonRDFaLite = notAllowed

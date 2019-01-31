@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -29,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public class SessionDialog extends DialogWrapper {
@@ -36,7 +23,7 @@ public class SessionDialog extends DialogWrapper {
   @NonNls public static final String VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title";
 
   private final CommitSession mySession;
-  private final List<Change> myChanges;
+  private final List<? extends Change> myChanges;
 
   private final String myCommitMessage;
 
@@ -46,7 +33,7 @@ public class SessionDialog extends DialogWrapper {
   public SessionDialog(String title,
                        Project project,
                        @NotNull CommitSession session,
-                       @NotNull List<Change> changes,
+                       @NotNull List<? extends Change> changes,
                        @Nullable String commitMessage,
                        @Nullable JComponent configurationComponent) {
     super(project, true);
@@ -66,21 +53,22 @@ public class SessionDialog extends DialogWrapper {
   public SessionDialog(String title,
                        Project project,
                        @NotNull CommitSession session,
-                       @NotNull List<Change> changes,
+                       @NotNull List<? extends Change> changes,
                        @Nullable String commitMessage) {
     this(title, project, session, changes, commitMessage, null);
   }
 
   @Nullable
-  public static JComponent createConfigurationUI(final CommitSession session, final List<Change> changes, final String commitMessage) {
+  public static JComponent createConfigurationUI(final CommitSession session, final List<? extends Change> changes, final String commitMessage) {
     try {
-      return session.getAdditionalConfigurationUI(changes, commitMessage);
+      return session.getAdditionalConfigurationUI((Collection<Change>)changes, commitMessage);
     }
     catch(AbstractMethodError e) {
       return session.getAdditionalConfigurationUI();
     }
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myCenterPanel.add(myConfigurationComponent, BorderLayout.CENTER);
@@ -100,7 +88,7 @@ public class SessionDialog extends DialogWrapper {
   }
 
   private void updateButtons() {
-    setOKActionEnabled(mySession.canExecute(myChanges, myCommitMessage));
+    setOKActionEnabled(mySession.canExecute((Collection<Change>)myChanges, myCommitMessage));
   }
 
   @Override

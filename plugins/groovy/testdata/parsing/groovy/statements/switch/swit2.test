@@ -8,7 +8,7 @@ Groovy script
     PsiElement(switch)('switch')
     PsiElement(()('(')
     Literal
-      PsiElement(string)(''bear'')
+      PsiElement(single quoted string)(''bear'')
     PsiElement())(')')
     PsiElement({)('{')
     PsiWhiteSpace('\n')

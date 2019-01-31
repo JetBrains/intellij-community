@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
@@ -58,7 +59,11 @@ public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionActi
       return false;
     }
     final PsiElement parent = element.getParent();
-    return parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() instanceof PsiIfStatement;
+    return isWellFormedIf(parent) && isWellFormedIf(((PsiIfStatement)parent).getElseBranch());
+  }
+
+  private static boolean isWellFormedIf(@Nullable PsiElement e) {
+    return e instanceof PsiIfStatement && ((PsiIfStatement)e).getCondition() != null && ((PsiIfStatement)e).getThenBranch() != null;
   }
 
   @NotNull

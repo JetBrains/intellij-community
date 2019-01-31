@@ -68,14 +68,14 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePaths);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
         ContainerUtil.addIfNotNull(result, parseListFilesStagedRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -101,14 +101,14 @@ public class GitIndexUtil {
     h.endOptions();
     h.addRelativePaths(filePath);
 
-    h.addLineListener(new GitLineHandlerAdapter() {
+    h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
         ContainerUtil.addIfNotNull(result, parseListTreeRecord(root, line));
       }
     });
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
 
     return result;
   }
@@ -141,16 +141,14 @@ public class GitIndexUtil {
       String permissions = s.spaceToken();
       String type = s.spaceToken();
       String hash = s.tabToken();
-      String filePath = s.line();
+      String filePath = GitUtil.unescapePath(s.line());
 
-      FilePath path = VcsUtil.getFilePath(root, GitUtil.unescapePath(filePath));
-
-      if ("tree".equals(type)) return new StagedDirectory(path);
-      if ("commit".equals(type)) return new StagedSubrepo(path);
+      if ("tree".equals(type)) return new StagedDirectory(VcsUtil.getFilePath(root, filePath, true));
+      if ("commit".equals(type)) return new StagedSubrepo(VcsUtil.getFilePath(root, filePath, true), hash);
       if (!"blob".equals(type)) return null;
 
       boolean executable = EXECUTABLE_MODE.equals(permissions);
-      return new StagedFile(path, hash, executable);
+      return new StagedFile(VcsUtil.getFilePath(root, filePath), hash, executable);
     }
     catch (VcsException e) {
       LOG.warn(e);
@@ -205,7 +203,7 @@ public class GitIndexUtil {
       h.addParameters("--cacheinfo", mode, blobHash.asString(), path);
     }
     h.endOptions();
-    Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
   }
 
   @NotNull
@@ -223,11 +221,18 @@ public class GitIndexUtil {
   public static class StagedFileOrDirectory {
     @NotNull protected final FilePath myPath;
 
-    public StagedFileOrDirectory(@NotNull FilePath path) {myPath = path;}
+    public StagedFileOrDirectory(@NotNull FilePath path) {
+      myPath = path;
+    }
 
     @NotNull
     public FilePath getPath() {
       return myPath;
+    }
+
+    @Override
+    public String toString() {
+      return "StagedFileOrDirectory[" + myPath + "]";
     }
   }
 
@@ -249,6 +254,11 @@ public class GitIndexUtil {
     public boolean isExecutable() {
       return myExecutable;
     }
+
+    @Override
+    public String toString() {
+      return "StagedFile[" + myPath + "] at [" + myBlobHash + "]";
+    }
   }
 
   public static class StagedDirectory extends StagedFileOrDirectory {
@@ -258,8 +268,21 @@ public class GitIndexUtil {
   }
 
   public static class StagedSubrepo extends StagedFileOrDirectory {
-    public StagedSubrepo(@NotNull FilePath path) {
+    @NotNull private final String myBlobHash;
+
+    public StagedSubrepo(@NotNull FilePath path, @NotNull String blobHash) {
       super(path);
+      myBlobHash = blobHash;
+    }
+
+    @NotNull
+    public String getBlobHash() {
+      return myBlobHash;
+    }
+
+    @Override
+    public String toString() {
+      return "StagedSubRepo[" + myPath + "] at [" + myBlobHash + "]";
     }
   }
 }

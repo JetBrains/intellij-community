@@ -21,7 +21,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public interface ScalaModel extends Serializable {
 

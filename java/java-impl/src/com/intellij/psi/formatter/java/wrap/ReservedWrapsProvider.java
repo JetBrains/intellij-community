@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * method and most probably will be removed as soon as formatting stuff is refactored.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010 3:43:17 PM
  */
 public interface ReservedWrapsProvider {
 

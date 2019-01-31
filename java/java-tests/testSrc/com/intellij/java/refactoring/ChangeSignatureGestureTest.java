@@ -116,13 +116,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   public void testDeleteParamInSuperUsed() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doDeleteTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doDeleteTest());
   }
 
   private void doDeleteTest() {

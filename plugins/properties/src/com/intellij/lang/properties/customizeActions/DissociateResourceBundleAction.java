@@ -48,7 +48,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
@@ -59,7 +59,7 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     if (!resourceBundles.isEmpty()) {
       final String actionText = resourceBundles.size() == 1 ?
@@ -72,7 +72,7 @@ public class DissociateResourceBundleAction extends AnAction {
     }
   }
 
-  public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
+  public static void dissociate(final Collection<? extends ResourceBundle> resourceBundles, final Project project) {
     final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<>();
     for (ResourceBundle resourceBundle : resourceBundles) {
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {

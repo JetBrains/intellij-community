@@ -12,7 +12,7 @@ public interface JsonObject extends JsonContainer {
   List<JsonProperty> getPropertyList();
 
   @Nullable
-  JsonProperty findProperty(String name);
+  JsonProperty findProperty(@NotNull String name);
 
   @Nullable
   ItemPresentation getPresentation();

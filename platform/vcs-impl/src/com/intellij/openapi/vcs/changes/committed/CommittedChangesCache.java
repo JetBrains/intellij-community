@@ -210,15 +210,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     private final ChangeBrowserSettings mySettings;
     private final int myMaxCount;
     private final boolean myCacheOnly;
-    private final Consumer<List<CommittedChangeList>> myConsumer;
-    private final Consumer<List<VcsException>> myErrorConsumer;
+    private final Consumer<? super List<CommittedChangeList>> myConsumer;
+    private final Consumer<? super List<VcsException>> myErrorConsumer;
 
     private final LinkedHashSet<CommittedChangeList> myResult = new LinkedHashSet<>();
     private final List<VcsException> myExceptions = new ArrayList<>();
     private boolean myDisposed = false;
 
     private MyProjectChangesLoader(ChangeBrowserSettings settings, int maxCount, boolean cacheOnly,
-                                   Consumer<List<CommittedChangeList>> consumer, Consumer<List<VcsException>> errorConsumer) {
+                                   Consumer<? super List<CommittedChangeList>> consumer, Consumer<? super List<VcsException>> errorConsumer) {
       mySettings = settings;
       myMaxCount = maxCount;
       myCacheOnly = cacheOnly;
@@ -287,8 +287,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public void getProjectChangesAsync(final ChangeBrowserSettings settings,
                                      final int maxCount,
                                      final boolean cacheOnly,
-                                     final Consumer<List<CommittedChangeList>> consumer,
-                                     final Consumer<List<VcsException>> errorConsumer) {
+                                     final Consumer<? super List<CommittedChangeList>> consumer,
+                                     final Consumer<? super List<VcsException>> errorConsumer) {
     final MyProjectChangesLoader loader = new MyProjectChangesLoader(settings, maxCount, cacheOnly, consumer, errorConsumer);
     myTaskQueue.run(loader);
   }
@@ -355,7 +355,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return true;
   }
 
-  public void hasCachesForAnyRoot(@Nullable final Consumer<Boolean> continuation) {
+  public void hasCachesForAnyRoot(@Nullable final Consumer<? super Boolean> continuation) {
     myTaskQueue.run(() -> {
       final Ref<Boolean> success = new Ref<>();
       try {
@@ -536,7 +536,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
-                                                        final List<CommittedChangeList> newChanges) throws IOException {
+                                                        final List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
       fireChangesLoaded(location, savedChanges);
@@ -545,7 +545,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
-                                                                    final List<CommittedChangeList> newChanges) throws IOException {
+                                                                    final List<? extends CommittedChangeList> newChanges) throws IOException {
     // ensure that changes are loaded before taking read action, to avoid stalling UI
     for(CommittedChangeList changeList: newChanges) {
       changeList.getChanges();
@@ -638,7 +638,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
 
     @Override
-    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
       if (lists.size() == 1) {
         return lists.get(0);
       }
@@ -686,7 +686,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
-  public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer, final boolean inBackground) {
+  public void loadIncomingChangesAsync(@Nullable final Consumer<? super List<CommittedChangeList>> consumer, final boolean inBackground) {
     debug("Loading incoming changes");
     final Runnable task = () -> {
       final List<CommittedChangeList> list = loadIncomingChanges(inBackground);
@@ -716,7 +716,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public void processUpdatedFiles(final UpdatedFiles updatedFiles,
-                                  @Nullable final Consumer<List<CommittedChangeList>> incomingChangesConsumer) {
+                                  @Nullable final Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     final Runnable task = () -> {
       debug("Processing updated files");
       final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
@@ -748,7 +748,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);
   }
 
-  private void pendingUpdateProcessed(@Nullable Consumer<List<CommittedChangeList>> incomingChangesConsumer) {
+  private void pendingUpdateProcessed(@Nullable Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     myPendingUpdateCount--;
     if (myPendingUpdateCount == 0) {
       notifyIncomingChangesUpdated(myNewIncomingChanges);
@@ -761,7 +761,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private void processUpdatedFilesAfterRefresh(final ChangesCacheFile cache,
                                                final UpdatedFiles updatedFiles,
-                                               @Nullable final Consumer<List<CommittedChangeList>> incomingChangesConsumer) {
+                                               @Nullable final Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     refreshCacheAsync(cache, false, new RefreshResultConsumer() {
       @Override
       public void receivedChanges(final List<CommittedChangeList> committedChangeLists) {
@@ -797,7 +797,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
-  private void fireIncomingChangesUpdated(final List<CommittedChangeList> lists) {
+  private void fireIncomingChangesUpdated(final List<? extends CommittedChangeList> lists) {
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
                                                       listener -> listener.incomingChangesUpdated(new ArrayList<>(lists)));
   }
@@ -974,8 +974,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
       myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
-                                                                 myState.getRefreshInterval()*60, myState.getRefreshInterval()*60,
-                                                                 TimeUnit.SECONDS);
+                                                                    myState.getRefreshInterval() * 60L,
+                                                                    myState.getRefreshInterval() * 60L,
+                                                                    TimeUnit.SECONDS);
     }
   }
 

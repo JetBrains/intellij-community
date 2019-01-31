@@ -17,12 +17,14 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -30,7 +32,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,13 +46,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.util.containers.ContainerUtil.map2Array;
-
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
  *
  * @author Denis Zhdanov
- * @since 4/16/13 11:38 AM
  */
 public class ProjectDataManagerImpl implements ProjectDataManager {
 
@@ -136,7 +134,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     final PerformanceTrace trace;
     if (traceNodes.size() > 0) {
       trace = (PerformanceTrace)traceNodes.iterator().next().getData();
-    } else {
+    }
+    else {
       trace = new PerformanceTrace();
       grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
     }
@@ -182,17 +181,25 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
-      runFinalTasks(synchronous, onFailureImportTasks);
-      dispose(modelsProvider, project, synchronous);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      try {
+        runFinalTasks(project, synchronous, onFailureImportTasks);
+        dispose(modelsProvider, project, synchronous);
+      }
+      finally {
+        //noinspection ConstantConditions
+        ExceptionUtil.rethrowAllAsUnchecked(t);
+      }
     }
-    runFinalTasks(synchronous, onSuccessImportTasks);
+    runFinalTasks(project, synchronous, onSuccessImportTasks);
   }
 
-  private static void runFinalTasks(boolean synchronous, List<Runnable> tasks) {
-    Runnable runnable = () -> {
-      for (Runnable task : ContainerUtil.reverse(tasks)) {
-        task.run();
+  private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<Runnable> tasks) {
+    Runnable runnable = new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        for (Runnable task : ContainerUtil.reverse(tasks)) {
+          task.run();
+        }
       }
     };
     if (synchronous) {
@@ -261,8 +268,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final List<Runnable> onSuccessImportTasks,
                                 @NotNull final List<Runnable> onFailureImportTasks) {
     if (project.isDisposed()) return;
-    if (project instanceof ProjectImpl) {
-      assert ((ProjectImpl)project).isComponentsCreated();
+    if (project instanceof ComponentManagerImpl) {
+      assert ((ComponentManagerImpl)project).isComponentsCreated();
     }
 
     final List<DataNode<T>> toImport = ContainerUtil.newSmartList();
@@ -283,10 +290,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     final List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
-      LOG.warn(String.format(
-        "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
-        toImport, key, myServices.getValue().keySet()
-      ));
+      LOG.debug(String.format("No data service is registered for %s", key));
     }
     else {
       for (ProjectDataService<?, ?> service : services) {
@@ -353,13 +357,15 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   @Override
-  public void ensureTheDataIsReadyToUse(@Nullable DataNode dataNode) {
-    if (dataNode == null) return;
-    if (Boolean.TRUE.equals(dataNode.getUserData(DATA_READY))) return;
-
-    ExternalSystemApiUtil.visit(dataNode, dataNode1 -> {
-      prepareDataToUse(dataNode1);
-      dataNode1.putUserData(DATA_READY, Boolean.TRUE);
+  public void ensureTheDataIsReadyToUse(@Nullable DataNode startNode) {
+    if (startNode == null) return;
+    if (Boolean.TRUE.equals(startNode.getUserData(DATA_READY))) return;
+    final DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
+    ExternalSystemApiUtil.visit(startNode, dataNode -> {
+      if (prepareDataToUse(dataNode)) {
+        dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
+        dataNode.putUserData(DATA_READY, Boolean.TRUE);
+      }
     });
   }
 
@@ -430,18 +436,27 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  private void prepareDataToUse(@NotNull DataNode dataNode) {
+  private boolean prepareDataToUse(@NotNull DataNode dataNode) {
     final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
     List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
     if (services != null) {
       try {
-        dataNode.prepareData(map2Array(services, ClassLoader.class, service -> service.getClass().getClassLoader()));
+        Set<ClassLoader> classLoaders = ContainerUtil.newLinkedHashSet();
+        for (ProjectDataService<?, ?> dataService : services) {
+          classLoaders.add(dataService.getClass().getClassLoader());
+        }
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+          classLoaders.add(manager.getClass().getClassLoader());
+        }
+        dataNode.prepareData(ContainerUtil.toArray(classLoaders, ClassLoader[]::new));
       }
       catch (Exception e) {
         LOG.debug(e);
         dataNode.clear(true);
+        return false;
       }
     }
+    return true;
   }
 
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,

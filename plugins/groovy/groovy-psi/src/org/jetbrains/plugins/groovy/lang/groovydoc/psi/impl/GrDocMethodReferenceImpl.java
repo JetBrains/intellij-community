@@ -27,6 +27,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     super(node);
   }
 
+  @Override
   public String toString() {
     return "GrDocMethodReference";
   }
@@ -108,7 +109,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
       return getManager().areElementsEquivalent(element, resolve());
     }
@@ -116,7 +117,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) resolved;

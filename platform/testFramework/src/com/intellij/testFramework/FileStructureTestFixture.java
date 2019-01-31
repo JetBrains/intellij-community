@@ -35,7 +35,7 @@ public class FileStructureTestFixture implements Disposable {
     FileStructurePopup popup = getPopup();
     PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate());
     TreePath path = PlatformTestUtil.waitForPromise(popup.select(popup.getCurrentElement(myFile)));
-    return path == null ? null : TreeUtil.getUserObject(FilteringTreeStructure.FilteringNode.class, path.getLastPathComponent());
+    return TreeUtil.getLastUserObject(FilteringTreeStructure.FilteringNode.class, path);
   }
 
   public Tree getTree() {

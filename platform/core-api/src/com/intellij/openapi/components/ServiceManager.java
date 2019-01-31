@@ -36,6 +36,11 @@ public class ServiceManager {
   }
 
   @Nullable
+  public static <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return doGetService(ApplicationManager.getApplication(), serviceClass, false);
+  }
+
+  @Nullable
   private static <T> T doGetService(ComponentManager componentManager, @NotNull Class<T> serviceClass, boolean isCreate) {
     String componentKey = serviceClass.getName();
 
@@ -71,7 +76,7 @@ public class ServiceManager {
    * @return Key instance.
    */
   @NotNull
-  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
+  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<? extends T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> getService(project, serviceClass));
   }
 }

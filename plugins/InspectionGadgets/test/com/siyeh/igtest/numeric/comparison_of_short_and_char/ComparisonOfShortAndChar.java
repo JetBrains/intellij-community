@@ -7,9 +7,9 @@ public class ComparisonOfShortAndChar
     {
         char bar = 'c';
         short baz = (short) bar2();
-        final boolean isEqual = bar == baz;
+        final boolean isEqual = <warning descr="Equality comparison 'bar == baz' of short and char values">bar == baz</warning>;
         System.out.println("isEqual = " + isEqual);
-        final boolean isNotEqual = bar != baz;
+        final boolean isNotEqual = <warning descr="Equality comparison 'bar != baz' of short and char values">bar != baz</warning>;
         System.out.println("isEqual = " + isEqual);
         return 3;
     }

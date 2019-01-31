@@ -56,10 +56,11 @@ class UniteSameType implements DiffCorrection {
     DiffCorrection.FragmentsCollector collector = new DiffCorrection.FragmentsCollector();
 //    DiffFragment previous = fragments[0];
     DiffFragment previous = null;
-    for (int i = 0; i < fragments.length; i++) {
-      DiffFragment fragment = fragments[i];
+    for (DiffFragment fragment : fragments) {
       if (fragment.isOneSide()) {
-        if (previous == null) previous = fragment;
+        if (previous == null) {
+          previous = fragment;
+        }
         else {
           FragmentSide side = FragmentSide.chooseSide(fragment);
           DiffString previousText = side.getText(previous);
@@ -67,7 +68,8 @@ class UniteSameType implements DiffCorrection {
           previous = side.createFragment(DiffString.concatenateNullable(previousText, side.getText(fragment)),
                                          side.getOtherText(previous), true);
         }
-      } else {
+      }
+      else {
         if (previous != null) collector.add(previous);
         previous = null;
         collector.add(fragment);

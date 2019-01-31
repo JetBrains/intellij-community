@@ -1,0 +1,15 @@
+try () {}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Try resource list
+      PsiElement(()('(')
+      PsiErrorElement:')' unexpected
+        <empty list>
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

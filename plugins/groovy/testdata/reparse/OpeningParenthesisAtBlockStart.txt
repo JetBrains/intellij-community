@@ -5,10 +5,9 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
@@ -61,34 +60,32 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      Reference expression
-        Call expression
-          Parenthesized expression
-            PsiElement(()('(')
-            Reference expression
-              PsiElement(identifier)('String')
-            PsiErrorElement:')' expected, got 'home'
-              <empty list>
-          PsiWhiteSpace(' ')
-          Command arguments
-            Reference expression
-              PsiElement(identifier)('home')
-        PsiWhiteSpace('\n    ')
-        PsiElement(identifier)('simplePlugins')
-      PsiErrorElement:'.' unexpected
-        PsiElement(.)('.')
+      Call expression
+        Parenthesized expression
+          PsiElement(()('(')
+          Reference expression
+            PsiElement(identifier)('String')
+          PsiErrorElement:')' expected, got 'home'
+            <empty list>
+        PsiWhiteSpace(' ')
+        Command arguments
+          Reference expression
+            PsiElement(identifier)('home')
+      PsiWhiteSpace('\n    ')
       Method call
         Reference expression
+          Reference expression
+            PsiElement(identifier)('simplePlugins')
+          PsiElement(.)('.')
           PsiElement(identifier)('each')
         PsiWhiteSpace(' ')
         Arguments

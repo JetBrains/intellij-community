@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditorHintFixture implements EditorHintListener {
@@ -30,7 +31,7 @@ public class EditorHintFixture implements EditorHintListener {
   }
 
   @Override
-  public void hintShown(Project project, LightweightHint hint, int flags) {
+  public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
     hint.putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.TRUE);
     myCurrentHint = hint;
     hint.addHintListener(event -> {
@@ -42,6 +43,10 @@ public class EditorHintFixture implements EditorHintListener {
   
   @Nullable
   public String getCurrentHintText() {
-    return myCurrentHint == null ? null : myCurrentHint.getComponent().toString();
+    return myCurrentHint == null ? null : removeCurrentParameterColor(myCurrentHint.getComponent().toString());
+  }
+
+  public static String removeCurrentParameterColor(String text) {
+    return text == null ? null : text.replace("<b color=1d1d1d>", "<b>");
   }
 }

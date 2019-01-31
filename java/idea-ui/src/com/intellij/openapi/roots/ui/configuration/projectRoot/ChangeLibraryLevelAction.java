@@ -51,7 +51,7 @@ public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final ProjectStructureElement selectedElement = mySourceConfigurable.getSelectedElement();
     if (!(selectedElement instanceof LibraryProjectStructureElement)) return;
     final StructureConfigurableContext context = mySourceConfigurable.myContext;

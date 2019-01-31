@@ -21,10 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,11 +36,9 @@ public class PyMakePublicQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
-      if (reference == null) return;
-      element = reference.resolve();
+    final PsiElement element = PyQuickFixUtil.dereference(descriptor.getPsiElement());
+    if (element == null) {
+      return;
     }
     if (element instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)element).getName();

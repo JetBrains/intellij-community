@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -20,10 +6,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
+import com.intellij.util.indexing.FileBasedIndex;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +29,7 @@ import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -56,11 +47,20 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
-
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
 
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
     ApplicationManager.getApplication().isUnitTestMode() ? new ClassDataIndexerStatistics() : map -> {};
+
+  // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
+  static final BinaryOperator<Equations> MERGER =
+    (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
+
+  private static final int VERSION = 11; // change when inference algorithm changes
+  private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
+  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
+  private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
+    "BytecodeAnalysisIndex", FINAL_VERSION, new BytecodeAnalysisIndex.EquationsExternalizer(), new ClassDataIndexer());
 
   @Nullable
   @Override
@@ -74,7 +74,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       ClassReader reader = new ClassReader(file.contentsToByteArray(false));
       Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
       allEquations = solvePartially(reader.getClassName(), allEquations);
-      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(md), hash(equations, md), BytecodeAnalysisIndex.MERGER));
+      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(md), hash(equations, md), MERGER));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -135,10 +135,11 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static Result hash(Result result, MessageDigest md) {
-    if(result instanceof Effects) {
+    if (result instanceof Effects) {
       Effects effects = (Effects)result;
       return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(effect -> hash(effect, md)).toSet());
-    } else if(result instanceof Pending) {
+    }
+    else if (result instanceof Pending) {
       return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
     }
     return result;
@@ -149,13 +150,12 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static EffectQuantum hash(EffectQuantum effect, MessageDigest md) {
-    if(effect instanceof EffectQuantum.CallQuantum) {
+    if (effect instanceof EffectQuantum.CallQuantum) {
       EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
       return new EffectQuantum.CallQuantum(call.key.hashed(md), call.data, call.isStatic);
     }
     return effect;
   }
-
 
   @NotNull
   private static Equations convertEquations(EKey methodKey, List<Equation> rawMethodEquations) {
@@ -188,6 +188,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
     classReader.accept(new KeyedMethodVisitor() {
 
+      @Override
       protected MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key) {
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
@@ -372,7 +373,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                           Type resultType,
                                           final boolean stable,
                                           boolean jsr,
-                                          List<Equation> result,
+                                          List<? super Equation> result,
                                           NegationAnalysis negatedAnalysis) throws AnalyzerException {
         final boolean isReferenceResult = ASMUtils.isReferenceType(resultType);
         final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
@@ -397,11 +398,12 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         }
         final boolean shouldInferNonTrivialFailingContracts;
         final Equation throwEquation;
-        if(methodNode.name.equals("<init>")) {
+        if (methodNode.name.equals("<init>")) {
           // Do not infer failing contracts for constructors
           shouldInferNonTrivialFailingContracts = false;
           throwEquation = new Equation(new EKey(method, Throw, stable), Value.Top);
-        } else {
+        }
+        else {
           final InThrowAnalysis inThrowAnalysis = new InThrowAnalysis(richControlFlow, Throw, origins, stable, sharedPendingStates);
           throwEquation = inThrowAnalysis.analyze();
           if (!throwEquation.result.equals(Value.Top)) {
@@ -496,7 +498,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                              ControlFlowGraph graph,
                                              Type returnType,
                                              boolean stable,
-                                             List<Equation> result) throws AnalyzerException {
+                                             List<? super Equation> result) throws AnalyzerException {
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
         ContainerUtil.addIfNotNull(result, analyzer.outContractEquation(stable));
@@ -565,6 +567,13 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
   }
 
+  @NotNull
+  static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
+    Project project = ProjectManager.getInstance().getDefaultProject(); // the data is project-independent
+    return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
+                                    file -> ourGist.getFileData(project, file).get(key));
+  }
+
   private static class ClassDataIndexerStatistics implements Consumer<Map<HMember, Equations>> {
     private static final AtomicLong ourTotalSize = new AtomicLong(0);
     private static final AtomicLong ourTotalCount = new AtomicLong(0);
@@ -583,7 +592,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
     @Override
     public String toString() {
-      if(ourTotalCount.get() == 0) {
+      if (ourTotalCount.get() == 0) {
         return "";
       }
       return String.format(Locale.ENGLISH, "Classes: %d\nBytes: %d\nBytes per class: %.2f%n", ourTotalCount.get(), ourTotalSize.get(),

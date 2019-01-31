@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -8,7 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
@@ -33,8 +33,7 @@ import java.util.Map;
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private static final NotNullLazyValue<Icon> ourSharedScopeIcon = new NotNullLazyValue<Icon>() {
-    @NotNull
+  private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
     @Override
     protected Icon compute() {
       return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
@@ -59,8 +58,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  public DependencyValidationManagerImpl(final Project project, NamedScopeManager namedScopeManager) {
+  public DependencyValidationManagerImpl(@NotNull Project project, @NotNull NamedScopeManager namedScopeManager) {
     super(project);
+
     myNamedScopeManager = namedScopeManager;
     namedScopeManager.addScopeListener(() -> reloadScopes());
   }
@@ -78,8 +78,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public NamedScope getPredefinedScope(@NotNull String name) {
-    final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
-    for (CustomScopesProvider scopesProvider : scopesProviders) {
+    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
       final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
                                ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name)
                                : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getFilteredScopes());
@@ -184,7 +183,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public Icon getIcon() {
-    return ourSharedScopeIcon.getValue();
+    return ourSharedScopeIcon;
   }
 
   @Override
@@ -372,7 +371,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public void setScopes(NamedScope[] scopes) {
+  public void setScopes(@NotNull NamedScope[] scopes) {
     super.setScopes(scopes);
     final List<String> order = myNamedScopeManager.myOrderState.myOrder;
     order.clear();

@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class Util {
-  static void drawOnActiveFrameGraphics(Consumer<Graphics2D> consumer) {
+  static void drawOnActiveFrameGraphics(Consumer<? super Graphics2D> consumer) {
     Arrays.stream(Frame.getFrames()).
       filter(window -> window instanceof RootPaneContainer).
             filter(f -> f.isActive()).

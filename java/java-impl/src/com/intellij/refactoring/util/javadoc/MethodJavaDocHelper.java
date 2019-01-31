@@ -71,14 +71,14 @@ public class MethodJavaDocHelper {
     if (!myDoCorrectJavaDoc) return null;
     if (anchor == null) return prependParameter(name);
     LOG.assertTrue(anchor.getParent() == myDocComment);
-    final PsiDocTag paramTag = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createParamTag(name, "");
+    final PsiDocTag paramTag = JavaPsiFacade.getElementFactory(myMethod.getProject()).createParamTag(name, "");
     return (PsiDocTag)myDocComment.addAfter(paramTag, anchor);
   }
 
   public PsiDocTag prependParameter(String name) throws IncorrectOperationException {
     if (!myDoCorrectJavaDoc) return null;
     final PsiDocTag[] paramTags = myDocComment.findTagsByName("param");
-    final PsiDocTag newTag = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createParamTag(name, "");
+    final PsiDocTag newTag = JavaPsiFacade.getElementFactory(myMethod.getProject()).createParamTag(name, "");
     if (paramTags.length > 0) {
       return (PsiDocTag)myDocComment.addBefore(newTag, paramTags[0]);
     } else {
@@ -89,7 +89,7 @@ public class MethodJavaDocHelper {
   public PsiDocTag appendParameter(String name) throws IncorrectOperationException {
     if (!myDoCorrectJavaDoc) return null;
     final PsiDocTag[] paramTags = myDocComment.findTagsByName("param");
-    final PsiDocTag newTag = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createParamTag(name, "");
+    final PsiDocTag newTag = JavaPsiFacade.getElementFactory(myMethod.getProject()).createParamTag(name, "");
     if (paramTags.length > 0) {
       return (PsiDocTag)myDocComment.addAfter(newTag, paramTags[paramTags.length - 1]);
     } else {

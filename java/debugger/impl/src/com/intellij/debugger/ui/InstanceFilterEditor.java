@@ -14,6 +14,7 @@ public class InstanceFilterEditor extends PatternFilterEditor {
     super(project);
   }
 
+  @Override
   protected void addClassFilter() {
     String idString = Messages.showInputDialog(myProject,
                                                DebuggerBundle.message("add.instance.filter.dialog.prompt"),
@@ -25,7 +26,6 @@ public class InstanceFilterEditor extends PatternFilterEditor {
                                                  @Override
                                                  public String getErrorText(String inputString) {
                                                    try {
-                                                     //noinspection ResultOfMethodCallIgnored
                                                      Long.parseLong(inputString);
                                                      return null;
                                                    } catch (NumberFormatException e) {
@@ -50,9 +50,7 @@ public class InstanceFilterEditor extends PatternFilterEditor {
       myTable.getSelectionModel().setSelectionInterval(row, row);
       myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
     }
   }
 }

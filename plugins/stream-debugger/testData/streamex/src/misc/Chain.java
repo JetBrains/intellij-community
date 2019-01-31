@@ -2,8 +2,6 @@ package misc;
 
 import one.util.streamex.StreamEx;
 
-import java.util.stream.Stream;
-
 public class Chain {
   public static void main(String[] args) {
     // Breakpoint!
@@ -11,7 +9,7 @@ public class Chain {
     System.out.println(count);
   }
 
-  private static Stream<Integer> dividable(Stream<Integer> stream, int num) {
+  private static StreamEx<Integer> dividable(StreamEx<Integer> stream, int num) {
     return stream.filter(x -> x % num == 0);
   }
 }

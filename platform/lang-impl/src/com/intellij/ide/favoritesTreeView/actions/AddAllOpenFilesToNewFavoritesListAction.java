@@ -22,15 +22,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 class AddAllOpenFilesToNewFavoritesListAction extends AnAction implements DumbAware {
-  public AddAllOpenFilesToNewFavoritesListAction() {
+  AddAllOpenFilesToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.all.open.tabs.to.new.favorites.list"),
-          IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
+          IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.Add);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(e.getProject());
     if (newName != null) {
       new AddAllOpenFilesToFavorites(newName).actionPerformed(e);
@@ -38,7 +39,7 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction implements DumbAw
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabled(false);

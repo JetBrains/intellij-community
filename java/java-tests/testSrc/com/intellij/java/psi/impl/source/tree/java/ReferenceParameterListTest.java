@@ -29,7 +29,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReferenceParameterListTest");
   public void testParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final PsiClass classFromText = factory.createClassFromText("class X extends Y<Z, W> {}", null);
     final PsiClass classX = classFromText.getInnerClasses()[0];
     final PsiJavaCodeReferenceElement[] extendsOfX = classX.getExtendsList().getReferenceElements();
@@ -48,7 +48,7 @@ public class ReferenceParameterListTest extends PsiTestCase {
   }
   public void testResolvableParameterListInExtends() {
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final PsiClass classFromText = factory.createClassFromText(
             "class Z {} class W{}" +
             "class Y<A, B> {} " +

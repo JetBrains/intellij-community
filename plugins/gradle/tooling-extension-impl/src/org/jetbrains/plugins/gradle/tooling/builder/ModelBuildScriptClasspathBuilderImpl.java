@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService {
 

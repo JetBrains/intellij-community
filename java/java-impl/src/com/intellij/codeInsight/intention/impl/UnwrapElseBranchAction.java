@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,9 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
           elseBranch = ifStatement.getElseBranch();
           LOG.assertTrue(elseBranch != null);
         }
-        InvertIfConditionAction.addAfter(ifStatement, elseBranch);
-        elseBranch.delete();
+        CommentTracker ct = new CommentTracker();
+        InvertIfConditionAction.addAfter(ifStatement, elseBranch, ct);
+        ct.deleteAndRestoreComments(elseBranch);
       }
     }
   }

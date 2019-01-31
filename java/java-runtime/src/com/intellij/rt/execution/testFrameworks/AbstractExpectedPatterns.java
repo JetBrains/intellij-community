@@ -23,6 +23,9 @@ import java.util.regex.Pattern;
 
 public class AbstractExpectedPatterns {
 
+  private static final Pattern ASSERT_EQUALS_PATTERN = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+  private static final Pattern ASSERT_EQUALS_CHAINED_PATTERN = Pattern.compile("but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+
   protected static void registerPatterns(String[] patternStrings, List patterns) {
     for (int i = 0; i < patternStrings.length; i++) {
       patterns.add(Pattern.compile(patternStrings[i], Pattern.DOTALL | Pattern.CASE_INSENSITIVE));
@@ -30,6 +33,11 @@ public class AbstractExpectedPatterns {
   }
 
   protected static ComparisonFailureData createExceptionNotification(String message, List patterns) {
+    ComparisonFailureData assertEqualsNotification = createExceptionNotification(message, ASSERT_EQUALS_PATTERN);
+    if (assertEqualsNotification != null) {
+      return ASSERT_EQUALS_CHAINED_PATTERN.matcher(assertEqualsNotification.getExpected()).find() ? null : assertEqualsNotification;
+    }
+
     for (int i = 0; i < patterns.size(); i++) {
       ComparisonFailureData notification = createExceptionNotification(message, (Pattern)patterns.get(i));
       if (notification != null) {
@@ -41,7 +49,7 @@ public class AbstractExpectedPatterns {
 
   protected static ComparisonFailureData createExceptionNotification(String message, Pattern pattern) {
     final Matcher matcher = pattern.matcher(message);
-    if (matcher.find()) {
+    if (matcher.find() && matcher.end() == message.length()) {
       return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), 
                                        matcher.group(2).replaceAll("\\\\n", "\n"));
     }

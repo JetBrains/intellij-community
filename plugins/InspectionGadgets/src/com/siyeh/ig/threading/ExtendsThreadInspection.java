@@ -17,10 +17,14 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
+import org.jetbrains.annotations.NotNull;
 
-public class ExtendsThreadInspection extends ExtendsThreadInspectionBase {
+public class ExtendsThreadInspection extends BaseInspection {
 
   /**
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
@@ -32,5 +36,52 @@ public class ExtendsThreadInspection extends ExtendsThreadInspectionBase {
       return null;
     }
     return new ReplaceInheritanceWithDelegationFix();
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "ClassExplicitlyExtendsThread";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("extends.thread.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiAnonymousClass) {
+      return InspectionGadgetsBundle.message("anonymous.extends.thread.problem.descriptor");
+    } else {
+      return InspectionGadgetsBundle.message("extends.thread.problem.descriptor");
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExtendsThreadVisitor();
+  }
+
+  private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
+        return;
+      }
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return;
+      }
+      final String superclassName = superClass.getQualifiedName();
+      if (!"java.lang.Thread".equals(superclassName)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
+    }
   }
 }

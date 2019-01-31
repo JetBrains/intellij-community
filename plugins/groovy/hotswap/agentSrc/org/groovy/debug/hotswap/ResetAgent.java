@@ -39,6 +39,12 @@ public class ResetAgent {
     initialized = true;
     inst.addTransformer(new ClassFileTransformer() {
       public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        if (className.indexOf('$') >= 0) {
+          // non-toplevel Groovy classes don't have timestamp fields, so don't Java classes and lambdas
+          // let's not care about presumably rare dollar-named Groovy classes
+          return null;
+        }
+
         if (classBeingRedefined != null) {
           try {
             Field callSiteArrayField = classBeingRedefined.getDeclaredField("$callSiteArray");
@@ -54,7 +60,7 @@ public class ResetAgent {
   }
 
   private static boolean matches(byte[] array, byte[] subArray, int start) {
-    for (int i = 0; i < subArray.length; i++) {
+    for (int i = 1; i < subArray.length; i++) {
       if (array[start + i] != subArray[i]) {
         return false;
       }
@@ -65,7 +71,7 @@ public class ResetAgent {
   private static boolean containsSubArray(byte[] array, byte[] subArray) {
     int maxLength = array.length - subArray.length;
     for (int i = 0; i < maxLength; i++) {
-      if (matches(array, subArray, i)) {
+      if (array[i] == subArray[0] && matches(array, subArray, i)) {
         return true;
       }
     }

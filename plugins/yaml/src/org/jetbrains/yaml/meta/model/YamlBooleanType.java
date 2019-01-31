@@ -44,7 +44,7 @@ public class YamlBooleanType extends YamlEnumType {
   private static class StandardYamlBoolean extends YamlBooleanType {
     private static final StandardYamlBoolean SHARED = new StandardYamlBoolean();
 
-    public StandardYamlBoolean() {
+    StandardYamlBoolean() {
       super("yaml:boolean");
       setDisplayName("boolean");
       withLiterals("true", "false");

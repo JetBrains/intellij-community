@@ -11,13 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(
-  name = "DuplocatorSettings",
-  storages = {
-    @Storage("duplocatorSettings.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DuplocatorSettings", storages = @Storage("duplocatorSettings.xml"))
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FIELDS = false;

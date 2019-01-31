@@ -22,15 +22,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 /**
  * @author Svetlana.Zemlyanskaya
  */
 public abstract class AbstractArrangementRuleAction extends AnAction {
 
   @Nullable
-  protected ArrangementMatchingRulesControl getRulesControl(AnActionEvent e) {
+  protected ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return ArrangementSectionRulesControl.KEY.getData(e.getDataContext());
   }
 

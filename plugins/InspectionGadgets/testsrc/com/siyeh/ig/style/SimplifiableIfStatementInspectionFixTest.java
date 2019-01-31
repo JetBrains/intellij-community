@@ -24,5 +24,4 @@ public class SimplifiableIfStatementInspectionFixTest extends LightQuickFixParam
     return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }
 
-  public void test() {  doAllTests(); }
 }

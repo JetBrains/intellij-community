@@ -40,11 +40,11 @@ class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   private final boolean myMakeStatic;
   private final String myNewVisibility;
 
-  public MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
+  MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
     this(method, makeStatic, PsiModifier.PUBLIC);
   }
 
-  public MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @PsiModifier.ModifierConstant String newVisibility) {
+  MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic, @PsiModifier.ModifierConstant String newVisibility) {
     String presentableVisibility = VisibilityUtil.getVisibilityString(newVisibility);
     myName = "Change signature of \'" +
              PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,

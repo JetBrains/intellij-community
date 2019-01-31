@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,8 @@ public class GitLineHandler extends GitTextHandler {
    * Remote url which require authentication
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
-  private boolean myIgnoreAuthenticationRequest;
+  @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
+  @Nullable private GitAuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
@@ -84,14 +85,25 @@ public class GitLineHandler extends GitTextHandler {
     return !myUrls.isEmpty();
   }
 
-  public boolean isIgnoreAuthenticationRequest() {
+  @NotNull
+  public GitAuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
-  public void setIgnoreAuthenticationRequest(boolean ignoreAuthenticationRequest) {
-    myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+    myIgnoreAuthenticationRequest = authenticationMode;
   }
 
+  @Nullable
+  public GitAuthenticationGate getAuthenticationGate() {
+    return myAuthenticationGate;
+  }
+
+  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+    myAuthenticationGate = authenticationGate;
+  }
+
+  @Override
   protected void processTerminated(final int exitCode) {}
 
   public void addLineListener(GitLineHandlerListener listener) {
@@ -99,6 +111,7 @@ public class GitLineHandler extends GitTextHandler {
     myLineListeners.addListener(listener);
   }
 
+  @Override
   protected void onTextAvailable(String text, Key outputType) {
     notifyLine(text, outputType);
   }
@@ -131,7 +144,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @Override
-  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override
@@ -163,7 +176,7 @@ public class GitLineHandler extends GitTextHandler {
 
     @NotNull private final BufferingTextSplitter myOutputProcessor;
 
-    public LineReader(@NotNull Reader reader,
+    LineReader(@NotNull Reader reader,
                       @NotNull SleepingPolicy sleepingPolicy,
                       @NotNull BufferingTextSplitter outputProcessor,
                       @NotNull String presentableName) {

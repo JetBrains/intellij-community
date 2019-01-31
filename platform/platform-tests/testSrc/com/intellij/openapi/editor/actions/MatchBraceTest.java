@@ -26,7 +26,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Dennis.Ushakov
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/platform-tests/testData/editor/matchBrace/")
 public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {

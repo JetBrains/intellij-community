@@ -39,6 +39,7 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     myGroupCreator = groupCreator;
   }
 
+  @Override
   public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
@@ -64,7 +65,8 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     return Pair.create(groups, singles);
   }
 
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<CommittedChangeList> lists) {
+  @Override
+  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
     if (lists.size() == 1) {
       return lists.get(0);
     }
@@ -82,6 +84,7 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     return result;
   }
 
+  @Override
   public long getNumber(final CommittedChangeList list) {
     return list.getNumber();
   }

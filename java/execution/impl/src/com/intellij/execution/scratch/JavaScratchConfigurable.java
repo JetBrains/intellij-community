@@ -83,6 +83,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters = new CommonJavaParametersPanel();
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
     myModule.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }

@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;import java.util.HashMap;
+import java.util.*;
+import java.util.HashMap;
 
 /**
  * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmart()}, {@link #create(TObjectHashingStrategy)} instead of override.
@@ -31,6 +19,7 @@ import java.util.*;import java.util.HashMap;
  * @see ConcurrentMultiMap
  * @author Dmitry Avdeev
  */
+@Debugger.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 public class MultiMap<K, V> implements Serializable {
   public static final MultiMap EMPTY = new EmptyMap();
   private static final long serialVersionUID = -2632269270151455493L;
@@ -76,9 +65,15 @@ public class MultiMap<K, V> implements Serializable {
     return Collections.emptyList();
   }
 
-  public <Kk extends K, Vv extends V> void putAllValues(@NotNull MultiMap<Kk, Vv> from) {
-    for (Map.Entry<Kk, Collection<Vv>> entry : from.entrySet()) {
+  public void putAllValues(@NotNull MultiMap<? extends K, ? extends V> from) {
+    for (Map.Entry<? extends K, ? extends Collection<? extends V>> entry : from.entrySet()) {
       putValues(entry.getKey(), entry.getValue());
+    }
+  }
+
+  public void putAllValues(@NotNull Map<? extends K, ? extends V> from) {
+    for (Map.Entry<? extends K, ? extends V> entry : from.entrySet()) {
+      putValue(entry.getKey(), entry.getValue());
     }
   }
 
@@ -160,6 +155,7 @@ public class MultiMap<K, V> implements Serializable {
   /**
    * @deprecated use {@link #remove(Object, Object)} instead
    */
+  @Deprecated
   public void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -286,6 +282,12 @@ public class MultiMap<K, V> implements Serializable {
       protected Collection<V> createCollection() {
         return ContainerUtil.newLinkedHashSet();
       }
+
+      @NotNull
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
+      }
     };
   }
 
@@ -296,6 +298,12 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createCollection() {
         return new OrderedSet<V>();
+      }
+
+      @NotNull
+      @Override
+      protected Collection<V> createEmptyCollection() {
+        return Collections.emptySet();
       }
     };
   }

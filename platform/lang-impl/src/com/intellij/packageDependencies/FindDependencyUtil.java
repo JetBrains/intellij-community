@@ -31,7 +31,7 @@ import java.util.*;
 public class FindDependencyUtil {
   private FindDependencyUtil() {}
 
-  public static UsageInfo[] findDependencies(@Nullable final List<DependenciesBuilder> builders, Set<PsiFile> searchIn, Set<PsiFile> searchFor) {
+  public static UsageInfo[] findDependencies(@Nullable final List<? extends DependenciesBuilder> builders, Set<? extends PsiFile> searchIn, Set<? extends PsiFile> searchFor) {
     final List<UsageInfo> usages = new ArrayList<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     int totalCount = searchIn.size();
@@ -65,7 +65,7 @@ public class FindDependencyUtil {
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  public static UsageInfo[] findBackwardDependencies(final List<DependenciesBuilder> builders, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
+  public static UsageInfo[] findBackwardDependencies(final List<? extends DependenciesBuilder> builders, final Set<? extends PsiFile> searchIn, final Set<? extends PsiFile> searchFor) {
     final List<UsageInfo> usages = new ArrayList<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
@@ -93,7 +93,7 @@ public class FindDependencyUtil {
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void analyzeFileDependencies(PsiFile psiFile, final Set<PsiFile> searchFor, final List<UsageInfo> result) {
+  private static void analyzeFileDependencies(PsiFile psiFile, final Set<? extends PsiFile> searchFor, final List<? super UsageInfo> result) {
     DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
       @Override
       public void process(PsiElement place, PsiElement dependency) {
@@ -123,11 +123,11 @@ public class FindDependencyUtil {
     return count;
   }
 
-  public static UsageInfo[] findDependencies(final DependenciesBuilder builder, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
+  public static UsageInfo[] findDependencies(final DependenciesBuilder builder, final Set<? extends PsiFile> searchIn, final Set<? extends PsiFile> searchFor) {
     return findDependencies(Collections.singletonList(builder), searchIn, searchFor);
   }
 
-  public static UsageInfo[] findBackwardDependencies(final DependenciesBuilder builder, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
+  public static UsageInfo[] findBackwardDependencies(final DependenciesBuilder builder, final Set<? extends PsiFile> searchIn, final Set<? extends PsiFile> searchFor) {
     return findBackwardDependencies(Collections.singletonList(builder), searchIn, searchFor);
   }
 }

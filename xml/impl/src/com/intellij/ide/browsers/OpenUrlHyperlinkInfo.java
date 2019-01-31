@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
   private final String url;
   private final WebBrowser browser;
-  private final Condition<WebBrowser> browserCondition;
+  private final Condition<? super WebBrowser> browserCondition;
 
   public OpenUrlHyperlinkInfo(@NotNull String url) {
     this(url, Conditions.alwaysTrue(), null);
@@ -44,11 +44,11 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     this(url, Conditions.alwaysTrue(), browser);
   }
 
-  public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition) {
+  public OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<? super WebBrowser> browserCondition) {
     this(url, browserCondition, null);
   }
 
-  private OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<WebBrowser> browserCondition, @Nullable WebBrowser browser) {
+  private OpenUrlHyperlinkInfo(@NotNull String url, @NotNull Condition<? super WebBrowser> browserCondition, @Nullable WebBrowser browser) {
     this.url = url;
     this.browserCondition = browserCondition;
     this.browser = browser;
@@ -61,7 +61,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
       if (browserCondition.value(browser)) {
         group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             BrowserLauncher.getInstance().browse(url, browser, e.getProject());
           }
         });
@@ -70,7 +70,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
 
     group.add(new AnAction("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         CopyPasteManager.getInstance().setContents(new StringSelection(url));
       }
     });

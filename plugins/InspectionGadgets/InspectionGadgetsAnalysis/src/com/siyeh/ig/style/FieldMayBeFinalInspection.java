@@ -17,8 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,9 +65,12 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      if (field.hasModifierProperty(PsiModifier.FINAL) ||
-          !field.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
+      }
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass aClass = field.getContainingClass();
+        if (aClass == null || !PsiUtil.isLocalOrAnonymousClass(aClass)) return;
       }
       if (!CanBeFinalHandler.allowToBeFinal(field)) return;
       if (!FinalUtils.canBeFinal(field)) {

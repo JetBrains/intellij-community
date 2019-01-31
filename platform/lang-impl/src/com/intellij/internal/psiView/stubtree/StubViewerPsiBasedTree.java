@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView.stubtree;
 
-import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -35,12 +20,16 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,11 +38,12 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
@@ -61,10 +51,8 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   public static final Logger LOG = Logger.getInstance("#com.intellij.internal.psiView.PsiViewerDialog");
 
-  private static final Key<Object> PSI_ELEMENT_SELECTION_REQUESTOR = Key.create("SelectionRequester");
-
   @Nullable
-  private PsiViewerStubTreeBuilder myStubTreeBuilder;
+  private AbstractTreeModel myTreeModel;
   @NotNull
   private final Tree myStubTree;
   @Nullable
@@ -76,6 +64,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private volatile Map<ASTNode, StubElement> myNodeToStubs = new BidirectionalMap<>();
+  private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
 
   public StubViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
@@ -92,9 +81,10 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void resetStubTree() {
     myStubTree.removeAll();
-    if (myStubTreeBuilder != null) {
-      Disposer.dispose(myStubTreeBuilder);
-      myStubTreeBuilder = null;
+    if (myTreeModel != null) {
+      Disposer.dispose(myTreeModelDisposable);
+      myTreeModel = null;
+      myTreeModelDisposable = Disposer.newDisposable();
     }
 
     myNodeToStubs = new BidirectionalMap<>();
@@ -145,14 +135,15 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     if (stub instanceof PsiFileStub) {
       PsiFileWithStubSupport file = (PsiFileWithStubSupport)rootElement;
       final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
-      final StubTreeStructure treeStructure = new StubTreeStructure(rootNode);
-      myStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
+      StructureTreeModel treeModel = new StructureTreeModel(new StubTreeStructure(rootNode));
+      myTreeModel = new AsyncTreeModel(treeModel, myTreeModelDisposable);
+      myStubTree.setModel(myTreeModel);
       fillPsiToStubCache(file, (PsiFileStub)stub);
       myStubTree.setRootVisible(true);
       myStubTree.expandRow(0);
 
-      myStubTree.addTreeSelectionListener(new StubTreeSelectionListener(file));
-      myStubTreeBuilder.queueUpdate();
+      myStubTree.addTreeSelectionListener(new StubTreeSelectionListener());
+      treeModel.invalidate();
     }
     else {
       myStubTree.setRootVisible(false);
@@ -200,63 +191,52 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     return builder == null ? null : builder.getBuilder();
   }
 
+  @Override
   public void selectNodeFromPsi(@Nullable PsiElement element) {
-    if (myStubTreeBuilder == null || element == null) return;
+    if (myTreeModel == null || element == null) return;
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof PsiFileWithStubSupport)) return;
 
-    final StubTreeNode rootNode = (StubTreeNode)myStubTreeBuilder.getRootElement();
+    final DefaultMutableTreeNode rootNode = getRoot();
     if (rootNode == null) return;
-
-    final StubElement<?> stub = rootNode.getStub();
-    if (!(stub instanceof PsiFileStub)) return;
-    if (Boolean.TRUE.equals(((PsiFileStub)stub).getUserData(PSI_ELEMENT_SELECTION_REQUESTOR))) {
-      return;
-    }
-
-    ((PsiFileStub)stub).putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, true);
 
     StubElement stubElement = myNodeToStubs.get(element.getNode());
     if (stubElement != null) {
-      myStubTreeBuilder.select(StubTreeNode.class, new TreeVisitor<StubTreeNode>() {
-        @Override
-        public boolean visit(@NotNull StubTreeNode node) {
-          return node.getStub() == stubElement;
-        }
-      }, () -> ((PsiFileStub)stub).putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, false), false);
+      selectStubElement(stubElement);
     }
     else {
-      myStubTreeBuilder.getUi().getTree().clearSelection();
-      ((PsiFileStub)stub).putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, false);
+      myStubTree.clearSelection();
+    }
+  }
+
+  private void selectStubElement(StubElement<?> stubElement) {
+    TreeNode node = TreeUtil.treeNodeTraverser(getRoot()).traverse().find(
+      (treeNode) -> treeNode instanceof DefaultMutableTreeNode &&
+                    ((StubTreeNode)((DefaultMutableTreeNode)treeNode).getUserObject()).getStub() == stubElement
+    );
+    if (node != null) {
+      TreePath path = TreePathUtil.pathToTreeNode(node);
+      myStubTree.getSelectionModel().setSelectionPath(path);
     }
   }
 
   private class StubTreeSelectionListener implements TreeSelectionListener {
-    @NotNull
-    private final PsiFileWithStubSupport myFile;
 
-    public StubTreeSelectionListener(@NotNull PsiFileWithStubSupport element) {
-      myFile = element;
+    StubTreeSelectionListener() {
     }
 
     @Override
     public void valueChanged(TreeSelectionEvent e) {
-      if (myStubTreeBuilder == null) {
-        return;
-      }
-      final StubTreeNode rootNode = (StubTreeNode)myStubTreeBuilder.getRootElement();
+      if (myTreeModel == null) return;
+
+      final StubTreeNode rootNode = (StubTreeNode)getRoot().getUserObject();
       StubElement<?> topLevelStub = rootNode == null ? null : rootNode.getStub();
       if (!(topLevelStub instanceof PsiFileStub)) return;
-      PsiFileStub stubFile = (PsiFileStub)topLevelStub;
-      if (Boolean.TRUE.equals(stubFile.getUserData(PSI_ELEMENT_SELECTION_REQUESTOR))) {
-        return;
-      }
 
-      Set<?> blockElementsSet = myStubTreeBuilder.getSelectedElements();
-      Object item = ContainerUtil.getFirstItem(blockElementsSet);
-      if (!(item instanceof StubTreeNode)) return;
+      TreePath selectionPath = myStubTree.getSelectionPath();
+      if (selectionPath == null) return;
 
-      StubElement<?> stub = ((StubTreeNode)item).getStub();
+      StubElement<?> stub = ((StubTreeNode)((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject()).getStub();
       PsiElement result = getPsiElementForStub(stub);
 
 
@@ -264,6 +244,10 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
         myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
       }
     }
+  }
+
+  private DefaultMutableTreeNode getRoot() {
+    return (DefaultMutableTreeNode)myStubTree.getModel().getRoot();
   }
 
   public PsiElement getPsiElementForStub(StubElement<?> stub) {

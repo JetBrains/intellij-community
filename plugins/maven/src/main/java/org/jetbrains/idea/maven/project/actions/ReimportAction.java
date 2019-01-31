@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public class ReimportAction extends MavenProjectsManagerAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     return MavenActionUtil.hasProject(e.getDataContext());
   }
 

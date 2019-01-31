@@ -46,6 +46,7 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -86,19 +87,32 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
     if (!hasLiteral) return;
+    processOperandsInjection(registrar, containingFile, tempInjectedLanguage, operands);
+  }
+
+  private void processOperandsInjection(@NotNull MultiHostRegistrar registrar,
+                                        @NotNull PsiFile containingFile, @Nullable InjectedLanguage tempInjectedLanguage,
+                                        @NotNull PsiElement[] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
-    PsiFile finalContainingFile = containingFile;
-    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, mySupport, operands) {
+    LanguageInjectionSupport injectionSupport = tempLanguage == null
+                                                ? mySupport
+                                                : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
+    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
                                                                           List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                           boolean settingsAvailable,
                                                                           boolean unparsable) {
-        InjectorUtils.registerInjection(language, list, finalContainingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, settingsAvailable, list.get(0).getFirst(), language);
+        InjectorUtils.registerInjection(language, list, containingFile, registrar);
+        InjectorUtils.registerSupport(getLanguageInjectionSupport(), settingsAvailable, list.get(0).getFirst(), language);
         PsiLanguageInjectionHost host = list.get(0).getFirst();
-        InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
-        return Pair.create(host,language);
+        if (tempLanguage != null) {
+          InjectorUtils
+            .putInjectedFileUserData(host, language, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+        }
+        InjectorUtils
+          .putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
+        return Pair.create(host, language);
       }
 
       @Override
@@ -432,6 +446,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
       return true;
+    }
+
+    public LanguageInjectionSupport getLanguageInjectionSupport() {
+      return mySupport;
     }
   }
 

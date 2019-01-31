@@ -496,8 +496,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-                                              .filter(e -> e instanceof PyFile)
-                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+        .filter(e -> e instanceof PyFile)
+        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
   }
@@ -582,5 +582,10 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
         assertEquals("ntpath.py", file.getName());
       }
     );
+  }
+
+  // EA-121262
+  public void testIncompleteFromImport() {
+    assertUnresolved();
   }
 }

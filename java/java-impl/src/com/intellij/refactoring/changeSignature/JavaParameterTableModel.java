@@ -138,10 +138,11 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   private static class VariableCompletionTableCellEditor extends StringTableCellEditor {
-    public VariableCompletionTableCellEditor(Project project) {
+    VariableCompletionTableCellEditor(Project project) {
       super(project);
     }
 
+    @Override
     public Component getTableCellEditorComponent(final JTable table,
                                                  Object value,
                                                  boolean isSelected,
@@ -149,6 +150,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
                                                  int column) {
       final EditorTextField textField = (EditorTextField)super.getTableCellEditorComponent(table, value, isSelected, row, column);
       textField.registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           PsiType type = getRowType(table, row);
           if (type != null) {
@@ -175,10 +177,11 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
   }
 
   private static class EditorWithExpectedType extends JavaCodeFragmentTableCellEditor {
-    public EditorWithExpectedType(PsiElement typeContext) {
+    EditorWithExpectedType(PsiElement typeContext) {
       super(typeContext.getProject());
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       final Component editor = super.getTableCellEditorComponent(table, value, isSelected, row, column);
       final PsiType type = getRowType(table, row);
@@ -216,6 +219,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     @Override
     public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<ParameterInfoImpl> item) {
       return new ColoredTableCellRenderer() {
+        @Override
         public void customizeCellRenderer(JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;

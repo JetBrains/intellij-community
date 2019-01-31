@@ -487,7 +487,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
-    public PropertyTypeColumnInfo(String name) {
+    PropertyTypeColumnInfo(String name) {
       super(name);
     }
 
@@ -509,7 +509,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
-    public ClassColumnInfo(String name) {
+    ClassColumnInfo(String name) {
       super(name);
     }
 
@@ -625,7 +625,7 @@ public class DynamicToolWindowWrapper {
   private class MyPropertyTypeCellEditor extends AbstractTableCellEditor {
     final EditorTextField field;
 
-    public MyPropertyTypeCellEditor() {
+    MyPropertyTypeCellEditor() {
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(new GroovyCodeFragment(myProject, ""));
       field = new EditorTextField(document, myProject, GroovyFileType.GROOVY_FILE_TYPE);
     }
@@ -646,13 +646,13 @@ public class DynamicToolWindowWrapper {
   }
 
   private class MyTreeTable extends TreeTable implements DataProvider {
-    public MyTreeTable(TreeTableModel treeTableModel) {
+    MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
       }

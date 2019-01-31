@@ -348,7 +348,7 @@ public class DynamicMemberUtils {
     private String myOriginalInfo;
     public final String mySource;
 
-    public GrDynamicMethodWithCache(GrMethod method, String source) {
+    GrDynamicMethodWithCache(GrMethod method, String source) {
       super(method);
       myTypeParameters = super.getTypeParameters();
       myParameterList = super.getParameterList();

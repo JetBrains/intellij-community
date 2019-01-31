@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,9 +43,10 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
     myPostCvsActivity = postCvsActivity;
   }
 
+  @Override
   public boolean shouldProcess(VirtualFile virtualFile, File targetFile) throws IOException {
     if (isProjectOrModuleFile(virtualFile) && myUpdatedFilesInfo.isMerged(targetFile)) {
-      myUpdatedFilesInfo.couldNotUpdateFile(targetFile);      
+      myUpdatedFilesInfo.couldNotUpdateFile(targetFile);
       File backupCopy = getCopyFor(virtualFile, targetFile);
       myPostCvsActivity.registerCorruptedProjectOrModuleFile(
         new MergedWithConflictProjectOrModuleFile(virtualFile));

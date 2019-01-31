@@ -42,7 +42,7 @@ public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
   }
 
   protected SMTestProxy createTestProxy(final String name, final SMTestProxy parentSuite) {
-    final SMTestProxy proxy = new SMTestProxy(name, false, null);
+    final SMTestProxy proxy = new SMTestProxy(name, false, "file://test.text");
     if (parentSuite != null) {
       parentSuite.addChild(proxy);
     }

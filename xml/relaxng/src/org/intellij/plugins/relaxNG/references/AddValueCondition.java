@@ -26,7 +26,7 @@ import java.util.Set;
 class AddValueCondition<T> extends PatternCondition<T> {
   private final Key<? extends Set<T>> myKey;
 
-  public AddValueCondition(Key<? extends Set<T>> key) {
+  AddValueCondition(Key<? extends Set<T>> key) {
     super("AddValue");
     myKey = key;
   }

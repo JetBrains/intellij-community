@@ -18,14 +18,11 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(
   name = "CodeStyleSchemeSettings",
-  storages = {
-    @Storage("code.style.schemes.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("code.style.schemes.xml"),
   additionalExportFile = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH
 )
 public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
-  public String CURRENT_SCHEME_NAME = CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME;
+  public String CURRENT_SCHEME_NAME = CodeStyleScheme.DEFAULT_SCHEME_NAME;
 
   public PersistableCodeStyleSchemes(@NotNull SchemeManagerFactory schemeManagerFactory) {
     super(schemeManagerFactory);
@@ -40,7 +37,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         if ("CURRENT_SCHEME_NAME".equals(accessor.getName())) {
-          return !CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME.equals(accessor.read(bean));
+          return !CodeStyleScheme.DEFAULT_SCHEME_NAME.equals(accessor.read(bean));
         }
         else {
           return accessor.getValueClass().equals(String.class);
@@ -51,7 +48,7 @@ public class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements
 
   @Override
   public void loadState(@NotNull Element state) {
-    CURRENT_SCHEME_NAME = CodeStyleSchemeImpl.DEFAULT_SCHEME_NAME;
+    CURRENT_SCHEME_NAME = CodeStyleScheme.DEFAULT_SCHEME_NAME;
     XmlSerializer.deserializeInto(this, state);
     CodeStyleScheme current = CURRENT_SCHEME_NAME == null ? null : mySchemeManager.findSchemeByName(CURRENT_SCHEME_NAME);
     setCurrentScheme(current == null ? getDefaultScheme() : current);

@@ -57,10 +57,12 @@ public class FileCopyPresentation extends PackagingElementPresentation {
     }
   }
 
+  @Override
   public String getPresentableName() {
     return myOutputFileName;
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null && !myFile.isDirectory()) {
       presentationData.setIcon(VirtualFilePresentation.getIcon(myFile));

@@ -22,11 +22,17 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +44,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     InspectionsKt.disableAllTools(profile);
     profile.enableTool(shortName, getProject());
 
-    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
     context.setExternalProfile(profile);
     configureByFile("Foo.java");
 
@@ -76,6 +82,21 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     fail("No disabled tools found: " + Arrays.asList(tools));
   }
 
+  public void testJavaMethodExternalization() throws Exception {
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+    PsiFile file = createFile("Foo.java", "public class Foo {\n" +
+                                          "    <T> void foo(T t) {\n" +
+                                          "    }\n" +
+                                          "}");
+    PsiClass[] classes = ((PsiClassOwner)file).getClasses();
+    PsiClass fooClass = classes[0];
+    PsiMethod fooMethod = fooClass.findMethodsByName("foo", false)[0];
+    RefElement refMethod = context.getRefManager().getReference(fooMethod);
+    String externalName = refMethod.getExternalName();
+    PsiMethod deserialized = RefMethodImpl.findPsiMethod(fooMethod.getManager(), externalName);
+    assertEquals(deserialized, fooMethod);
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -88,6 +109,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     super.tearDown();
   }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/globalContext/";

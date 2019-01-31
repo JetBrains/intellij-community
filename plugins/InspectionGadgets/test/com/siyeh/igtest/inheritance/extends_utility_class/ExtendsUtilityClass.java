@@ -21,7 +21,7 @@ public class ExtendsUtilityClass {
   public static void member() {}
 }
 class Extender extends ExtendsUtilityClass {}
-class Extender2 extends ExtendsUtilityClass {
+class <warning descr="Class 'Extender2' extends utility class 'ExtendsUtilityClass'">Extender2</warning> extends ExtendsUtilityClass {
 
   public void nonStaticMethod() {}
 }

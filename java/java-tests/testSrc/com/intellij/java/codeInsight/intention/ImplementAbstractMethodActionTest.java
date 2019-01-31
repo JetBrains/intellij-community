@@ -22,9 +22,4 @@ public class ImplementAbstractMethodActionTest extends LightIntentionActionTestC
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/implementAbstractMethod";
   }
-
-  public void test() {
-    doAllTests();
-  }
-
 }

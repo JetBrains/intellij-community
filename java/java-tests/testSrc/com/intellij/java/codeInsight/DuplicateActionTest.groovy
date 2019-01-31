@@ -18,8 +18,10 @@ package com.intellij.java.codeInsight
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 
+@CompileStatic
 class DuplicateActionTest extends LightCodeInsightFixtureTestCase {
   void testOneLine() {
     doTest '''xxx<caret>

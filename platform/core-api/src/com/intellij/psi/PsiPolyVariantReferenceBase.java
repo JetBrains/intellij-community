@@ -49,7 +49,7 @@ public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends 
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     final ResolveResult[] results = multiResolve(false);
     for (ResolveResult result : results) {
       if (getElement().getManager().areElementsEquivalent(result.getElement(), element)) {

@@ -39,7 +39,7 @@ public class MoveModulesToGroupAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
@@ -55,7 +55,7 @@ public class MoveModulesToGroupAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     doMove(modules, myModuleGroup, e.getDataContext());
   }

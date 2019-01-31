@@ -203,8 +203,8 @@ public class EJavadocUtil {
   }
 
   static void setupAttributes(Element orderEntry,
-                              Function<String, String> fun,
-                              String attributeName, 
+                              Function<? super String, String> fun,
+                              String attributeName,
                               String[] roots) {
     final List<String> eclipseUrls = new ArrayList<>();
     if (roots.length > 0) {

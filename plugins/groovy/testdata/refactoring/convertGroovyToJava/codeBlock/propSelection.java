@@ -1,1 +1,1 @@
-print(this.getBinding().getProperty("p")."a$c");
+invokeMethod("print", new java.lang.Object[]{this.getBinding().getProperty("p")."a$c"});

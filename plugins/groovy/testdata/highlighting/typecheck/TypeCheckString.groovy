@@ -29,7 +29,7 @@ class FooString {
     <error descr="Cannot cast 'Closure<Integer>' to 'String'">(String){ int a, int b -> a + b }</error>
     (String)o
     <error descr="Cannot cast 'Matcher' to 'String'">(String) ("aaa" =~ /aaa/)</error>
-    <error descr="Cannot cast 'List' to 'String'">(String)[]</error>
+    <error descr="Cannot cast 'List<Object>' to 'String'">(String)[]</error>
   }
 
   def stringAssignment() {

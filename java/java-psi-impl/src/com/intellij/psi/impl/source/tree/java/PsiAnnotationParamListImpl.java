@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- * @since 27.07.2012
  */
 public class PsiAnnotationParamListImpl extends JavaStubPsiElement<PsiAnnotationParameterListStub> implements PsiAnnotationParameterList {
   public PsiAnnotationParamListImpl(@NotNull PsiAnnotationParameterListStub stub) {

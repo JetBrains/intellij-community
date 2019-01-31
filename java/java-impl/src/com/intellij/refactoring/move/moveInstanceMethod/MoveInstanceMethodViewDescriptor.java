@@ -40,11 +40,13 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
     myTargetClass = targetClass;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myTargetVariable == null ? new PsiElement[] {myTargetClass} : new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("move.instance.method.elements.header");
   }

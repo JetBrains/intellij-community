@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.Factory;
@@ -28,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractFunctionContext implements FunctionContext {
-  private static final Map<ContextType, FunctionContext> ourInstances = new HashMap<>();
+  private static final Map<ContextType, FunctionContext> ourInstances = ContainerUtil.newConcurrentMap();
 
   private final Map<Pair<QName, Integer>, Function> myFunctions;
   private final Map<QName, Function> myDefaultMap = new HashMap<>();
@@ -52,7 +38,6 @@ public abstract class AbstractFunctionContext implements FunctionContext {
         myDefaultMap.put(entry.getKey().first, function);
       }
     }
-    ourInstances.put(contextType, this);
   }
 
   protected abstract Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
@@ -66,10 +51,11 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     return Collections.unmodifiableMap(map);
   }
 
-  protected static synchronized FunctionContext getInstance(ContextType contextType, Factory<FunctionContext> factory) {
+  protected static FunctionContext getInstance(ContextType contextType, Factory<? extends FunctionContext> factory) {
     return ourInstances.computeIfAbsent(contextType, k -> factory.create());
   }
 
+  @Override
   public Map<Pair<QName, Integer>, Function> getFunctions() {
     return myFunctions;
   }

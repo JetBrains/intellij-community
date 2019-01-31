@@ -102,12 +102,8 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   private void doTest(@NotNull String url, @NotNull String alias, boolean added) throws Exception {
-    CloseableHttpResponse response = myClient.execute(new HttpGet(url));
-    try {
+    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
       assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
-    }
-    finally {
-      response.close();
     }
     if (added) {
       assertTrue(myTrustManager.containsCertificate(alias));
@@ -185,6 +181,9 @@ public class CertificateTest extends LightPlatformTestCase {
     finally {
       try {
         myClient.close();
+      }
+      catch (Throwable e) {
+        addSuppressedException(e);
       }
       finally {
         super.tearDown();

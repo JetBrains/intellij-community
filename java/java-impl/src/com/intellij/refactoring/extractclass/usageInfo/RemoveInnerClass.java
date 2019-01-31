@@ -27,6 +27,7 @@ public class RemoveInnerClass extends FixableUsageInfo {
         this.innerClass = innerClass;
     }
 
+    @Override
     public void fixUsage() throws IncorrectOperationException{
         innerClass.delete();
     }

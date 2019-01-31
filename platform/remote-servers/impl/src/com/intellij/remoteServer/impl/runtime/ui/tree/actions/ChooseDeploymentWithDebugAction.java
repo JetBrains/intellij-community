@@ -33,7 +33,7 @@ public class ChooseDeploymentWithDebugAction extends ServersTreeAction<ServersTr
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
     node.deployWithDebug(e);
   }
 

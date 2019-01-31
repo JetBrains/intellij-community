@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/19/11 6:06 PM
  */
 public class KillRingSaveAction extends TextComponentEditorAction {
 

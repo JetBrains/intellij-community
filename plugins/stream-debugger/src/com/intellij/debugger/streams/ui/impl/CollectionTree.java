@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -37,8 +38,8 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -79,7 +80,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         final XDebuggerTreeListener listener = this;
         if (node instanceof XValueContainerNode) {
           final XValueContainer container = ((XValueContainerNode)node).getValueContainer();
@@ -135,7 +136,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   CollectionTree(@NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextImpl evaluationContext) {
-    this(traceElements.stream().map(TraceElement::getValue).collect(Collectors.toList()), traceElements, evaluationContext);
+    this(ContainerUtil.map(traceElements, TraceElement::getValue), traceElements, evaluationContext);
   }
 
   @Override
@@ -274,14 +275,18 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     int topIndex = 0;
     int bottomIndex = 1;
-    int topY = getRowBounds(rows[topIndex]).y;
+    Rectangle rowBounds = getRowBounds(rows[topIndex]);
+    if (rowBounds == null) return visibleRect;
+    int topY = rowBounds.y;
 
     final Result result = new Result();
     while (bottomIndex < rows.length) {
       final int nextY = getRowBounds(rows[bottomIndex]).y;
       while (nextY - topY > height) {
         topIndex++;
-        topY = getRowBounds(rows[topIndex]).y;
+        rowBounds = getRowBounds(rows[topIndex]);
+        if (rowBounds == null) return visibleRect;
+        topY = rowBounds.y;
       }
 
       if (bottomIndex - topIndex > result.count()) {

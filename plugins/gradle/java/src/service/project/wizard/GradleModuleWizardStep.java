@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -25,7 +26,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class GradleModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
@@ -67,6 +67,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
     myAddToPanel.add(myParentProjectForm.getComponent());
     ActionListener updatingListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateComponents();
       }
@@ -112,6 +113,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     PropertiesComponent.getInstance().setValue(key, value);
   }
 
+  @Override
   public JComponent getComponent() {
     return myMainPanel;
   }
@@ -133,14 +135,14 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     ProjectId projectId = myBuilder.getProjectId();
 
     if (projectId == null) {
-      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, parentProject == null ? myBuilder.getName() : parentProject.getGroup());
-      setTestIfEmpty(myVersionField, parentProject == null ? DEFAULT_VERSION : parentProject.getVersion());
+      setTextIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTextIfEmpty(myGroupIdField, parentProject == null ? "" : parentProject.getGroup());
+      setTextIfEmpty(myVersionField, parentProject == null ? DEFAULT_VERSION : parentProject.getVersion());
     }
     else {
-      setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
-      setTestIfEmpty(myGroupIdField, projectId.getGroupId());
-      setTestIfEmpty(myVersionField, projectId.getVersion());
+      setTextIfEmpty(myArtifactIdField, projectId.getArtifactId());
+      setTextIfEmpty(myGroupIdField, projectId.getGroupId());
+      setTextIfEmpty(myVersionField, projectId.getVersion());
     }
 
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
@@ -165,9 +167,9 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       myInheritGroupIdCheckBox.setEnabled(false);
       myInheritVersionCheckBox.setEnabled(false);
 
-      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, "");
-      setTestIfEmpty(myVersionField, DEFAULT_VERSION);
+      setTextIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTextIfEmpty(myGroupIdField, "");
+      setTextIfEmpty(myVersionField, DEFAULT_VERSION);
     }
     else {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.TRUE);
@@ -227,7 +229,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     return WIZARD_ICON;
   }
 
-  private static void setTestIfEmpty(@NotNull JTextField field, @Nullable String text) {
+  private static void setTextIfEmpty(@NotNull JTextField field, @Nullable String text) {
     if (StringUtil.isEmpty(field.getText())) {
       field.setText(StringUtil.notNullize(text));
     }
@@ -241,6 +243,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public void disposeUIResources() {
     Disposer.dispose(myParentProjectForm);
+  }
+
+  @TestOnly
+  public void setArtifactId(@NotNull String artifactId) {
+    myArtifactIdField.setText(artifactId);
   }
 }
 

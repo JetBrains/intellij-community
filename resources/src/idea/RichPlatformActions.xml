@@ -34,7 +34,7 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-            icon="AllIcons.Nodes.Module">
+            icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
 
@@ -143,6 +143,14 @@
       </group>
 
       <separator/>
+      <group internal="true" text="Cached value profiler" popup="true">
+        <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
+                text="Turn on cached value profiler" internal="true"/>
+        <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
+                text="Dump results" internal="true"/>
+      </group>
+
+      <separator/>
       <group id="Internal.VFS" text="VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
         <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction" text="Mark File Dirty"/>
@@ -176,9 +184,6 @@
 
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
-
-    <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"
-            internal="true"/>
 
     <reference ref="Compile">
       <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
@@ -241,80 +246,6 @@
       <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
-    <group id="TypeHierarchyPopupMenu">
-      <reference ref="TypeHierarchy.Class"/>
-      <reference ref="TypeHierarchy.Subtypes"/>
-      <reference ref="TypeHierarchy.Supertypes"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="Compile"/>
-      <reference ref="VersionControlsGroup"/>
-
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
-    <group id="MethodHierarchyPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
-    <group id="CallHierarchyPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
-
     <group id="ShowPackageDepsGroup"/>
 
     <group id="CommanderPopupMenu">
@@ -349,12 +280,6 @@
       <reference ref="ExternalToolsGroup"/>
     </group>
 
-    <group id="TestStatisticsTablePopupMenu">
-      <reference ref="TestTreePopupMenu"/>
-      <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
-              text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
-    </group>
-
     <!--  TODO: fix
       <group id="UsageView.Popup">-->
     <!--<reference ref="EditSource"/>-->
@@ -380,16 +305,13 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
-              icon="AllIcons.General.PluginManager"/>
-
+      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"/>
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
-    <group id="WelcomeScreen.Configure.IDEA">
-      <action class="com.intellij.ide.actions.TemplateProjectSettingsGroup"/>
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="last"/>
-    </group>
+    <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
+    </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>

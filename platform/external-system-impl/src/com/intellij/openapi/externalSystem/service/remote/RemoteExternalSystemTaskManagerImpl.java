@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 7:49 PM
  */
 public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemTaskManager<S> {

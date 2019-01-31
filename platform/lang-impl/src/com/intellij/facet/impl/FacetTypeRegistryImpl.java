@@ -104,7 +104,6 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
 
   private void loadExtensions() {
     if (!myExtensionsLoaded) {
-      myExtensionsLoaded = true;
       final ExtensionPoint<FacetType> extensionPoint = Extensions.getArea(null).getExtensionPoint(FacetType.EP_NAME);
       extensionPoint.addExtensionPointListener(new ExtensionPointListener<FacetType>() {
         @Override
@@ -117,6 +116,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
           unregisterFacetType(extension);
         }
       });
+      myExtensionsLoaded = true;
     }
   }
 }

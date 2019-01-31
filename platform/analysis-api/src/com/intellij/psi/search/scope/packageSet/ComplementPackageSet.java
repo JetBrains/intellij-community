@@ -26,17 +26,17 @@ import java.util.function.Predicate;
 public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
 
-  public ComplementPackageSet(PackageSet set) {
+  public ComplementPackageSet(@NotNull PackageSet set) {
     myComplementarySet = set;
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
     return contains(file, holder.getProject(), holder);
   }
 
   @Override
-  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, project, holder)
                                                         : myComplementarySet.contains(getPsiFile(file, project), holder);
   }
@@ -65,16 +65,17 @@ public class ComplementPackageSet extends PackageSetBase {
   }
 
   @Override
-  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
+  public PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
     PackageSet updated = transformation.apply(myComplementarySet);
     return updated != myComplementarySet ? new ComplementPackageSet(updated) : this;
   }
 
   @Override
-  public boolean anyMatches(Predicate<PackageSet> predicate) {
+  public boolean anyMatches(@NotNull Predicate<? super PackageSet> predicate) {
     return predicate.test(myComplementarySet);
   }
 
+  @NotNull
   public PackageSet getComplementarySet() {
     return myComplementarySet;
   }

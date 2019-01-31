@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -29,7 +28,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
@@ -46,40 +47,29 @@ class ClassPatternsPanel extends JPanel {
   private final List<EntryPointsManagerBase.ClassPattern> myModifiedPatterns;
   private final JBTable myTable;
 
-  public ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
+  ClassPatternsPanel(List<EntryPointsManagerBase.ClassPattern> patterns) {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     myTable = createTableForPatterns();
     final String addClassMessage = "Add Class";
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myTable));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-            .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.allScope(project), ClassFilter.ALL, null);
-          chooser.showDialog();
-          final PsiClass selected = chooser.getSelected();
-          if (selected != null) {
-            insertRow(selected.getQualifiedName());
-          }
+      .setAddAction(button -> {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myTable));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+          .createWithInnerClassesScopeChooser(addClassMessage, GlobalSearchScope.allScope(project), ClassFilter.ALL, null);
+        chooser.showDialog();
+        final PsiClass selected = chooser.getSelected();
+        if (selected != null) {
+          insertRow(selected.getQualifiedName());
         }
       })
       .setAddActionName(addClassMessage)
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          TableUtil.removeSelectedItems(myTable);
-          myTable.repaint();
-        }
+      .setRemoveAction(button -> {
+        TableUtil.removeSelectedItems(myTable);
+        myTable.repaint();
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myTable.getSelectedRow() >= 0;
-        }
-      });
+      .setRemoveActionUpdater(e -> myTable.getSelectedRow() >= 0);
     add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     add(new MultiLineLabel("Leave method blank to represent constructors\n" +
@@ -161,7 +151,7 @@ class ClassPatternsPanel extends JPanel {
     public static final String ERROR_MESSAGE = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
     private final PsiNameHelper myNameHelper;
 
-    public ClassPatternValidator(PsiNameHelper nameHelper) {
+    ClassPatternValidator(PsiNameHelper nameHelper) {
       myNameHelper = nameHelper;
     }
 
@@ -187,18 +177,21 @@ class ClassPatternsPanel extends JPanel {
   private class MyTableModel extends AbstractTableModel implements ItemRemovable {
     private final String[] myNames;
 
-    public MyTableModel() {
+    MyTableModel() {
       myNames = new String[] {"With Subclasses",  "Class", "Method"};
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myModifiedPatterns.size();
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int col) {
       if (row < 0 || row > myModifiedPatterns.size() - 1) return null;
@@ -213,10 +206,12 @@ class ClassPatternsPanel extends JPanel {
       return classPattern.method;
     }
 
+    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }
 
+    @Override
     public Class getColumnClass(int col) {
       if (col == 0) {
         return Boolean.class;
@@ -230,10 +225,12 @@ class ClassPatternsPanel extends JPanel {
       throw new IllegalArgumentException(String.valueOf(col));
     }
 
+    @Override
     public boolean isCellEditable(int row, int col) {
       return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int row, int col) {
       EntryPointsManagerBase.ClassPattern classPattern = myModifiedPatterns.get(row);
       if (classPattern == null) return;

@@ -24,6 +24,7 @@ import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
@@ -35,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourceFileProcessor {
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
@@ -64,7 +64,7 @@ public class GradleResourceFileProcessor {
       copyWithFiltering(file, targetFileRef, rootConfiguration.filters, context);
     }
     else {
-      FileUtil.copyContent(file, targetFileRef.get());
+      FSOperations.copy(file, targetFileRef.get());
     }
   }
 
@@ -73,14 +73,19 @@ public class GradleResourceFileProcessor {
     final FileInputStream originalInputStream = new FileInputStream(file);
     try {
       final InputStream inputStream = transform(filters, originalInputStream, outputFileRef, context);
-      FileUtil.createIfDoesntExist(outputFileRef.get());
-      FileOutputStream outputStream = new FileOutputStream(outputFileRef.get());
       try {
-        FileUtil.copy(inputStream, outputStream);
+        final File outputFile = outputFileRef.get();
+        FileUtil.createIfDoesntExist(outputFile);
+        FileOutputStream outputStream = new FileOutputStream(outputFileRef.get());
+        try {
+          FileUtil.copy(inputStream, outputStream);
+        }
+        finally {
+          StreamUtil.closeStream(outputStream);
+        }
       }
       finally {
         StreamUtil.closeStream(inputStream);
-        StreamUtil.closeStream(outputStream);
       }
     }
     finally {

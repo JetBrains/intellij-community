@@ -30,10 +30,12 @@ public class UpdatedFiles implements JDOMExternalizable {
     return fileGroup;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     FileGroup.writeGroupsToElement(myGroups, element);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     FileGroup.readGroupsFromElement(myGroups, element);
   }

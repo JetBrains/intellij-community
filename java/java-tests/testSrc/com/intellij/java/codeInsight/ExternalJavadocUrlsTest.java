@@ -16,20 +16,45 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
+  private static final ProjectDescriptor DESCRIPTOR = new ProjectDescriptor(LanguageLevel.HIGHEST) {
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk17();
+    }
+
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      setMockJavadocUrl(model);
+    }
+  };
+
+  @NotNull
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return DESCRIPTOR;
+  }
+
+  protected static void setMockJavadocUrl(@NotNull ModifiableRootModel model) {
+    model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(new String[]{"http://doc"});
   }
 
   public void testVarargs() {
@@ -37,7 +62,7 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "  void <caret>foo(Class<?>... cl) { }\n" +
            "}",
 
-           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-", "foo(java.lang.Class...)", "foo(java.lang.Class<?>...)");
+           "foo(java.lang.Class...)", "foo-java.lang.Class...-");
 
   }
 
@@ -47,7 +72,14 @@ public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
            "}\n" +
            "class Comparator<X>{}",
 
-           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-", "sort(T[], Comparator)", "sort(T[], Comparator<? super T>)");
+           "sort(T[],Comparator)", "sort-T:A-Comparator-", "sort(T[], Comparator)");
+  }
+
+  public void testConstructor() {
+    doTest("class Test {\n" +
+           "  Test<caret>() { }\n" +
+           "}",
+           "<init>()", "Test--", "Test()");
   }
 
   protected void doTest(String text, String... expected) {

@@ -70,7 +70,7 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
     private final XInstanceEvaluator myInstanceEvaluator;
     private final String myName;
 
-    public InstanceEvaluatorTreeRootValue(XInstanceEvaluator instanceEvaluator, String name) {
+    InstanceEvaluatorTreeRootValue(XInstanceEvaluator instanceEvaluator, String name) {
       myInstanceEvaluator = instanceEvaluator;
       myName = name;
     }

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @deprecated use SearchTextField instead, it supports persistent history
  */
+@Deprecated
 public class SearchTextFieldWithStoredHistory extends SearchTextField {
   public SearchTextFieldWithStoredHistory(@NonNls final String propertyName) {
     super(propertyName);

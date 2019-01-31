@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -31,6 +17,8 @@ import org.jetbrains.ide.BuiltInServerManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -50,12 +38,14 @@ import java.util.UUID;
  * </p>
  */
 public abstract class GitXmlRpcHandlerService<T> {
+  private static final Logger LOG = getInstance(GitXmlRpcHandlerService.class);
 
   @NotNull private final String myScriptTempFilePrefix;
   @NotNull private final String myHandlerName;
   @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
-  @Nullable private File myScriptPath;
+  @Nullable private File myBatchScriptPath;
+  @Nullable private File myShellScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
   @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
@@ -79,6 +69,11 @@ public abstract class GitXmlRpcHandlerService<T> {
     return BuiltInServerManager.getInstance().waitForStart().getPort();
   }
 
+  @NotNull
+  public File getScriptPath() throws IOException {
+    return getScriptPath(SystemInfo.isWindows);
+  }
+
   /**
    * Get file to the script service
    *
@@ -86,16 +81,24 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public File getScriptPath() throws IOException {
+  public File getScriptPath(boolean useBatchFile) throws IOException {
     ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
     generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
     customizeScriptGenerator(generator);
 
     synchronized (SCRIPT_FILE_LOCK) {
-      if (myScriptPath == null || !myScriptPath.exists()) {
-        myScriptPath = generator.generate();
+      if (useBatchFile) {
+        if (myBatchScriptPath == null || !myBatchScriptPath.exists()) {
+          myBatchScriptPath = generator.generate(useBatchFile);
+        }
+        return myBatchScriptPath;
       }
-      return myScriptPath;
+      else {
+        if (myShellScriptPath == null || !myShellScriptPath.exists()) {
+          myShellScriptPath = generator.generate(useBatchFile);
+        }
+        return myShellScriptPath;
+      }
     }
   }
 
@@ -111,7 +114,8 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
    * @return an identifier to pass to the environment variable
    */
-  public UUID registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
+  @NotNull
+  public UUID registerHandler(@NotNull T handler) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
@@ -120,12 +124,6 @@ public abstract class GitXmlRpcHandlerService<T> {
 
       final UUID key = UUID.randomUUID();
       handlers.put(key, handler);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          handlers.remove(key);
-        }
-      });
       return key;
     }
   }
@@ -163,7 +161,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   public void unregisterHandler(UUID key) {
     synchronized (HANDLERS_LOCK) {
       if (handlers.remove(key) == null) {
-        throw new IllegalArgumentException("The handler " + key + " is not registered");
+        LOG.error("The handler " + key + " is not registered");
       }
     }
   }

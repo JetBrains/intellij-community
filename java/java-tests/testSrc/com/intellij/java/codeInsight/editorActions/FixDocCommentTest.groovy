@@ -15,13 +15,16 @@
  */
 package com.intellij.java.codeInsight.editorActions
 
+
 import com.intellij.codeInsight.editorActions.FixDocCommentAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import groovy.transform.CompileStatic
 
 /**
  * @author Denis Zhdanov
- * @since 9/20/12 6:17 PM
  */
+@CompileStatic
 class FixDocCommentTest extends AbstractEditorTest {
 
   void testGenerateMethodDoc() {
@@ -35,7 +38,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i
+     * @param i <caret>
      * @return
      */
     String test(int i) {
@@ -584,10 +587,65 @@ class Test {
     )
   }
 
+  void "test many newlines before interface"() {
+    doTest(
+      initial: '''\
+
+
+
+
+interface <caret>I {}''',
+      expected: '''\
+/**
+ * 
+ */
+interface I {}'''
+    )
+
+  }
+
+  void testWithEmptyTagsRemovalOption() {
+    getCustomSettings(JavaCodeStyleSettings.class).with {
+      JD_KEEP_EMPTY_PARAMETER = false
+      JD_KEEP_EMPTY_RETURN = false
+      JD_KEEP_EMPTY_EXCEPTION = false
+    }
+    doTest(
+      initial: '''package com.company;
+
+public class Test
+{
+    int foo<caret>(String s, int i, double d) throws Exception
+    {
+        return 0;
+    }
+}
+''',
+      expected: '''package com.company;
+
+public class Test
+{
+    /**
+     * @param s <caret>
+     * @param i
+     * @param d
+     * @return
+     * @throws Exception
+     */
+    int foo(String s, int i, double d) throws Exception
+    {
+        return 0;
+    }
+}
+'''
+    )
+  }
+
   private def doTest(Map args) {
-    configureFromFileText("${getTestName(false)}.java", args.initial)
+    configureFromFileText("${getTestName(false)}.java", (String)args.initial)
     myEditor.settings.virtualSpace = false
     executeAction(FixDocCommentAction.ACTION_ID)
-    checkResultByText(args.expected)
+    checkResultByText((String)args.expected)
   }
+
 }

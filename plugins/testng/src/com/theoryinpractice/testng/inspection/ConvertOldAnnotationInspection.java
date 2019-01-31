@@ -24,26 +24,31 @@ import org.jetbrains.annotations.NotNull;
  * @author Hani Suleiman
  */
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final String DISPLAY_NAME = "Convert old @Configuration TestNG annotations";
+  private static final String DISPLAY_NAME = "Old TestNG annotation @Configuration is used";
+  static final String FIX_NAME = "Convert old @Configuration TestNG annotations";
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "ConvertOldAnnotations";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -59,9 +64,10 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
   private static class ConvertOldAnnotationsQuickfix implements LocalQuickFix {
     private static final Logger LOG = Logger.getInstance(ConvertOldAnnotationsQuickfix.class);
 
+    @Override
     @NotNull
     public String getFamilyName() {
-      return DISPLAY_NAME;
+      return FIX_NAME;
     }
 
     @Override
@@ -69,6 +75,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
       return false;
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiAnnotation annotation = (PsiAnnotation)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(annotation)) return;
@@ -105,13 +112,12 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
                                                                 @NonNls String newAnnotation) throws IncorrectOperationException {
 
     PsiAnnotationParameterList list = annotation.getParameterList();
+    Project project = annotation.getProject();
     for (PsiNameValuePair pair : list.getAttributes()) {
       if (attribute.equals(pair.getName())) {
-        final StringBuffer newAnnotationBuffer = new StringBuffer();
-        newAnnotationBuffer.append(newAnnotation).append('(').append(')');
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory();
-        final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);
-        JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotation + "()", modifierList);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
       }
     }
   }

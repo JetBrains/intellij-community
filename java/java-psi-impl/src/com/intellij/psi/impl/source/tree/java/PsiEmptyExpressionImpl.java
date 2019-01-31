@@ -43,6 +43,7 @@ public class PsiEmptyExpressionImpl extends ExpressionPsiElement implements PsiE
     }
   }
 
+  @Override
   public String toString() {
     return "PsiExpression(empty)";
   }

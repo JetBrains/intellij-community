@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -41,24 +27,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
  * Basic abstract action handler for all Git actions to extend.
  */
 public abstract class BasicAction extends DumbAwareAction {
-  /**
-   * {@inheritDoc}
-   */
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
     final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
-    assert project != null;
     final GitVcs vcs = GitVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, vFiles)) {
       return;
@@ -70,6 +52,7 @@ public abstract class BasicAction extends DumbAwareAction {
     final boolean background = perform(project, vcs, exceptions, affectedFiles);
     if (!background) {
       GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           VfsUtil.markDirtyAndRefresh(false, true, false, affectedFiles);
           VcsFileUtil.markFilesDirty(project, Arrays.asList(affectedFiles));
@@ -78,7 +61,6 @@ public abstract class BasicAction extends DumbAwareAction {
       });
     }
   }
-
 
   /**
    * Perform the action over set of files
@@ -111,7 +93,7 @@ public abstract class BasicAction extends DumbAwareAction {
       if (!file.isDirectory() && projectLevelVcsManager.getVcsFor(file) instanceof GitVcs) {
         affectedFiles.add(file);
       }
-      else if (file.isDirectory() && isRecursive()) {
+      else if (file.isDirectory()) {
         addChildren(project, affectedFiles, file);
       }
 
@@ -130,7 +112,7 @@ public abstract class BasicAction extends DumbAwareAction {
    *                (recursively)
    */
   private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, (isRecursive() ? null : ONE_LEVEL_DEEP)) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, null) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && appliesTo(project, file)) {
@@ -147,15 +129,6 @@ public abstract class BasicAction extends DumbAwareAction {
   @NotNull
   protected abstract String getActionName();
 
-
-  /**
-   * @return true if the action could be applied recursively
-   */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  protected boolean isRecursive() {
-    return true;
-  }
-
   /**
    * Check if the action is applicable to the file. The default checks if the file is a directory
    *
@@ -163,7 +136,7 @@ public abstract class BasicAction extends DumbAwareAction {
    * @param file    the file to check
    * @return true if the action is applicable to the virtual file
    */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  @SuppressWarnings({"UnusedDeclaration"})
   protected boolean appliesTo(@NotNull Project project, @NotNull VirtualFile file) {
     return !file.isDirectory();
   }

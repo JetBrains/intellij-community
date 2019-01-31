@@ -7,7 +7,7 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
-import com.intellij.testGuiFramework.tests.community.focus.FocusIssuesUtil.checkSearchEverywhereUI
+import com.intellij.testGuiFramework.tests.community.focus.FocusIssuesUtil.checkSearchEnteredText
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.timing.Pause
@@ -68,7 +68,7 @@ class GoToClassFocusTest : GuiTestCase() {
     val smartRobot = GuiRobotHolder.robot as SmartWaitRobot
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
-    checkSearchEverywhereUI(typedString)
+    checkSearchEnteredText(typedString)
     shortcut(ESCAPE)
   }
 

@@ -32,5 +32,4 @@ public class AccessStaticViaInstanceTest extends LightQuickFixParameterizedTestC
     return "/codeInsight/daemonCodeAnalyzer/quickFix/accessStaticViaInstance";
   }
 
-  public void test() {  doAllTests(); }
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
@@ -63,12 +62,10 @@ public class LibraryScopeCache {
       }
     });
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache =
-    ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache =
-    ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
+  private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
+  private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
 
-  public LibraryScopeCache(Project project) {
+  public LibraryScopeCache(@NotNull Project project) {
     myProject = project;
     myLibrariesOnlyScope = new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject), myProject);
   }
@@ -86,7 +83,7 @@ public class LibraryScopeCache {
   }
 
   @NotNull
-  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<Module> modulesLibraryIsUsedIn) {
+  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<? extends Module> modulesLibraryIsUsedIn) {
     Module[] array = modulesLibraryIsUsedIn.toArray(Module.EMPTY_ARRAY);
     GlobalSearchScope scope = myLibraryScopes.get(array);
     return scope != null ? scope : ConcurrencyUtil.cacheOrGet(myLibraryScopes, array,
@@ -99,7 +96,7 @@ public class LibraryScopeCache {
    * @return a cached resolve scope
    */
   @NotNull
-  public GlobalSearchScope getLibraryScope(@NotNull List<OrderEntry> orderEntries) {
+  public GlobalSearchScope getLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryResolveScopeCache.get(orderEntries);
   }
 
@@ -109,12 +106,12 @@ public class LibraryScopeCache {
    * @return a cached use scope
    */
   @NotNull
-  public GlobalSearchScope getLibraryUseScope(@NotNull List<OrderEntry> orderEntries) {
+  public GlobalSearchScope getLibraryUseScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryUseScopeCache.get(orderEntries);
   }
 
   @NotNull
-  private GlobalSearchScope calcLibraryScope(@NotNull List<OrderEntry> orderEntries) {
+  private GlobalSearchScope calcLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
     LibraryOrderEntry lib = null;
@@ -132,7 +129,7 @@ public class LibraryScopeCache {
       }
     }
 
-    Comparator<Module> comparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
+    Comparator<Module> comparator = Comparator.comparing(Module::getName);
     Collections.sort(modulesLibraryUsedIn, comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
 
@@ -162,24 +159,14 @@ public class LibraryScopeCache {
     if (jdkName == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = mySdkScopes.get(jdkName);
     if (scope == null) {
-      //noinspection deprecation
-      for (SdkResolveScopeProvider provider : SdkResolveScopeProvider.EP_NAME.getExtensions()) {
-        scope = provider.getScope(myProject, jdkOrderEntry);
-
-        if (scope != null) {
-          break;
-        }
-      }
-      if (scope == null) {
-        scope = new JdkScope(myProject, jdkOrderEntry);
-      }
+      scope = new JdkScope(myProject, jdkOrderEntry);
       return ConcurrencyUtil.cacheOrGet(mySdkScopes, jdkName, scope);
     }
     return scope;
   }
 
   @NotNull
-  private GlobalSearchScope calcLibraryUseScope(@NotNull List<OrderEntry> entries) {
+  private GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
     Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
     Set<Module> modulesWithSdk = new THashSet<>(entries.size());
     for (OrderEntry entry : entries) {
@@ -204,7 +191,7 @@ public class LibraryScopeCache {
       united.add(GlobalSearchScope.moduleWithDependentsScope(module));
     }
 
-    return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[0]));
+    return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
   private static class LibrariesOnlyScope extends GlobalSearchScope {
@@ -219,7 +206,7 @@ public class LibraryScopeCache {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && (myIndex.isInLibraryClasses(file) || myIndex.isInLibrarySource(file));
+      return myOriginal.contains(file) && myIndex.isInLibrary(file);
     }
 
     @Override

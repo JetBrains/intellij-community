@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Condition;
@@ -40,7 +26,7 @@ import java.util.zip.ZipFile;
  */
 public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
-  private final Condition<String> myPathInJarFilter;
+  private final Condition<? super String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
@@ -48,7 +34,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
                                         int index,
                                         @NotNull ArtifactBuildTarget target,
                                         @NotNull DestinationInfo destinationInfo,
-                                        @NotNull Condition<String> pathInJarFilter) {
+                                        @NotNull Condition<? super String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
     myPathInJarFilter = pathInJarFilter;
@@ -63,24 +49,18 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       prefix = "";
     }
 
-    try {
-      ZipFile zipFile = new ZipFile(myRoot);
-      try {
-        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    try (ZipFile zipFile = new ZipFile(myRoot)) {
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-        while (entries.hasMoreElements()) {
-          ZipEntry entry = entries.nextElement();
-          final String name = entry.getName();
-          if (name.startsWith(prefix)) {
-            String relativePath = name.substring(prefix.length());
-            if (myPathInJarFilter.value(relativePath)) {
-              processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
-            }
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        final String name = entry.getName();
+        if (name.startsWith(prefix)) {
+          String relativePath = name.substring(prefix.length());
+          if (myPathInJarFilter.value(relativePath)) {
+            processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
           }
         }
-      }
-      finally {
-        zipFile.close();
       }
     }
     catch (IOException e) {
@@ -93,6 +73,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
   }
 
+  @Override
   public void copyFromRoot(final String filePath,
                            final int rootIndex, final String outputPath,
                            CompileContext context, final BuildOutputConsumer outputConsumer,
@@ -114,14 +95,9 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
         }
         else {
           if (outSrcMapping.getState(fullOutputPath) == null) {
-            final BufferedInputStream from = new BufferedInputStream(inputStream);
-            final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
-            try {
+            try (BufferedInputStream from = new BufferedInputStream(inputStream);
+                 BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile))) {
               FileUtil.copy(from, to);
-            }
-            finally {
-              from.close();
-              to.close();
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }

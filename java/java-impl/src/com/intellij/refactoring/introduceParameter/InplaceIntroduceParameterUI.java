@@ -121,6 +121,7 @@ public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSett
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
       myCbReplaceAllOccurences.addItemListener(
         new ItemListener() {
+          @Override
           public void itemStateChanged(ItemEvent e) {
             updateControls(new JCheckBox[0]);
           }

@@ -25,7 +25,7 @@ import java.util.List;
 
 public class ColorGenerator {
   @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull List<Color> anchorColors, int colorsBetweenAnchors) {
+  public static List<Color> generateLinearColorSequence(@NotNull List<? extends Color> anchorColors, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;
     if (anchorColors.isEmpty()) return Collections.singletonList(JBColor.GRAY);
     if (anchorColors.size() == 1) return Collections.singletonList(anchorColors.get(0));
@@ -47,7 +47,7 @@ public class ColorGenerator {
   }
 
   @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
+  static List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;
 
     List<Color> result = new ArrayList<>(colorsBetweenAnchors + 2);
@@ -69,7 +69,7 @@ public class ColorGenerator {
   }
 
   private static int ratio(int val1, int val2, float ratio) {
-    int value = (int)(val1 + ((val2 - val1) * ratio));
+    int value = (int)(val1 + (val2 - val1) * ratio);
     return Math.max(Math.min(value, 255), 0);
   }
 }

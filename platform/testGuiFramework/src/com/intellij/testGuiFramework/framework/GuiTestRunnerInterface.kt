@@ -20,9 +20,17 @@ internal interface GuiTestRunnerInterface {
   fun getTestClassesNames(): List<String>
 }
 
-
 fun getIdeFromAnnotation(testClass: Class<*>): Ide {
   val annotation = testClass.annotations.filterIsInstance<RunWithIde>().firstOrNull()?.value
   val ideType = if (annotation != null) (annotation as KClass<out IdeType>).java.newInstance() else CommunityIde()
   return Ide(ideType, 0, 0)
+}
+
+fun getSystemPropertiesFromAnnotation(testClass: Class<*>): List<Pair<String, String>>? {
+  return testClass
+    .annotations
+    .filterIsInstance<SystemProperties>()
+    .firstOrNull()
+    ?.keyValueArray
+    ?.map { val (key, value) = it.split("="); Pair(key, value) }
 }

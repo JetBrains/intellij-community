@@ -110,6 +110,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
    * @deprecated this method is not called by IDEA core anymore. Use {@link com.intellij.framework.detection.FrameworkDetector} extension
    * to provide automatic detection for facets
    */
+  @Deprecated
   public void registerDetectors(FacetDetectorRegistry<C> registry) {
   }
 

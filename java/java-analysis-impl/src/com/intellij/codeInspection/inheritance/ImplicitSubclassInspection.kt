@@ -23,8 +23,8 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.JvmNamedElement
-import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.actions.createModifierActions
+import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -182,7 +182,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.hasModifier(modifier) == shouldPresent) return
-      val request = MemberRequest.Modifier(modifier, shouldPresent)
+      val request = modifierRequest(modifier, shouldPresent)
       actionsList += createModifierActions(declaration, request)
     }
 

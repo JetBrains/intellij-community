@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,11 +17,11 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
@@ -43,11 +43,8 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
 
 /**
  * @author Vladislav.Soroka
- * @since 3/20/2017
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
-
   private final List<Sdk> removedSdks = new SmartList<>();
 
   /**
@@ -77,13 +74,16 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     try {
       WriteAction.runAndWait(() -> {
         Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-              .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
-              .forEach(ProjectJdkTable.getInstance()::removeJdk);
+          .filter(sdk -> !GRADLE_JDK_NAME.equals(sdk.getName()))
+          .forEach(ProjectJdkTable.getInstance()::removeJdk);
         for (Sdk sdk : removedSdks) {
           SdkConfigurationUtil.addSdk(sdk);
         }
         removedSdks.clear();
       });
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -200,7 +200,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
         MessageBusConnection busConnection = project.getMessageBus().connect();
         busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
           @Override
-          public void projectOpened(Project project) {
+          public void projectOpened(@NotNull Project project) {
             ProjectInspectionProfileManager.getInstance(project).forceLoadSchemes();
           }
         });
@@ -209,7 +209,11 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
     Project fooProject = null;
     try {
-      fooProject = executeOnEdt(() -> ProjectUtil.openOrImport(foo.getPath(), null, true));
+      fooProject = EdtTestUtilKt.runInEdtAndGet(() -> {
+        final Project project = ProjectUtil.openOrImport(foo.getPath(), null, true);
+        UIUtil.dispatchAllInvocationEvents();
+        return project;
+      });
       assertTrue(fooProject.isOpen());
       InspectionProfileImpl currentProfile = getCurrentProfile(fooProject);
       assertEquals("myInspections", currentProfile.getName());
@@ -248,8 +252,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
-      ProjectManager.getInstance().closeProject(project);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
   }
 }

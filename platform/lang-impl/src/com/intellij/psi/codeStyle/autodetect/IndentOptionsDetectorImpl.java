@@ -40,8 +40,6 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
-  @SuppressWarnings("unused")
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl");
   private final PsiFile myFile;
   private final Project myProject;
   private final Document myDocument;

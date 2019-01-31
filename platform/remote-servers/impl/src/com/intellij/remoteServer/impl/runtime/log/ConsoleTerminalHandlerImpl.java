@@ -64,8 +64,7 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
     Disposer.register(this, myLoggingHandler);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput));
-      try {
+      try (BufferedReader outputReader = new BufferedReader(new InputStreamReader(terminalOutput))) {
         while (!isClosed()) {
           String line = outputReader.readLine();
           if (line == null) {
@@ -76,14 +75,6 @@ public class ConsoleTerminalHandlerImpl extends TerminalHandlerBase {
       }
       catch (IOException e) {
         LOG.debug(e);
-      }
-      finally {
-        try {
-          outputReader.close();
-        }
-        catch (IOException ignored) {
-
-        }
       }
     });
   }

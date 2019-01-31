@@ -37,7 +37,7 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
   private final JComboBox comboBox;
 
   public ComboBoxTableCellEditor() {
-    //noinspection unchecked,UndesirableClassUsage
+    //noinspection unchecked
     super(new JComboBox(new ListComboBoxModel(Collections.emptyList())));
 
     comboBox = (JComboBox)getComponent();
@@ -79,7 +79,6 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
     else {
       Enum enumValue = (Enum)value;
       Class enumClass = enumValue.getDeclaringClass();
-      //noinspection unchecked
       ComboBoxModel model = comboBox.getModel();
       if (!(model instanceof EnumComboBoxModel && model.getSize() > 0 && ((Enum)model.getElementAt(0)).getDeclaringClass() == enumClass)) {
         //noinspection unchecked

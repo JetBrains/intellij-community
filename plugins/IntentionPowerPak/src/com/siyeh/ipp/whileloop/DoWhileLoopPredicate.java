@@ -24,6 +24,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class DoWhileLoopPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;

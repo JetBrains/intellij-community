@@ -10,7 +10,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
-import java.util.HashMap;
 import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XMap;
@@ -19,6 +18,7 @@ import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +31,6 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
   }
 
   private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final SoftFactoryMap<ResourceBundleImpl, String> myGuessedSeparators = new SoftFactoryMap<ResourceBundleImpl, String>() {
     @Override
     protected String create(ResourceBundleImpl resourceBundle) {
@@ -74,6 +73,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
     final char[] mostProbableChar = new char[]{'.'};
     charCounts.forEachKey(new TIntProcedure() {
       long count = -1;
+      @Override
       public boolean execute(int ch) {
         long charCount = charCounts.get(ch);
         if (charCount > count) {
@@ -95,6 +95,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
     }
   }
 
+  @Override
   public void loadState(@NotNull final PropertiesSeparatorManagerState state) {
     myUserDefinedSeparators = state.decode(myProject);
   }

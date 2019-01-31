@@ -24,7 +24,6 @@ import org.gradle.util.GradleVersion
 
 /**
  * @author Vladislav.Soroka
- * @since 11/10/2015
  */
 class CopySpecWalker {
 

@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
@@ -21,10 +23,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -34,7 +36,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -78,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+  // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
   final ReadMostlyRWLock myLock;
@@ -107,8 +109,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
-  private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
@@ -128,8 +128,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     getPicoContainer().registerComponentInstance(Application.class, this);
     getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
+    boolean strictMode = isUnitTestMode || isInternal;
+    BundleBase.assertOnMissedKeys(strictMode);
+    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
@@ -210,6 +211,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * if there is a pending write action.
    */
   @Override
+  @Deprecated
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();
@@ -225,7 +227,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
-    final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+    final ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
     if (manager == null) {
       saveSettings(true);
     }
@@ -306,14 +308,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
+        // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           action.run();
         }
         catch (ProcessCanceledException e) {
           // ignore
         }
-        catch (Throwable t) {
-          LOG.error(t);
+        catch (Throwable e) {
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -329,14 +332,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
+        // This is very special magic only needed by threads that need read actions and can be executed
+        // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
+        // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
+
+        // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
           return action.call();
         }
         catch (ProcessCanceledException e) {
           // ignore
         }
-        catch (Throwable t) {
-          LOG.error(t);
+        catch (Throwable e) {
+          LOG.error(e);
         }
         finally {
           Thread.interrupted(); // reset interrupted status
@@ -403,7 +411,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         getPicoContainer().getComponentInstance(ServiceManagerImpl.class);
 
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        ApplicationLoadListener[] applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensions();
+        List<ApplicationLoadListener> applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensionList();
         for (ApplicationLoadListener listener : applicationLoadListeners) {
           try {
             listener.beforeApplicationLoaded(this, effectiveConfigPath);
@@ -439,7 +447,25 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void createComponents(@Nullable ProgressIndicator indicator) {
     // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    Runnable task = () -> super.createComponents(indicator);
+    Runnable task = () -> {
+      super.createComponents(indicator);
+      ExtensionPoint<ApplicationInitializedListener> initializedExtensionPoint = ApplicationInitializedListener.EP_NAME.getPoint(null);
+      for (ApplicationInitializedListener listener : initializedExtensionPoint.getExtensionList()) {
+        try {
+          listener.componentsInitialized();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+
+        try {
+          initializedExtensionPoint.reset();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    };
 
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -786,6 +812,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       lifecycleListener.appWillBeClosed(restart);
+      LifecycleUsageTriggerCollector.onIdeClose(restart);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -911,7 +938,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void runReadAction(@NotNull final Runnable action) {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       action.run();
     }
     else {
@@ -927,7 +954,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
     startRead();
@@ -941,7 +968,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       return computation.compute();
     }
     startRead();
@@ -965,7 +992,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
-                                                                          @NotNull Consumer<ProgressIndicator> action) {
+                                                                          @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
@@ -973,7 +1000,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
-                                                                       @NotNull Consumer<ProgressIndicator> action) {
+                                                                       @NotNull Consumer<? super ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
@@ -981,13 +1008,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
-                                            @NotNull Consumer<ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+                                            @NotNull Consumer<? super ProgressIndicator> action) {
+    return runWriteActionWithClass(action.getClass(), ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInSwingThread(() -> action.consume(indicator));
       return !indicator.isCanceled();
+    });
+  }
+
+  private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
+    startWrite(clazz);
+    try {
+      return computable.compute();
     }
     finally {
       endWrite(clazz);
@@ -999,10 +1031,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent,
                                                               @Nullable String cancelText,
-                                                              @NotNull Consumer<ProgressIndicator> action) {
+                                                              @NotNull Consumer<? super ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
+    return runWriteActionWithClass(clazz, ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInBackground(() -> {
         assert myWriteActionThread == null;
@@ -1014,10 +1045,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       });
       return !indicator.isCanceled();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    });
   }
 
   @Override
@@ -1035,25 +1063,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public <T> T runWriteAction(@NotNull final Computable<T> computation) {
     Class<? extends Computable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, () -> computation.compute());
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     Class<? extends ThrowableComputable> clazz = computation.getClass();
-    startWrite(clazz);
-    try {
-      return computation.compute();
-    }
-    finally {
-      endWrite(clazz);
-    }
+    return runWriteActionWithClass(clazz, computation);
   }
 
   @Override
@@ -1089,10 +1105,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isReadAccessAllowed() {
-    if (isDispatchThread()) {
-      return myWriteActionThread == null; // no reading from EDT during background write action
-    }
-    return myLock.isReadLockedByThisThread() || myWriteActionThread == Thread.currentThread();
+    return isDispatchThread() || myLock.isReadLockedByThisThread();
+  }
+
+  private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
+    return isDispatchThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
   }
 
   @Override
@@ -1142,7 +1159,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    if (isReadAccessAllowed()) {
+    if (checkReadAccessAllowedAndNoPendingWrites()) {
       action.run();
     }
     else {
@@ -1175,7 +1192,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public AccessToken acquireReadActionLock() {
     // if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    return isReadAccessAllowed() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
+    return checkReadAccessAllowedAndNoPendingWrites() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
   private volatile boolean myWriteActionPending;
@@ -1197,14 +1214,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
-      ActionPauses.WRITE.started("write action ("+clazz+")");
+      ActionPauses.WRITE.started();
     }
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
-      if (!myLock.isWriteLocked() && !myLock.tryWriteLock()) {
+      if (!myLock.isWriteLocked()) {
         Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
                                     JobScheduler.getScheduler()
                                       .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
@@ -1260,7 +1277,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private class WriteAccessToken extends AccessToken {
     @NotNull private final Class clazz;
 
-    public WriteAccessToken(@NotNull Class clazz) {
+    WriteAccessToken(@NotNull Class clazz) {
       this.clazz = clazz;
       startWrite(clazz);
       markThreadNameInStackTrace();
@@ -1389,7 +1406,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void fireApplicationExiting() {
     myDispatcher.getMulticaster().applicationExiting();
   }
-
   private void fireBeforeWriteActionStart(@NotNull Class action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
@@ -1411,18 +1427,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     saveSettings(false);
   }
 
-  @Override
-  public void saveSettings(boolean isForce) {
-    if (!mySaveAllowed || !mySaveSettingsIsInProgress.compareAndSet(false, true)) {
-      return;
-    }
-
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-    try {
-      StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
-    }
-    finally {
-      mySaveSettingsIsInProgress.set(false);
+  private void saveSettings(boolean isForceSavingAllSettings) {
+    if (mySaveAllowed) {
+      StoreUtil.saveSettings(this, isForceSavingAllSettings);
     }
   }
 

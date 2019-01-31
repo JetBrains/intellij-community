@@ -31,7 +31,8 @@ public class ActionShortcutRestrictionsImpl extends ActionShortcutRestrictions {
 
     if (IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET.equals(actionId) ||
         IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION.equals(actionId) ||
-        IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG.equals(actionId)) {
+        IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG.equals(actionId) ||
+        IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG.equals(actionId)) {
       return MOUSE_SINGLE_CLICK_ONLY;
     }
     if (IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB.equals(actionId)) {

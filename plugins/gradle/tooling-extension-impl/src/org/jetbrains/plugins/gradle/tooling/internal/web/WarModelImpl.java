@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class WarModelImpl implements WebConfiguration.WarModel {
   @NotNull

@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.OneTimeString;
+import com.intellij.credentialStore.OneTimeStringKt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +63,7 @@ public class EncryptionUtil {
     // do nothing
   }
 
-  static byte[] rawKey(@NotNull CredentialAttributes attributes) {
+  public static byte[] rawKey(@NotNull CredentialAttributes attributes) {
     return hash(getUTF8Bytes(attributes.getServiceName() + "/" + attributes.getUserName()));
   }
 
@@ -94,17 +80,6 @@ public class EncryptionUtil {
     }
     return key;
   }
-
-  /**
-   * Generate key based on password
-   *
-   * @param password the password to use
-   * @return the generated key
-   */
-  public static byte[] genPasswordKey(@NotNull String password) {
-    return genKey(hash(getUTF8Bytes(password)));
-  }
-
 
   /**
    * Encrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -124,25 +99,6 @@ public class EncryptionUtil {
       throw new IllegalStateException(e);
     }
   }
-
-  /**
-   * Decrypt key (does not use salting, so the encryption result is the same for the same input)
-   *
-   * @param password     the secret key to use
-   * @param encryptedKey the key to decrypt
-   * @return the decrypted key
-   */
-  public static byte[] decryptKey(byte[] password, byte[] encryptedKey) {
-    try {
-      Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
-      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);
-      return c.doFinal(encryptedKey);
-    }
-    catch (Exception e) {
-      throw new IllegalStateException(ENCRYPT_KEY_ALGORITHM + " is not available", e);
-    }
-  }
-
 
   /**
    * Encrypt key (does not use salting, so the encryption result is the same for the same input)
@@ -193,7 +149,7 @@ public class EncryptionUtil {
     if (len < 0 || len > plain.length - 4) {
       throw new IllegalStateException("Unmatched password is used");
     }
-    return CredentialAttributesKt.OneTimeString(plain, 4, len);
+    return OneTimeStringKt.OneTimeString(plain, 4, len);
   }
 
   /**

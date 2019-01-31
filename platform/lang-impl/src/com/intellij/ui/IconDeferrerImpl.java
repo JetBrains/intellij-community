@@ -22,28 +22,24 @@ package com.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
+import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new LinkedHashMap<Object, Icon>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<Object, Icon> eldest) {
-      return size() > 100;
-    }
-  };
+  private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(Registry.intValue("ide.icons.deferrerCacheSize"));
   private long myLastClearTimestamp;
 
   public IconDeferrerImpl(@NotNull MessageBus bus) {
@@ -78,29 +74,30 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> evaluator) {
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
     return deferImpl(base, param, evaluator, true);
   }
 
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> evaluator, final boolean autoUpdatable) {
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return evaluator.fun(param);
     }
 
     synchronized (LOCK) {
-      Icon result = myIconsCache.get(param);
-      if (result == null) {
-        final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
-          synchronized (LOCK) {
-            // check if our results is not outdated yet
-            if (started == myLastClearTimestamp) {
-              myIconsCache.put(key, autoUpdatable ? source : r);
-            }
-          }
-        }, autoUpdatable);
-        myIconsCache.put(param, result);
+      Icon cached = myIconsCache.get(param);
+      if (cached != null) {
+        return cached;
       }
+      final long started = myLastClearTimestamp;
+      Icon result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
+        synchronized (LOCK) {
+          // check if our results is not outdated yet
+          if (started == myLastClearTimestamp) {
+            myIconsCache.put(key, autoUpdatable ? source : r);
+          }
+        }
+      }, autoUpdatable);
+      myIconsCache.put(param, result);
 
       return result;
     }

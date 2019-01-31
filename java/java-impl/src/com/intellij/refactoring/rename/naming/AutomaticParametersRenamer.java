@@ -41,10 +41,12 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
     }
   }
 
+  @Override
   public String getDialogTitle() {
     return "Rename Parameters";
   }
 
+  @Override
   public String getDialogDescription() {
     return "Rename parameter in hierarchy to:";
   }

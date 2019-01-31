@@ -15,15 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
-
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 
@@ -35,14 +33,17 @@ public class MatchTemplateMatcher extends TemplateMatcher {
         myMode = mode;
     }
 
+    @Override
     protected ResolveUtil.Matcher changeDocument(XmlDocument document) {
         return new MatchTemplateMatcher(document, myMode);
     }
 
+    @Override
     public ResolveUtil.Matcher variantMatcher() {
         return new MatchTemplateMatcher(myDocument, myMode);
     }
 
+    @Override
     public boolean matches(XmlTag element) {
         if (super.matches(element) && element.getAttribute("match", null) != null) {
             final XsltTemplate t = XsltElementFactory.getInstance().wrapElement(element, XsltTemplate.class);

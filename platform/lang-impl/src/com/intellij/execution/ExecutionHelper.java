@@ -11,6 +11,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -208,12 +209,14 @@ public class ExecutionHelper {
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
-                                                                           @NotNull final NotNullFunction<String, Boolean> titleMatcher) {
+                                                                           @NotNull final NotNullFunction<? super String, Boolean> titleMatcher) {
     return findRunningConsole(project, selectedContent -> titleMatcher.fun(selectedContent.getDisplayName()));
   }
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
-                                                                    @NotNull NotNullFunction<RunContentDescriptor, Boolean> descriptorMatcher) {
+                                                                    @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
     final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
@@ -235,7 +238,7 @@ public class ExecutionHelper {
   }
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
-                                                                        @NotNull NotNullFunction<String, Boolean> titleMatcher) {
+                                                                        @NotNull NotNullFunction<? super String, Boolean> titleMatcher) {
     List<RunContentDescriptor> result = new SmartList<>();
     for (RunContentDescriptor runContentDescriptor : ExecutionManagerImpl.getAllDescriptors(project)) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {
@@ -247,8 +250,8 @@ public class ExecutionHelper {
 
   public static void selectContentDescriptor(final @NotNull DataContext dataContext,
                                              final @NotNull Project project,
-                                             @NotNull Collection<RunContentDescriptor> consoles,
-                                             String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
+                                             @NotNull Collection<? extends RunContentDescriptor> consoles,
+                                             String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);
@@ -345,6 +348,10 @@ public class ExecutionHelper {
       if (indicator != null && title2 != null) {
         indicator.setText2(title2);
       }
+      Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread() && application.isInternal() && !application.isHeadlessEnvironment()) {
+        LOG.warn("Synchronous execution on EDT: " + processHandler, new Throwable());
+      }
       process.run();
     }
   }
@@ -421,7 +428,7 @@ public class ExecutionHelper {
 
       private final Runnable myProcessThread = () -> {
         try {
-          final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
+          final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
             mode.getTimeoutCallback().consume(mode, presentableCmdline);
             processHandler.destroyProcess();
