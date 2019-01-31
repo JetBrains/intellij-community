@@ -824,10 +824,11 @@ bool RunMainClass(std::vector<LPWSTR> args)
   return true;
 }
 
-void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& args)
+int CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& args)
 {
   JNIEnv *env;
   JavaVMAttachArgs attachArgs;
+  int exitCode = -1;
   attachArgs.version = JNI_VERSION_1_2;
   attachArgs.name = "WinLauncher external command processing thread";
   attachArgs.group = NULL;
@@ -842,7 +843,7 @@ void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& ar
     {
       jstring jCurDir = env->NewString((const jchar *)curDir.c_str(), curDir.size());
       jobjectArray jArgs = ArgsToJavaArray(RemovePredefinedArgs(ParseCommandLine(args.c_str())));
-      env->CallStaticVoidMethod(processorClass, processMethodID, jCurDir, jArgs);
+      exitCode = (int)(env->CallStaticIntMethod(processorClass, processMethodID, jCurDir, jArgs));
       jthrowable exc = env->ExceptionOccurred();
       if (exc)
       {
@@ -852,6 +853,7 @@ void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& ar
   }
 
   jvm->DetachCurrentThread();
+  return exitCode;
 }
 
 DWORD WINAPI SingleInstanceThread(LPVOID args)
@@ -867,10 +869,32 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
     int pos = command.find('\n');
     if (pos >= 0)
     {
+      int second_pos = command.find('\n', pos + 1);
       std::wstring curDir = command.substr(0, pos);
-      std::wstring args = command.substr(pos + 1);
+      std::wstring args = command.substr(pos + 1, second_pos);
+      std::wstring response_id = command.substr(second_pos + 1);
 
-      CallCommandLineProcessor(curDir, args);
+      int exitCode = CallCommandLineProcessor(curDir, args);
+      
+      std::string message = std::to_string(exitCode);
+      std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::string(response_id.begin(), response_id.end());
+      HANDLE hResultFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str());
+      if (hResultFileMapping)
+      {
+        void *resultView = MapViewOfFile(hResultFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+        if (resultView)
+        {
+          memcpy(resultView, message.c_str(), (message.size() + 1) * sizeof(wchar_t));
+          UnmapViewOfFile(resultView);
+        }
+        
+        std::string eventName = std::string("IntelliJLauncherEvent.") + std::string(response_id.begin(), response_id.end());
+        HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
+        SetEvent(hResponseEvent);
+        CloseHandle(hResponseEvent);
+        CloseHandle(hResultFileMapping);
+      }
+      
     }
 
     UnmapViewOfFile(view);
@@ -878,13 +902,17 @@ DWORD WINAPI SingleInstanceThread(LPVOID args)
   return 0;
 }
 
-void SendCommandLineToFirstInstance()
+void SendCommandLineToFirstInstance(int response_id)
 {
   wchar_t curDir[_MAX_PATH];
   GetCurrentDirectoryW(_MAX_PATH - 1, curDir);
+  std::string resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(response_id);
+  
   std::wstring command(curDir);
   command += _T("\n");
   command += GetCommandLineW();
+  command += _T("\n");
+  command += std::wstring(resultFileName.begin(), resultFileName.end());
 
   void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
   if (view)
@@ -895,7 +923,7 @@ void SendCommandLineToFirstInstance()
   SetEvent(hEvent);
 }
 
-bool CheckSingleInstance()
+int CheckSingleInstance()
 {
   char moduleFileName[_MAX_PATH];
   GetModuleFileNameA(NULL, moduleFileName, _MAX_PATH - 1);
@@ -913,14 +941,55 @@ bool CheckSingleInstance()
   {
     hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE,
       mappingName.c_str());
-    return true;
+    // Means we're the first instance
+    return -1;
   }
   else
   {
-    SendCommandLineToFirstInstance();
+    srand(239);
+    int response_id;
+    std::string resultFileName;
+    
+    // Let's find a vacant result port. It's advised to use different result connections:
+    // that's because requests can be blocking (for quite a time) and several ones might exist at once.
+    while (true)
+    {
+      response_id = rand();
+      resultFileName = std::string("IntelliJLauncherResultMapping.") + std::to_string(response_id);
+      
+      if (!OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, resultFileName.c_str()))
+        break;
+    }
+    
+    // Creating mapping for exitCode transmission
+    HANDLE hResultFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, resultFileName.c_str());
+     
+    SendCommandLineToFirstInstance(response_id);
     CloseHandle(hFileMapping);
     CloseHandle(hEvent);
-    return false;
+    
+    // Lock wait for the response
+    std::string responseEventName = std::string("IntelliJLauncherEvent.") + std::to_string(response_id);
+    HANDLE hResponseEvent = CreateEventA(NULL, FALSE, FALSE, responseEventName.c_str());
+    WaitForSingleObject(hResponseEvent, INFINITE);
+    CloseHandle(hResponseEvent);
+    
+    // Read the exitCode
+    wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hResultFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+    int exitCode;
+    if (view)
+    {
+      std::wstring result(view);
+      exitCode = std::stoi(result);
+      UnmapViewOfFile(view);
+    }
+    else
+    {
+      exitCode = 1;
+    }
+    
+    CloseHandle(hResultFileMapping);
+    return exitCode;
   }
 }
 
@@ -1090,7 +1159,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   }
 
   //it's OK to return 0 here, because the control is transferred to the first instance
-  if (!CheckSingleInstance()) return 0;
+  int exitCode = CheckSingleInstance();
+  if (exitCode != -1) return exitCode;
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 
