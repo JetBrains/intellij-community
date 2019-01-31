@@ -24,6 +24,8 @@ import com.intellij.util.text.trimMiddle
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.PyAddSdkDialog
+import java.util.function.Consumer
 
 class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
@@ -131,12 +133,17 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
     override fun actionPerformed(e: AnActionEvent) {
       val model = PyConfigurableInterpreterList.getInstance(project).model
 
-      PythonSdkDetailsStep.show(project, module, model.sdks) {
-        if (it != null && model.findSdk(it.name) == null) {
-          model.addSdk(it)
-          model.apply()
+      PyAddSdkDialog.show(
+        project,
+        module,
+        model.sdks.asList(),
+        Consumer {
+          if (it != null && model.findSdk(it.name) == null) {
+            model.addSdk(it)
+            model.apply()
+          }
         }
-      }
+      )
     }
   }
 }
