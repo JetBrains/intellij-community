@@ -39,7 +39,6 @@ public class FileContextUtil {
 
   @Nullable
   public static PsiFile getContextFile(@NotNull PsiElement element) {
-    if (!element.isValid()) return null;
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     PsiElement context = file.getContext();
