@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -264,10 +265,18 @@ public class Alarm implements Disposable {
 
   @TestOnly
   public void drainRequestsInTest() {
+    for (Runnable task : getUnfinishedTasks()) {
+      task.run();
+    }
+  }
+
+  @NotNull
+  @TestOnly
+  public List<Runnable> getUnfinishedTasks() {
     List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
-        return;
+        return Collections.emptyList();
       }
 
       unfinishedTasks = new ArrayList<>(myRequests.size());
@@ -279,10 +288,7 @@ public class Alarm implements Disposable {
       }
       myRequests.clear();
     }
-
-    for (Runnable task : unfinishedTasks) {
-      task.run();
-    }
+    return unfinishedTasks;
   }
 
   /**

@@ -4,9 +4,11 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.configurationStore.schemeManager.SchemeFileTracker
 import com.intellij.configurationStore.schemeManager.useSchemeLoader
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.ComponentManager
@@ -33,6 +35,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -43,7 +46,7 @@ private val CHANGED_SCHEMES_KEY = Key.create<MultiMap<SchemeFileTracker, SchemeC
 /**
  * Should be a separate service, not closely related to ProjectManager, but it requires some cleanup/investigation.
  */
-class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager) {
+class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressManager: ProgressManager) : ProjectManagerImpl(progressManager), ConfigurationStorageReloader {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<String?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
@@ -173,6 +176,19 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   override fun flushChangedProjectFileAlarm() {
     changedFilesAlarm.drainRequestsInTest()
+  }
+
+  override suspend fun reloadChangedStorageFiles() {
+    val unfinishedTasks = changedFilesAlarm.unfinishedTasks
+    if (unfinishedTasks.isEmpty()) {
+      return
+    }
+
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      unfinishedTasks.forEach { it.run() }
+      // just to be sure
+      changedFilesAlarm.unfinishedTasks.forEach { it.run() }
+    }
   }
 
   override fun reloadProject(project: Project) {

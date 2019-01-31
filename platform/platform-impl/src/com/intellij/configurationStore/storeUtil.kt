@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -144,15 +143,19 @@ fun getStateSpec(originalClass: Class<*>): State? {
   return null
 }
 
+interface ConfigurationStorageReloader {
+  suspend fun reloadChangedStorageFiles()
+}
+
 /**
  * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
  */
 @CalledInAny
 private suspend fun saveProjectsAndApp(isForceSavingAllSettings: Boolean, onlyProject: Project? = null) {
+  (ProjectManager.getInstance() as? ConfigurationStorageReloader)?.reloadChangedStorageFiles()
+
   val start = System.currentTimeMillis()
   saveSettings(ApplicationManager.getApplication(), isForceSavingAllSettings)
-
-  ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm()
   if (onlyProject == null) {
     saveAllProjects(isForceSavingAllSettings)
   }
