@@ -316,8 +316,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public synchronized void addProjectPane(@NotNull final AbstractProjectViewPane pane) {
     myUninitializedPanes.add(pane);
     SelectInTarget selectInTarget = pane.createSelectInTarget();
-    if (selectInTarget != null) {
-      mySelectInTargets.put(pane.getId(), selectInTarget);
+    String id = selectInTarget.getMinorViewId();
+    if (pane.getId().equals(id)) {
+      mySelectInTargets.put(id, selectInTarget);
+    }
+    else {
+      try {
+        LOG.error("Unexpected SelectInTarget: " + selectInTarget.getClass() + "\n  created by project pane:" + pane.getClass());
+      }
+      catch (AssertionError ignored) {
+      }
     }
     if (isInitialized) {
       doAddUninitializedPanes();
