@@ -809,4 +809,21 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "  }\n" +
            "}", "x: 2.99792458e8");
   }
+
+  public void testTreatEmptyValueAsNull() throws Exception {
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"number\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x:<warning descr=\"Schema validation: Type is not allowed. Expected: number.\"> </warning>");
+    doTest("{\n" +
+           "  \"properties\": {\n" +
+           "    \"x\": {\n" +
+           "      \"type\": \"null\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "x: ");
+  }
 }

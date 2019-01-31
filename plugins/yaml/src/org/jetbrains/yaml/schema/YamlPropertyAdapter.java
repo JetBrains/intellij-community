@@ -3,6 +3,8 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -36,7 +38,10 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
   @Override
   public Collection<JsonValueAdapter> getValues() {
     YAMLValue value = myProperty.getValue();
-    return value == null ? ContainerUtil.emptyList() : Collections.singletonList(createValueAdapterByType(value));
+    if (value != null) return Collections.singletonList(createValueAdapterByType(value));
+    PsiElement nextSibling = myProperty.getNextSibling();
+    PsiElement nodeToHighlight = PsiUtilCore.getElementType(nextSibling) == TokenType.WHITE_SPACE ? nextSibling : myProperty.getLastChild();
+    return nodeToHighlight == null ? ContainerUtil.emptyList() : Collections.singletonList(new YamlEmptyValueAdapter(nodeToHighlight));
   }
 
   @NotNull
