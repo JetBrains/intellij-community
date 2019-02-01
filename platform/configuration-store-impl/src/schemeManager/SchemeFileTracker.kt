@@ -19,10 +19,12 @@ import com.intellij.util.io.systemIndependentPath
 import java.util.function.Function
 
 internal interface SchemeChangeEvent {
-  fun SchemeFileTracker.execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>)
+  fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>)
 }
 
 internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project?) : BulkFileListener {
+  private val projectManager by lazy { (ProjectManager.getInstance() as StoreAwareProjectManager) }
+
   private fun isMy(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
   private fun isMyDirectory(parent: VirtualFile): Boolean {
@@ -33,38 +35,35 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   private fun findExternalizableSchemeByFileName(fileName: String) = schemeManager.schemes.firstOrNull { fileName == "${schemeManager.getFileName(it)}${schemeManager.schemeExtension}" }
 
-  private val projectManager by lazy { (ProjectManager.getInstance() as StoreAwareProjectManager) }
-
   private class RemoveAllSchemes : SchemeChangeEvent {
-    override fun SchemeFileTracker.execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-      schemeManager.cachedVirtualDirectory = null
-      schemeManager.removeExternalizableSchemes()
+    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
+      schemeTracker.schemeManager.cachedVirtualDirectory = null
+      schemeTracker.schemeManager.removeExternalizableSchemes()
     }
   }
 
   private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
-    override fun SchemeFileTracker.execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-      val scheme = findExternalizableSchemeByFileName(fileName)
+    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
+      val scheme = schemeTracker.findExternalizableSchemeByFileName(fileName)
       if (scheme != null) {
-        schemeManager.removeScheme(scheme)
-        schemeManager.processor.onSchemeDeleted(scheme)
+        schemeTracker.schemeManager.removeScheme(scheme)
+        schemeTracker.schemeManager.processor.onSchemeDeleted(scheme)
       }
     }
   }
 
   private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
-    override fun SchemeFileTracker.execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
+    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
       if (file.isValid) {
-        schemeCreatedExternally(file, schemaLoader.value)
+        schemeTracker.schemeCreatedExternally(file, schemaLoader.value)
       }
     }
   }
 
   private data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
-    override fun SchemeFileTracker.execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
+    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
     }
   }
 
@@ -98,9 +97,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
 
     val processor = schemeManager.processor
     for (event in events) {
-      event.apply {
-        execute(lazySchemaLoader)
-      }
+      event.execute(this@SchemeFileTracker, lazySchemaLoader)
 
       if (event !is UpdateScheme) {
         continue
@@ -237,10 +234,8 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
   private fun schemeCreatedExternally(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>) {
     val readScheme = readSchemeFromFile(file, schemeLoader) ?: return
     val readSchemeKey = schemeManager.processor.getSchemeKey(readScheme)
-    val existingScheme = schemeManager.findSchemeByName(readSchemeKey)
-    @Suppress("SuspiciousEqualsCombination")
-    if (existingScheme != null && schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(
-        schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
+    val existingScheme = schemeManager.findSchemeByName(readSchemeKey) ?: return
+    if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
       LOG.warn("Ignore incorrect VFS create scheme event: schema ${readSchemeKey} is already exists")
       return
     }
