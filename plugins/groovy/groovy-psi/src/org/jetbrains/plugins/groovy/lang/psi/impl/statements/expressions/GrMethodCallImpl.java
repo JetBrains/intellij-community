@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -18,8 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
-
-import java.util.concurrent.atomic.AtomicReference;
+import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.LOG;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isImplicitCall;
@@ -29,9 +27,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isImplici
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
 
-  private static final GroovyMethodCallReference NO_REFERENCE = ObjectUtils.sentinel("uninitialized", GroovyMethodCallReference.class);
-
-  private final AtomicReference<GroovyMethodCallReference> myImplicitCallReference = new AtomicReference<>(NO_REFERENCE);
+  private final SafePublicationClearableLazyValue<GroovyMethodCallReference> myImplicitCallReference =
+    new SafePublicationClearableLazyValue<>(() -> isImplicitCall(this) ? new GrImplicitCallReference(this) : null);
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
@@ -40,23 +37,13 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @Nullable
   @Override
   public GroovyMethodCallReference getImplicitCallReference() {
-    final GroovyMethodCallReference reference = myImplicitCallReference.get();
-    if (reference != NO_REFERENCE) {
-      return reference;
-    }
-    final GroovyMethodCallReference newReference = isImplicitCall(this) ? new GrImplicitCallReference(this) : null;
-    if (myImplicitCallReference.compareAndSet(NO_REFERENCE, newReference)) {
-      return newReference;
-    }
-    else {
-      return myImplicitCallReference.get();
-    }
+    return myImplicitCallReference.getValue();
   }
 
   @Override
   public void subtreeChanged() {
     super.subtreeChanged();
-    myImplicitCallReference.set(NO_REFERENCE);
+    myImplicitCallReference.clear();
   }
 
   @Override
