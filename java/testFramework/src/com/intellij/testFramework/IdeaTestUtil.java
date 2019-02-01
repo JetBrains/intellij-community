@@ -71,8 +71,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   @NotNull
   public static Sdk getMockJdk(@NotNull JavaVersion version) {
-    int mockJdk = version.feature >= 9 ? 9 : version.feature >= 7 ? version.feature : version.feature >= 5 ? 7 : 4;
-    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
+    int mockJdk = version.feature >= 11 ? 11 :
+                  version.feature >= 9 ? 9 :
+                  version.feature >= 7 ? version.feature :
+                  version.feature >= 5 ? 7 :
+                  4;
+    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + (mockJdk < 11 ? "1." : "") + mockJdk).getPath();
     return createMockJdk("java " + version, path);
   }
 
