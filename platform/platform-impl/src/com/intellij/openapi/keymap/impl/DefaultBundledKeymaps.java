@@ -41,7 +41,7 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
       "Eclipse (Mac OS X).xml",
       "NetBeans 6.5.xml",
       "Sublime Text.xml",
-      "Sublime Text OSX.xml"
+      "Sublime Text (Mac OS X).xml"
     );
   }
 }

@@ -360,7 +360,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl T",             "Images.ShowThumbnails", "ReopenClosedTab", "RunDashboard.ShowConfigurations"},
     { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"}
     });
-    put("Sublime Text OSX", new String[][] {
+    put("Sublime Text (Mac OS X)", new String[][] {
     { "F2",                       "Arrangement.Rule.Edit", "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
     { "meta ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
     { "meta D",                   "CompareTwoFiles", "Diff.ShowDiff", "FileChooser.GotoDesktop", "SelectNextOccurrence", "SendEOF"},

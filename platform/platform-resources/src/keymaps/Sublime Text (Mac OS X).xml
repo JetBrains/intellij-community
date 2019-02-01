@@ -1,4 +1,4 @@
-<keymap name="Sublime Text OSX" parent="Mac OS X 10.5+" version="1" disable-mnemonics="false">
+<keymap name="Sublime Text (Mac OS X)" parent="Mac OS X 10.5+" version="1" disable-mnemonics="false">
   <!--FILE-->
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="meta o"/>
