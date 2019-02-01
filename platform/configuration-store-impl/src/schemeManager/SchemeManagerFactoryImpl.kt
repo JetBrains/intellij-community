@@ -43,15 +43,15 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
-                                                                                  processor,
-                                                                                  streamProvider
-                                                                                  ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                                                                  directoryPath ?: pathToFile(path),
-                                                                                  roamingType,
-                                                                                  presentableName,
-                                                                                  schemeNameToFileName,
-                                                                                  if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
-                                                                                  else createFileChangeSubscriber())
+                                    processor,
+                                    streamProvider
+                                    ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                    directoryPath ?: pathToFile(path),
+                                    roamingType,
+                                    presentableName,
+                                    schemeNameToFileName,
+                                    if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
+                                    else createFileChangeSubscriber())
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)

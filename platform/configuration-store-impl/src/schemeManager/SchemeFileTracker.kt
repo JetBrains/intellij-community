@@ -2,13 +2,9 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -18,144 +14,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.SmartList
 import com.intellij.util.io.systemIndependentPath
-import java.util.function.Function
-
-internal interface SchemeChangeEvent {
-  fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>)
-}
 
 internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project) : BulkFileListener {
-  private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
-
-  private fun isMyDirectory(parent: VirtualFile): Boolean {
-    val virtualDirectory = schemeManager.cachedVirtualDirectory
-    return when (virtualDirectory) {
-      null -> schemeManager.ioDirectory.systemIndependentPath == parent.path
-      else -> virtualDirectory == parent
-    }
-  }
-
-  private fun findExternalizableSchemeByFileName(fileName: String) = schemeManager.schemes.firstOrNull { fileName == "${schemeManager.getFileName(it)}${schemeManager.schemeExtension}" }
-
-  private class RemoveAllSchemes : SchemeChangeEvent {
-    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-      schemeTracker.schemeManager.cachedVirtualDirectory = null
-      schemeTracker.schemeManager.removeExternalizableSchemes()
-    }
-  }
-
-  private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
-    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-      val scheme = schemeTracker.findExternalizableSchemeByFileName(fileName)
-      if (scheme != null) {
-        schemeTracker.schemeManager.removeScheme(scheme)
-        schemeTracker.schemeManager.processor.onSchemeDeleted(scheme)
-      }
-    }
-  }
-
-  private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
-    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-      if (file.isValid) {
-        schemeTracker.schemeCreatedExternally(file, schemaLoader.value)
-      }
-    }
-
-    private fun SchemeFileTracker.schemeCreatedExternally(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>) {
-      val readScheme = readSchemeFromFile(file, schemeLoader) ?: return
-      val readSchemeKey = schemeManager.processor.getSchemeKey(readScheme)
-      val existingScheme = schemeManager.findSchemeByName(readSchemeKey) ?: return
-      if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
-        LOG.warn("Ignore incorrect VFS create scheme event: schema ${readSchemeKey} is already exists")
-        return
-      }
-    }
-  }
-
-  private data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
-    override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
-    }
-  }
-
-  private fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>): Any? {
-    val fileName = file.name
-    if (file.isDirectory || !schemeManager.canRead(fileName)) {
-      return null
-    }
-
-    catchAndLog(fileName) {
-      return file.inputStream.use {
-        schemeLoader.loadScheme(fileName, it)
-      }
-    }
-
-    return null
-  }
-
-  internal fun reload(events: Collection<SchemeChangeEvent>, schemaLoaderRef: Ref<SchemeLoader<Any, Any>>) {
-    val oldActiveScheme = schemeManager.activeScheme
-    var newActiveScheme: Any? = null
-
-    val lazySchemaLoader = lazy {
-      var result = schemaLoaderRef.get()
-      if (result == null) {
-        result = schemeManager.createSchemeLoader()
-        schemaLoaderRef.set(result)
-      }
-      result
-    }
-
-    val processor = schemeManager.processor
-    for (event in events) {
-      event.execute(this@SchemeFileTracker, lazySchemaLoader)
-
-      if (event !is UpdateScheme) {
-        continue
-      }
-
-      val file = event.file
-      if (!file.isValid) {
-        continue
-      }
-
-      val fileName = file.name
-      val changedScheme = findExternalizableSchemeByFileName(fileName)
-      if (callSchemeContentChangedIfSupported(changedScheme, fileName, file)) {
-        continue
-      }
-
-      changedScheme?.let {
-        schemeManager.removeScheme(it)
-        processor.onSchemeDeleted(it)
-      }
-
-      val newScheme = readSchemeFromFile(file, lazySchemaLoader.value)
-      fun isNewActiveScheme(): Boolean {
-        if (newActiveScheme != null) {
-          return false
-        }
-
-        if (oldActiveScheme == null) {
-          return newScheme != null && schemeManager.currentPendingSchemeName == processor.getSchemeKey(newScheme)
-        }
-        else {
-          // do not set active scheme if currently no active scheme
-          // must be equals by reference
-          return changedScheme === oldActiveScheme
-        }
-      }
-
-      if (isNewActiveScheme()) {
-        // call onCurrentSchemeSwitched only when all schemes reloaded
-        newActiveScheme = newScheme
-      }
-    }
-
-    if (newActiveScheme != null) {
-      schemeManager.activeScheme = newActiveScheme
-      processor.onCurrentSchemeSwitched(oldActiveScheme, newActiveScheme)
-    }
-  }
+  private val applicator = SchemeChangeApplicator(schemeManager)
 
   override fun after(events: MutableList<out VFileEvent>) {
     val list = SmartList<SchemeChangeEvent>()
@@ -196,7 +57,17 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
 
     if (list.isNotEmpty()) {
-      (ProjectManager.getInstance() as StoreAwareProjectManager).registerChangedSchemes(list, this, project)
+      (ProjectManager.getInstance() as StoreAwareProjectManager).registerChangedSchemes(list, applicator, project)
+    }
+  }
+
+  private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
+
+  private fun isMyDirectory(parent: VirtualFile): Boolean {
+    val virtualDirectory = schemeManager.cachedVirtualDirectory
+    return when (virtualDirectory) {
+      null -> schemeManager.ioDirectory.systemIndependentPath == parent.path
+      else -> virtualDirectory == parent
     }
   }
 
@@ -226,29 +97,41 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
       }
     }
   }
+}
 
-  private fun callSchemeContentChangedIfSupported(changedScheme: Any?, fileName: String, file: VirtualFile): Boolean {
-    if (changedScheme == null || schemeManager.processor !is SchemeContentChangedHandler<*> || schemeManager.processor !is LazySchemeProcessor) {
-      return false
+internal data class UpdateScheme(val file: VirtualFile) : SchemeChangeEvent {
+  override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+  }
+}
+
+private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
+  override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    if (!file.isValid) {
+      return
     }
 
-    // unrealistic case, but who knows
-    val externalInfo = schemeManager.schemeToInfo.get(changedScheme) ?: return false
-
-    catchAndLog(fileName) {
-      val bytes = file.contentsToByteArray()
-      lazyPreloadScheme(bytes, schemeManager.isOldSchemeNaming) { name, parser ->
-        val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val schemeName = name
-                         ?: schemeManager.processor.getSchemeKey(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
-                         ?: throw nameIsMissed(bytes)
-
-        val dataHolder = SchemeDataHolderImpl(schemeManager.processor, bytes, externalInfo)
-        @Suppress("UNCHECKED_CAST")
-        (schemeManager.processor as SchemeContentChangedHandler<Any>).schemeContentChanged(changedScheme, schemeName, dataHolder)
-      }
-      return true
+    val readScheme = readSchemeFromFile(file, schemaLoader.value, schemeManager) ?: return
+    val readSchemeKey = schemeManager.processor.getSchemeKey(readScheme)
+    val existingScheme = schemeManager.findSchemeByName(readSchemeKey) ?: return
+    if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(
+        schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
+      LOG.warn("Ignore incorrect VFS create scheme event: schema ${readSchemeKey} is already exists")
+      return
     }
-    return false
+  }
+}
+
+private data class RemoveScheme(private val fileName: String) : SchemeChangeEvent {
+  override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    val scheme = findExternalizableSchemeByFileName(fileName, schemeManager) ?: return
+    schemeManager.removeScheme(scheme)
+    schemeManager.processor.onSchemeDeleted(scheme)
+  }
+}
+
+private class RemoveAllSchemes : SchemeChangeEvent {
+  override fun execute(schemaLoader: Lazy<SchemeLoader<Any, Any>>, schemeManager: SchemeManagerImpl<Any, Any>) {
+    schemeManager.cachedVirtualDirectory = null
+    schemeManager.removeExternalizableSchemes()
   }
 }
