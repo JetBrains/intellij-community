@@ -556,6 +556,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                        @NotNull Runnable process) {
     List<Set<Thread>> threadsUnderThisIndicator = new ArrayList<>();
     synchronized (threadsUnderIndicator) {
+      boolean oneOfTheIndicatorsIsCanceled = false;
+
       for (ProgressIndicator thisIndicator = indicator; thisIndicator != null; thisIndicator = thisIndicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator() : null) {
         Set<Thread> underIndicator = threadsUnderIndicator.computeIfAbsent(thisIndicator, __ -> new SmartHashSet<>());
         boolean alreadyUnder = !underIndicator.add(currentThread);
@@ -569,8 +571,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
         if (thisIndicator.isCanceled()) {
           threadsUnderCanceledIndicator.add(currentThread);
+          oneOfTheIndicatorsIsCanceled = true;
         }
-        else {
+        else if (!oneOfTheIndicatorsIsCanceled) {
           threadsUnderCanceledIndicator.remove(currentThread);
         }
       }
