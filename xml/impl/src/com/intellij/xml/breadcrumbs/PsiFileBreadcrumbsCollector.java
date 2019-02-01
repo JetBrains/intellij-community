@@ -100,9 +100,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
                            ProgressIndicator progressIndicator,
                            @NotNull Consumer<Iterable<? extends Crumb>> consumer,
                            Boolean forcedShown) {
-    PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(document, () -> {
-      consumer.consume(collectBreadcrumbs(virtualFile, document, offset, forcedShown));
-    }, progressIndicator);
+    PsiAvailabilityService.getInstance(myProject).performWhenPsiAvailable(document, () -> consumer.consume(collectBreadcrumbs(virtualFile, document, offset, forcedShown)), progressIndicator);
   }
 
   @NotNull

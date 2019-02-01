@@ -188,23 +188,21 @@ public class PatchApplier<Unused> {
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       try {
-        runWithDefaultConfirmations(project, silentAddDelete, () -> {
-          CommandProcessor.getInstance().executeCommand(project, () -> {
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-              applier.addSkippedItems(trigger);
-            }
-            trigger.prepare();
-            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-              refStatus.set(null);
-            }
-            for (PatchApplier applier : group) {
-              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-            }
-          }, VcsBundle.message("patch.apply.command"), null);
-        });
+        runWithDefaultConfirmations(project, silentAddDelete, () -> CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+            applier.addSkippedItems(trigger);
+          }
+          trigger.prepare();
+          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+            refStatus.set(null);
+          }
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+          }
+        }, VcsBundle.message("patch.apply.command"), null));
       }
       finally {
         VcsFileListenerContextHelper.getInstance(project).clearContext();
@@ -242,9 +240,7 @@ public class PatchApplier<Unused> {
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> {
-      return VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName()));
-    });
+    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
     if (undoApplyPatchDialog.showAndGet()) {

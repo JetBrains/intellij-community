@@ -167,9 +167,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   public void navigate(final DomElement element) {
     final EditorTextField field = getEditorTextField(getComponent());
     SwingUtilities.invokeLater(() -> {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(field, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
       field.selectAll();
     });
   }

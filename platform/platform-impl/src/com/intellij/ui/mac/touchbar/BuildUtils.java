@@ -284,9 +284,7 @@ class BuildUtils {
   // creates releaseOnClose touchbar
   static TouchBar createStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
-    tb.addButton().setText("Stop All").setActionOnEDT(() -> {
-      stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
-    });
+    tb.addButton().setText("Stop All").setActionOnEDT(() -> stoppableDescriptors.forEach((pair) -> pair.second.run()));
     final TBItemScrubber stopScrubber = tb.addScrubber();
     for (Pair<RunContentDescriptor, Runnable> sd : stoppableDescriptors)
       stopScrubber.addItem(sd.first.getIcon(), sd.first.getDisplayName(), sd.second);

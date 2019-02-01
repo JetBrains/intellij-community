@@ -194,38 +194,36 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(junit3Class);
     if (conflicts == null) return; // cancelled by user
 
-    final Runnable runnable = () -> {
-      WriteAction.run(() -> {
-        final PsiReferenceList extendsList = junit3Class.getExtendsList();
-        if (extendsList == null) {
-          return;
-        }
-        for (PsiMethod method : junit3Class.getMethods()) {
-          @NonNls final String name = method.getName();
-          if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-              PsiType.VOID.equals(method.getReturnType()) &&
-              method.getParameterList().isEmpty()) {
-            final PsiModifierList modifierList = method.getModifierList();
-            if (name.startsWith("test")) {
-              addAnnotationIfNotPresent(modifierList, "org.junit.Test");
-            }
-            else if (name.equals("setUp")) {
-              transformSetUpOrTearDownMethod(method);
-              addAnnotationIfNotPresent(modifierList, "org.junit.Before");
-            }
-            else if (name.equals("tearDown")) {
-              transformSetUpOrTearDownMethod(method);
-              addAnnotationIfNotPresent(modifierList, "org.junit.After");
-            }
+    final Runnable runnable = () -> WriteAction.run(() -> {
+      final PsiReferenceList extendsList = junit3Class.getExtendsList();
+      if (extendsList == null) {
+        return;
+      }
+      for (PsiMethod method : junit3Class.getMethods()) {
+        @NonNls final String name = method.getName();
+        if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+            PsiType.VOID.equals(method.getReturnType()) &&
+            method.getParameterList().isEmpty()) {
+          final PsiModifierList modifierList = method.getModifierList();
+          if (name.startsWith("test")) {
+            addAnnotationIfNotPresent(modifierList, "org.junit.Test");
           }
-          method.accept(new MethodCallModifier());
+          else if (name.equals("setUp")) {
+            transformSetUpOrTearDownMethod(method);
+            addAnnotationIfNotPresent(modifierList, "org.junit.Before");
+          }
+          else if (name.equals("tearDown")) {
+            transformSetUpOrTearDownMethod(method);
+            addAnnotationIfNotPresent(modifierList, "org.junit.After");
+          }
         }
-        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-        for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-          referenceElement.delete();
-        }
-      });
-    };
+        method.accept(new MethodCallModifier());
+      }
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        referenceElement.delete();
+      }
+    });
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {

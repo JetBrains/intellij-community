@@ -288,9 +288,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private void commitToOriginal(final DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
-        myEditChangesHandler.commitToOriginal(e);
-      });
+      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {

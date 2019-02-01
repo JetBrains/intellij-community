@@ -130,9 +130,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
             table.scrollRectToVisible(bounds);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true));
           }
         });
 
@@ -145,9 +143,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
       public void run(AnActionButton button) {
         if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
         }
       }
@@ -180,9 +176,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           idx[i] += delta;
         }
         TableUtil.selectRows(table, idx);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         if (row > 0 && col != -1) {
           table.editCellAt(row - 1, col);
         }

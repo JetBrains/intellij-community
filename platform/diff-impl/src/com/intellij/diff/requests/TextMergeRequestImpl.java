@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.requests;
 
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
@@ -112,9 +111,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
       }
 
       if (applyContent != null) {
-        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> {
-          myOutput.getDocument().setText(applyContent);
-        });
+        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
       }
 
       if (myApplyCallback != null) myApplyCallback.consume(result);

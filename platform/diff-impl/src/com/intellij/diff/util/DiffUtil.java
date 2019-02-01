@@ -1274,9 +1274,7 @@ public class DiffUtil {
   private static boolean canResolveLineConflict(@NotNull MergeLineFragment fragment,
                                                 @NotNull List<? extends CharSequence> sequences,
                                                 @NotNull List<? extends LineOffsets> lineOffsets) {
-    List<? extends CharSequence> contents = ThreeSide.map(side -> {
-      return getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side));
-    });
+    List<? extends CharSequence> contents = ThreeSide.map(side -> getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side)));
     return ComparisonMergeUtil.tryResolveConflict(contents.get(0), contents.get(1), contents.get(2)) != null;
   }
 
@@ -1364,16 +1362,14 @@ public class DiffUtil {
       return false;
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        if (underBulkUpdate) {
-          DocumentUtil.executeInBulk(document, true, task);
-        }
-        else {
-          task.run();
-        }
-      }, commandName, commandGroupId, confirmationPolicy, document);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, () -> {
+      if (underBulkUpdate) {
+        DocumentUtil.executeInBulk(document, true, task);
+      }
+      else {
+        task.run();
+      }
+    }, commandName, commandGroupId, confirmationPolicy, document));
     return true;
   }
 

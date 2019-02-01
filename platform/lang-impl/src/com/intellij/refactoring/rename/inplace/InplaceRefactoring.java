@@ -351,9 +351,7 @@ public abstract class InplaceRefactoring {
 
     beforeTemplateStart();
 
-    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
-      startTemplate(builder);
-    });
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> startTemplate(builder));
 
     if (myBalloon == null) {
       showBalloon();

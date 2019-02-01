@@ -88,9 +88,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
 
     if (dep != null) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      WriteCommandAction.writeCommandAction(project).run(() -> {
-        dep.getSystemPath().setValue(selectedFile);
-      });
+      WriteCommandAction.writeCommandAction(project).run(() -> dep.getSystemPath().setValue(selectedFile));
     }
   }
 

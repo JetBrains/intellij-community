@@ -42,9 +42,7 @@ public class HgBranchWorker {
                       @NotNull final HgRepository selectedRepository) {
     try {
       final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
-      });
+      ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
       VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());

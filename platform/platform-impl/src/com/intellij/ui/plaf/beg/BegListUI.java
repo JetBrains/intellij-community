@@ -34,9 +34,7 @@ public class BegListUI extends BasicListUI {
        * synchronous (it is on Windows).  See bug 4122345
        */
       if (!myList.hasFocus()){
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
       }
 
       int row = BegListUI.this.convertYToRow(e.getY());

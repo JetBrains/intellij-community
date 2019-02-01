@@ -34,9 +34,7 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor,
     PsiDocumentManager.getInstance(project).commitDocument(document);
     final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file instanceof GroovyFile) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, templateRange.getStartOffset(),templateRange.getEndOffset());
-      });
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, templateRange.getStartOffset(), templateRange.getEndOffset()));
     }
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
   }

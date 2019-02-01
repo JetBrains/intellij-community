@@ -121,9 +121,7 @@ public class ExternalDiffToolUtil {
     Boolean hasBom = content.hasBom();
     if (hasBom == null) hasBom = CharsetToolkit.getMandatoryBom(charset) != null;
 
-    String contentData = ReadAction.compute(() -> {
-      return content.getDocument().getText();
-    });
+    String contentData = ReadAction.compute(() -> content.getDocument().getText());
     if (separator != LineSeparator.LF) {
       contentData = StringUtil.convertLineSeparators(contentData, separator.getSeparatorString());
     }
@@ -395,9 +393,7 @@ public class ExternalDiffToolUtil {
     @Override
     public void apply() throws IOException {
       final String content = StringUtil.convertLineSeparators(FileUtil.loadFile(myLocalFile, myCharset));
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myDocument.setText(content);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myDocument.setText(content));
     }
   }
 

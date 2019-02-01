@@ -207,9 +207,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
 
-    List<Range> linesRanges = ContainerUtil.map(ranges, range -> {
-      return new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2());
-    });
+    List<Range> linesRanges = ContainerUtil.map(ranges, range -> new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2()));
 
     List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(vcsText, localText, linesRanges, indicator));
 
@@ -225,9 +223,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       boolean isSkipped = !isFromActiveChangelist;
       boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
-      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
-        return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
-      }));
+      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
     }
 
     return apply(new CompareData(changes, isContentsEqual));

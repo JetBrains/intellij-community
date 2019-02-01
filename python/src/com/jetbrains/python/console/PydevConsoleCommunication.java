@@ -205,9 +205,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private boolean execIPythonEditor(String path) {
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        FileEditorManager.getInstance(myProject).openFile(file, true);
-      });
+      ApplicationManager.getApplication().invokeLater(() -> FileEditorManager.getInstance(myProject).openFile(file, true));
 
       return true;
     }

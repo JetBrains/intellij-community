@@ -175,9 +175,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
           final Container parent = getParent();
           if (parent instanceof IpnbFilePanel) {
             ((IpnbFilePanel)parent).setSelectedCellPanel(IpnbEditablePanel.this);
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(textArea, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(textArea, true));
           }
         }
       }

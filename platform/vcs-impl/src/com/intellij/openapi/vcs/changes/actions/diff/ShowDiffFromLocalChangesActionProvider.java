@@ -130,9 +130,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       Change selectedChange = changes.get(0);
       List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
       if (changelistChanges != null) {
-        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> {
-          return ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it);
-        });
+        int selectedIndex = ContainerUtil.indexOf(changelistChanges, it -> ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it));
         if (selectedIndex != -1) {
           showChangesDiff(project, ListSelection.createAt(changelistChanges, selectedIndex));
         }

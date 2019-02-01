@@ -388,9 +388,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
           myShouldRename[row] = !myShouldRename[row];
           fireTableDataChanged();
           repaintTable();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
         }
       }
     }

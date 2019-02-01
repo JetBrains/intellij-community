@@ -223,9 +223,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
       validate();
       if (isFocused) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true));
       }
     }
   }
@@ -356,9 +354,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
     revalidate();
     if (isFocused) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> requestFocus());
     }
   }
 
@@ -716,9 +712,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   @Override
   public void requestFocus() {
     if (myEditor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

@@ -551,16 +551,12 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
       String title = e.getPresentation().getText() + " in patch resolve";
 
-      executeCommand(title, () -> {
-        apply(selectedChanges);
-      });
+      executeCommand(title, () -> apply(selectedChanges));
     }
 
     private boolean isSomeChangeSelected(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
-      return DiffUtil.isSomeRangeSelected(editor, lines -> {
-        return ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side));
-      });
+      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side)));
     }
 
     @NotNull

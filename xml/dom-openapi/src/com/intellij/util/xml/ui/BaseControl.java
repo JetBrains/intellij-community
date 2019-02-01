@@ -207,9 +207,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
       final CommitListener multicaster = myDispatcher.getMulticaster();
       multicaster.beforeCommit(this);
       try {
-        WriteCommandAction.writeCommandAction(getProject(), getDomWrapper().getFile()).run(() -> {
-          doCommit(value);
-        });
+        WriteCommandAction.writeCommandAction(getProject(), getDomWrapper().getFile()).run(() -> doCommit(value));
       }
       catch (ReflectiveOperationException e) {
         LOG.error(e);

@@ -295,16 +295,12 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(final MouseEvent e) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
       }
 
       @Override
       public void mousePressed(final MouseEvent e) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
       }
     });
   }
@@ -397,9 +393,7 @@ public class CommanderPanel extends JPanel {
     if (selectedIndices.length == 0 && myList.getModel().getSize() > 0) {
       myList.setSelectedIndex(0);
       if (!myList.hasFocus()) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
       }
     }
     else if (myList.getModel().getSize() > 0) {
@@ -419,9 +413,7 @@ public class CommanderPanel extends JPanel {
       final int popupIndex = myList.locationToIndex(new Point(x, y));
       if (popupIndex >= 0) {
         myList.setSelectedIndex(popupIndex);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
       }
     }
 

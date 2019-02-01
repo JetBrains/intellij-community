@@ -103,9 +103,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
           mutator = item12 -> helper.getMutable(item12, selectedRow);
         }
         ((DialogItemEditor<T>)itemEditor).edit(item, mutator, false);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
       }
     }).setEditActionUpdater(e -> {
       T item = table.getSelectedObject();
@@ -251,9 +249,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
             model.addRow(itemEditor.clone(item, false));
           }
 
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
         }
       }
@@ -321,9 +317,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     @Override
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         TableUtil.updateScroller(table);
       }
     }

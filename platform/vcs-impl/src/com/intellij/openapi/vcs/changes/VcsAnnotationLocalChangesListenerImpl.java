@@ -177,9 +177,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void closeForVcs(final Set<VcsKey> refresh) {
     if (refresh.isEmpty()) return;
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
-        return it.getVcsKey() != null && refresh.contains(it.getVcsKey());
-      });
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> it.getVcsKey() != null && refresh.contains(it.getVcsKey()));
       invalidateAnnotations(copy, false);
     }
   }
@@ -226,9 +224,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   @Override
   public void reloadAnnotationsForVcs(@NotNull VcsKey key) {
     synchronized (myLock) {
-      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> {
-        return key.equals(it.getVcsKey());
-      });
+      List<FileAnnotation> copy = ContainerUtil.filter(myFileAnnotationMap.values(), it -> key.equals(it.getVcsKey()));
       invalidateAnnotations(copy, true);
     }
   }

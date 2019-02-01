@@ -95,9 +95,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
           int row = myTableModel.getRowCount() - 1;
           myTable.getSelectionModel().setSelectionInterval(row, row);
           myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
         }
       }
     }

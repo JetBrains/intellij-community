@@ -55,9 +55,7 @@ public abstract class JspSpiUtil {
   @Nullable
   private static JspSpiUtil getJspSpiUtil() {
     Ref<JspSpiUtil> result = Ref.create();
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      result.set(ServiceManager.getService(JspSpiUtil.class));
-    });
+    ProgressManager.getInstance().executeNonCancelableSection(() -> result.set(ServiceManager.getService(JspSpiUtil.class)));
     return result.get();
   }
 

@@ -192,9 +192,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
       Component component = myCurrentStep.getDefaultFocusedComponent();
       if (component != null) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(component, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
       }
     });
 

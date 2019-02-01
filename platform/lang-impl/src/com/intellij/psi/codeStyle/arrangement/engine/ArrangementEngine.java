@@ -135,14 +135,12 @@ public class ArrangementEngine {
       DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(false);
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      FormatChangedTextUtil.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
-        doArrange(context);
-        if (callback != null) {
-          callback.afterArrangement(context.moveInfos);
-        }
-      });
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> FormatChangedTextUtil.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
+      doArrange(context);
+      if (callback != null) {
+        callback.afterArrangement(context.moveInfos);
+      }
+    }));
   }
 
   private <E extends ArrangementEntry> void doArrange(Context<E> context) {

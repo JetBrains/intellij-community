@@ -42,9 +42,7 @@ public abstract class EnableDisableAction extends AbstractAction {
       applyValue(rows, valueToBeSet);
 //          myMyTableModel.fireTableRowsUpdated(rows[0], rows[rows.length - 1]);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getTable(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getTable(), true));
   }
 
   protected abstract JTable getTable();

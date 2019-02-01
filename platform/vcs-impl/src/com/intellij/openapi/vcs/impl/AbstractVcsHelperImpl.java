@@ -569,9 +569,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
     FilePath filePath = VcsUtil.getFilePath(virtualFile);
-    loadAndShowCommittedChangesDetails(project, revision, filePath, () -> {
-      return getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
-    });
+    loadAndShowCommittedChangesDetails(project, revision, filePath, () -> getAffectedChanges(provider, virtualFile, revision, location, isNonLocal));
   }
 
   public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
