@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
@@ -333,7 +334,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         if (PsiUtil.isCompileStatic(refExpr) && resolved instanceof GrField) {
           return TypesUtil.getJavaLangObject(refExpr);
         }
-        LOG.assertTrue(resolved.isValid());
+        ensureValid(resolved);
         return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       }
       return null;
