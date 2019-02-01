@@ -54,7 +54,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     if (cellValidator != null) {
       ValidationInfo result = cellValidator.validate(value, row, column);
       iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
-      iconLabel.setBorder(result == null ? null: JBUI.Borders.emptyRight(4));
+      iconLabel.setBorder(result == null ? null: JBUI.Borders.emptyRight(3));
       putClientProperty(CELL_VALIDATION_PROPERTY, result);
     }
 

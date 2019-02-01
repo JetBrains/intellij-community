@@ -10,10 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
-import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
-import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
-import com.intellij.openapi.ui.cellvalidators.ValidationUtils;
+import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -293,12 +290,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
                                                  "Open file", () -> System.out.println("Table browse clicked"));
       cellEditor.addExtension(browseExtension);
-
       cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
 
       new ComponentValidator(getDisposable()).withValidator(() -> {
         boolean isAllowed = ALLOWED_VALUES.contains(cellEditor.getText());
-        ValidationUtils.setErrorExtension(cellEditor, !isAllowed);
+        ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, !isAllowed);
         return isAllowed ? null : validationInfoGenerator.apply(cellEditor.getText(), cellEditor);
       }).withHyperlinkListener(hyperlinkListener).
         andRegisterOnDocumentListener(cellEditor).
@@ -317,7 +313,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JComboBox<Integer> rightEditor = new ComboBox<>(Arrays.stream(data).map(i -> Integer.valueOf(i[1])).toArray(Integer[]::new));
       col = table.getColumnModel().getColumn(1);
 
-      col.setCellEditor(new DefaultCellEditor(rightEditor));
+      col.setCellEditor(new StatefulValidatingCellEditor(rightEditor, getDisposable()));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
 
         { setIpad(JBUI.emptyInsets()); } // Reset standard pads

@@ -65,7 +65,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       new ComponentValidator(validatorsDisposable).withValidator(() -> {
         String text = cellEditor.getText();
         boolean hasError = !StringUtil.isEmpty(text) && !ourPackagePattern.matcher(text).matches();
-        ValidationUtils.setErrorExtension(cellEditor, hasError);
+        ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, hasError);
 
         return validationInfoProducer.apply(text, cellEditor);
       }).andRegisterOnDocumentListener(cellEditor).installOn(cellEditor);

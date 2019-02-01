@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.cellvalidators.CellComponentProvider;
-import com.intellij.openapi.ui.cellvalidators.CellTooltipManager;
-import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper;
+import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +20,7 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -38,8 +37,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.openapi.ui.cellvalidators.ValidationUtils.StatefulValidatingEditor;
 
 public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
   private final ListTableModel<UrlInfo> myModel = new ListTableModel<UrlInfo>() {
@@ -138,7 +135,9 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    DefaultCellEditor editor = new StatefulValidatingEditor(myDisposable);
+    ExtendableTextField cellEditor = new ExtendableTextField();
+    DefaultCellEditor editor = new StatefulValidatingCellEditor(cellEditor, myDisposable).
+      withStateUpdater(vi -> ValidationUtils.setExtension(cellEditor, vi));
     editor.setClickCountToStart(1);
     myTable.setDefaultEditor(Object.class, editor);
 
@@ -149,7 +148,6 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
         protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (row >= 0 && row < myModel.getRowCount()) {
             UrlInfo info = myModel.getRowValue(row);
-            setBorder(null);
             setForeground(selected ? table.getSelectionForeground() : table.getForeground());
             setBackground(selected ? table.getSelectionBackground() : table.getBackground());
             append(info.name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -161,7 +159,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
           return attributes;
         }
       }).
-      bindToEditorSize(editor.getComponent()::getPreferredSize).
+      bindToEditorSize(cellEditor::getPreferredSize).
       withCellValidator((value, row, column) -> {
         if (row >= 0 && row < myModel.getRowCount()) {
           UrlInfo info = myModel.getRowValue(row);
