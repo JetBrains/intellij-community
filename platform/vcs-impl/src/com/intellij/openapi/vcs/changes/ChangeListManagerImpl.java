@@ -447,6 +447,25 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
+  public void waitForUpdate(@Nullable String operationName) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    CountDownLatch waiter = new CountDownLatch(1);
+    invokeAfterUpdate(() -> waiter.countDown(), InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
+
+    boolean success = false;
+    while (!success) {
+      ProgressManager.checkCanceled();
+      try {
+        success = waiter.await(50, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
+    }
+  }
+
+  @Override
   public String isFreezed() {
     return myFreezeName;
   }
