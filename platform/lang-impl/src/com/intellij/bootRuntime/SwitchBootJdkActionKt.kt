@@ -8,6 +8,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -30,8 +33,12 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
 
-    bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
-    bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
+    ProgressManager.getInstance().run(object : Task.Modal(e.project, "Loading Runtime List...", false) {
+      override fun run(progressIndicator: ProgressIndicator) {
+        bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
+        bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
+      }
+    })
 
     // todo change to dsl
     val southPanel = ActionPanel()
