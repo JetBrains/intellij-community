@@ -103,14 +103,15 @@ interface GlobalMenuLib extends Library {
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
-  private static final boolean TRACE_SYSOUT               = System.getProperty("linux.native.menu.debug.trace.sysout",            "false").equals("true");
-  private static final boolean TRACE_DISABLED             = System.getProperty("linux.native.menu.debug.trace.disabled",          "true").equals("true");
-  private static final boolean TRACE_SYNC_STATS           = System.getProperty("linux.native.menu.debug.trace.sync-stats",        "false").equals("true");
-  private static final boolean TRACE_EVENTS               = System.getProperty("linux.native.menu.debug.trace.events",            "false").equals("true");
-  private static final boolean TRACE_EVENT_FILTER         = System.getProperty("linux.native.menu.debug.trace.event-filter",      "false").equals("true");
-  private static final boolean TRACE_CLEARING             = System.getProperty("linux.native.menu.debug.trace.clearing",          "false").equals("true");
-  private static final boolean TRACE_HIERARCHY_MISMATCHES = System.getProperty("linux.native.menu.debug.trace.hierarchy.mismatches","false").equals("true");
-  private static final boolean SHOW_SWING_MENU            = System.getProperty("linux.native.menu.debug.show.frame.menu",         "false").equals("true");
+  private static final boolean TRACE_SYSOUT               = Boolean.getBoolean("linux.native.menu.debug.trace.sysout");
+  private static final boolean TRACE_ENABLED              = Boolean.getBoolean("linux.native.menu.debug.trace.enabled");
+  private static final boolean TRACE_SYNC_STATS           = Boolean.getBoolean("linux.native.menu.debug.trace.sync-stats");
+  private static final boolean TRACE_EVENTS               = Boolean.getBoolean("linux.native.menu.debug.trace.events");
+  private static final boolean TRACE_EVENT_FILTER         = Boolean.getBoolean("linux.native.menu.debug.trace.event-filter");
+  private static final boolean TRACE_CLEARING             = Boolean.getBoolean("linux.native.menu.debug.trace.clearing");
+  private static final boolean TRACE_HIERARCHY_MISMATCHES = Boolean.getBoolean("linux.native.menu.debug.trace.hierarchy.mismatches");
+  private static final boolean SHOW_SWING_MENU            = Boolean.getBoolean("linux.native.menu.debug.show.frame.menu");
+  private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -212,7 +213,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         ourInstances.remove(myXid);
     };
 
-    if (SystemInfo.isKDE) {
+    if (SystemInfo.isKDE && !KDE_DISABLE_ROOT_MNEMONIC_PROCESSING) {
       // root menu items doesn't catch mnemonic shortcuts (in KDE), so process them inside IDE
       IdeEventQueue.getInstance().addDispatcher(e -> {
         if (!(e instanceof KeyEvent))
@@ -779,7 +780,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         final int x11keycode = X11KeyCodes.jkeycode2X11code(jkeycode, 0);
         if (x11keycode != 0)
           ourLib.setItemShortcut(nativePeer, jmodifiers, x11keycode);
-        else if (!TRACE_DISABLED)
+        else if (TRACE_ENABLED)
           _trace("unknown x11 keycode for jcode=" + jkeycode);
       }
     }
@@ -1023,14 +1024,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
 
   private static void _trace(String fmt, Object... args) {
-    if (TRACE_DISABLED)
+    if (!TRACE_ENABLED)
       return;
     final String msg = String.format(fmt, args);
     _trace(msg);
   }
 
   private static void _trace(String msg) {
-    if (TRACE_DISABLED)
+    if (!TRACE_ENABLED)
       return;
     if (TRACE_SYSOUT)
       //noinspection UseOfSystemOutOrSystemErr
