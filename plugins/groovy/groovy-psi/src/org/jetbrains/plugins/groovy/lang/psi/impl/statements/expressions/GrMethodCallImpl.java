@@ -1,13 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -16,30 +15,48 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.LOG;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isImplicitCall;
 
 /**
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
 
+  private static final GroovyMethodCallReference NO_REFERENCE = ObjectUtils.sentinel("uninitialized", GroovyMethodCallReference.class);
+
+  private final AtomicReference<GroovyMethodCallReference> myImplicitCallReference = new AtomicReference<>(NO_REFERENCE);
+
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  private final NullableLazyValue<GroovyMethodCallReference> myImplicitCallReference = AtomicNullableLazyValue.createValue(
-    () -> PsiImplUtilKt.isImplicitCall(this) ? new GrImplicitCallReference(this) : null
-  );
-
   @Nullable
   @Override
   public GroovyMethodCallReference getImplicitCallReference() {
-    return myImplicitCallReference.getValue();
+    final GroovyMethodCallReference reference = myImplicitCallReference.get();
+    if (reference != NO_REFERENCE) {
+      return reference;
+    }
+    final GroovyMethodCallReference newReference = isImplicitCall(this) ? new GrImplicitCallReference(this) : null;
+    if (myImplicitCallReference.compareAndSet(NO_REFERENCE, newReference)) {
+      return newReference;
+    }
+    else {
+      return myImplicitCallReference.get();
+    }
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myImplicitCallReference.set(NO_REFERENCE);
   }
 
   @Override
@@ -70,7 +87,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final GroovyMethodCallReference implicitCallReference = myImplicitCallReference.getValue();
+    final GroovyMethodCallReference implicitCallReference = getImplicitCallReference();
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);
     }
