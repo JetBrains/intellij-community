@@ -97,7 +97,13 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     try {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        extension.beforeStart();
+
       SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
+
+      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        extension1.afterTraversal(options);
 
       final Map<String, Element> roots = newHashMap();
       for (SearchableConfigurable option : options.keySet()) {
@@ -148,6 +154,9 @@ public class TraverseUIStarter extends ApplicationStarterEx {
         FileUtil.ensureCanCreateFile(output);
         JDOMUtil.writeDocument(new Document(entry.getValue()), output, "\n");
       }
+
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+        extension.afterResultsAreSaved();
 
       System.out.println("Searchable options index builder completed");
     }
