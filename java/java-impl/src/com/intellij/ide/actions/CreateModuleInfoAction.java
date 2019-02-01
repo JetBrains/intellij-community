@@ -9,7 +9,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -42,20 +41,13 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public void update(@NotNull AnActionEvent e) {
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
-    if (view == null || e.getProject() == null) {
+    PsiDirectory target = view != null && e.getProject() != null ? getTargetDirectory(ctx, view) : null;
+    if (target == null || !PsiUtil.isLanguageLevel9OrHigher(target)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      PsiDirectory target = getTargetDirectory(ctx, view);
-      boolean isActionAvailable =
-        target != null && PsiUtil.isLanguageLevel9OrHigher(target) && JavaModuleGraphUtil.findDescriptorByElement(target) == null;
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
-        e.getPresentation().setVisible(isActionAvailable);
-      }
-      else {
-        e.getPresentation().setVisible(true);
-        e.getPresentation().setEnabled(isActionAvailable);
-      }
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(JavaModuleGraphUtil.findDescriptorByElement(target) == null);
     }
   }
 
