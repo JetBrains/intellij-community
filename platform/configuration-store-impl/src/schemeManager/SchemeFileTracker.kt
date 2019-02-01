@@ -9,12 +9,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.SmartList
 import com.intellij.util.io.systemIndependentPath
 import java.util.function.Function
 
@@ -22,9 +24,7 @@ internal interface SchemeChangeEvent {
   fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>)
 }
 
-internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project?) : BulkFileListener {
-  private val projectManager by lazy { (ProjectManager.getInstance() as StoreAwareProjectManager) }
-
+internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project) : BulkFileListener {
   private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
   private fun isMyDirectory(parent: VirtualFile): Boolean {
@@ -158,60 +158,71 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
   }
 
   override fun after(events: MutableList<out VFileEvent>) {
-    fun registerChange(schemeEvent: SchemeChangeEvent) {
-      if (project == null) {
-        // test mode
-        useSchemeLoader {
-          reload(listOf(schemeEvent), it)
-        }
-      }
-      else {
-        projectManager.registerChangedScheme(schemeEvent, this, project)
-      }
-    }
-
-    eventLoop@ for (event in events) {
+    val list = SmartList<SchemeChangeEvent>()
+    for (event in events) {
       if (event.requestor is SchemeManagerImpl<*, *>) {
         continue
       }
 
       when (event) {
         is VFileContentChangeEvent -> {
-          if (schemeManager.canRead(event.file.name) && isMyDirectory(event.file.parent)) {
-            registerChange(UpdateScheme(event.file))
+          val file = event.file
+          if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            list.add(UpdateScheme(file))
           }
         }
 
         is VFileCreateEvent -> {
-          if (schemeManager.canRead(event.childName)) {
-            if (isMyDirectory(event.parent)) {
-              event.file?.let {
-                registerChange(AddScheme(it))
-              }
-            }
+          if (event.isDirectory) {
+            handleDirectoryCreated(event, list)
           }
-          else if (event.file?.isDirectory == true) {
-            val dir = schemeManager.virtualDirectory
-            if (event.file == dir) {
-              for (file in dir!!.children) {
-                if (isMyFileWithoutParentCheck(file)) {
-                  registerChange(AddScheme(file))
-                }
-              }
+          else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
+            event.file?.let {
+              list.add(AddScheme(it))
             }
           }
         }
 
         is VFileDeleteEvent -> {
-          if (event.file.isDirectory) {
-            if (event.file == schemeManager.virtualDirectory) {
-              registerChange(RemoveAllSchemes())
-            }
+          val file = event.file
+          if (file.isDirectory) {
+            handleDirectoryDeleted(file, list)
           }
-          else if (isMyFileWithoutParentCheck(event.file) && isMyDirectory(event.file.parent)) {
-            registerChange(RemoveScheme(event.file.name))
+          else if (isMyFileWithoutParentCheck(file) && isMyDirectory(file.parent)) {
+            list.add(RemoveScheme(file.name))
           }
         }
+      }
+    }
+
+    if (list.isNotEmpty()) {
+      (ProjectManager.getInstance() as StoreAwareProjectManager).registerChangedSchemes(list, this, project)
+    }
+  }
+
+  private fun handleDirectoryDeleted(file: VirtualFile, list: SmartList<SchemeChangeEvent>) {
+    if (!StringUtil.equals(file.nameSequence, schemeManager.ioDirectory.fileName.toString())) {
+      return
+    }
+
+    if (file == schemeManager.virtualDirectory) {
+      list.add(RemoveAllSchemes())
+    }
+  }
+
+  private fun handleDirectoryCreated(event: VFileCreateEvent, list: MutableList<SchemeChangeEvent>) {
+    if (event.childName != schemeManager.ioDirectory.fileName.toString()) {
+      return
+    }
+
+    val dir = schemeManager.virtualDirectory
+    if (event.file != dir) {
+      return
+    }
+
+    for (file in dir!!.children) {
+      if (isMyFileWithoutParentCheck(file)) {
+        list.add(AddScheme(file))
       }
     }
   }

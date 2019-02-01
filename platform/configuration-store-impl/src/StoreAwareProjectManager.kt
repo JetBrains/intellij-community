@@ -7,7 +7,6 @@ import com.intellij.configurationStore.schemeManager.useSchemeLoader
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.async.coroutineDispatchingContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -163,15 +162,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
 
     blockStackTrace.set(null)
-    if (changedFilesAlarm.isEmpty) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        // todo fix test to handle invokeLater
-        changedFilesAlarm.request(true)
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL)
-      }
-    }
+    changedFilesAlarm.request()
   }
 
   override fun flushChangedProjectFileAlarm() {
@@ -230,9 +221,9 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }
 
-  internal fun registerChangedScheme(event: SchemeChangeEvent, schemeFileTracker: SchemeFileTracker, project: Project) {
+  internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeFileTracker, project: Project) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] Registering scheme to reload: $event", Exception())
+      LOG.debug("[RELOAD] Registering scheme to reload: $events", Exception())
     }
 
     var changes = CHANGED_SCHEMES_KEY.get(project)
@@ -242,7 +233,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
 
     synchronized(changes) {
-      changes.putValue(schemeFileTracker, event)
+      changes.putValues(schemeFileTracker, events)
     }
 
     if (isReloadUnblocked()) {

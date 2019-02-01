@@ -363,12 +363,13 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
   }
 
-  @Test fun `VFS - rename A to B and B to A`() {
+  @Test
+  fun `VFS - rename A to B and B to A`() {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
       @Suppress("UNCHECKED_CAST")
       ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(
-        schemeManager as SchemeManagerImpl<Any, Any>, null))
+        schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project))
     })
 
     val a = TestScheme("a", "a")
