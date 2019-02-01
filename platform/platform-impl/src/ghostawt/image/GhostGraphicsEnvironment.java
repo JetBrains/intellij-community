@@ -21,19 +21,21 @@ public class GhostGraphicsEnvironment extends GraphicsEnvironment {
         return screenDevice;
     }
 
-    private GGraphics2D graphics2d;
+    //private GGraphics2D graphics2d;
 
     @Override
     public Graphics2D createGraphics(BufferedImage img) {
+        return new GGraphics2D(getDefaultScreenDevice().getConfigurations()[0]);
+
         // GraphicsConfiguration configuration =getDefaultScreenDevice().getConfigurations()[0];
         //  ((GGraphicsConfiguration)configuration).buffer = img;
         //  return new SunGraphics2D(BufImgSurfaceData.createData(img), Color.white, Color.white,  Font.getFont("Times"));
 
-        if (graphics2d == null) {
-            graphics2d = new GGraphics2D(getDefaultScreenDevice().getConfigurations()[0]);
-        }
-
-        return graphics2d;
+        //if (graphics2d == null) {
+        //    graphics2d = new GGraphics2D(getDefaultScreenDevice().getConfigurations()[0]);
+        //}
+        //
+        //return graphics2d;
     }
 
     @Override

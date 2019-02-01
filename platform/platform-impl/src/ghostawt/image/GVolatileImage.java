@@ -37,11 +37,11 @@ public class GVolatileImage extends VolatileImage {
 
     @Override
     public Graphics2D createGraphics() {
-        GraphicsEnvironment env =
-                GraphicsEnvironment.getLocalGraphicsEnvironment();
-        return env.createGraphics(null);
+        //GraphicsEnvironment env =
+        //        GraphicsEnvironment.getLocalGraphicsEnvironment();
+        //return env.createGraphics(null);
 
-     //   return new GGraphics2D(_graphicsConfiguration);
+        return new GGraphics2D(_graphicsConfiguration);
     }
 
     @Override

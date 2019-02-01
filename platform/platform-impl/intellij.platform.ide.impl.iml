@@ -57,5 +57,6 @@
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="javax.activation-api" level="project" />
     <orderEntry type="library" exported="" name="lib" level="project" />
+    <orderEntry type="library" name="batik" level="project" />
   </component>
 </module>

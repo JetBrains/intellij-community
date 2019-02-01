@@ -55,5 +55,4 @@ public class GGraphicsConfiguration extends GraphicsConfiguration {
        //return new BufferedImage(width, height,BufferedImage.TYPE_INT_ARGB);
 
     }
-
 }
