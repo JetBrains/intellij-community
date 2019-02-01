@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -32,20 +35,24 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
 
-    if (BinTrayUtil.getJdkConfigFilePath().exists()) {
-      try {
-        val file = File(BinTrayUtil.getJdkConfigFilePath().readLines()[0])
-        if (file.exists()) {
-          val runtime = Local(project, file)
-          installed = runtime
-          bundles.add(installed)
+    ProgressManager.getInstance().run(object : Task.Modal(e.project, "Loading Runtime List...", false) {
+      override fun run(progressIndicator: ProgressIndicator) {
+        if (BinTrayUtil.getJdkConfigFilePath().exists()) {
+          try {
+            val file = File(BinTrayUtil.getJdkConfigFilePath().readLines()[0])
+            if (file.exists()) {
+              val runtime = Local(project, file)
+              installed = runtime
+              bundles.add(installed)
+            }
+          } catch (exc : Exception) {
+            // todo ask for file ramovale if it is broken
+          }
         }
-      } catch (exc : Exception) {
-        // todo ask for file ramovale if it is broken
+        bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
+        bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
       }
-    }
-    bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
-    bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
+    })
 
     // todo change to dsl
     val southPanel = ActionPanel()
