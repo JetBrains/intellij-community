@@ -2,8 +2,6 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.icons.AllIcons;
-import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -17,8 +15,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -138,7 +138,8 @@ public class EditorConfigStatusUIContributor extends IndentStatusBarUIContributo
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      EditorConfigSettings settings = CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class);
+      final CodeStyleSettings rootSettings = CodeStyle.getSettings(myProject);
+      EditorConfigSettings settings = rootSettings.getCustomSettings(EditorConfigSettings.class);
       settings.ENABLED = true;
       notifyCodeStyleChanged(myProject);
       myNotification.expire();
