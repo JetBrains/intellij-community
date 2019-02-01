@@ -7,6 +7,7 @@ import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 public abstract class AbstractExtensionPointBean implements PluginAware {
@@ -31,11 +32,12 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
 
   @NotNull
   public final <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
-    return (Class<T>)Class.forName(className, true, getLoaderForClass());
+    @SuppressWarnings("unchecked") Class<T> aClass = (Class<T>)Class.forName(className, true, getLoaderForClass());
+    return aClass;
   }
 
   @Nullable
-  public final <T> Class<T> findClassNoExceptions(final String className) {
+  public final <T> Class<T> findClassNoExceptions(String className) {
     try {
       return findClass(className);
     }
@@ -56,28 +58,25 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
   }
 
   @NotNull
-  public static <T> T instantiate(@NotNull final Class<T> aClass, @NotNull final PicoContainer container) {
+  public static <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container) {
     return instantiate(aClass, container, true);
   }
 
   @NotNull
-  public static <T> T instantiate(@NotNull final Class<T> aClass,
-                                  @NotNull final PicoContainer container,
-                                  final boolean allowNonPublicClasses) {
-    //noinspection unchecked
-    return (T)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses).getComponentInstance(container);
+  public static <T> T instantiate(@NotNull Class<T> aClass, @NotNull PicoContainer container, boolean allowNonPublicClasses) {
+    ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses);
+    @SuppressWarnings("unchecked") T t = (T)adapter.getComponentInstance(container);
+    return t;
   }
 
   @NotNull
-  protected <T> T instantiateWithPicoContainerOnlyIfNeeded(@Nullable String implementationClass, @NotNull PicoContainer picoContainer)
-    throws ClassNotFoundException {
+  protected <T> T instantiateWithPicoContainerOnlyIfNeeded(@Nullable String implementationClass,
+                                                           @NotNull PicoContainer picoContainer) throws ClassNotFoundException {
     if (implementationClass == null) {
       throw new RuntimeException("implementation class is not specified, " +
-                                 "plugin id: " +
-                                 (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
+                                 "plugin id: " + (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
                                  "Check if 'implementationClass' attribute is specified");
     }
-
 
     Class<T> clazz = findClass(implementationClass);
     try {
