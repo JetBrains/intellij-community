@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
@@ -25,7 +25,13 @@ internal interface SchemeChangeEvent {
 internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project?) : BulkFileListener {
   private fun isMy(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
-  private fun isMyDirectory(parent: VirtualFile) = schemeManager.cachedVirtualDirectory.let { if (it == null) schemeManager.ioDirectory.systemIndependentPath == parent.path else it == parent }
+  private fun isMyDirectory(parent: VirtualFile): Boolean {
+    val virtualDirectory = schemeManager.cachedVirtualDirectory
+    return when (virtualDirectory) {
+      null -> schemeManager.ioDirectory.systemIndependentPath == parent.path
+      else -> virtualDirectory == parent
+    }
+  }
 
   @Suppress("UNCHECKED_CAST")
   private fun findExternalizableSchemeByFileName(fileName: String) = schemeManager.schemes.firstOrNull { fileName == "${schemeManager.getFileName(it)}${schemeManager.schemeExtension}" }
