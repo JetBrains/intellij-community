@@ -570,6 +570,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @Nullable
     private Icon getIcon() {
+      if (!myAllowExcludeChangesFromCommit) return null;
+
       PartialLocalLineStatusTracker tracker = getPartialTracker();
       if (tracker == null || !tracker.isValid()) return null;
 
