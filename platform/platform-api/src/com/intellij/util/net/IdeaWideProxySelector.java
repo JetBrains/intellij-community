@@ -64,7 +64,7 @@ public class IdeaWideProxySelector extends ProxySelector {
         return selectUsingPac(uri);
       }
       catch (Throwable e) {
-        LOG.error("Cannot select proxy for \"" + uri + "\" using PAC script", e);
+        throw new RuntimeException("Cannot select proxy for \"" + uri + "\" using PAC script", e);
       }
     }
 
