@@ -25,9 +25,7 @@ internal fun readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<An
   }
 
   catchAndLog(fileName) {
-    return file.inputStream.use {
-      schemeLoader.loadScheme(fileName, it)
-    }
+    schemeLoader.loadScheme(fileName, null, file.contentsToByteArray())
   }
 
   return null
@@ -72,6 +70,7 @@ internal class SchemeChangeApplicator(private val schemeManager: SchemeManagerIm
       }
 
       val newScheme = readSchemeFromFile(file, lazySchemaLoader.value, schemeManager)
+
       fun isNewActiveScheme(): Boolean {
         if (newActiveScheme != null) {
           return false
