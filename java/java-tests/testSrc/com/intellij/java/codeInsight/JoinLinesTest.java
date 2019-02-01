@@ -56,6 +56,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testIfChainPolyadic() { doTest(); }
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
+  public void testIfChainSelection() { doTest(); }
 
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
