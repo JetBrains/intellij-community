@@ -25,7 +25,7 @@ internal interface SchemeChangeEvent {
 internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<Any, Any>, private val project: Project?) : BulkFileListener {
   private val projectManager by lazy { (ProjectManager.getInstance() as StoreAwareProjectManager) }
 
-  private fun isMy(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
+  private fun isMyFileWithoutParentCheck(file: VirtualFile) = schemeManager.canRead(file.nameSequence)
 
   private fun isMyDirectory(parent: VirtualFile): Boolean {
     val virtualDirectory = schemeManager.cachedVirtualDirectory
@@ -58,6 +58,16 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     override fun execute(schemeTracker: SchemeFileTracker, schemaLoader: Lazy<SchemeLoader<Any, Any>>) {
       if (file.isValid) {
         schemeTracker.schemeCreatedExternally(file, schemaLoader.value)
+      }
+    }
+
+    private fun SchemeFileTracker.schemeCreatedExternally(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>) {
+      val readScheme = readSchemeFromFile(file, schemeLoader) ?: return
+      val readSchemeKey = schemeManager.processor.getSchemeKey(readScheme)
+      val existingScheme = schemeManager.findSchemeByName(readSchemeKey) ?: return
+      if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
+        LOG.warn("Ignore incorrect VFS create scheme event: schema ${readSchemeKey} is already exists")
+        return
       }
     }
   }
@@ -184,7 +194,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
             val dir = schemeManager.virtualDirectory
             if (event.file == dir) {
               for (file in dir!!.children) {
-                if (isMy(file)) {
+                if (isMyFileWithoutParentCheck(file)) {
                   registerChange(AddScheme(file))
                 }
               }
@@ -198,7 +208,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
               registerChange(RemoveAllSchemes())
             }
           }
-          else if (isMy(event.file) && isMyDirectory(event.file.parent)) {
+          else if (isMyFileWithoutParentCheck(event.file) && isMyDirectory(event.file.parent)) {
             registerChange(RemoveScheme(event.file.name))
           }
         }
@@ -229,15 +239,5 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
       return true
     }
     return false
-  }
-
-  private fun schemeCreatedExternally(file: VirtualFile, schemeLoader: SchemeLoader<Any, Any>) {
-    val readScheme = readSchemeFromFile(file, schemeLoader) ?: return
-    val readSchemeKey = schemeManager.processor.getSchemeKey(readScheme)
-    val existingScheme = schemeManager.findSchemeByName(readSchemeKey) ?: return
-    if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(schemeManager.processor.getSchemeKey(existingScheme)) !== existingScheme) {
-      LOG.warn("Ignore incorrect VFS create scheme event: schema ${readSchemeKey} is already exists")
-      return
-    }
   }
 }
