@@ -15,6 +15,7 @@ internal inline fun processConfigurationTypes(processor: (configurationType: Con
     val factories = type.configurationFactories
     if (factories.isEmpty()) {
       LOG.error("Configuration type \"${type.displayName}\" is not valid: factory list is empty")
+      continue
     }
 
     processor(type, propertyName, factories)
@@ -71,7 +72,7 @@ internal class RunConfigurationJsonSchemaGenerator {
       }
       else {
         val description = type.configurationTypeDescription
-        describeFactory(factories.first(), typeDefinitionId, if (StringUtil.equals(typePropertyName, description)) null else description)
+        describeFactory(factories.first(), typeDefinitionId, if (typePropertyName == description) null else description)
       }
     }
 
