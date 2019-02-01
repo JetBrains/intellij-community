@@ -196,22 +196,6 @@ public class GitMergeProvider implements MergeProvider2 {
     return revisionNumber.getShortRev();
   }
 
-  /**
-   * @return number for "yours" revision  (taking {@code reverse} flag in account)
-   * @param root
-   */
-  private int yoursRevision(@NotNull VirtualFile root) {
-    return myReverseRoots.contains(root) ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
-  }
-
-  /**
-   * @return number for "theirs" revision (taking {@code reverse} flag in account)
-   * @param root
-   */
-  private int theirsRevision(@NotNull VirtualFile root) {
-    return myReverseRoots.contains(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
-  }
-
   @Override
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     try {
@@ -321,10 +305,10 @@ public class GitMergeProvider implements MergeProvider2 {
               c.myRoot = root;
               cs.put(file, c);
             }
-            if (source == theirsRevision(root)) {
+            if (source == THEIRS_REVISION_NUM) {
               c.myStatusTheirs = Conflict.Status.MODIFIED;
             }
-            else if (source == yoursRevision(root)) {
+            else if (source == YOURS_REVISION_NUM) {
               c.myStatusYours = Conflict.Status.MODIFIED;
             }
             else if (source != ORIGINAL_REVISION_NUM) {
@@ -385,13 +369,15 @@ public class GitMergeProvider implements MergeProvider2 {
         List<VirtualFile> toDelete = new ArrayList<>();
 
         for (Conflict c: conflicts) {
+          boolean isReversed = myReverseRoots.contains(c.myRoot);
+
           Conflict.Status status;
           switch (resolution) {
             case AcceptedTheirs:
-              status = c.myStatusTheirs;
+              status = !isReversed ? c.myStatusTheirs : c.myStatusYours;
               break;
             case AcceptedYours:
-              status = c.myStatusYours;
+              status = isReversed ? c.myStatusTheirs : c.myStatusYours;
               break;
             case Merged:
               status = Conflict.Status.MODIFIED;
@@ -423,19 +409,19 @@ public class GitMergeProvider implements MergeProvider2 {
       assert resolution == Resolution.AcceptedYours || resolution == Resolution.AcceptedTheirs;
 
       MultiMap<VirtualFile, Conflict> byRoot = groupConflictsByRoot(files);
-      boolean isCurrent = resolution == Resolution.AcceptedYours;
 
       for (VirtualFile root : byRoot.keySet()) {
         Collection<Conflict> conflicts = byRoot.get(root);
+        boolean isReversed = myReverseRoots.contains(root);
+        boolean acceptYours = !isReversed ? resolution == Resolution.AcceptedYours
+                                          : resolution == Resolution.AcceptedTheirs;
 
         List<VirtualFile> filesToCheckout = ContainerUtil.mapNotNull(conflicts, c -> {
-          Conflict.Status status = isCurrent ? c.myStatusYours : c.myStatusTheirs;
+          Conflict.Status status = acceptYours ? c.myStatusYours : c.myStatusTheirs;
           return status == Conflict.Status.MODIFIED ? c.myFile : null;
         });
 
-        String parameter = myReverseRoots.contains(root)
-                           ? isCurrent ? "--theirs" : "--ours"
-                           : isCurrent ? "--ours" : "--theirs";
+        String parameter = acceptYours ? "--ours" : "--theirs";
 
         for (List<String> paths : VcsFileUtil.chunkFiles(root, filesToCheckout)) {
           GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
@@ -467,14 +453,11 @@ public class GitMergeProvider implements MergeProvider2 {
      * The column shows either "yours" or "theirs" status
      */
     class StatusColumn extends ColumnInfo<VirtualFile, String> {
-      /**
-       * if false, "yours" status is displayed, otherwise "theirs"
-       */
-      private final boolean myIsTheirs;
+      private final boolean myIsLast;
 
-      StatusColumn(boolean isTheirs, @Nullable String branchName) {
-        super(calcColumnName(isTheirs, branchName));
-        myIsTheirs = isTheirs;
+      StatusColumn(boolean isLast, @Nullable String branchName) {
+        super(calcColumnName(isLast, branchName));
+        myIsLast = isLast;
       }
 
       @Override
@@ -484,14 +467,17 @@ public class GitMergeProvider implements MergeProvider2 {
           LOG.error("No conflict for the file " + file);
           return "";
         }
-        Conflict.Status s = myIsTheirs ? c.myStatusTheirs : c.myStatusYours;
-        switch (s) {
+        boolean isReversed = myReverseRoots.contains(c.myRoot);
+        Conflict.Status currentStatus = !isReversed ? c.myStatusYours : c.myStatusTheirs;
+        Conflict.Status lastStatus = isReversed ? c.myStatusYours : c.myStatusTheirs;
+        Conflict.Status status = myIsLast ? lastStatus : currentStatus;
+        switch (status) {
           case MODIFIED:
             return GitBundle.message("merge.tool.column.status.modified");
           case DELETED:
             return GitBundle.message("merge.tool.column.status.deleted");
           default:
-            throw new IllegalStateException("Unknown status " + s + " for file " + file.getPath());
+            throw new IllegalStateException("Unknown status " + status + " for file " + file.getPath());
         }
       }
 
