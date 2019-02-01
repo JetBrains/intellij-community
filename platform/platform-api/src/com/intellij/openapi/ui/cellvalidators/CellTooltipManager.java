@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,20 +42,24 @@ public final class CellTooltipManager {
   private boolean               isOverPopup;
   private boolean               isClosing;
 
+  @ApiStatus.Experimental
   public CellTooltipManager(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
   }
 
+  @ApiStatus.Experimental
   public CellTooltipManager withCellComponentProvider(@NotNull CellComponentProvider cellComponentProvider) {
     this.cellComponentProvider = cellComponentProvider;
     return this;
   }
 
+  @ApiStatus.Experimental
   public CellTooltipManager withHyperlinkListener(@NotNull HyperlinkListener hyperlinkListener) {
     this.hyperlinkListener = hyperlinkListener;
     return this;
   }
 
+  @ApiStatus.Experimental
   public void installOn(@NotNull JComponent component) {
     MouseAdapter mouseListener = new ValidationMouseListener();
 

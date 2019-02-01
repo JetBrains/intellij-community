@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
   private Supplier<? extends Dimension> editorSizeSupplier = () -> JBUI.emptySize();
   private TableCellValidator cellValidator;
 
+  @ApiStatus.Experimental
   public ValidatingTableCellRendererWrapper(TableCellRenderer delegate) {
     this.delegate = delegate;
     setLayout(new BorderLayout(0, 0));
@@ -30,11 +32,13 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     setName("Table.cellRenderer");
   }
 
+  @ApiStatus.Experimental
   public ValidatingTableCellRendererWrapper bindToEditorSize(@NotNull Supplier<? extends Dimension> editorSizeSupplier) {
     this.editorSizeSupplier = editorSizeSupplier;
     return this;
   }
 
+  @ApiStatus.Experimental
   public ValidatingTableCellRendererWrapper withCellValidator(@NotNull TableCellValidator cellValidator) {
     this.cellValidator = cellValidator;
     return this;

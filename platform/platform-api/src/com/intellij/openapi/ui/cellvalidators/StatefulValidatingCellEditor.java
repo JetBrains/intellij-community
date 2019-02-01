@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,6 +53,7 @@ public class StatefulValidatingCellEditor extends DefaultCellEditor implements S
     Disposer.register(disposable, () -> comboBox.removeItemListener(il));
   }
 
+  @ApiStatus.Experimental
   public StatefulValidatingCellEditor withStateUpdater(@NotNull Consumer<ValidationInfo> stateUpdater) {
     this.stateUpdater = stateUpdater;
     return this;

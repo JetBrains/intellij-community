@@ -2,7 +2,9 @@
 package com.intellij.openapi.ui.cellvalidators;
 
 import com.intellij.openapi.ui.ValidationInfo;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Experimental
 public interface TableCellValidator {
   ValidationInfo validate(Object value, int row, int column);
 }
