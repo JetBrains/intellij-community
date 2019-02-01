@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -57,7 +58,7 @@ public class FSRecords {
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
+  private static final int VERSION = 22 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useCompressionUtil ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
@@ -96,6 +97,7 @@ public class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
@@ -975,6 +977,23 @@ public class FSRecords {
             prevId = childId;
           }
         }
+      }
+    });
+  }
+
+  static @Nullable String readSymlinkTarget(int id) {
+    return readAndHandleErrors(() -> {
+      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
+        return stream != null ? StringUtil.nullize(stream.readUTF()) : null;
+      }
+    });
+  }
+
+  static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
+    writeAndHandleErrors(() -> {
+      DbConnection.markDirty();
+      try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
+        stream.writeUTF(StringUtil.notNullize(symlinkTarget));
       }
     });
   }
