@@ -2,10 +2,7 @@
 package com.jetbrains.python.configuration
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -29,6 +26,22 @@ import java.util.function.Consumer
 
 class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
+}
+
+class PySwitchSdkAction : AnAction("Switch Python Interpreter", null, null) {
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
+    val project = e.project ?: return
+    val module = ModuleUtil.findModuleForFile(file, project) ?: return
+
+    val dataContext = e.dataContext
+    PySdkPopupFactory(project, module).createPopup(dataContext)?.showInBestPositionFor(dataContext)
+  }
 }
 
 private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project) {
@@ -57,7 +70,20 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       )
   }
 
-  override fun createPopup(context: DataContext): ListPopup? {
+  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project!!, it).createPopup(context) }
+
+  override fun ID(): String = "PythonInterpreter"
+
+  override fun requiresWritableFile(): Boolean = false
+
+  override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
+
+  private fun shortenNameInBar(sdk: Sdk) = name(sdk).trimMiddle(50)
+}
+
+private class PySdkPopupFactory(val project: Project, val module: Module) {
+
+  fun createPopup(context: DataContext): ListPopup? {
     val group = DefaultActionGroup()
 
     val moduleSdksByTypes = groupModuleSdksByTypes(PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks(project), module) {
@@ -92,22 +118,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
     )
   }
 
-  override fun ID(): String = "PythonInterpreter"
-
-  override fun requiresWritableFile(): Boolean = false
-
-  override fun createInstance(project: Project): StatusBarWidget = PySdkStatusBar(project)
-
-  private fun shortenNameAndPath(sdk: Sdk) = "${name(sdk)} [${path(sdk)}]".trimMiddle(150)
-
-  private fun shortenNameInBar(sdk: Sdk) = name(sdk).trimMiddle(50)
-
   private fun shortenNameInPopup(sdk: Sdk) = name(sdk).trimMiddle(100)
-
-  private fun name(sdk: Sdk): String {
-    val (_, primary, secondary) = com.jetbrains.python.sdk.name(sdk)
-    return if (secondary == null) primary else "$primary [$secondary]"
-  }
 
   private inner class SwitchToSdkAction(val sdk: Sdk) : AnAction() {
 
@@ -119,13 +130,13 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      project!!.pythonSdk = sdk
-      module?.pythonSdk = sdk
+      project.pythonSdk = sdk
+      module.pythonSdk = sdk
     }
   }
 
   private inner class InterpreterSettingsAction : AnAction("Interpreter Settings...") {
-    override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.ConfigureInterpreterFix.showProjectInterpreterDialog(project!!)
+    override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.ConfigureInterpreterFix.showProjectInterpreterDialog(project)
   }
 
   private inner class AddInterpreterAction : AnAction("Add Interpreter...") {
@@ -146,4 +157,11 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       )
     }
   }
+}
+
+private fun shortenNameAndPath(sdk: Sdk) = "${name(sdk)} [${path(sdk)}]".trimMiddle(150)
+
+private fun name(sdk: Sdk): String {
+  val (_, primary, secondary) = com.jetbrains.python.sdk.name(sdk)
+  return if (secondary == null) primary else "$primary [$secondary]"
 }
