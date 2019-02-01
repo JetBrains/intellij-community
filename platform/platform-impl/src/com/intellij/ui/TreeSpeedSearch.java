@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -158,7 +157,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
         TreePath currentElement = (TreePath)mySearch.findElement(query);
         TreePath anchor = ObjectUtils.chooseNotNull(currentElement, filtered.get(0));
 
-        sm.setSelectionPaths(ArrayUtil.toObjectArray(filtered, TreePath.class));
+        sm.setSelectionPaths(filtered.toArray(new TreePath[0]));
         myTree.setAnchorSelectionPath(anchor);
       }
     }

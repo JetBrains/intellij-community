@@ -45,7 +45,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable1;
@@ -69,7 +68,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myPrevNextConflictIterable = new MyPrevNextConflictIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(toObjectArray(getEditors(), EditorEx.class), this);
+    myFoldingModel = new MyFoldingModel(getEditors().toArray(new EditorEx[0]), this);
 
     for (ThreeSide side : ThreeSide.values()) {
       DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());

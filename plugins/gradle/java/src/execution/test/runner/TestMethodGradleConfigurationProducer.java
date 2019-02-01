@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.ArrayUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +111,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, ArrayUtil.toObjectArray(classes, PsiClass.class));
+        chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, classes.toArray(PsiClass.EMPTY_ARRAY));
       }
 
       @Override

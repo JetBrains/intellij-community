@@ -159,7 +159,7 @@ public class FilenameIndex {
     processFilesByName(name, directories, processor, scope, project, null);
 
     if (directories) {
-      return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
+      return result.toArray(new PsiFileSystemItem[0]);
     }
     //noinspection SuspiciousToArrayCall
     return result.toArray(PsiFile.EMPTY_ARRAY);

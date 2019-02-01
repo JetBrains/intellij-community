@@ -288,7 +288,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             }
           }
         }
-        myKids = ArrayUtil.toObjectArray(list, Configurable.class);
+        myKids = list.toArray(new Configurable[0]);
         isInitialized = true;
         ConfigurableCardPanel.warn(this, "children", time);
       }

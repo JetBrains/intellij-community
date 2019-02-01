@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -414,7 +413,7 @@ public class NewMappings {
   }
 
   private void sortedMappingsByMap() {
-    mySortedMappings = ArrayUtil.toObjectArray(myVcsToPaths.values(), VcsDirectoryMapping.class);
+    mySortedMappings = myVcsToPaths.values().toArray(VcsDirectoryMapping.EMPTY_ARRAY);
     Arrays.sort(mySortedMappings, MAPPINGS_COMPARATOR);
   }
 

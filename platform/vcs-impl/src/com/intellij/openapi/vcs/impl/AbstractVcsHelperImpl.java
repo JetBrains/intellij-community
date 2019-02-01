@@ -61,7 +61,6 @@ import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
@@ -72,7 +71,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
@@ -152,11 +150,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final String cancelActionName = CommonBundle.getCancelButtonText();
 
     if (files.size() == 1 && singleFileTitle != null && singleFilePromptTemplate != null) {
-      String filePrompt = MessageFormat.format(singleFilePromptTemplate,
-                                               FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
-      if (ConfirmationDialog
-        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon(),
-                                okActionName, cancelActionName)) {
+      String filePrompt = format(singleFilePromptTemplate, FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
+      if (requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, getQuestionIcon(),
+                                 okActionName, cancelActionName)) {
         return new ArrayList<>(files);
       }
       return null;
@@ -509,7 +505,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                            @NotNull MergeProvider provider,
                                            @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
-    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(files, VirtualFile.class));
+    VfsUtil.markDirtyAndRefresh(false, false, false, files.toArray(VirtualFile.EMPTY_ARRAY));
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     AppIcon.getInstance().requestAttention(myProject, true);
     fileMergeDialog.show();

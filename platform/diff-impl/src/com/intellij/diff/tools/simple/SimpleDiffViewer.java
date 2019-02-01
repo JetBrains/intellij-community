@@ -53,7 +53,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
@@ -840,7 +839,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
-      super(toObjectArray(editors, EditorEx.class), disposable);
+      super(editors.toArray(new EditorEx[0]), disposable);
     }
 
     public void install(@NotNull List<SimpleDiffChange> changes,

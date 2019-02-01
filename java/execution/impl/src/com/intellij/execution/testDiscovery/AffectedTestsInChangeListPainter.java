@@ -14,7 +14,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PowerStatus;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
@@ -102,7 +101,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     renderer.append("show affected tests", new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
-      Change[] changes = ArrayUtil.toObjectArray(changeList.getChanges(), Change.class);
+      Change[] changes = changeList.getChanges().toArray(new Change[0]);
       ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);
     });
   }
@@ -123,7 +122,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Pr
         .map(list -> {
           Collection<Change> changes = list.getChanges();
 
-          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, ArrayUtil.toObjectArray(changes, Change.class));
+          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, changes.toArray(new Change[0]));
           List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
           if (methods.length == 0 && paths.isEmpty()) return null;
 

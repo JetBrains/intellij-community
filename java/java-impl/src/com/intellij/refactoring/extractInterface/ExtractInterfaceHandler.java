@@ -39,7 +39,6 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +98,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       myInterfaceName = dialog.getExtractedSuperName();
-      mySelectedMembers = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
+      mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
       myTargetDir = dialog.getTargetDirectory();
       myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
       try {

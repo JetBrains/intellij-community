@@ -59,7 +59,6 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter.moveToFailedList;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -503,7 +502,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void setOptions(@NotNull List<? extends Action> actions) {
-      myOptions = toObjectArray(actions, Action.class);
+      myOptions = actions.toArray(new Action[0]);
     }
   }
 
@@ -529,7 +528,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       result.add(getHelpAction());
     }
 
-    return toObjectArray(result, Action.class);
+    return result.toArray(new Action[0]);
   }
 
   private void executeDefaultCommitSession(@Nullable CommitExecutor executor) {
@@ -630,7 +629,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       if (result.isNull()) {
         CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
         if (checkinEnvironment != null) {
-          FilePath[] paths = toObjectArray(ChangesUtil.getPaths(changes), FilePath.class);
+          FilePath[] paths = ChangesUtil.getPaths(changes).toArray(new FilePath[0]);
           result.set(checkinEnvironment.getDefaultMessageFor(paths));
         }
       }

@@ -19,7 +19,6 @@ import com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -115,7 +114,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JBLabel descriptionLabel = new JBLabel(makeDescription(myInitialRepository));
 
-    JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
+    JComboBox<GitRepository> repositorySelector = new JComboBox<>(myRepositories.toArray(new GitRepository[0]));
     repositorySelector.setRenderer(new RepositoryComboboxListCellRenderer());
     repositorySelector.setSelectedItem(myInitialRepository);
     repositorySelector.addActionListener(new ActionListener() {

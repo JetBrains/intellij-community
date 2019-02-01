@@ -27,7 +27,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +120,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
   @Override
   public void dispose() {
-    for (AdditionalTabComponent component : ArrayUtil.toObjectArray(myAdditionalContent.keySet(), AdditionalTabComponent.class)) {
+    for (AdditionalTabComponent component : myAdditionalContent.keySet().toArray(new AdditionalTabComponent[0])) {
       removeAdditionalTabComponent(component);
     }
   }

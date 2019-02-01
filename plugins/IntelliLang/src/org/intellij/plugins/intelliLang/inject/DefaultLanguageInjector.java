@@ -20,7 +20,6 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.util.ArrayUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
 
   public DefaultLanguageInjector(Configuration configuration) {
     myInjectionConfiguration = configuration;
-    mySupports = ArrayUtil.toObjectArray(InjectorUtils.getActiveInjectionSupports(), LanguageInjectionSupport.class);
+    mySupports = InjectorUtils.getActiveInjectionSupports().toArray(new LanguageInjectionSupport[0]);
   }
 
   @Override

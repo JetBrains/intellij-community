@@ -25,7 +25,6 @@ import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,10 +61,8 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
     TextDiffTypeFactory.TextDiffTypeImpl[] diffTypes = TextDiffTypeFactory.getInstance().getAllDiffTypes();
-    List<AttributesDescriptor> attributes = ContainerUtil.map(diffTypes, type -> {
-      return new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey());
-    });
-    return ArrayUtil.toObjectArray(attributes, AttributesDescriptor.class);
+    return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type -> 
+      new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey()));
   }
 
   @NotNull
@@ -75,7 +72,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.background"), DiffLineSeparatorRenderer.BACKGROUND, ColorDescriptor.Kind.BACKGROUND));
 
-    return ArrayUtil.toObjectArray(descriptors, ColorDescriptor.class);
+    return descriptors.toArray(ColorDescriptor.EMPTY_ARRAY);
   }
 
   @Override

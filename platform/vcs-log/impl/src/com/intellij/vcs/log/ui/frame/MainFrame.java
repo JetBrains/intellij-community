@@ -18,7 +18,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -240,7 +239,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      return ArrayUtil.toObjectArray(myChangesBrowser.getDirectChanges(), Change.class);
+      return myChangesBrowser.getDirectChanges().toArray(new Change[0]);
     }
     else if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<VcsFullCommitDetails> details = myLog.getSelectedDetails();
