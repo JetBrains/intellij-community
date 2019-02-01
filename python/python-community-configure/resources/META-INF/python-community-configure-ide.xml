@@ -22,4 +22,8 @@
     <!-- Status Bar -->
     <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
   </extensions>
+
+  <actions>
+    <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
+  </actions>
 </idea-plugin>
