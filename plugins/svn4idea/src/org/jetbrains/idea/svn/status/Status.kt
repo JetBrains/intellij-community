@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
 import com.intellij.openapi.util.Getter
@@ -91,13 +91,9 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
         STATUS_DELETED == itemStatus -> FileStatus.DELETED
         STATUS_REPLACED == itemStatus -> SvnFileStatus.REPLACED
         STATUS_CONFLICTED == itemStatus || STATUS_CONFLICTED == propertyStatus -> {
-          if (STATUS_CONFLICTED == itemStatus && STATUS_CONFLICTED == propertyStatus) {
-            FileStatus.MERGED_WITH_BOTH_CONFLICTS
-          }
-          else if (STATUS_CONFLICTED == itemStatus) {
-            FileStatus.MERGED_WITH_CONFLICTS
-          }
-          FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
+          if (STATUS_CONFLICTED == itemStatus && STATUS_CONFLICTED == propertyStatus) FileStatus.MERGED_WITH_BOTH_CONFLICTS
+          else if (STATUS_CONFLICTED == itemStatus) FileStatus.MERGED_WITH_CONFLICTS
+          else FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
         }
         STATUS_MODIFIED == itemStatus || STATUS_MODIFIED == propertyStatus -> FileStatus.MODIFIED
         isSwitched -> FileStatus.SWITCHED
