@@ -403,6 +403,11 @@ public class ReflectionUtil {
    */
   @NotNull
   public static <T> T newInstance(@NotNull Class<T> aClass) {
+    return newInstance(aClass, true);
+  }
+
+  @NotNull
+  public static <T> T newInstance(@NotNull Class<T> aClass, boolean isKotlinDataClassesSupported) {
     try {
       Constructor<T> constructor = aClass.getDeclaredConstructor();
       try {
@@ -417,9 +422,12 @@ public class ReflectionUtil {
       if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof ProcessCanceledException) {
         throw (ProcessCanceledException) (((InvocationTargetException) e).getTargetException());
       }
-      T t = createAsDataClass(aClass);
-      if (t != null) {
-        return t;
+
+      if (isKotlinDataClassesSupported) {
+        T t = createAsDataClass(aClass);
+        if (t != null) {
+          return t;
+        }
       }
 
       ExceptionUtilRt.rethrow(e);

@@ -2,7 +2,6 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 public abstract class AbstractExtensionPointBean implements PluginAware {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
 
   protected PluginDescriptor myPluginDescriptor;
 
@@ -32,8 +31,14 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
 
   @NotNull
   public final <T> Class<T> findClass(@NotNull String className) throws ClassNotFoundException {
-    @SuppressWarnings("unchecked") Class<T> aClass = (Class<T>)Class.forName(className, true, getLoaderForClass());
-    return aClass;
+    return findClass(className, myPluginDescriptor);
+  }
+
+  @NotNull
+  public static <T> Class<T> findClass(@NotNull String className, @Nullable PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+    ClassLoader classLoader = pluginDescriptor == null ? AbstractExtensionPointBean.class.getClassLoader() : pluginDescriptor.getPluginClassLoader();
+    //noinspection unchecked
+    return (Class<T>)Class.forName(className, true, classLoader);
   }
 
   @Nullable
@@ -67,29 +72,5 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     ComponentAdapter adapter = new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, allowNonPublicClasses);
     @SuppressWarnings("unchecked") T t = (T)adapter.getComponentInstance(container);
     return t;
-  }
-
-  @NotNull
-  protected <T> T instantiateWithPicoContainerOnlyIfNeeded(@Nullable String implementationClass,
-                                                           @NotNull PicoContainer picoContainer) throws ClassNotFoundException {
-    if (implementationClass == null) {
-      throw new RuntimeException("implementation class is not specified, " +
-                                 "plugin id: " + (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
-                                 "Check if 'implementationClass' attribute is specified");
-    }
-
-    Class<T> clazz = findClass(implementationClass);
-    try {
-      return ReflectionUtil.newInstance(clazz);
-    }
-    catch (RuntimeException e) {
-      if (e.getCause() instanceof NoSuchMethodException) {
-        LOG.error("Bean extension class constructor must not have parameters: " + implementationClass);
-        return instantiate(clazz, picoContainer, true);
-      }
-      else {
-        throw e;
-      }
-    }
   }
 }
