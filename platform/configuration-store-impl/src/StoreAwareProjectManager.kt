@@ -179,15 +179,11 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   }
 
   override suspend fun reloadChangedStorageFiles() {
-    val unfinishedTasks = changedFilesAlarm.unfinishedTasks
-    if (unfinishedTasks.isEmpty()) {
-      return
-    }
-
+    val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      unfinishedTasks.forEach { it.run() }
+      unfinishedRequest.run()
       // just to be sure
-      changedFilesAlarm.unfinishedTasks.forEach { it.run() }
+      changedFilesAlarm.getUnfinishedRequest()?.run()
     }
   }
 

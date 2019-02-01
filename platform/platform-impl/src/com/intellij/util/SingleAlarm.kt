@@ -43,6 +43,16 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
       cancelAllAndAddRequest(task, delay, modalityState)
     }
   }
+
+  fun getUnfinishedRequest(): Runnable? {
+    val unfinishedTasks = unfinishedRequests
+    if (unfinishedTasks.isEmpty()) {
+      return null
+    }
+
+    LOG.assertTrue(unfinishedTasks.size == 1)
+    return unfinishedTasks.first()
+  }
 }
 
 fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable = ApplicationManager.getApplication(), task: () -> Unit): SingleAlarm {
