@@ -23,6 +23,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -726,15 +727,24 @@ public class HighlightClassUtil {
         if (!aClass.isEnum()) {
           QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
         }
-
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
       } else if (aClass instanceof PsiAnonymousClass) {
         final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
         if (baseClass != null && baseClass.isInterface()) {
           info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
             .descriptionAndTooltip("Anonymous class implements interface; cannot have qualifier for new").create();
         }
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
+      } else {
+        PsiElement refQualifier = Objects.requireNonNull(expression.getClassReference()).getQualifier();
+        if (refQualifier != null) {
+          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refQualifier)
+            .descriptionAndTooltip("Qualified class reference is not allowed in qualified new")
+            .create();
+          QuickFixAction
+            .registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(refQualifier, QuickFixBundle.message("remove.qualifier.fix")));
+        }
       }
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
     }
     return info;
   }
