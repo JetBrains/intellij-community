@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -24,8 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
@@ -150,7 +147,9 @@ public class ThreadTracker {
         //if (thread.isAlive()) {
         //  System.err.println("waiting for " + thread + "\n" + ThreadDumper.dumpThreadsToString());
         //}
-        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + 10_000) {
+        StackTraceElement[] traceBeforeWait = thread.getStackTrace();
+        int WAIT_SEC = 10;
+        while (!shouldIgnore(thread, thread.getStackTrace()) && System.currentTimeMillis() < start + WAIT_SEC*1_000) {
           UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           // afters some time the submitted task can finish and the thread become idle pool
         }
@@ -165,8 +164,15 @@ public class ThreadTracker {
 
         if (shouldIgnore(thread, stackTrace)) continue;
 
-        String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
-        Assert.fail(trace + "\n\nFull thread dump:\n"+dumpThreadsToString(after, stackTraces));
+        all.keySet().removeAll(after.keySet());
+        Map<Thread, StackTraceElement[]> otherStackTraces = ContainerUtil.map2Map(all.values(), t -> Pair.create(t, t.getStackTrace()));
+
+        String trace = PerformanceWatcher.printStacktrace("", thread, stackTrace);
+        String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
+
+        Assert.fail("Thread leaked: " +traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after "+WAIT_SEC+" seconds wait:) "+trace)+
+                    "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+                    "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces));
       }
     }
     finally {
@@ -175,8 +181,14 @@ public class ThreadTracker {
   }
 
   private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
-    Writer f = new StringWriter();
-    after.values().forEach(thread -> ThreadDumper.dumpCallStack(thread, f, stackTraces.get(thread)));
+    StringBuilder f = new StringBuilder();
+    after.forEach((name, thread) -> {
+      f.append("\"" + name + "\" " + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
+      for (StackTraceElement element : stackTraces.get(thread)) {
+        f.append("\tat " + element + "\n");
+      }
+      f.append("\n");
+    });
     return f.toString();
   }
 
