@@ -249,7 +249,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return mySegment.vfsData.isFileValid(myId) ? myId : -myId;
+    return myId;
   }
 
   @Override

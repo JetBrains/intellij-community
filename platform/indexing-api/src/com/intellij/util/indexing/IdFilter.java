@@ -49,9 +49,7 @@ public abstract class IdFilter {
     final BitSet idSet = new BitSet();
 
     ContentIterator iterator = fileOrDir -> {
-      int id = ((VirtualFileWithId)fileOrDir).getId();
-      if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
-      idSet.set(id);
+      idSet.set(((VirtualFileWithId)fileOrDir).getId());
       ProgressManager.checkCanceled();
       return true;
     };

@@ -383,13 +383,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      if (getId() > 0) {
-        myData.clearAdoptedNames();
-        myData.myChildrenIds = result;
-        setChildrenLoaded();
-        if (CHECK) {
-          assertConsistency(caseSensitive, Arrays.asList(childrenIds));
-        }
+      myData.clearAdoptedNames();
+      myData.myChildrenIds = result;
+      setChildrenLoaded();
+      if (CHECK) {
+        assertConsistency(caseSensitive, Arrays.asList(childrenIds));
       }
 
       return files;
