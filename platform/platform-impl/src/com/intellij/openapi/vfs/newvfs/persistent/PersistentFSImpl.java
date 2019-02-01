@@ -694,7 +694,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       if (checkIfConflictingEvent(path, files, middleDirs)) {
         break;
       }
-      // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent, so both paths should be checked for conflicts
+      // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
+      // so both paths should be checked for conflicts
       String path2 = null;
       if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
@@ -718,7 +719,9 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<? super String> files, @NotNull Set<? super String> middleDirs) {
+  private static boolean checkIfConflictingEvent(@NotNull String path,
+                                                 @NotNull Set<? super String> files,
+                                                 @NotNull Set<? super String> middleDirs) {
     if (!files.add(path) || middleDirs.contains(path)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
@@ -960,7 +963,11 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       }
       parent.createAndAddChildren(childrenAdded);
       if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
+        long count = Arrays.stream(parentChildrenIds.toArray())
+          .mapToObj(this::findFileById)
+          .filter(Objects::nonNull)
+          .map(VirtualFile::getName)
+          .distinct().count();
         assert count == parentChildrenIds.size();
       }
       FSRecords.updateList(parentId, parentChildrenIds.toArray());
@@ -1019,7 +1026,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
           final VirtualFileSystemEntry existingRoot = entry.getValue();
           if (Math.abs(existingRoot.getId()) == rootId) {
-            throw new RuntimeException("Duplicate FS roots: " + rootUrl + " and " + entry.getKey() + ", id=" + rootId + ", valid=" + existingRoot.isValid(), e);
+            String message = "Duplicate FS roots: " + rootUrl + " / " + entry.getKey() + " id=" + rootId + " valid=" + existingRoot.isValid();
+            throw new RuntimeException(message, e);
           }
         }
         throw new RuntimeException("No root duplication, roots=" + Arrays.toString(FSRecords.listAll(1)), e);
@@ -1177,7 +1185,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
   private void executeCreateChild(@NotNull VirtualFile parent,
                                   @NotNull String name,
-                                  @Nullable FileAttributes attributes, boolean isEmptyDirectory) {
+                                  @Nullable FileAttributes attributes,
+                                  boolean isEmptyDirectory) {
     NewVirtualFileSystem delegate = getDelegate(parent);
     int parentId = getFileId(parent);
     attributes = getAttributesIfNeeded(attributes, name, parent, delegate);
@@ -1306,7 +1315,10 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     return BitUtil.isSet(FSRecords.getFlags(fileId), mask);
   }
 
-  private static void executeTouch(@NotNull VirtualFile file, boolean reloadContentFromDelegate, long newModificationStamp, long newLength,
+  private static void executeTouch(@NotNull VirtualFile file,
+                                   boolean reloadContentFromDelegate,
+                                   long newModificationStamp,
+                                   long newLength,
                                    long newTimestamp) {
     if (reloadContentFromDelegate) {
       setFlag(file, MUST_RELOAD_CONTENT, true);

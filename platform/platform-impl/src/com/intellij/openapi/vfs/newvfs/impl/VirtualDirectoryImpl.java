@@ -211,7 +211,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(@NotNull String name,
                                             int id,
                                             @NotNull NewVirtualFileSystem delegate,
-                                            @NotNull FileAttributes attributes, boolean isEmptyDirectory) {
+                                            @NotNull FileAttributes attributes,
+                                            boolean isEmptyDirectory) {
     synchronized (myData) {
       return createChild(FileNameCache.storeName(name), id, delegate, attributes, isEmptyDirectory);
     }
@@ -596,7 +597,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     boolean caseSensitive = getFileSystem().isCaseSensitive();
 
-    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    CharSequenceHashingStrategy strategy = caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
+    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, strategy);
     for (int id : myData.myChildrenIds) {
       existingNames.add(mySegment.vfsData.getNameByFileId(id));
     }
