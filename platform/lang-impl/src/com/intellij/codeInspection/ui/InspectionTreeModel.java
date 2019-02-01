@@ -86,6 +86,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return JBIterable.generate(node, n -> getParent(n)).filter(n -> getParent(n) != null).flatMap(n1 -> {
       InspectionTreeNode p = getParent(n1);
       int idx = getIndexOfChild(p, n1);
+      if (idx < 0) return JBIterable.empty();
       InspectionTreeNode[] arr = p.myChildren.myChildren;
       List<? extends InspectionTreeNode> sublist;
       if (direction) {
