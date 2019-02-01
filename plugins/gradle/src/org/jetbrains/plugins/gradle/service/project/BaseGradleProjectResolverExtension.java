@@ -695,6 +695,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
+  public ProjectImportExtraModelProvider getExtraModelProvider() {
+    return new ClassSetProjectImportExtraModelProvider(getExtraProjectModelClasses());
+  }
+
+  @NotNull
+  @Override
   public Set<Class> getToolingExtensionsClasses() {
     return ContainerUtil.set(
       // external-system-rt.jar
