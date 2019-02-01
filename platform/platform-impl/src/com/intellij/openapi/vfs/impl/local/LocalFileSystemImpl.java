@@ -43,13 +43,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    WatchRequestImpl(@SystemDependent String rootPath, boolean watchRecursively) {
+    WatchRequestImpl(@SystemDependent @NotNull String rootPath, boolean watchRecursively) {
       myFSRootPath = rootPath;
       myWatchRecursively = watchRecursively;
     }
 
+    @NotNull
     @Override
-    public @NotNull @SystemIndependent String getRootPath() {
+    public @SystemIndependent String getRootPath() {
       return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
@@ -89,6 +90,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     myWatcher.dispose();
   }
 
+  @NotNull
   private List<WatchRequestImpl> normalizeRootsForRefresh() {
     List<WatchRequestImpl> result = new ArrayList<>();
 
@@ -168,14 +170,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return parts;
   }
 
-  private static void visitTree(TreeNode rootNode, Consumer<? super TreeNode> consumer) {
+  private static void visitTree(@NotNull TreeNode rootNode, @NotNull Consumer<? super TreeNode> consumer) {
     for (TreeNode node : rootNode.nodes.values()) {
       consumer.consume(node);
       visitTree(node, consumer);
     }
   }
 
-  private boolean isAlreadyWatched(final WatchRequestImpl request) {
+  private boolean isAlreadyWatched(@NotNull WatchRequestImpl request) {
     if (myNormalizedTree == null) {
       normalizeRootsForRefresh();
     }
@@ -206,7 +208,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
-  private void markPathsDirty(Iterable<String> dirtyPaths) {
+  private void markPathsDirty(@NotNull Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       VirtualFile file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
@@ -215,7 +217,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
-  private void markFlatDirsDirty(Iterable<String> dirtyPaths) {
+  private void markFlatDirsDirty(@NotNull Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
       if (pair.first != null) {
@@ -230,7 +232,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
-  private void markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
+  private void markRecursiveDirsDirty(@NotNull Iterable<String> dirtyPaths) {
     for (String dirtyPath : dirtyPaths) {
       Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
       if (pair.first != null) {
@@ -270,7 +272,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
     flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
 
-    Set<String> recursiveWatches = new HashSet<>(), flatWatches = new HashSet<>();
+    Set<String> recursiveWatches = new HashSet<>();
+    Set<String> flatWatches = new HashSet<>();
     for (LocalFileSystem.WatchRequest watch : watchRequests) {
       (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
     }
@@ -281,8 +284,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
     Set<WatchRequest> result = new HashSet<>();
     synchronized (myLock) {
-      boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result) |
-                       doRemoveWatchedRoots(watchRequests);
+      boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result);
+      update |= doRemoveWatchedRoots(watchRequests);
       if (update) {
         myNormalizedTree = null;
         setUpFileWatcher();
@@ -291,14 +294,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return result;
   }
 
-  private boolean doAddRootsToWatch(Collection<String> recursiveRoots, Collection<String> flatRoots, Set<? super WatchRequest> result) {
+  private boolean doAddRootsToWatch(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots, @NotNull Set<? super WatchRequest> result) {
     boolean update = false;
     for (String root : recursiveRoots) update |= watch(root, true, result);
     for (String root : flatRoots) update |= watch(root, false, result);
     return update;
   }
 
-  private boolean watch(String rootPath, boolean recursively, Set<? super WatchRequest> result) {
+  private boolean watch(@NotNull String rootPath, boolean recursively, @NotNull Set<? super WatchRequest> result) {
     int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (index >= 0) rootPath = rootPath.substring(0, index);
 
@@ -315,7 +318,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     return !request.myDominated;
   }
 
-  private boolean doRemoveWatchedRoots(Collection<? extends WatchRequest> watchRequests) {
+  private boolean doRemoveWatchedRoots(@NotNull Collection<? extends WatchRequest> watchRequests) {
     boolean update = false;
 
     for (WatchRequest watchRequest : watchRequests) {
