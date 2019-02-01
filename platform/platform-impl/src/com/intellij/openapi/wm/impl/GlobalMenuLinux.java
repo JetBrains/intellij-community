@@ -111,7 +111,11 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean TRACE_CLEARING             = Boolean.getBoolean("linux.native.menu.debug.trace.clearing");
   private static final boolean TRACE_HIERARCHY_MISMATCHES = Boolean.getBoolean("linux.native.menu.debug.trace.hierarchy.mismatches");
   private static final boolean SHOW_SWING_MENU            = Boolean.getBoolean("linux.native.menu.debug.show.frame.menu");
+
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
+
+  private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
+  private static final boolean FILL_MINIMALLY             = Boolean.getBoolean("linux.native.menu.fill.minimally");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -299,8 +303,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    int[] stats = new int[]{0, 0, 0};
     final int size = roots == null ? 0 : roots.size();
     final List<MenuItemInternal> newRoots = new ArrayList<>(size);
+
     if (roots != null) {
       for (ActionMenu am: roots) {
         final int uid = System.identityHashCode(am);
@@ -308,6 +314,15 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         mi.jitem = am;
         mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
+
+        if (!FILL_MINIMALLY) {
+          final long startMs = System.currentTimeMillis();
+          am.removeAll();
+          am.fillMenu();
+          _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
+          final long elapsedMs = System.currentTimeMillis() - startMs;
+          if (TRACE_SYNC_STATS) _trace("filled root menu '%s', spent (in EDT) %d ms, stats: %s", String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
+        }
       }
     }
 
@@ -562,16 +577,24 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     if (TRACE_EVENTS) _trace("received event '%s' from item %s", _evtype2str(eventType), mi);
 
-    if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW || eventType == GlobalMenuLib.EVENT_CLOSED) {
-      final boolean check = myEventFilter.check(uid, eventType, mi);
-      if (!check)
-        return;
+    final boolean check = myEventFilter.check(uid, eventType, mi);
+    if (!check)
+      return;
 
-      if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW) {
+    if (
+      eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW
+      || (!SKIP_OPEN_MENU_COMMAND && eventType == GlobalMenuLib.EVENT_OPENED)
+    ) {
         // glib main-loop thread
         final long startMs = System.currentTimeMillis();
-        int[] stats = new int[]{0, 0, 0};
 
+        if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW)
+          mi.lastAboutToShowMs = startMs;
+
+        if (eventType == GlobalMenuLib.EVENT_OPENED && startMs - mi.lastAboutToShowMs < 2000) // simple protection to avoid double (frequent) filling
+          return;
+
+        int[] stats = new int[]{0, 0, 0};
         ApplicationManager.getApplication().invokeAndWait(()-> {
           // ETD-start
           final JMenuItem jmi = mi.jitem;
@@ -587,7 +610,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
           final ActionMenu am = (ActionMenu)jmi;
           am.removeAll();
           am.fillMenu();
-          _syncChildren(mi, am, 1, stats);
+          _syncChildren(mi, am, FILL_MINIMALLY ? 1 : 2, stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent)
         });
 
         // glib main-loop thread
@@ -595,12 +618,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         if (TRACE_SYNC_STATS) _trace("opened %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
-      } else {
-        // glib main-loop thread
-        // process GlobalMenuLib.EVENT_CLOSED
-        mi.scheduleClearSwing();
-      }
+    }
 
+    if (eventType == GlobalMenuLib.EVENT_CLOSED) {
+      // glib main-loop thread
+      // process GlobalMenuLib.EVENT_CLOSED
+      mi.scheduleClearSwing();
       return;
     }
 
@@ -699,6 +722,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     Pointer nativePeer;
     int position = -1;
 
+    long lastAboutToShowMs = 0;
     long lastClosedMs = 0;
 
     Timer timerClearSwing;
@@ -906,7 +930,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       final long timeMs = System.currentTimeMillis();
       if (eventType == GlobalMenuLib.EVENT_CLOSED) {
         mi.lastClosedMs = timeMs;
-      } else {
+      } else if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW) {
         if (mi.rootPos == 0) {
           if (myTimer == null) {
             myLastFirstRootEventMs = timeMs;
