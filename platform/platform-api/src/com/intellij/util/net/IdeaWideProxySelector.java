@@ -108,7 +108,7 @@ public class IdeaWideProxySelector extends ProxySelector {
         return select;
       }
       catch (StackOverflowError ignore) {
-        LOG.debug("Too large PAC script (JRE-247)");
+        LOG.warn("Too large PAC script (JRE-247)");
       }
     }
     return CommonProxy.NO_PROXY_LIST;
