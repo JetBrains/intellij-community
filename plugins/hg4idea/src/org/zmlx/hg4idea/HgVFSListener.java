@@ -151,10 +151,6 @@ public class HgVFSListener extends VcsVFSListener {
 
         // separate adds from copies
         for (VirtualFile file : addedFiles) {
-          if (file.isDirectory()) {
-            continue;
-          }
-
           final VirtualFile copyFrom = copyFromMap.get(file);
           if (copyFrom != null) {
             copies.put(copyFrom, file);
@@ -176,7 +172,12 @@ public class HgVFSListener extends VcsVFSListener {
         }
 
         for (VirtualFile file : addedFiles) {
-          dirtyScopeManager.fileDirty(file);
+          if (file.isDirectory()) {
+            dirtyScopeManager.dirDirtyRecursively(file);
+          }
+          else {
+            dirtyScopeManager.fileDirty(file);
+          }
         }
       }
     }).queue();
