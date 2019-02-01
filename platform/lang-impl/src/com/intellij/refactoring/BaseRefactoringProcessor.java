@@ -382,7 +382,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
     if (conflicts.isEmpty()) return true;
 
-    if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) return true;
       throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
     }
 
