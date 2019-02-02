@@ -36,8 +36,8 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
 
   private fun getOSVersion(): FeatureUsageData {
     val osData = FeatureUsageData()
-    val linuxRelease = OsVersionUsageCollector.getLinuxRelease()
     if (SystemInfo.isLinux) {
+      val linuxRelease = OsVersionUsageCollector.getLinuxRelease()
       osData.addData("release", linuxRelease.release)
       osData.addVersionByString(linuxRelease.version)
     }
