@@ -902,6 +902,10 @@
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
     </group>
 
+    <action id="OpenBlankEditorInBlankDiffWindow" class="com.intellij.diff.actions.SwitchToBlankEditorAction" text="Switch to Blank Editor">
+      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+    </action>
+
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>
     <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction" text="Rerun Tests"/>
 
