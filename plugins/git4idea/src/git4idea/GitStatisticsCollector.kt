@@ -3,6 +3,7 @@ package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getCountingUsage
@@ -50,7 +51,10 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  private fun versionUsage(version: GitVersion) = UsageDescriptor("version.${version.semanticPresentation}")
+  private fun versionUsage(version: GitVersion): UsageDescriptor {
+    val data = FeatureUsageData().addData("version", version.presentation).addData("type", version.type.name)
+    return UsageDescriptor("version", 1, data)
+  }
 
   override fun getGroupId(): String {
     return "vcs.git.settings"
