@@ -1523,6 +1523,24 @@ public class Messages {
     protected JComponent createScrollableTextComponent() {
       return new JBScrollPane(myField);
     }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      return null;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
+      return messagePanel;
+    }
   }
 
 }
