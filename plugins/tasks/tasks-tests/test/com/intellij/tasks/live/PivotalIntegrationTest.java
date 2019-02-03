@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.live;
 
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.pivotal.PivotalTrackerRepository;
 import com.intellij.tasks.pivotal.PivotalTrackerRepositoryType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 
 public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrackerRepository> {
   private static final String INTEGRATION_TESTS_PROJECT_ID = "2243263";
@@ -44,5 +47,14 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
     assertEquals("#" + STARTED_STORY_ID, task.getPresentableId());
     assertEquals(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID, task.getId());
     assertEquals("Started story", task.getSummary());
+  }
+
+  // IDEA-206556
+  public void testApiTokenNotStoredInSettings() {
+    final String token = "secret";
+    myRepository.setAPIKey(token);
+    final Element serialized = XmlSerializer.serialize(myRepository);
+    final String configContent = JDOMUtil.write(serialized);
+    assertFalse(configContent.contains(token));
   }
 }
