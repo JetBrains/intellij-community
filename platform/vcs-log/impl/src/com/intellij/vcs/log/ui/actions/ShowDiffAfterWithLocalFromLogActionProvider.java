@@ -77,6 +77,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     FilePath path = getFilePath(e, log);
+    if (path == null) return;
 
     FilePath pathInCommit = path;
     FileHistoryUi historyUi = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
