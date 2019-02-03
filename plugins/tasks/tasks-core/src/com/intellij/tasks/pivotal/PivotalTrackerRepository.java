@@ -69,7 +69,6 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   private PivotalTrackerRepository(final PivotalTrackerRepository other) {
     super(other);
     setProjectId(other.myProjectId);
-    setAPIKey(other.myAPIKey);
   }
 
   @NotNull
@@ -84,7 +83,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
-        request.addHeader(TOKEN_HEADER, getAPIKey());
+        request.addHeader(TOKEN_HEADER, getPassword());
       }
     };
   }
@@ -105,7 +104,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   public boolean isConfigured() {
     return super.isConfigured() &&
            StringUtil.isNotEmpty(getProjectId()) &&
-           StringUtil.isNotEmpty(getAPIKey());
+           StringUtil.isNotEmpty(getPassword());
   }
 
   @Override
@@ -164,12 +163,26 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     myProjectId = projectId;
   }
 
+  /**
+   * Don't use this getter, it's left only to preserve compatibility with existing settings.
+   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
+   *
+   * @deprecated Use {@link #getPassword()}
+   */
+  @Deprecated
   public String getAPIKey() {
-    return myAPIKey;
+    return null;
   }
 
+  /**
+   * Don't use this setter, it's left only to preserve compatibility with existing settings.
+   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
+   *
+   * @deprecated Use {@link #setPassword(String)}
+   */
+  @Deprecated
   public void setAPIKey(final String APIKey) {
-    myAPIKey = APIKey;
+    setPassword(APIKey);
   }
 
   @Override
@@ -184,7 +197,6 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     if (!(o instanceof PivotalTrackerRepository)) return false;
 
     final PivotalTrackerRepository that = (PivotalTrackerRepository)o;
-    if (getAPIKey() != null ? !getAPIKey().equals(that.getAPIKey()) : that.getAPIKey() != null) return false;
     if (getProjectId() != null ? !getProjectId().equals(that.getProjectId()) : that.getProjectId() != null) return false;
     return true;
   }
