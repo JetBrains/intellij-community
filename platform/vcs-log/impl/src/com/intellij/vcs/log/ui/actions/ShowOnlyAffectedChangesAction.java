@@ -3,10 +3,10 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
@@ -23,7 +23,7 @@ public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!Registry.is("vcs.folder.history.in.log")) {
+    if (!VcsLogUtil.isFolderHistoryShownInLog()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

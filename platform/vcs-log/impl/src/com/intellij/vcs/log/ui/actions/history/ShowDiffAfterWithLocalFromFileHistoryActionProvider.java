@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.ui.actions;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -16,7 +16,6 @@ import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,10 +23,11 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExtensionProvider {
+public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnActionExtensionProvider {
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
-    return e.getData(VcsLogDataKeys.VCS_LOG) != null && e.getData(ChangesBrowserBase.DATA_KEY) == null;
+    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null && e.getData(ChangesBrowserBase.DATA_KEY) == null;
   }
 
   @Override
@@ -47,7 +47,10 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
       return;
     }
 
-    e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+
+    e.getPresentation().setEnabled(filePath != null && filePath.getVirtualFile() != null && handler != null);
   }
 
   @Override
@@ -63,7 +66,10 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
+    FilePath localPath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    FilePath pathInCommit = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI).getPathInCommit(commit.getHash());
     VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
-    handler.showDiffForPaths(commit.getRoot(), VcsLogUtil.getAffectedPaths(commit.getRoot(), e), commit.getHash(), null);
+
+    handler.showDiffWithLocal(commit.getRoot(), pathInCommit, commit.getHash(), localPath);
   }
 }

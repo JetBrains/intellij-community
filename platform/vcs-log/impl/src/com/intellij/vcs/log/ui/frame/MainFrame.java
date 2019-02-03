@@ -169,8 +169,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
-    VcsLogStructureFilter structureFilter = dataPack.getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
-    myChangesBrowser.setAffectedPaths(structureFilter != null ? structureFilter.getFiles() : null);
+    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(myUi));
   }
 
   @NotNull
