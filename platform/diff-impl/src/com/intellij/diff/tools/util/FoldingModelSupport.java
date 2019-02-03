@@ -320,7 +320,7 @@ public class FoldingModelSupport {
 
   private class MyFoldingListener implements FoldingListener {
     private final int myIndex;
-    @NotNull Set<FoldRegion> myModifiedRegions = new HashSet<>();
+    @NotNull private final Set<FoldRegion> myModifiedRegions = new HashSet<>();
 
     MyFoldingListener(int index) {
       myIndex = index;
