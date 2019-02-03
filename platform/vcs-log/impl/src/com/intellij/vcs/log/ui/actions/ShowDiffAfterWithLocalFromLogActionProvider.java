@@ -31,7 +31,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     if (filePath != null) return filePath;
     List<CommitId> commits = log.getSelectedCommits();
-    if (commits.isEmpty() || commits.size() > 1) return null;
+    if (commits.size() != 1) return null;
     return VcsUtil.getFilePath(notNull(getFirstItem(commits)).getRoot());
   }
 
