@@ -130,9 +130,9 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
     loadDiffAndShow(() -> getDiff(root, filePaths, leftRevision, rightRevision),
                     (diff) -> {
                       String dialogTitle = "Changes between " +
-                                           leftRevision.asString() +
+                                           leftRevision.toShortString() +
                                            " and " +
-                                           (rightRevision == null ? "local version" : rightRevision.asString()) +
+                                           (rightRevision == null ? "local version" : rightRevision.toShortString()) +
                                            " in " +
                                            getTitleForPaths(root, affectedPaths);
                       VcsDiffUtil.showChangesDialog(myProject, dialogTitle, ContainerUtil.newArrayList(diff));
