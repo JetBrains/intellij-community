@@ -40,10 +40,13 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
+  public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
+  public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
+  public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
@@ -151,7 +154,7 @@ public abstract class ActionPlaces {
     FILEHISTORY_VIEW_TOOLBAR, RUN_CONFIGURATIONS_COMBOBOX, WELCOME_SCREEN, CHANGES_VIEW_TOOLBAR, DATABASE_VIEW_TOOLBAR,
     ACTION_PLACE_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_TOOLBAR, DOCK_MENU, PHING_MESSAGES_TOOLBAR, DIFF_TOOLBAR,
     ANALYZE_STACKTRACE_PANEL_TOOLBAR, TOUCHBAR_GENERAL, COMPOSER_EDITOR_NOTIFICATION_PANEL, COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA,
-    COMPOSER_LOG_RERUN
+    COMPOSER_LOG_RERUN, EDITOR_GUTTER, TOOLWINDOW_CONTENT
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
@@ -163,7 +166,7 @@ public abstract class ActionPlaces {
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
-    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP
+    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, EDITOR_GUTTER_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
