@@ -108,6 +108,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean TRACE_SYNC_STATS           = Boolean.getBoolean("linux.native.menu.debug.trace.sync-stats");
   private static final boolean TRACE_EVENTS               = Boolean.getBoolean("linux.native.menu.debug.trace.events");
   private static final boolean TRACE_EVENT_FILTER         = Boolean.getBoolean("linux.native.menu.debug.trace.event-filter");
+  private static final boolean TRACE_SKIPPED_EVENT        = Boolean.getBoolean("linux.native.menu.debug.trace.skipped.event");
   private static final boolean TRACE_CLEARING             = Boolean.getBoolean("linux.native.menu.debug.trace.clearing");
   private static final boolean TRACE_HIERARCHY_MISMATCHES = Boolean.getBoolean("linux.native.menu.debug.trace.hierarchy.mismatches");
   private static final boolean SHOW_SWING_MENU            = Boolean.getBoolean("linux.native.menu.debug.show.frame.menu");
@@ -115,7 +116,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
-  private static final boolean FILL_MINIMALLY             = Boolean.getBoolean("linux.native.menu.fill.minimally");
+  private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
+  private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -133,6 +136,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private boolean myIsRootsUpdated = false;
   private boolean myIsEnabled = true;
   private boolean myIsDisposed = false;
+  private boolean myIsFirstFilling = true; // don't filter first packet of events (it causes slow reaction of KDE applet)
 
   private final GlobalMenuLib.JRunnable myOnWindowReleased;
   private final EventFilter myEventFilter = new EventFilter();
@@ -310,12 +314,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (roots != null) {
       for (ActionMenu am: roots) {
         final int uid = System.identityHashCode(am);
-        final MenuItemInternal mi = new MenuItemInternal(newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, am.getAnAction());
+        final MenuItemInternal mi = new MenuItemInternal(null, newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, am.getAnAction());
         mi.jitem = am;
         mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
 
-        if (!FILL_MINIMALLY) {
+        if (!DONT_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
           am.removeAll();
           am.fillMenu();
@@ -446,20 +450,20 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
   }
 
-  private static MenuItemInternal _createInternalFromSwing(Component each) {
+  private static MenuItemInternal _createInternalFromSwing(MenuItemInternal parent, Component each) {
     if (each == null)
       return null;
     MenuItemInternal result = null;
     if (each instanceof ActionMenuItem) {
       final ActionMenuItem ami = (ActionMenuItem)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
       result.jitem = ami;
     } else if (each instanceof ActionMenu) {
       final ActionMenu am2 = (ActionMenu)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
       result.jitem = am2;
     } else if (each instanceof JSeparator) {
-      result = new MenuItemInternal(-1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null);
+      result = new MenuItemInternal(parent, -1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null);
     } else if (each instanceof StubItem) {
       // System.out.println("skip StubItem");
     } else {
@@ -492,7 +496,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     for (Component each : am.getPopupMenu().getComponents()) {
       MenuItemInternal cmi = mi.findCorrespondingChild(each);
       if (cmi == null) {
-        cmi = _createInternalFromSwing(each);
+        cmi = _createInternalFromSwing(mi, each);
         if (cmi != null) {
           cmi.position = itemPos++;
           mi.children.add(cmi);
@@ -509,8 +513,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         }
       }
       if (cmi != null) {
-        if (deepness > 1 && (each instanceof ActionMenu))
-          _syncChildren(cmi, (ActionMenu)each, deepness - 1, stats);
+        if (deepness > 1 && (each instanceof ActionMenu)) {
+          final ActionMenu jmiEach = (ActionMenu)each;
+          jmiEach.removeAll();
+          jmiEach.fillMenu();
+          _syncChildren(cmi, jmiEach, deepness - 1, stats);
+        }
       }
     }
   }
@@ -558,8 +566,15 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
   }
 
+  private static boolean _isFillEvent(int eventType) {
+    return eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW || (!SKIP_OPEN_MENU_COMMAND && eventType == GlobalMenuLib.EVENT_OPENED);
+  }
+
   @Override
   public void handleEvent(int uid, int eventType) {
+    _handleEvent(uid, eventType, true);
+  }
+  private void _handleEvent(int uid, int eventType, boolean doFiltering) {
     // glib main-loop thread
     final MenuItemInternal mi = _findMenuItem(uid);
     if (mi == null) {
@@ -577,24 +592,27 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     if (TRACE_EVENTS) _trace("received event '%s' from item %s", _evtype2str(eventType), mi);
 
-    final boolean check = myEventFilter.check(uid, eventType, mi);
-    if (!check)
+    if (!DISABLE_EVENTS_FILTERING && !myIsFirstFilling && doFiltering && !myEventFilter.check(uid, eventType, mi))
       return;
 
-    if (
-      eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW
-      || (!SKIP_OPEN_MENU_COMMAND && eventType == GlobalMenuLib.EVENT_OPENED)
-    ) {
+    if (myIsFirstFilling) {
+      final Timer timer = new Timer(5000, e -> myIsFirstFilling = false);
+      timer.setRepeats(false);
+      timer.start();
+    }
+
+    if (_isFillEvent(eventType)) {
         // glib main-loop thread
-        final long startMs = System.currentTimeMillis();
+      final long startMs = System.currentTimeMillis();
 
-        if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW)
-          mi.lastAboutToShowMs = startMs;
+      mi.cancelClearSwing();
 
-        if (eventType == GlobalMenuLib.EVENT_OPENED && startMs - mi.lastAboutToShowMs < 2000) // simple protection to avoid double (frequent) filling
-          return;
-
-        int[] stats = new int[]{0, 0, 0};
+      // simple check to avoid double (or frequent) filling
+      final long timeMs = System.currentTimeMillis();
+      int[] stats = new int[]{0, 0, 0};
+      if (timeMs - mi.lastFilledMs < 1500 && mi.lastClearedMs < mi.lastFilledMs) {
+        if (TRACE_SKIPPED_EVENT) _trace("skipped fill-event for item '%s', use cached (too frequent fill-events)", String.valueOf(mi.txt));
+      } else {
         ApplicationManager.getApplication().invokeAndWait(()-> {
           // ETD-start
           final JMenuItem jmi = mi.jitem;
@@ -607,22 +625,24 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
             return;
           }
 
+          mi.lastFilledMs = timeMs;
+
           final ActionMenu am = (ActionMenu)jmi;
           am.removeAll();
           am.fillMenu();
-          _syncChildren(mi, am, FILL_MINIMALLY ? 1 : 2, stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent)
+          _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2, stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
         });
 
         // glib main-loop thread
         final long elapsedMs = System.currentTimeMillis() - startMs;
-        if (TRACE_SYNC_STATS) _trace("opened %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
+        if (TRACE_SYNC_STATS) _trace("filled menu %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
+      }
     }
 
     if (eventType == GlobalMenuLib.EVENT_CLOSED) {
       // glib main-loop thread
-      // process GlobalMenuLib.EVENT_CLOSED
       mi.scheduleClearSwing();
       return;
     }
@@ -706,6 +726,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     final int type;
     final AnAction action;
 
+    final MenuItemInternal parent;
     final List<MenuItemInternal> children = new ArrayList<>();
 
     String txt;
@@ -722,12 +743,13 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     Pointer nativePeer;
     int position = -1;
 
-    long lastAboutToShowMs = 0;
-    long lastClosedMs = 0;
+    long lastFilledMs = 0;
+    long lastClearedMs = 0;
 
     Timer timerClearSwing;
 
-    MenuItemInternal(int rootPos, int uid, int type, AnAction action) {
+    MenuItemInternal(MenuItemInternal parent, int rootPos, int uid, int type, AnAction action) {
+      this.parent = parent;
       this.rootPos = rootPos;
       this.uid = uid;
       this.type = type;
@@ -890,13 +912,26 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     void scheduleClearSwing() {
       // exec at glib main-loop thread
-      if (timerClearSwing != null)
-        timerClearSwing.stop();
+      if (timerClearSwing != null) {
+        timerClearSwing.restart();
+        if (TRACE_CLEARING) _trace("\t reset clear timer of item '%s'", toStringShort());
+        return;
+      }
 
-      timerClearSwing = new Timer(300, (e)->_clearSwing());
+      timerClearSwing = new Timer(2000, (e)->_clearSwing());
       timerClearSwing.setRepeats(false);
       timerClearSwing.start();
       if (TRACE_CLEARING) _trace("\t scheduled (300 ms later) to clear '%s'", toStringShort());
+    }
+
+    void cancelClearSwing() {
+      // exec at glib main-loop thread
+      if (timerClearSwing != null) {
+        timerClearSwing.stop();
+        timerClearSwing = null;
+      }
+      for (MenuItemInternal p = parent; p != null; p = p.parent)
+        p.cancelClearSwing();
     }
 
     private void _clearSwing() {
@@ -916,59 +951,157 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       final ActionMenu am = (ActionMenu)jitem;
       am.clearItems();
       clearChildrenSwingRefs();
+      _onSwingCleared(System.currentTimeMillis());
       if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());
+    }
+
+    private void _onSwingCleared(long timeMs) {
+      lastClearedMs = timeMs;
+      if (timerClearSwing != null) {
+        timerClearSwing.stop();
+        timerClearSwing = null;
+      }
+
+      for (MenuItemInternal kid: children)
+        kid._onSwingCleared(timeMs);
+    }
+  }
+
+  private static class QueuedEvent {
+    final int uid;
+    final int eventType;
+    final int rootId;
+    final long timeMs;
+
+    private QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
+      this.uid = uid;
+      this.eventType = eventType;
+      this.rootId = rootId;
+      this.timeMs = timeMs;
+    }
+
+    static QueuedEvent of(int uid, int eventType, int rootId, long timeMs) {
+      return new QueuedEvent(uid, eventType, rootId, timeMs);
     }
   }
 
   private class EventFilter {
+    final private ArrayList<QueuedEvent> myQueued = new ArrayList<>();
     private Timer myTimer;
-    private long myLastFirstRootEventMs = 0;
+    private long myClosedMs = 0;
+
     @SuppressWarnings("unused")
     private GlobalMenuLib.JRunnable myGlibLoopRunnable; // holds runnable object
 
-    boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
-      final long timeMs = System.currentTimeMillis();
-      if (eventType == GlobalMenuLib.EVENT_CLOSED) {
-        mi.lastClosedMs = timeMs;
-      } else if (eventType == GlobalMenuLib.SIGNAL_ABOUT_TO_SHOW) {
-        if (mi.rootPos == 0) {
-          if (myTimer == null) {
-            myLastFirstRootEventMs = timeMs;
-            // start timer to call handleEvent(uid, eventType) after several ms
-            myTimer = new Timer(50, (e) -> {
-              if (myTimer == null) {
-                if (TRACE_EVENT_FILTER) _trace("EventFilter: skip delayed 'about-to-show' processing of first-root because timer was reset (i.e. myTimer == null)");
-                return;
-              }
-              ourLib.execOnMainLoop(myGlibLoopRunnable = () -> handleEvent(uid, eventType));
-            });
-            myTimer.setRepeats(false);
-            myTimer.start();
-            if (TRACE_EVENT_FILTER) _trace("EventFilter: start timer to process 'about-to-show' of first-root later");
-            return false;
+    private boolean _isClosed() { return myClosedMs > 0; }
+
+    private void _stopTimer() {
+      // exec at glib-main-thread
+      if (myTimer != null)
+        myTimer.stop();
+      myTimer = null;
+    }
+
+    private void _processQueue() {
+      // exec at glib-main-thread
+      for (QueuedEvent q: myQueued)
+        _handleEvent(q.uid, q.eventType, false);
+      myQueued.clear();
+    }
+
+    private void _startTimer() {
+      // exec at glib-main-thread
+      _stopTimer();
+
+      final Timer timer = new Timer(50, null);
+      timer.addActionListener((e) -> {
+        if (TRACE_EVENT_FILTER) _trace("EventFilter: start execution of timer callback");        // exec at EDT
+        if (myTimer != timer) {// check that timer wasn't reset
+          if (TRACE_EVENT_FILTER) _trace("EventFilter: skip timer-processing because timer was reset (i.e. myTimer == null)");
+          return;
+        }
+
+        ourLib.execOnMainLoop(myGlibLoopRunnable = () -> {
+          // remove continuous series of sequential root events
+          // because some of implementations (of menu applet) regularly send packets of root events ('about-to-show' or/and 'open')
+          final int lastRootId = myRoots.size() - 1;
+          int from = 0;
+          while (from < myQueued.size()) {
+            final int size = myQueued.size();
+
+            // 1. find event from second root
+            while (from < size && myQueued.get(from).rootId != 1) ++from;
+            if (from == size) break;
+
+            // 2. rewind to first root
+            int first = from - 1;
+            if (first < 0 || myQueued.get(first).rootId != 0) {
+              // no events from first root, rewind forward
+              while (from < size && myQueued.get(from).rootId == 1) ++from;
+              continue;
+            }
+            while (first >= 1 && myQueued.get(first - 1).rootId == 0 && from - first <= 1) --first;
+
+            // 3. find last root
+            int to = from + 1;
+            while (to < size && myQueued.get(to).rootId != lastRootId) ++to;
+            if (to == size) break;
+            while (to < size && myQueued.get(to).rootId == lastRootId) ++to;
+
+            // 4. remove fake segment
+            if (TRACE_EVENT_FILTER) _trace("EventFilter: remove segment [%d, %d) from queue of size=%d", first, to, myQueued.size());
+            myQueued.subList(first, to).clear();
+            from = first + 1;
           }
 
+          if (!myQueued.isEmpty()) {
+            if (TRACE_ENABLED) _trace("EventFilter: process queued events, size=%d", myQueued.size());
+            _processQueue();
+          } else if (TRACE_ENABLED) _trace("EventFilter: queue is empty");
+
           myTimer = null;
-        } else if (mi.rootPos > 0) {
-          if ((timeMs - myLastFirstRootEventMs) < 50) {
-            if (TRACE_EVENT_FILTER) _trace("EventFilter: skip fake 'about-to-show' of root[%d]%s", mi.rootPos, myTimer != null ? " (reset timer)" : "");
-            if (myTimer != null) {
-              myTimer.stop();
-              myTimer = null;
-            }
-            return false;
-          }
-          if (TRACE_EVENT_FILTER) _trace("EventFilter: process real 'about-to-show' on root[%d]", mi.rootPos);
+          myClosedMs = 0; // open filter
+          if (TRACE_EVENT_FILTER) _trace("EventFilter: filter is opened");
+        });
+      });
+
+      myTimer = timer;
+      myTimer.setRepeats(false);
+      myTimer.start();
+      if (TRACE_EVENT_FILTER) _trace("EventFilter: start timer");
+    }
+
+    boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
+      // exec at glib-main-thread
+      final boolean isFillEvent = _isFillEvent(eventType);
+      final long timeMs = System.currentTimeMillis();
+
+      if (_isClosed()) {
+        if (timeMs - myClosedMs > 2000) {
+          // simple protection (open filter by timeout)
+          if (TRACE_ENABLED) _trace("EventFilter WARNING: close filter by timeout protection");
+          _processQueue();
+          _stopTimer();
+          myClosedMs = 0;
         } else {
-          if (TRACE_EVENT_FILTER) _trace("EventFilter: process real 'about-to-show' on non-root item '%s'%s", mi.txt, myTimer != null ? " (reset timer)" : "");
-          if (myTimer != null) {
-            myTimer.stop();
-            myTimer = null;
-          }
+          // filter is closed
+          myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+          if (myTimer != null)
+            myTimer.restart();
+          return false;
         }
       }
 
-      return true;
+      // filter is opened
+      if (mi.rootPos != 0)
+        return true;
+
+      // filter is opened and first root appeared
+      if (TRACE_EVENT_FILTER) _trace("EventFilter: close filter");
+      myQueued.add(QueuedEvent.of(uid, eventType, mi.rootPos, timeMs));
+      myClosedMs = timeMs;
+      _startTimer();
+      return false;
     }
   }
 
