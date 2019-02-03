@@ -157,11 +157,6 @@ public class VcsLogUtil {
     }));
   }
 
-  @NotNull
-  public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
-    return ContainerUtil.getFirstItems(list, max);
-  }
-
   @Nullable
   public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
