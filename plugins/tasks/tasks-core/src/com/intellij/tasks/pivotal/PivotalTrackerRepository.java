@@ -4,7 +4,9 @@ package com.intellij.tasks.pivotal;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
@@ -18,7 +20,10 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +44,15 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   private static final String API_V5_PATH = "/services/v5";
   private static final String TOKEN_HEADER = "X-TrackerToken";
   private static final Pattern TASK_ID_REGEX = Pattern.compile("(?<projectId>\\d+)-(?<storyId>\\d+)");
+
+  private static final List<String> STANDARD_STORY_STATES = Arrays.asList("accepted",
+                                                                          "delivered",
+                                                                          "finished",
+                                                                          "started",
+                                                                          "rejected",
+                                                                          "planned",
+                                                                          "unstarted",
+                                                                          "unscheduled");
 
   // @formatter:off
   private static final TypeToken<List<PivotalTrackerStory>> LIST_OF_STORIES_TYPE = new TypeToken<List<PivotalTrackerStory>>() {};
@@ -149,6 +165,27 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return matcher.matches() ? taskName : null;
   }
 
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
+    final Matcher matcher = TASK_ID_REGEX.matcher(task.getId());
+    if (!matcher.matches()) {
+      LOG.warn("Illegal PivotalTracker ID pattern " + task.getId());
+      return;
+    }
+    final String projectId = matcher.group("projectId");
+    final String storyId = matcher.group("storyId");
+    final HttpPut request = new HttpPut(getRestApiUrl("projects", projectId, "stories", storyId));
+    String payload = ourGson.toJson(ContainerUtil.newHashMap(Pair.create("current_state", state.getId())));
+    request.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
+    getHttpClient().execute(request);
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    return ContainerUtil.map2Set(STANDARD_STORY_STATES, name -> new CustomTaskState(name, name));
+  }
+
   @NotNull
   @Override
   public BaseRepository clone() {
@@ -203,7 +240,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION | STATE_UPDATING;
   }
 
   @Override

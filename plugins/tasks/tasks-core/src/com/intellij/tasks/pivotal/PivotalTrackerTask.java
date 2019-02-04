@@ -112,4 +112,10 @@ public class PivotalTrackerTask extends Task {
   public String getCustomIcon() {
     return "/icons/pivotal/" + myStory.getStoryType() + ".png";
   }
+
+  @TestOnly
+  @NotNull
+  public PivotalTrackerStory getStory() {
+    return myStory;
+  }
 }

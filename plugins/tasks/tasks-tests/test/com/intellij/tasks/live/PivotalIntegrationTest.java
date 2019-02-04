@@ -3,15 +3,21 @@ package com.intellij.tasks.live;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.pivotal.PivotalTrackerRepository;
 import com.intellij.tasks.pivotal.PivotalTrackerRepositoryType;
+import com.intellij.tasks.pivotal.PivotalTrackerTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 
 public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrackerRepository> {
   private static final String INTEGRATION_TESTS_PROJECT_ID = "2243263";
   private static final String STARTED_STORY_ID = "163682205";
+  private static final String STORY_FOR_STATE_UPDATES_ID = "163693218";
+
+  private static final CustomTaskState STARTED_STATE = new CustomTaskState("started", "started");
+  private static final CustomTaskState FINISHED_STATE = new CustomTaskState("finished", "finished");
 
   @Override
   protected PivotalTrackerRepository createRepository() throws Exception {
@@ -47,6 +53,23 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
     assertEquals("#" + STARTED_STORY_ID, task.getPresentableId());
     assertEquals(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID, task.getId());
     assertEquals("Started story", task.getSummary());
+  }
+
+  public void testStoryStateUpdating() throws Exception {
+    final String taskId = INTEGRATION_TESTS_PROJECT_ID + "-" + STORY_FOR_STATE_UPDATES_ID;
+
+    PivotalTrackerTask task = ((PivotalTrackerTask)myRepository.findTask(taskId));
+    assertEquals("started", task.getStory().getCurrentState());
+
+    myRepository.setTaskState(task, FINISHED_STATE);
+
+    task = ((PivotalTrackerTask)myRepository.findTask(taskId));
+    assertEquals("finished", task.getStory().getCurrentState());
+
+    myRepository.setTaskState(task, STARTED_STATE);
+
+    task = ((PivotalTrackerTask)myRepository.findTask(taskId));
+    assertEquals("started", task.getStory().getCurrentState());
   }
 
   // IDEA-206556
