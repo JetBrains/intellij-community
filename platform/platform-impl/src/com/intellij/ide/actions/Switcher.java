@@ -331,7 +331,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
-      DefaultListModel twModel = new DefaultListModel();
+      CollectionListModel<ToolWindow> twModel = new CollectionListModel<ToolWindow>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = ContainerUtil.newArrayList();
       for (ActivateToolWindowAction action : actions) {
@@ -344,7 +344,7 @@ public class Switcher extends AnAction implements DumbAware {
       final Map<ToolWindow, String> map = ContainerUtil.reverseMap(twShortcuts);
       Collections.sort(windows, (o1, o2) -> StringUtil.compare(map.get(o1), map.get(o2), false));
       for (ToolWindow window : windows) {
-        twModel.addElement(window);
+        twModel.add(window);
       }
 
       toolWindows = new JBList(twModel);
@@ -397,9 +397,9 @@ public class Switcher extends AnAction implements DumbAware {
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, collectFiles(project, onlyEdited),
                                                                                               toolWindows.getModel().getSize(), pinned);
       final int selectionIndex = filesAndSelection.getSecond();
-      final DefaultListModel filesModel = new DefaultListModel();
+      final CollectionListModel<FileInfo> filesModel = new CollectionListModel<FileInfo>();
       for (FileInfo editor : filesAndSelection.getFirst()) {
-        filesModel.addElement(editor);
+        filesModel.add(editor);
       }
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
@@ -507,7 +507,7 @@ public class Switcher extends AnAction implements DumbAware {
       ScrollingUtil.ensureSelectionExists(files);
 
       this.add(toolWindows, BorderLayout.WEST);
-      if (filesModel.size() > 0) {
+      if (filesModel.getSize() > 0) {
         files.setAlignmentY(1f);
         final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
         pane.setPreferredSize(new Dimension(files.getPreferredSize().width, 20 * 20));
@@ -839,8 +839,8 @@ public class Switcher extends AnAction implements DumbAware {
 
     private static void removeElementAt(@NotNull JList jList, int index) {
       final ListModel model = jList.getModel();
-      if (model instanceof DefaultListModel) {
-        ((DefaultListModel)model).removeElementAt(index);
+      if (model instanceof CollectionListModel) {
+        ((CollectionListModel)model).remove(index);
       }
       else if (model instanceof NameFilteringListModel) {
         ((NameFilteringListModel)model).remove(index);
