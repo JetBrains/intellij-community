@@ -1504,8 +1504,20 @@ public class PluginManagerCore {
       }
     }
 
+    fixOptionalConfigs(idToDescriptorMap);
     mergeOptionalConfigs(idToDescriptorMap);
     addModulesAsDependents(idToDescriptorMap);
+  }
+
+  private static void fixOptionalConfigs(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
+    if (!isRunningFromSources()) return;
+    for (IdeaPluginDescriptorImpl descriptor : idToDescriptorMap.values()) {
+      if (!descriptor.isUseCoreClassLoader() || descriptor.getOptionalDescriptors() == null) continue;
+      descriptor.getOptionalDescriptors().entrySet().removeIf(entry -> {
+        IdeaPluginDescriptorImpl dependent = idToDescriptorMap.get(entry.getKey());
+        return dependent != null && !dependent.isUseCoreClassLoader();
+      });
+    }
   }
 
   private static void registerExtensionPointsAndExtensions(@NotNull ExtensionsArea area, @NotNull List<? extends IdeaPluginDescriptorImpl> loadedPlugins) {
