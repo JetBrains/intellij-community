@@ -180,10 +180,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     super.doOKAction();
   }
 
-  @Nullable
   @Override
-  protected String getLoggedDialogId() {
-    return null;
+  protected boolean canRecordDialogId() {
+    return false;
   }
 
   private void initCurrentStep(boolean forward) {
