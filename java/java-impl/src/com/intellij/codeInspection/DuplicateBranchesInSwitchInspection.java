@@ -275,27 +275,23 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
   private static class MergeBranchesFix implements LocalQuickFix {
     @NotNull private final String mySwitchLabelText;
-    private final boolean myInExpression;
 
-    MergeBranchesFix(@NotNull String switchLabelText, boolean inExpression) {
+    MergeBranchesFix(@NotNull String switchLabelText) {
       mySwitchLabelText = switchLabelText;
-      myInExpression = inExpression;
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return myInExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.fix.family.name")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.fix.family.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.fix.name", mySwitchLabelText);
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
     @Override
@@ -329,26 +325,19 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   }
 
   private static class DeleteRedundantBranchFix implements LocalQuickFix {
-    private final boolean myInExpression;
-
-    private DeleteRedundantBranchFix(boolean inExpression) {
-      myInExpression = inExpression;
-    }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.fix.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return myInExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.expression.fix.family.name")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.fix.family.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
     @Override
@@ -538,15 +527,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     String getCaseBranchMessage() {
-      return myInExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.message")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.statement.message");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.message");
     }
 
     String getDefaultBranchMessage() {
-      return myInExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.default.message")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.statement.default.message");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.default.message");
     }
 
     @Override
@@ -681,7 +666,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @Override
     LocalQuickFix newMergeCasesFix() {
       String switchLabelText = getSwitchLabelText();
-      return switchLabelText != null ? new MergeBranchesFix(switchLabelText, myInExpression) : null;
+      return switchLabelText != null ? new MergeBranchesFix(switchLabelText) : null;
     }
 
     @Override
@@ -691,7 +676,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     @Override
     LocalQuickFix newDeleteCaseFix() {
-      return new DeleteRedundantBranchFix(myInExpression);
+      return new DeleteRedundantBranchFix();
     }
 
     /**
@@ -798,7 +783,6 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   }
 
   private static class Rule extends BranchBase<PsiSwitchLabeledRuleStatement> {
-    private final boolean myIsResult;
     private final boolean myIsSimpleExit;
 
     Rule(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull PsiStatement body, @NotNull String[] commentTexts) {
@@ -806,7 +790,6 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
             new PsiStatement[]{body},
             commentTexts);
 
-      myIsResult = body instanceof PsiExpressionStatement;
       myIsSimpleExit = body instanceof PsiExpressionStatement || body instanceof PsiThrowStatement;
     }
 
@@ -820,31 +803,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return false;
     }
 
-    @Override
-    String getCaseBranchMessage() {
-      if (myInExpression) {
-        return myIsResult
-               ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.result.message")
-               : InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.message");
-      }
-      return super.getCaseBranchMessage();
-    }
-
-    @Override
-    String getDefaultBranchMessage() {
-      if (myInExpression) {
-        return myIsResult
-               ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.default.result.message")
-               : InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.default.message");
-      }
-      return super.getDefaultBranchMessage();
-    }
-
     @Nullable
     @Override
     LocalQuickFix newMergeCasesFix() {
       String switchLabelText = getSwitchLabelText();
-      return switchLabelText != null ? new MergeRulesFix(switchLabelText, isResultExpression()) : null;
+      return switchLabelText != null ? new MergeRulesFix(switchLabelText) : null;
     }
 
     @Override
@@ -854,37 +817,29 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     @Override
     LocalQuickFix newDeleteCaseFix() {
-      return new DeleteRedundantRuleFix(isResultExpression());
-    }
-
-    private boolean isResultExpression() {
-      return myInExpression && myIsResult;
+      return new DeleteRedundantRuleFix();
     }
   }
 
   private static class MergeRulesFix implements LocalQuickFix {
     @NotNull private final String mySwitchLabelText;
-    private final boolean myIsResultExpression;
 
-    MergeRulesFix(@NotNull String switchLabelText, boolean isResultExpression) {
+    MergeRulesFix(@NotNull String switchLabelText) {
       mySwitchLabelText = switchLabelText;
-      myIsResultExpression = isResultExpression;
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return myIsResultExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.expression.fix.family.name")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.fix.family.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.family.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.fix.name", mySwitchLabelText);
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.merge.fix.name", mySwitchLabelText);
     }
 
     @Override
@@ -898,28 +853,19 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   }
 
   private static class DeleteRedundantRuleFix implements LocalQuickFix {
-    private final boolean myIsResultExpression;
-
-    DeleteRedundantRuleFix(boolean isResultExpression) {
-      myIsResultExpression = isResultExpression;
-    }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
-      return myIsResultExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.expression.fix.name")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.fix.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.name");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return myIsResultExpression
-             ? InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.expression.fix.family.name")
-             : InspectionsBundle.message("inspection.duplicate.branches.in.switch.redundant.fix.family.name");
+      return InspectionsBundle.message("inspection.duplicate.branches.in.switch.delete.fix.family.name");
     }
 
     @Override
