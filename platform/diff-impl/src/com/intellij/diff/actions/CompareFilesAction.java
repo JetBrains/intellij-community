@@ -74,7 +74,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
-    DiffRequest request = e.getData(DIFF_REQUEST);
+    DiffRequest request = getDiffRequest(e);
     if (request != null) {
       return true;
     }
@@ -96,10 +96,15 @@ public class CompareFilesAction extends BaseShowDiffAction {
   }
 
   @Nullable
+  protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
+    return e.getData(DIFF_REQUEST);
+  }
+
+  @Nullable
   @Override
   protected DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    DiffRequest diffRequest = e.getData(DIFF_REQUEST);
+    DiffRequest diffRequest = getDiffRequest(e);
     if (diffRequest != null) {
       return new SimpleDiffRequestChain(diffRequest);
     }
