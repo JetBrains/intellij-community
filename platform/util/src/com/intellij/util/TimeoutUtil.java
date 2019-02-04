@@ -69,7 +69,7 @@ public final class TimeoutUtil {
    * @return time of running {@code runnable} in milliseconds
    */
   @ApiStatus.Experimental
-  public static <E extends Throwable> long runAndGetExecutionTime(@NotNull ThrowableRunnable<E> runnable) throws E {
+  public static <E extends Throwable> long measureExecutionTime(@NotNull ThrowableRunnable<E> runnable) throws E {
     long startTime = System.currentTimeMillis();
     runnable.run();
     return System.currentTimeMillis() - startTime;

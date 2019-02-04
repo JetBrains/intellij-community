@@ -130,7 +130,7 @@ public class XsltHighlightingTest extends TestBase {
     final Project project = myFixture.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    return TimeoutUtil.runAndGetExecutionTime(() -> ReadAction.run(
+    return TimeoutUtil.measureExecutionTime(() -> ReadAction.run(
       () -> CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false)));
   }
 

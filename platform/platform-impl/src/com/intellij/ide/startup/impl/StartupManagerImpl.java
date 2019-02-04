@@ -149,7 +149,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
-    long duration = TimeoutUtil.runAndGetExecutionTime(() -> extension.runActivity(myProject));
+    long duration = TimeoutUtil.measureExecutionTime(() -> extension.runActivity(myProject));
 
     Application app = ApplicationManager.getApplication();
     if (duration > 100 && !app.isUnitTestMode()) {

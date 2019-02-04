@@ -70,7 +70,7 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
   @NotNull
   private static List<? extends Segment> calcFocusZones(@NotNull FocusModeProvider focusModeProvider, @NotNull PsiFile psiFile) {
     Ref<List<? extends Segment>> resultRef = Ref.create();
-    long executionTime = TimeoutUtil.runAndGetExecutionTime(() -> resultRef.set(focusModeProvider.calcFocusZones(psiFile)));
+    long executionTime = TimeoutUtil.measureExecutionTime(() -> resultRef.set(focusModeProvider.calcFocusZones(psiFile)));
     if (executionTime > MAX_ALLOWED_TIME) {
       LOG.warn("Focus zones collecting took too long: " + executionTime + "ms; " +
                "Provider: " + focusModeProvider.getClass().getSimpleName() + "; " +
