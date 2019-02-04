@@ -19,9 +19,6 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
-/**
- * @author max
- */
 public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
 
   public void testSCR6067() {
@@ -194,6 +191,10 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testClassLiteralRef() {
+    doTest();
+  }
+
+  public void testClassLiteralRef2() {
     doTest();
   }
 
