@@ -187,12 +187,15 @@ public class JoinLinesHandler extends EditorActionHandler {
         if (rc != CANNOT_JOIN) break;
       }
     }
-    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     if (rc != CANNOT_JOIN) {
+      RangeMarker marker = doc.createRangeMarker(rc, rc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
+      rc = marker.getStartOffset();
       if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(rc);
       return;
     }
+    docManager.doPostponedOperationsAndUnblockDocument(doc);
 
     int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
     if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);

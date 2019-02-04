@@ -25,7 +25,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -59,7 +58,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private int myInsideRefresh;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
-  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
+  @NotNull
+  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
@@ -78,7 +78,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     });
 
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
       public void afterRefreshFinish(boolean asynchronous) {
         doUpdateOnRefresh();
@@ -123,7 +123,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @Override
   protected void addRootsToWatch() {
     if (!myProject.isDefault()) {
-      Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY), flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      Set<String> flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       collectWatchRoots(recursivePaths, flatPaths);
       myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, recursivePaths, flatPaths);
     }
@@ -182,7 +183,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private void collectWatchRoots(Set<String> recursivePaths, Set<String> flatPaths) {
+  private void collectWatchRoots(@NotNull Set<String> recursivePaths, @NotNull Set<String> flatPaths) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     String projectFilePath = myProject.getProjectFilePath();
@@ -232,7 +233,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     collectModuleWatchRoots(recursivePaths, flatPaths);
   }
 
-  private void collectModuleWatchRoots(Set<String> recursivePaths, Set<String> flatPaths) {
+  private void collectModuleWatchRoots(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {
     Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {

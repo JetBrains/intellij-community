@@ -105,9 +105,7 @@ public class VcsImplUtil {
         applicationSettings.MANAGE_IGNORE_FILES = true;
         notification.expire();
       }),
-      NotificationAction.create(VcsBundle.message("ignored.file.manage.notnow"), (event, notification) -> {
-        notification.expire();
-      }));
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.notnow"), (event, notification) -> notification.expire()));
   }
 
   public static boolean generateIgnoreFileIfNeeded(@NotNull Project project,

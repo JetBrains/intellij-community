@@ -77,17 +77,15 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
       }
     }
 
-    rangeAndText.onSuccess(textRangeStringPair -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        TextRange range = textRangeStringPair.getFirst();
-        String text = textRangeStringPair.getSecond();
-        if (text == null)
-          return;
-        ConsoleExecuteAction action = getConsoleExecuteAction(session);
-        if (action != null) {
-          action.execute(range, text, (EditorEx) editor);
-        }
-      });
-    });
+    rangeAndText.onSuccess(textRangeStringPair -> ApplicationManager.getApplication().invokeLater(() -> {
+      TextRange range = textRangeStringPair.getFirst();
+      String text = textRangeStringPair.getSecond();
+      if (text == null)
+        return;
+      ConsoleExecuteAction action = getConsoleExecuteAction(session);
+      if (action != null) {
+        action.execute(range, text, (EditorEx) editor);
+      }
+    }));
   }
 }

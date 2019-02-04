@@ -222,19 +222,15 @@ public class PyTypeHintGenerationUtil {
       final PsiElement lastNonComment = PyPsiUtils.getPrevNonCommentSibling(insertionAnchor, true);
       final int startOffset = lastNonComment.getTextRange().getEndOffset();
       final int endOffset = insertionAnchor.getTextRange().getEndOffset();
-      insertComment = () -> {
-        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-          document.replaceString(startOffset, endOffset, combinedTypeCommentText);
-        });
-      };
+      insertComment = () -> PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        document.replaceString(startOffset, endOffset, combinedTypeCommentText);
+      });
     }
     else if (insertionAnchor != null) {
       final int offset = insertionAnchor.getTextRange().getEndOffset();
-      insertComment = () -> {
-        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-          document.insertString(offset, typeCommentText);
-        });
-      };
+      insertComment = () -> PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        document.insertString(offset, typeCommentText);
+      });
     }
     else {
       return;

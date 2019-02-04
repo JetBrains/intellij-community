@@ -238,9 +238,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      final CharSequence[] texts = ReadAction.compute(() -> {
-        return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
-      });
+      final CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
       final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
@@ -673,9 +671,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
       if (changes.isEmpty()) return false;
 
-      return DiffUtil.isSomeRangeSelected(getEditor(), lines -> {
-        return ContainerUtil.exists(changes, change -> isChangeSelected(change, lines));
-      });
+      return DiffUtil.isSomeRangeSelected(getEditor(), lines -> ContainerUtil.exists(changes, change -> isChangeSelected(change, lines)));
     }
 
     @NotNull

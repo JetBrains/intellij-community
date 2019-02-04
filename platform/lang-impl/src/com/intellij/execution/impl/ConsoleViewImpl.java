@@ -1042,30 +1042,30 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myJLayeredPane.startUpdating();
     final int currentValue = myHeavyUpdateTicket;
     myHeavyAlarm.addRequest(() -> {
-        if (!myFilters.shouldRunHeavy()) return;
-        try {
-          myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
-              addFlushRequest(0, new FlushRunnable(true) {
-                @Override
-                public void doRun() {
-                  if (myHeavyUpdateTicket != currentValue) return;
-                  TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
-                  if (additionalAttributes != null) {
-                    ResultItem item = additionalHighlight.getResultItems().get(0);
-                    myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
-                  }
-                  else {
-                    myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
-                  }
-                }
-              })
-          );
+      if (!myFilters.shouldRunHeavy()) return;
+      try {
+        myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
+          addFlushRequest(0, new FlushRunnable(true) {
+            @Override
+            public void doRun() {
+              if (myHeavyUpdateTicket != currentValue) return;
+              TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
+              if (additionalAttributes != null) {
+                ResultItem item = additionalHighlight.getResultItems().get(0);
+                myHyperlinks.addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
+              }
+              else {
+                myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
+              }
+            }
+          })
+        );
+      }
+      finally {
+        if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
+          UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
         }
-        finally {
-          if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
-            UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
-          }
-        }
+      }
     }, 0);
   }
 

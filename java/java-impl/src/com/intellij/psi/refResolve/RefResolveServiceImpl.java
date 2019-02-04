@@ -560,7 +560,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private static int getAbsId(@NotNull VirtualFile file) {
-    return Math.abs(((VirtualFileWithId)file).getId());
+    return ((VirtualFileWithId)file).getId();
   }
 
   @NotNull

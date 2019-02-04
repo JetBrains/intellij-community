@@ -146,9 +146,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
   @Nullable
   private static VcsFullCommitDetails getChangesFromCache(@NotNull VcsLogData data, @NotNull Hash hash, @NotNull VirtualFile root) {
     Ref<VcsFullCommitDetails> details = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root)));
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> details.set(data.getCommitDetailsGetter().getCommitDataIfAvailable(data.getCommitIndex(hash, root))));
     if (details.isNull() || details.get() instanceof LoadingDetails) return null;
     return details.get();
   }

@@ -412,11 +412,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       nestedRange.push(elementRange);
       nestedInfos.push(infosForThisRange);
-      if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
+      if (parent == null || !hasSameRangeAsParent(parent, element)) {
         myHighlightInfoProcessor.allHighlightsForRangeAreProduced(myHighlightingSession, elementRange, infosForThisRange);
       }
     }
     advanceProgress(elements.size() - (nextLimit-chunkSize));
+  }
+
+  private static boolean hasSameRangeAsParent(PsiElement parent, PsiElement element) {
+    return element.getStartOffsetInParent() == 0 && element.getTextLength() == parent.getTextLength();
   }
 
   private static final int POST_UPDATE_ALL = 5;

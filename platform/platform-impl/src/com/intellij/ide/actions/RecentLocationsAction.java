@@ -41,13 +41,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -335,7 +335,7 @@ public class RecentLocationsAction extends AnAction {
 
   @NotNull
   private static JPanel createHeaderPanel(@NotNull JLabel title, @NotNull JComponent checkbox) {
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    JPanel topPanel = new CaptionPanel();
     topPanel.add(title, BorderLayout.WEST);
     topPanel.add(checkbox, BorderLayout.EAST);
 
@@ -343,7 +343,6 @@ public class RecentLocationsAction extends AnAction {
     size.height = JBUI.scale(29);
     topPanel.setPreferredSize(size);
     topPanel.setBorder(JBUI.Borders.empty(5, 8));
-    topPanel.setBackground(JBUI.CurrentTheme.Popup.headerBackground(true));
 
     WindowMoveListener moveListener = new WindowMoveListener(topPanel);
     topPanel.addMouseListener(moveListener);

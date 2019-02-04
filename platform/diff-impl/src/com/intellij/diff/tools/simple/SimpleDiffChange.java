@@ -317,16 +317,12 @@ public class SimpleDiffChange {
       text = "Accept";
     }
 
-    return createIconRenderer(side, text, icon, () -> {
-      myViewer.replaceChange(this, side);
-    });
+    return createIconRenderer(side, text, icon, () -> myViewer.replaceChange(this, side));
   }
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> {
-      myViewer.appendChange(this, side);
-    });
+    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> myViewer.appendChange(this, side));
   }
 
   @Nullable

@@ -72,9 +72,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
-    myCommonOptionsForm.addInterpreterModeListener((isRemoteInterpreter) -> {
-      emulateTerminalEnabled(!isRemoteInterpreter);
-    });
+    myCommonOptionsForm.addInterpreterModeListener((isRemoteInterpreter) -> emulateTerminalEnabled(!isRemoteInterpreter));
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
     myProject = configuration.getProject();

@@ -147,9 +147,7 @@ public class ProcessedModulesTable extends JPanel {
   public void addModule(Module element, String dirName) {
     myTableModel.addElement(element, dirName);
     selectRow(myTableModel.getRowCount() - 1);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   public void removeModule(Module element) {
@@ -170,9 +168,7 @@ public class ProcessedModulesTable extends JPanel {
         myTable.getSelectionModel().clearSelection();
       }
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   public void removeAllElements() {
@@ -215,9 +211,7 @@ public class ProcessedModulesTable extends JPanel {
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
   }
 
   private int[] getElementsRows(final Collection<? extends Module> elements) {

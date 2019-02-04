@@ -117,20 +117,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
-          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
-        }));
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
         return;
       }
     }
 
-
-    fileAnnotation.setCloser(() -> {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
-      });
-    });
+    fileAnnotation.setCloser(() ->
+                               UIUtil.invokeLaterIfNeeded(() -> {
+                                 if (project.isDisposed()) return;
+                                 editor.getGutter().closeAllAnnotations();
+                               }));
 
     fileAnnotation.setReloader(newFileAnnotation -> {
       if (project.isDisposed()) return;
@@ -291,7 +287,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @Nullable
+  @NotNull
   private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
     Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
     Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
@@ -367,13 +363,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
       setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
 
-      createActionLabel("Display anyway", () -> {
-        showAnnotations();
-      });
-
-      createActionLabel("Hide", () -> {
-        hideNotification();
-      }).setToolTipText("Hide this notification");
+      createActionLabel("Display anyway", () -> showAnnotations());
+      createActionLabel("Hide", () -> hideNotification()).setToolTipText("Hide this notification");
     }
 
     public void showAnnotations() {

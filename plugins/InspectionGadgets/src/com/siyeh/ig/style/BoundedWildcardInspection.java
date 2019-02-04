@@ -401,20 +401,18 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static boolean errorChecks(@NotNull PsiElement method, @NotNull List<PsiElement> elementsToIgnore) {
     HighlightVisitor visitor = ContainerUtil.find(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(method.getProject()), h -> h instanceof HighlightVisitorImpl).clone();
     HighlightInfoHolder holder = new HighlightInfoHolder(method.getContainingFile());
-    visitor.analyze(method.getContainingFile(), false, holder, ()->{
-      method.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (elementsToIgnore.contains(element)) return; // ignore sub-elements too
-          visitor.visit(element);
-          //System.out.println("element = " + element+"; holder: "+holder.hasErrorResults());
-          if (holder.hasErrorResults()) {
-            stopWalking();
-          }
-          super.visitElement(element);
+    visitor.analyze(method.getContainingFile(), false, holder, ()-> method.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (elementsToIgnore.contains(element)) return; // ignore sub-elements too
+        visitor.visit(element);
+        //System.out.println("element = " + element+"; holder: "+holder.hasErrorResults());
+        if (holder.hasErrorResults()) {
+          stopWalking();
         }
-      });
-    });
+        super.visitElement(element);
+      }
+    }));
     return !holder.hasErrorResults();
   }
 

@@ -34,7 +34,6 @@ public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends Dev
       return;
     }
 
-    RelatedItemLineMarkerInfo<PsiElement> info = LineMarkerInfoHelper.createExtensionLineMarkerInfo(targets, identifier);
-    result.add(info);
+    result.add(LineMarkerInfoHelper.createExtensionLineMarkerInfo(targets, identifier));
   }
 }

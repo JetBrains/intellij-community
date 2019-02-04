@@ -102,9 +102,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     CardLayout cl = (CardLayout)(getLayout());
     cl.show(this, primary ? PRIMARY_CONSOLE_PANEL : SECONDARY_CONSOLE_PANEL);
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getSubConsoleView(primary).getComponent(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getSubConsoleView(primary).getComponent(), true));
 
     myPrimary = primary;
   }

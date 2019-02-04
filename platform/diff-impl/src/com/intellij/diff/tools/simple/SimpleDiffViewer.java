@@ -191,9 +191,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final Document document1 = getContent1().getDocument();
       final Document document2 = getContent2().getDocument();
 
-      CharSequence[] texts = ReadAction.compute(() -> {
-        return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
-      });
+      CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
 
       List<LineFragment> lineFragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
@@ -204,9 +202,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return apply(new CompareData(null, isContentsEqual));
       }
       else {
-        List<SimpleDiffChange> changes = ContainerUtil.map(lineFragments, fragment -> {
-          return new SimpleDiffChange(this, fragment);
-        });
+        List<SimpleDiffChange> changes = ContainerUtil.map(lineFragments, fragment -> new SimpleDiffChange(this, fragment));
         return apply(new CompareData(changes, isContentsEqual));
       }
     }
@@ -418,9 +414,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (myDiffChanges.isEmpty()) return false;
 
     EditorEx editor = getEditor(side);
-    return DiffUtil.isSomeRangeSelected(editor, lines -> {
-      return ContainerUtil.exists(myDiffChanges, change -> isChangeSelected(change, lines, side));
-    });
+    return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(myDiffChanges, change -> isChangeSelected(change, lines, side)));
   }
 
   @NotNull
@@ -574,9 +568,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (!isEditable(myModifiedSide)) return;
 
       String title = e.getPresentation().getText() + " selected changes";
-      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> {
-        apply(changes);
-      });
+      DiffUtil.executeWriteCommand(getEditor(myModifiedSide).getDocument(), e.getProject(), title, () -> apply(changes));
     }
 
     protected boolean isBothEditable() {

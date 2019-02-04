@@ -357,12 +357,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   private class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
-    final TextAttributes myAttributes;
-
-    DebuggerEditorListener() {
-      myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES).clone();
-      myAttributes.setBackgroundColor(ColorUtil.softer(myAttributes.getBackgroundColor()));
-    }
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA) {
@@ -379,9 +373,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         return;
       }
       removeHighlighter(e);
+
+      TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+      Color backgroundColor = attributes.getBackgroundColor();
+      if (backgroundColor != null) {
+        attributes = attributes.clone();
+        attributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
+      }
+
       myCurrentHighlighter = e.getEditor().getMarkupModel().addLineHighlighter(getLineNumber(e),
                                                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                               myAttributes);
+                                                                               attributes);
       IdeGlassPaneUtil.find(e.getMouseEvent().getComponent()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), this);
     }
 

@@ -94,7 +94,7 @@ public class CompileDriver {
       startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -146,7 +146,7 @@ public class CompileDriver {
       startup(scope, false, true, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 
@@ -155,7 +155,7 @@ public class CompileDriver {
       startup(compileScope, true, false, callback, null);
     }
     else {
-      callback.finished(true, 0, 0, DummyCompileContext.getInstance());
+      callback.finished(true, 0, 0, DummyCompileContext.create(myProject));
     }
   }
 

@@ -421,9 +421,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         myLastChosen = first.getFile();
       }
       fireLibraryChanged();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
 
     protected abstract List<OrderRoot> selectRoots(@Nullable VirtualFile initialSelection);
@@ -478,9 +476,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     updatePropertiesLabel();
     myTreeBuilder.queueUpdate();
     if (putFocusIntoTree) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
     fireLibraryChanged();
   }

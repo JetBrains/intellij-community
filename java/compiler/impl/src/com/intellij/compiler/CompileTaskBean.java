@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.util.ExtensionInstantiator;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +27,8 @@ public final class CompileTaskBean extends AbstractExtensionPointBean {
 
   public CompileTaskBean(Project project) {
     myInstanceHolder = AtomicNotNullLazyValue.createValue(() -> {
-      try {
-        return instantiateWithPicoContainerOnlyIfNeeded(myImplementation, project.getPicoContainer());
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      //noinspection CodeBlock2Expr
+      return ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(myImplementation, project.getPicoContainer(), myPluginDescriptor);
     });
   }
 

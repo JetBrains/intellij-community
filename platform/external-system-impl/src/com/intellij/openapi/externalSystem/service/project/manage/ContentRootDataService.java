@@ -128,12 +128,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           VirtualFile[] roots = modelsProvider.getModifiableRootModel(module).getContentRoots();
           if (roots.length > 0) {
             VirtualFile virtualFile = roots[0];
-            ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
-              StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-                final ProjectView projectView = ProjectView.getInstance(project);
-                projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
-              });
-            });
+            ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+              final ProjectView projectView = ProjectView.getInstance(project);
+              projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+            }));
           }
         }
       }

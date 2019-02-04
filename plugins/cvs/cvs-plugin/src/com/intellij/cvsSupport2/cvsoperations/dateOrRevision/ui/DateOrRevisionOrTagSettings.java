@@ -66,9 +66,7 @@ public class DateOrRevisionOrTagSettings {
         refreshEnabling();
         if (myUseBranch.isEnabled()){
           myBranch.getTextField().selectAll();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myBranch.getTextField(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myBranch.getTextField(), true));
         }
       }
     });
@@ -88,9 +86,7 @@ public class DateOrRevisionOrTagSettings {
         }
         refreshEnabling();
         if (myUseDate.isEnabled()){
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myDatePicker, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDatePicker, true));
         }
 
       }

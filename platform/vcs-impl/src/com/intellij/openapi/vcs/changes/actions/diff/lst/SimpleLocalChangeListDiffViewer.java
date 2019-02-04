@@ -207,9 +207,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
 
-    List<Range> linesRanges = ContainerUtil.map(ranges, range -> {
-      return new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2());
-    });
+    List<Range> linesRanges = ContainerUtil.map(ranges, range -> new Range(range.getVcsLine1(), range.getVcsLine2(), range.getLine1(), range.getLine2()));
 
     List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(vcsText, localText, linesRanges, indicator));
 
@@ -225,9 +223,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       boolean isSkipped = !isFromActiveChangelist;
       boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
-      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
-        return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
-      }));
+      changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
     }
 
     return apply(new CompareData(changes, isContentsEqual));
@@ -524,13 +520,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     public void doLayout() {
       Dimension size = myCheckbox.getPreferredSize();
       EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
-      int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
-      int iconAreaWidth = gutter.getIconsAreaWidth();
-
       int y = (getHeight() - size.height) / 2;
-      int gap = (iconAreaWidth - AllIcons.Diff.GutterCheckBox.getIconWidth()) / 2;
-      int x = gutterWidth - gap - size.width;
-      myCheckbox.setBounds(Math.max(0, x), Math.max(0, y), size.width, size.height);
+      int x = gutter.getIconAreaOffset() + 2; // "+2" from EditorGutterComponentImpl.processIconsRow
+      myCheckbox.setBounds(Math.min(getWidth() - AllIcons.Diff.GutterCheckBox.getIconWidth(), x), Math.max(0, y), size.width, size.height);
     }
 
     @Override
@@ -570,6 +562,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @Nullable
     private Icon getIcon() {
+      if (!myAllowExcludeChangesFromCommit) return null;
+
       PartialLocalLineStatusTracker tracker = getPartialTracker();
       if (tracker == null || !tracker.isValid()) return null;
 

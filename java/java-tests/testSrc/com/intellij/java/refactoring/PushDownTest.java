@@ -120,31 +120,23 @@ public class PushDownTest extends LightRefactoringTestCase {
   }
 
   public void testClassShouldBeAbstractConflict() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Non abstract class <b><code>B</code></b> will miss implementation of method <b><code>foo()</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Non abstract class <b><code>B</code></b> will miss implementation of method <b><code>foo()</code></b>")));
   }
 
   public void testClassInheritsUnrelatedDefaultsConflict() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>I</code></b> and interface <b><code>A</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>I</code></b> and interface <b><code>A</code></b>")));
   }
 
   public void testStaticToLocal() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(), Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(), Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>")));
   }
 
   public void testStaticToLocalWithReferenceUpdate() {
-    doTest(conflicts -> {
-      assertSameElements(conflicts.values(),
-                         Arrays.asList("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                       "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
-                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
-                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
-    });
+    doTest(conflicts -> assertSameElements(conflicts.values(),
+                                         Arrays.asList("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                     "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
+                                     "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>")));
   }
 
   private void doTest() {

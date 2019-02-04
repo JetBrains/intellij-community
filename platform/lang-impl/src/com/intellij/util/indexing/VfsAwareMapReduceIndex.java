@@ -166,9 +166,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
             (key, value, inputId1) -> {
             },
             (key, value, inputId1) -> {},
-            (key, inputId1) -> {
-              diskKeySet.add(key);
-            }
+            (key, inputId1) -> diskKeySet.add(key)
           );
           removeTransientDataForKeys(inputId, diskKeySet);
         }

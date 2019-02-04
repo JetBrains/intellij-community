@@ -437,9 +437,7 @@ public class PyMoveTest extends PyTestCase {
   public void testMoveSymbolDoesntCreateInitPyInSourceRoot() {
     doComparingDirectories(testDir -> {
       final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
-      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> {
-        moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass");
-      });
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass"));
     });
   }
 

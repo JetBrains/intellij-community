@@ -22,17 +22,17 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,9 +105,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   private void applyFix() {
     chooseParent(myParents,
-                 parent -> WriteCommandAction.writeCommandAction(parent.getManager().getProject(), DomUtil.getFile(parent)).run(() -> {
-                   doFix(parent, myChildDescription, myNewName);
-                 }));
+                 parent -> WriteCommandAction.writeCommandAction(parent.getManager().getProject(), DomUtil.getFile(parent)).run(() -> doFix(parent, myChildDescription, myNewName)));
   }
 
   protected DomElement doFix(DomElement parent, final DomCollectionChildDescription childDescription, String newName) {

@@ -139,9 +139,7 @@ public class TableCellEditorWithButton extends AbstractCellEditor implements Tab
 
     @Override
     public boolean requestDefaultFocus() {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true));
       return true;
     }
   }

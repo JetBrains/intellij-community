@@ -156,15 +156,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
     if (manifest == null) {
       Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
-      ReadAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-          VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null);
-      });
+      ReadAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
+        VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null));
     }
     else {
-      WriteAction.run(()-> {
-        myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null);
-      });
+      WriteAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null));
     }
   }
 

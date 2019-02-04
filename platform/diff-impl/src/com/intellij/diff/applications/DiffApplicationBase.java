@@ -102,9 +102,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
 
   @NotNull
   public List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<VirtualFile> contents) {
-    return ContainerUtil.map(contents, file -> {
-      return ObjectUtils.notNull(file, () -> new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
-    });
+    return ContainerUtil.map(contents, file -> ObjectUtils.notNull(file, () -> new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, "")));
   }
 
 

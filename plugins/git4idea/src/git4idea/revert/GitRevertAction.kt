@@ -20,9 +20,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil.pluralize
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS
-import com.intellij.vcs.log.util.VcsLogUtil.collectFirstPack
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.config.GitVcsSettings
 
@@ -38,7 +38,7 @@ class GitRevertAction : DumbAwareAction() {
     }
     val repositoryManager = getRepositoryManager(project)
 
-    val commits = collectFirstPack(log.selectedShortDetails, MAX_SELECTED_COMMITS)
+    val commits = ContainerUtil.getFirstItems(log.selectedShortDetails, MAX_SELECTED_COMMITS)
     // commits from mixed roots
     if (commits.any { repositoryManager.getRepositoryForRootQuick(it.root) == null }) {
       e.presentation.isEnabledAndVisible = false

@@ -19,7 +19,6 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -70,9 +69,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     Document document = new DocumentImpl("line0\nline1\nline2");
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      document.deleteString(document.getLineStartOffset(1), document.getTextLength());
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(document.getLineStartOffset(1), document.getTextLength()));
     assertFalse(highlighter.isValid());
   }
 

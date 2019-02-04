@@ -112,9 +112,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
       .setTitle(QuickFixBundle.message("target.class.chooser.title"))
-      .setItemChosenCallback((aClass) -> {
-        doInvoke(aClass, superClassName);
-      });
+      .setItemChosenCallback((aClass) -> doInvoke(aClass, superClassName));
     renderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(editor);
   }

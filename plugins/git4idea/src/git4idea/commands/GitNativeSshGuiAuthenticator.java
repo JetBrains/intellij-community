@@ -143,9 +143,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     if (myAuthenticationMode != FULL) return null;
 
     Ref<String> answerRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      answerRef.set(query.compute());
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> answerRef.set(query.compute()), ModalityState.any());
     return answerRef.get();
   }
 }

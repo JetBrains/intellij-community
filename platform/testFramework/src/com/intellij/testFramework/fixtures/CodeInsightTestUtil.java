@@ -175,9 +175,7 @@ public class CodeInsightTestUtil {
   public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
-      CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
-    });
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile()));
     fixture.checkResultByFile(after, false);
   }
 

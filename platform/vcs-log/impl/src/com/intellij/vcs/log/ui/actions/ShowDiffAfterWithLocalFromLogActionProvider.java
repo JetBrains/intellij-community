@@ -31,7 +31,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     if (filePath != null) return filePath;
     List<CommitId> commits = log.getSelectedCommits();
-    if (commits.isEmpty() || commits.size() > 1) return null;
+    if (commits.size() != 1) return null;
     return VcsUtil.getFilePath(notNull(getFirstItem(commits)).getRoot());
   }
 
@@ -77,7 +77,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     FilePath path = getFilePath(e, log);
-    VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    if (path == null) return;
 
     FilePath pathInCommit = path;
     FileHistoryUi historyUi = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
@@ -85,6 +85,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
       pathInCommit = historyUi.getPathInCommit(commit.getHash());
     }
 
+    VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
     handler.showDiffWithLocal(commit.getRoot(), pathInCommit, commit.getHash(), path);
   }
 }

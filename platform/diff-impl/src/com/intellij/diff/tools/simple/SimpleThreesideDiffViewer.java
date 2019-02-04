@@ -111,9 +111,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     try {
       indicator.checkCanceled();
 
-      List<CharSequence> sequences = ContainerUtil.map(getContents(), content -> {
-        return content.getDocument().getImmutableCharSequence();
-      });
+      List<CharSequence> sequences = ContainerUtil.map(getContents(), content -> content.getDocument().getImmutableCharSequence());
 
       List<FineMergeLineFragment> lineFragments = myTextDiffProvider.compare(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                              indicator);

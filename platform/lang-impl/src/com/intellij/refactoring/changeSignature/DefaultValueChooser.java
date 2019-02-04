@@ -44,9 +44,7 @@ public class DefaultValueChooser extends DialogWrapper{
         myValueEditor.setEnabled(myUseValueRadioButton.isSelected());
         if (myUseValueRadioButton.isSelected()) {
           myValueEditor.selectAll();
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myValueEditor, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myValueEditor, true));
         }
       }
     };

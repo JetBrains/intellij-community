@@ -75,9 +75,7 @@ public class CellEditorComponentWithBrowseButton<Comp extends JComponent> extend
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true));
   }
 
   @SuppressWarnings("deprecation")

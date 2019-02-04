@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.io.File
 
@@ -27,8 +26,8 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
   fun `test changes in 3-level nested root`() {
     // 1. prepare roots and files
     val repo = createRepository(project, projectPath)
-    val childRepo = createSubRoot(projectPath, "child")
-    val grandChildRepo = createSubRoot(childRepo.root.path, "grand")
+    val childRepo = repo.createSubRepository("child")
+    val grandChildRepo = childRepo.createSubRepository("grand")
 
     createFileStructure(repo.root, "a.txt")
     createFileStructure(childRepo.root, "in1.txt", "in2.txt", "grand/inin1.txt", "grand/inin2.txt")
@@ -99,16 +98,6 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
 
     assertEquals(1, changeListManager.allChanges.size)
     assertFileStatus("b.txt", FileStatus.MODIFIED)
-  }
-
-  private fun createSubRoot(parent: String, name: String) : GitRepository {
-    val childRoot = File(parent, name)
-    assertTrue(childRoot.mkdir())
-    val repo = createRepository(project, childRoot.path)
-    cd(parent)
-    touch(".gitignore", name)
-    addCommit("gitignore")
-    return repo
   }
 
   private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {

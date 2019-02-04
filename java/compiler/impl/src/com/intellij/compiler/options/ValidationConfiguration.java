@@ -13,22 +13,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.compiler.JpsCompilerValidationExcludeSerializer;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsValidationSerializer;
 
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "ValidationConfiguration", storages = @Storage("validation.xml"))
-public class ValidationConfiguration implements PersistentStateComponent<ValidationConfiguration> {
-
-  public boolean VALIDATE_ON_BUILD = false;
-  public Map<String, Boolean> VALIDATORS = new HashMap<>();
+@State(name = JpsValidationSerializer.COMPONENT_NAME, storages = @Storage(JpsValidationSerializer.CONFIG_FILE_NAME))
+public class ValidationConfiguration implements PersistentStateComponent<JpsValidationSerializer.ValidationConfigurationState> {
+  private final JpsValidationSerializer.ValidationConfigurationState myState = new JpsValidationSerializer.ValidationConfigurationState();
 
   public static boolean shouldValidate(Compiler validator, CompileContext context) {
     ValidationConfiguration configuration = getInstance(context.getProject());
-    return (configuration.VALIDATE_ON_BUILD) && configuration.isSelected(validator);
+    return (configuration.myState.VALIDATE_ON_BUILD) && configuration.isSelected(validator);
   }
 
   public boolean isSelected(Compiler validator) {
@@ -36,8 +32,16 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
   }
 
   public boolean isSelected(String validatorDescription) {
-    final Boolean selected = VALIDATORS.get(validatorDescription);
+    final Boolean selected = myState.VALIDATORS.get(validatorDescription);
     return selected == null || selected.booleanValue();
+  }
+
+  public boolean isValidateOnBuild() {
+    return myState.VALIDATE_ON_BUILD;
+  }
+
+  public void setValidateOnBuild(boolean value) {
+    myState.VALIDATE_ON_BUILD = value;
   }
 
   public void setSelected(Compiler validator, boolean selected) {
@@ -45,7 +49,7 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
   }
 
   public void setSelected(String validatorDescription, boolean selected) {
-    VALIDATORS.put(validatorDescription, selected);
+    myState.VALIDATORS.put(validatorDescription, selected);
   }
 
   public static ValidationConfiguration getInstance(Project project) {
@@ -57,13 +61,14 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
   }
 
   @Override
-  public ValidationConfiguration getState() {
-    return this;
+  @NotNull
+  public JpsValidationSerializer.ValidationConfigurationState getState() {
+    return myState;
   }
 
   @Override
-  public void loadState(@NotNull final ValidationConfiguration state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public void loadState(@NotNull final JpsValidationSerializer.ValidationConfigurationState state) {
+    XmlSerializerUtil.copyBean(state, myState);
   }
 
   @State(

@@ -1,13 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info
 
+import com.intellij.openapi.util.io.FileUtil.isAbsolute
 import org.jetbrains.idea.svn.api.*
 import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription
 import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
 
-private fun resolveConflictFile(file: File?, path: String?) = if (file != null && path != null) File(file.parentFile, path) else null
+private fun resolveConflictFile(file: File?, path: String?): File? {
+  if (path == null) return null
+  if (isAbsolute(path)) return File(path)
+
+  val parent = file?.parentFile ?: throw IllegalArgumentException("Could not resolve conflict file for $file and $path")
+  return File(parent, path)
+}
 
 class Info(val file: File?,
            val url: Url?,
@@ -21,14 +28,14 @@ class Info(val file: File?,
            val copyFromUrl: Url? = null,
            val copyFromRevision: Revision = Revision.UNDEFINED,
            val lock: Lock? = null,
-           conflictOldFileName: String? = null,
-           conflictNewFileName: String? = null,
-           conflictWorkingFileName: String? = null,
+           conflictOldFilePath: String? = null,
+           conflictNewFilePath: String? = null,
+           conflictWorkingFilePath: String? = null,
            val treeConflict: TreeConflictDescription? = null) : BaseNodeDescription(nodeKind) {
   val commitInfo: CommitInfo = commitInfo ?: CommitInfo.EMPTY
-  val conflictOldFile = resolveConflictFile(file, conflictOldFileName)
-  val conflictNewFile = resolveConflictFile(file, conflictNewFileName)
-  val conflictWrkFile = resolveConflictFile(file, conflictWorkingFileName)
+  val conflictOldFile = resolveConflictFile(file, conflictOldFilePath)
+  val conflictNewFile = resolveConflictFile(file, conflictNewFilePath)
+  val conflictWrkFile = resolveConflictFile(file, conflictWorkingFilePath)
 
   @Deprecated("Use nodeKind property", ReplaceWith("nodeKind"))
   val kind

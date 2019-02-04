@@ -44,7 +44,7 @@ class CollectConversion {
       return;
     }
 
-    convertQualifierViaCollectors(ref, expectedTypes, consumer, qualifier);
+    convertQualifierViaCollectors(ref, expectedTypes, consumer, qualifier, collectors);
   }
 
   private static void suggestCollectorsArgument(Collection<? extends ExpectedTypeInfo> expectedTypes, Consumer<? super LookupElement> consumer, PsiClass collectors, PsiExpression qualifier) {
@@ -64,8 +64,11 @@ class CollectConversion {
 
   private static void convertQualifierViaCollectors(PsiReferenceExpression ref,
                                                     Collection<? extends ExpectedTypeInfo> expectedTypes,
-                                                    Consumer<? super LookupElement> consumer, PsiExpression qualifier) {
+                                                    Consumer<? super LookupElement> consumer,
+                                                    PsiExpression qualifier,
+                                                    @NotNull PsiClass collectors) {
     for (Pair<String, PsiType> pair : suggestCollectors(expectedTypes, qualifier)) {
+      if (collectors.findMethodsByName(pair.first, true).length == 0) continue;
       consumer.consume(new MyLookupElement(pair.first, pair.second, ref));
     }
   }
@@ -119,9 +122,11 @@ class CollectConversion {
     List<Pair<String, PsiType>> result = new ArrayList<>();
     if (listType != null) {
       result.add(Pair.create("toList", listType));
+      result.add(Pair.create("toUnmodifiableList", listType));
     }
     if (setType != null) {
       result.add(Pair.create("toSet", setType));
+      result.add(Pair.create("toUnmodifiableSet", setType));
     }
     if (expectedTypes.isEmpty() || hasIterable) {
       result.add(Pair.create("toCollection", factory.createType(collection, component)));

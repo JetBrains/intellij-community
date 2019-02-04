@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -30,8 +28,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
-
-  private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
           static final int IS_WRITABLE_FLAG = 0x01000000;
           static final int IS_HIDDEN_FLAG =   0x02000000;
@@ -62,12 +58,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   void updateLinkStatus() {
-    boolean isSymLink = is(VFileProperty.SYMLINK);
-    if (isSymLink) {
-      String target = getParent().getFileSystem().resolveSymLink(this);
-      setLinkTarget(target != null ? FileUtil.toSystemIndependentName(target) : null);
-    }
-    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || getParent().getFlagInt(HAS_SYMLINK_FLAG));
+    setFlagInt(HAS_SYMLINK_FLAG, is(VFileProperty.SYMLINK) || getParent().getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   @Override
@@ -258,7 +249,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return mySegment.vfsData.isFileValid(myId) ? myId : -myId;
+    return myId;
   }
 
   @Override
@@ -386,15 +377,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (property == PROP_HIDDEN) setFlagInt(IS_HIDDEN_FLAG, value);
   }
 
-  public void setLinkTarget(@Nullable String target) {
-    putUserData(SYMLINK_TARGET, target);
-  }
-
   @Override
   public String getCanonicalPath() {
     if (getFlagInt(HAS_SYMLINK_FLAG)) {
       if (is(VFileProperty.SYMLINK)) {
-        return getUserData(SYMLINK_TARGET);
+        return ourPersistence.resolveSymLink(this);
       }
       VirtualFileSystemEntry parent = getParent();
       if (parent != null) {

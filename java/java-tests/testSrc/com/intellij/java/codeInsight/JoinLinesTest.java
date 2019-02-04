@@ -43,6 +43,11 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
 
   public void testCallChain() { doTest(); }
   public void testCallChain2() { doTest(); }
+  public void testCallChainLineBreak() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest(); 
+  }
   public void testCallChainWrong() { doTest(); }
   public void testCallChainWrong2() { doTest(); }
   public void testDeclarationAndCall() { doTest(); }

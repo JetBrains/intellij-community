@@ -33,9 +33,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
 
     GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
     if (appliedPatch != null) {
-      FormatChangedTextUtil.getInstance().runHeavyModificationTask(project, document, () -> {
-        document.setText(appliedPatch.patchedText);
-      });
+      FormatChangedTextUtil.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
       FileDocumentManager.getInstance().saveDocument(document);
       return new Result(appliedPatch.status);
     }

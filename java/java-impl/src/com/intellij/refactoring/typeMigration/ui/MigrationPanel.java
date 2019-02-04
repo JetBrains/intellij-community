@@ -193,9 +193,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                   ensureFilesWritable(files).hasReadonlyFiles()) {
                   return;
                 }
-                WriteCommandAction.writeCommandAction(myProject).run(() -> {
-                  TypeMigrationProcessor.change(usages, myLabeler, myProject);
-                });
+                WriteCommandAction.writeCommandAction(myProject).run(() -> TypeMigrationProcessor.change(usages, myLabeler, myProject));
               }, myProject.getDisposed());
             }, "Type Migration", false, myProject);
           }

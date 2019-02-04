@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS;
-import static com.intellij.vcs.log.util.VcsLogUtil.collectFirstPack;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 
@@ -90,7 +89,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
    */
   @Nullable
   private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
-    MultiMap<Repo, CommitId> commitIds = groupCommits(project, collectFirstPack(log.getSelectedCommits(), MAX_SELECTED_COMMITS),
+    MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(log.getSelectedCommits(), MAX_SELECTED_COMMITS),
                                                       CommitId::getRoot);
     if (commitIds == null) return null;
 
