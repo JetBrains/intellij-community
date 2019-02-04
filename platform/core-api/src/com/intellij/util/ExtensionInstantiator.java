@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -36,6 +37,9 @@ public final class ExtensionInstantiator {
     try {
       return ReflectionUtil.newInstance(clazz, false);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Throwable e) {
       if (e.getCause() instanceof NoSuchMethodException) {
         LOG.error(new PluginException("Bean extension class constructor must not have parameters: " + className, pluginId));
@@ -47,6 +51,9 @@ public final class ExtensionInstantiator {
 
     try {
       return AbstractExtensionPointBean.instantiate(clazz, picoContainer, true);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       throw new PluginException(e, pluginId);
