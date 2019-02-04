@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,7 +30,6 @@ public final class GotoDeclarationActionHandler implements CodeInsightActionHand
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
     final PsiElement declarationElement = findDeclarationElement(project, editor);
     if (declarationElement == null) {
       GotoDeclarationOnlyHandler.INSTANCE.invoke(project, editor, file);
