@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 
 public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
@@ -116,10 +117,9 @@ public class AsyncEditorLoader {
    */
   private LoadingProgress scheduleLoading() {
     CompletableFuture<Runnable> continuationFuture = new CompletableFuture<>();
-    Document document = myEditor.getDocument();
     Future<?> totalProgressFuture = ourExecutor.submit(() -> {
       while (!myEditorComponent.isDisposed() && !isDone()) {
-        LoadEditorResult result = tryLoadEditor(document);
+        LoadEditorResult result = tryLoadEditor();
         if (result != null) {
           continuationFuture.complete(result.continuation);
           invokeAndWait(() -> {
@@ -127,7 +127,7 @@ public class AsyncEditorLoader {
               // it might happen when the caller already finished the loading manually through `continuationFuture`
               return;
             }
-            if ((myTooLongIndicator.isCanceled() || isCommitted()) && result.docStamp == document.getModificationStamp()) {
+            if ((myTooLongIndicator.isCanceled() || isCommitted()) && result.continuationValidator.test(myEditor.getDocument())) {
               loadingFinished(result.continuation);
             }
           });
@@ -146,24 +146,21 @@ public class AsyncEditorLoader {
     return myLoadingFinished.isDone();
   }
 
-  private static class LoadEditorResult {
-    final long docStamp;
+  static class LoadEditorResult {
+    @NotNull final Predicate<Document> continuationValidator;
     @NotNull final Runnable continuation;
 
-    private LoadEditorResult(long docStamp, @NotNull Runnable continuation) {
-      this.docStamp = docStamp;
+    LoadEditorResult(@NotNull Predicate<Document> continuationValidator, @NotNull Runnable continuation) {
+      this.continuationValidator = continuationValidator;
       this.continuation = continuation;
     }
   }
 
   @Nullable
-  private LoadEditorResult tryLoadEditor(@NotNull Document document) {
+  private LoadEditorResult tryLoadEditor() {
     Ref<LoadEditorResult> ref = Ref.create();
-    Runnable loadingRunnable = () -> {
-      Runnable continuation =
-        myProject.isDisposed() ? EmptyRunnable.INSTANCE : myTextEditor.loadEditorInBackground();
-      ref.set(new LoadEditorResult(document.getModificationStamp(), continuation));
-    };
+    Runnable loadingRunnable = () -> ref.set(myProject.isDisposed() ? new LoadEditorResult(document -> true, EmptyRunnable.INSTANCE)
+                                                                    : myTextEditor.loadEditorInBackground());
     if (!myTooLongIndicator.isCanceled()) {
         ProgressIndicatorUtils.runWithWriteActionPriority(
           () -> PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(loadingRunnable),
