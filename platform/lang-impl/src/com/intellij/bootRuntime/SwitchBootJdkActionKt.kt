@@ -3,7 +3,6 @@ package com.intellij.bootRuntime
 
 import com.intellij.bootRuntime.bundles.Local
 import com.intellij.bootRuntime.bundles.Runtime
-import com.intellij.bootRuntime.ui.dialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -14,11 +13,12 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
-import java.awt.GridLayout
+import java.awt.*
 import java.io.File
 import javax.swing.*
 
@@ -82,10 +82,6 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
     combobox.model = myRuntimeUrlComboboxModel
 
-    // todo change to dsl
-    val centralPanel = JPanel(GridLayout(1,1))
-    centralPanel.add(comboboxWithBrowserButton)
-
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
         bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
@@ -94,12 +90,34 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
     combobox.selectedItem = bundles[0];
 
-    dialog(
-      title = "Switch Boot Runtime",
-      owner = WindowManager.getInstance().suggestParentWindow(e.project),
-      centerPanel = centralPanel,
-      southPanel = southPanel
-    )
+    val centralPanel = JPanel(GridBagLayout())
+    val constraint = GridBagConstraints()
+    constraint.insets = Insets(10, 0,10, 0)
+    centralPanel.add(comboboxWithBrowserButton, constraint)
+
+    val myDialogWrapper = object: DialogWrapper(e.project) {
+      init {
+        title = "Switch Boot Runtime"
+        init()
+        peer.window.isAutoRequestFocus = true
+        controller.updateRuntime()
+
+      }
+
+      override fun getPreferredFocusedComponent(): JComponent? {
+        return comboboxWithBrowserButton.childComponent
+      }
+
+      override fun createCenterPanel(): JComponent? = centralPanel
+
+      override fun createSouthPanel(): JComponent = southPanel
+
+      override fun createActions(): Array<Action> {
+        return emptyArray()
+      }
+    }
+
+    myDialogWrapper.show()
   }
 }
 

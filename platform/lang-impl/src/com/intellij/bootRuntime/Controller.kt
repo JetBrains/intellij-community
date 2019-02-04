@@ -9,13 +9,22 @@ import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.openapi.project.Project
-import javax.swing.JButton
-import javax.swing.SwingUtilities
+import com.intellij.ui.components.JBOptionButton
+import java.awt.GridBagConstraints
+import java.awt.Insets
+import javax.swing.Action
 
 class Controller(val project: Project, val actionPanel:ActionPanel, val model: Model) {
 
   init {
     CommandFactory.initialize(project, this)
+  }
+
+  fun actionsForCurrentRuntime() : List<Action> {
+    return runtimeStateToActions(model.selectedBundle, model.currentState()).toList()
+  }
+
+  fun updateRuntime() {
     runtimeSelected(model.selectedBundle)
   }
 
@@ -23,11 +32,20 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
   fun runtimeSelected(runtime:Runtime) {
     model.updateBundle(runtime)
     actionPanel.removeAll()
-    runtimeStateToActions(runtime, model.currentState())
-      .map { abstractAction -> JButton(abstractAction) }
-      .forEach{ button -> actionPanel.add(button) }
+    val list = runtimeStateToActions(runtime, model.currentState()).toList()
+
+    val job = JBOptionButton(list.firstOrNull(), list.subList(1, list.size).toTypedArray())
+
+    val constraint = GridBagConstraints()
+    constraint.insets = Insets(0,0,0, 0)
+    constraint.weightx = 1.0
+    constraint.anchor = GridBagConstraints.EAST
+
+    actionPanel.rootPane?.defaultButton = job
+
+    actionPanel.add(job, constraint);
     actionPanel.repaint()
-    SwingUtilities.getWindowAncestor(actionPanel)?.pack()
+    actionPanel.revalidate()
   }
 
   private fun runtimeStateToActions(runtime:Runtime, currentState: BundleState) : List<Command> {
