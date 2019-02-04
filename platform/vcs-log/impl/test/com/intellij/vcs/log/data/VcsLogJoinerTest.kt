@@ -36,11 +36,11 @@ class VcsLogJoinerTest {
   }
 
   class TestRunner {
-    private var fullLog: List<String>? = null
-    private var recentCommits: List<String>? = null
-    private var oldRefs: List<String>? = null
-    private var newRefs: List<String>? = null
-    private var expected: String? = null
+    private lateinit var fullLog: List<String>
+    private lateinit var recentCommits: List<String>
+    private lateinit var oldRefs: List<String>
+    private lateinit var newRefs: List<String>
+    private lateinit var expected: String
 
     private fun build(f: StringArrayBuilder.() -> Unit): List<String> {
       val stringArrayBuilder = StringArrayBuilder()
@@ -69,24 +69,24 @@ class VcsLogJoinerTest {
     }
 
     fun run() {
-      val vcsFullLog = TimedCommitParser.log(fullLog!!)
-      val vcsRecentCommits = TimedCommitParser.log(recentCommits!!)
-      val vcsOldRefs = oldRefs!!.map { HashImpl.build(it) }
-      val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
+      val vcsFullLog = TimedCommitParser.log(fullLog)
+      val vcsRecentCommits = TimedCommitParser.log(recentCommits)
+      val vcsOldRefs = oldRefs.map { HashImpl.build(it) }
+      val vcsNewRefs = newRefs.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.id.asString() }.joinToString(separator = "\n")
+      val actual = result.joinToString(separator = "\n") { it.id.asString() }
       assertEquals(expected, actual)
     }
   }
 
-  fun runTest(f: TestRunner.() -> Unit) {
+  private fun runTest(f: TestRunner.() -> Unit) {
     val testRunner = TestRunner()
     testRunner.f()
     testRunner.run()
   }
 
-  val BIG_TIME = 100000000
+  private val BIG_TIME = 100000000
 
   @Test
   fun simple() {
