@@ -35,7 +35,7 @@ import java.net.URL;
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarStatisticsService implements StartupActivity, DumbAware {
+public class LibraryJarStatisticsService implements DumbAware {
 
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
 
@@ -89,12 +89,5 @@ public class LibraryJarStatisticsService implements StartupActivity, DumbAware {
     }
 
     return null;
-  }
-
-  @Override
-  public void runActivity(@NotNull Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-    ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> getInstance().getTechnologyDescriptors());
   }
 }
