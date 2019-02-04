@@ -216,7 +216,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
         ((RefJavaFileImpl)refWhat).addInReference(this);
         getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
       } else if (refWhat instanceof RefJavaElementImpl) {
-        ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
+        ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, forWriting, forReading, expression);
       }
     } else {
       if (psiWhat instanceof PsiMethod) {
@@ -226,7 +226,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     }
   }
 
-  protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom,
+                                PsiElement psiFrom,
+                                boolean forWriting,
+                                boolean forReading,
+                                UExpression expressionFrom) {
     addInReference(refFrom);
     setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
@@ -278,7 +282,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
           final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
           if (enumConstantReference != null) {
             addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, psiFrom, enumConstant, false, true, expression);
+            enumConstantReference.markReferenced(this, psiFrom, false, true, expression);
           }
         }
       }

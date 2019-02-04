@@ -57,7 +57,11 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom,
+                                PsiElement psiFrom,
+                                boolean forWriting,
+                                boolean forReading,
+                                UExpression expressionFrom) {
     addInReference(refFrom);
 
     boolean referencedFromClassInitializer = false;
