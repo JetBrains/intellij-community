@@ -329,8 +329,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (statements.length == 1) {
         if (statements[0] instanceof PsiExpressionStatement) {
           tempExpr = ((PsiExpressionStatement) statements[0]).getExpression();
-        } else if (statements[0] instanceof PsiReturnStatement) {
+        }
+        else if (statements[0] instanceof PsiReturnStatement) {
           tempExpr = ((PsiReturnStatement)statements[0]).getReturnValue();
+        }
+        else if (statements[0] instanceof PsiSwitchStatement) {
+          PsiExpression expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(statements[0].getText(), statements[0]);
+          TextRange range = statements[0].getTextRange();
+          final RangeMarker rangeMarker = FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(range);
+          expr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
+          expr.putUserData(ElementToWorkOn.PARENT, statements[0]);
+          return expr;
         }
       }
     }
