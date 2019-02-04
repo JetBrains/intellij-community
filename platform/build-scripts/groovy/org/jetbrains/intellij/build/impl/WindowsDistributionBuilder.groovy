@@ -79,8 +79,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildWinLauncher(it, winDistPath)
     }
     customizer.copyAdditionalFiles(buildContext, winDistPath)
-    new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
-      buildContext.signExeFile(it.absolutePath)
+    List<String> extensions = ["exe", "dll"]
+    for (String extension : extensions) {
+      new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each {
+        buildContext.signExeFile(it.absolutePath)
+      }
     }
     return winDistPath
   }
