@@ -467,7 +467,6 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull protected final T myLabel;
     @NotNull protected final PsiStatement[] myStatements;
     @NotNull protected final String[] myCommentTexts;
-    protected final boolean myInExpression;
     private final boolean myIsDefault;
     private DuplicatesFinder myFinder;
 
@@ -478,7 +477,6 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       myLabel = labels[0];
       myStatements = statements;
       myCommentTexts = commentTexts;
-      myInExpression = PsiTreeUtil.getParentOfType(labels[0], PsiSwitchBlock.class) instanceof PsiSwitchExpression;
       myIsDefault = ContainerUtil.find(labels, PsiSwitchLabelStatementBase::isDefaultCase) != null;
     }
 
