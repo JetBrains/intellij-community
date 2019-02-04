@@ -5,10 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.function.Supplier;
@@ -58,7 +60,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     if (cellValidator != null) {
       ValidationInfo result = cellValidator.validate(value, row, column);
       iconLabel.setIcon(result == null ? null : result.warning ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
-      iconLabel.setBorder(result == null ? null: JBUI.Borders.emptyRight(3));
+      iconLabel.setBorder(result == null ? null: iconBorder());
       putClientProperty(CELL_VALIDATION_PROPERTY, result);
     }
 
@@ -68,6 +70,10 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
 
     setBackground(delegateRenderer.getBackground());
     return this;
+  }
+
+  private static Border iconBorder() {
+    return JBUI.Borders.emptyRight(UIUtil.isUnderWin10LookAndFeel() ? 4 : 3);
   }
 
   @Override
