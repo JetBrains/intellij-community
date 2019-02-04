@@ -10,7 +10,7 @@ import com.intellij.util.text.nullize
 
 internal const val ROOT_GROUP_NAME = SERVICE_NAME_PREFIX
 
-internal abstract class BaseKeePassCredentialStore : CredentialStore {
+abstract class BaseKeePassCredentialStore : CredentialStore {
   protected abstract val db: KeePassDatabase
 
   override fun get(attributes: CredentialAttributes): Credentials? {

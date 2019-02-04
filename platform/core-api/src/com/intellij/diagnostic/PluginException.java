@@ -69,6 +69,14 @@ public class PluginException extends RuntimeException {
   }
 
   /**
+   * Creates an exception caused by a problem in a plugin's code, takes error message from the cause exception.
+   * @param pluginClass a problematic class which caused the error
+   */
+  public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class pluginClass) {
+    return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtil.notNullize(cause.getMessage()), cause, pluginClass);
+  }
+
+  /**
    * Log an error caused by a problem in a plugin's code.
    * @param pluginClass a problematic class which caused the error
    */

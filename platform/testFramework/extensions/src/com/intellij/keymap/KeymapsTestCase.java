@@ -338,6 +338,49 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "meta alt H",               "ChangesView.ShelveSilently", "RunDashboard.ShowConfigurations"}
     });
+    put("Sublime Text", new String[][] {
+    { "F2",                       "Arrangement.Rule.Edit", "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "ctrl ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
+    { "ctrl D",                   "CompareTwoFiles", "Diff.ShowDiff", "FileChooser.GotoDesktop", "SelectNextOccurrence", "SendEOF"},
+    { "ctrl ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLine", "PyExecuteCellAction", "ViewSource"},
+    { "ctrl EQUALS",              "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
+    { "ctrl L",                   "EditorSelectWord", "Vcs.Log.FocusTextFilter"},
+    { "ctrl M",                   "EditorMatchBrace", "TodoViewGroupByShowModules", "Vcs.ShowMessageHistory"},
+    { "ctrl MINUS",               "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
+    { "ctrl N",                   "FileChooser.NewFolder", "NewElement"},
+    { "ctrl P",                   "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "GotoFile"},
+    { "ctrl R",                   "FileStructurePopup", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "ctrl SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
+    { "ctrl alt DOWN",            "Console.TableResult.NextPage", "EditorCloneCaretBelow"},
+    { "ctrl alt UP",              "Console.TableResult.PreviousPage", "EditorCloneCaretAbove"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction", "EditorSplitLine", "ExpandExpandableComponent", "OpenElementInNewWindow"},
+    { "shift ctrl D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
+    { "shift ctrl DOWN",          "MoveLineDown", "ResizeToolWindowDown"},
+    { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
+    { "shift ctrl T",             "Images.ShowThumbnails", "ReopenClosedTab", "RunDashboard.ShowConfigurations"},
+    { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"}
+    });
+    put("Sublime Text (Mac OS X)", new String[][] {
+    { "F2",                       "Arrangement.Rule.Edit", "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
+    { "meta ADD",                 "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
+    { "meta D",                   "CompareTwoFiles", "Diff.ShowDiff", "FileChooser.GotoDesktop", "SelectNextOccurrence", "SendEOF"},
+    { "meta DOWN",                "EditorTextEnd", "SearchEverywhere.NavigateToNextGroup"},
+    { "meta ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLine", "ViewSource"},
+    { "meta EQUALS",              "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
+    { "meta I",                   "DatabaseView.PropertiesAction", "IncrementalSearch"},
+    { "meta L",                   "EditorSelectWord", "Vcs.Log.FocusTextFilter"},
+    { "meta MINUS",               "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
+    { "meta P",                   "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "GotoFile"},
+    { "meta R",                   "FileStructurePopup", "Refresh", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
+    { "meta SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
+    { "meta UP",                  "EditorTextStart", "SearchEverywhere.NavigateToPrevGroup"},
+    { "meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
+    { "meta alt G",               "DatabaseView.SqlGenerator", "FindWordAtCaret", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction"},
+    { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "OpenElementInNewWindow"},
+    { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
+    { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
+    { "shift meta T",             "Images.ShowThumbnails", "ReopenClosedTab", "RunDashboard.ShowConfigurations"}
+    });
   }};
   // @formatter:on
 

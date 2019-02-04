@@ -55,7 +55,7 @@ private fun initCipherRandomly(secureRandom: SecureRandom, engine: SkippingStrea
 
 // we should on each save change protectedStreamKey for security reasons (as KeeWeb also does)
 // so, this requirement (is it really required?) can force us to re-encrypt all passwords on save
-internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
   private var secureStringCipher = lazy {
     createRandomlyInitializedChaCha7539Engine(createSecureRandom())
   }
@@ -64,7 +64,7 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
   var isDirty: Boolean = false
     internal set
 
-  val rootGroup: KdbxGroup
+  internal val rootGroup: KdbxGroup
 
   init {
     val rootElement = rootElement.getOrCreate(KdbxDbElementNames.root)
@@ -82,7 +82,7 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
   internal fun protectValue(value: CharSequence) = StringProtectedByStreamCipher(value, secureStringCipher.value)
 
   @Synchronized
-  fun save(credentials: KeePassCredentials, outputStream: OutputStream, secureRandom: SecureRandom) {
+  internal fun save(credentials: KeePassCredentials, outputStream: OutputStream, secureRandom: SecureRandom) {
     val kdbxHeader = KdbxHeader(secureRandom)
     kdbxHeader.writeKdbxHeader(outputStream)
 
@@ -108,7 +108,7 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
     isDirty = false
   }
 
-  fun createEntry(title: String): KdbxEntry {
+  internal fun createEntry(title: String): KdbxEntry {
     val element = Element(KdbxDbElementNames.entry)
     ensureElements(element, mandatoryEntryElements)
 
@@ -224,7 +224,7 @@ internal class StringProtectedByStreamCipher(value: ByteArray, private val ciphe
   constructor(value: CharSequence, cipher: SkippingStreamCipher) : this(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray(), cipher)
 
   init {
-    var position = 0L
+    var position: Long
     data = ByteArray(value.size)
     synchronized(cipher) {
       position = cipher.position

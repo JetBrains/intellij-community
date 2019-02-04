@@ -122,7 +122,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
   }
 }
 
-internal class InMemoryCredentialStore : BaseKeePassCredentialStore(), PasswordStorage {
+class InMemoryCredentialStore : BaseKeePassCredentialStore(), PasswordStorage {
   override val db = KeePassDatabase()
 
   override fun markDirty() {
