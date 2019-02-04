@@ -18,7 +18,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -628,16 +628,13 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     final PsiType denotableFunctionalInterfaceType = RefactoringChangeUtil.getTypeByExpression(lambda);
     if (denotableFunctionalInterfaceType == null) return lambda;
 
-    Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(lambda, PsiComment.class),
-                                                        (comment) -> (PsiComment)comment.copy());
-
     final String methodRefText = createMethodReferenceText(body, functionalInterfaceType, lambda.getParameterList().getParameters());
 
     if (methodRefText != null) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambda);
       final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
-      PsiExpression replace = (PsiExpression)lambda.replace(psiExpression);
+      PsiExpression replace = (PsiExpression)new CommentTracker().replaceAndRestoreComments(lambda, psiExpression);
       final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
       functionalInterfaceType = typePointer.getType();
       if (functionalInterfaceType != null && (functionalTypeAfterReplacement == null ||
@@ -652,7 +649,6 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         replace = (PsiExpression)replace.replace(cast);
       }
 
-      AnonymousCanBeLambdaInspection.restoreComments(comments, replace);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
       return replace;
     }
