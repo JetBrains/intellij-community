@@ -18,6 +18,53 @@ class FeatureStatisticsWhitelistTest {
   }
 
   @Test
+  fun `with build and group version is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }],
+    "versions" : [ {
+      "from" : "3",
+      "to" : "5"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "IU-173.4284.118", "test.group.id")
+  }
+
+  @Test
+  fun `with build and from group version is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }],
+    "versions" : [ {
+      "from" : "3"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "IU-173.4284.118", "test.group.id")
+  }
+
+  @Test
   fun `with equal build than from is accepted`() {
     val content = """
 {
