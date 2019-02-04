@@ -10,6 +10,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
@@ -216,7 +217,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
         ((RefJavaFileImpl)refWhat).addInReference(this);
         getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
       } else if (refWhat instanceof RefJavaElementImpl) {
-        ((RefJavaElementImpl)refWhat).markReferenced(this, psiFrom, forWriting, forReading, expression);
+        ((RefJavaElementImpl)refWhat).markReferenced(this, forWriting, forReading, expression);
       }
     } else {
       if (psiWhat instanceof PsiMethod) {
@@ -227,16 +228,15 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   protected void markReferenced(@NotNull RefElementImpl refFrom,
-                                PsiElement psiFrom,
                                 boolean forWriting,
                                 boolean forReading,
-                                UExpression expressionFrom) {
+                                @Nullable UExpression expressionFrom) {
     addInReference(refFrom);
     setForbidProtectedAccess(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom == null ? null : expressionFrom.getSourcePsi());
   }
 
-  void setForbidProtectedAccess(RefElementImpl refFrom, UExpression expressionFrom) {
+  void setForbidProtectedAccess(RefElementImpl refFrom, @Nullable UExpression expressionFrom) {
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression || 
          expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) && 
@@ -282,7 +282,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
           final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
           if (enumConstantReference != null) {
             addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, psiFrom, false, true, expression);
+            enumConstantReference.markReferenced(this, false, true, expression);
           }
         }
       }
