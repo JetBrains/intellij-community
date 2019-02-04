@@ -82,7 +82,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
       substitutor.ensureValid();
     }
     catch (Throwable e) {
-      throw PluginException.createByClass(e.getMessage(), e, method.getClass());
+      throw PluginException.createByClass(e, method.getClass());
     }
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
