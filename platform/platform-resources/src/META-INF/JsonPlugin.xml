@@ -100,7 +100,7 @@
     <lang.documentationProvider language="JSON"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
-    <statistics.counterUsagesCollector group_id="json.schema" version="1"/>
+    <statistics.counterUsagesCollector groupId="json.schema" version="1"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>

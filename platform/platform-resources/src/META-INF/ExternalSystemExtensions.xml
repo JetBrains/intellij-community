@@ -81,7 +81,7 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
-    <statistics.counterUsagesCollector group_id="build.tools.actions" version="1"/>
+    <statistics.counterUsagesCollector groupId="build.tools.actions" version="1"/>
   </extensions>
 
 </idea-plugin>
