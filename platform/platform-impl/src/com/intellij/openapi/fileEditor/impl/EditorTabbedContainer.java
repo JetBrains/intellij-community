@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
@@ -39,8 +38,9 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.JBTabPainter;
-import com.intellij.ui.tabs.impl.*;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -103,7 +103,18 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         return JBTabPainter.getInstance(JBTabPainter.PainterType.EDITOR);
       }
 
-      boolean isOwner = false;
+      @Override
+      protected TabLabel createTabLabel(TabInfo info) {
+        return new TabLabel(this, info) {
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension size = super.getPreferredSize();
+
+            int height = TabsUtil.getTabsHeight(size.height - layoutDelimiterThickness());
+            return new Dimension(size.width, height);
+          }
+        };
+      }
 
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
         return e -> {
@@ -734,18 +745,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void paintBorder(Component component, Graphics g, int x, int y, int w, int h) {
-      Rectangle selectedBounds = myTabs.getSelectedBounds();
-      if (selectedBounds != null && selectedBounds.y > 0) selectedBounds = null;//Not first row selection
-      Rectangle bounds = new Rectangle(x, y, w, h);
-      g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
-      drawLine(bounds, selectedBounds, g, 0);
-      if (UIUtil.isUnderDarcula() || true) { //remove shadow for all for awhile
-        return;
-      }
-      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
-      drawLine(bounds, selectedBounds, g, 1);
-      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .2));
-      drawLine(bounds, selectedBounds, g, 2);
+      myTabs.paintLayoutDelimiters((Graphics2D)g, new Rectangle(0, 0,  w, h));
     }
 
     private static void drawLine(Rectangle bounds, @Nullable Rectangle selectedBounds, Graphics g, int yShift) {

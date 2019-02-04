@@ -79,12 +79,6 @@ public class JBEditorTabs extends JBTabsImpl {
     return true;
   }
 
-  @Nullable
-  public Rectangle getSelectedBounds() {
-    TabLabel label = getSelectedLabel();
-    return label != null ? label.getBounds() : null;
-  }
-
   @Override
   public boolean isEditorTabs() {
     return true;
@@ -103,20 +97,6 @@ public class JBEditorTabs extends JBTabsImpl {
   @Override
   public boolean useBoldLabels() {
     return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
-  }
-
-  @NotNull
-  private Rectangle fixedBounds(Rectangle bounds) {
-    return fixedBounds(bounds, getTabsBorder().getEffectiveBorder());
-  }
-
-  private Rectangle fixedBounds(Rectangle effectiveBounds, Insets insets) {
-    int _x = effectiveBounds.x + insets.left;
-    int _y = effectiveBounds.y + insets.top;
-    int _width = effectiveBounds.width - insets.left - insets.right + (getTabsPosition() == JBTabsPosition.right ? 1 : 0);
-    int _height = effectiveBounds.height - insets.top - insets.bottom;
-
-    return new Rectangle(_x, _y, _width, _height);
   }
 
 

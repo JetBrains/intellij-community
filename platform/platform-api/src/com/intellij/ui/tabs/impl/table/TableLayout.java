@@ -161,7 +161,7 @@ public class TableLayout extends TabLayout {
         boolean lastCell = i == eachRow.myColumns.size() - 1;
         eachX += width + (lastCell ? 0 : myTabs.getTabHGap());
       }
-      eachY += myTabs.myHeaderFitSize.height - 1;
+      eachY += myTabs.myHeaderFitSize.height;
     }
 
     if (myTabs.getSelectedInfo() != null) {

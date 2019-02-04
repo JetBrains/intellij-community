@@ -64,7 +64,7 @@ public class TabLabel extends JPanel implements Accessible {
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
-    setOpaque(true);
+    setOpaque(false);
     setLayout(new BorderLayout());
 
     myLabelPlaceholder.setOpaque(false);
@@ -235,19 +235,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public void paint(final Graphics g) {
     if (myTabs.isDropTarget(myInfo)) return;
-    super.paint(g);
-  }
-
-  public void paintImage(Graphics g) {
-    final Rectangle b = getBounds();
-    final Graphics lG = g.create(b.x, b.y, b.width, b.height);
-    try {
-      lG.setColor(Color.red);
-      doPaint(lG);
-    }
-    finally {
-      lG.dispose();
-    }
+    doPaint(g);
   }
 
   private void doPaint(final Graphics g) {
@@ -257,7 +245,6 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    // size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
 
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
@@ -498,13 +485,37 @@ public class TabLabel extends JPanel implements Accessible {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
+    paintBackground(g);
+  }
+
+  private void paintBackground(Graphics g) {
+    int offset = myInfo != myTabs.getSelectedInfo() ? myTabs.layoutDelimiterThickness() : 0;
+
+    Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
+
+    switch (myTabs.getPosition()) {
+      case top:
+        rect.height -= offset;
+        break;
+      case bottom:
+        rect.y += offset;
+        break;
+      case left:
+        rect.width += offset;
+        break;
+      case right:
+        rect.x += offset;
+        break;
+    }
+
     Graphics2D g2d = (Graphics2D)g;
     if (myTabs.getSelectedInfo() != myInfo) {
-      myTabs.getTabPainter().paintTab(g2d, new Rectangle(0, 0, getWidth(), getHeight()), myInfo.getTabColor(), myTabs.isHoveredTab(this));
+
+      myTabs.getTabPainter().paintTab(g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
     }
     else {
       myTabs.getTabPainter()
-        .paintSelectedTab(g2d, new Rectangle(0, 0, getWidth(), getHeight()), myInfo.getTabColor(), myTabs.getPosition(), myTabs.isActiveTabs(), myTabs.isHoveredTab(this));
+        .paintSelectedTab(g2d, rect, myInfo.getTabColor(), myTabs.getPosition(), myTabs.isActiveTabs(), myTabs.isHoveredTab(this));
     }
   }
 

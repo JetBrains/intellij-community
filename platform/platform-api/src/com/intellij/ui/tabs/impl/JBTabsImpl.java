@@ -20,6 +20,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -206,7 +207,7 @@ public class JBTabsImpl extends JComponent
     myActionManager = actionManager;
     myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
 
-    setOpaque(true);
+    setOpaque(false);
     setPaintBorder(-1, -1, -1, -1);
 
     Disposer.register(parent, this);
@@ -225,8 +226,10 @@ public class JBTabsImpl extends JComponent
     myLayout = mySingleRowLayout;
 
     getTabLabelUnderMouse(this).advise(lifetime, label -> {
+      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
+
       tabLabelAtMouse = label;
-      updateTabs();
+      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
 
       return Unit.INSTANCE;
     });
@@ -1588,12 +1591,39 @@ public class JBTabsImpl extends JComponent
     return myInnerInsets;
   }
 
-  public Insets getLayoutInsets() {
-    Insets insets = getInsets();
-    if (insets == null) {
-      insets = new Insets(0, 0, 0, 0);
+  /**
+   * TODO move to the tabPainter
+   */
+  public int layoutDelimiterThickness() {
+    return 1;
+  }
+
+  public void paintLayoutDelimiters(Graphics2D g, Rectangle bounds) {
+    g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+
+    if(getPosition() == JBTabsPosition.top) {
+      for (int eachRow = 0; eachRow <= myLastLayoutPass.getRowCount(); eachRow++) {
+        int yl = eachRow * myHeaderFitSize.height;
+        /**
+         * TODO move to the tabPainter
+         */
+        LinePainter2D.paint(g, bounds.x, yl, bounds.width, yl);
+      }
+    } else if(getPosition() == JBTabsPosition.bottom) {
+      final TabLabel firstLabel = myInfo2Label.get(myLastLayoutPass.getTabAt(0, 0));
+      int bla = firstLabel.getY() + layoutDelimiterThickness();
+      for (int eachRow = 0; eachRow <= myLastLayoutPass.getRowCount() - 1; eachRow++) {
+        int yl = eachRow * (myHeaderFitSize.height) + bla - layoutDelimiterThickness();
+        LinePainter2D.paint(g, bounds.x, yl, bounds.width, yl);
+      }
     }
-    return insets;
+  }
+
+  public Insets getLayoutInsets() {
+    if (getPosition() == JBTabsPosition.top) {
+      return new Insets(layoutDelimiterThickness(), 0, 0, 0);
+    }
+    return JBUI.emptyInsets();
   }
 
   public int getToolbarInset() {
