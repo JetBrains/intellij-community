@@ -391,6 +391,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow", "ActivatePaletteToolWindow",
     "ActivateTerminalToolWindow",
     "IDEtalk.SearchUserHistory", "IDEtalk.SearchUserHistory", "IDEtalk.Rename",
+    "CIDR.Lang.Cpp.GenerateDefinitions",
     ""
   );
 
