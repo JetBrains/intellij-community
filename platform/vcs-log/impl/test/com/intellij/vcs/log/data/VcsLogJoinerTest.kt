@@ -314,7 +314,7 @@ class VcsLogJoinerTest {
         +"b2"
       }
       newRefs {
-        "e1"
+        +"e1"
       }
       expected {
         +"e1"
