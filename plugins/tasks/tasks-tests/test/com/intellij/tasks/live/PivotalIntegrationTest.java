@@ -5,11 +5,14 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.pivotal.PivotalTrackerRepository;
 import com.intellij.tasks.pivotal.PivotalTrackerRepositoryType;
 import com.intellij.tasks.pivotal.PivotalTrackerTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
 
 public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrackerRepository> {
   private static final String INTEGRATION_TESTS_PROJECT_ID = "2243263";
@@ -27,9 +30,26 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
     return repository;
   }
 
+  private static void checkStartedStoryTaskProperties(@NotNull Task task) {
+    assertEquals("Started story", task.getSummary());
+    assertEquals("Description.", task.getDescription());
+    assertFalse(task.isClosed());
+    assertNull(task.getState());
+    // Not yet supported
+    assertEmpty(task.getComments());
+    assertEquals("https://www.pivotaltracker.com/story/show/163682205", task.getIssueUrl());
+    assertEquals("#" + STARTED_STORY_ID, task.getPresentableId());
+    assertEquals(STARTED_STORY_ID, task.getNumber());
+    assertEquals(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID, task.getId());
+    // Checking getUpdated() is to brittle
+    assertEquals(TaskUtil.parseDate("2019-02-03T13:34:15Z"), task.getCreated());
+  }
+
   public void testFetchingAllStories() throws Exception {
     final Task[] tasks = myRepository.getIssues("", 0, 10, false);
-    assertContainsElements(ContainerUtil.map(tasks, Task::getSummary), "Started story");
+    final Task startedStoryTask = ContainerUtil.find(tasks, task -> "Started story".equals(task.getSummary()));
+    assertNotNull(startedStoryTask);
+    checkStartedStoryTaskProperties(startedStoryTask);
   }
 
   public void testFetchingWithFilteringStoriesByQuery() throws Exception {
@@ -41,9 +61,12 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
   public void testFetchingClosedStories() throws Exception {
     final Task[] openTasks = myRepository.getIssues("", 0, 10, false);
     assertDoesntContain(ContainerUtil.map(openTasks, Task::getSummary), "Finished story");
+    assertTrue(ContainerUtil.and(openTasks, task -> !task.isClosed()));
 
     final Task[] allTasks = myRepository.getIssues("", 0, 10, true);
     assertContainsElements(ContainerUtil.map(allTasks, Task::getSummary), "Finished story");
+    final Task finished = ContainerUtil.find(allTasks, task -> task.getSummary().equals("Finished story"));
+    assertTrue(finished.isClosed());
   }
 
   public void testFetchingSingleStory() throws Exception {
@@ -52,7 +75,8 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
     assertEquals(STARTED_STORY_ID, task.getNumber());
     assertEquals("#" + STARTED_STORY_ID, task.getPresentableId());
     assertEquals(INTEGRATION_TESTS_PROJECT_ID + "-" + STARTED_STORY_ID, task.getId());
-    assertEquals("Started story", task.getSummary());
+    assertNotNull(task);
+    checkStartedStoryTaskProperties(task);
   }
 
   public void testStoryStateUpdating() throws Exception {
