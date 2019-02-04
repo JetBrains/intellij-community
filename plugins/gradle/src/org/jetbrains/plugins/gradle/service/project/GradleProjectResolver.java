@@ -198,7 +198,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
     }
 
-    executionSettings.withArgument("-Didea.version=" + getIdeaVersion());
+    executionSettings.withArgument("-Didea.sync.active=true");
     if(resolverCtx.isPreviewMode()){
       executionSettings.withArgument("-Didea.isPreviewMode=true");
       final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
@@ -791,10 +791,5 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     return projectResolverChain;
-  }
-
-  private static String getIdeaVersion() {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }

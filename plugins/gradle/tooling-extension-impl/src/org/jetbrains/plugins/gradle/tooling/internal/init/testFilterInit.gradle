@@ -3,7 +3,6 @@ import groovy.xml.MarkupBuilder
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal
 import org.gradle.util.*
 
-System.setProperty("idea.active", "true")
 String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
 boolean ijTestFilteringSupported = GradleVersion.current().compareTo(GradleVersion.version("1.10"))>=0
 boolean skipExecution

@@ -5,6 +5,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -137,17 +139,21 @@ public class GradleExecutionHelper {
       }
     }
 
+    List<String> filteredArgs = ContainerUtil.newArrayList();
     if (!settings.getArguments().isEmpty()) {
       String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
       LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
 
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
+      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
 
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
-      operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
+    filteredArgs.add("-Didea.active=true");
+    filteredArgs.add("-Didea.version=" + getIdeaVersion());
+    operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
+
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
     final String javaHome = settings.getJavaHome();
@@ -778,5 +784,10 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardError) {
     settings.withArguments(commandLineArgs).withVmOptions(extraJvmArgs);
     prepare(operation, id, settings, listener, connection, standardOutput, standardError);
+  }
+
+  private static String getIdeaVersion() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
 }
