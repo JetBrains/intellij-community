@@ -118,6 +118,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
   private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
   private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
+  private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
   private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
@@ -603,8 +604,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     if (_isFillEvent(eventType)) {
         // glib main-loop thread
-      final long startMs = System.currentTimeMillis();
-
+      if (!DONT_CLOSE_POPUPS)
+        ApplicationManager.getApplication().invokeLater(() -> IdeEventQueue.getInstance().getPopupManager().closeAllPopups());
       mi.cancelClearSwing();
 
       // simple check to avoid double (or frequent) filling
@@ -634,7 +635,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         });
 
         // glib main-loop thread
-        final long elapsedMs = System.currentTimeMillis() - startMs;
+        final long elapsedMs = System.currentTimeMillis() - timeMs;
         if (TRACE_SYNC_STATS) _trace("filled menu %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
