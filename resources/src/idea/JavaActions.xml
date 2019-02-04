@@ -226,7 +226,8 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
 
-      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction" text="Step Out Of Code Block">
+      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction" text="Step Out Of Code Block"
+              icon="AllIcons.Actions.StepOutCodeBlock">
         <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="StepOut"/>
       </action>
 
