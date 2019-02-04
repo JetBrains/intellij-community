@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 14
+version = 15
 
 if not hasattr(sys, '_current_frames'):
 
@@ -1014,7 +1014,7 @@ cdef class SafeCallWrapper:
         Py_INCREF(<object>method_obj)
         ret = (<object>method_obj)(*args)
         Py_XDECREF (method_obj)
-        return SafeCallWrapper(ret) if ret is not None else None
+        return SafeCallWrapper(ret) if ret is not None and not isinstance(ret, SafeCallWrapper) else None
 # ELSE
 # ENDIF
 

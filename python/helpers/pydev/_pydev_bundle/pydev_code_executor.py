@@ -100,13 +100,13 @@ class BaseCodeExecutor(object):
                 try:
                     self.start_exec()
                     if hasattr(self, 'debugger'):
-                        from _pydevd_bundle import pydevd_tracing
+                        import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
                     more = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
-                        from _pydevd_bundle import pydevd_tracing
+                        import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
                     self.finish_exec(more)

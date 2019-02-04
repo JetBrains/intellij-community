@@ -57,7 +57,7 @@ global_cache_frame_skips = {}
 #         Py_INCREF(<object>method_obj)
 #         ret = (<object>method_obj)(*args)
 #         Py_XDECREF (method_obj)
-#         return SafeCallWrapper(ret) if ret is not None else None
+#         return SafeCallWrapper(ret) if ret is not None and not isinstance(ret, SafeCallWrapper) else None
 # ELSE
 # ENDIF
 
