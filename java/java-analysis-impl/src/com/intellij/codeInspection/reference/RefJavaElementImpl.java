@@ -221,7 +221,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       }
     } else {
       if (psiWhat instanceof PsiMethod) {
-        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression, psiFrom);
+        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression);
       }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
@@ -273,7 +273,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return super.getIcon(expanded);
   }
 
-  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression, PsiElement psiFrom) {
+  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
     //TODO support kotlin enums
     final PsiClass containingClass = psiWhat.getContainingClass();
     if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
