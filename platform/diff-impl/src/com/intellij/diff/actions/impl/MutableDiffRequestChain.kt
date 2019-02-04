@@ -12,8 +12,10 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.Side
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.UserDataHolder
 
 class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffContent) : DiffRequestChainBase() {
@@ -47,8 +49,10 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
 
   data class Helper(val chain: MutableDiffRequestChain, val context: DiffContextEx) {
     fun setContent(newContent: DiffContent, side: Side) {
-      val title = getTitleFor(newContent)
+      setContent(newContent, getTitleFor(newContent), side)
+    }
 
+    fun setContent(newContent: DiffContent, title: String?, side: Side) {
       if (side.isLeft) {
         chain.content1 = newContent
         chain.title1 = title
@@ -62,6 +66,31 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
     fun fireRequestUpdated() {
       context.reloadDiffRequest()
     }
+  }
+}
+
+internal class SwapDiffSidesAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext)
+    if (helper == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    e.presentation.isEnabledAndVisible = true
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
+
+    val oldContent1 = helper.chain.content1
+    val oldContent2 = helper.chain.content2
+    val oldTitle1 = helper.chain.title1
+    val oldTitle2 = helper.chain.title2
+
+    helper.setContent(oldContent1, oldTitle1, Side.RIGHT)
+    helper.setContent(oldContent2, oldTitle2, Side.LEFT)
+    helper.fireRequestUpdated()
   }
 }
 
