@@ -58,6 +58,7 @@ public class FSRecords {
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
+  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old` and use it's value for `ourSymlinkTargetAttr`
   private static final int VERSION = 22 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
@@ -97,7 +98,8 @@ public class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
-  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET_2");
+  private static final FileAttribute ourSymlinkTargetAttr_old = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
@@ -984,8 +986,12 @@ public class FSRecords {
   static @Nullable String readSymlinkTarget(int id) {
     return readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
-        return stream != null ? StringUtil.nullize(stream.readUTF()) : null;
+        if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
       }
+      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr_old)) {
+        if (stream != null) return StringUtil.nullize(stream.readUTF());
+      }
+      return null;
     });
   }
 
@@ -993,7 +999,7 @@ public class FSRecords {
     writeAndHandleErrors(() -> {
       DbConnection.markDirty();
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
-        stream.writeUTF(StringUtil.notNullize(symlinkTarget));
+        IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
     });
   }
