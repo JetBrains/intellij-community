@@ -57,7 +57,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return new GotoDeclarationActionHandler();
+    return GotoDeclarationActionHandler.INSTANCE;
   }
 
   @Override
