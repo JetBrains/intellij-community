@@ -57,6 +57,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
+import java.awt.image.VolatileImage;
 import java.net.URL;
 import java.util.Set;
 
@@ -374,12 +375,14 @@ public class IdeBackgroundUtil {
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
-      // skip painters for transparent 'reasons'
-      if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
-      if (reason instanceof Image) {
-        if (!(reason instanceof BufferedImage)) return;
-        if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
-      }
+      boolean hasAlpha =
+        reason instanceof Color ? ((Color)reason).getAlpha() < 255 :
+        reason instanceof BufferedImage ? ((BufferedImage)reason).getColorModel().hasAlpha() :
+        reason instanceof VolatileImage ? ((VolatileImage)reason).getTransparency() != Transparency.OPAQUE :
+        true;
+      // skip painters when alpha is already present
+      if (hasAlpha) return;
+
       Shape prevClip = getClip();
       Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
       if (tmpClip == null) return;
