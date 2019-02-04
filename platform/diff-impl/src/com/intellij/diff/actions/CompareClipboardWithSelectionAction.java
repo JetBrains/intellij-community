@@ -95,7 +95,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
     request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editor.getCaretModel().getLogicalPosition().line));
     if (editor.isViewer()) {
-      request.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{false, true});
+      content2.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
     }
     return request;
   }
