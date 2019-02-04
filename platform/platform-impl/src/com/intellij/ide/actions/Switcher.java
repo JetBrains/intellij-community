@@ -3,12 +3,14 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -44,6 +46,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -180,9 +183,21 @@ public class Switcher extends AnAction implements DumbAware {
   
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
-    if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) {
-      SWITCHER.goForward();
-      return null;
+    if (SWITCHER != null) {
+      final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
+      if (SWITCHER.isCheckboxMode()) {
+        if (sameShortcut) {
+          SWITCHER.toggleShowEditedFiles();
+        }
+        else {
+          SWITCHER.setShowOnlyEditedFiles(onlyEdited);
+        }
+        return null;
+      }
+      else if (sameShortcut) {
+        SWITCHER.goForward();
+        return null;
+      }
     }
     return project == null ? null : createAndShowSwitcher(project, title, onlyEdited, pinned);
   }
@@ -207,6 +222,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JBList files;
     final JPanel separator;
     final ToolWindowManager twManager;
+    final JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
@@ -530,13 +546,37 @@ public class Switcher extends AnAction implements DumbAware {
       KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
       KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
 
-
+      myShowOnlyEditedFilesCheckBox = new JBCheckBox("Show Only Edited Files", onlyEdited);
+      myShowOnlyEditedFilesCheckBox.setOpaque(false);
+      myShowOnlyEditedFilesCheckBox.setFocusable(false);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myShowOnlyEditedFilesCheckBox);
+      if (isCheckboxMode()) {
+        myShowOnlyEditedFilesCheckBox.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected());
+          }
+        });
+      }
+      else {
+        myShowOnlyEditedFilesCheckBox.setEnabled(false);
+        myShowOnlyEditedFilesCheckBox.setVisible(false);
+      }
+      
+      
+      
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
         .setResizable(pinned)
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
-        .setTitle(title)
+        .setTitle(isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title)
+        .setCommandButton(new ActiveComponent.Adapter() {
+          @Override
+          public JComponent getComponent() {
+            return myShowOnlyEditedFilesCheckBox;
+          }
+        })
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
@@ -911,6 +951,40 @@ public class Switcher extends AnAction implements DumbAware {
     @Nullable
     JBList getSelectedList(@Nullable JBList preferable) {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
+    }
+
+    boolean isCheckboxMode() {
+      return isPinnedMode() && Experiments.isFeatureEnabled("recent.and.edited.files.together");
+    }
+
+    void toggleShowEditedFiles() {
+      myShowOnlyEditedFilesCheckBox.doClick();
+    }
+    
+    void setShowOnlyEditedFiles(boolean onlyEdited) {
+      if (myShowOnlyEditedFilesCheckBox.isSelected() != onlyEdited) {
+        myShowOnlyEditedFilesCheckBox.setSelected(onlyEdited);
+      }
+      
+      final boolean listWasSelected = files.getSelectedIndex() != -1;
+      
+      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(
+        project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
+      final int selectionIndex = filesAndSelection.getSecond();
+
+      final ListModel model = files.getModel();
+      if (model instanceof CollectionListModel) {
+        ((CollectionListModel)model).replaceAll(filesAndSelection.getFirst());
+      }
+      else if (model instanceof NameFilteringListModel) {
+        ((NameFilteringListModel)model).replaceAll(filesAndSelection.getFirst());
+      }
+
+      if (selectionIndex > -1 && listWasSelected) {
+        files.setSelectedIndex(selectionIndex);
+      }
+      files.revalidate();
+      files.repaint();
     }
 
     void navigate(final InputEvent e) {
