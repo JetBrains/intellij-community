@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.EditorTextField;
@@ -69,6 +70,8 @@ public class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
   public static final String TARGET_PROP = "idea.background.target";
+
+  public static final Key<Boolean> NO_BACKGROUND = Key.create("SUPPRESS_BACKGROUND");
 
   public enum Fill {
     PLAIN, SCALE, TILE
@@ -403,6 +406,7 @@ public class IdeBackgroundUtil {
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(c, NO_BACKGROUND))) return g;
       String type = getComponentType(c);
       if (type == null) return g;
       if ("frame".equals(type)) return withFrameBackground(g, c);
