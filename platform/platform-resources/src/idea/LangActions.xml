@@ -139,6 +139,7 @@
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+      <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
@@ -625,6 +626,7 @@
       <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
+        <reference ref="GotoDeclarationOnly"/>
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
         <reference ref="GotoSuperMethod"/>
