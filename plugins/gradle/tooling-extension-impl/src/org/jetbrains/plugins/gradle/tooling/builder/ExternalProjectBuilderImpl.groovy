@@ -157,7 +157,8 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
-        externalTask.test = task instanceof Test
+        def ext = task.getExtensions()?.extraProperties
+        externalTask.test = (task instanceof Test) || (ext?.has("idea.internal.test") && ext.get("idea.internal.test") == true)
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }
