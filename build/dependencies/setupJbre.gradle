@@ -9,6 +9,12 @@ def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").t
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 createJbreTasks(jreBuild, jreVersion, targetOs)
 
+if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
+  def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
+  def secondJreVersion = System.getProperty("intellij.build.bundled.second.jre.version", secondJreVersion).toInteger()
+  createJbreTasks(secondJreBuild, secondJreVersion, targetOs)
+}
+
 def createJbreTasks(String defaultBuild, int version, String targetOs) {
   def isModular = version >= 9
   def jbsdkPrefix = version == 8 ? 'jbrex8' : "jbsdk$version"
@@ -36,9 +42,9 @@ def createDownloadJbreTask(String artifactName, String build, boolean doRepackag
   def suffix = doRepackage ? '_origin' : ''
   def outputFile = "$outputDir/${artifactName}${suffix}.tar.gz"
   task("download${artifactName.capitalize()}") {
-    def src = "https://cache-redirector.jetbrains.com/intellij-jdk/${artifactName}.tar.gz".toString()
-    it.inputs.property('build', build)
-    it.outputs.file(outputFile)
+    def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
+    inputs.property('build', build)
+    outputs.file(outputFile)
     doLast {
       logger.info("Downloading $artifactName to $outputFile")
       download {
@@ -48,6 +54,7 @@ def createDownloadJbreTask(String artifactName, String build, boolean doRepackag
         timeout TimeUnit.MINUTES.toMillis(30).toInteger()
       }
     }
+    setupJbre.dependsOn(it)
     cleanSetupJbre.dependsOn("clean${it.name.capitalize()}")
   }
   file(outputFile)

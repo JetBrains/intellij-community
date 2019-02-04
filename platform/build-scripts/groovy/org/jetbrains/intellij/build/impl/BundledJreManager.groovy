@@ -44,8 +44,8 @@ class BundledJreManager {
       return targetDir
     }
 
-    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${JvmArchitecture.x64}.tar.gz"
-    File archive = new File(buildContext.paths.projectHome, "build/jdk11/${osName}/$jreArchive")
+    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${osName}_${JvmArchitecture.x64}.tar.gz"
+    File archive = new File(jreDir(), jreArchive)
     if (!archive.file || !archive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found"
       buildContext.messages.warning(errorMessage)
@@ -153,10 +153,18 @@ class BundledJreManager {
     return targetDir
   }
 
+  private File dependenciesDir() {
+    new File(buildContext.paths.communityHome, 'build/dependencies')
+  }
+
+  File jreDir() {
+    def dependenciesDir = dependenciesDir()
+    new File(dependenciesDir, 'build/jbre')
+  }
+
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    def dependenciesDir = new File(buildContext.paths.communityHome, 'build/dependencies')
-    def jreDir = new File(dependenciesDir, 'build/jbre')
-    def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
+    def jreDir = jreDir()
+    def jreVersion = getExpectedJreVersion(osName, dependenciesDir())
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
     String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
@@ -195,7 +203,8 @@ class BundledJreManager {
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8", "jre"), JetBrains("jbre8", "jbrex8", "jbre")
+    Oracle("jre8", "jdk8", "jre"),
+    JetBrains("jbre8", "jbrex8", "jbsdk")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
