@@ -650,7 +650,9 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
       }
-      presentation.addText(title != null ? title : toString(), attributes);
+      String text = title != null ? title : toString();
+      presentation.setPresentableText(text);
+      presentation.addText(text, attributes);
       Icon icon = getIcon();
       if (icon == null && file.isValid()) {
         icon = file.isDirectory()
