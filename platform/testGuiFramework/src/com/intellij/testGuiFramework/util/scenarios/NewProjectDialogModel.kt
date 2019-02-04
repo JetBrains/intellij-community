@@ -523,6 +523,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
     fileSystemUtils.assertProjectPathExists(projectPath)
     with(connectDialog()) {
       selectProjectGroup(group)
+      selectSdk(projectSdk)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       typeProjectNameAndLocation(projectPath)
