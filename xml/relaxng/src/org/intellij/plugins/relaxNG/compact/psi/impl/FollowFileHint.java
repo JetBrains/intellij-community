@@ -22,5 +22,5 @@ import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 public interface FollowFileHint {
   Key<FollowFileHint> KEY = Key.create("FollowFileHint");
 
-  public boolean doFollow(RncFile file);
+  boolean doFollow(RncFile file);
 }

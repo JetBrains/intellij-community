@@ -335,7 +335,7 @@ public class ListUtil {
     return listener;
   }
 
-  public static interface RemoveNotification<ItemType> {
+  public interface RemoveNotification<ItemType> {
     void itemsRemoved(List<ItemType> items);
   }
 
@@ -350,7 +350,7 @@ public class ListUtil {
     return null;
   }
 
-  private static interface ListModelExtension<ModelType extends ListModel> {
+  private interface ListModelExtension<ModelType extends ListModel> {
     Object get(ModelType model, int index);
     void remove(ModelType model, int index);
   }

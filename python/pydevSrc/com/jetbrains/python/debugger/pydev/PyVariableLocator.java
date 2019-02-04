@@ -10,8 +10,8 @@ package com.jetbrains.python.debugger.pydev;
  */
 public interface PyVariableLocator {
 
-  public String getThreadId();
+  String getThreadId();
 
-  public String getPyDBLocation();
+  String getPyDBLocation();
 
 }

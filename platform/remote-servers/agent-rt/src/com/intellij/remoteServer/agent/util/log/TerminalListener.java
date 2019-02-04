@@ -19,7 +19,7 @@ public interface TerminalListener {
 
   void close();
 
-  static TerminalListener NULL = new TerminalListener() {
+  TerminalListener NULL = new TerminalListener() {
 
     public void close() {
 
