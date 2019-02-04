@@ -216,18 +216,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (window == null || toolWindowVisible == window.isVisible()) return;
         myCurrentSelectionObsolete = ThreeState.NO;
         if (window.isVisible() && !toolWindowVisible) {
-          String id = getCurrentViewId();
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-          if (currentProjectViewPane != null) {
-            if (isAutoscrollToSource(id)) {
-              myAutoScrollToSourceHandler.onMouseClicked(currentProjectViewPane.getTree());
-            }
-            if (isAutoscrollFromSource(id)) {
-              SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
-              if (context != null) {
-                myCurrentSelectionObsolete = ThreeState.UNSURE;
-                context.selectInCurrentTarget();
-              }
+          if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
+            SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
+            if (context != null) {
+              myCurrentSelectionObsolete = ThreeState.UNSURE;
+              context.selectInCurrentTarget();
             }
           }
         }
