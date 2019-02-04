@@ -796,8 +796,15 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testTravisPythonVersion() throws Exception {
     @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
     doTest(schema, "python: 3.5"); // validates as 'number'
-    doTest(schema, "python: 3.50"); // validates as 'string'
+    doTest(schema, "python: 3.50"); // validates as 'number'
+    doTest(schema, "python: 3.50a"); // validates as 'string'
     doTest(schema, "python: <warning descr=\"Schema validation: Type is not allowed. Expected one of: array, number, string.\">null</warning>");
+  }
+
+  public void testTravisNode() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "node_js: \n" +
+                   "  - <warning descr=\"Schema validation: Type is not allowed. Expected: string.\">2.10</warning>");
   }
 
   public void testExpNumberNotation() throws Exception {
