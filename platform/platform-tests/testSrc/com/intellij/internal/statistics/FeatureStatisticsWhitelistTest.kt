@@ -673,6 +673,230 @@ class FeatureStatisticsWhitelistTest {
   }
 
   @Test
+  fun `with from snapshot and build later is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.0"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495", "test.group.id")
+  }
+
+  @Test
+  fun `with from snapshot and build later with bugfix update is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.0"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495.245", "test.group.id")
+  }
+
+  @Test
+  fun `with from snapshot and build earlier is not accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "191.0"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495")
+  }
+
+  @Test
+  fun `with from equals to build is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495", "test.group.id")
+  }
+
+  @Test
+  fun `with from middle number equals to build is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495.0", "test.group.id")
+  }
+
+  @Test
+  fun `with from middle number equals to build and last is bigger is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495.12", "test.group.id")
+  }
+
+  @Test
+  fun `with build middle number equals to from and last is bigger is not accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495.12"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.1495")
+  }
+
+  @Test
+  fun `with build middle number equals to to is not accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495.12",
+      "to": "183.4885"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.4885")
+  }
+
+  @Test
+  fun `with build middle number equals to to and last is bigger is not accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495.12",
+      "to": "183.4885"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.4885.35")
+  }
+
+  @Test
+  fun `with build middle number smaller then to is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495.12",
+      "to": "183.4885"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.4884.35", "test.group.id")
+  }
+
+  @Test
+  fun `with build middle number smaller then to and have two numbers is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "183.1495.12",
+      "to": "183.4885"
+    }],
+    "context" : {
+    }
+  }]
+}
+    """
+    doTest(content, "183.4884", "test.group.id")
+  }
+
+  @Test
   fun `snapshot builds major greater than from is accepted`() {
     val content = """
 {
