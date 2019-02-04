@@ -267,7 +267,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final String realName = delegate.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();
     boolean isEmptyDirectory = isDirectory && !delegate.hasChildren(fake);
-    final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, true, isEmptyDirectory);
+    String symlinkTarget = attributes.isSymLink() ? delegate.resolveSymLink(fake) : null;
+    VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, isEmptyDirectory);
     RefreshQueue.getInstance().processSingleEvent(event);
     return findChild(realName);
   }

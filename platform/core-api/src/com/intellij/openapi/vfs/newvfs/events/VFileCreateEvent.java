@@ -18,6 +18,7 @@ public class VFileCreateEvent extends VFileEvent {
   private final boolean myEmptyDirectory;
   @NotNull private final String myChildName;
   private final FileAttributes myAttributes;
+  private final String mySymlinkTarget;
   private VirtualFile myCreatedFile;
 
   public VFileCreateEvent(Object requestor,
@@ -25,6 +26,7 @@ public class VFileCreateEvent extends VFileEvent {
                           @NotNull String childName,
                           boolean isDirectory,
                           @Nullable("null means read from the created file") FileAttributes attributes,
+                          @Nullable String symlinkTarget,
                           boolean isFromRefresh,
                           boolean isEmptyDirectory) {
     super(requestor, isFromRefresh);
@@ -32,6 +34,7 @@ public class VFileCreateEvent extends VFileEvent {
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = attributes;
+    mySymlinkTarget = symlinkTarget;
     myEmptyDirectory = isEmptyDirectory;
   }
 
@@ -59,6 +62,11 @@ public class VFileCreateEvent extends VFileEvent {
   @Nullable
   public FileAttributes getAttributes() {
     return myAttributes;
+  }
+
+  @Nullable
+  public String getSymlinkTarget() {
+    return mySymlinkTarget;
   }
 
   @NonNls

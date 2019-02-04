@@ -272,7 +272,8 @@ class LocalFileSystemRefreshWorker {
         if (child == null) { // new file is created
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
-          myHelper.scheduleCreation(parent, name, file, convert(file, attrs));
+          String symlinkTarget = attrs.isSymbolicLink() ? file.toRealPath().toString() : null;
+          myHelper.scheduleCreation(parent, name, file, convert(file, attrs), symlinkTarget);
           return FileVisitResult.CONTINUE;
         }
 
@@ -300,7 +301,8 @@ class LocalFileSystemRefreshWorker {
             oldIsSpecial != isSpecial) { // symlink or directory or special changed
           myHelper.scheduleDeletion(child);
           VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
-          myHelper.scheduleCreation(parent, child.getName(), file, convert(file, attrs));
+          String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+          myHelper.scheduleCreation(parent, child.getName(), file, convert(file, attrs), symlinkTarget);
           // ignore everything else
           child.markClean();
           return FileVisitResult.CONTINUE;
