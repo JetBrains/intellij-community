@@ -5,6 +5,8 @@ iml_module(
     name = "intellij.platform.updater",
     srcs = ["src"],
     iml_files = ["intellij.platform.updater.iml"],
+    test_class = "com.android.studio.updater.UpdaterTestSuite",
+    test_data = glob(["testData/**"]),
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -22,7 +24,7 @@ iml_module(
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     test_srcs = ["testSrc"],
-    test_tags = ["manual"],
+    test_tags = ["no_test_windows"],  # b/123974530
     visibility = ["//visibility:public"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar"],
     # do not sort: must match IML order
@@ -33,5 +35,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
+        "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
     ],
 )

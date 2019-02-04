@@ -33,5 +33,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="android.sdktools.testutils" scope="TEST" />
   </component>
 </module>
