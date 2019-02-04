@@ -66,6 +66,10 @@ public class StatisticsUploadAssistant {
     return (settings != null && settings.isAllowed()) || Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
   }
 
+  public static boolean isTestStatisticsEnabled() {
+    return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
   public static void updateSentTime() {
     UsageStatisticsPersistenceComponent.getInstance().setSentTime(System.currentTimeMillis());
   }
