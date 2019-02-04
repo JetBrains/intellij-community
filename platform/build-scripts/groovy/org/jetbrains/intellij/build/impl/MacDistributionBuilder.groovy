@@ -272,12 +272,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
-  private String buildMacZip(String macDistPath, String secondJreSuffix = null) {
+  private String buildMacZip(String macDistPath) {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = getZipRoot(buildContext, customizer)
-      String suffix = secondJreSuffix == null ? buildContext.bundledJreManager.jreSuffix() : secondJreSuffix
+      String suffix = buildContext.bundledJreManager.jreSuffix()
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 

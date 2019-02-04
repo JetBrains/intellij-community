@@ -60,11 +60,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
-        buildTarGz(null, osSpecificDistPath)
+        buildTarGz(null, osSpecificDistPath, "-no-jdk")
       }
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
-        buildTarGz(jreDirectoryPath, osSpecificDistPath)
+        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
         buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
@@ -134,10 +134,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
-  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String secondJreSuffix = null) {
+  private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def suffix = secondJreSuffix
-    if (suffix == null) suffix = jreDirectoryPath != null ? buildContext.bundledJreManager.jreSuffix() : "-no-jdk"
     def tarPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.tar"
     def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
