@@ -187,13 +187,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (SWITCHER != null) {
         SWITCHER.cancel();
       }
-      SWITCHER = new SwitcherPanel(project, title, pinned) {
-        @NotNull
-        @Override
-        protected List<VirtualFile> getFiles(@NotNull Project project) {
-          return vFiles != null ? vFiles : super.getFiles(project);
-        }
-      };
+      SWITCHER = new SwitcherPanel(project, title, vFiles != null ? vFiles : EditorHistoryManager.getInstance(project).getFileList(), pinned);
       return SWITCHER;
     }
   }
@@ -302,7 +296,7 @@ public class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean pinned) {
+    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull List<VirtualFile> filesToShow, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
       myTitle = title;
@@ -391,65 +385,11 @@ public class Switcher extends AnAction implements DumbAware {
       separator.setPreferredSize(JBUI.size(9, 10));
       separator.setBackground(toolWindows.getBackground());
 
-      int selectionIndex = -1;
-      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileInfo> filesData = new ArrayList<>();
-      final ArrayList<FileInfo> editors = new ArrayList<>();
-      if (!pinned) {
-        if (UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
-          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-            editors.add(new FileInfo(pair.first, pair.second, project));
-          }
-        }
-      }
-      if (editors.size() < 2 || isPinnedMode()) {
-        if (isPinnedMode() && editors.size() > 1) {
-          filesData.addAll(editors);
-        }
-        final List<VirtualFile> recentFiles = getFiles(project);
-        final int maxFiles = Math.max(editors.size(), recentFiles.size());
-        final int minIndex = isPinnedMode() ? 0 : (recentFiles.size() - Math.min(toolWindows.getModel().getSize(), maxFiles));
-        boolean firstRecentMarked = false;
-        final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-        for (int i = recentFiles.size() - 1; i >= minIndex; i--) {
-          if (isPinnedMode()
-              && selectedFiles.contains(recentFiles.get(i))
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
-            continue;
-          }
-
-          final FileInfo info = new FileInfo(recentFiles.get(i), null, project);
-          boolean add = true;
-          if (isPinnedMode()) {
-            for (FileInfo fileInfo : filesData) {
-              if (fileInfo.first.equals(info.first)) {
-                add = false;
-                break;
-              }
-            }
-          }
-          if (add) {
-            filesData.add(info);
-            if (!firstRecentMarked) {
-              selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !isPinnedMode() || selectedFiles.isEmpty()) {
-                firstRecentMarked = true;
-              }
-            }
-          }
-        }
-        //if (editors.size() == 1) selectionIndex++;
-        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
-          filesData.add(0, editors.get(0));
-        }
-      } else {
-        for (int i = 0; i < Math.min(30, editors.size()); i++) {
-          filesData.add(editors.get(i));
-        }
-      }
-
+      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, filesToShow,
+                                                                                              toolWindows.getModel().getSize(), pinned);
+      final int selectionIndex = filesAndSelection.getSecond();
       final DefaultListModel filesModel = new DefaultListModel();
-      for (FileInfo editor : filesData) {
+      for (FileInfo editor : filesAndSelection.getFirst()) {
         filesModel.addElement(editor);
       }
 
@@ -646,6 +586,71 @@ public class Switcher extends AnAction implements DumbAware {
       return content == null ? null : content.getFocusCycleRootAncestor();
     }
 
+    @NotNull
+    private static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
+                                                                                 @NotNull List<VirtualFile> filesForInit,
+                                                                                 int toolWindowsCount,
+                                                                                 boolean pinned) {
+      int selectionIndex = -1;
+      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      final ArrayList<FileInfo> filesData = new ArrayList<>();
+      final ArrayList<FileInfo> editors = new ArrayList<>();
+      if (!pinned) {
+        if (UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+            editors.add(new FileInfo(pair.first, pair.second, project));
+          }
+        }
+      }
+      if (editors.size() < 2 || pinned) {
+        if (pinned && editors.size() > 1) {
+          filesData.addAll(editors);
+        }
+        final List<VirtualFile> recentFiles = filesForInit;
+        final int maxFiles = Math.max(editors.size(), recentFiles.size());
+        final int minIndex = pinned ? 0 : (recentFiles.size() - Math.min(toolWindowsCount, maxFiles));
+        boolean firstRecentMarked = false;
+        final List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
+        for (int i = recentFiles.size() - 1; i >= minIndex; i--) {
+          if (pinned
+              && selectedFiles.contains(recentFiles.get(i))
+              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+            continue;
+          }
+
+          final FileInfo info = new FileInfo(recentFiles.get(i), null, project);
+          boolean add = true;
+          if (pinned) {
+            for (FileInfo fileInfo : filesData) {
+              if (fileInfo.first.equals(info.first)) {
+                add = false;
+                break;
+              }
+            }
+          }
+          if (add) {
+            filesData.add(info);
+            if (!firstRecentMarked) {
+              selectionIndex = filesData.size() - 1;
+              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !pinned || selectedFiles.isEmpty()) {
+                firstRecentMarked = true;
+              }
+            }
+          }
+        }
+        //if (editors.size() == 1) selectionIndex++;
+        if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
+          filesData.add(0, editors.get(0));
+        }
+      } else {
+        for (int i = 0; i < Math.min(30, editors.size()); i++) {
+          filesData.add(editors.get(i));
+        }
+      }
+
+      return Pair.create(filesData, selectionIndex);
+    }
+
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
       Set<AWTKeyStroke> focusTraversalKeySet = focusCycleRoot.getFocusTraversalKeys(focusTraversalType);
 
@@ -654,9 +659,10 @@ public class Switcher extends AnAction implements DumbAware {
       focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
 
+    @Deprecated
     @NotNull
     protected List<VirtualFile> getFiles(@NotNull Project project) {
-      return EditorHistoryManager.getInstance(project).getFileList();
+      throw new UnsupportedOperationException("deprecated");
     }
 
     @NotNull
