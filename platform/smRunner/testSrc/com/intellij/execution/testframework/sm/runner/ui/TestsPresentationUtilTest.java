@@ -533,6 +533,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(PoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
   }
 
+  public void testPresentationWithDependentNamesTestProxy() {
+    SMTestProxy suiteProxy = createSuiteProxy("A");
+    SMTestProxy testProxy = createTestProxy("A.b");
+    suiteProxy.addChild(testProxy);
+    TestsPresentationUtil.formatTestProxy(testProxy, myRenderer);
+    assertEquals("b", myFragContainer.getTextAt(0));
+  }
+
+  public void testPresentationWithDependentNamesSuite() {
+    SMTestProxy suiteProxy = createSuiteProxy("A");
+    SMTestProxy suiteProxyChild = createSuiteProxy("AB");
+    suiteProxy.addChild(suiteProxyChild);
+    TestsPresentationUtil.formatTestProxy(suiteProxyChild, myRenderer);
+    assertEquals("AB", myFragContainer.getTextAt(0));
+    myRenderer.clear();
+  }
+
   public void testFormatRootNodeWithoutChildren() {
     TestsPresentationUtil.formatRootNodeWithoutChildren(mySMRootTestProxy, myRenderer);
 
