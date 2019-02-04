@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsageTriggerCollector;
@@ -11,6 +12,10 @@ import org.jetbrains.annotations.Nullable;
 public class SearchEverywhereUsageTriggerCollector extends ProjectUsageTriggerCollector {
 
   private static final String GROUP_ID = "statistics.searchEverywhere";
+
+  // this string will be used as ID for contributors from private
+  // plugins that mustn't be sent in statistics
+  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "nonPublicContributor";
 
   public static final String DIALOG_OPEN = "dialogOpen";
   public static final String TAB_SWITCHED = "tabSwitched";
@@ -33,5 +38,12 @@ public class SearchEverywhereUsageTriggerCollector extends ProjectUsageTriggerCo
   @NotNull
   public static FUSUsageContext createContext(@Nullable String contributorID, @Nullable String shortcut) {
     return FUSUsageContext.create(contributorID, shortcut);
+  }
+
+  @NotNull
+  public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
+    Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
+    PluginType pluginType = StatisticsUtilKt.getPluginType(clazz);
+    return pluginType.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;
   }
 }
