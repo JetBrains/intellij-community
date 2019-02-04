@@ -74,6 +74,6 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "javaLibraries";
+    return "javaLibraryJars";
   }
 }
