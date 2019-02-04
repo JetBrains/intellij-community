@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -147,7 +148,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (SWITCHER == null) {
         isNewSwitcher = true;
         // Assigns SWITCHER field
-        createAndShowSwitcher(project, SWITCHER_TITLE, false, null);
+        createAndShowSwitcher(project, SWITCHER_TITLE, false, false);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
@@ -168,26 +169,34 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
+  /**
+   * @deprecated Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}
+   */
+  @Deprecated
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
+    return createAndShowSwitcher(e, title, pinned, vFiles != null);
+  }
+  
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
     if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) {
       SWITCHER.goForward();
       return null;
     }
-    return project == null ? null : createAndShowSwitcher(project, title, pinned, vFiles == null ? null : Arrays.asList(vFiles));
+    return project == null ? null : createAndShowSwitcher(project, title, onlyEdited, pinned);
   }
 
   @Nullable
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
                                                      @NotNull String title,
-                                                     boolean pinned,
-                                                     @Nullable final List<VirtualFile> vFiles) {
+                                                     boolean onlyEdited,
+                                                     boolean pinned) {
     synchronized (Switcher.class) {
       if (SWITCHER != null) {
         SWITCHER.cancel();
       }
-      SWITCHER = new SwitcherPanel(project, title, vFiles != null ? vFiles : EditorHistoryManager.getInstance(project).getFileList(), pinned);
+      SWITCHER = new SwitcherPanel(project, title, onlyEdited, pinned);
       return SWITCHER;
     }
   }
@@ -296,7 +305,7 @@ public class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull List<VirtualFile> filesToShow, boolean pinned) {
+    SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean onlyEdited, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
       myTitle = title;
@@ -385,7 +394,7 @@ public class Switcher extends AnAction implements DumbAware {
       separator.setPreferredSize(JBUI.size(9, 10));
       separator.setBackground(toolWindows.getBackground());
 
-      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, filesToShow,
+      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, collectFiles(project, onlyEdited),
                                                                                               toolWindows.getModel().getSize(), pinned);
       final int selectionIndex = filesAndSelection.getSecond();
       final DefaultListModel filesModel = new DefaultListModel();
@@ -586,6 +595,12 @@ public class Switcher extends AnAction implements DumbAware {
       return content == null ? null : content.getFocusCycleRootAncestor();
     }
 
+    @NotNull
+    private static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
+      return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
+                        : EditorHistoryManager.getInstance(project).getFileList();
+    }
+    
     @NotNull
     private static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
                                                                                  @NotNull List<VirtualFile> filesForInit,
