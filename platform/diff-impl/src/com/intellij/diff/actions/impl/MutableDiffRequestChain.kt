@@ -16,11 +16,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 
 class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffContent) : DiffRequestChainBase() {
+  private val requestUserData: MutableList<Pair<Key<*>, Any>> = mutableListOf()
+  var windowTitle: String? = null
   var title1: String? = getTitleFor(content1)
   var title2: String? = getTitleFor(content2)
+
+  fun <T : Any> putRequestUserData(key: Key<T>, value: T) {
+    requestUserData.add(Pair(key, value))
+  }
 
   override fun getRequests(): List<DiffRequestProducer> {
     return listOf(object : DiffRequestProducer {
@@ -29,7 +36,12 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
       }
 
       override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-        return MutableChainDiffRequest(this@MutableDiffRequestChain)
+        val request = MutableChainDiffRequest(this@MutableDiffRequestChain)
+        for (it in requestUserData) {
+          @Suppress("UNCHECKED_CAST")
+          request.putUserData(it.first as Key<Any>, it.second)
+        }
+        return request
       }
     })
   }
@@ -64,6 +76,7 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
     }
 
     fun fireRequestUpdated() {
+      chain.requestUserData.clear()
       context.reloadDiffRequest()
     }
   }
@@ -98,4 +111,4 @@ private fun getTitleFor(content: DiffContent) =
   if (content is FileContent) DiffRequestFactory.getInstance().getContentTitle(content.file) else null
 
 private class MutableChainDiffRequest(val chain: MutableDiffRequestChain)
-  : SimpleDiffRequest(null, chain.content1, chain.content2, chain.title1, chain.title2)
+  : SimpleDiffRequest(chain.windowTitle, chain.content1, chain.content2, chain.title1, chain.title2)
