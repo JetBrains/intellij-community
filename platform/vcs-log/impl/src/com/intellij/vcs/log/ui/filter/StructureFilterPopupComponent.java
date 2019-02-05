@@ -67,12 +67,24 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   }
 
   @NotNull
+  private Collection<VirtualFile> getFilterRoots(@Nullable VcsLogRootFilter filter) {
+    return filter != null ? filter.getRoots() : getAllRoots();
+  }
+
+  @NotNull
+  private static Collection<FilePath> getFilterFiles(@Nullable VcsLogStructureFilter filter) {
+    return filter != null ? filter.getFiles() : Collections.emptySet();
+  }
+
+  @NotNull
   @Override
   protected String getText(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
-    Collection<VirtualFile> roots = getRootFilter(filter) == null ? getAllRoots() : getRootFilter(filter).getRoots();
-    Collection<FilePath> files = getStructureFilter(filter) == null ? Collections.emptySet() : getStructureFilter(filter).getFiles();
-    Collection<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(getAllRoots(), getRootFilter(filter), getStructureFilter(filter));
+    VcsLogRootFilter rootFilter = getRootFilter(filter);
+    VcsLogStructureFilter structureFilter = getStructureFilter(filter);
+    Collection<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(getAllRoots(), rootFilter, structureFilter);
 
+    Collection<VirtualFile> roots = getFilterRoots(rootFilter);
+    Collection<FilePath> files = getFilterFiles(structureFilter);
     if (files.isEmpty()) {
       return getTextFromRoots(roots, visibleRoots.size() == getAllRoots().size());
     }
@@ -118,8 +130,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   @Nullable
   @Override
   protected String getToolTip(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
-    return getToolTip(getRootFilter(filter) == null ? getAllRoots() : getRootFilter(filter).getRoots(),
-                      getStructureFilter(filter) == null ? Collections.emptySet() : getStructureFilter(filter).getFiles());
+    return getToolTip(getFilterRoots(getRootFilter(filter)), getFilterFiles(getStructureFilter(filter)));
   }
 
   @NotNull
@@ -197,9 +208,9 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   }
 
   private boolean isVisible(@NotNull VirtualFile root) {
-    FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter = myFilterModel.getFilter();
-    if (getRootFilter(filter) != null) {
-      return getRootFilter(filter).getRoots().contains(root);
+    VcsLogRootFilter rootFilter = getRootFilter(myFilterModel.getFilter());
+    if (rootFilter != null) {
+      return rootFilter.getRoots().contains(root);
     }
     return true;
   }
@@ -207,8 +218,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
   private void setVisible(@NotNull VirtualFile root, boolean visible) {
     Set<VirtualFile> roots = getAllRoots();
 
-    FilterPair<VcsLogStructureFilter, VcsLogRootFilter> previousFilter = myFilterModel.getFilter();
-    VcsLogRootFilter rootFilter = getRootFilter(previousFilter);
+    VcsLogRootFilter rootFilter = getRootFilter(myFilterModel.getFilter());
 
     Collection<VirtualFile> visibleRoots;
     if (rootFilter == null) {
@@ -344,23 +354,23 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
       VcsLogDataPack dataPack = myFilterModel.getDataPack();
-      FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter = myFilterModel.getFilter();
+      VcsLogStructureFilter structureFilter = getStructureFilter(myFilterModel.getFilter());
 
       Collection<VirtualFile> files;
-      if (getStructureFilter(filter) == null) {
+      if (structureFilter == null) {
         files = Collections.emptySet();
       }
       else {
         // for now, ignoring non-existing paths
-        files = ContainerUtil.mapNotNull(getStructureFilter(filter).getFiles(), FilePath::getVirtualFile);
+        files = ContainerUtil.mapNotNull(structureFilter.getFiles(), FilePath::getVirtualFile);
       }
 
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
                                                             new ArrayList<>(dataPack.getLogProviders().keySet()));
       if (chooser.showAndGet()) {
-        VcsLogStructureFilter structureFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
-        myFilterModel.setFilter(new FilterPair<>(structureFilter, null));
-        myUiProperties.addRecentlyFilteredGroup(myName, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(structureFilter));
+        VcsLogStructureFilter newFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
+        myFilterModel.setFilter(new FilterPair<>(newFilter, null));
+        myUiProperties.addRecentlyFilteredGroup(myName, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
       }
     }
 
