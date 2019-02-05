@@ -220,9 +220,9 @@ class GuiTestRule : TestRule {
     //find first page with such actions like "Create New Project" without timeout
     private fun isWelcomeFrameFirstStep(timeout: org.fest.swing.timing.Timeout = Timeouts.seconds01): Boolean {
       val createNewProjectAction = GuiTestUtilKt.ignoreComponentLookupException {
-        WelcomeFrameFixture.find(robot(), timeout).apply { robot().finder().find(this@apply.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
+        WelcomeFrameFixture.find(robot(), timeout).let { robot().finder().find(it.target() as Container) { it is ActionLink && it.text.contains("New Project") } }
       }
-      return createNewProjectAction?.target()?.isShowing ?: false
+      return createNewProjectAction?.isShowing ?: false
     }
 
 
