@@ -17,9 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -78,7 +75,6 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     return myBlockingMethodCheckers.stream().anyMatch(extension -> extension.isApplicable(file)) &&
            myNonBlockingContextCheckers.stream().anyMatch(extension -> extension.isApplicable(file));
   }
-
 
   private class OptionsPanel extends JPanel {
     private OptionsPanel() {
@@ -143,50 +139,42 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     @Override
     public void visitElement(PsiElement element) {
       super.visitElement(element);
-
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
-
       if (callExpression == null) return;
-
-      if (!isContextNonBlockingFor(element)) return;
-
+      if (!isContextNonBlockingFor(element, myNonBlockingContextCheckers)) return;
       ProgressIndicatorProvider.checkCanceled();
+
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
-      if (!CachedValuesManager.getCachedValue(referencedMethod, getIsBlockingProvider(referencedMethod, myBlockingMethodCheckers))) {
-        return;
-      }
+      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers)) return;
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
       myHolder.registerProblem(elementToHighLight,
                                JvmAnalysisBundle.message("jvm.inspections.blocking.method.problem.descriptor"));
     }
+  }
 
-    private static CachedValueProvider<Boolean> getIsBlockingProvider(PsiMethod referencedMethod,
-                                                                      List<? extends BlockingMethodChecker> blockingMethodCheckers) {
-      return () -> {
-        boolean isBlocking =
-          StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
-            .anyMatch(method -> isMethodBlocking(method, blockingMethodCheckers));
-        return CachedValueProvider.Result.create(isBlocking, PsiModificationTracker.MODIFICATION_COUNT);
-      };
-    }
+  private static boolean isMethodOrSupersBlocking(PsiMethod referencedMethod,
+                                                  List<? extends BlockingMethodChecker> blockingMethodCheckers) {
+    return StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
+      .anyMatch(method -> isMethodBlocking(method, blockingMethodCheckers));
+  }
 
-    private boolean isContextNonBlockingFor(PsiElement element) {
-      return myNonBlockingContextCheckers.stream().anyMatch(extension -> {
-        ProgressIndicatorProvider.checkCanceled();
-        return extension.isContextNonBlockingFor(element);
-      });
-    }
+  private static boolean isMethodBlocking(PsiMethod method,
+                                          List<? extends BlockingMethodChecker> blockingMethodCheckers) {
+    return blockingMethodCheckers.stream().anyMatch(extension -> {
+      ProgressIndicatorProvider.checkCanceled();
+      return extension.isMethodBlocking(method);
+    });
+  }
 
-    private static boolean isMethodBlocking(PsiMethod method,
-                                            List<? extends BlockingMethodChecker> blockingMethodCheckers) {
-      return blockingMethodCheckers.stream().anyMatch(extension -> {
-        ProgressIndicatorProvider.checkCanceled();
-        return extension.isMethodBlocking(method);
-      });
-    }
+  private static boolean isContextNonBlockingFor(PsiElement element,
+                                                 List<? extends NonBlockingContextChecker> nonBlockingContextCheckers) {
+    return nonBlockingContextCheckers.stream().anyMatch(extension -> {
+      ProgressIndicatorProvider.checkCanceled();
+      return extension.isContextNonBlockingFor(element);
+    });
   }
 }
