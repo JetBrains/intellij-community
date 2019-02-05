@@ -36,7 +36,7 @@ public class CommandFactory {
     return instance;
   }
 
-  public static Command produce(Type commandType, Runtime runtime) {
+  public static RuntimeCommand produce(Type commandType, Runtime runtime) {
     switch (commandType) {
       case REMOTE_INSTALL:
         return new RemoteInstall(getInstance().myProject, getInstance().myController, runtime);
@@ -49,7 +49,9 @@ public class CommandFactory {
       case INSTALL:
         return new Install(getInstance().myProject, getInstance().myController, runtime);
       case UNINSTALL:
-        return new Uninstall(getInstance().myProject, getInstance().myController, runtime);
+        Install install = new Install(getInstance().myProject, getInstance().myController, runtime);
+        install.setEnabled(false);
+        return install;
       case DELETE:
         return new Delete(getInstance().myProject, getInstance().myController, runtime);
     }

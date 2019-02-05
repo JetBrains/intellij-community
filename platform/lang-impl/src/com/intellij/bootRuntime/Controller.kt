@@ -4,15 +4,18 @@ package com.intellij.bootRuntime
 import com.intellij.bootRuntime.BundleState.*
 import com.intellij.bootRuntime.bundles.Local
 import com.intellij.bootRuntime.bundles.Runtime
-import com.intellij.bootRuntime.command.Command
+import com.intellij.bootRuntime.command.Cleanup
+import com.intellij.bootRuntime.command.RuntimeCommand
 import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
+import com.intellij.bootRuntime.command.UseDefault
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
 import java.awt.GridBagConstraints
 import java.awt.Insets
 import javax.swing.Action
+import javax.swing.JButton
 
 class Controller(val project: Project, val actionPanel:ActionPanel, val model: Model) {
 
@@ -39,6 +42,18 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
     val constraint = GridBagConstraints()
     constraint.insets = Insets(0,0,0, 0)
     constraint.weightx = 1.0
+    constraint.anchor = GridBagConstraints.WEST
+
+    val resetButton = JButton(UseDefault(project, this))
+    resetButton.toolTipText = "Reset boot Runtime to the default one"
+    resetButton.isEnabled = BinTrayUtil.getJdkConfigFilePath().exists()
+
+
+    actionPanel.add(resetButton, constraint)
+    val cleanButton = JButton(Cleanup(project, this))
+    cleanButton.toolTipText = "Remove all installed runtimes"
+    actionPanel.add(cleanButton, constraint )
+
     constraint.anchor = GridBagConstraints.EAST
 
     actionPanel.rootPane?.defaultButton = job
@@ -48,13 +63,13 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
     actionPanel.revalidate()
   }
 
-  private fun runtimeStateToActions(runtime:Runtime, currentState: BundleState) : List<Command> {
+  private fun runtimeStateToActions(runtime:Runtime, currentState: BundleState) : List<RuntimeCommand> {
     return when (currentState) {
-      REMOTE -> listOf(produce(REMOTE_INSTALL, runtime))
+      REMOTE -> listOf(produce(REMOTE_INSTALL, runtime), produce(DOWNLOAD, runtime))
       DOWNLOADED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
       EXTRACTED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
       UNINSTALLED -> listOf(produce(INSTALL, runtime), produce(DELETE, runtime))
-      INSTALLED -> listOf(produce(UNINSTALL, runtime), produce(DELETE, runtime))
+      INSTALLED -> listOf(produce(UNINSTALL, runtime))
     }
   }
 

@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project;
 
 import java.awt.event.ActionEvent;
 
-public class RemoteInstall extends Command {
+public class RemoteInstall extends RuntimeCommand {
   RemoteInstall(Project project, Controller controller, Runtime runtime) {
-    super(project, controller, "Download and Install", runtime);
+    super(project, controller, "Install", runtime);
   }
 
   @Override

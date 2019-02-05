@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-public class Install extends Command {
+public class Install extends RuntimeCommand {
   public Install(Project project, Controller controller, Runtime runtime) {
     super(project, controller, "Install", runtime);
   }

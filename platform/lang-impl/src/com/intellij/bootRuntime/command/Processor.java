@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class Processor {
 
-  public static void process(@NotNull Command... commands) {
-    for (Command c : commands) {
+  public static void process(@NotNull RuntimeCommand... commands) {
+    for (RuntimeCommand c : commands) {
       c.actionPerformed(null);
     }
   }

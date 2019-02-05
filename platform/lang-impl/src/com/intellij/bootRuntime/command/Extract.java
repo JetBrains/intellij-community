@@ -4,7 +4,6 @@ package com.intellij.bootRuntime.command;
 import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 
 import java.awt.event.ActionEvent;
@@ -14,7 +13,7 @@ import java.io.IOException;
 
 import static org.jetbrains.io.TarKt.unpackTarGz;
 
-public class Extract extends Command {
+public class Extract extends RuntimeCommand {
   public Extract(Project project, Controller controller, Runtime runtime) {
     super(project, controller, "Extract", runtime);
   }
@@ -24,30 +23,24 @@ public class Extract extends Command {
     runWithProgress("Extracting...", indicator -> {
       String archiveFileName = getRuntime().getFileName();
       String directoryToExtractName = BinTrayUtil.archveToDirectoryName(archiveFileName);
-      String archiveFilePath = PathManager.getPluginTempPath() + File.separator + archiveFileName;
       File jdkStoragePathFile = BinTrayUtil.getJdkStoragePathFile();
       if (!jdkStoragePathFile.exists()) {
         jdkStoragePathFile.mkdir();
       }
 
-      File archiveFile = new File(archiveFilePath);
       File directoryToExtractFile = new File(jdkStoragePathFile, directoryToExtractName);
       if (directoryToExtractFile.exists()) {
         BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
       } else {
-          if (!archiveFile.exists()) {
-            // this.updateCallback.run();
-          } else {
+        directoryToExtractFile.mkdir();
+        try (FileInputStream inputStream = new FileInputStream(myRuntime.getDownloadPath())) {
+          unpackTarGz(inputStream, directoryToExtractFile.toPath());
+        }
+        catch (IOException ex) {
+          ex.printStackTrace();
+        }
 
-            try (FileInputStream inputStream = new FileInputStream(archiveFile)) {
-              unpackTarGz(inputStream, directoryToExtractFile.toPath());
-            }
-            catch (IOException ex) {
-              ex.printStackTrace();
-            }
-
-            BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
-          }
+        BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
       }
     });
   }
