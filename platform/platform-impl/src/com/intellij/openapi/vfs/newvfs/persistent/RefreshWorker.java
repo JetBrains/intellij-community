@@ -3,12 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,14 +34,13 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * @author max
  */
 public class RefreshWorker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
-
   private final boolean myIsRecursive;
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
@@ -74,6 +71,7 @@ public class RefreshWorker {
       myLocalFileSystemRefreshWorker.scan();
       return;
     }
+
     NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
@@ -93,9 +91,7 @@ public class RefreshWorker {
     while (!myRefreshQueue.isEmpty()) {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
-      boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
-      if (!fileDirty) continue;
+      if (!myHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
@@ -216,17 +212,10 @@ public class RefreshWorker {
 
         return true;
       });
-      if (hasEvents) {
-        break;
-      }
+
+      if (hasEvents) break;
     }
   }
-
-  @NotNull
-  private static Path appendPath(@NotNull String parent, @NotNull String name) {
-    return StringUtil.endsWith(parent, "/") ? Paths.get(parent + name) : Paths.get(parent + "/" + name);
-  }
-
 
   private void partialDirRefresh(@NotNull NewVirtualFileSystem fs,
                                  @NotNull TObjectHashingStrategy<String> strategy,
@@ -289,9 +278,8 @@ public class RefreshWorker {
 
         return true;
       });
-      if (hasEvents) {
-        break;
-      }
+
+      if (hasEvents) break;
     }
   }
 
@@ -314,21 +302,10 @@ public class RefreshWorker {
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes == null) return null;
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    return new NewChildRecord(name, appendPath(dir.getPath(), name), attributes, symlinkTarget);
+    return new NewChildRecord(name, Paths.get(dir.getPath() + '/' + name), attributes, symlinkTarget);
   }
 
-  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, @NotNull VirtualFile child) {
-    if (actualNames != null) {
-      String currentName = child.getName();
-      String actualName = actualNames.get(currentName);
-      if (actualName != null && !currentName.equals(actualName)) {
-        myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
-      }
-    }
-  }
-
-  private static class RefreshCancelledException extends RuntimeException {
-  }
+  private static class RefreshCancelledException extends RuntimeException { }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) {
     if (myCancelled || ourCancellingCondition != null && ourCancellingCondition.fun(stopAt)) {
@@ -373,11 +350,21 @@ public class RefreshWorker {
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
       String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), appendPath(parent.getPath(), child.getName()), childAttributes, symlinkTarget);
+      myHelper.scheduleCreation(parent, child.getName(), Paths.get(parent.getPath() + '/' + child.getName()), childAttributes, symlinkTarget);
       return true;
     }
 
     return false;
+  }
+
+  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, @NotNull VirtualFile child) {
+    if (actualNames != null) {
+      String currentName = child.getName();
+      String actualName = actualNames.get(currentName);
+      if (actualName != null && !currentName.equals(actualName)) {
+        myHelper.scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+      }
+    }
   }
 
   private static Function<? super VirtualFile, Boolean> ourCancellingCondition;

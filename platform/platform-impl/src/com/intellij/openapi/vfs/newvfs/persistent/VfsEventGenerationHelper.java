@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class VfsEventGenerationHelper {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
-  private static final Logger LOG_ATTRIBUTES = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker_Attributes");
+  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+
   private final List<VFileEvent> myEvents = new ArrayList<>();
 
   @NotNull
@@ -24,26 +25,20 @@ class VfsEventGenerationHelper {
     return myEvents;
   }
 
-  void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
-    if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
-    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
+  boolean checkDirty(@NotNull NewVirtualFile file) {
+    boolean fileDirty = file.isDirty();
+    if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
+    return fileDirty;
   }
 
   void checkContentChanged(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
     if (oldTimestamp != newTimestamp || oldLength != newLength) {
-      scheduleUpdateContent(file, oldTimestamp, newTimestamp, oldLength, newLength);
-    }
-  }
-
-  void scheduleUpdateContent(@NotNull VirtualFile file, long oldTimestamp, long newTimestamp, long oldLength, long newLength) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
+      if (LOG.isTraceEnabled()) LOG.trace(
         "update file=" + file +
-        (oldTimestamp != newTimestamp ? ", oldtimestamp=" + oldTimestamp + ", newtimestamp=" + newTimestamp : "") +
-        (oldLength != newLength ? ", oldlength=" + oldLength + ", length=" + newLength : "")
-      );
+        (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
+        (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
+      myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
     }
-    myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength, true));
   }
 
   void scheduleCreation(@NotNull VirtualFile parent,
@@ -51,9 +46,8 @@ class VfsEventGenerationHelper {
                         @NotNull Path path,
                         @NotNull FileAttributes attributes,
                         String symlinkTarget) {
-    boolean isEmptyDir = attributes.isDirectory() && !LocalFileSystemBase.hasChildren(path);
-
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
+    boolean isEmptyDir = attributes.isDirectory() && !LocalFileSystemBase.hasChildren(path);
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, isEmptyDir));
   }
 
@@ -76,12 +70,14 @@ class VfsEventGenerationHelper {
   }
 
   void checkWritableAttributeChange(@NotNull VirtualFile file, boolean oldWritable, boolean newWritable) {
-    if (LOG_ATTRIBUTES.isTraceEnabled()) {
-      LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + oldWritable + " real=" + newWritable);
-    }
     if (oldWritable != newWritable) {
       scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, oldWritable, newWritable);
     }
+  }
+
+  void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
+    if (LOG.isTraceEnabled()) LOG.trace("update file=" + file + ' ' + property + '=' + current + "->" + upToDate);
+    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 
   void addAllEventsFrom(@NotNull VfsEventGenerationHelper otherHelper) {

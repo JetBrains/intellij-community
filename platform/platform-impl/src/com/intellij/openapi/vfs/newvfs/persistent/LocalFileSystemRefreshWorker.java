@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -35,9 +34,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class LocalFileSystemRefreshWorker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
+class LocalFileSystemRefreshWorker {
   private final boolean myIsRecursive;
   private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
@@ -89,9 +88,7 @@ class LocalFileSystemRefreshWorker {
 
     while (!myRefreshQueue.isEmpty()) {
       NewVirtualFile file = myRefreshQueue.pullFirst();
-      boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
-      if (!fileDirty) continue;
+      if (!myHelper.checkDirty(file)) continue;
 
       checkCancelled(file);
 
