@@ -52,18 +52,6 @@ class ParallelTreeManager(object):
         else:
             func_to_open()
 
-        # parent_id = "0"
-        # for branch_n in range(len(test_as_list), 1):
-        #     branch = test_as_list[0:branch_n]
-        #     key = tuple(branch)
-        #     try:
-        #         _, parent_id = self._branches[key]
-        #     except KeyError:
-        #         self._max_node_id += 1
-        #         self._branches[key] = (self._max_node_id, parent_id)
-        #         return "open", branch
-        # func_to_open()
-
     def level_closed(self, test_as_list, func_to_close):
         """
         To be called on test end or failure.
