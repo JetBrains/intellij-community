@@ -67,7 +67,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
     if (forWriting && expressionFrom != null) {
       UClassInitializer initializer = UastUtils.getParentOfType(expressionFrom, UClassInitializer.class);
-      if (initializer != null && expressionFrom.getSourcePsi() == UastUtils.getParentOfType(initializer, UClass.class).getSourcePsi()) {
+      if (initializer != null && refFrom.getPsiElement() == UastUtils.getParentOfType(initializer, UClass.class).getSourcePsi()) {
         UExpression qualifierExpression = expressionFrom instanceof UQualifiedReferenceExpression ? ((UQualifiedReferenceExpression)expressionFrom).getReceiver() : null;
         if (qualifierExpression == null || qualifierExpression instanceof UThisExpression) {
           referencedFromClassInitializer = true;
