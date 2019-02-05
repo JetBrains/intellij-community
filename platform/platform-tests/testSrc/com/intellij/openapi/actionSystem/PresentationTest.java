@@ -13,13 +13,14 @@ public class PresentationTest extends LightPlatformTestCase {
     new Data("Pre-last and not unique ch_ar", "Pre-last and not unique ch&ar", "Pre-last and not unique char", "Pre-last and not unique ch_ar", 'A', 26),
     new Data("Last cha_r", "Last cha&r", "Last char", "Last cha_r", 'R', 8),
     new Data("Too late_", "Too late&", "Too late", "Too late", 0, -1),
-    new Data("Do__uble", "Do&_uble", "Do_uble", "Do_uble", 0, -1),
-    new Data("Dou_&ble", "Dou&&ble", "Dou&ble", "Dou&ble", 0, -1),
-    new Data("Complete double__", "Complete double&_", "Complete double_", "Complete double_", 0, -1),
-    new Data("Complete double_&", "Complete double&&", "Complete double&", "Complete double&", 0, -1),
+    new Data("Do__uble", "Do&_uble", "Do_uble", "Do__uble", 0, -1),
+    new Data("Dou_&ble", "Dou&&ble", "Dou&ble", "Dou&&ble", 0, -1),
+    new Data("Complete double__", "Complete double&_", "Complete double_", "Complete double__", 0, -1),
+    new Data("Complete double_&", "Complete double&&", "Complete double&", "Complete double&&", 0, -1),
     new Data("Repea_te_d", "Repea&te_d", "Repeate_d", "Repea_te_d", 'T', 5),
     new Data("Re_peate&d", "Re&peate&d", "Repeate&d", "Re_peate&d", 'P', 2),
-    new Data("Run 'test__1' with Co_verage", "Run 'test__1' with Co&verage", "Run 'test_1' with Coverage", "Run 'test_1' with Co_verage", 'V', 20)
+    new Data("Run 'test__1' with Co_verage", "Run 'test__1' with Co&verage", "Run 'test_1' with Coverage", "Run 'test__1' with Co_verage", 'V', 20),
+    new Data("R_un 'test_1'", "R&un 'test_1'", "Run 'test_1'", "R_un 'test_1'", 'U', 1),
   };
 
   private static class Data {
@@ -64,6 +65,29 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(testCase.fullMenuText, p.getTextWithMnemonic());
 
       assertTrue(testCase.menuText.length() > p.getDisplayedMnemonicIndex());
+    }
+
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsUnderscore);
+
+      Presentation p2 = new Presentation();
+      p2.setText(p1.getTextWithMnemonic());
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsAmpersand);
+      Presentation p2 = new Presentation();
+      p2.setText(testCase.inputTextsUnderscore);
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
     }
   }
 

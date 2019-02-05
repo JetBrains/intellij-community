@@ -182,10 +182,7 @@ public final class Presentation implements Cloneable {
   }
 
   public String getTextWithMnemonic() {
-    if (myText != null && myDisplayedMnemonicIndex > -1) {
-      return myText.substring(0, myDisplayedMnemonicIndex) + "_" + myText.substring(myDisplayedMnemonicIndex);
-    }
-    return myText;
+    return wrapTextWithMnemonic(myText, myDisplayedMnemonicIndex);
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
@@ -193,15 +190,28 @@ public final class Presentation implements Cloneable {
   }
 
   public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
-    if (text == null) {
-      return null;
-    }
+    if (text == null) return null;
     for (int i = 0; i < text.length(); i++) {
       if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-        return text.substring(0, i) + "_" + text.substring(i);
+        return wrapTextWithMnemonic(text, i);
       }
     }
-    return text;
+    return wrapTextWithMnemonic(text, -1);
+  }
+
+  @Nullable
+  private static String wrapTextWithMnemonic(@Nullable String text, int mnemonicIndex) {
+    if (text == null) return null;
+    if (mnemonicIndex > -1) {
+      String prefix = escapeMnemonicsInActionText(text.substring(0, mnemonicIndex));
+      String suffix = text.substring(mnemonicIndex);
+      return prefix + "_" + suffix;
+    }
+    return escapeMnemonicsInActionText(text);
+  }
+
+  private static String escapeMnemonicsInActionText(String text) {
+    return text.replace("_", "__").replace("&", "&&");
   }
 
   public String getDescription() {
