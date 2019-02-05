@@ -47,6 +47,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -70,6 +71,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
@@ -151,7 +153,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (SWITCHER == null) {
         isNewSwitcher = true;
         // Assigns SWITCHER field
-        createAndShowSwitcher(project, SWITCHER_TITLE, false, false);
+        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
@@ -178,10 +180,10 @@ public class Switcher extends AnAction implements DumbAware {
   @Deprecated
   @Nullable
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
-    return createAndShowSwitcher(e, title, pinned, vFiles != null);
+    return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
   
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
     if (SWITCHER != null) {
       final boolean sameShortcut = Comparing.equal(SWITCHER.myTitle, title);
@@ -199,19 +201,20 @@ public class Switcher extends AnAction implements DumbAware {
         return null;
       }
     }
-    return project == null ? null : createAndShowSwitcher(project, title, onlyEdited, pinned);
+    return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned);
   }
 
   @Nullable
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
                                                      @NotNull String title,
+                                                     @NotNull String actionId,
                                                      boolean onlyEdited,
                                                      boolean pinned) {
     synchronized (Switcher.class) {
       if (SWITCHER != null) {
         SWITCHER.cancel();
       }
-      SWITCHER = new SwitcherPanel(project, title, onlyEdited, pinned);
+      SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
       return SWITCHER;
     }
   }
@@ -231,6 +234,7 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
+    final String myActionId;
 
     @Nullable
     @Override
@@ -321,10 +325,11 @@ public class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean onlyEdited, boolean pinned) {
+    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
       myTitle = title;
+      myActionId = actionId;
       myPinned = pinned;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch() : null;
 
@@ -546,10 +551,11 @@ public class Switcher extends AnAction implements DumbAware {
       KeymapUtil.reassignAction(files, getKeyStroke(VK_UP, 0), getKeyStroke(VK_UP, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
       KeymapUtil.reassignAction(files, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), WHEN_FOCUSED, false);
 
-      myShowOnlyEditedFilesCheckBox = new JBCheckBox("Show Only Edited Files", onlyEdited);
-      myShowOnlyEditedFilesCheckBox.setOpaque(false);
-      myShowOnlyEditedFilesCheckBox.setFocusable(false);
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myShowOnlyEditedFilesCheckBox);
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(actionId, onlyEdited);
+
+      JPanel topPanel = createTopPanel(myShowOnlyEditedFilesCheckBox, isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title);
+      this.add(topPanel, BorderLayout.NORTH);
+      
       if (isCheckboxMode()) {
         myShowOnlyEditedFilesCheckBox.addActionListener(new ActionListener() {
           @Override
@@ -570,13 +576,6 @@ public class Switcher extends AnAction implements DumbAware {
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
-        .setTitle(isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title)
-        .setCommandButton(new ActiveComponent.Adapter() {
-          @Override
-          public JComponent getComponent() {
-            return myShowOnlyEditedFilesCheckBox;
-          }
-        })
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
@@ -627,7 +626,6 @@ public class Switcher extends AnAction implements DumbAware {
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "LEFT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, "control RIGHT");
       addFocusTraversalKeys(popupFocusAncestor, KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, "control LEFT");
-
     }
 
     private Container getPopupFocusAncestor() {
@@ -640,7 +638,7 @@ public class Switcher extends AnAction implements DumbAware {
       return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
                         : EditorHistoryManager.getInstance(project).getFileList();
     }
-    
+
     @NotNull
     private static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
                                                                                  @NotNull List<VirtualFile> filesForInit,
@@ -704,6 +702,21 @@ public class Switcher extends AnAction implements DumbAware {
       }
 
       return Pair.create(filesData, selectionIndex);
+    }
+
+    @NotNull
+    private static JPanel createTopPanel(JBCheckBox showOnlyEditedFilesCheckBox, @NotNull String title) {
+      JPanel topPanel = new CaptionPanel();
+      JBLabel titleLabel = new JBLabel(title);
+      titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
+      topPanel.add(titleLabel, BorderLayout.WEST);
+      topPanel.add(showOnlyEditedFilesCheckBox, BorderLayout.EAST);
+
+      Dimension size = topPanel.getPreferredSize();
+      size.height = JBUI.scale(29);
+      topPanel.setPreferredSize(size);
+      topPanel.setBorder(JBUI.Borders.empty(5, 8));
+      return topPanel;
     }
 
     private static void  addFocusTraversalKeys (Container focusCycleRoot, int focusTraversalType, String keyStroke) {
@@ -1274,6 +1287,23 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
+  private static class MyCheckBox extends JBCheckBox {
+    private MyCheckBox(@NotNull String actionId, boolean selected) {
+      super(layoutText(actionId), selected);
+      setOpaque(false);
+      setFocusable(false);
+    }
+
+    private static String layoutText(@NotNull String actionId) {
+      ShortcutSet shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId);
+      return "<html>"
+             + IdeBundle.message("recent.files.checkbox.label")
+             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
+             + "</html>";
+    }
+  }
+  
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;

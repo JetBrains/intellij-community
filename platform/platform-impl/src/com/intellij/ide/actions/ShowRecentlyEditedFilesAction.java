@@ -29,7 +29,7 @@ public class ShowRecentlyEditedFilesAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
-      Switcher.createAndShowSwitcher(e, "Recently Edited Files", true, true);
+      Switcher.createAndShowSwitcher(e, "Recently Edited Files", "RecentChangedFiles", true, true);
     }
   }
 
