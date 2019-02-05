@@ -230,7 +230,8 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
-   * Also 'copyable' label supports web hyperlinks (e.g. opens browser on click)
+   * Note: 'copyable' labels support web hyperlinks (e.g. opens browser on click)
+   *       'copyable' labels do not allow auto wrapping by default and will render "..." as label text when there isn't enough space.
    *
    * @return 'this' (the same instance)
    */
@@ -243,7 +244,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
           @Override
           public void paint(Graphics g) {
             Dimension size = getSize();
-            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline;
+            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline && !myAllowAutoWrapping;
 
             if (!paintEllipsis) {
               super.paint(g);
