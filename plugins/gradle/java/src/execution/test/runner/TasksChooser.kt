@@ -27,7 +27,7 @@ abstract class TasksChooser {
   }
 
   fun runTaskChoosing(context: ConfigurationContext, vararg elements: PsiElement) {
-    return runTaskChoosing(context, elements.asIterable())
+    runTaskChoosing(context, elements.asIterable())
   }
 
   private fun runTaskChoosing(context: DataContext, sources: List<VirtualFile>, project: Project) {

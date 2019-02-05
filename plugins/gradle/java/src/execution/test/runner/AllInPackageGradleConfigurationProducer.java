@@ -44,8 +44,9 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
                                                     ConfigurationContext context,
                                                     Ref<PsiElement> sourceElement) {
-    ConfigurationData configurationData = extractConfigurationElements(context);
+    ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
     TasksToRun tasksToRun = findTestsTaskToRun(configurationData.source, context.getProject());
     if (tasksToRun.isEmpty()) return false;
@@ -62,8 +63,9 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
 
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    ConfigurationData configurationData = extractConfigurationElements(context);
+    ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) return false;
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, configurationData.module)) return false;
 
     if (!StringUtil.equals(
       configurationData.projectPath,
@@ -81,8 +83,12 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
                          @NotNull ConfigurationContext context,
                          @NotNull Runnable performRunnable) {
-    ConfigurationData configurationData = extractConfigurationElements(context);
-    if (configurationData == null) return;
+    ConfigurationData configurationData = extractConfigurationData(context);
+    if (configurationData == null) {
+      LOG.warn("Cannot extract configuration data from context, uses raw run configuration");
+      performRunnable.run();
+      return;
+    }
     TasksChooser tasksChooser = new TasksChooser() {
       @Override
       protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
@@ -90,7 +96,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
         PsiElement[] sourceElements = ArrayUtil.toObjectArray(PsiElement.class, configurationData.sourceElement);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, sourceElements, createFilter)) return;
+        if (!applyTestConfiguration(settings, context.getProject(), tasks, sourceElements, createFilter)) {
+          LOG.warn("Cannot apply package test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
         configuration.setName(suggestName(configurationData.psiPackage, configurationData.module));
         performRunnable.run();
       }
@@ -99,14 +109,13 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
   }
 
   @Nullable
-  private ConfigurationData extractConfigurationElements(ConfigurationContext context) {
+  private ConfigurationData extractConfigurationData(ConfigurationContext context) {
     PsiElement contextLocation = context.getPsiLocation();
     if (contextLocation == null) return null;
     PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(contextLocation);
     if (psiPackage == null) return null;
     Module module = context.getModule();
     if (module == null) return null;
-    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
     String projectPath = resolveProjectPath(module);
     if (projectPath == null) return null;
     PsiElement sourceElement = getSourceElement(module, contextLocation);
