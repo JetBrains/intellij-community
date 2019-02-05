@@ -19,12 +19,16 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import javax.crypto.KeyAgreement;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Random;
@@ -244,5 +248,58 @@ public class UrlClassLoaderTest {
 
   private static void withCustomCachedClassloader(URL url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
     testAction.consume(UrlClassLoader.build().useCache().urls(url).get());
+  }
+
+  /**
+   * IDEA's class loader {@link UrlClassLoader} is optimized for speed but does not works correctly in a few cases.
+   * For example it does not assign {@link java.security.CodeSource} to loaded classes. In such cases should be used
+   * default class loader.
+   *
+   * @see IDEA-181010
+   */
+  @Test
+  public void testFallbackForBlacklistedPackages() throws Exception {
+    String className = "org.bouncycastle.jce.provider.BouncyCastleProvider";
+    URL classUrl = UrlClassLoaderTest.class.getClassLoader().getResource(className.replace('.', '/') + ".class");
+    assertEquals("jar", classUrl.getProtocol());
+    classUrl = new URL(classUrl.toExternalForm().split("[!]", 2)[0].substring("jar:".length()));
+
+    ClassLoader classLoader;
+    Exception error;
+
+    classLoader = UrlClassLoader.build()
+      .urls(classUrl)
+      .get();
+    error = codeThatRegistersSecurityProvider(classLoader, className);
+    assertEquals(SecurityException.class, error == null ? null : error.getClass());
+
+    classLoader = UrlClassLoader.build()
+      .urls(classUrl)
+      .useDefaultClassLoaderForPrefixes("org.bouncycastle.")
+      .get();
+    error = codeThatRegistersSecurityProvider(classLoader, className);
+    assertEquals(null, error == null ? null : error.getClass());
+  }
+
+  @Nullable
+  private Exception codeThatRegistersSecurityProvider(ClassLoader classLoader, String className) {
+    Class<?> providerClass;
+    Provider provider;
+    try {
+      providerClass = classLoader.loadClass(className);
+      provider = (Provider)providerClass.newInstance();
+    }
+    catch (Exception error) {
+      throw new IllegalStateException(error);
+    }
+    Security.addProvider(provider);
+
+    try {
+      KeyAgreement.getInstance("DH", provider);
+      return null;
+    }
+    catch (Exception error) {
+      return error;
+    }
   }
 }

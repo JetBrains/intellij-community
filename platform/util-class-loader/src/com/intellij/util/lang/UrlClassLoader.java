@@ -23,6 +23,7 @@ import java.util.*;
  */
 public class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
+  static final List<String> DEFAULT_PACKAGE_BLACKLIST = Arrays.asList("org.bouncycastle.");
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -84,6 +85,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
+    private List<String> myPackageBlacklist = ContainerUtil.emptyList();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -104,7 +106,22 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
     @NotNull
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
-    
+
+    /**
+     * {@link UrlClassLoader} is optimized for speed but does not works correctly in a few cases.
+     * Class names mathing any specified prefix will be loaded by default Java class loader.
+     *
+     * @param prefixes List of prefixes of package names.
+     */
+    @NotNull
+    public Builder useDefaultClassLoaderForPrefixes(@NotNull List<String> prefixes) { myPackageBlacklist = prefixes; return this; }
+
+    /**
+     * @see {@link #useDefaultClassLoaderForPrefixes(List)}
+     */
+    @NotNull
+    public Builder useDefaultClassLoaderForPrefixes(@NotNull String... prefixes) { return useDefaultClassLoaderForPrefixes(Arrays.asList(prefixes)); }
+
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
@@ -183,6 +200,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private final List<URL> myURLs;
+  private final List<String> myPackageBlacklist;
+  private final URLClassLoader myFallbackClassLoader;
   private final ClassPath myClassPath;
   private final ClassLoadingLocks myClassLoadingLocks;
   private final boolean myAllowBootstrapResources;
@@ -192,7 +211,8 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
-           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
+           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
+           .useDefaultClassLoaderForPrefixes(DEFAULT_PACKAGE_BLACKLIST));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -206,6 +226,8 @@ public class UrlClassLoader extends ClassLoader {
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
     myClassLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
+    myPackageBlacklist = builder.myPackageBlacklist;
+    myFallbackClassLoader = URLClassLoader.newInstance(myURLs.toArray(new URL[0]), null);
   }
 
   @NotNull
@@ -262,6 +284,18 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected final Class _findClass(@NotNull String name) {
+    // Expected that myPackageBlacklist contains small amount of prefixes
+    // that makes simple loop more quick than complex data structures.
+    for (String prefix : myPackageBlacklist) {
+      if (name.startsWith(prefix)) {
+        try {
+          return myFallbackClassLoader.loadClass(name);
+        }
+        catch (ClassNotFoundException e) {
+          return null;
+        }
+      }
+    }
     Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
