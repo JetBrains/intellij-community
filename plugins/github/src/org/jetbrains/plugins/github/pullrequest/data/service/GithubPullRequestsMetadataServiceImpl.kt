@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,11 +17,8 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -339,7 +335,8 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
       mainLabel.text = getText(value.value)
       mainLabel.icon = getIcon(value.value)
 
-      checkIconLabel.icon = if (value.selected) AllIcons.Actions.Checked else EmptyIcon.create(AllIcons.Actions.Checked)
+      val icon = LafIconLookup.getIcon("checkmark", isSelected, false)
+      checkIconLabel.icon = if (value.selected) icon else EmptyIcon.create(icon)
 
       return this
     }
