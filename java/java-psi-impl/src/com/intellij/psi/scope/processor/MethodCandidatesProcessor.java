@@ -64,7 +64,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
         if (containingClass != null && 
             containingClass.isInterface() &&
             !(myAccessClass instanceof PsiTypeParameter) &&
-            !containingClass.equals(myAccessClass)) {
+            !containingClass.getManager().areElementsEquivalent(myAccessClass, containingClass)) {
           staticProblem = true;
         }
       }
