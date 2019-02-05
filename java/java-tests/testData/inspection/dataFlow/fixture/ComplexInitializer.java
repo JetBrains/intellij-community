@@ -63,7 +63,7 @@ class Constants {
   static native Object get();
 }
 
-class NotTooComplexInitializer {
+class <weak_warning descr="Class initializer is complex: data flow results could be imprecise">NotTooComplexInitializer</weak_warning> {
   static {
     int i = 1;
     for(Object obj = Constants.get(); obj != Constants.C5; obj = Constants.get()) {
@@ -84,7 +84,7 @@ class NotTooComplexInitializer {
     }
   }
 }
-class NotTooComplexMergingInitializer {
+class <weak_warning descr="Class initializer is complex: data flow results could be imprecise">NotTooComplexMergingInitializer</weak_warning> {
   static {
     foo(Constants.C1 == null, Constants.C2 == null, Constants.C3 == null,
                   Constants.C4 == null, Constants.C5 == null, Constants.C6 == null,
