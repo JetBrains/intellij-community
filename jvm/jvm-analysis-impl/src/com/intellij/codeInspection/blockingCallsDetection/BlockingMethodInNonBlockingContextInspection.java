@@ -17,9 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -32,8 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUastLocalInspectionTool {
 
@@ -130,14 +125,14 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
   private static class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
     private final ProblemsHolder myHolder;
-    private final Map<Boolean, ? extends List<? extends BlockingMethodChecker>> myBlockingMethodCheckers;
+    private final List<? extends BlockingMethodChecker> myBlockingMethodCheckers;
     private final List<? extends NonBlockingContextChecker> myNonBlockingContextCheckers;
 
     BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
                                               List<? extends BlockingMethodChecker> blockingMethodCheckers,
                                               List<? extends NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;
-      this.myBlockingMethodCheckers = blockingMethodCheckers.stream().collect(Collectors.partitioningBy(checker -> checker instanceof PersistentStateChecker));
+      this.myBlockingMethodCheckers = blockingMethodCheckers;
       this.myNonBlockingContextCheckers = nonBlockingContextCheckers;
     }
 
@@ -152,10 +147,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
       PsiMethod referencedMethod = callExpression.resolve();
       if (referencedMethod == null) return;
 
-      final boolean isBlockingCachedValue = queryCacheIfMethodIsBlocking(referencedMethod, myBlockingMethodCheckers.get(false));
-      if (!isBlockingCachedValue && !queryProvidersIfMethodIsBlocking(referencedMethod, myBlockingMethodCheckers.get(true))) {
-        return;
-      }
+      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers)) return;
 
       PsiElement elementToHighLight = AnalysisUastUtil.getMethodIdentifierSourcePsi(callExpression);
       if (elementToHighLight == null) return;
@@ -164,14 +156,8 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
   }
 
-  private static boolean queryCacheIfMethodIsBlocking(PsiMethod referencedMethod, List<? extends BlockingMethodChecker> myBlockingMethodCheckers) {
-    return CachedValuesManager.getCachedValue(referencedMethod, () -> CachedValueProvider.Result.create(
-      queryProvidersIfMethodIsBlocking(referencedMethod, myBlockingMethodCheckers),
-      PsiModificationTracker.MODIFICATION_COUNT));
-  }
-
-  private static boolean queryProvidersIfMethodIsBlocking(PsiMethod referencedMethod,
-                                                          List<? extends BlockingMethodChecker> blockingMethodCheckers) {
+  private static boolean isMethodOrSupersBlocking(PsiMethod referencedMethod,
+                                                  List<? extends BlockingMethodChecker> blockingMethodCheckers) {
     return StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
       .anyMatch(method -> isMethodBlocking(method, blockingMethodCheckers));
   }

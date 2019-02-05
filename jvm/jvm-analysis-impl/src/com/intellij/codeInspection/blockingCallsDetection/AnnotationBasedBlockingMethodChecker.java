@@ -2,12 +2,15 @@
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker, PersistentStateChecker {
+public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
 
   private final List<String> myBlockingAnnotations;
 
@@ -25,11 +28,6 @@ public class AnnotationBasedBlockingMethodChecker implements BlockingMethodCheck
 
   @Override
   public boolean isMethodBlocking(@NotNull PsiMethod method) {
-    return hasAnnotation(method, myBlockingAnnotations);
-  }
-
-  static boolean hasAnnotation(PsiModifierListOwner owner, List<String> annotationsFQNames) {
-    // AnnotationUtil#isAnnotated doesn't use caching inside
-    return AnnotationUtil.findAnnotation(owner, annotationsFQNames, false) != null;
+    return AnnotationUtil.findAnnotation(method, myBlockingAnnotations, false) != null;
   }
 }

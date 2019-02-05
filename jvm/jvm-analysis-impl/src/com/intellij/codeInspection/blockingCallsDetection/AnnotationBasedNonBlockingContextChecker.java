@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
@@ -10,9 +11,7 @@ import org.jetbrains.uast.UastUtils;
 
 import java.util.List;
 
-import static com.intellij.codeInspection.blockingCallsDetection.AnnotationBasedBlockingMethodChecker.hasAnnotation;
-
-public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker, PersistentStateChecker {
+public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
 
   private final List<String> myNonBlockingAnnotations;
 
@@ -37,6 +36,6 @@ public class AnnotationBasedNonBlockingContextChecker implements NonBlockingCont
     if (callingMethod == null) return false;
     PsiMethod psiCallingMethod = callingMethod.getJavaPsi();
 
-    return hasAnnotation(psiCallingMethod, myNonBlockingAnnotations);
+    return AnnotationUtil.findAnnotation(psiCallingMethod, myNonBlockingAnnotations, false) != null;
   }
 }
