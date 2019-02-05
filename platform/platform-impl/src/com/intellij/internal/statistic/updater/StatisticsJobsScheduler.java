@@ -6,8 +6,13 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.*;
+import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryEP;
+import com.intellij.internal.statistic.utils.metricsWhitelist.dictionaries.FUSRegexDictionaryService;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,9 +33,11 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class StatisticsJobsScheduler implements BaseComponent {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 20 * 60 * 1000;
@@ -65,6 +72,8 @@ public class StatisticsJobsScheduler implements BaseComponent {
     runEventLogStatisticsService();
     runStatesLogging();
     runLegacyDataCleanupService();
+
+    preloadMetricsWhitelists();
   }
 
   private static void runEventLogStatisticsService() {
@@ -128,5 +137,10 @@ public class StatisticsJobsScheduler implements BaseComponent {
       }
     }
     return false;
+  }
+
+  private static void preloadMetricsWhitelists() {
+    Set<String> dictionaryIds = FUSRegexDictionaryEP.EP_NAME.extensions().map(d -> d.id).collect(Collectors.toSet());
+    FUSRegexDictionaryService.getInstance().preloadDictionaries(dictionaryIds);
   }
 }
