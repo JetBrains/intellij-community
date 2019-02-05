@@ -31,7 +31,7 @@ import java.util.*;
 
 class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myManager;
-  public static long CAN_BE_FINAL_MASK;
+  static long CAN_BE_FINAL_MASK;
 
   CanBeFinalAnnotator(@NotNull RefManager manager) {
     myManager = manager;
@@ -94,7 +94,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     }
     else if (refElement instanceof RefField) {
       final PsiElement element = refElement.getPsiElement();
-      if (element != null && RefUtil.isImplicitWrite(element)) {
+      if (RefUtil.isImplicitWrite(element)) {
         ((RefElementImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
