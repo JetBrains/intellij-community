@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,10 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), "noBreadcrumbsBelow");
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), "breadcrumbs");
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), "intentionBulb");
-    for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
-      addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), "breadcrumbsFor" + language);
+    if (Registry.is("editor.breadcrumbs.language.statistics.enabled")) {
+      for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
+        addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), "breadcrumbsFor" + language);
+      }
     }
 
     RichCopySettings rcs = RichCopySettings.getInstance();
