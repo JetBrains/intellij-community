@@ -36,7 +36,7 @@ import static java.awt.event.KeyEvent.*;
 @State(
   name = "ShortcutsCollector",
   storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
     @Storage(value = "statistics.shortcuts.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
@@ -57,7 +57,6 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
 
   @Override
   public void loadState(@NotNull final MyState state) {
-    myState = state;
   }
 
   @Nullable

@@ -35,7 +35,9 @@ public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
-    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://java.sun.com/dtd/prefer<caret>ences.dtd</error>\"><images> </images>");
+    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE preferences SYSTEM \"<error descr=\"Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)\">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>\"><preferences>\n" +
+                                                    "  <root type=\"system\"><map/></root>\n" +
+                                                    "</preferences>");
     myFixture.testHighlighting();
     IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
     assertNotNull(intention);

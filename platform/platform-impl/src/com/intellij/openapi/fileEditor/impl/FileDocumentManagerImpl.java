@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.ExternalChangeAction;
@@ -582,8 +583,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    // check file type in second order to avoid content detection running
-    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
+
+    // when an empty unknown file is written into, re-run file type detection
+    long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+    if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 

@@ -35,7 +35,9 @@ data class ProjectProperties(
   // Gradle/Maven based projects: used for multimodule projects
   val modules: Set<TargetPlatform> = emptySet(),
   // Idea, Gradle or Maven
-  val buildSystem: BuildSystem
+  val buildSystem: BuildSystem,
+  // project SDK
+  val projectSdk: String = "1.8"
 ) : Serializable
 
 enum class Projects(val title: String) {

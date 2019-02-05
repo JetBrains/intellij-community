@@ -1491,6 +1491,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiArrayType arrayType = tryCast(arrayExpr.getType(), PsiArrayType.class);
         if (arrayType == null) return null;
         if (!StreamApiUtil.isSupportedStreamElement(arrayType.getComponentType())) return null;
+        if (VariableAccessUtils.variableIsUsed(parameters[0], arrayExpr)) return null;
 
         PsiExpression leftBound = args[0];
         PsiExpression rightBound = args[1];

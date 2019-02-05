@@ -436,7 +436,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
   public void showFrame() {
-    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
     myProjectToFrame.put(null, frame);
 
     Rectangle frameBounds = myDefaultFrameInfo.getBounds();
@@ -464,7 +464,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
-      frame = new IdeFrameImpl(myActionManager, myDataManager, ApplicationManager.getApplication());
+      frame = new IdeFrameImpl(myActionManager, myDataManager);
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();

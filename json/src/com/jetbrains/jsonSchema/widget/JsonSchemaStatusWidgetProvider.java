@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetProvider;
 import org.jetbrains.annotations.NotNull;
@@ -12,5 +13,11 @@ public class JsonSchemaStatusWidgetProvider implements StatusBarWidgetProvider {
   @Override
   public StatusBarWidget getWidget(@NotNull Project project) {
     return new JsonSchemaStatusWidget(project);
+  }
+
+  @NotNull
+  @Override
+  public String getAnchor() {
+    return StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL);
   }
 }

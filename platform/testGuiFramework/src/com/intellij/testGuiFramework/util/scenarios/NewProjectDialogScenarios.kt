@@ -14,13 +14,14 @@ class NewProjectDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 val GuiTestCase.newProjectDialogScenarios by NewProjectDialogScenarios
 
 fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
+                                                        projectSdk: String,
                                                         libs: LibrariesSet = emptySet(),
                                                         template: String = "",
                                                         basePackage: String = "") {
   with(testCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaProject(projectPath, libs, template, basePackage)
+    newProjectDialogModel.createJavaProject(projectPath, projectSdk, libs, template, basePackage)
   }
 }
 
@@ -34,26 +35,27 @@ fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
  * */
 fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups,
                                                            projectPath: String,
+                                                           projectSdk: String,
                                                            libs: LibrariesSet = emptySet()) {
   with(testCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createProjectInGroup(group, projectPath, libs)
+    newProjectDialogModel.createProjectInGroup(group, projectPath, projectSdk, libs)
   }
 }
 
-fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions){
+fun NewProjectDialogScenarios.createGradleProjectScenario(projectPath: String, projectSdk: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions){
   with(testCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createGradleProject(projectPath, gradleOptions)
+    newProjectDialogModel.createGradleProject(projectPath, gradleOptions, projectSdk)
   }
 }
 
-fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions){
+fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, projectSdk: String, mavenOptions: NewProjectDialogModel.MavenProjectOptions){
   with(testCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
+    newProjectDialogModel.createMavenProject(projectPath, mavenOptions, projectSdk)
   }
 }

@@ -7,10 +7,12 @@ import org.junit.Ignore
 import org.junit.Test
 
 class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
+  private val testedJdk = "1.8"
+
   @Test
   @JvmName("kotlin_cfg_jvm_with_lib")
   fun configureKotlinJvmWithLibInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJvm(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
@@ -25,7 +27,7 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_cfg_jvm_no_lib")
   fun configureKotlinJvmInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJvm(libInPlugin = true)
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       project = kotlinProjects.getValue(Projects.JavaProject),
@@ -35,7 +37,7 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_cfg_js_with_lib")
   fun configureKotlinJSWithLibInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJs(libInPlugin = false)
     checkKotlinLibInProject(
       projectPath = projectFolder,
@@ -50,7 +52,7 @@ class CreateJavaProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_cfg_js_no_lib")
   fun configureKotlinJSInJavaProject() {
-    createJavaProject(projectFolder)
+    createJavaProject(projectFolder, testedJdk)
     configureKotlinJs(libInPlugin = true)
     projectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
       project = kotlinProjects.getValue(Projects.KotlinProjectJs),

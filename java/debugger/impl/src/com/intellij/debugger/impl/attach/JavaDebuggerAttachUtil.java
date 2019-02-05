@@ -2,6 +2,12 @@
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.openapi.project.Project;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 /**
  * @author egor
@@ -18,5 +24,14 @@ public class JavaDebuggerAttachUtil {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  public static VirtualMachine attachVirtualMachine(String id) throws IOException, AttachNotSupportedException {
+    // avoid attaching to the 3rd party vms
+    if (VirtualMachine.list().stream().map(VirtualMachineDescriptor::id).noneMatch(id::equals)) {
+      throw new AttachNotSupportedException("AttachProvider for the vm is not found");
+    }
+    return VirtualMachine.attach(id);
   }
 }

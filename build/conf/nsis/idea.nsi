@@ -730,9 +730,9 @@ Function uninstallOldVersion
   CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
 
   ${If} $9 == "1"
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$3\bin'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
   ${else}
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$3\bin'
+    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
   ${EndIf}
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
   goto complete
@@ -1429,7 +1429,26 @@ Function un.onUninstSuccess
 FunctionEnd
 
 
+Function un.UninstallFeedback
+; do not ask user about UNINSTALL FEEDBACK if uninstallation was run from another installation
+  Push $R0
+  Push $R1
+  ${GetParameters} $R0
+  ClearErrors
+  ${GetOptions} $R0 /NO_UNINSTALL_FEEDBACK= $R1
+  IfErrors done
+  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "State" "0"
+done:
+  Pop $R1
+  Pop $R0
+  ClearErrors
+FunctionEnd
+
+
 Function un.onInit
+  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
+  Call un.UninstallFeedback
+
 ; Uninstallation was run from installation dir?
   IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
@@ -1494,7 +1513,6 @@ end_of_uninstall:
   Abort
 UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
-  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
 FunctionEnd
 
 

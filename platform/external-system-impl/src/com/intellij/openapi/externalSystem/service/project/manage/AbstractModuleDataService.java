@@ -106,7 +106,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
 
-        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
+        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName()) && ExternalSystemApiUtil.isJavaCompatibleIde()) {
           // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
           setLanguageLevel(modifiableRootModel, node.getData());
         }

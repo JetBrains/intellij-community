@@ -19,6 +19,11 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
     return new FUStatisticsStateService();
   }
 
+  public static void clearLegacyCaches() {
+    FUStatisticsPersistence.clearLegacyStates();
+    LegacyApplicationUsageTriggers.cleanup();
+  }
+
   // some FeatureUsagesCollector can implement markup interface FUStatisticsDifferenceSender.
   // such collectors post "difference" value metrics.
   // for such collectors we persist sent data(between send sessions)

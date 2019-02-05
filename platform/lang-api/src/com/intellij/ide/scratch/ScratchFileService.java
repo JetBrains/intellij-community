@@ -22,7 +22,7 @@ public abstract class ScratchFileService {
   }
 
   @NotNull
-  public abstract String getRootPath(@NotNull RootType rootId);
+  public abstract String getRootPath(@NotNull RootType rootType);
 
   @Nullable
   public abstract RootType getRootType(@Nullable VirtualFile file);

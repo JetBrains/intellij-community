@@ -157,15 +157,26 @@ class AsyncFilterRunner {
     return result;
   }
 
-  private interface FilterResult {
-    void applyHighlights();
+  private class FilterResult {
+    private final DeltaTracker myDelta;
+    private final Filter.Result myResult;
+
+    FilterResult(DeltaTracker delta, Filter.Result result) {
+      myDelta = delta;
+      myResult = result;
+    }
+
+    void applyHighlights() {
+      if (!myDelta.isOutdated()) {
+        myHyperlinks.highlightHyperlinks(myResult, myDelta.getOffsetDelta());
+      }
+    }
   }
 
   private class HighlighterJob {
     private final AtomicInteger startLine;
     private final int endLine;
-    private final int initialMarkerOffset;
-    private final RangeMarker endMarker;
+    private final DeltaTracker delta;
     private final Filter filter;
     private final Document snapshot;
 
@@ -174,13 +185,13 @@ class AsyncFilterRunner {
       this.endLine = endLine;
       this.filter = filter;
 
-      initialMarkerOffset = document.getLineEndOffset(endLine);
-      endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
+      delta = new DeltaTracker(document, document.getLineEndOffset(endLine));
+
       snapshot = ((DocumentImpl)document).freeze();
     }
 
     boolean hasUnprocessedLines() {
-      return !isOutdated() && startLine.get() <= endLine;
+      return !delta.isOutdated() && startLine.get() <= endLine;
     }
 
     @Nullable
@@ -188,20 +199,27 @@ class AsyncFilterRunner {
       int line = startLine.get();
       Filter.Result result = analyzeLine(line);
       LOG.assertTrue(line == startLine.getAndIncrement());
-      return result == null ? null : () -> {
-        if (!isOutdated()) {
-          myHyperlinks.highlightHyperlinks(result, getOffsetDelta());
-        }
-      };
+      return result == null ? null : new FilterResult(delta, result);
     }
 
     Filter.Result analyzeLine(int line) {
       int lineStart = snapshot.getLineStartOffset(line);
-      if (lineStart + getOffsetDelta() < 0) return null;
+      if (lineStart + delta.getOffsetDelta() < 0) return null;
 
       String lineText = EditorHyperlinkSupport.getLineText(snapshot, line, true);
       int endOffset = lineStart + lineText.length();
       return checkRange(filter, endOffset, filter.applyFilter(lineText, endOffset));
+    }
+
+  }
+
+  private static class DeltaTracker {
+    private final int initialMarkerOffset;
+    private final RangeMarker endMarker;
+
+    DeltaTracker(Document document, int offset) {
+      initialMarkerOffset = offset;
+      endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
     }
 
     boolean isOutdated() {

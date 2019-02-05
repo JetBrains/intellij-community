@@ -37,4 +37,5 @@ public interface JsonValueAdapter {
   @Nullable JsonArrayValueAdapter getAsArray();
 
   default boolean shouldCheckIntegralRequirements() {return true;}
+  default boolean shouldCheckAsValue() {return true;}
 }

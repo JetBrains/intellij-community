@@ -74,6 +74,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "1.9");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }

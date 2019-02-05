@@ -54,5 +54,4 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
 
   public void testManyAdditionsDoNotCauseExponentialBlowUp() { doTest(); }
   public void testBoxedRanges() { doTest(); }
-  public void testTwoArraysDiff() { doTest(); }
 }

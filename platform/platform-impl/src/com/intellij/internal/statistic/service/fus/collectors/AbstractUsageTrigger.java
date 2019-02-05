@@ -18,8 +18,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   private static final Logger LOG = Logger.getInstance("#" + AbstractUsageTrigger.class.getPackage().getName());
 
   final static class State {
-    @Property(surroundWithTag = false)
-    @XCollection
+    @Transient
     List<SessionInfo> sessions = ContainerUtil.newSmartList();
   }
 
@@ -124,7 +123,6 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   }
 
   public void loadState(@NotNull final State state) {
-    myState = state;
   }
 
   @Tag("session")

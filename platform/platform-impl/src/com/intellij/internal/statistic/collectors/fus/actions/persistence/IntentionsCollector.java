@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
@@ -27,8 +26,11 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "IntentionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+@State(name = "IntentionsCollector", storages = @Storage(
+  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
+  private static final String GROUP_ID = "statistics.actions.intentions";
   private State myState = new State();
 
   @Nullable
@@ -39,23 +41,15 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 
   private static final List<String> PREFIXES_TO_STRIP = Arrays.asList("com.intellij.codeInsight.",
                                                                       "com.intellij.");
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
-    State state = getState();
-    if (state == null) return;
-
     String id = getIntentionId(action);
 
     String key = language.getID() + " " + id;
-    FeatureUsageLogger.INSTANCE.log(IntentionUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
-
-    final Integer count = state.myIntentions.get(key);
-    int value = count == null ? 1 : count + 1;
-    state.myIntentions.put(key, value);
+    FeatureUsageLogger.INSTANCE.log(GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
   }
 
   @NotNull

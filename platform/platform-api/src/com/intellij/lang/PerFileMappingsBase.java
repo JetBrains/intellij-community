@@ -89,11 +89,16 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Nullable
   public T getConfiguredMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
-    return getMappingInner(file, pusher == null ? null : pusher.getFileDataKey());
+    return getMappingInner(file, pusher == null ? null : pusher.getFileDataKey(), false);
   }
 
   @Nullable
-  private T getMappingInner(@Nullable VirtualFile file, @Nullable Key<T> pusherKey) {
+  public T getDirectlyConfiguredMapping(@Nullable VirtualFile file) {
+    return getMappingInner(file, null, true);
+  }
+
+  @Nullable
+  private T getMappingInner(@Nullable VirtualFile file, @Nullable Key<T> pusherKey, boolean forHierarchy) {
     if (file instanceof VirtualFileWindow) {
       VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -115,6 +120,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (t != null) return t;
       t = getMappingForHierarchy(originalFile, myMappings);
       if (t != null) return t;
+      if (forHierarchy) return null;
       return getNotInHierarchy(originalFile != null ? originalFile : file, myMappings);
     }
   }

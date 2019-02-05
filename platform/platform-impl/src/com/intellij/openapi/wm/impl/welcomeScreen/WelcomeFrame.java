@@ -151,16 +151,22 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   }
 
   public static void showNow() {
-    if (ourInstance != null) return;
+    if (ourInstance != null) {
+      return;
+    }
+
     if (!GeneralSettings.getInstance().isShowWelcomeScreen()) {
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
     IdeFrame frame = null;
-    for (WelcomeFrameProvider provider : EP.getExtensions()) {
+    for (WelcomeFrameProvider provider : EP.getExtensionList()) {
       frame = provider.createFrame();
-      if (frame != null) break;
+      if (frame != null) {
+        break;
+      }
     }
+
     if (frame == null) {
       frame = new WelcomeFrame();
     }
@@ -171,7 +177,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   }
 
   public static void showIfNoProjectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();

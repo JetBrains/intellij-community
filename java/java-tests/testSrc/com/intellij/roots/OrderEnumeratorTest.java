@@ -6,9 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
@@ -164,6 +162,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
     assertClassRoots(orderEntries(myProject).withoutSdk(), testOutput, output, getJDomJar());
     assertSourceRoots(orderEntries(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
+    List<Module> modules = new ArrayList<>();
+    orderEntries(myProject).forEachModule(modules::add);
+    assertSameElements(modules, myModule);
   }
 
   public void testModules() throws Exception {

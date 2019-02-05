@@ -278,6 +278,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUsername(myUserNameText.getText().trim());
     //noinspection deprecation
     myRepository.setPassword(myPasswordText.getText());
+    myRepository.storeCredentials();
     myRepository.setShared(myShareUrlCheckBox.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHttpAuthenticationCheckBox.isSelected());

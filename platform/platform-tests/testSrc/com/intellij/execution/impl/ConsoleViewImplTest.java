@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
@@ -466,5 +467,109 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myConsole.flushDeferredText();
     }
     Assert.assertEquals(expectedText, myConsole.getText());
+  }
+
+  public void testBackspacePerformance() {
+    int nCopies = 10000;
+    String in = StringUtil.repeat("\na\nb\bc", nCopies);
+    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+      for (int i = 0; i < 2; i++) {
+        myConsole.clear();
+        int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();
+        for (int j = 0; j < printCount; j++) {
+          myConsole.print(in, ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        myConsole.waitAllRequests();
+        Assert.assertEquals(printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
+      }
+    }).assertTiming();
+  }
+
+  public void testBackspaceChangesHighlightingRanges1() {
+    myConsole.print("Starting\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("Hello", ConsoleViewContentType.ERROR_OUTPUT);
+    myConsole.print("\b\b\b\bDone", ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.flushDeferredText();
+    Assert.assertEquals("Starting\nHDone", myConsole.getText());
+
+    List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
+    assertMarkersEqual(ContainerUtil.newArrayList(
+      new ExpectedHighlighter(0, 9, ConsoleViewContentType.NORMAL_OUTPUT),
+      new ExpectedHighlighter(9, 10, ConsoleViewContentType.ERROR_OUTPUT),
+      new ExpectedHighlighter(10, 14, ConsoleViewContentType.SYSTEM_OUTPUT)
+    ), actualHighlighters);
+  }
+
+  public void testBackspaceChangesHighlightingRanges2() {
+    myConsole.print("Ready\n\bSet\b\b\b\b\bSteady\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("\b\b\bGo", ConsoleViewContentType.ERROR_OUTPUT);
+    myConsole.print("token1", ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.print("\b\b\b\btoken2\bX\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("temp", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("\b\b\b\b\b\b\b\b\b", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("_", ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.print("Done", ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.flushDeferredText();
+
+    Assert.assertEquals("Ready\nSteady\nGototokenX\n_Done", myConsole.getText());
+    List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
+    assertMarkersEqual(ContainerUtil.newArrayList(
+      new ExpectedHighlighter(0, 13, ConsoleViewContentType.NORMAL_OUTPUT),  // Ready\nSteady\n
+      new ExpectedHighlighter(13, 15, ConsoleViewContentType.ERROR_OUTPUT),  // Go
+      new ExpectedHighlighter(15, 17, ConsoleViewContentType.SYSTEM_OUTPUT), // to
+      new ExpectedHighlighter(17, 24, ConsoleViewContentType.NORMAL_OUTPUT), // tokenX\n
+      new ExpectedHighlighter(24, 29, ConsoleViewContentType.SYSTEM_OUTPUT)  // Done
+    ), actualHighlighters);
+  }
+
+  public void testBackspaceChangesHighlightingRanges3() {
+    myConsole.print("Test1\n", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.print("Test2", ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.print("\b\b\b\b\b\b", ConsoleViewContentType.ERROR_OUTPUT);
+    myConsole.flushDeferredText();
+
+    Assert.assertEquals("Test1\n", myConsole.getText());
+    List<RangeHighlighter> actualHighlighters = getAllRangeHighlighters();
+    assertMarkersEqual(ContainerUtil.newArrayList(
+      new ExpectedHighlighter(0, 6, ConsoleViewContentType.NORMAL_OUTPUT)  // Test1\n
+    ), actualHighlighters);
+  }
+
+  @NotNull
+  private List<RangeHighlighter> getAllRangeHighlighters() {
+    MarkupModel model = DocumentMarkupModel.forDocument(myConsole.getEditor().getDocument(), getProject(), true);
+    RangeHighlighter[] highlighters = model.getAllHighlighters();
+    Arrays.sort(highlighters, (r1, r2) -> {
+      int startOffsetDiff = r1.getStartOffset() - r2.getStartOffset();
+      if (startOffsetDiff != 0) return startOffsetDiff;
+      return r1.getEndOffset() - r2.getEndOffset();
+    });
+    return Arrays.asList(highlighters);
+  }
+
+  private static void assertMarkersEqual(@NotNull List<ExpectedHighlighter> expected, @NotNull List<RangeHighlighter> actual) {
+    assertEquals(expected.size(), actual.size());
+    for (int i = 0; i < expected.size(); i++) {
+      assertMarkerEquals(expected.get(i), actual.get(i));
+    }
+  }
+
+  private static void assertMarkerEquals(@NotNull ExpectedHighlighter expected, @NotNull RangeHighlighter actual) {
+    assertEquals(expected.myStartOffset, actual.getStartOffset());
+    assertEquals(expected.myEndOffset, actual.getEndOffset());
+    assertEquals(expected.myContentType.getAttributes(), actual.getTextAttributes());
+  }
+
+  private static class ExpectedHighlighter {
+    private final int myStartOffset;
+    private final int myEndOffset;
+    private final ConsoleViewContentType myContentType;
+
+    private ExpectedHighlighter(int startOffset, int endOffset, @NotNull ConsoleViewContentType contentType) {
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
+      myContentType = contentType;
+    }
   }
 }

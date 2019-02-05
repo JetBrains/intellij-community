@@ -9,6 +9,7 @@ import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIdeFirstStart
+import com.intellij.testGuiFramework.testCases.CreateJdkGuiTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
@@ -59,6 +60,7 @@ class KotlinCreateOtherProjectGuiTestSuite : GuiTestSuite()
 @Suite.SuiteClasses(
   InstallPluginGuiTest::class
   , CreateSdksGuiTest::class
+  , CreateJdkGuiTest::class
 )
 class PreparationSteps
 

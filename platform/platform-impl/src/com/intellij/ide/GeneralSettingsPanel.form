@@ -3,7 +3,7 @@
   <grid id="9d13a" binding="myPanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="32" y="45" width="800" height="742"/>
+      <xy x="32" y="45" width="636" height="742"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -221,7 +221,7 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="6b133" class="com.intellij.ui.components.JBLabel">
+              <component id="6b133" class="com.intellij.ui.components.JBLabel" binding="myProjectDirComment">
                 <constraints>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -229,7 +229,7 @@
                   <anchor value="cb2c8"/>
                   <background color="-8882056"/>
                   <foreground color="-8882056"/>
-                  <text value="Selected by default in the &quot;Open File or Project&quot; dialog and for new projects. To remove, clear the field."/>
+                  <text value="This directory is preselected in &quot;Open...&quot; and &quot;New | Project...&quot; dialogs."/>
                 </properties>
               </component>
             </children>

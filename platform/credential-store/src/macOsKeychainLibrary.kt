@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.text.nullize
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
@@ -86,14 +87,14 @@ internal class KeyChainCredentialStore : CredentialStore {
   }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName)
+    return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName.nullize())
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     val serviceName = attributes.serviceName.toByteArray()
     if (credentials.isEmpty()) {
       val itemRef = PointerByReference()
-      val userName = attributes.userName?.toByteArray()
+      val userName = attributes.userName.nullize()?.toByteArray()
       val code = library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, null, null, itemRef)
       if (code == errSecItemNotFound || code == errSecInvalidRecord) {
         return
@@ -107,7 +108,7 @@ internal class KeyChainCredentialStore : CredentialStore {
       return
     }
 
-    val userName = (attributes.userName ?: credentials!!.userName)?.toByteArray()
+    val userName = (attributes.userName.nullize() ?: credentials!!.userName)?.toByteArray()
     val searchUserName = if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null
     val itemRef = PointerByReference()
     val library = library

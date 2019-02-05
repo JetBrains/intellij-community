@@ -33,7 +33,16 @@ private interface DefaultTypeProvider {
 private val providers = createProviders()
 
 private fun createProviders(): MultiMap<MethodArgument, DefaultTypeProvider> {
-  val providers = listOf<Pair<MethodArgument, DefaultTypeProvider>>(
+  val providers = listOf(
+    MethodArgument("log",              0) to object : DefaultTypeProvider {
+      override fun getDefaultType(method: PsiMethod, substitutor: PsiSubstitutor, argument: PsiExpression): PsiType? {
+        if (isDefinedInClass(method, "org.apache.log4j.Category")) {
+          return JavaPsiFacade.getElementFactory(method.project).createTypeFromText("org.apache.log4j.Level", argument)
+        }
+        return null
+      }
+    },
+
     MethodArgument("contains",              0) to takeClassTypeArgument(CommonClassNames.JAVA_UTIL_COLLECTION, 0),
     MethodArgument("remove",                0) to takeClassTypeArgument(CommonClassNames.JAVA_UTIL_COLLECTION, 0),
     MethodArgument("indexOf",               0) to takeClassTypeArgument(CommonClassNames.JAVA_UTIL_LIST, 0),

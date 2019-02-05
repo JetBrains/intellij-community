@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.openapi.Disposable
@@ -9,12 +9,16 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 
-class LanguageExtensionCacheTest : PlatformTestCase() {
+class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
-  private val myExtensionPointClass = String::class.java.name
   private val myExtensionPointName = "testLangExt"
+  private val myExtensionPointXML = """
+<extensionPoint qualifiedName="$myExtensionPointName" beanClass="com.intellij.lang.LanguageExtensionPoint">
+  <with attribute="implementationClass" implements="java.lang.String"/>
+</extensionPoint>
+"""
 
   private val myDescriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var myArea: ExtensionsArea
@@ -23,20 +27,11 @@ class LanguageExtensionCacheTest : PlatformTestCase() {
   override fun setUp() {
     super.setUp()
     myArea = Extensions.getRootArea()
-    myExtension = LanguageExtension(myExtensionPointName)
-    registerLanguageEP()
-  }
-
-  private fun registerLanguageEP() {
-    val extensionPointElement = JDOMUtil.load("""
-<extensionPoint qualifiedName ="$myExtensionPointName" beanClass = "com.intellij.lang.LanguageExtensionPoint">
-  <with attribute ="implementationClass" implements = "$myExtensionPointClass"/>
-</extensionPoint>
-""")
-    myArea.registerExtensionPoint(myDescriptor, extensionPointElement)
+    myArea.registerExtensionPoint(myDescriptor, JDOMUtil.load(myExtensionPointXML))
     Disposer.register(testRootDisposable, Disposable {
-      myArea.unregisterExtensionPoint("langExt")
+      myArea.unregisterExtensionPoint(myExtensionPointName)
     })
+    myExtension = LanguageExtension(myExtensionPointName, null, testRootDisposable)
   }
 
   private fun registerExtension(languageID: String, implementationFqn: String) {

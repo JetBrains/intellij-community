@@ -26,7 +26,9 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ActionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+@State(name = "ActionsCollector", storages = @Storage(
+  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
@@ -44,16 +46,14 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   public void record(@Nullable String actionId, @NotNull Class context, @Nullable AnActionEvent event) {
     if (actionId == null) return;
 
-    State state = getState();
-    if (state == null) return;
-
     boolean isContextMenu = event != null && event.isFromContextMenu();
     final String place = event != null ? event.getPlace() : "";
 
-    String key = toReportedId(actionId, context);
+    final boolean isDevelopedByJB = isDevelopedByJetBrains(context);
+    String key = toReportedId(actionId, isDevelopedByJB);
     final Map<String, Object> data = ContainerUtil.newHashMap(FUSUsageContext.OS_CONTEXT.getData());
     data.put("context_menu", isContextMenu);
-    if (isContextMenu) {
+    if (isContextMenu && isDevelopedByJB) {
       data.put("place", place);
     }
 
@@ -62,25 +62,15 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       data.put("input_event", inputEvent);
     }
     FeatureUsageLogger.INSTANCE.log("actions.v2", key, data);
-
-    Integer count = state.myValues.get(key);
-    int value = count == null ? 1 : count + 1;
-    state.myValues.put(key, value);
-    if (isContextMenu) {
-      key = "[" + place + "] " + key;
-      count = state.myContextMenuValues.get(key);
-      value = count == null ? 1 : count + 1;
-      state.myContextMenuValues.put(key, value);
-    }
   }
 
   @NotNull
-  private static String toReportedId(@NotNull String actionId, @NotNull Class context) {
-    final String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-    if (!isDevelopedByJetBrains(context)) {
+  private static String toReportedId(@NotNull String actionId, boolean isDevelopedByJB) {
+    if (!isDevelopedByJB) {
       return DEFAULT_ID;
     }
 
+    final String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
     for (Map.Entry<String, String> prefix : ourPrefixesBlackList.entrySet()) {
       if (key.startsWith(prefix.getKey())) {
         return prefix.getValue();
@@ -104,6 +94,5 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
   }
 }

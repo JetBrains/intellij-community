@@ -45,7 +45,8 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
     if (!isIdeFrameRun()) return
     createKotlinMPProject(
       projectPath = projectFolder,
-      templateName = testParameters.project.frameworkName
+      templateName = testParameters.project.frameworkName,
+      projectSdk = "1.8"
     )
 
     waitAMoment()

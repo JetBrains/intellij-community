@@ -135,7 +135,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (stringElement != null && (!stringElement.isFormatted() ||
                                   nodeType == PyTokenTypes.FSTRING_TEXT ||
                                   // Caret should be right before the opening brace of an f-string fragment 
-                                  nodeType == PyTokenTypes.FSTRING_FRAGMENT_START)) {
+                                  nodeType == PyTokenTypes.FSTRING_FRAGMENT_START || 
+                                  nodeType == PyTokenTypes.FSTRING_END)) {
       if (stringElement.isTripleQuoted() || nodeType == PyTokenTypes.DOCSTRING) {
         return Result.Continue;
       }

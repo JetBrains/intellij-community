@@ -20,22 +20,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
-  @Nullable private volatile LineSet myLineSet;
+  @Nullable private volatile SoftReference<LineSet> myLineSet;
   private final long myStamp;
   private volatile SoftReference<String> myTextString;
 
   FrozenDocument(@NotNull ImmutableCharSequence text, @Nullable LineSet lineSet, long stamp, @Nullable String textString) {
     myText = text;
-    myLineSet = lineSet;
+    myLineSet = lineSet == null ? null : new SoftReference<>(lineSet);
     myStamp = stamp;
     myTextString = textString == null ? null : new SoftReference<>(textString);
   }
 
   @NotNull
   private LineSet getLineSet() {
-    LineSet lineSet = myLineSet;
+    LineSet lineSet = SoftReference.dereference(myLineSet);
     if (lineSet == null) {
-      myLineSet = lineSet = LineSet.createLineSet(myText);
+      myLineSet = new SoftReference<>(lineSet = LineSet.createLineSet(myText));
     }
     return lineSet;
   }

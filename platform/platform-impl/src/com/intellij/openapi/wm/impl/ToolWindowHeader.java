@@ -344,7 +344,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         x = ((MouseEvent)inputEvent).getX();
         y = ((MouseEvent)inputEvent).getY();
       }
-      ToolbarClicksCollector.record("Show Options", "ToolWindowHeader");
+      ToolbarClicksCollector.record("Show Options@ToolWindowHeader");
       popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
     }
   }

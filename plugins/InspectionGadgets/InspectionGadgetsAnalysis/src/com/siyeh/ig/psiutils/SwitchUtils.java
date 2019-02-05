@@ -203,7 +203,15 @@ public class SwitchUtils {
     }
     final PsiExpression left = check.getLeft();
     final PsiExpression right = check.getRight();
-    return PsiUtil.isConstantExpression(left) ? right : left;
+    if (PsiUtil.isConstantExpression(left)) {
+      return right;
+    }
+    else if (PsiUtil.isConstantExpression(right)) {
+      return left;
+    }
+    else {
+      return null;
+    }
   }
 
   private static boolean canBeCaseLabel(PsiExpression expression, LanguageLevel languageLevel) {
