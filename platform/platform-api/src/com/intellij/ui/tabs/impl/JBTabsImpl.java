@@ -128,7 +128,7 @@ public class JBTabsImpl extends JComponent
   private boolean myPaintBlocked;
   private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
-  private final boolean myAdjustBorders = true;
+  private static final boolean myAdjustBorders = true;
 
   boolean myAddNavigationGroup = true;
 

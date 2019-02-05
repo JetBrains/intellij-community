@@ -29,7 +29,7 @@ public abstract class MoreIcon {
   private final ActiveIcon myRight =
     new ActiveIcon(AllIcons.General.ArrowRight, IconLoader.getDisabledIcon(AllIcons.General.ArrowRight));
 
-  protected final int myGap = 2;
+  protected static final int myGap = 2;
   protected boolean myLeftPainted;
   protected boolean myRightPainted;
 

@@ -15,7 +15,7 @@ public class TableCellEditorWithButton extends AbstractCellEditor implements Tab
 
   protected final MyComponent myComponent;
   protected final EditorDelegate delegate;
-  protected final int myClickCountToStart = 1;
+  protected static final int myClickCountToStart = 1;
 
   public TableCellEditorWithButton() {
     myComponent = new MyComponent();

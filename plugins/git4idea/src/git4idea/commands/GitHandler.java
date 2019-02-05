@@ -536,7 +536,7 @@ public abstract class GitHandler {
   @Deprecated
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
   @Deprecated
-  private final int LAST_OUTPUT_SIZE = 5;
+  private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private boolean myProgressParameterAllowed = false;
   @Deprecated
