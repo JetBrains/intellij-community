@@ -122,7 +122,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
-  private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DONT_FILL_ROOTS            =
+    SystemInfo.isKDE
+    || (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode()) // NOTE: expanding root menu causes failures of tests: PhpStorm -> Performance Tests (3rd Party Plugins)
+    || Boolean.getBoolean("linux.native.dont.fill.roots");
   private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
   private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
   private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
