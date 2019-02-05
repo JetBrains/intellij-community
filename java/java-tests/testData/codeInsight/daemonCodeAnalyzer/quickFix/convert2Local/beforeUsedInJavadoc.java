@@ -1,4 +1,4 @@
-// "Convert to local" "false"
+// "Fix all 'Field can be local' problems in file" "false"
 class TestFieldConversion
 {
   private static int som<caret>eInt = 0;
