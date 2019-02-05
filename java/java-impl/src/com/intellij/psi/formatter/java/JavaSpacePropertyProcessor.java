@@ -275,13 +275,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private void createSpacingForEnumBraces(boolean isLbrace) {
-    // Ignore comments in front of enum for dependent spacing
-    PsiElement first = myParent.getFirstChild();
-    while (first instanceof PsiDocComment || first instanceof PsiWhiteSpace) {
-      first = first.getNextSibling();
+    ASTNode node = myParent.getNode().findChildByType(JavaTokenType.LBRACE);
+    final int startOffset;
+    if (node == null) {
+      startOffset = myParent.getTextOffset();
+    } else {
+      startOffset = node.getTextRange().getStartOffset();
     }
     int spaces = myJavaSettings.SPACE_INSIDE_ONE_LINE_ENUM_BRACES ? 1 : 0;
-    TextRange textRange = new TextRange(first.getTextOffset(), myParent.getTextRange().getEndOffset());
+    TextRange textRange = new TextRange(startOffset, myParent.getTextRange().getEndOffset());
     int blankLinesCount = isLbrace ? mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS : mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
     myResult = Spacing.createDependentLFSpacing(spaces, spaces, textRange, mySettings.KEEP_LINE_BREAKS, blankLinesCount);
   }
