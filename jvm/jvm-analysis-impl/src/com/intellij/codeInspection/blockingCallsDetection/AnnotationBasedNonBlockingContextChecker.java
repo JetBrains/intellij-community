@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.blockingCallsDetection.AnnotationBasedBlockingMethodChecker.hasAnnotation;
 
-public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker {
+public class AnnotationBasedNonBlockingContextChecker implements NonBlockingContextChecker, PersistentStateChecker {
 
   private final List<String> myNonBlockingAnnotations;
 

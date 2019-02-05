@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker {
+public class AnnotationBasedBlockingMethodChecker implements BlockingMethodChecker, PersistentStateChecker {
 
   private final List<String> myBlockingAnnotations;
 
@@ -33,6 +33,9 @@ public class AnnotationBasedBlockingMethodChecker implements BlockingMethodCheck
   }
 
   static boolean hasAnnotation(PsiModifierListOwner owner, List<String> annotationsFQNames) {
+    //AnnotationUtil.isAnnotated() fixme
+
+
     boolean hasAnnotation = annotationsFQNames.stream()
       .anyMatch(annotation -> owner.hasAnnotation(annotation));
     if (hasAnnotation) return true;
