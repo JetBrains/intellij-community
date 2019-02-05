@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
                             PsiTypeElement element2Highlight) {
          PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
          if (typeElementCopy != null) {
-           replaceExplicitTypeWithVar(typeElementCopy, variable);
+           IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
            if (variable.getType().equals(copyVariable.getType())) {
              holder.registerProblem(element2Highlight,
                                     "Explicit type of local variable can be omitted",
@@ -56,22 +56,6 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
          }
        }
     };
-  }
-
-  private static PsiElement replaceExplicitTypeWithVar(PsiTypeElement typeElement, PsiElement context) {
-    PsiElement parent = typeElement.getParent();
-    if (parent instanceof PsiVariable) {
-      PsiExpression copyVariableInitializer = ((PsiVariable)parent).getInitializer();
-      if (copyVariableInitializer instanceof PsiNewExpression) {
-        final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
-          PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)copyVariableInitializer, copyVariableInitializer);
-        if (!diamondResolveResult.getInferredTypes().isEmpty()) {
-          PsiDiamondTypeUtil.expandTopLevelDiamondsInside(copyVariableInitializer);
-        }
-      }
-    }
-
-    return typeElement.replace(JavaPsiFacade.getElementFactory(context.getProject()).createTypeElementFromText("var", context));
   }
 
   private static class ReplaceWithVarFix implements LocalQuickFix {
@@ -87,7 +71,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
         CodeStyleManager.getInstance(project)
-          .reformat(replaceExplicitTypeWithVar((PsiTypeElement)element, element));
+          .reformat(IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
       }
     }
   }
