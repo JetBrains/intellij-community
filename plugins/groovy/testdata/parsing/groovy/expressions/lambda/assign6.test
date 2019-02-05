@@ -1,25 +1,17 @@
-def m() {
-  return a -> a
-}
+def l = (a -> a)
 -----
 Groovy script
-  Method
+  Variable definitions
     Modifiers
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('m')
-    Parameter list
-      PsiElement(()('(')
-      PsiElement())(')')
-    Throw clause
-      <empty list>
-    PsiWhiteSpace(' ')
-    Open block
-      PsiElement({)('{')
-      PsiWhiteSpace('\n  ')
-      RETURN statement
-        PsiElement(return)('return')
-        PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('l')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Parenthesized expression
+        PsiElement(()('(')
         Lambda expression
           Parameter list
             Parameter
@@ -31,5 +23,4 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('a')
-      PsiElement(new line)('\n')
-      PsiElement(})('}')
+        PsiElement())(')')
