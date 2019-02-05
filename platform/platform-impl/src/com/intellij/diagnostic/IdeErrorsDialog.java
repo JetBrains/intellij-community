@@ -600,11 +600,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
     }
 
-    return submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
-      message.setSubmitting(false);
+    boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
       UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
     });
+    if (!accepted) {
+      message.setSubmitting(false);
+    }
+    return accepted;
   }
 
   private void disablePlugin() {
