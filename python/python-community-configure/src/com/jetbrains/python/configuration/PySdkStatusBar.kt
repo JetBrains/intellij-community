@@ -53,9 +53,13 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
 
     module = ModuleUtil.findModuleForFile(file, project!!) ?: return WidgetState.HIDDEN
 
-    val sdk = PythonSdkType.findPythonSdk(module) ?: return WidgetState.HIDDEN
-
-    return WidgetState("Current Interpreter: ${shortenNameAndPath(sdk)}]", shortenNameInBar(sdk), true)
+    val sdk = PythonSdkType.findPythonSdk(module)
+    return if (sdk == null) {
+      WidgetState("", noInterpreterMarker, true)
+    }
+    else {
+      WidgetState("Current Interpreter: ${shortenNameAndPath(sdk)}]", shortenNameInBar(sdk), true)
+    }
   }
 
   override fun registerCustomListeners() {

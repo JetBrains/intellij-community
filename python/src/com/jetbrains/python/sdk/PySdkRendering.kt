@@ -15,6 +15,8 @@ import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import javax.swing.Icon
 
+const val noInterpreterMarker: String = "<No interpreter>"
+
 fun name(sdk: Sdk, sdkModificator: SdkModificator? = null): Triple<String?, String, String?> = name(sdk, sdkModificator?.name ?: sdk.name)
 
 /**
