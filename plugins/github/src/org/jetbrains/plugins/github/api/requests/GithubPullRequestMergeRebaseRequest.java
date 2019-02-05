@@ -7,10 +7,10 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod;
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public class GithubPullRequestMergeRebaseRequest {
   @NotNull private final String sha;
-  @NotNull private final GithubPullRequestMergeMethod method;
+  @NotNull private final GithubPullRequestMergeMethod mergeMethod;
 
   public GithubPullRequestMergeRebaseRequest(@NotNull String sha) {
     this.sha = sha;
-    this.method = GithubPullRequestMergeMethod.rebase;
+    this.mergeMethod = GithubPullRequestMergeMethod.rebase;
   }
 }

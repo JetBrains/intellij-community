@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.notification
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
@@ -15,6 +16,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   override fun setUp() {
     super.setUp()
 
+    Registry.get("vcs.process.externally.added.files").setValue(true, testRootDisposable)
     setStandardConfirmation(project, vcs.name, VcsConfiguration.StandardConfirmation.ADD, VcsShowConfirmationOption.Value.SHOW_CONFIRMATION)
     projectRoot.children //ensure that all subsequent VFS events will be fired after new files added to projectRoot
   }

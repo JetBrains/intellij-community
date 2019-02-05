@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -16,7 +15,7 @@ public class SearchEverywhereUsageTriggerCollector {
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
-  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "nonPublicContributor";
+  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
 
   public static final String DIALOG_OPEN = "dialogOpen";
   public static final String TAB_SWITCHED = "tabSwitched";
@@ -39,6 +38,6 @@ public class SearchEverywhereUsageTriggerCollector {
   public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
     Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
-    return pluginInfo.isSafeToReport() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;
+    return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;
   }
 }
