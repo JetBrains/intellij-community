@@ -30,7 +30,7 @@ class PyLenPostfixTemplate : SurroundPostfixTemplateBase("len", DESCR, PyPostfix
       val context = TypeEvalContext.codeCompletion(expression.project, expression.containingFile)
       val type = context.getType(expression) ?: return@Condition false
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
       val results = type.resolveMember(PyNames.LEN, null, AccessDirection.READ, resolveContext)
       return@Condition results?.isNotEmpty() ?: false
     }
