@@ -8,9 +8,9 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -58,8 +58,10 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return false;
 
-    if (context.getModule() == null) return false;
+    Module module = context.getModule();
+    if (module == null) return false;
 
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
     if (!applyTestMethodConfiguration(configuration, context, psiMethod, containingClass)) return false;
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -89,6 +91,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
     final Module module = context.getModule();
     if (module == null) return false;
+
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
     final String projectPath = resolveProjectPath(module);
     if (projectPath == null) return false;
@@ -120,7 +124,6 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, psiClass)) return;
-    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) return;
     chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass);
   }
 
@@ -129,15 +132,17 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                    @NotNull Runnable performRunnable,
                                                    @NotNull PsiMethod psiMethod,
                                                    @NotNull PsiClass... classes) {
-    String systemId = ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId();
-    if (!StringUtil.equals(systemId, GradleConstants.SYSTEM_ID.toString())) return;
     TasksChooser tasksChooser = new TasksChooser() {
       @Override
       protected void choosesTasks(@NotNull List<? extends Map<String, ? extends List<String>>> tasks) {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
         Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
-        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) return;
+        if (!applyTestConfiguration(settings, context.getProject(), tasks, classes, createFilter)) {
+          LOG.warn("Cannot apply method test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
         configuration.setName((classes.length == 1 ? classes[0].getName() + "." : "") + psiMethod.getName());
         performRunnable.run();
       }

@@ -5,6 +5,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -45,6 +46,8 @@ import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
   private static final List<String> TEST_SOURCE_SET_TASKS = ContainerUtil.list("cleanTest", "test");
+
+  protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.

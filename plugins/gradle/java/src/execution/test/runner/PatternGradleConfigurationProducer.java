@@ -75,8 +75,6 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
       return;
     }
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
-    ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    if (!GradleConstants.SYSTEM_ID.equals(settings.getExternalSystemId())) return;
     Project project = context.getProject();
     List<String> tests = getTestPatterns(context);
     TestMappings testMappings = getTestMappings(project, tests);
@@ -87,7 +85,11 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
         Function1<String, PsiClass> findPsiClass = test -> testMappings.getClasses().get(test);
         Function2<PsiClass, String, String> createFilter = (psiClass, test) ->
           createTestFilterFrom(psiClass, testMappings.getMethods().get(test), /*hasSuffix=*/true);
-        if (!applyTestConfiguration(settings, project, tasks, tests, findPsiClass, createFilter)) return;
+        if (!applyTestConfiguration(settings, project, tasks, tests, findPsiClass, createFilter)) {
+          LOG.warn("Cannot apply pattern test configuration, uses raw run configuration");
+          performRunnable.run();
+          return;
+        }
         configuration.setName(tests.size() > 1 ? String.format("%s and %d more", tests.get(0), tests.size() - 1) : tests.get(0));
         performRunnable.run();
       }
