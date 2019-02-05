@@ -145,4 +145,14 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
   public final void setClientProperty(@NotNull final Object key, @Nullable final Object value) {
     myProperties = myProperties.prepend(pair(key, value));
   }
+
+  // OnAir
+  public final Icon getIcon() {
+    return myIcon;
+  }
+
+  public final String getText() {
+    return myText;
+  }
+
 }
