@@ -4377,20 +4377,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // modifier_list mb_type_element var
-  public static boolean lambda_parameter(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "lambda_parameter")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PARAMETER, "<lambda parameter>");
-    r = modifier_list(b, l + 1);
-    r = r && mb_type_element(b, l + 1);
-    r = r && var(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // empty_parens | '(' <<comma_list (mb_nl lambda_parameter)>> ')'
+  // empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')'
   public static boolean lambda_parameter_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_parameter_list")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
@@ -4402,7 +4389,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '(' <<comma_list (mb_nl lambda_parameter)>> ')'
+  // '(' <<comma_list (mb_nl parse_parameter)>> ')'
   private static boolean lambda_parameter_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_parameter_list_1")) return false;
     boolean r;
@@ -4414,13 +4401,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // mb_nl lambda_parameter
+  // mb_nl parse_parameter
   private static boolean lambda_parameter_list_1_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lambda_parameter_list_1_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
-    r = r && lambda_parameter(b, l + 1);
+    r = r && parse_parameter(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
