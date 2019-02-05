@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.ActionEvent;
 
-public class Delete extends Command {
+public class Delete extends RuntimeCommand {
   public Delete(Project project, Controller controller, Runtime runtime) {
     super(project, controller,"Delete", runtime);
     setEnabled(!(runtime instanceof Local));

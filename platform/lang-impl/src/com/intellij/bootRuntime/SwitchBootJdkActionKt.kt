@@ -92,7 +92,7 @@ class SwitchBootJdkAction : AnAction(), DumbAware {
 
     val centralPanel = JPanel(GridBagLayout())
     val constraint = GridBagConstraints()
-    constraint.insets = Insets(10, 15,10, 15)
+    constraint.insets = Insets(10, 0,10, 0)
     centralPanel.add(comboboxWithBrowserButton, constraint)
 
     val myDialogWrapper = object: DialogWrapper(e.project) {

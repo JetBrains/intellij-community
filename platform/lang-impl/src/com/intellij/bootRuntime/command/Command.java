@@ -2,7 +2,6 @@
 package com.intellij.bootRuntime.command;
 
 import com.intellij.bootRuntime.Controller;
-import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -14,20 +13,17 @@ import javax.swing.*;
 import java.util.function.Consumer;
 
 public abstract class Command extends AbstractAction {
-  protected final Runtime myRuntime;
-  private final Project myProject;
-  private Controller myController;
+  protected final Project myProject;
+  protected Controller myController;
 
-  Command(Project project, Controller controller, String name, Runtime runtime) {
+  Command(Project project, Controller controller, String name) {
     super(name);
-    myRuntime = runtime;
     myProject = project;
     myController = controller;
-
   }
 
-  protected Runtime getRuntime() {
-    return myRuntime;
+  protected void handleFinished() {
+    myController.updateRuntime();
   }
 
   protected void runWithProgress(String title, final Consumer<ProgressIndicator> progressIndicatorConsumer) {
@@ -40,7 +36,7 @@ public abstract class Command extends AbstractAction {
       @Nullable
       @Override
       public NotificationInfo notifyFinished() {
-        myController.runtimeSelected(myRuntime);
+        handleFinished();
         return super.notifyFinished();
       }
     });

@@ -24,7 +24,7 @@ abstract class Runtime(initialLocation:File) {
   }
 
   val downloadPath: File by lazy {
-    File(PathManager.getPluginTempPath(), fileName)
+    File(BinTrayUtil.downloadPath(), fileName)
   }
 
   abstract fun install()

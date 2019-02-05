@@ -57,9 +57,12 @@ public class BinTrayUtil {
 
   @NotNull
   public static String archveToDirectoryName(String archiveFileName) {
-    String var10000 = archiveFileName.substring(0, archiveFileName.lastIndexOf(".tar.gz"));
+    return archiveFileName.substring(0, archiveFileName.lastIndexOf(".tar.gz"));
+  }
 
-    return var10000;
+  @NotNull
+  public static File downloadPath() {
+    return new File(PathManager.getPluginTempPath(), "jdk_archives");
   }
 
   public static void updateJdkConfigFileAndRestart(File directoryToExtractFile) {

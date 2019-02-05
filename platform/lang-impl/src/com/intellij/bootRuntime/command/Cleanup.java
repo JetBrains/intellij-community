@@ -3,22 +3,22 @@ package com.intellij.bootRuntime.command;
 
 import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
-import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 
-public class Uninstall extends Command {
-  public Uninstall(Project project, Controller controller, Runtime runtime) {
-    super(project, controller, "Uninstall", runtime);
+public class Cleanup extends Command {
+  public Cleanup(Project project, Controller controller) {
+    super(project, controller,"Clean-up");
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    runWithProgress("Installing...", indicator -> {
-      BinTrayUtil.getJdkConfigFilePath().delete();
+    runWithProgress("Cleaning up..." , indicator -> {
+      FileUtil.delete(BinTrayUtil.getJdkStoragePathFile());
+      FileUtil.delete(BinTrayUtil.downloadPath());
+      FileUtil.delete(BinTrayUtil.getJdkConfigFilePath());
     });
   }
 }
