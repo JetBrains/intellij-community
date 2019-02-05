@@ -34,26 +34,22 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
   fun getPasswordAsString() = password?.toString()
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is Credentials) return false
-    return userName == other.userName && password == other.password
-  }
+  override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
 }
 
-@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
-/**
- * @deprecated Never use it in a new code.
- */
+/** @deprecated Never use it in a new code. */
 @Deprecated("Never use it in a new code.")
+@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")
 fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
 
+@Contract("null -> false")
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
