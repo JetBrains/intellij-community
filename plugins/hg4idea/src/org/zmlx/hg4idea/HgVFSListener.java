@@ -67,6 +67,14 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
+    executeAddWithoutIgnores(addedFiles, copyFromMap,
+                             (notIgnoredAddedFiles, copiedFilesMap) -> originalExecuteAdd(notIgnoredAddedFiles, copiedFilesMap));
+  }
+
+  @Override
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.
@@ -104,7 +112,7 @@ public class HgVFSListener extends VcsVFSListener {
         // select files to add if there is something to select
         if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
 
-          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copyFromMap));
+          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> executeAddCallback.executeAdd(addedFiles, copyFromMap));
         }
       }
     }.queue();
@@ -151,10 +159,6 @@ public class HgVFSListener extends VcsVFSListener {
 
         // separate adds from copies
         for (VirtualFile file : addedFiles) {
-          if (file.isDirectory()) {
-            continue;
-          }
-
           final VirtualFile copyFrom = copyFromMap.get(file);
           if (copyFrom != null) {
             copies.put(copyFrom, file);
@@ -176,7 +180,12 @@ public class HgVFSListener extends VcsVFSListener {
         }
 
         for (VirtualFile file : addedFiles) {
-          dirtyScopeManager.fileDirty(file);
+          if (file.isDirectory()) {
+            dirtyScopeManager.dirDirtyRecursively(file);
+          }
+          else {
+            dirtyScopeManager.fileDirty(file);
+          }
         }
       }
     }).queue();

@@ -650,7 +650,9 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
       }
-      presentation.addText(title != null ? title : toString(), attributes);
+      String text = title != null ? title : toString();
+      presentation.setPresentableText(text);
+      presentation.addText(text, attributes);
       Icon icon = getIcon();
       if (icon == null && file.isValid()) {
         icon = file.isDirectory()
@@ -1006,7 +1008,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       if (!groups.isEmpty() || roots.isEmpty()) return AllIcons.Nodes.ModuleGroup;
       Object id = roots.get(0).node.getRootID();
       if (roots.stream().anyMatch(root -> !root.node.getRootID().equals(id))) return AllIcons.Nodes.ModuleGroup;
-      return id instanceof Module ? ModuleType.get((Module)id).getIcon() : AllIcons.Nodes.Module;
+      if (id instanceof Module) {
+        ModuleType type = ModuleType.get((Module)id);
+        Icon icon = type.getIcon();
+        if (icon != null) return icon;
+        LOG.warn(type.getName() + " type have no icon for " + id);
+      }
+      return AllIcons.Nodes.Module;
     }
 
     @Nullable

@@ -487,6 +487,10 @@ public class AllIcons {
     /**
      * 16x16
      */
+    public static final Icon StepOutCodeBlock = IconLoader.getIcon("/actions/stepOutCodeBlock.svg");
+    /**
+     * 16x16
+     */
     public static final Icon Stub = IconLoader.getIcon("/actions/stub.svg");
     /**
      * 16x16

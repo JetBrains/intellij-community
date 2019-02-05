@@ -116,8 +116,8 @@ class ResolveLocalTest implements ResolveTest {
   void 'variable after lambda'() {
     resolveTest 'def l = a -> a; <caret>a ', null
     resolveTest 'def l = (a) -> a; <caret>a ', null
-    resolveTest 'def l = (Integer a) -> {} <caret>a ', null
-    resolveTest 'def l = a -> {} <caret>a ', null
+    resolveTest 'def l = (Integer a) -> {}; <caret>a ', null
+    resolveTest 'def l = a -> {}; <caret>a ', null
   }
 
   @Test

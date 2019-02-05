@@ -63,7 +63,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
-  private final boolean mySkinny = false;
+  private static final boolean mySkinny = false;
 
   public WideSelectionTreeUI() {
     this(true, Conditions.<Integer>alwaysTrue());

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.index
 
 import com.intellij.ide.todo.TodoConfiguration
@@ -154,7 +154,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024, readOnly)
     return new StringIndex(testName, indexStorage, index, !readOnly)
   }
-  
+
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
@@ -250,7 +250,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile vFile = psiFile.getVirtualFile()
 
     CodeStyleManager.getInstance(project).reformat(psiFile)
-    
+
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     PsiManager.getInstance(project).reloadFromDisk(psiFile)
 
@@ -258,9 +258,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def provider = PsiManager.getInstance(project).findViewProvider(vFile)
     def stubTree = ((PsiFileImpl)provider.getPsi(provider.getBaseLanguage())).getGreenStubTree()
-    
+
     VfsUtil.saveText(vFile, "class Bar {}")
-    
+
     assertNotNull(findClass("Foo"))
   }
 
@@ -417,14 +417,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     GCUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
-  
+
   void "test unknown file type in stubs" () {
     def vFile = myFixture.addFileToProject("Foo.java", "").virtualFile
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     document.setText("class Foo {}")
-    PsiDocumentManager.getInstance(project).commitAllDocuments() 
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
     assert findClass("Foo")
-    
+
     vFile.rename(null, "Foo1")
     assert !findClass("Foo")
   }
@@ -553,12 +553,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def classEntry = new IdIndexEntry("class", true)
     def findValueProcessor = { file, value -> file != vFile } as FileBasedIndex.ValueProcessor
-    
+
     def projectScope = GlobalSearchScope.projectScope(project)
     def result = FileBasedIndex.instance.processValues(IdIndexImpl.NAME, classEntry, null, findValueProcessor,
                                                        projectScope)
     assertFalse(result)
-    
+
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
     document.setText("")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -593,7 +593,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test internalErrorOfStubProcessingInvalidatesIndex"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
-    
+
     assertTrue(findClass("Foo") != null)
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
@@ -625,7 +625,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         return false
       }
     }
-    
+
     try {
 
       StubIndex.instance.
@@ -642,8 +642,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     catch (AssertionError ignored) {
       // stub mismatch
     }
-    
-    try {      
+
+    try {
       StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
 
       fail("Unexpected")
@@ -893,7 +893,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     Document document = FileDocumentManager.getInstance().getDocument(srcFile.virtualFile)
     document.replaceString(0, document.getTextLength(), 'class B {}')
     assertNotNull(findClass('A'))
-    
+
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).doCommitWithoutReparse(document)
 
     assertNull(findClass("A"))
@@ -918,7 +918,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assert findClass("Foo")
   }
-  
+
   void "test read-only index has read-only storages"() {
     def index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true).getIndex()
 
@@ -952,7 +952,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
         eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, true, false))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, false))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
@@ -972,18 +972,18 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def projectScope = GlobalSearchScope.projectScope(project)
     assert !JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(runnable.methods[0], projectScope, { true }).findFirst().present
-    assert StubIndex.instance.getElements(JavaStubIndexKeys.METHODS, 'run', project, projectScope, PsiMethod).empty 
+    assert StubIndex.instance.getElements(JavaStubIndexKeys.METHODS, 'run', project, projectScope, PsiMethod).empty
   }
 
   void "test text todo indexing checks for cancellation"() {
     TodoPattern pattern = new TodoPattern("(x+x+)+y", TodoAttributesUtil.createDefault(), true)
-    
+
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns()
     TodoPattern[] newPatterns = [pattern]
     TodoConfiguration.getInstance().setTodoPatterns(newPatterns)
     FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
     myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-    
+
     try {
       final CountDownLatch progressStarted = new CountDownLatch(1)
       final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase()

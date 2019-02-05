@@ -204,7 +204,7 @@ public class TestsPresentationUtil {
     }
 
     String presentationCandidate = name;
-    if (parent != null) {
+    if (parent != null && !testProxy.isSuite()) {
       String parentName = parent.getName();
       if (parentName != null) {
         boolean parentStartsWith = name.startsWith(parentName);

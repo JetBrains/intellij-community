@@ -145,6 +145,11 @@ public class ToolWindowMoveAction extends DumbAwareAction {
     }
 
     @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isInitialized) {
         for (ToolWindowMoveAction.Anchor anchor : ToolWindowMoveAction.Anchor.values()) {

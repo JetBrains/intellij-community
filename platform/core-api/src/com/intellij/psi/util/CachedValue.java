@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.RecursionGuard;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +37,18 @@ import org.jetbrains.annotations.NotNull;
  * be run concurrently on more than one thread. Due to this and unpredictable garbage collection,
  * cached value providers shouldn't have side effects.<p></p>
  *
- * <b>Important note</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
+ * <b>Result equivalence</b>: CachedValue might return a different result even if the previous one
+ * is still reachable and not garbage-collected, and dependencies haven't changed. Therefore CachedValue results
+ * should be equivalent and interchangeable if they're called multiple times. Examples:
+ * <ul>
+ *   <li>If PSI declarations are cached, {@link #equals} or at least {@link com.intellij.psi.PsiManager#areElementsEquivalent}
+ *   should hold for results from the same CachedValue.</li>
+ *   <li>{@link com.intellij.psi.ResolveResult} objects should have equivalent {@code getElement()} values.</li>
+ *   <li>Cached arrays or lists should have the same number of elements, and they also should be equivalent and come in the same order.</li>
+ *   <li>If the result object's class has a meaningful {@link #equals} method, it should hold.</li>
+ * </ul>
+ *
+ * <b>Context-independence</b>: if you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
  * may only depend on X and parts of global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
  * Otherwise re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
  * possibly causing exceptions in places far, far away. In particular, the provider may not capture:

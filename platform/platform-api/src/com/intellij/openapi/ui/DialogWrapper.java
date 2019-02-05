@@ -1784,27 +1784,30 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String dialogId = getLoggedDialogId();
-    if (StringUtil.isNotEmpty(dialogId)) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
+    final boolean canRecord = canRecordDialogId();
+    if (canRecord) {
+      final String dialogId = getClass().getName();
+      if (StringUtil.isNotEmpty(dialogId)) {
+        FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
+      }
     }
   }
 
   private void logShowDialogEvent() {
-    final String dialogId = getLoggedDialogId();
-    if (StringUtil.isNotEmpty(dialogId)) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
+    final boolean canRecord = canRecordDialogId();
+    if (canRecord) {
+      final String dialogId = getClass().getName();
+      if (StringUtil.isNotEmpty(dialogId)) {
+        FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
+      }
     }
   }
 
   /**
-   * The ID will be recorded in user event log, it can be used to understand how often this dialog is used.
-   *
-   * @return null if we shouldn't record the dialog.
+   * If dialog open/close events should be recorded in user event log, it can be used to understand how often this dialog is used.
    */
-  @Nullable
-  protected String getLoggedDialogId() {
-    return getClass().getName();
+  protected boolean canRecordDialogId() {
+    return true;
   }
 
   /**
@@ -2050,8 +2053,8 @@ public abstract class DialogWrapper {
     }
 
     new Thread("DialogWrapper resizer") {
-      final int time = 200;
-      final int steps = 7;
+      static final int time = 200;
+      static final int steps = 7;
 
       @Override
       public void run() {

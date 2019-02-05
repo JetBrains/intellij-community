@@ -57,7 +57,7 @@ class MergeAutoTest : MergeTestBase() {
     }
   }
 
-  private fun TestBuilder.doApply(): Unit {
+  private fun TestBuilder.doApply() {
     val index = RNG.nextInt(changes.size)
     val change = changes[index]
 
@@ -67,7 +67,7 @@ class MergeAutoTest : MergeTestBase() {
     command(change) { viewer.replaceChange(change, side, modifier) }
   }
 
-  private fun TestBuilder.doIgnore(): Unit {
+  private fun TestBuilder.doIgnore() {
     val index = RNG.nextInt(changes.size)
     val change = changes[index]
 
@@ -77,18 +77,18 @@ class MergeAutoTest : MergeTestBase() {
     command(change) { viewer.ignoreChange(change, side, modifier) }
   }
 
-  private fun TestBuilder.doTryResolve(): Unit {
+  private fun TestBuilder.doTryResolve() {
     val index = RNG.nextInt(changes.size)
     val change = changes[index]
 
     command(change) { viewer.resolveChangeAutomatically(change, ThreeSide.BASE) }
   }
 
-  private fun TestBuilder.doModifyText(): Unit {
+  private fun TestBuilder.doModifyText() {
     val length = document.textLength
 
-    var index1: Int = 0
-    var index2: Int = 0
+    var index1 = 0
+    var index2 = 0
     if (length != 0) {
       index1 = RNG.nextInt(length)
       index2 = index1 + RNG.nextInt(length - index1)

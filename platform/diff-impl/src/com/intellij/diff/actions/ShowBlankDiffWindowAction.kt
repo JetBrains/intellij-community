@@ -2,12 +2,10 @@
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
-import com.intellij.diff.chains.DiffRequestChainBase
-import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.actions.impl.MutableDiffRequestChain
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.FileContent
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
@@ -21,16 +19,17 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
+
+private val BLANK_KEY = Key.create<Boolean>("Diff.BlankWindow")
 
 class ShowBlankDiffWindowAction : DumbAwareAction() {
   init {
@@ -49,51 +48,56 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
     val content1 = createEditableContent(project, StringUtil.notNullize(defaultText))
     val content2 = createEditableContent(project, "")
 
-    val chain = BlankWindowDiffRequestChain(content1, content2)
+    val chain = MutableDiffRequestChain(content1, content2)
     chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
+    chain.putUserData(BLANK_KEY, true)
 
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT)
   }
 }
 
 internal class SwitchToBlankEditorAction : BlankActionBase() {
-  override fun isEnabled(viewer: TwosideTextDiffViewer, chain: BlankWindowDiffRequestChain, context: DiffContextEx, side: Side): Boolean {
-    val content = side.select(chain.content1, chain.content2)
+  override fun isEnabled(viewer: TwosideTextDiffViewer, helper: MutableDiffRequestChain.Helper, side: Side): Boolean {
+    val content = side.select(helper.chain.content1, helper.chain.content2)
     return content is FileContent
   }
 
-  override fun perform(viewer: TwosideTextDiffViewer, chain: BlankWindowDiffRequestChain, context: DiffContextEx, side: Side) {
+  override fun perform(viewer: TwosideTextDiffViewer, helper: MutableDiffRequestChain.Helper, side: Side) {
     val newContent = createEditableContent(viewer.project, "")
-    chain.setContent(newContent, side)
+    helper.setContent(newContent, side)
 
-    context.reloadDiffRequest()
+    helper.fireRequestUpdated()
   }
 }
 
 internal class SwitchToFileEditorAction : BlankActionBase() {
-  override fun isEnabled(viewer: TwosideTextDiffViewer, chain: BlankWindowDiffRequestChain, context: DiffContextEx, side: Side): Boolean {
+  override fun isEnabled(viewer: TwosideTextDiffViewer, helper: MutableDiffRequestChain.Helper, side: Side): Boolean {
     return true
   }
 
-  override fun perform(viewer: TwosideTextDiffViewer, chain: BlankWindowDiffRequestChain, context: DiffContextEx, side: Side) {
+  override fun perform(viewer: TwosideTextDiffViewer, helper: MutableDiffRequestChain.Helper, side: Side) {
     val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
     descriptor.title = "Select File to Compare"
     descriptor.description = ""
     val file = FileChooser.chooseFile(descriptor, viewer.component, viewer.project, null) ?: return
 
     val newContent = createFileContent(viewer.project, file) ?: return
-    chain.setContent(newContent, side)
+    helper.setContent(newContent, side)
 
-    context.reloadDiffRequest()
+    helper.fireRequestUpdated()
   }
 }
 
 internal abstract class BlankActionBase : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val viewer = e.getData(DiffDataKeys.DIFF_VIEWER) as? TwosideTextDiffViewer
-    val request = e.getData(DiffDataKeys.DIFF_REQUEST) as? BlankWindowDiffRequest
-    val context = e.getData(DiffDataKeys.DIFF_CONTEXT) as? DiffContextEx
-    if (viewer == null || request == null || context == null) {
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext)
+    if (viewer == null || helper == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    if (helper.chain.getUserData(BLANK_KEY) != true) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -105,45 +109,42 @@ internal abstract class BlankActionBase : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = isEnabled(viewer, request.chain, context, side)
+    e.presentation.isEnabledAndVisible = isEnabled(viewer, helper, side)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val viewer = e.getData(DiffDataKeys.DIFF_VIEWER) as TwosideTextDiffViewer
-    val request = e.getData(DiffDataKeys.DIFF_REQUEST) as BlankWindowDiffRequest
-    val context = e.getData(DiffDataKeys.DIFF_CONTEXT) as DiffContextEx
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
 
     val editor = e.getData(CommonDataKeys.EDITOR)
     val side = Side.fromValue(viewer.editors, editor)!!
 
-    perform(viewer, request.chain, context, side)
+    perform(viewer, helper, side)
   }
 
   protected abstract fun isEnabled(viewer: TwosideTextDiffViewer,
-                                   chain: BlankWindowDiffRequestChain,
-                                   context: DiffContextEx,
+                                   helper: MutableDiffRequestChain.Helper,
                                    side: Side): Boolean
 
   protected abstract fun perform(viewer: TwosideTextDiffViewer,
-                                 chain: BlankWindowDiffRequestChain,
-                                 context: DiffContextEx,
+                                 helper: MutableDiffRequestChain.Helper,
                                  side: Side)
 }
 
 class ShowBlankDiffWindowDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
-    if (request is BlankWindowDiffRequest &&
-        context is DiffContextEx &&
-        viewer is TwosideTextDiffViewer) {
-      DnDHandler(viewer, context, request.chain, Side.LEFT).install()
-      DnDHandler(viewer, context, request.chain, Side.RIGHT).install()
+    if (viewer is TwosideTextDiffViewer) {
+      val helper = MutableDiffRequestChain.createHelper(context, request) ?: return
+      if (helper.chain.getUserData(BLANK_KEY) == true) {
+        DnDHandler(viewer, helper, Side.LEFT).install()
+        DnDHandler(viewer, helper, Side.RIGHT).install()
+      }
     }
   }
 }
 
 private class DnDHandler(val viewer: TwosideTextDiffViewer,
-                         val context: DiffContextEx,
-                         val chain: BlankWindowDiffRequestChain,
+                         val helper: MutableDiffRequestChain.Helper,
                          val side: Side) : EditorDropHandler {
   fun install() {
     val editor = viewer.getEditor(side) as? EditorImpl ?: return
@@ -156,7 +157,7 @@ private class DnDHandler(val viewer: TwosideTextDiffViewer,
 
   override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
     val success = doHandleDnD(t)
-    if (success) context.reloadDiffRequest()
+    if (success) helper.fireRequestUpdated()
   }
 
   private fun doHandleDnD(transferable: Transferable): Boolean {
@@ -164,14 +165,14 @@ private class DnDHandler(val viewer: TwosideTextDiffViewer,
     if (files != null) {
       if (files.size == 1) {
         val newContent = createFileContent(viewer.project, files[0]) ?: return false
-        chain.setContent(newContent, side)
+        helper.setContent(newContent, side)
         return true
       }
       if (files.size >= 2) {
         val newContent1 = createFileContent(viewer.project, files[0]) ?: return false
         val newContent2 = createFileContent(viewer.project, files[1]) ?: return false
-        chain.setContent(newContent1, Side.LEFT)
-        chain.setContent(newContent2, Side.RIGHT)
+        helper.setContent(newContent1, Side.LEFT)
+        helper.setContent(newContent2, Side.RIGHT)
         return true
       }
     }
@@ -191,39 +192,3 @@ private fun createFileContent(project: Project?, file: File): DocumentContent? {
 private fun createFileContent(project: Project?, file: VirtualFile): DocumentContent? {
   return DiffContentFactory.getInstance().createDocument(project, file)
 }
-
-internal class BlankWindowDiffRequestChain(var content1: DocumentContent, var content2: DocumentContent) : DiffRequestChainBase() {
-  var title1: String? = getTitleFor(content1)
-  var title2: String? = getTitleFor(content2)
-
-  override fun getRequests(): List<DiffRequestProducer> {
-    return listOf(object : DiffRequestProducer {
-      override fun getName(): String {
-        return "Change"
-      }
-
-      override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-        return BlankWindowDiffRequest(this@BlankWindowDiffRequestChain)
-      }
-    })
-  }
-
-  fun setContent(newContent: DocumentContent, side: Side) {
-    val title = getTitleFor(newContent)
-
-    if (side.isLeft) {
-      content1 = newContent
-      title1 = title
-    }
-    else {
-      content2 = newContent
-      title2 = title
-    }
-  }
-
-  private fun getTitleFor(content: DocumentContent) =
-    if (content is FileContent) DiffRequestFactory.getInstance().getContentTitle(content.file) else null
-}
-
-private class BlankWindowDiffRequest internal constructor(val chain: BlankWindowDiffRequestChain)
-  : SimpleDiffRequest(null, chain.content1, chain.content2, chain.title1, chain.title2)

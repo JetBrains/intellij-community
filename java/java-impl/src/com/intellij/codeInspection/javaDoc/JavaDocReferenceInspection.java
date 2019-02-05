@@ -69,6 +69,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
     boolean allAccessible = !REPORT_INACCESSIBLE ||
                             Arrays.stream(resolveResults).map(ResolveResult::getElement)
+                              .filter(Objects::nonNull)
                               .allMatch(element -> isAccessible(element, context));
 
     return allAccessible ? null :

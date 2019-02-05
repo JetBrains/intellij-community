@@ -816,8 +816,5 @@
   <item name='java.lang.Thread void setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.lang.Throwable java.lang.Throwable getCause()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
 </root>
 

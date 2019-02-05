@@ -196,7 +196,7 @@ public abstract class ReorderableListController <T> {
     }
   }
 
-  static interface ActionBehaviour<T> {
+  interface ActionBehaviour<T> {
     T performAction(@NotNull AnActionEvent e);
     void updateAction(@NotNull AnActionEvent e);
   }

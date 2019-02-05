@@ -550,20 +550,10 @@ public class RecentLocationsAction extends AnAction {
                                       @NotNull Document document,
                                       @NotNull PlaceInfo placeInfo,
                                       @NotNull TextRange textRange) {
-    EditorColorsScheme colorsScheme = setupColorScheme(project, editor, placeInfo);
+    EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     applySyntaxHighlighting(project, editor, document, colorsScheme, textRange, placeInfo);
     applyHighlightingPasses(project, editor, document, colorsScheme, textRange);
-  }
-
-  @NotNull
-  private static EditorColorsScheme setupColorScheme(@NotNull Project project, @NotNull EditorEx editor, @NotNull PlaceInfo placeInfo) {
-    EditorColorsScheme colorsScheme = RecentLocationManager.getInstance(project).getColorScheme(placeInfo, showChanged(project));
-    if (colorsScheme == null) {
-      colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    }
-    editor.setColorsScheme(colorsScheme);
-    return colorsScheme;
   }
 
   private static void applySyntaxHighlighting(@NotNull Project project,

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -45,11 +46,9 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
           VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(psiClass.getContainingFile().getVirtualFile());
           if (jarFile != null) {
             String version = getVersionByJarManifest(jarFile);
-            if (version == null) {
-              version = getVersionByJarFileName(jarFile.getName());
-            }
-            if (version != null && StringUtil.containsChar(version, '.')) {
-              result.add(new UsageDescriptor(descriptor.myName + "_" + version, 1));
+            if (version == null) version = getVersionByJarFileName(jarFile.getName());
+            if (StringUtil.isNotEmpty(version)) {
+              result.add(new UsageDescriptor(descriptor.myName, 1, new FeatureUsageData().addOS().addVersionByString(version)));
             }
           }
         }
@@ -75,6 +74,6 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
-    return "javaLibraries";
+    return "javaLibraryJars";
   }
 }

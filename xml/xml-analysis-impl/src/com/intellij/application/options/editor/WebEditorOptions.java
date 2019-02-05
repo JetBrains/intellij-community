@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage("editor.xml")
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
-  private final boolean myShowCssColorPreviewInGutter = true;
+  private static final boolean myShowCssColorPreviewInGutter = true;
   private boolean mySelectWholeCssIdentifierOnDoubleClick = true;
   private boolean myShowCssInlineColorPreview = false;
   private boolean myAutomaticallyInsertClosingTag = true;

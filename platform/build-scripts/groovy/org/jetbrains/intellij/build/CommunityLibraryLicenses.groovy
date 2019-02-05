@@ -72,8 +72,6 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0",
                        url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
-    new LibraryLicense(name: "Apache Axis wstx-asl", libraryName: "wstx-asl", version: "1.4", license: "Apache 2.0",
-                           url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
 
     new LibraryLicense(name: "Apache Commons BeanUtils", libraryName: "commons-beanutils.jar", version: "1.6", license: "Apache 2.0",
                        url: "http://commons.apache.org/beanutils/"),
@@ -104,6 +102,8 @@ class CommunityLibraryLicenses {
                        additionalLibraryNames: ["asm-capture"]),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools", license: "BSD", url: "http://asm.objectweb.org/",
                        licenseUrl: "http://asm.objectweb.org/license.html"),
+    new LibraryLicense(name: "AssertJ fluent assertions", libraryName: "assertJ", version: "3.11.1", license: "Apache 2.0",
+                       url: "http://joel-costigliola.github.io/assertj/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.12-1", license: "BSD",
                        url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
     new LibraryLicense(name: "batik", libraryName: "batik", version: "1.9.1", license: "Apache 2.0",
@@ -333,6 +333,8 @@ class CommunityLibraryLicenses {
                        additionalLibraryNames: ["org.apache.maven.shared:maven-dependency-tree:1.2", "org.apache.maven.archetype:archetype-common:2.2"],
                        version: "3.6.0", license: "Apache 2.0", url: "http://maven.apache.org/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "Memory File System", libraryName: "memoryfilesystem", version: "1.3.0", license: "MIT",
+                       url: "https://github.com/marschall/memoryfilesystem", licenseUrl: "http://opensource.org/licenses/MIT"),
     new LibraryLicense(name: "mercurial_prompthooks", attachedTo: "intellij.vcs.hg", version: "",
                        license: "GPLv2 (used as hg extension called from hg executable)",
                        url: "https://github.com/willemv/mercurial_prompthooks",

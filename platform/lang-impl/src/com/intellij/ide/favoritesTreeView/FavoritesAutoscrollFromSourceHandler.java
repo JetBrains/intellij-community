@@ -50,10 +50,6 @@ public class FavoritesAutoscrollFromSourceHandler extends AutoScrollFromSourceHa
   protected void selectElementFromEditor(@NotNull FileEditor editor) {
     VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
     PsiFile psiFile = file == null ? null : PsiManager.getInstance(myProject).findFile(file);
-    if (psiFile == null) return;
-    FileEditorSelectInContext context = new FileEditorSelectInContext(editor, psiFile);
-    if (mySelectInTarget.canSelect(context)) {
-      mySelectInTarget.selectIn(context, false);
-    }
+    if (psiFile != null) new FileEditorSelectInContext(editor, psiFile).selectIn(mySelectInTarget, false);
   }
 }

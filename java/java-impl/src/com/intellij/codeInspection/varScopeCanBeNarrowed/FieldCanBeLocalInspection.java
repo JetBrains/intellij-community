@@ -38,7 +38,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
@@ -376,22 +375,30 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   private static class ConvertFieldToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiField> {
     private final String myName;
 
-    private ConvertFieldToLocalQuickFix(Map<PsiCodeBlock, Collection<PsiReference>> refs) {
-      Set<PsiMethod> methods = refs.keySet().stream()
-        .filter(block -> block.getParent() instanceof PsiMethod)
-        .map(block -> (PsiMethod)block.getParent())
-        .collect(Collectors.toSet());
+    private ConvertFieldToLocalQuickFix(@NotNull Map<PsiCodeBlock, Collection<PsiReference>> refs) {
+      final Set<PsiCodeBlock> blocks = refs.keySet();
+      final PsiElement block;
+      if (blocks.size() == 1) {
+        block =
+          PsiTreeUtil.getNonStrictParentOfType(blocks.toArray(PsiCodeBlock.EMPTY_ARRAY)[0], PsiClassInitializer.class, PsiMethod.class);
+      }
+      else {
+        block = null;
+      }
 
-      myName = determineName(methods, refs);
+      myName = determineName(block);
     }
 
     @NotNull
-    private String determineName(Set<PsiMethod> methods, Map<PsiCodeBlock, Collection<PsiReference>> refs) {
-      if (methods.isEmpty() || methods.size() != refs.size()) return getFamilyName();
-      if (methods.size() > 1) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.multiple.methods", methods.size());
+    private String determineName(@Nullable PsiElement block) {
+      if (block instanceof PsiClassInitializer) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.initializer");
 
-      final String methodName = methods.toArray(PsiMethod.EMPTY_ARRAY)[0].getName();
-      return InspectionsBundle.message("inspection.field.can.be.local.quickfix.one.method", methodName);
+      if (block instanceof PsiMethod) {
+        if (((PsiMethod)block).isConstructor()) return InspectionsBundle.message("inspection.field.can.be.local.quickfix.constructor");
+        return InspectionsBundle.message("inspection.field.can.be.local.quickfix.one.method", ((PsiMethod)block).getName());
+      }
+
+      return getFamilyName();
     }
 
     @NotNull

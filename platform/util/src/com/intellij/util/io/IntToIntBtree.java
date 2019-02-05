@@ -52,10 +52,10 @@ public class IntToIntBtree {
   private boolean hasZeroKey;
   private int zeroKeyValue;
 
-  private final boolean isLarge = true;
+  private static final boolean isLarge = true;
   private final ResizeableMappedFile storage;
-  private final boolean offloadToSiblingsBeforeSplit = false;
-  private final boolean indexNodeIsHashTable = true;
+  private static final boolean offloadToSiblingsBeforeSplit = false;
+  private static final boolean indexNodeIsHashTable = true;
   final int metaDataLeafPageLength;
   final int hashPageCapacity;
 

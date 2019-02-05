@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,11 +18,14 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+
+import static java.util.Collections.emptyMap;
 
 public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
@@ -62,7 +64,8 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final ProjectConfigurationFilesProcessor myProjectConfigurationFilesProcessor;
+  private final FilesProcessor myProjectConfigurationFilesProcessor;
+  private final FilesProcessor myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -79,7 +82,8 @@ public abstract class VcsVFSListener implements Disposable {
     project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
-    myProjectConfigurationFilesProcessor = ServiceManager.getService(myProject, ProjectConfigurationFilesProcessor.class);
+    myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
+    myExternalFilesProcessor = createExternalFilesProcessor();
   }
 
   @Override
@@ -89,6 +93,10 @@ public abstract class VcsVFSListener implements Disposable {
   protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
     if (event.isFromRefresh()) return true;
     return !isUnderMyVcs(event.getFile());
+  }
+
+  private static boolean isExternalEvent(@NotNull VirtualFileEvent event) {
+    return event.isFromRefresh();
   }
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
@@ -137,7 +145,7 @@ public abstract class VcsVFSListener implements Disposable {
     LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
 
-    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles, this);
+    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles);
 
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
@@ -152,6 +160,17 @@ public abstract class VcsVFSListener implements Disposable {
         performAdding(new ArrayList<>(filesToProcess), copyFromMap);
       }
     }
+  }
+
+  protected void executeAddWithoutIgnores(@NotNull List<VirtualFile> addedFiles,
+                                          @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
+                                          @NotNull ExecuteAddCallback executeAddCallback) {
+    executeAddCallback.executeAdd(addedFiles, copyFromMap);
+  }
+
+  @FunctionalInterface
+  protected interface ExecuteAddCallback {
+    void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
   }
 
   protected void saveUnsavedVcsIgnoreFiles() {
@@ -227,10 +246,20 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void fileAdded(@NotNull VirtualFileEvent event, @NotNull VirtualFile file) {
-    if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(file) &&
+    if (isExternalEvent(event)
+        && !myChangeListManager.isIgnoredFile(file) && VcsUtil.getVcsRootFor(myProject, file) != null) {
+      LOG.debug("Adding external file [", file, "]");
+      if (file.isDirectory()) {
+        processExternalCreatedFiles(ContainerUtil.newArrayList(file));
+      } else {
+        executeAddWithoutIgnores(ContainerUtil.newArrayList(file), Collections.emptyMap(),
+                                 (notIgnoredFiles, copiedFilesMap) -> processExternalCreatedFiles(notIgnoredFiles));
+      }
+    }
+    else if (!isEventIgnored(event) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
       LOG.debug("Adding [", file, "] to added files");
-      myAddedFiles.add(event.getFile());
+      myAddedFiles.add(file);
     }
   }
 
@@ -315,6 +344,26 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
+
+  @SuppressWarnings("unchecked")
+  private FilesProcessor createExternalFilesProcessor() {
+    return new ExternallyAddedFilesProcessorImpl(myProject,
+                                                 myVcs.getDisplayName(),
+                                                 (files) -> {
+                                                   performAdding((Collection<VirtualFile>)files, emptyMap());
+                                                   return Unit.INSTANCE;
+                                                 });
+  }
+
+  @SuppressWarnings("unchecked")
+  private FilesProcessor createProjectConfigurationFilesProcessor() {
+    return new ProjectConfigurationFilesProcessorImpl(myProject,
+                                                      myVcs.getDisplayName(),
+                                                      (files) -> {
+                                                        performAdding((Collection<VirtualFile>)files, emptyMap());
+                                                        return Unit.INSTANCE;
+                                                      });
+  }
 
   private class MyVirtualFileListener implements VirtualFileListener {
     @Override
@@ -410,6 +459,20 @@ public abstract class VcsVFSListener implements Disposable {
       if (isUnderMyVcs(file)) {
         VcsVFSListener.this.beforeContentsChange(event, file);
       }
+    }
+  }
+
+  private void processExternalCreatedFiles(@NotNull List<VirtualFile> files) {
+    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    files = myProjectConfigurationFilesProcessor.processFiles(files);
+    if (files.isEmpty()) return;
+
+    if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      performAdding(files, Collections.emptyMap());
+    }
+    else {
+      myExternalFilesProcessor.processFiles(files);
     }
   }
 

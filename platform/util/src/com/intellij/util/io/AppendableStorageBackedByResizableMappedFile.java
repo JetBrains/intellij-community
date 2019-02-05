@@ -64,7 +64,7 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
   }
 
   private final CompressedAppendableFile myCompressedAppendableFile;
-  private final boolean testMode = false;
+  private static final boolean testMode = false;
 
   public <Data> Data read(final int addr, KeyDescriptor<Data> descriptor) throws IOException {
     Data tempData = null;

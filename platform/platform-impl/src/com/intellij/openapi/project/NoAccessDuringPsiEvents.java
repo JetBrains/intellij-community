@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,8 @@ public class NoAccessDuringPsiEvents {
     if (!application.isWriteAccessAllowed()) return false;
 
     MessageBus bus = application.getMessageBus();
-    return bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) || bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC);
+    return bus.hasUndeliveredEvents(VirtualFileManager.VFS_CHANGES) ||
+           bus.hasUndeliveredEvents(PsiModificationTracker.TOPIC) ||
+           bus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS);
   }
 }

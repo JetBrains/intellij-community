@@ -252,7 +252,7 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
       }
 
       // we faced conflicting insertions - resolve failed
-      return null;
+      return null
     }
 
     return newContent

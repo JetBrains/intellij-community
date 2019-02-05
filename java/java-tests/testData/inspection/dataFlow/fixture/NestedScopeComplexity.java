@@ -30,7 +30,7 @@ class NestedScopeComplexity {
 
   static Object get() {return new Object();}
 
-  void test() {
+  void <weak_warning descr="Method 'test' is complex: data flow results could be imprecise">test</weak_warning>() {
     int i = 1;
     for(Object obj = get(); obj != C100; obj = get()) {
       if (obj == C1) i = 2;

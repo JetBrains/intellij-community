@@ -18,6 +18,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -319,6 +320,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (!bareParamType.isValid()) {
           try {
             PsiUtil.ensureValidType(bareParamType);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
           }
           catch (Throwable e) {
             throw PluginException.createByClass(

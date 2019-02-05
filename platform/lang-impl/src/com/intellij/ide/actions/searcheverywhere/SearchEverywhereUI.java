@@ -445,7 +445,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         @Override
         public void mousePressed(MouseEvent e) {
           switchToTab(SETab.this);
-          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(getID(), "mouseClick");
+          String reportableID = getContributor()
+            .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
+            .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+          FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(reportableID, "mouseClick");
           featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
         }
       });
@@ -750,9 +753,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void triggerTabSwitched(AnActionEvent e) {
-    String selectedContributorID = getSelectedContributorID();
     String shortcut = getEventShortcut(e).orElse(null);
-    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(selectedContributorID, shortcut);
+    String id = mySelectedTab.getContributor()
+      .map(SearchEverywhereUsageTriggerCollector::getReportableContributorID)
+      .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+
+    FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(id, shortcut);
     featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
   }
 
@@ -839,7 +845,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
       if (isAllTab) {
-        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(contributor.getSearchProviderId(), null);
+        String reportableContributorID = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor);
+        FUSUsageContext context = SearchEverywhereUsageTriggerCollector.createContext(reportableContributorID, null);
         featureTriggered(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED, context);
       }
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);

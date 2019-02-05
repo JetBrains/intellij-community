@@ -68,7 +68,7 @@ import java.util.Map;
  *
  * <p>No HTML tagging is allowed in title or shortcut, they are supposed to be simple text strings.</p>
  * <p>Description is can be html formatted. You can use all possible html tagging in description just without enclosing
- * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/ or &lt;p&gt; tags between paragraphs.
+ * &lt;html&gt; and &lt;/html&gt; tags themselves. In description it's allowed to have &lt;p/&gt; or &lt;p&gt; tags between paragraphs.
  * Paragraphs will be rendered with the standard (10px) offset from the title, from one another and from the link.
  * To force the line break in a paragraph use &lt;br/&gt;. Standard font coloring and styling is also available.</p>
  *

@@ -92,12 +92,6 @@ public class RecentLocationManager implements ProjectComponent {
     return item == null ? null : item.getPositionOffsetMarker();
   }
 
-  @Nullable
-  EditorColorsScheme getColorScheme(@NotNull PlaceInfo placeInfo, boolean showChanged) {
-    PlaceInfoPersistentItem item = getMap(showChanged).get(placeInfo);
-    return item == null ? null : item.getScheme();
-  }
-
   private void subscribeOnExternalChange(@NotNull MessageBusConnection connection) {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override

@@ -3,21 +3,18 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,9 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
@@ -56,76 +51,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
+public class GotoDeclarationAction extends BaseCodeInsightAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
 
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return this;
+    return GotoDeclarationActionHandler.INSTANCE;
   }
 
   @Override
   protected boolean isValidForLookup() {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-
-    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-    try {
-      int offset = editor.getCaretModel().getOffset();
-      PsiElement[] elements = underModalProgress(project, "Resolving Reference...", () -> findAllTargetElements(project, editor, offset));
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-
-      if (elements.length != 1) {
-        if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
-          PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (startFindUsages(editor, project, element)) {
-            return;
-          }
-
-          //disable 'no declaration found' notification for keywords
-          if (isKeywordUnderCaret(project, file, offset)) return;
-        }
-        chooseAmbiguousTarget(editor, offset, elements, file);
-        return;
-      }
-
-      PsiElement element = elements[0];
-      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
-          startFindUsages(editor, project, element)) {
-        return;
-      }
-
-      PsiElement navElement = element.getNavigationElement();
-      navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
-      if (navElement != null) {
-        gotoTargetElement(navElement, editor, file);
-      }
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
-    }
-    finally {
-      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-    }
-  }
-
-  private static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
-    if (element == null) {
-      return false;
-    }
-    if (DumbService.getInstance(project).isDumb()) {
-      AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
-      String name = action.getTemplatePresentation().getText();
-      DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
-    }
-    else {
-      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
-    }
     return true;
   }
 
@@ -147,19 +83,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
-  private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
-    if (!editor.getComponent().isShowing()) return;
-    PsiElementProcessor<PsiElement> navigateProcessor = element -> {
-      gotoTargetElement(element, editor, currentFile);
-      return true;
-    };
-    boolean found =
-      chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), elements);
-    if (!found) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
-    }
-  }
-
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
     if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
       int offset = element.getTextOffset();
@@ -178,7 +101,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
+  static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
     if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
     Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
@@ -238,11 +161,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return Collections.emptyList();
     }
     return TargetElementUtil.getInstance().getTargetCandidates(reference);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Nullable

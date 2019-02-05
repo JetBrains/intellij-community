@@ -569,13 +569,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           startBackgroundNonStandardIndicatorsPing();
         }
 
-        if (thisIndicator.isCanceled()) {
-          threadsUnderCanceledIndicator.add(currentThread);
-          oneOfTheIndicatorsIsCanceled = true;
-        }
-        else if (!oneOfTheIndicatorsIsCanceled) {
-          threadsUnderCanceledIndicator.remove(currentThread);
-        }
+        oneOfTheIndicatorsIsCanceled |= thisIndicator.isCanceled();
+      }
+
+      if (oneOfTheIndicatorsIsCanceled) {
+        threadsUnderCanceledIndicator.add(currentThread);
+      }
+      else {
+        threadsUnderCanceledIndicator.remove(currentThread);
       }
 
       updateShouldCheckCanceled();

@@ -440,7 +440,7 @@ internal val Storage.path: String
   get() = if (value.isEmpty()) file else value
 
 internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == Storage.NOT_ROAMABLE_FILE || collapsedPath == StoragePathMacros.CACHE_FILE)) {
+  if (roamingType != RoamingType.DISABLED && (collapsedPath == StoragePathMacros.WORKSPACE_FILE || collapsedPath == StoragePathMacros.NOT_ROAMABLE_FILE || collapsedPath == StoragePathMacros.CACHE_FILE)) {
     return RoamingType.DISABLED
   }
   else {

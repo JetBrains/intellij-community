@@ -135,6 +135,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
+    NonBlockingReadActionImpl.cancelAllTasks(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);

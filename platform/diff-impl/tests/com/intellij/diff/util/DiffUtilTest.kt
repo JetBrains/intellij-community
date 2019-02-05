@@ -38,7 +38,6 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.containers.ContainerUtil
 import java.io.File
-import java.util.*
 
 class DiffUtilTest : DiffTestCase() {
   fun `test getSortedIndexes`() {
