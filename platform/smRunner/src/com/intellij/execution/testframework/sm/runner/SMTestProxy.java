@@ -368,7 +368,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public Long getDuration() {
     // Returns duration value for tests
     // or cached duration for suites
-    if (myDurationIsCached || !isSuite()) {
+    if (myDurationIsCached || durationShouldBeSetExplicitly()) {
       return myDuration;
     }
 
@@ -427,20 +427,9 @@ public class SMTestProxy extends AbstractTestProxy {
       return strategy;
     }
     else {
-      final TestDurationStrategy parentDurationStrategy = getDurationStrategyFromParent();
+      final TestDurationStrategy parentDurationStrategy = getRoot().getDurationStrategy();
       myDurationStrategyCached = parentDurationStrategy;
       return parentDurationStrategy;
-    }
-  }
-
-  @NotNull
-  private TestDurationStrategy getDurationStrategyFromParent() {
-    final SMTestProxy parent = getParent();
-    if (parent != null) {
-      return parent.getDurationStrategy();
-    }
-    else {
-      return TestDurationStrategy.AUTOMATIC;
     }
   }
 
@@ -969,13 +958,13 @@ public class SMTestProxy extends AbstractTestProxy {
       myTestsReporterAttached = true;
     }
 
-    public void setDurationStrategy(@NotNull final TestDurationStrategy strategy) {
+    final void setDurationStrategy(@NotNull final TestDurationStrategy strategy) {
       myDurationStrategy = strategy;
     }
 
     @NotNull
     @Override
-    public TestDurationStrategy getDurationStrategy() {
+    public final TestDurationStrategy getDurationStrategy() {
       return myDurationStrategy;
     }
 
