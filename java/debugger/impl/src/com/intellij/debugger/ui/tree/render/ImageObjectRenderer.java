@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +62,7 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
   static ImageIcon getIcon(EvaluationContext evaluationContext, Value obj, String methodName) {
     try {
       Value bytes = getImageBytes(evaluationContext, obj, methodName);
-      byte[] data = readBytes(bytes);
+      byte[] data = DebuggerUtilsImpl.readBytesArray(bytes);
       if (data != null) {
         return new ImageIcon(data);
       }
@@ -83,24 +84,6 @@ class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValue
       if (!methods.isEmpty()) {
         return process.invokeMethod(copyContext, helperClass, methods.get(0), Collections.singletonList(obj));
       }
-    }
-    return null;
-  }
-
-  private static byte[] readBytes(Value bytes) {
-    if (bytes instanceof ArrayReference) {
-      List<Value> values = ((ArrayReference)bytes).getValues();
-      byte[] res = new byte[values.size()];
-      int idx = 0;
-      for (Value value : values) {
-        if (value instanceof ByteValue) {
-          res[idx++] = ((ByteValue)value).value();
-        }
-        else {
-          return null;
-        }
-      }
-      return res;
     }
     return null;
   }
