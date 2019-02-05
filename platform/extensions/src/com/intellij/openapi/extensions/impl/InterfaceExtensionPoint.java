@@ -32,7 +32,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
 
   @Override
   public synchronized void reset() {
-    for (Object extensionAdapter : myExtensionAdapters) {
+    for (Object extensionAdapter : myAdapters) {
       myOwner.getPicoContainer().unregisterComponent(((ComponentAdapter)extensionAdapter).getComponentKey());
     }
     super.reset();

@@ -41,12 +41,18 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   protected final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
 
-  @NotNull protected Set<ExtensionComponentAdapter> myExtensionAdapters = Collections.emptySet(); // guarded by this
+  // guarded by this
+  @NotNull
+  protected Set<ExtensionComponentAdapter> myAdapters = Collections.emptySet();
+
+  @NotNull
+  // guarded by this
+  private List<ExtensionComponentAdapter> myLoadedAdapters = Collections.emptyList();
+
   @SuppressWarnings("unchecked")
   @NotNull
-  private ExtensionPointListener<T>[] myEPListeners = ExtensionPointListener.EMPTY_ARRAY; // guarded by this
-  @NotNull
-  private List<ExtensionComponentAdapter> myLoadedAdapters = Collections.emptyList(); // guarded by this
+  // guarded by this
+  private ExtensionPointListener<T>[] myListeners = ExtensionPointListener.EMPTY_ARRAY;
 
   @Nullable
   protected Class<T> myExtensionClass;
@@ -143,7 +149,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void notifyListenersOnAdd(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor) {
-    for (ExtensionPointListener<T> listener : myEPListeners) {
+    for (ExtensionPointListener<T> listener : myListeners) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);
       }
@@ -200,7 +206,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       return !cache.isEmpty();
     }
     synchronized (this) {
-      return myExtensionAdapters.size() + myLoadedAdapters.size() > 0;
+      return myAdapters.size() + myLoadedAdapters.size() > 0;
     }
   }
 
@@ -210,7 +216,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (processingAdaptersNow) {
       throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
     }
-    int totalSize = myExtensionAdapters.size() + myLoadedAdapters.size();
+    int totalSize = myAdapters.size() + myLoadedAdapters.size();
     Class<T> extensionClass = getExtensionClass();
     @SuppressWarnings("unchecked")
     T[] result = (T[])Array.newInstance(extensionClass, totalSize);
@@ -221,11 +227,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     processingAdaptersNow = true;
     try {
       ExtensionComponentAdapter[] adapters = new ExtensionComponentAdapter[totalSize];
-      myExtensionAdapters.toArray(adapters);
-      ArrayUtil.copy(myLoadedAdapters, adapters, myExtensionAdapters.size());
+      myAdapters.toArray(adapters);
+      ArrayUtil.copy(myLoadedAdapters, adapters, myAdapters.size());
       LoadingOrder.sort(adapters);
-      myExtensionAdapters = new LinkedHashSet<>(adapters.length);
-      ContainerUtil.addAll(myExtensionAdapters, adapters);
+      myAdapters = new LinkedHashSet<>(adapters.length);
+      ContainerUtil.addAll(myAdapters, adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
       OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.length);
@@ -263,9 +269,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         catch (Exception e) {
           LOG.error(e);
         }
-        myExtensionAdapters.remove(adapter);
+        myAdapters.remove(adapter);
       }
-      myExtensionAdapters = Collections.emptySet();
+      myAdapters = Collections.emptySet();
 
       if (extensionIndex != result.length) {
         result = Arrays.copyOf(result, extensionIndex);
@@ -279,7 +285,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   // used in upsource
   public synchronized void removeUnloadableExtensions() {
-    ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
+    ExtensionComponentAdapter[] adapters = myAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
     for (ExtensionComponentAdapter adapter : adapters) {
       try {
         adapter.getComponentImplementation();
@@ -322,7 +328,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public synchronized void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
-    for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myExtensionAdapters, myLoadedAdapters)) {
+    for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myAdapters, myLoadedAdapters)) {
       if (adapter.getAssignableToClassName().equals(extensionClass.getCanonicalName())) {
         unregisterExtensionAdapter(adapter);
         return;
@@ -352,7 +358,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void notifyListenersOnRemove(@NotNull T extensionObject, PluginDescriptor pluginDescriptor) {
-    for (ExtensionPointListener<T> listener : myEPListeners) {
+    for (ExtensionPointListener<T> listener : myListeners) {
       try {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
@@ -384,15 +390,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   // true if added
   private boolean addListener(@NotNull ExtensionPointListener<T> listener) {
-    if (ArrayUtil.indexOf(myEPListeners, listener) != -1) return false;
+    if (ArrayUtil.indexOf(myListeners, listener) != -1) return false;
     //noinspection unchecked
-    myEPListeners = ArrayUtil.append(myEPListeners, listener, n->n==0?ExtensionPointListener.EMPTY_ARRAY:new ExtensionPointListener[n]);
+    myListeners = ArrayUtil.append(myListeners, listener, n-> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n]);
     return true;
   }
   private boolean removeListener(@NotNull ExtensionPointListener<T> listener) {
-    if (ArrayUtil.indexOf(myEPListeners, listener) == -1) return false;
+    if (ArrayUtil.indexOf(myListeners, listener) == -1) return false;
     //noinspection unchecked
-    myEPListeners = ArrayUtil.remove(myEPListeners, listener, n->n==0?ExtensionPointListener.EMPTY_ARRAY:new ExtensionPointListener[n]);
+    myListeners = ArrayUtil.remove(myListeners, listener, n-> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n]);
     return true;
   }
 
@@ -435,7 +441,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public synchronized void reset() {
-    myExtensionAdapters = Collections.emptySet();
+    myAdapters = Collections.emptySet();
     for (T extension : getExtensionList()) {
       unregisterExtension(extension);
     }
@@ -468,10 +474,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
-    if (myExtensionAdapters == Collections.<ExtensionComponentAdapter>emptySet()) {
-      myExtensionAdapters = new LinkedHashSet<>();
+    if (myAdapters == Collections.<ExtensionComponentAdapter>emptySet()) {
+      myAdapters = new LinkedHashSet<>();
     }
-    myExtensionAdapters.add(adapter);
+    myAdapters.add(adapter);
     clearCache();
   }
 
@@ -482,7 +488,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
-      if (!myExtensionAdapters.isEmpty() && myExtensionAdapters.remove(adapter)) {
+      if (!myAdapters.isEmpty() && myAdapters.remove(adapter)) {
         return;
       }
 
@@ -532,7 +538,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @TestOnly
   final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
-    for (final ExtensionPointListener<T> listener : myEPListeners) {
+    for (final ExtensionPointListener<T> listener : myListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
       }
