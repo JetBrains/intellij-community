@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -319,7 +320,8 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath) || !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath) ||
+            !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
           String relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/');
           if (relativePath != null) {
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
@@ -609,7 +611,7 @@ public class MavenUtil {
 
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
-    if(mavenHome == null) return null;
+    if (mavenHome == null) return null;
     String[] libs = new File(mavenHome, "lib").list();
 
 
@@ -797,7 +799,7 @@ public class MavenUtil {
 
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      parser.parse(in, new DefaultHandler(){
+      parser.parse(in, new DefaultHandler() {
 
         boolean textContentOccur = false;
         int spacesCrc;
@@ -1026,5 +1028,9 @@ public class MavenUtil {
   public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
     if (root == null) return Stream.empty();
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
+  }
+
+  public static boolean isExternalBuildSystem() {
+    return Registry.is("MAVEN.experimental.externalBuild");
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +22,8 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.externalSystemIntegration.util.MavenExternalSystemTaskRunner;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -32,7 +35,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public final class MavenRunConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType extends AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
 
@@ -44,6 +47,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
    * reflection
    */
   MavenRunConfigurationType() {
+    super(MavenConstants.SYSTEM_ID);
     myFactory = new ConfigurationFactory(this) {
       @NotNull
       @Override
@@ -180,6 +184,11 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                       @Nullable MavenGeneralSettings settings,
                                       @Nullable  MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback) {
+
+    if (MavenUtil.isExternalBuildSystem()){
+      new MavenExternalSystemTaskRunner(project).runMavenTask(params, settings, runnerSettings);
+      return;
+    }
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
                                                                                          params,

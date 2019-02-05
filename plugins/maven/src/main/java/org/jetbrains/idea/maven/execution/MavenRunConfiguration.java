@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -41,11 +42,11 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
 
-public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile {
+public class MavenRunConfiguration extends ExternalSystemRunConfiguration implements ModuleRunProfile {
   private MavenSettings mySettings;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
-    super(project, factory, name);
+    super(MavenConstants.SYSTEM_ID, project, factory, name);
     mySettings = new MavenSettings(project);
   }
 
@@ -58,15 +59,19 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<>();
+  public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    final SettingsEditor<ExternalSystemRunConfiguration> editor = super.getConfigurationEditor();
 
-    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
+    if (editor instanceof SettingsEditorGroup) {
+      final SettingsEditorGroup group = (SettingsEditorGroup)editor;
+      //noinspection unchecked
+      group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
 
-    group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
-    group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-    return group;
+      group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
+      group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
+      group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
+    }
+    return editor;
   }
 
   public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
@@ -248,7 +253,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
       ParametersList programParametersList = myJavaParameters.getProgramParametersList();
       boolean execGoal = programParametersList.getList().stream().anyMatch(parameter ->
-        parameter.equals("exec:exec") || EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches()
+                                                                             parameter.equals("exec:exec") ||
+                                                                             EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches()
       );
       if (!execGoal) {
         return null;
