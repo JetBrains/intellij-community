@@ -52,7 +52,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.vcs.svn",
     "intellij.vcs.hg",
     "intellij.vcs.github",
-    "intellij.vcs.cvs",
     "intellij.groovy",
     "intellij.junit",
     "intellij.testng",
