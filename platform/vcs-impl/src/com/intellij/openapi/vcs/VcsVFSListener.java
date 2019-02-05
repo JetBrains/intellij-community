@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
@@ -96,7 +97,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private static boolean isExternalEvent(@NotNull VirtualFileEvent event) {
-    return event.isFromRefresh();
+    return event.isFromRefresh() && Registry.is("vcs.process.externally.added.files");
   }
 
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
