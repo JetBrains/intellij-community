@@ -88,7 +88,8 @@ static def jdkArch() {
 
 def jdkUrl() {
   def arch = jdkArch()
-  def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build')
+  // base url of TeamCity build to download JDK from
+  def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
   if (teamCityBuild != null) {
     def platform = OperatingSystem.current().with { os ->
       os.isWindows() ? 'win' : os.isMacOsX() ? 'mac' : 'linux'
