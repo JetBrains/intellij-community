@@ -33,7 +33,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 class MissingRecentApiInspection : AbstractBaseJavaLocalInspectionTool() {
 
   companion object {
-    val INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.simpleName!!)
+    val INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
