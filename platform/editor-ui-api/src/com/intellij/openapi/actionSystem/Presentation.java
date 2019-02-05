@@ -148,14 +148,8 @@ public final class Presentation implements Cloneable {
             if (i >= text.length()) break;
             ch = text.charAt(i);
             if (ch != '_' && ch != '&') {
-              if (UISettings.getInstance().getDisableMnemonicsInControls()) {
-                myMnemonic = 0;
-                myDisplayedMnemonicIndex = -1;
-              }
-              else {
-                myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-                myDisplayedMnemonicIndex = i - 1 - backShift;
-              }
+              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
+              myDisplayedMnemonicIndex = i - 1 - backShift;
             }
             else {
               backShift++;
@@ -171,6 +165,11 @@ public final class Presentation implements Cloneable {
     }
     else {
       myText = null;
+    }
+
+    if (UISettings.getInstance().getDisableMnemonicsInControls()) {
+      myMnemonic = 0;
+      myDisplayedMnemonicIndex = -1;
     }
 
     fireObjectPropertyChange(PROP_TEXT, oldText, myText);
