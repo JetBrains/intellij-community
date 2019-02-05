@@ -35,17 +35,6 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     myState = state;
   }
 
-  /**
-   * Method for migrating external log tabs properties to the other storage.
-   * Finds a state by id and removes it.
-   * To be removed after 2018.3 release.
-   */
-  @Deprecated
-  @Nullable
-  public VcsLogUiPropertiesImpl.State removeTabState(@NotNull String id) {
-    return myState.TAB_STATES.remove(id);
-  }
-
   @Override
   @NotNull
   public MainVcsLogUiProperties createProperties(@NotNull final String id) {
