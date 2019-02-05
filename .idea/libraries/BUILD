@@ -490,8 +490,8 @@ java_library(
 java_library(
     name = "proxy-vole",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/markusbernhardt/proxy-vole/1.0.5:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/proxy-vole/1.0.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/proxy-vole/1.0.6:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1342,10 +1342,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "delight-nashorn-sandbox",
+    name = "delight-rhino-sandbox",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.16:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-nashorn-sandbox/0.1.16:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.9:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javadelight/delight-rhino-sandbox/0.0.9:jar"],
 )
 
 # managed by go/iml_to_build
