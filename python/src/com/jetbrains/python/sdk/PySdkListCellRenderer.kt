@@ -28,7 +28,7 @@ import javax.swing.JList
  * @author vlan
  */
 open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifiers: Map<Sdk, SdkModificator>?,
-                                                           private val nullSdkName: String = "<No interpreter>",
+                                                           private val nullSdkName: String = noInterpreterMarker,
                                                            private val nullSdkValue: Sdk? = null) : ColoredListCellRenderer<Any>() {
 
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
