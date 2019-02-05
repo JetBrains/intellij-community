@@ -125,8 +125,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
       point.registerExtension(extension);
 
       infos = doHighlighting(HighlightSeverity.WARNING);
-      HighlightInfo info = assertOneElement(infos);
-      assertEquals("Class 'WithMain' is never used", info.getDescription());
+      assertEmpty(infos);
     }
     finally {
       point.unregisterExtension(extension);
