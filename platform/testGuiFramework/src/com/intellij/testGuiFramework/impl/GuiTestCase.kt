@@ -88,10 +88,6 @@ open class GuiTestCase {
   @JvmField
   val testMethod = TestName()
 
-  @Rule
-  @JvmField
-  val logActionsDuringTest = LogActionsDuringTest()
-
   val projectFolder: String by lazy {
     val dir = File(projectsFolder, testMethod.methodName)
     if (!dir.mkdirs()) {

@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,15 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   }
 
   public void record(@NotNull IntentionAction action, @NotNull Language language) {
+    record(null, action, language);
+  }
+
+  public void record(@Nullable Project project, @NotNull IntentionAction action, @NotNull Language language) {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
 
     final FeatureUsageData data = new FeatureUsageData().addOS().
+      addProject(project).
       addPluginInfo(info).
       addLanguage(language);
 

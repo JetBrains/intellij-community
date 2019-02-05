@@ -1,26 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.JBList
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.speedSearch.NameFilteringListModel
+import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -36,10 +34,16 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.util.*
 import java.awt.Component
+import java.awt.Cursor
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.*
+import javax.swing.event.DocumentEvent
 
 class GithubPullRequestsMetadataServiceImpl internal constructor(private val project: Project,
                                                                  private val progressManager: ProgressManager,
@@ -101,8 +105,7 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
   override fun adjustLabels(pullRequest: Long, parentComponent: JComponent) {
     showChooser(pullRequest, "Labels", parentComponent,
-                { SelectionListCellRenderer.Labels() }, { it.name },
-                { _, _ -> repoIssuesLabels }, { it.labels.orEmpty() })
+                { SelectionListCellRenderer.Labels() }, { _, _ -> repoIssuesLabels }, { it.labels.orEmpty() })
       .handleOnEdt(getAdjustmentHandler(pullRequest, "label") { delta, indicator ->
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.Issues.Labels
@@ -120,89 +123,152 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
     return showChooser(pullRequest, popupTitle, parentComponent, { list ->
       val avatarIconsProvider = avatarIconsProviderFactory.create(JBUI.uiIntValue("GitHub.Avatars.Size", 20), list)
       SelectionListCellRenderer.Users(avatarIconsProvider)
-    }, { it.login }, availableListProvider, currentListExtractor)
+    }, availableListProvider, currentListExtractor)
   }
 
   private fun <T> showChooser(pullRequest: Long,
                               popupTitle: String,
                               parentComponent: JComponent,
-                              cellRendererFactory: (JList<SelectableWrapper<T>>) -> ListCellRenderer<SelectableWrapper<T>>,
-                              speedSearchNamer: (T) -> String,
+                              cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
                               availableListProvider: (ProgressIndicator, GithubPullRequestDetailed) -> List<T>,
                               currentListExtractor: (GithubPullRequestDetailed) -> List<T>)
     : CompletableFuture<CollectionDelta<T>> {
 
     val listModel = CollectionListModel<SelectableWrapper<T>>()
-    val list = JBList<SelectableWrapper<T>>(listModel)
+    val list = JBList<SelectableWrapper<T>>(listModel).apply {
+      visibleRowCount = 7
+      isFocusable = false
+      selectionMode = ListSelectionModel.SINGLE_SELECTION
+    }
+    val listCellRenderer = cellRendererFactory(list)
+    list.cellRenderer = listCellRenderer
 
-    val builder = PopupChooserBuilder<SelectableWrapper<T>>(list)
-      .setTitle(popupTitle)
-      .setResizable(true)
-      .setMovable(true)
-      .setNamerForFiltering { speedSearchNamer(it.value) }
-      .setAutoSelectIfEmpty(false)
-      .setCloseOnEnter(false)
-      .setRenderer(cellRendererFactory(list))
-      .setItemsChosenCallback {
-        for (item in it) {
-          item.selected = !item.selected
+    val speedSearch = SpeedSearch()
+    val filteringListModel = NameFilteringListModel<SelectableWrapper<T>>(list,
+                                                                          { listCellRenderer.getText(it.value) },
+                                                                          speedSearch::shouldBeShowing,
+                                                                          speedSearch)
+
+    speedSearch.addChangeListener {
+      val prevSelection = list.selectedValue // save to restore the selection on filter drop
+      filteringListModel.refilter()
+      if (filteringListModel.size > 0) {
+        val fullMatchIndex = if (speedSearch.isHoldingFilter) filteringListModel.closestMatchIndex
+        else filteringListModel.getElementIndex(prevSelection)
+        if (fullMatchIndex != -1) {
+          list.selectedIndex = fullMatchIndex
         }
-        list.repaint()
+
+        if (filteringListModel.size <= list.selectedIndex || !filteringListModel.contains(list.selectedValue)) {
+          list.selectedIndex = 0
+        }
       }
-    val popup = builder.createPopup()
+    }
 
-    val updater = builder.backgroundUpdater
-    updater.paintBusy(true)
-    list.emptyText.text = "Loading..."
+    val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
+      viewport.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+      isFocusable = false
+    }
 
-    var originalSelection: Set<T> = setOf()
-
-    val progressIndicator = EmptyProgressIndicator()
-    Disposer.register(popup, Disposable { progressIndicator.cancel() })
-
-    val loadingFuture = GithubAsyncUtil
-      .futureOfMutable { dataLoader.getDataProvider(pullRequest).detailsRequest }
-      .thenComposeAsync(Function { details: GithubPullRequestDetailedWithHtml ->
-        originalSelection = currentListExtractor(details).toHashSet()
-        progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) {
-          availableListProvider(it, details)
+    val searchField = SearchTextField(false).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+      UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
+      textEditor.border = JBUI.Borders.empty()
+      //focus dark magic, otherwise focus shifts to searchfield panel
+      isFocusable = false
+      addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          speedSearch.updatePattern(text)
         }
       })
-      .thenAcceptAsync(Consumer { possibilities ->
-        listModel.replaceAll(possibilities
-                               .map { SelectableWrapper(it, originalSelection.contains(it)) }
-                               .sortedBy { !it.selected })
+    }
 
-        updater.paintBusy(false)
-        list.emptyText.text = StatusText.DEFAULT_EMPTY_TEXT
+    val panel = simplePanel(scrollPane).addToTop(searchField)
+    ScrollingUtil.installActions(list, panel)
+    ListUtil.installAutoSelectOnMouseMove(list)
 
-        popup.pack(true, true)
-      }, EDT_EXECUTOR)
-      .exceptionally {
-        updater.paintBusy(false)
-        list.emptyText.clear()
-        list.emptyText.appendText("Can't load the list", SimpleTextAttributes.ERROR_ATTRIBUTES)
-        list.emptyText.appendSecondaryText(it.message.orEmpty(), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-        throw it
+    fun toggleSelection() {
+      for (item in list.selectedValuesList) {
+        item.selected = !item.selected
       }
+      list.repaint()
+    }
 
-    Disposer.register(popup, Disposable {
-      loadingFuture.cancel(true)
+    list.addMouseListener(object : MouseAdapter() {
+      override fun mouseReleased(e: MouseEvent) {
+        if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed) toggleSelection()
+      }
     })
 
     val result = CompletableFuture<CollectionDelta<T>>()
-    popup.addListener(object : JBPopupListener {
-      override fun onClosed(event: LightweightWindowEvent) {
-        if (!loadingFuture.isDone || loadingFuture.isCancelled || loadingFuture.isCompletedExceptionally) {
-          result.cancel(true)
-          return
+    JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchField)
+      .setRequestFocus(true)
+      .setCancelOnClickOutside(true)
+      .setTitle(popupTitle)
+      .setResizable(true)
+      .setMovable(true)
+      .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
+      .addListener(object : JBPopupListener {
+        private lateinit var loadingFuture: CompletableFuture<Void>
+        private lateinit var originalSelection: Set<T>
+
+        override fun beforeShown(event: LightweightWindowEvent) {
+          val popup = event.asPopup()
+
+          list.setPaintBusy(true)
+          list.emptyText.text = "Loading..."
+
+
+          val progressIndicator = EmptyProgressIndicator()
+
+          loadingFuture = GithubAsyncUtil
+            .futureOfMutable { dataLoader.getDataProvider(pullRequest).detailsRequest }
+            .thenComposeAsync(Function { details: GithubPullRequestDetailedWithHtml ->
+              originalSelection = currentListExtractor(details).toHashSet()
+              progressManager.submitBackgroundTask(project, "Load List Of Possibilities", true, progressIndicator) {
+                availableListProvider(it, details)
+              }
+            })
+            .thenAcceptAsync(Consumer { possibilities ->
+              listModel.replaceAll(possibilities
+                                     .map { SelectableWrapper(it, originalSelection.contains(it)) }
+                                     .sortedBy { !it.selected })
+
+              list.setPaintBusy(false)
+              list.emptyText.text = UIBundle.message("message.noMatchesFound")
+
+              popup.pack(true, true)
+
+              if (list.selectedIndex == -1) {
+                list.selectedIndex = 0
+              }
+            }, EDT_EXECUTOR)
+            .exceptionally {
+              list.setPaintBusy(false)
+              list.emptyText.clear()
+              list.emptyText.appendText("Can't load the list", SimpleTextAttributes.ERROR_ATTRIBUTES)
+              list.emptyText.appendSecondaryText(it.message.orEmpty(), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+              throw it
+            }
+
+          Disposer.register(popup, Disposable {
+            progressIndicator.cancel()
+            loadingFuture.cancel(true)
+          })
         }
 
-        val selected = listModel.items.filter { it.selected }.map { it.value }
-        result.complete(CollectionDelta(originalSelection, selected))
-      }
-    })
-    popup.showUnderneathOf(parentComponent)
+        override fun onClosed(event: LightweightWindowEvent) {
+          if (!loadingFuture.isDone || loadingFuture.isCancelled || loadingFuture.isCompletedExceptionally) {
+            result.cancel(true)
+            return
+          }
+
+          val selected = listModel.items.filter { it.selected }.map { it.value }
+          result.complete(CollectionDelta(originalSelection, selected))
+        }
+      })
+      .createPopup()
+      .showUnderneathOf(parentComponent)
     return result
   }
 
@@ -240,19 +306,19 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
   private data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 
-  private sealed class SelectionListCellRenderer<T>
-    : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {
+  private sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {
 
     private val mainLabel = JLabel()
     private val checkIconLabel = JLabel()
 
     init {
       checkIconLabel.iconTextGap = JBUI.scale(UIUtil.DEFAULT_VGAP)
+      checkIconLabel.border = JBUI.Borders.empty(0, 4)
 
       addToLeft(checkIconLabel)
       addToCenter(mainLabel)
 
-      border = JBUI.Borders.empty(2)
+      border = JBUI.Borders.empty(4, 0)
     }
 
     override fun getListCellRendererComponent(list: JList<out SelectableWrapper<T>>,
@@ -260,9 +326,8 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      font = list.font
-      foreground = UIUtil.getListForeground(isSelected, list.hasFocus())
-      background = UIUtil.getListBackground(isSelected, list.hasFocus())
+      foreground = UIUtil.getListForeground(isSelected, true)
+      background = UIUtil.getListBackground(isSelected, true)
 
       mainLabel.foreground = foreground
       mainLabel.font = font
@@ -270,14 +335,8 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
       mainLabel.text = getText(value.value)
       mainLabel.icon = getIcon(value.value)
 
-      if (value.selected) {
-        checkIconLabel.icon = AllIcons.Actions.Checked
-        checkIconLabel.border = JBUI.Borders.empty(0, 4)
-      }
-      else {
-        checkIconLabel.icon = null
-        checkIconLabel.border = JBUI.Borders.empty(0, 10)
-      }
+      val icon = LafIconLookup.getIcon("checkmark", isSelected, false)
+      checkIconLabel.icon = if (value.selected) icon else EmptyIcon.create(icon)
 
       return this
     }
