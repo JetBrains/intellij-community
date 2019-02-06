@@ -3,21 +3,28 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author pegov
  */
 public class TabsUtil {
-  public static final JBValue TAB_VERTICAL_PADDING = new JBValue.Float(2);
+  public static final int TAB_VERTICAL_PADDING = JBUI.scale(2);
 
-  private TabsUtil() {}
+  private TabsUtil() {
+  }
 
-  public static int getTabsHeight(int baseHeight) {
-    return baseHeight + TAB_VERTICAL_PADDING.get() * 2;
+  public static int getTabsHeight() {
+    return getTabsHeight(TAB_VERTICAL_PADDING);
+  }
+
+  public static int getTabsHeight(int verticalPadding) {
+    JLabel xxx = new JLabel("XXX");
+    xxx.setFont(getLabelFont());
+    return xxx.getPreferredSize().height + (verticalPadding * 2);
   }
 
   public static Font getLabelFont() {

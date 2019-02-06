@@ -489,7 +489,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void paintBackground(Graphics g) {
-    int offset = myInfo != myTabs.getSelectedInfo() ? myTabs.layoutDelimiterThickness() : 0;
+    int offset = myInfo != myTabs.getSelectedInfo() ? myTabs.getLayoutDelimiterThickness() : 0;
 
     Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
 

@@ -110,8 +110,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
 
-            int height = TabsUtil.getTabsHeight(size.height - layoutDelimiterThickness());
-            return new Dimension(size.width, height);
+            return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()) - getLayoutDelimiterThickness());
           }
         };
       }
@@ -148,7 +147,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       .setPopupGroup(
         () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false)
       .addTabMouseListener(new TabMouseListener()).getPresentation()
-      .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(2, 8)))
+      .setTabDraggingEnabled(true)
       .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener() {

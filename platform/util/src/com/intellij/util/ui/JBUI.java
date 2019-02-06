@@ -32,8 +32,7 @@ import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1703,12 +1702,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", 0);
+        return getInt("ToolWindow.tab.verticalPadding", scale(8));
       }
 
       @NotNull
       public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
+        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(6, 0));
       }
 
       @NotNull

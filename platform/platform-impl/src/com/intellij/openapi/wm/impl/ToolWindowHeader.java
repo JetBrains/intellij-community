@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -15,6 +14,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -124,8 +124,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setReservePlaceAutoPopupIcon(false);
 
     JComponent component = myToolbar.getComponent();
-    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
-    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
+    component.setBorder(JBUI.Borders.empty());
     component.setOpaque(false);
     add(component, BorderLayout.EAST);
 
@@ -163,7 +162,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
 
     setOpaque(true);
-    setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
+    setBorder(JBUI.Borders.empty());
 
     new DoubleClickListener() {
       @Override
@@ -316,6 +315,18 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract boolean isActive();
 
   protected abstract void hideToolWindow();
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension size = super.getMinimumSize();
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+  }
 
   private class ShowOptionsAction extends DumbAwareAction {
     ShowOptionsAction() {
