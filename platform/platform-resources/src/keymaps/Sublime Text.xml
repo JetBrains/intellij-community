@@ -78,8 +78,10 @@
     <keyboard-shortcut first-keystroke="control k" second-keystroke="control k"/>
   </action>
   <action id="EditorDeleteToLineStart">
+    <keyboard-shortcut first-keystroke="control shift BACK_SPACE"/>
     <keyboard-shortcut first-keystroke="control k" second-keystroke="control BACK_SPACE"/>
   </action>
+  <action id="JumpToLastChange"/>
   <action id="Vcs.UpdateProject"/>
   <action id="ExpandAllRegions">
     <keyboard-shortcut first-keystroke="control k" second-keystroke="control j"/>

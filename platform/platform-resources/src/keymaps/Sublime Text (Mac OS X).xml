@@ -72,6 +72,7 @@
     <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta k"/>
   </action>
   <action id="EditorDeleteToLineStart">
+    <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta BACK_SPACE"/>
   </action>
   <action id="Vcs.UpdateProject"/>
