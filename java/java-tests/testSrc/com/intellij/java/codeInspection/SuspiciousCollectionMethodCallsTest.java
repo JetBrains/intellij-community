@@ -46,6 +46,11 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
   public void testSetList() { doTest(); }
   public void testUseDfa() { doTest(); }
   public void testWildcard() { doTest(); }
+  public void testGuava() {
+    myFixture.addClass("package com.google.common.cache;" +
+                "public interface Cache<K, V> {V getIfPresent(Object k);void invalidate(Object k);}");
+    doTest();
+  }
   public void testPolyConditionalExpressionPassedToMapGetCall() { doTest(); }
   public void testNewExpressionPassedToMapContains() { doTest(); }
   public void testIgnoreConvertible() {
