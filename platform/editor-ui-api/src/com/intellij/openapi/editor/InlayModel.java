@@ -13,7 +13,8 @@ import java.util.List;
 
 /**
  * Provides an ability to introduce custom visual elements into editor's representation.
- * Such elements are not reflected in document contents.
+ * Such elements are not reflected in document contents. Elements are 'anchored' to a certain document offset at creation,
+ * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
  * <p>
  * WARNING! This is an experimental API, it can change at any time.
  * @see Editor#getInlayModel()
@@ -29,21 +30,24 @@ public interface InlayModel {
   }
 
   /**
-   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
-   * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns {@code null}
-   * if requested element cannot be created, e.g. if corresponding functionality is not supported by current editor instance.
-   * 
+   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
+   *
    * @param relatesToPrecedingText whether element is associated with preceding or following text 
    *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
 
   /**
    * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
-   * will be displayed between lines of text. With respect to document changes, created element behaves in a similar way to a zero-range
-   * {@link RangeMarker}. This method returns {@code null} if requested element cannot be created, e.g. if corresponding functionality
-   * is not supported by current editor instance.
+   * will be displayed between lines of text.
+   *
+   * @param relatesToPrecedingText whether element is associated with preceding or following text
+   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
@@ -51,6 +55,18 @@ public interface InlayModel {
                                                                 boolean showAbove,
                                                                 int priority,
                                                                 @NotNull T renderer);
+
+
+  /**
+   * Introduces a visual element, which will be displayed after the end of corresponding logical line.
+   *
+   * @param relatesToPrecedingText whether element is associated with preceding or following text
+   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable
+  <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
@@ -135,6 +151,34 @@ public interface InlayModel {
    */
   @Nullable
   Inlay getElementAt(@NotNull Point point);
+
+  /**
+   * Returns a list of after-line-end elements for a given offset range (both limits are inclusive).
+   * Returned list is sorted by offset. Both visible and invisible (due to folding) elements are returned.
+   *
+   * @see #addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
+   */
+  @NotNull
+  List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset);
+
+  /**
+   * Same as {@link #getAfterLineEndElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
+   */
+  @NotNull
+  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+    //noinspection unchecked
+    return (List)ContainerUtil.filter(getAfterLineEndElementsInRange(startOffset, endOffset),
+                                      inlay -> type.isInstance(inlay.getRenderer()));
+  }
+
+  /**
+   * Returns after-line-end elements for a given logical line, in creation order (this is the order they are displayed in).
+   * Elements are returned regardless of whether they are currently visible.
+   *
+   * @see #addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
+   */
+  @NotNull
+  List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine);
 
   /**
    * When text is inserted at inline element's offset, resulting element's position is determined by its
