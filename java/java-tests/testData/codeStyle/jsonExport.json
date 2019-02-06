@@ -123,7 +123,7 @@
       "line_comment_add_space": false,
       "line_comment_at_first_column": true,
       "method_annotation_wrap": "split_into_lines",
-      "method_brace_style": "end_of_line",
+      "method_brace_style": "next_line_if_wrapped",
       "method_call_chain_wrap": "off",
       "method_parameters_new_line_after_left_paren": false,
       "method_parameters_right_paren_on_new_line": false,
