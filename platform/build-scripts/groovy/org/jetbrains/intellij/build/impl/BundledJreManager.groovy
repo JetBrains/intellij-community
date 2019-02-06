@@ -28,7 +28,7 @@ class BundledJreManager {
     return extractJre("linux")
   }
 
-  private static String doBundleSecondJre() {
+  private static boolean doBundleSecondJre() {
     return System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()
   }
 
