@@ -320,7 +320,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8_CHARSET);
     }
     catch (IOException e) {
-      LOG.error(e);
       throw new RuntimeException(e);
     }
     checkResultByText(message, StringUtil.convertLineSeparators(fileText), ignoreTrailingSpaces, getTestDataPath() + "/" + expectedFilePath);
