@@ -1,6 +1,7 @@
 package com.intellij.bash;
 
 import com.intellij.bash.psi.*;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -36,7 +37,7 @@ public class BashAnnotator implements Annotator {
   }
 
   private void annotateHeredoc(@NotNull BashHeredoc o, @NotNull AnnotationHolder holder) {
-    mark(o, holder, HERE_DOC);
+    holder.createAnnotation(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, o.getTextRange(), null).setTextAttributes(HERE_DOC);
     mark(o.getHeredocMarkerStart(), holder, HERE_DOC_START);
     mark(o.getHeredocMarkerEnd(), holder, HERE_DOC_END);
 
