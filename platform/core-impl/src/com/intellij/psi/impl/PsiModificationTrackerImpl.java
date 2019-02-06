@@ -49,7 +49,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private static final RegistryValue ourEnableJavaStructureTracker = Registry.get("psi.modification.tracker.java-structure");
   private static final RegistryValue ourEnableLanguageTracker = Registry.get("psi.modification.tracker.per-language");
 
-  private final boolean myTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  private final boolean myTestMode = false; //ApplicationManager.getApplication().isUnitTestMode();
 
   private final SimpleModificationTracker myModificationCount = new SimpleModificationTracker();
   private final SimpleModificationTracker myOutOfCodeBlockModificationTracker = wrapped(ourEnableCodeBlockTracker, myModificationCount, myTestMode);
