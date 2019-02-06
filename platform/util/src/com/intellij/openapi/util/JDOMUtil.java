@@ -41,13 +41,22 @@ public class JDOMUtil {
     }
   };
 
+  private static final String XML_INPUT_FACTORY_KEY = "javax.xml.stream.XMLInputFactory";
+  private static final String XML_INPUT_FACTORY_IMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";
   private static final NotNullLazyValue<XMLInputFactory> XML_INPUT_FACTORY = new NotNullLazyValue<XMLInputFactory>() {
     @NotNull
     @Override
     protected XMLInputFactory compute() {
       // requests default JRE factory implementation instead of an incompatible one from the classpath
-      System.setProperty("javax.xml.stream.XMLInputFactory", "com.sun.xml.internal.stream.XMLInputFactoryImpl");
-      XMLInputFactory factory = XMLInputFactory.newFactory();
+      String property = System.setProperty(XML_INPUT_FACTORY_KEY, XML_INPUT_FACTORY_IMPL);
+      XMLInputFactory factory;
+      try {
+        factory = XMLInputFactory.newFactory();
+      }
+      finally {
+        if (property != null) System.setProperty(XML_INPUT_FACTORY_KEY, property);
+        else System.clearProperty(XML_INPUT_FACTORY_KEY);
+      }
       if (!SystemInfo.isIbmJvm) {
         try {
           factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
