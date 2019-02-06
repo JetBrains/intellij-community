@@ -336,6 +336,12 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
+/* Android Studio: Do not customize background colors as everything in that table is an issue, so colors do not add
+   any additional information for the user, but may have suboptimal contrast levels in Darcula.
+   See also com.android.tools.idea.sdk.updater.RepoUpdaterUI, which inherits from this class.
+
+   Issue: https://issuetracker.google.com/issues/112324902
+
       if (!isSelected) {
         ValidationResult.Kind kind = ((MyTableModel)table.getModel()).getKind(row);
         if (kind == ValidationResult.Kind.ERROR) {
@@ -345,7 +351,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
           result.setBackground(VALIDATION_CONFLICT_COLOR);
         }
       }
-
+end of Android Studio block: Do not customize background colors, https://issuetracker.google.com/issues/112324902 */
       return result;
     }
   }
