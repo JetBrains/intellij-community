@@ -10,6 +10,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class CreateDefaultBranchFix extends BaseSwitchFix {
+  private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
   private final String myMessage;
 
   public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, String message) {
@@ -86,7 +88,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
     FileTemplate branchTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_SWITCH_DEFAULT_BRANCH);
     Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
     PsiExpression expression = switchBlock.getExpression();
-    props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION, expression == null ? "" : expression.getText());
+    props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION, PLACEHOLDER_NAME);
     PsiType expressionType = expression == null ? null : expression.getType();
     props.setProperty(FileTemplate.ATTRIBUTE_EXPRESSION_TYPE, expressionType == null ? "" : expressionType.getCanonicalText());
     PsiStatement statement;
@@ -99,6 +101,14 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
         }
       }
       statement = JavaPsiFacade.getElementFactory(project).createStatementFromText("{" + text + "}", switchBlock);
+      if (expression != null) {
+        PsiElement[] refs = PsiTreeUtil.collectElements(
+          statement, e -> e instanceof PsiReferenceExpression && e.textMatches(PLACEHOLDER_NAME));
+        for (PsiElement ref : refs) {
+          // This would add parentheses when necessary
+          ref.replace(expression);
+        }
+      }
     }
     catch (IOException | IncorrectOperationException e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
