@@ -33,10 +33,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -151,6 +148,7 @@ public class RecentLocationsAction extends AnAction {
       })
       .setResizable(true)
       .setMovable(true)
+      .setBorderColor(SystemInfoRt.isMac && UIUtil.isUnderDarcula() ? topPanel.getBackground() : null)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
       .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
       .setLocateWithinScreenBounds(false)
