@@ -81,7 +81,7 @@ public class RecentLocationsAction extends AnAction {
   private static final int MINIMUM_WIDTH = JBUI.scale(200);
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
-  private static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
+  public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                  SHORTCUT_FOREGROUND_COLOR.getRed(),
                                                                  SHORTCUT_FOREGROUND_COLOR.getGreen(),
                                                                  SHORTCUT_FOREGROUND_COLOR.getBlue());
