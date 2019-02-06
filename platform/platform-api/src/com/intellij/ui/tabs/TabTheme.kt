@@ -6,18 +6,19 @@ import java.awt.Color
 
 class TabTheme(
   val background: Color? = JBUI.CurrentTheme.EditorTabs.backgroundColor(),
-  val border: Color = JBUI.CurrentTheme.EditorTabs.borderColor(),
+  val borderColor: Color = JBUI.CurrentTheme.EditorTabs.borderColor(),
   val underline: Color = JBUI.CurrentTheme.EditorTabs.underlineColor(),
   val inactiveUnderline: Color = JBUI.CurrentTheme.EditorTabs.inactiveUnderlineColor(),
   val hoverOverlayColor: Color = JBUI.CurrentTheme.EditorTabs.hoverOverlayColor(),
   val unselectedOverlayColor: Color = JBUI.CurrentTheme.EditorTabs.unselectedOverlayColor(),
-  val thickness : Int = JBUI.scale(2)
+  val underlineThickness : Int = JBUI.scale(2),
+  val borderThickness : Int = 1
 ) {
 
   companion object {
     @JvmStatic
     val TOOLWINDOW_TAB = TabTheme(background = null)
     @JvmStatic
-    var EDITOR_TAB: TabTheme = TabTheme(thickness = JBUI.scale(3))
+    var EDITOR_TAB: TabTheme = TabTheme(underlineThickness = JBUI.scale(3))
   }
 }

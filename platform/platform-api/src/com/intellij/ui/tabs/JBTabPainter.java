@@ -35,6 +35,10 @@ public interface JBTabPainter {
   @Deprecated
   Color getBackgroundColor();
 
+  int getBorderThickness();
+
+  void paintBorders(Graphics2D g, Rectangle bounds, JBTabsPosition position, int headerFitHeight, int rows, int yOffset);
+
   void fillBackground(Graphics2D g, Rectangle rect);
 
   void paintTab(Graphics2D g, Rectangle rect, Color tabColor, Boolean hovered);

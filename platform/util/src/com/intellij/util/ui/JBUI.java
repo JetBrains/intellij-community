@@ -1585,7 +1585,7 @@ public class JBUI {
 
       @NotNull
       public static Color borderColor() {
-        return JBColor.namedColor("DefaultTabs.borderColor", UIUtil.CONTRAST_BORDER_COLOR);
+        return JBColor.namedColor("DefaultTabs.borderColor", ToolWindow.headerBorderBackground());
       }
 
       @NotNull

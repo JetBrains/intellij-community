@@ -110,7 +110,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
 
-            return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()) - getLayoutDelimiterThickness());
+            return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()) - tabPainter.getBorderThickness());
           }
         };
       }
@@ -118,7 +118,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       private IdeEventQueue.EventDispatcher createFocusDispatcher() {
         return e -> {
           if (e instanceof FocusEvent) {
-              myTabs.updateTabs();
+            SwingUtilities.invokeLater(() -> myTabs.updateTabs());
           }
           return false;
         };

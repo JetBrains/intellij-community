@@ -1591,37 +1591,16 @@ public class JBTabsImpl extends JComponent
     return myInnerInsets;
   }
 
-  /**
-   * TODO move to the tabPainter
-   */
-  public int getLayoutDelimiterThickness() {
-    return 1; //JBUI.scale(1);
-  }
-
   public void paintLayoutDelimiters(Graphics2D g, Rectangle bounds) {
-    g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
+    final TabLabel firstLabel = myInfo2Label.get(myLastLayoutPass.getTabAt(0, 0));
+    if(firstLabel == null) return;
 
-    if(getPosition() == JBTabsPosition.top) {
-      for (int eachRow = 0; eachRow <= myLastLayoutPass.getRowCount(); eachRow++) {
-        int yl = eachRow * myHeaderFitSize.height;
-        /**
-         * TODO move to the tabPainter
-         */
-        LinePainter2D.paint(g, bounds.x, yl, bounds.width, yl);
-      }
-    } else if(getPosition() == JBTabsPosition.bottom) {
-      final TabLabel firstLabel = myInfo2Label.get(myLastLayoutPass.getTabAt(0, 0));
-      int bla = firstLabel.getY() + getLayoutDelimiterThickness();
-      for (int eachRow = 0; eachRow <= myLastLayoutPass.getRowCount() - 1; eachRow++) {
-        int yl = eachRow * (myHeaderFitSize.height) + bla - getLayoutDelimiterThickness();
-        LinePainter2D.paint(g, bounds.x, yl, bounds.width, yl);
-      }
-    }
+    tabPainter.paintBorders(g, bounds, getPosition(), myHeaderFitSize.height, myLastLayoutPass.getRowCount(), firstLabel.getY());
   }
 
   public Insets getLayoutInsets() {
     if (getPosition() == JBTabsPosition.top) {
-      return new Insets(getLayoutDelimiterThickness(), 0, 0, 0);
+      return new Insets(tabPainter.getBorderThickness(), 0, 0, 0);
     }
     return JBUI.emptyInsets();
   }

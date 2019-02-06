@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.util.ui.Centerizer;
@@ -489,33 +490,35 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void paintBackground(Graphics g) {
-    int offset = myInfo != myTabs.getSelectedInfo() ? myTabs.getLayoutDelimiterThickness() : 0;
+    JBTabPainter painter = myTabs.getTabPainter();
+    boolean isSelected = myInfo == myTabs.getSelectedInfo();
 
     Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
 
-    switch (myTabs.getPosition()) {
-      case top:
-        rect.height -= offset;
-        break;
-      case bottom:
-        rect.y += offset;
-        break;
-      case left:
-        rect.width += offset;
-        break;
-      case right:
-        rect.x += offset;
-        break;
-    }
-
     Graphics2D g2d = (Graphics2D)g;
-    if (myTabs.getSelectedInfo() != myInfo) {
-
-      myTabs.getTabPainter().paintTab(g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
+    if (isSelected) {
+      painter
+        .paintSelectedTab(g2d, rect, myInfo.getTabColor(), myTabs.getPosition(), myTabs.isActiveTabs(), myTabs.isHoveredTab(this));
     }
     else {
-      myTabs.getTabPainter()
-        .paintSelectedTab(g2d, rect, myInfo.getTabColor(), myTabs.getPosition(), myTabs.isActiveTabs(), myTabs.isHoveredTab(this));
+      int offset = painter.getBorderThickness();
+
+      switch (myTabs.getPosition()) {
+        case top:
+          rect.height -= offset;
+          break;
+        case bottom:
+          rect.y += offset;
+          break;
+        case left:
+          rect.width += offset;
+          break;
+        case right:
+          rect.x += offset;
+          break;
+      }
+
+      painter.paintTab(g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
     }
   }
 

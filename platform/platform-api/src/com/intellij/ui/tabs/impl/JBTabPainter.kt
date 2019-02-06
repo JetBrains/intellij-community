@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl
 
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.TabTheme
@@ -11,7 +12,9 @@ import java.awt.Rectangle
 
 class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
 
-  override fun getBackgroundColor(): Color = theme.background ?: theme.border
+  override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
+
+  override fun getBorderThickness(): Int = theme.borderThickness
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     g.color = theme.background
@@ -51,7 +54,7 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
       g.fillRect(rect)
     }
 
-    val thickness = theme.thickness
+    val thickness = theme.underlineThickness
 
     val underline = when(position) {
       JBTabsPosition.bottom -> Rectangle(rect.x, rect.y, rect.width, thickness)
@@ -62,5 +65,20 @@ class JBDefaultTabPainter(val theme : TabTheme = TabTheme()) : JBTabPainter {
 
     g.color = if(active) theme.underline else theme.inactiveUnderline
     g.fillRect(underline)
+  }
+
+  override fun paintBorders(g: Graphics2D, bounds: Rectangle, position: JBTabsPosition, headerFitHeight: Int, rows: Int, yOffset: Int) {
+    g.color = theme.borderColor
+    when(position) {
+      JBTabsPosition.top -> paintBorder(g, bounds, headerFitHeight, rows, 0)
+      JBTabsPosition.bottom -> paintBorder(g, bounds, headerFitHeight, rows - 1, yOffset)
+    }
+  }
+
+  private fun paintBorder(g: Graphics2D, bounds: Rectangle, headerFitHeight: Int, rows: Int, yOffset: Int) {
+    for (eachRow in 0..rows) {
+      val yl = (eachRow * headerFitHeight) + yOffset
+      LinePainter2D.paint(g, bounds.x.toDouble(), yl.toDouble(), bounds.width.toDouble(), yl.toDouble())
+    }
   }
 }
