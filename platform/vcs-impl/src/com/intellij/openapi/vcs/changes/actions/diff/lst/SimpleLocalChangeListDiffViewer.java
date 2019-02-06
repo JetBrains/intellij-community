@@ -345,7 +345,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     protected String getText(@NotNull List<MySimpleDiffChange> selectedChanges) {
       if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
-        return String.format("Move to '%s' Changelist", shortChangeListName);
+        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName));
       }
       else {
         return ActionsBundle.message("action.ChangesView.Move.text");

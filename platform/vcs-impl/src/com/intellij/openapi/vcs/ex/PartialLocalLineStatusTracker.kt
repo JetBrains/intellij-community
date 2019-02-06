@@ -608,7 +608,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
       : RangeMarkerAction(editor, range, null) {
       init {
-        templatePresentation.text = StringUtil.trimMiddle(changelist.name, 60)
+        templatePresentation.setText(StringUtil.trimMiddle(changelist.name, 60), false)
       }
 
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
