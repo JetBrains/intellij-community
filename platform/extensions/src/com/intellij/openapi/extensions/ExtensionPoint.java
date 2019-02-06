@@ -24,6 +24,9 @@ public interface ExtensionPoint<T> {
 
   void registerExtension(@NotNull T extension);
 
+  @Deprecated
+  void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
+
   @TestOnly
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 

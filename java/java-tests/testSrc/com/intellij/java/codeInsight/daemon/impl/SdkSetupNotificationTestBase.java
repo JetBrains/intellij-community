@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -11,6 +12,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -32,25 +35,12 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     setProjectSdk(IdeaTestUtil.getMockJdk17());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   @Nullable
   protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
-                                                          boolean moduleSdk,
+                                                          boolean isModuleSdk,
                                                           @NotNull String name,
                                                           @NotNull String text) {
-    if (moduleSdk) {
+    if (isModuleSdk) {
       ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
     }
     else {
