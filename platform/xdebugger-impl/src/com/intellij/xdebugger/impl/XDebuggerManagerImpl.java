@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -359,7 +359,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
-      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA) {
+      if (e.getArea() != EditorMouseEventArea.LINE_NUMBERS_AREA || e.getEditor().getProject() != myProject) {
         return false;
       }
       XDebugSessionImpl session = getCurrentSession();
