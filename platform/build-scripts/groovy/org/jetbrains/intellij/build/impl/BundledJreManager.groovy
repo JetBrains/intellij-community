@@ -150,7 +150,9 @@ class BundledJreManager {
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
         buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
-          cutdirsmapper(dirs: 1)
+          if (!buildContext.isBundledJreModular()) {
+            cutdirsmapper(dirs: 1)
+          }
         }
       }
       else {
@@ -159,8 +161,10 @@ class BundledJreManager {
         buildContext.ant.exec(executable: "tar", dir: archive.parent) {
           arg(value: "-xf")
           arg(value: archive.name)
-          arg(value: "--strip")
-          arg(value: "1")
+          if (!buildContext.isBundledJreModular()) {
+            arg(value: "--strip")
+            arg(value: "1")
+          }
           arg(value: "--directory")
           arg(value: destination)
         }
