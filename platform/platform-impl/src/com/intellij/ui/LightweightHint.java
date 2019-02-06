@@ -238,6 +238,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   protected void onPopupCancel() {
+    hide();
   }
 
   private void fixActualPoint(Point actualPoint) {

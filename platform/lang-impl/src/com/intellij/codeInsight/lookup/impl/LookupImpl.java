@@ -1118,11 +1118,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  protected void onPopupCancel() {
-    hide();
-  }
-
-  @Override
   public void hide(){
     hideLookup(true);
   }
