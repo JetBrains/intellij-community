@@ -79,12 +79,7 @@ public class ApplicationUtil {
    */
   public static void runWithCheckCanceled(@NotNull Future<?> future, @NotNull final ProgressIndicator indicator) throws Exception {
     while (true) {
-      try {
-        indicator.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
+      indicator.checkCanceled();
 
       try {
         future.get(25, TimeUnit.MILLISECONDS);
