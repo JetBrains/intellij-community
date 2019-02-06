@@ -140,6 +140,10 @@
     </component>
 
     <component>
+      <implementation-class>com.intellij.internal.performance.LatenciometerListener</implementation-class>
+    </component>
+
+    <component>
       <interface-class>org.jetbrains.ide.BuiltInServerManager</interface-class>
       <implementation-class>org.jetbrains.ide.BuiltInServerManagerImpl</implementation-class>
     </component>

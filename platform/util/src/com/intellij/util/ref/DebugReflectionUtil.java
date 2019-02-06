@@ -129,8 +129,8 @@ public class DebugReflectionUtil {
                                     @NotNull final Class<?> lookFor,
                                     @NotNull Condition<Object> shouldExamineValue,
                                     @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
-    TIntHashSet visited = new TIntHashSet((int)(10000000 * 0.8));
-    Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
+    TIntHashSet visited = new TIntHashSet(100);
+    Queue<BackLink> toVisit = new Queue<BackLink>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();

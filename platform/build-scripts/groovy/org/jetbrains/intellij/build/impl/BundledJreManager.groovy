@@ -28,12 +28,28 @@ class BundledJreManager {
     return extractJre("linux")
   }
 
+  private static String doBundleSecondJre() {
+    return System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()
+  }
+
   String getSecondJreBuild() {
-    return System.getProperty("intellij.build.bundled.second.jre.build")
+    if (!doBundleSecondJre()) return null
+    def build = System.getProperty("intellij.build.bundled.second.jre.build")
+    if (build == null) {
+      loadDependencyVersions()
+      build = dependencyVersions.get('secondJreBuild')
+    }
+    return build
   }
 
   String getSecondJreVersion() {
-    return System.getProperty("intellij.build.bundled.second.jre.version", "11")
+    if (!doBundleSecondJre()) return null
+    def version = System.getProperty("intellij.build.bundled.second.jre.version")
+    if (version == null) {
+      loadDependencyVersions()
+      version = dependencyVersions.get('secondJreVersion')
+    }
+    return version
   }
 
   @CompileDynamic
@@ -44,8 +60,8 @@ class BundledJreManager {
       return targetDir
     }
 
-    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${JvmArchitecture.x64}.tar.gz"
-    File archive = new File(buildContext.paths.projectHome, "build/jdk11/${osName}/$jreArchive")
+    def jreArchive = "jbsdk${getSecondJreVersion()}${secondJreBuild}_${osName}_${JvmArchitecture.x64}.tar.gz"
+    File archive = new File(jreDir(), jreArchive)
     if (!archive.file || !archive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found"
       buildContext.messages.warning(errorMessage)
@@ -153,10 +169,18 @@ class BundledJreManager {
     return targetDir
   }
 
+  private File dependenciesDir() {
+    new File(buildContext.paths.communityHome, 'build/dependencies')
+  }
+
+  File jreDir() {
+    def dependenciesDir = dependenciesDir()
+    new File(dependenciesDir, 'build/jbre')
+  }
+
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    def dependenciesDir = new File(buildContext.paths.communityHome, 'build/dependencies')
-    def jreDir = new File(dependenciesDir, 'build/jbre')
-    def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
+    def jreDir = jreDir()
+    def jreVersion = getExpectedJreVersion(osName)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
     String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
@@ -177,11 +201,11 @@ class BundledJreManager {
   }
 
   private Properties dependencyVersions
-  private synchronized String getExpectedJreVersion(String osName, File dependenciesDir) {
+  private synchronized void loadDependencyVersions() {
     if (dependencyVersions == null) {
       buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
 
-      def stream = new File(dependenciesDir, 'build/dependencies.properties').newInputStream()
+      def stream = new File(dependenciesDir(), 'build/dependencies.properties').newInputStream()
       try {
         Properties properties = new Properties()
         properties.load(stream)
@@ -191,11 +215,16 @@ class BundledJreManager {
         stream.close()
       }
     }
+  }
+
+  private String getExpectedJreVersion(String osName) {
+    loadDependencyVersions()
     return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8", "jre"), JetBrains("jbre8", "jbrex8", "jbre")
+    Oracle("jre8", "jdk8", "jre"),
+    JetBrains("jbre8", "jbrex8", "jbsdk")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix

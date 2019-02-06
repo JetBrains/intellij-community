@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -23,10 +24,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -85,14 +83,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull VcsLogUiImpl ui,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLog log,
-                   @NotNull VisiblePack initialDataPack) {
+                   @NotNull VisiblePack initialDataPack,
+                   @Nullable VcsLogFilterCollection filters) {
     // collect info
     myLogData = logData;
     myUi = ui;
     myLog = log;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack);
+    myFilterUi = new VcsLogClassicFilterUi(ui, logData, myUiProperties, initialDataPack, filters);
 
     // initialize components
     myGraphTable = new MyVcsLogGraphTable(ui, logData, initialDataPack);
@@ -170,6 +169,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void updateDataPack(@NotNull VisiblePack dataPack, boolean permGraphChanged) {
     myFilterUi.updateDataPack(dataPack);
     myGraphTable.updateDataPack(dataPack, permGraphChanged);
+    myChangesBrowser.setAffectedPaths(VcsLogUtil.getAffectedPaths(myUi));
   }
 
   @NotNull

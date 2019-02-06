@@ -577,6 +577,11 @@ print <warning descr="Cannot resolve symbol 'abc'">abc</warning>
 @CompileStatic
 def bar() {
 print <error descr="Cannot resolve symbol 'abc'">abc</error>
+  new Object() {
+    def baz() {
+      print(<error descr="Cannot resolve symbol 'unknown'">unknown</error>)
+    }
+  }
 }
 }
 ''', true, false, false, GrUnresolvedAccessInspection)

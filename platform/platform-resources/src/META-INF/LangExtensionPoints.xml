@@ -601,6 +601,8 @@
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
+    <extensionPoint name="gotoDeclaration"
+                    interface="com.intellij.codeInsight.navigation.GotoDeclarationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 

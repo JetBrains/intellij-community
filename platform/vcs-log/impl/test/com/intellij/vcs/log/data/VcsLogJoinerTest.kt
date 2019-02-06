@@ -36,11 +36,11 @@ class VcsLogJoinerTest {
   }
 
   class TestRunner {
-    private var fullLog: List<String>? = null
-    private var recentCommits: List<String>? = null
-    private var oldRefs: List<String>? = null
-    private var newRefs: List<String>? = null
-    private var expected: String? = null
+    private lateinit var fullLog: List<String>
+    private lateinit var recentCommits: List<String>
+    private lateinit var oldRefs: List<String>
+    private lateinit var newRefs: List<String>
+    private lateinit var expected: String
 
     private fun build(f: StringArrayBuilder.() -> Unit): List<String> {
       val stringArrayBuilder = StringArrayBuilder()
@@ -48,37 +48,48 @@ class VcsLogJoinerTest {
       return stringArrayBuilder.result
     }
 
-    fun fullLog(f: StringArrayBuilder.() -> Unit) {fullLog = build(f)}
+    fun fullLog(f: StringArrayBuilder.() -> Unit) {
+      fullLog = build(f)
+    }
 
-    fun recentCommits(f: StringArrayBuilder.() -> Unit) {recentCommits = build(f)}
+    fun recentCommits(f: StringArrayBuilder.() -> Unit) {
+      recentCommits = build(f)
+    }
 
-    fun oldRefs(f: StringArrayBuilder.() -> Unit) {oldRefs = build(f)}
+    fun oldRefs(f: StringArrayBuilder.() -> Unit) {
+      oldRefs = build(f)
+    }
 
-    fun newRefs(f: StringArrayBuilder.() -> Unit) {newRefs = build(f)}
+    fun newRefs(f: StringArrayBuilder.() -> Unit) {
+      newRefs = build(f)
+    }
 
-    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).joinToString(separator = "\n")}
+    fun expected(f: StringArrayBuilder.() -> Unit) {
+      expected = build(f).joinToString(separator = "\n")
+    }
 
     fun run() {
-      val vcsFullLog = TimedCommitParser.log(fullLog!!)
-      val vcsRecentCommits = TimedCommitParser.log(recentCommits!!)
-      val vcsOldRefs = oldRefs!!.map { HashImpl.build(it) }
-      val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
+      val vcsFullLog = TimedCommitParser.log(fullLog)
+      val vcsRecentCommits = TimedCommitParser.log(recentCommits)
+      val vcsOldRefs = oldRefs.map { HashImpl.build(it) }
+      val vcsNewRefs = newRefs.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.id.asString() }.joinToString(separator = "\n")
+      val actual = result.joinToString(separator = "\n") { it.id.asString() }
       assertEquals(expected, actual)
     }
   }
 
-  fun runTest(f: TestRunner.() -> Unit) {
+  private fun runTest(f: TestRunner.() -> Unit) {
     val testRunner = TestRunner()
     testRunner.f()
     testRunner.run()
   }
 
-  val BIG_TIME = 100000000
+  private val BIG_TIME = 100000000
 
-  @Test fun simple() {
+  @Test
+  fun simple() {
     runTest {
       fullLog {
         +"4|-a2|-a1"
@@ -109,7 +120,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNode() {
+  @Test
+  fun oneNode() {
     runTest {
       fullLog {
         +"3|-a1|-"
@@ -129,7 +141,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNodeReset() {
+  @Test
+  fun oneNodeReset() {
     runTest {
       fullLog {
         +"3|-a1|-a2"
@@ -151,7 +164,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun oneNodeReset2() {
+  @Test
+  fun oneNodeReset2() {
     runTest {
       fullLog {
         +"3|-a1|-a2"
@@ -172,7 +186,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun simpleRemoveCommits() {
+  @Test
+  fun simpleRemoveCommits() {
     runTest {
       fullLog {
         +"4|-a2|-a1"
@@ -201,7 +216,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits() {
+  @Test
+  fun removeCommits() {
     runTest {
       fullLog {
         +"5|-a5|-a4"
@@ -227,7 +243,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits2() {
+  @Test
+  fun removeCommits2() {
     runTest {
       fullLog {
         +"2|-a2|-a1"
@@ -254,7 +271,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeCommits3() {
+  @Test
+  fun removeCommits3() {
     runTest {
       fullLog {
         +"3|-a3|-a2"
@@ -277,7 +295,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeOldBranch() {
+  @Test
+  fun removeOldBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -295,7 +314,7 @@ class VcsLogJoinerTest {
         +"b2"
       }
       newRefs {
-        "e1"
+        +"e1"
       }
       expected {
         +"e1"
@@ -306,7 +325,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun addToOldBranch() {
+  @Test
+  fun addToOldBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -341,7 +361,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeLongBranch() {
+  @Test
+  fun removeLongBranch() {
     runTest {
       fullLog {
         +"100|-e1|-e10"
@@ -372,7 +393,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun notEnoughDataExceptionTest() {
+  @Test
+  fun notEnoughDataExceptionTest() {
     try {
       runTest {
         fullLog {
@@ -388,13 +410,15 @@ class VcsLogJoinerTest {
           +"a3"
         }
       }
-    } catch (e: VcsLogRefreshNotEnoughDataException) {
+    }
+    catch (e: VcsLogRefreshNotEnoughDataException) {
       return
     }
     fail()
   }
 
-  @Test fun illegalStateExceptionTest() {
+  @Test
+  fun illegalStateExceptionTest() {
     try {
       runTest {
         fullLog {
@@ -411,13 +435,15 @@ class VcsLogJoinerTest {
           +"a1"
         }
       }
-    } catch (e: IllegalStateException) {
+    }
+    catch (e: IllegalStateException) {
       return
     }
     fail()
   }
 
-  @Test fun illegalStateExceptionTest2() {
+  @Test
+  fun illegalStateExceptionTest2() {
     try {
       runTest {
         fullLog {
@@ -434,13 +460,15 @@ class VcsLogJoinerTest {
           +"a3"
         }
       }
-    } catch (e: IllegalStateException) {
+    }
+    catch (e: IllegalStateException) {
       return
     }
     fail()
   }
 
-  @Test fun removeParallelBranch() {
+  @Test
+  fun removeParallelBranch() {
     runTest {
       fullLog {
         +"4|-a4|-a1"
@@ -465,7 +493,8 @@ class VcsLogJoinerTest {
     }
   }
 
-  @Test fun removeAll() {
+  @Test
+  fun removeAll() {
     runTest {
       fullLog {
         +"4|-a4|-a1"

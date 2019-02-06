@@ -8,7 +8,9 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
@@ -102,6 +104,10 @@ interface GlobalMenuLib extends Library {
 }
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
+  private static final String TOGGLE_SWING_MENU_ACTION_NAME = "Toggle Global Menu integration";
+  private static final String TOGGLE_SWING_MENU_ACTION_DESC = "Enable/disable global menu integration (in all frames)";
+  private static final String TOGGLE_SWING_MENU_ACTION_ID = "ToggleGlobalLinuxMenu";
+
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
   private static final boolean TRACE_SYSOUT               = Boolean.getBoolean("linux.native.menu.debug.trace.sysout");
   private static final boolean TRACE_ENABLED              = Boolean.getBoolean("linux.native.menu.debug.trace.enabled");
@@ -116,7 +122,10 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final boolean KDE_DISABLE_ROOT_MNEMONIC_PROCESSING = Boolean.getBoolean("linux.native.menu.kde.disable.root.mnemonic");
 
   private static final boolean SKIP_OPEN_MENU_COMMAND     = Boolean.getBoolean("linux.native.menu.skip.open");
-  private static final boolean DONT_FILL_ROOTS            = SystemInfo.isKDE || Boolean.getBoolean("linux.native.dont.fill.roots");
+  private static final boolean DONT_FILL_ROOTS            =
+    SystemInfo.isKDE
+    || (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode()) // NOTE: expanding root menu causes failures of tests: PhpStorm -> Performance Tests (3rd Party Plugins)
+    || Boolean.getBoolean("linux.native.dont.fill.roots");
   private static final boolean DONT_FILL_SUBMENU          = Boolean.getBoolean("linux.native.menu.dont.fill.submenu");
   private static final boolean DONT_CLOSE_POPUPS          = Boolean.getBoolean("linux.native.menu.dont.close.popups");
   private static final boolean DISABLE_EVENTS_FILTERING   = Boolean.getBoolean("linux.native.menu.disable.events.filtering");
@@ -192,6 +201,19 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "GlobalMenuLinux loop");
         glibMain.start();
       }
+
+      // register toggle-swing-menu action (to be able to enable swing menu when system applet is died)
+      final ActionManager am = ActionManager.getInstance();
+      final AnAction toggleSwingMenu = new AnAction(TOGGLE_SWING_MENU_ACTION_NAME, TOGGLE_SWING_MENU_ACTION_DESC, null) {
+        boolean enabled = false;
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          for (GlobalMenuLinux gml: ourInstances.values())
+            gml.toggle(enabled);
+          enabled = !enabled;
+        }
+      };
+      am.registerAction(TOGGLE_SWING_MENU_ACTION_ID, toggleSwingMenu);
     } else {
       ourGLogger = null;
       ourUpdateAllRoots = null;

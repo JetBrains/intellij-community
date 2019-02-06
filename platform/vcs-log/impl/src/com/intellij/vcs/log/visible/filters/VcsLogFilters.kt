@@ -102,6 +102,11 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun fromCommits(commits: List<CommitId>): VcsLogRevisionFilter {
+    return VcsLogRevisionFilterImpl(commits)
+  }
+
+  @JvmStatic
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
     for (word in StringUtil.split(text, " ")) {
@@ -192,6 +197,10 @@ fun VcsLogFilterCollection.without(filterKey: FilterKey<*>): VcsLogFilterCollect
   val filterSet = createFilterSet()
   this.filters.forEach { if (it.key != filterKey) filterSet.add(it) }
   return MyVcsLogFilterCollectionImpl(filterSet)
+}
+
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
+  return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
 }
 
 fun VcsLogFilterCollection.getPresentation(): String {

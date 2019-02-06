@@ -1983,7 +1983,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (file != null) {
         int offset = editor.getCaretModel().getOffset();
         PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-        if (manager.hasUncommitedDocuments()) manager.commitAllDocuments();
+        LOG.assertTrue(manager.isCommitted(editor.getDocument()));
         PsiElement element = file.findElementAt(offset);
         if (element != null) return element;
       }

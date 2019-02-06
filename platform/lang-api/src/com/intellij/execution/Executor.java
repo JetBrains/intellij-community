@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,7 +93,13 @@ public abstract class Executor {
 
   @NotNull
   public String getStartActionText(@NotNull String configurationName) {
-    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
+    String text = getStartActionText();
+    boolean hasMnemonic = text.indexOf(UIUtil.MNEMONIC) >= 0 || !StringUtil.escapeMnemonics(text).equals(text);
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
+    if (!hasMnemonic) {
+      configName = StringUtil.escapeMnemonics(configName);
+    }
+    return text + configName;
   }
 
   /**

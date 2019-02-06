@@ -194,7 +194,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
         return getElement();
       }
       final String value = getValue();
-      return resolveReference(convertString(value, myContext), myContext);
+      return DelimitedListConverter.this.resolveReference(convertString(value, myContext), myContext);
     }
 
     @Override

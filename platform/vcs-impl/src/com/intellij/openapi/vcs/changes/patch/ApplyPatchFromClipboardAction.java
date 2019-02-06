@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 
@@ -56,15 +54,11 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
 
     @NotNull
     private static JCheckBox createAnalyzeOnTheFlyOptionPanel() {
-      final JCheckBox removeOptionCheckBox = new JCheckBox("Analyze and Apply Patch from Clipboard on the Fly");
+      final JCheckBox removeOptionCheckBox = new JCheckBox("Analyze and apply patch from clipboard on the fly");
       removeOptionCheckBox.setMnemonic(KeyEvent.VK_L);
       removeOptionCheckBox.setSelected(VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY);
-      removeOptionCheckBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY = removeOptionCheckBox.isSelected();
-        }
-      });
+      removeOptionCheckBox.addActionListener(
+        e -> VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY = removeOptionCheckBox.isSelected());
       return removeOptionCheckBox;
     }
   }

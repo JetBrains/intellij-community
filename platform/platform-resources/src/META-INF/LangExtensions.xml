@@ -1133,6 +1133,7 @@
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
 
+    <gotoDeclaration implementation="com.intellij.codeInsight.navigation.actions.DefaultGotoDeclarationProvider" order="last"/>
     <!-- Search everywhere services/objects -->
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>

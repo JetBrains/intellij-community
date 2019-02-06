@@ -29,13 +29,13 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.history.FileHistoryUtil
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
-import com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction
 import java.awt.event.KeyEvent
 
-class CompareRevisionsFromFolderHistoryActionProvider : CompareRevisionsFromLogAction(), AnActionExtensionProvider {
+class CompareRevisionsFromFolderHistoryActionProvider : AnActionExtensionProvider {
 
-  override fun getFilePath(e: AnActionEvent): FilePath? {
+  private fun getFilePath(e: AnActionEvent): FilePath? {
     return e.getData(VcsDataKeys.FILE_PATH)
   }
 
@@ -65,7 +65,8 @@ class CompareRevisionsFromFolderHistoryActionProvider : CompareRevisionsFromLogA
     }
 
     if (log.selectedCommits.size >= 2) {
-      super.update(e)
+      val handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER)
+      e.presentation.isEnabledAndVisible = handler != null
     }
     else {
       e.presentation.isEnabled = log.selectedCommits.isNotEmpty()
@@ -78,9 +79,12 @@ class CompareRevisionsFromFolderHistoryActionProvider : CompareRevisionsFromLogA
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
     val filePath = getFilePath(e)!!
 
+    VcsLogUsageTriggerCollector.triggerUsage(e, this)
+    
     val commits = log.selectedCommits
     if (commits.size >= 2) {
-      super.actionPerformed(e)
+      val handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER)
+      handler.showDiff(commits[1].root, filePath, commits[1].hash, filePath, commits[0].hash)
       return
     }
 

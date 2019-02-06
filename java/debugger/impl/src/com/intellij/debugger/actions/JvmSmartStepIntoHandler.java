@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -94,8 +94,9 @@ public abstract class JvmSmartStepIntoHandler {
   private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target, SourcePosition position) {
     final PsiElement highlightElement = target.getHighlightElement();
     if (highlightElement != null) {
-      LOG.assertTrue(PsiTreeUtil.isAncestor(position.getFile(), highlightElement, false),
-                     "Highlight element " + highlightElement + " in " + target + " is not from the current file");
+      if (!PsiTreeUtil.isAncestor(position.getFile(), highlightElement, false)) {
+        LOG.error("Highlight element " + highlightElement + " in " + target + " is not from the current file", target.myCreationStack);
+      }
       popupStep.getScopeHighlighter().highlight(highlightElement, Collections.singletonList(highlightElement));
     }
   }

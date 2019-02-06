@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -565,7 +564,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (submitter instanceof ITNReporter) {
       myCredentialsLabel.setVisible(true);
       Credentials credentials = ErrorReportConfigurable.getCredentials();
-      if (CredentialAttributesKt.isFulfilled(credentials)) {
+      if (credentials != null && credentials.getUserName() != null) {
         myCredentialsLabel.setHtmlText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
       }
       else {
@@ -601,11 +600,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
     }
 
-    return submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
-      message.setSubmitting(false);
+    boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
       UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
     });
+    if (!accepted) {
+      message.setSubmitting(false);
+    }
+    return accepted;
   }
 
   private void disablePlugin() {

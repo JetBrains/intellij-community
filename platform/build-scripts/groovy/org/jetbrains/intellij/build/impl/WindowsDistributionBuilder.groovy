@@ -110,7 +110,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def jreSuffix = buildContext.bundledJreManager.jreSuffix()
     def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("win", secondJreBuild) : null
+    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath)
       if (secondJreDirectoryPath != null) {

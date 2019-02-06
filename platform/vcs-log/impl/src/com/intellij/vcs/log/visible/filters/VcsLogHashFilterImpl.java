@@ -7,9 +7,9 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 
 class VcsLogHashFilterImpl implements VcsLogHashFilter {
-
   @NotNull private final Collection<String> myHashes;
 
   VcsLogHashFilterImpl(@NotNull Collection<String> hashes) {
@@ -31,5 +31,18 @@ class VcsLogHashFilterImpl implements VcsLogHashFilter {
   @Override
   public String toString() {
     return "hashes:" + myHashes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    VcsLogHashFilterImpl filter = (VcsLogHashFilterImpl)o;
+    return myHashes.equals(filter.myHashes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myHashes);
   }
 }

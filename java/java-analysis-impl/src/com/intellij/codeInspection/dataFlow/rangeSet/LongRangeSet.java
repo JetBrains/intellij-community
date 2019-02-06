@@ -1272,7 +1272,7 @@ public abstract class LongRangeSet {
         return other.unite(this);
       }
       if (other instanceof Range) {
-        if (other.intersects(this) ||
+        if (other.min() <= max() && min() <= other.max() ||
             (other.max() < min() && other.max() + 1 == min()) ||
             (other.min() > max() && max() + 1 == other.min())) {
           return range(Math.min(min(), other.min()), Math.max(max(), other.max()));

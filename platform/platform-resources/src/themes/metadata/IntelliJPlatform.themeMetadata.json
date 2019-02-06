@@ -150,21 +150,6 @@
       "key": "FlameGraph.parentSearchNotMatchedBackground"
     },
     {
-      "key": "Git.Log.Ref.Head"
-    },
-    {
-      "key": "Git.Log.Ref.LocalBranch"
-    },
-    {
-      "key": "Git.Log.Ref.Other"
-    },
-    {
-      "key": "Git.Log.Ref.RemoteBranch"
-    },
-    {
-      "key": "Git.Log.Ref.Tag"
-    },
-    {
       "key": "Group.disabledSeparatorColor"
     },
     {
@@ -193,30 +178,6 @@
     },
     {
       "key": "HelpTooltip.shortcutForeground"
-    },
-    {
-      "key": "Hg.Log.Ref.Bookmark"
-    },
-    {
-      "key": "Hg.Log.Ref.Branch"
-    },
-    {
-      "key": "Hg.Log.Ref.ClosedBranch"
-    },
-    {
-      "key": "Hg.Log.Ref.Head"
-    },
-    {
-      "key": "Hg.Log.Ref.LocalTag"
-    },
-    {
-      "key": "Hg.Log.Ref.MqTag"
-    },
-    {
-      "key": "Hg.Log.Ref.Tag"
-    },
-    {
-      "key": "Hg.Log.Ref.Tip"
     },
     {
       "key": "InformationHint.borderColor"
@@ -558,19 +519,58 @@
       "key": "VersionControl.FileHistory.Commit.selectedBranchBackground"
     },
     {
+      "key": "VersionControl.GitLog.headIconColor"
+    },
+    {
+      "key": "VersionControl.GitLog.localBranchIconColor"
+    },
+    {
+      "key": "VersionControl.GitLog.otherIconColor"
+    },
+    {
+      "key": "VersionControl.GitLog.remoteBranchIconColor"
+    },
+    {
+      "key": "VersionControl.GitLog.tagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.bookmarkIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.branchIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.closedBranchIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.headIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.localTagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.mqTagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.tagIconColor"
+    },
+    {
+      "key": "VersionControl.HgLog.tipIconColor"
+    },
+    {
       "key": "VersionControl.Log.Commit.currentBranchBackground"
     },
     {
       "key": "VersionControl.Log.Commit.unmatchedForeground"
     },
     {
-      "key": "VersionControl.Ref.backgroundBase"
+      "key": "VersionControl.RefLabel.backgroundBase"
     },
     {
-      "key": "VersionControl.Ref.backgroundBrightness"
+      "key": "VersionControl.RefLabel.backgroundBrightness"
     },
     {
-      "key": "VersionControl.Ref.foreground"
+      "key": "VersionControl.RefLabel.foreground"
     },
     {
       "key": "WelcomeScreen.background"

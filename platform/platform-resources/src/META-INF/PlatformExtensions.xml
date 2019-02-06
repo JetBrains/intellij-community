@@ -594,6 +594,10 @@
       <description>Intergation with global menu in Linux</description>
     </experimentalFeature>
 
+    <experimentalFeature id="recent.and.edited.files.together" percentOfUsers="0">
+      <description>Second Cmd/Ctrl+E switches to Recently Edited Files</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
   </extensions>
 </idea-plugin>
