@@ -111,7 +111,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     });
 
     setOpaque(true);
-    setBorder(JBUI.Borders.empty());
+    setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
 
     new DoubleClickListener() {
       @Override

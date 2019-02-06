@@ -102,7 +102,7 @@ public class JBRunnerTabs extends JBEditorTabs {
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(JBUI.Borders.empty(4));
+      setBorder(JBUI.Borders.empty(5));
     }
 
     @Override

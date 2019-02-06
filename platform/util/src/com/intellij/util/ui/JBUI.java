@@ -1702,12 +1702,12 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        return getInt("ToolWindow.tab.verticalPadding", scale(8));
+        return getInt("ToolWindow.tab.verticalPadding", scale(6));
       }
 
       @NotNull
-      public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(6, 0));
+      public static Border tabHeaderBorder() {
+        return getBorder("ToolWindow.tabHeaderBorder", Borders.emptyBottom(1));
       }
 
       @NotNull
