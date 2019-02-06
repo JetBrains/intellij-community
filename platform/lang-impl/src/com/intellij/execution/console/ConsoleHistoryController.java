@@ -343,6 +343,7 @@ public class ConsoleHistoryController {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
           setOKButtonMnemonic('P');
           setCancelButtonText(CommonBundle.getCloseButtonText());
+          setUseNumbering(false);
         }
 
         @Override
