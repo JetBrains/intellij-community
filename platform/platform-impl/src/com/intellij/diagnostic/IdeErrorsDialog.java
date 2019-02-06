@@ -287,7 +287,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myCredentialsLabel = new HyperlinkLabel();
     myCredentialsLabel.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        JetBrainsAccountDialogKt.showJetBrainsAccountDialog(getRootPane()).show();
+        JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
         updateControls();
       }
     });
