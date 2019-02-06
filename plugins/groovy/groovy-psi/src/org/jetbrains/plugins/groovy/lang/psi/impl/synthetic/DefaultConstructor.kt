@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic
 
 import com.intellij.psi.*
@@ -65,7 +65,9 @@ class DefaultConstructor(
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getSignature(substitutor: PsiSubstitutor): MethodSignatureBackedByPsiMethod = MethodSignatureBackedByPsiMethod.create(this, substitutor)
+  override fun getSignature(substitutor: PsiSubstitutor): MethodSignatureBackedByPsiMethod {
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor)
+  }
 
   override fun getHierarchicalMethodSignature(): HierarchicalMethodSignature = getHierarchicalMethodSignature(this)
 
@@ -81,7 +83,7 @@ class DefaultConstructor(
 
   override fun findSuperMethods(parentClass: PsiClass?): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
-  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> = emptyList<MethodSignatureBackedByPsiMethod>()
+  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> = emptyList()
 
   override fun findDeepestSuperMethods(): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
@@ -91,4 +93,19 @@ class DefaultConstructor(
   override fun findDeepestSuperMethod(): PsiMethod? = null
 
   override fun setName(name: String): PsiElement = throw IncorrectOperationException("setName() isn't supported")
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as DefaultConstructor
+
+    if (myConstructedClass != other.myConstructedClass) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return myConstructedClass.hashCode()
+  }
 }
