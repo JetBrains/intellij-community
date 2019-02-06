@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -125,6 +126,14 @@ public final class Presentation implements Cloneable {
     return myText;
   }
 
+  /**
+   * Sets the presentation text
+   * @param text presentation text. If mayContainMnemonic is true, it may contain a mnemonic prefixed with '_' or '&'.
+   *             To escape '_' or '&' before the actual mnemonic the character must be duplicated.
+   *             The characters after the actual mnemonic should not be escaped. 
+   *             E.g. "A__b_c__d" will be displayed as "A_bc__d" with mnemonic 'c'.
+   * @param mayContainMnemonic if true, a mnemonic will be extracted from the presentation text
+   */
   public void setText(@Nullable String text, boolean mayContainMnemonic) {
     int oldMnemonic = myMnemonic;
     int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
@@ -177,10 +186,18 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldDisplayedMnemonicIndex, myDisplayedMnemonicIndex);
   }
 
+  /**
+   * Sets the text with mnemonic.
+   * @param text
+   * @see #setText(String, boolean) 
+   */
   public void setText(String text) {
     setText(text, true);
   }
 
+  /**
+   * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
+   */
   public String getTextWithMnemonic() {
     return wrapTextWithMnemonic(myText, myDisplayedMnemonicIndex);
   }
@@ -203,15 +220,11 @@ public final class Presentation implements Cloneable {
   private static String wrapTextWithMnemonic(@Nullable String text, int mnemonicIndex) {
     if (text == null) return null;
     if (mnemonicIndex > -1) {
-      String prefix = escapeMnemonicsInActionText(text.substring(0, mnemonicIndex));
+      String prefix = StringUtil.escapeMnemonics(text.substring(0, mnemonicIndex));
       String suffix = text.substring(mnemonicIndex);
       return prefix + "_" + suffix;
     }
-    return escapeMnemonicsInActionText(text);
-  }
-
-  private static String escapeMnemonicsInActionText(String text) {
-    return text.replace("_", "__").replace("&", "&&");
+    return StringUtil.escapeMnemonics(text);
   }
 
   public String getDescription() {

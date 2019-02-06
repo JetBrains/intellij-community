@@ -92,7 +92,13 @@ public abstract class Executor {
 
   @NotNull
   public String getStartActionText(@NotNull String configurationName) {
-    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
+    String text = getStartActionText();
+    boolean hasMnemonic = !StringUtil.escapeMnemonics(text).equals(text);
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
+    if (!hasMnemonic) {
+      configName = StringUtil.escapeMnemonics(configName);
+    }
+    return text + configName;
   }
 
   /**
