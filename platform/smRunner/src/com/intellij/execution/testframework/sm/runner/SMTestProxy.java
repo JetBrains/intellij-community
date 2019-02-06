@@ -528,6 +528,11 @@ public class SMTestProxy extends AbstractTestProxy {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
+    DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
+    if (hyperlink != null) {
+      hyperlink.setTestProxyName(getName());
+    }
+
     if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
     }
