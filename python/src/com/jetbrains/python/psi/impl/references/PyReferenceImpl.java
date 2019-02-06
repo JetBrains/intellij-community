@@ -705,14 +705,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           Ref<Boolean> importFound = Ref.create(false);
           Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
           int completionIndex = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
-          ControlFlowUtil.iteratePrev(completionIndex, instructions, instruction -> {
-            if (instruction.getElement() == e) {
-              importFound.set(true);
-              return ControlFlowUtil.Operation.BREAK;
-            }
-            return ControlFlowUtil.Operation.NEXT;
-          });
-          return importFound.get();
+          if (completionIndex >= 0) {
+            ControlFlowUtil.iteratePrev(completionIndex, instructions, instruction -> {
+              if (instruction.getElement() == e) {
+                importFound.set(true);
+                return ControlFlowUtil.Operation.BREAK;
+              }
+              return ControlFlowUtil.Operation.NEXT;
+            });
+            return importFound.get();
+          }
         }
         if (name != null && scopeOwner != null) {
           List<Instruction> defs = getLatestDefinitions(name, scopeOwner, element);
