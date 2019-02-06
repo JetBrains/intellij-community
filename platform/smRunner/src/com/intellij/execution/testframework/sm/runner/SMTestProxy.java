@@ -12,7 +12,6 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -317,7 +316,7 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
 
-    return EditSourceUtil.getDescriptor(location.getPsiElement());
+    return location.getOpenFileDescriptor();
   }
 
   public boolean isSuite() {
