@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ui.tabs.impl.JBDefaultTabPainter;
+import com.intellij.ui.tabs.impl.JBEditorTabPainter;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -13,8 +14,7 @@ public interface JBTabPainter {
     TOOL_WINDOW
   }
 
-  JBTabPainter editorPainter = new JBDefaultTabPainter(TabTheme.Companion.getEDITOR_TAB());
-  JBTabPainter toolWindowPainter = new JBDefaultTabPainter(TabTheme.Companion.getTOOLWINDOW_TAB());
+  JBTabPainter editorPainter = new JBEditorTabPainter();
   JBTabPainter defaultPainter = new JBDefaultTabPainter();
 
   static JBTabPainter getInstance(@Nullable PainterType type) {
@@ -24,7 +24,6 @@ public interface JBTabPainter {
       case EDITOR:
         return editorPainter;
       case TOOL_WINDOW:
-        return toolWindowPainter;
       default:
         return defaultPainter;
     }
@@ -37,12 +36,12 @@ public interface JBTabPainter {
 
   int getBorderThickness();
 
-  void paintBorders(Graphics2D g, Rectangle bounds, JBTabsPosition position, int headerFitHeight, int rows, int yOffset);
+  default void paintBorders(JBTabsPosition position, Graphics2D g, Rectangle bounds, int headerFitHeight, int rows, int yOffset) {};
 
   void fillBackground(Graphics2D g, Rectangle rect);
 
-  void paintTab(Graphics2D g, Rectangle rect, Color tabColor, Boolean hovered);
+  void paintTab(JBTabsPosition position, Graphics2D g, Rectangle bounds, Color tabColor, Boolean hovered);
 
-  void paintSelectedTab(Graphics2D g, Rectangle rect, Color tabColor, JBTabsPosition position, Boolean active, Boolean hovered);
+  void paintSelectedTab(JBTabsPosition position, Graphics2D g, Rectangle rect, Color tabColor, Boolean active, Boolean hovered);
 }
 

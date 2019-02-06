@@ -382,7 +382,7 @@ public class JBTabsImpl extends JComponent
     return label != null && label == tabLabelAtMouse;
   }
 
-  protected boolean isActiveTabs() {
+  protected boolean isActiveTabs(TabInfo info) {
     return Utils.Companion.isFocusOwner(this);
   }
 
@@ -1595,7 +1595,7 @@ public class JBTabsImpl extends JComponent
     final TabLabel firstLabel = myInfo2Label.get(myLastLayoutPass.getTabAt(0, 0));
     if(firstLabel == null) return;
 
-    tabPainter.paintBorders(g, bounds, getPosition(), myHeaderFitSize.height, myLastLayoutPass.getRowCount(), firstLabel.getY());
+    tabPainter.paintBorders(getPosition(), g, bounds, myHeaderFitSize.height, myLastLayoutPass.getRowCount(), firstLabel.getY());
   }
 
   public Insets getLayoutInsets() {

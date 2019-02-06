@@ -498,27 +498,10 @@ public class TabLabel extends JPanel implements Accessible {
     Graphics2D g2d = (Graphics2D)g;
     if (isSelected) {
       painter
-        .paintSelectedTab(g2d, rect, myInfo.getTabColor(), myTabs.getPosition(), myTabs.isActiveTabs(), myTabs.isHoveredTab(this));
+        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isActiveTabs(myInfo), myTabs.isHoveredTab(this));
     }
     else {
-      int offset = painter.getBorderThickness();
-
-      switch (myTabs.getPosition()) {
-        case top:
-          rect.height -= offset;
-          break;
-        case bottom:
-          rect.y += offset;
-          break;
-        case left:
-          rect.width += offset;
-          break;
-        case right:
-          rect.x += offset;
-          break;
-      }
-
-      painter.paintTab(g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
+      painter.paintTab(myTabs.getPosition(), g2d, rect, myInfo.getTabColor(), myTabs.isHoveredTab(this));
     }
   }
 
