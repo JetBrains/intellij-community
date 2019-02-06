@@ -3,7 +3,7 @@ package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.memory.agent.UnexpectedValueFormatException
 import com.sun.jdi.*
-import java.util.ArrayList
+import java.util.*
 
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
@@ -69,5 +69,11 @@ object IntArrayParser : ResultParser<List<Int>> {
     if (items[0] !is IntegerValue) throw UnexpectedValueFormatException("array elements should be integers")
     return items.map { it as IntegerValue }.map(IntegerValue::value)
   }
+}
 
+object LongArrayParser : ResultParser<List<Long>> {
+  override fun parse(value: Value): List<Long> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    return value.values.map(LongValueParser::parse)
+  }
 }

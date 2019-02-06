@@ -18,7 +18,7 @@ public interface MemoryAgent {
 
   boolean canEvaluateObjectsSizes();
 
-  List<Long> evaluateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
+  long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) throws EvaluateException;
 
   boolean canFindGcRoots();
 

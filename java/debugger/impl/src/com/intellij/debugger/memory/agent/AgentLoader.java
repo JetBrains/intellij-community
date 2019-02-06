@@ -96,7 +96,7 @@ public class AgentLoader {
     }
 
     @Override
-    public List<Long> evaluateObjectsSizes(@NotNull List<ObjectReference> references) {
+    public long[] evaluateObjectsSizes(@NotNull List<ObjectReference> references) {
       throw new UnsupportedOperationException();
     }
 
