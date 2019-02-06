@@ -49,6 +49,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
     if (needDoForCurrentProject()) {
       doActionOnChosenFiles(acquireValidFiles())
+      clearFiles()
     }
     else {
       proposeToProcessFiles()
@@ -93,6 +94,10 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   @Synchronized
   private fun clearFiles() {
     files.clear()
+  }
+
+  override fun dispose() {
+    clearFiles()
   }
 
   private fun showAction() = NotificationAction.createSimple(showActionText) {
