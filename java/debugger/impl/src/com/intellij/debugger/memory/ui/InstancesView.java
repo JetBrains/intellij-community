@@ -9,13 +9,13 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
 import com.intellij.debugger.memory.filtering.FilteringTaskCallback;
 import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
-import com.intellij.debugger.memory.utils.InstanceValueDescriptor;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -41,8 +41,6 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.intellij.xdebugger.memory.ui.InstancesViewBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -184,8 +182,8 @@ class InstancesView extends InstancesViewBase {
         final int limit = myIsAndroidVM
           ? AndroidUtil.ANDROID_INSTANCES_LIMIT
           : DEFAULT_INSTANCES_LIMIT;
-        List<ObjectReference> instances = ContainerUtil
-          .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo).getObjectReference());
+        List<JavaReferenceInfo> instances = ContainerUtil
+          .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo));
 
         final EvaluationContextImpl evaluationContext = myDebugProcess
           .getDebuggerContext().createEvaluationContext();
@@ -195,9 +193,11 @@ class InstancesView extends InstancesViewBase {
           instances = instances.subList(0, limit);
         }
 
+        instances = MemoryAgentUtil.tryCalculateSizes(instances, myDebugProcess.getMemoryAgent());
+
         if (evaluationContext != null) {
           synchronized (myFilteringTaskLock) {
-            List<ObjectReference> finalInstances = instances;
+            List<JavaReferenceInfo> finalInstances = instances;
             ApplicationManager.getApplication().runReadAction(() -> {
               myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
               myFilteringTask.execute();
@@ -252,9 +252,6 @@ class InstancesView extends InstancesViewBase {
   }
 
 
-
-
-
   private class MyFilteringCallback implements FilteringTaskCallback {
     private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup();
     private final EvaluationContextImpl myEvaluationContext;
@@ -284,8 +281,8 @@ class InstancesView extends InstancesViewBase {
 
     @NotNull
     @Override
-    public Action matched(@NotNull Value ref) {
-      final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myDebugProcess.getProject(), ref),
+    public Action matched(@NotNull JavaReferenceInfo ref) {
+      final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
         myEvaluationContext, myNodeManager);
       myMatchedCount++;
       myProceedCount++;
@@ -298,7 +295,7 @@ class InstancesView extends InstancesViewBase {
 
     @NotNull
     @Override
-    public Action notMatched(@NotNull Value ref) {
+    public Action notMatched(@NotNull JavaReferenceInfo ref) {
       myProceedCount++;
       updateProgress();
 
@@ -307,8 +304,8 @@ class InstancesView extends InstancesViewBase {
 
     @NotNull
     @Override
-    public Action error(@NotNull Value ref, @NotNull String description) {
-      final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myDebugProcess.getProject(), ref),
+    public Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
+      final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
         myEvaluationContext, myNodeManager);
       myErrorsGroup.addErrorValue(description, val);
       myProceedCount++;
@@ -364,9 +361,9 @@ class InstancesView extends InstancesViewBase {
     }
   }
   private static class MyValuesList implements FilteringTask.ValuesList {
-    private final List<? extends ObjectReference> myRefs;
+    private final List<? extends JavaReferenceInfo> myRefs;
 
-    MyValuesList(List<? extends ObjectReference> refs) {
+    MyValuesList(List<? extends JavaReferenceInfo> refs) {
       myRefs = refs;
     }
 
@@ -376,14 +373,14 @@ class InstancesView extends InstancesViewBase {
     }
 
     @Override
-    public ObjectReference get(int index) {
+    public JavaReferenceInfo get(int index) {
       return myRefs.get(index);
     }
   }
   private class MyFilteringWorker extends SwingWorker<Void, Void> {
     private final FilteringTask myTask;
 
-    MyFilteringWorker(@NotNull List<ObjectReference> refs,
+    MyFilteringWorker(@NotNull List<JavaReferenceInfo> refs,
                       @NotNull XExpression expression,
                       @NotNull EvaluationContextImpl evaluationContext) {
       myTask = new FilteringTask(myClassName, myDebugProcess, expression, new MyValuesList(refs),

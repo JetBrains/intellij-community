@@ -4,19 +4,26 @@ package com.intellij.debugger.memory.agent;
 import com.intellij.debugger.engine.DebugProcessAdapterImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.agent.extractor.AgentExtractor;
+import com.intellij.debugger.memory.ui.JavaReferenceInfo;
+import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,6 +69,23 @@ public class MemoryAgentUtil {
     }
     path += "=" + args;
     parametersList.add("-agentpath:" + path);
+  }
+
+  public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull List<JavaReferenceInfo> objects, @Nullable MemoryAgent agent) {
+    if (agent == null || !agent.canEvaluateObjectsSizes()) return objects;
+    try {
+      long[] sizes = agent.evaluateObjectsSizes(ContainerUtil.map(objects, x -> x.getObjectReference()));
+      return IntStreamEx.range(0, objects.size())
+        .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
+        .reverseSorted(Comparator.comparing(x -> x.size()))
+        .map(x -> (JavaReferenceInfo)x)
+        .toList();
+    }
+    catch (EvaluateException e) {
+      LOG.error("Could not estimate objects sizes");
+    }
+
+    return objects;
   }
 
   public static void loadAgentProxy(@NotNull DebugProcessImpl debugProcess, @NotNull Consumer<MemoryAgent> agentLoaded) {
