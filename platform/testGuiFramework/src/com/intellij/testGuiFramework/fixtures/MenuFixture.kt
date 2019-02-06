@@ -98,6 +98,7 @@ class MenuFixture internal constructor(private val myRobot: Robot, private val m
   private fun menuItemMatcher(pathIsRegex: Boolean,
                               segment: String): GenericTypeMatcher<JMenuItem> {
     return typeMatcher(JMenuItem::class.java) {
+      it.width != 0 && it.height != 0 &&
       if (pathIsRegex) it.text.matches(segment.toRegex())
       else segment == it.text
     }
