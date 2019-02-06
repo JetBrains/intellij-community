@@ -10,8 +10,7 @@ import com.intellij.psi.util.CachedValueProvider.Result.create
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
@@ -31,9 +30,9 @@ class GrLambdaExpressionImpl(node: ASTNode) : GrExpressionImpl(node), GrLambdaEx
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getBody(): PsiElement? {
+  override fun getBody(): GrLambdaBody? {
     val body = lastChild
-    return if (body is GrExpression || body is GrCodeBlock) body else null
+    return if (body is GrLambdaBody) body else null
   }
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {

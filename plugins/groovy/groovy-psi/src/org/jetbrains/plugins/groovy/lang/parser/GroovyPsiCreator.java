@@ -205,6 +205,7 @@ public class GroovyPsiCreator {
     if (elem == ARRAY_DECLARATION) return new GrArrayDeclarationImpl(node);
     if (elem == ARRAY_INITIALIZER) return new GrArrayInitializerImpl(node);
     if (elem == LAMBDA_EXPRESSION) return new GrLambdaExpressionImpl(node);
+    if (elem == LAMBDA_EXPRESSION_FORM_BODY) return new GrLambdaBodyExpressionImpl(node);
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
