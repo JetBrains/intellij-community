@@ -8,8 +8,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.injected.editor.VirtualFileDelegate;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.NotebookSourceVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -699,8 +699,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static boolean isOpenInNewWindow() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    // openFile... methods can be called several times in a row with the same InputEvent but we should open just one new window in this case
-    if (event instanceof InputEvent && ((InputEvent)event).isConsumed()) return false;
 
     // Shift was used while clicking
     if (event instanceof MouseEvent &&
@@ -708,23 +706,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         (event.getID() == MouseEvent.MOUSE_CLICKED ||
          event.getID() == MouseEvent.MOUSE_PRESSED ||
          event.getID() == MouseEvent.MOUSE_RELEASED)) {
-      ((MouseEvent)event).consume();
       return true;
     }
 
     if (event instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event;
-      KeymapManager keymapManager = KeymapManager.getInstance();
-      if (keymapManager == null) {
-        return false;
-      }
-      Keymap keymap = keymapManager.getActiveKeymap();
+      Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
       String[] ids = keymap.getActionIds(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
-      boolean inNewWindow = Arrays.asList(ids).contains("OpenElementInNewWindow");
-      if (inNewWindow) {
-        ke.consume();
-      }
-      return inNewWindow;
+      return Arrays.asList(ids).contains("OpenElementInNewWindow");
     }
 
     return false;
@@ -1352,7 +1341,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
     assertReadAccess();
-    if (file instanceof VirtualFileDelegate) file = ((VirtualFileDelegate)file).getDelegate();
+    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof NotebookSourceVirtualFile) file = ((NotebookSourceVirtualFile)file).getOriginFile();
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {

@@ -11,9 +11,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.injected.editor.VirtualFileDelegate;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.notebook.editor.NotebookSourceVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
@@ -347,12 +348,10 @@ public class PyUtil {
       if (binaryExpression.getOperator() == PyTokenTypes.OR_KEYWORD) {
         return isNameEqualsMain(binaryExpression.getLeftExpression()) || isNameEqualsMain(binaryExpression.getRightExpression());
       }
-      if (binaryExpression.getRightExpression() instanceof PyStringLiteralExpression) {
-        final PyStringLiteralExpression rhs = (PyStringLiteralExpression) binaryExpression.getRightExpression();
-        return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
-               binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
-               rhs.getStringValue().equals("__main__");
-      }
+      final PyExpression rhs = binaryExpression.getRightExpression();
+      return binaryExpression.getOperator() == PyTokenTypes.EQEQ &&
+             binaryExpression.getLeftExpression().getText().equals(PyNames.NAME) &&
+             rhs != null && rhs.getText().contains("__main__");
     }
     return false;
   }
@@ -635,8 +634,11 @@ public class PyUtil {
   @NotNull
   public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
                                                              @NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileDelegate) {
-      virtualFile = ((VirtualFileDelegate)virtualFile).getDelegate();
+    if (virtualFile instanceof VirtualFileWindow) {
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    }
+    if (virtualFile instanceof NotebookSourceVirtualFile) {
+      virtualFile = ((NotebookSourceVirtualFile)virtualFile).getOriginFile();
     }
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
