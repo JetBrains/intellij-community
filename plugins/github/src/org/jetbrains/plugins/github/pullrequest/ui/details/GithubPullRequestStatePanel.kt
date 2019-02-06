@@ -159,7 +159,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       mergeButton.isVisible = false
     }
     else {
-      reopenButton.isVisible = state.editAllowed && state.state == GithubIssueState.closed && !state.merged
+      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.closed && !state.merged
       reopenAction.isEnabled = reopenButton.isVisible && !state.busy
 
       closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.open
