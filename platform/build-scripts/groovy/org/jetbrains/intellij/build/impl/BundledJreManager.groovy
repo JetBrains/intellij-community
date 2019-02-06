@@ -28,12 +28,28 @@ class BundledJreManager {
     return extractJre("linux")
   }
 
+  private static String doBundleSecondJre() {
+    return System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()
+  }
+
   String getSecondJreBuild() {
-    return System.getProperty("intellij.build.bundled.second.jre.build")
+    if (!doBundleSecondJre()) return null
+    def build = System.getProperty("intellij.build.bundled.second.jre.build")
+    if (build == null) {
+      loadDependencyVersions()
+      build = dependencyVersions.get('secondJreBuild')
+    }
+    return build
   }
 
   String getSecondJreVersion() {
-    return System.getProperty("intellij.build.bundled.second.jre.version", "11")
+    if (!doBundleSecondJre()) return null
+    def version = System.getProperty("intellij.build.bundled.second.jre.version")
+    if (version == null) {
+      loadDependencyVersions()
+      version = dependencyVersions.get('secondJreVersion')
+    }
+    return version
   }
 
   @CompileDynamic
@@ -164,7 +180,7 @@ class BundledJreManager {
 
   private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     def jreDir = jreDir()
-    def jreVersion = getExpectedJreVersion(osName, dependenciesDir())
+    def jreVersion = getExpectedJreVersion(osName)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
     String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
@@ -185,11 +201,11 @@ class BundledJreManager {
   }
 
   private Properties dependencyVersions
-  private synchronized String getExpectedJreVersion(String osName, File dependenciesDir) {
+  private synchronized void loadDependencyVersions() {
     if (dependencyVersions == null) {
       buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
 
-      def stream = new File(dependenciesDir, 'build/dependencies.properties').newInputStream()
+      def stream = new File(dependenciesDir(), 'build/dependencies.properties').newInputStream()
       try {
         Properties properties = new Properties()
         properties.load(stream)
@@ -199,6 +215,10 @@ class BundledJreManager {
         stream.close()
       }
     }
+  }
+
+  private String getExpectedJreVersion(String osName) {
+    loadDependencyVersions()
     return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
   }
 
