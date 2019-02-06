@@ -2,7 +2,7 @@
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.vcs.FilePath
-import com.jetbrains.changeReminder.commit.info.Commit
+import com.jetbrains.changeReminder.repository.Commit
 import kotlin.math.min
 
 /**

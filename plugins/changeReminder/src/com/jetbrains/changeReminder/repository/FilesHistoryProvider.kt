@@ -5,8 +5,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.jetbrains.changeReminder.commit.info.Commit
 import java.util.*
+
+data class Commit(val id: Int, val time: Long, val files: Set<FilePath>)
 
 class FilesHistoryProvider(private val root: VirtualFile, private val dataGetter: IndexDataGetter) {
   private val commits = HashMap<Int, Commit>()
