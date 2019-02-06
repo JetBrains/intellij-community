@@ -72,7 +72,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   @NotNull
   @Override
   protected String getText(@NotNull Filter filter) {
-    return displayableText(getFilterValues(filter));
+    return displayableText(getFilterValues(filter), MAX_FILTER_VALUE_LENGTH);
   }
 
   @Nullable
@@ -82,7 +82,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  static String displayableText(@NotNull Collection<String> values) {
+  static String displayableText(@NotNull Collection<String> values, int maxLength) {
     String text;
     if (values.size() == 1) {
       text = ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
@@ -90,7 +90,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     else {
       text = StringUtil.join(values, "|");
     }
-    return StringUtil.shortenTextWithEllipsis(text, MAX_FILTER_VALUE_LENGTH, 0, true);
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, true);
   }
 
   @NotNull
@@ -110,8 +110,15 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     return false;
   }
 
+  @NotNull
+  private static String getActionName(@NotNull List<String> values) {
+    if (values.size() == 1) return ObjectUtils.notNull(ContainerUtil.getFirstItem(values));
+    return displayableText(values, 2 * MAX_FILTER_VALUE_LENGTH);
+  }
+  
   protected class PredefinedValueAction extends DumbAwareAction {
     @NotNull protected final List<String> myValues;
+
     private final boolean myAddToRecent;
 
     public PredefinedValueAction(@NotNull String value) {
@@ -119,7 +126,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     }
 
     public PredefinedValueAction(@NotNull List<String> values) {
-      this(displayableText(values), values, true);
+      this(getActionName(values), values, true);
     }
 
     public PredefinedValueAction(@NotNull String name, @NotNull List<String> values, boolean addToRecent) {
