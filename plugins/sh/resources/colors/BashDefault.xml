@@ -17,11 +17,6 @@
             <option name="FONT_TYPE" value="1"/>
         </value>
     </option>
-    <option name="BASH.HERE_DOC">
-        <value>
-            <option name="BACKGROUND" value="fff6f6"/>
-        </value>
-    </option>
     <option name="BASH.INTERNAL_COMMAND">
         <value>
             <option name="FOREGROUND" value="b0c95"/>
