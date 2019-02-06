@@ -64,7 +64,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         clearInjectorCache();
       }
     }, false, this);
-    final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
+
+    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
       @Override
       public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
@@ -74,8 +75,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       public void extensionRemoved(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         clearInjectorCache();
       }
-    };
-    LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).addExtensionPointListener(myListener, false, this);
+    }, false, this);
   }
 
   PsiDocumentManager getDocManager() {

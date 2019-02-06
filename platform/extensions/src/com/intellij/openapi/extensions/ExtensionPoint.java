@@ -75,6 +75,8 @@ public interface ExtensionPoint<T> {
   /**
    * Unregisters an extension of the specified type.
    *
+   * Please note that you can deregister service specifying empty implementation class.
+   *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
   @SuppressWarnings("unused")

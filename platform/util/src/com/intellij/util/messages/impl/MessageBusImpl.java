@@ -36,7 +36,7 @@ public class MessageBusImpl implements MessageBus {
   };
   @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
-  /**Well, it applies for all our topics. As no one notice it, I can judge that it's insignificant.pWell, it applies for all our topics. As no one notice it, I can judge that it's insignificant.Well, it applies for all our topics. As no one notice it, I can judge that it's insignificant.
+  /**
    * Root's order is empty
    * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
    * Sorting by these vectors lexicographically gives DFS order
