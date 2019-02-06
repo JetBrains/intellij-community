@@ -97,7 +97,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
       .withBorder(JBUI.Borders.empty())
       .addToLeft(createTitleTextComponent(project, list, speedSearch, placeInfo, colorsScheme, breadcrumb, selected));
 
-    title.setBorder(JBUI.Borders.empty(8, 6, 6, 0));
+    title.setBorder(JBUI.Borders.empty(8, 6, 5, 0));
     title.setBackground(getBackgroundColor(colorsScheme, selected));
 
     return title;
@@ -128,7 +128,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     editor.setBackgroundColor(getBackgroundColor(colorsScheme, selected));
-    editor.setBorder(JBUI.Borders.empty(0, 4, 4, 0));
+    editor.setBorder(JBUI.Borders.empty(0, 4, 6, 0));
 
     if (EMPTY_FILE_TEXT.equals(editor.getDocument().getText())) {
       editor.getMarkupModel().addRangeHighlighter(0,

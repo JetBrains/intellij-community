@@ -7,6 +7,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -134,6 +136,10 @@ public class RecentLocationsAction extends AnAction {
     JPanel topPanel = createHeaderPanel(title, createCheckbox(project, listWithFilter, e, showChanged));
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
+    Color borderColor = SystemInfoRt.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
+                        ? topPanel.getBackground()
+                        : null;
+
     Ref<Boolean> navigationRef = Ref.create(false);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mainPanel, list)
       .setProject(project)
@@ -148,7 +154,7 @@ public class RecentLocationsAction extends AnAction {
       })
       .setResizable(true)
       .setMovable(true)
-      .setBorderColor(SystemInfoRt.isMac && UIUtil.isUnderDarcula() ? topPanel.getBackground() : null)
+      .setBorderColor(borderColor)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
       .setMinSize(new Dimension(DEFAULT_WIDTH, MINIMUM_HEIGHT))
       .setLocateWithinScreenBounds(false)
