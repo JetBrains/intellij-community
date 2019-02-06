@@ -437,6 +437,16 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     //noinspection unchecked
     myExtensionsCacheAsArray = list.toArray((T[])Array.newInstance(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
+
+    if (oldList != null) {
+      for (T extension : oldList) {
+        notifyListenersOnRemove(extension, null, myListeners);
+      }
+    }
+    for (T extension : list) {
+      notifyListenersOnAdd(extension, null, myListeners);
+    }
+
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -444,6 +454,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           POINTS_IN_READONLY_MODE.remove(ExtensionPointImpl.this);
           myExtensionsCache = oldList;
           myExtensionsCacheAsArray = oldArray;
+
+          for (T extension : list) {
+            notifyListenersOnRemove(extension, null, myListeners);
+          }
+          if (oldList != null) {
+            for (T extension : oldList) {
+              notifyListenersOnAdd(extension, null, myListeners);
+            }
+          }
         }
       }
     });

@@ -135,13 +135,13 @@ public class MyTestInjector {
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");
 
-    final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
+    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
         XmlAttributeValue value = (XmlAttributeValue)context;
-        PsiElement parent = value.getParent();
-        if (parent instanceof XmlAttribute) {
-          @NonNls String attrName = ((XmlAttribute)parent).getLocalName();
+        PsiElement parent1 = value.getParent();
+        if (parent1 instanceof XmlAttribute) {
+          @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
           if ("jsInBraces".equals(attrName)) {
             registrar.startInjecting(js);
             String text = value.getText();
@@ -162,8 +162,7 @@ public class MyTestInjector {
       public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return Collections.singletonList(XmlAttributeValue.class);
       }
-    };
-    InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(myMultiHostInjector, parent);
+    }, parent);
 
     final LanguageInjector myInjector = (host, placesToInject) -> {
       if (host instanceof XmlAttributeValue) {
@@ -305,6 +304,8 @@ public class MyTestInjector {
       }
     };
 
+    // cannot use maskAll here because of InjectedLanguageEditingTest (ok for all other tests)
+    //((ExtensionPointImpl<LanguageInjector>)LanguageInjector.EXTENSION_POINT_NAME.getPoint(null)).maskAll(Collections.singletonList(myInjector), parent);
     LanguageInjector.EXTENSION_POINT_NAME.getPoint(null).registerExtension(myInjector, parent);
   }
 
