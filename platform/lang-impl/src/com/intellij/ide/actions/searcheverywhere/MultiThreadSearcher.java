@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -195,26 +196,27 @@ class MultiThreadSearcher implements SESearcher {
         do {
           ProgressIndicator wrapperIndicator = new SensitiveProgressWrapper(myIndicator);
           try {
-            myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, wrapperIndicator,
-                                        element -> {
-                                          try {
-                                            if (element == null) {
-                                              LOG.debug("Skip null element");
-                                              return true;
-                                            }
+            ProgressManager.getInstance()
+              .runProcess(() -> myContributor.fetchElements(myPattern, myUseNonProjectItems, filter, wrapperIndicator,
+                                                            element -> {
+                                                              try {
+                                                                if (element == null) {
+                                                                  LOG.debug("Skip null element");
+                                                                  return true;
+                                                                }
 
-                                            int priority = myContributor.getElementPriority(element, myPattern);
-                                            boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
-                                            if (!added) {
-                                              myAccumulator.setContributorHasMore(myContributor, true);
-                                            }
-                                            return added;
-                                          }
-                                          catch (InterruptedException e) {
-                                            LOG.warn("Search task was interrupted");
-                                            return false;
-                                          }
-                                        });
+                                                                int priority = myContributor.getElementPriority(element, myPattern);
+                                                                boolean added = myAccumulator.addElement(element, myContributor, priority, wrapperIndicator);
+                                                                if (!added) {
+                                                                  myAccumulator.setContributorHasMore(myContributor, true);
+                                                                }
+                                                                return added;
+                                                              }
+                                                              catch (InterruptedException e) {
+                                                                LOG.warn("Search task was interrupted");
+                                                                return false;
+                                                              }
+                                                            }), wrapperIndicator);
           }
           catch (ProcessCanceledException pce) {}
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
