@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -22,29 +22,18 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author cdr
  */
-public class ConcatenationInjectorManager extends SimpleModificationTracker {
-  public static final ExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationAwareInjector");
+public final class ConcatenationInjectorManager extends SimpleModificationTracker {
+  public static final ProjectExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");
 
-  public ConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
-    final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
-    concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
-      @Override
-      public void extensionAdded(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        registerConcatenationInjector(injector);
-      }
+  private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-      @Override
-      public void extensionRemoved(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        unregisterConcatenationInjector(injector);
-      }
-    });
+  public ConcatenationInjectorManager(@NotNull PsiManagerEx psiManagerEx) {
     // clear caches even on non-physical changes
     psiManagerEx.registerRunnableToRunOnAnyChange(this::incModificationCount);
   }
@@ -61,7 +50,7 @@ public class ConcatenationInjectorManager extends SimpleModificationTracker {
     InjectionRegistrarImpl registrar = new InjectionRegistrarImpl(project, containingFile, anchor, docManager);
     InjectionResult result = null;
     ConcatenationInjectorManager concatenationInjectorManager = getInstance(project);
-    for (ConcatenationAwareInjector concatenationInjector : concatenationInjectorManager.myConcatenationInjectors) {
+    for (ConcatenationAwareInjector concatenationInjector : concatenationInjectorManager.getConcatenationInjectors(project)) {
       concatenationInjector.getLanguagesToInject(registrar, operands);
       result = registrar.getInjectedResult();
       if (result != null) break;
@@ -82,7 +71,9 @@ public class ConcatenationInjectorManager extends SimpleModificationTracker {
 
     @Override
     public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-      if (myManager.myConcatenationInjectors.isEmpty()) return;
+      if (myManager.myConcatenationInjectors.isEmpty() && !CONCATENATION_INJECTOR_EP_NAME.hasAnyExtensions(context.getProject())) {
+        return;
+      }
 
       final PsiFile containingFile = ((InjectionRegistrarImpl)registrar).getHostPsiFile();
       Project project = containingFile.getProject();
@@ -139,12 +130,18 @@ public class ConcatenationInjectorManager extends SimpleModificationTracker {
     protected abstract Pair<PsiElement, PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context);
   }
 
-  private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull
+  private List<ConcatenationAwareInjector> getConcatenationInjectors(@NotNull Project project) {
+    return ContainerUtil.concat(myConcatenationInjectors, CONCATENATION_INJECTOR_EP_NAME.getExtensions(project));
+  }
+
+  @Deprecated
   public void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
     myConcatenationInjectors.add(injector);
     concatenationInjectorsChanged();
   }
 
+  @Deprecated
   public boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
     boolean removed = myConcatenationInjectors.remove(injector);
     concatenationInjectorsChanged();

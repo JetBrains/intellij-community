@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -66,7 +66,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.*;
@@ -1028,11 +1027,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
+  public <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> epName, @NotNull T extension) {
     assertInitialized();
-    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
-    extensionPoint.registerExtension(extension);
-    Disposer.register(myProjectFixture.getTestRootDisposable(), () -> extensionPoint.unregisterExtension(extension));
+    area.getExtensionPoint(epName).registerExtension(extension, myProjectFixture.getTestRootDisposable());
   }
 
   @NotNull

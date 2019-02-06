@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -26,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -395,9 +381,8 @@ public class MiscImportingTest extends MavenImportingTestCase {
 
   public void testUserPropertiesCanBeCustomizedByMavenImporters() {
     NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
-    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
-    extensionPoint.registerExtension(extension);
-
+    Disposable disposable = Disposer.newDisposable();
+    MavenImporter.EXTENSION_POINT_NAME.getPoint(null).registerExtension(extension, disposable);
     try {
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
@@ -405,7 +390,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
                     "<name>${myName}</name>");
     }
     finally {
-      extensionPoint.unregisterExtension(extension);
+      Disposer.dispose(disposable);
     }
 
     MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));

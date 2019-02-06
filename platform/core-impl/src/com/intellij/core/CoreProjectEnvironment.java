@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.mock.MockDumbService;
@@ -6,7 +6,6 @@ import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -100,16 +99,9 @@ public class CoreProjectEnvironment {
   }
 
   public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
-    final ExtensionPoint<T> extensionPoint = Extensions.getArea(myProject).getExtensionPoint(name);
-    extensionPoint.registerExtension(extension);
-    Disposer.register(myParentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(extension);
-      }
-    });
+    //noinspection TestOnlyProblems
+    name.getPoint(myProject).registerExtension(extension, myParentDisposable);
   }
-
 
   public <T> void registerProjectComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
     CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);

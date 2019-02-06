@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -140,7 +140,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   @Override
-  protected <T> void registerExtensionPoint(ExtensionPointName<T> extensionPointName, Class<T> aClass) {
+  protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
     super.registerExtensionPoint(extensionPointName, aClass);
     Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
   }

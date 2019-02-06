@@ -1,16 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.PlatformUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -39,7 +39,14 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class GrConcatenationInjector implements MultiHostInjector {
+public final class GrConcatenationInjector implements MultiHostInjector {
+  public GrConcatenationInjector() {
+    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix())) {
+      // fix https://code.google.com/p/android/issues/detail?id=201624
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     assert context instanceof GrLiteral;

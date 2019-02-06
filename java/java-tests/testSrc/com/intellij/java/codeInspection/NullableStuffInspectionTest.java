@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
@@ -45,21 +44,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void setUp() throws Exception {
     super.setUp();
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
-    Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).registerExtension(myGeneratedSourcesFilter);
+    GeneratedSourcesFilter.EP_NAME.getPoint(null).registerExtension(myGeneratedSourcesFilter, getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      myInspection = null;
-      Extensions.getRootArea().getExtensionPoint(GeneratedSourcesFilter.EP_NAME).unregisterExtension(myGeneratedSourcesFilter);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    myInspection = null;
+    super.tearDown();
   }
 
   public void testProblems() { doTest();}
@@ -138,10 +129,10 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testNullableSiblingOverriding() { doTest(); }
-  
+
   public void testNonAnnotatedSiblingOverriding() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
-    doTest(); 
+    doTest();
   }
 
   public void testHonorSuperParameterDefault() {

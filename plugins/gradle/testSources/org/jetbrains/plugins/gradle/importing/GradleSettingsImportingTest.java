@@ -16,8 +16,6 @@ import com.intellij.facet.FacetManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -48,6 +46,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,10 +66,8 @@ import static com.intellij.openapi.externalSystem.service.project.settings.Confi
 
 /**
  * Created by Nikita.Skvortsov
- * date: 18.09.2017.
  */
 public class GradleSettingsImportingTest extends GradleImportingTestCase {
-
   public static final String IDEA_EXT_PLUGIN_VERSION = "0.5";
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -144,9 +141,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("application");
-    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
-    ep.reset();
-    ep.registerExtension(testExtension);
+    maskRunImporter(testExtension);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
@@ -181,13 +176,14 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertNull(app2Settings.get("jvmArgs"));
   }
 
+  private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {
+    PlatformTestUtil.maskExtensions(RunConfigurationImporter.EP_NAME, Collections.singletonList(testExtension), getTestRootDisposable());
+  }
 
   @Test
   public void testDefaultRCSettingsImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
-    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
-    ep.reset();
-    ep.registerExtension(appcConfigImporter);
+    maskRunImporter(appcConfigImporter);
 
     importProject(
       withGradleIdeaExtPlugin(
@@ -214,9 +210,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testDefaultsAreUsedDuringImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
-    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
-    ep.reset();
-    ep.registerExtension(appcConfigImporter);
+    maskRunImporter(appcConfigImporter);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
@@ -255,9 +249,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testBeforeRunTaskImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
-    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
-    ep.reset();
-    ep.registerExtension(appcConfigImporter);
+    maskRunImporter(appcConfigImporter);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
@@ -295,12 +287,8 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testFacetSettingsImport() throws Exception {
-
     TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("spring");
-    ExtensionPoint<FacetConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(FacetConfigurationImporter.EP_NAME);
-    ep.reset();
-    ep.registerExtension(testExtension);
-
+    PlatformTestUtil.maskExtensions(FacetConfigurationImporter.EP_NAME, Collections.singletonList(testExtension), getTestRootDisposable());
     importProject(
       withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.*\n" +

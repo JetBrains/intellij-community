@@ -31,18 +31,17 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -54,7 +53,6 @@ import java.awt.event.KeyEvent
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
-
   void testNewItemsOnLongerPrefix() {
     myFixture.configureByText("a.java", """
       class Foo {
@@ -640,11 +638,16 @@ public interface Test {
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
     registerCompletionContributor(contributor, myFixture.testRootDisposable, order)
   }
-  static def registerCompletionContributor(final Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
+
+  static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
+    def ep = CompletionContributor.EP.getPoint(null)
     def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
-    ep.registerExtension(bean, order)
-    Disposer.register(parentDisposable, { ep.unregisterExtension(bean) } as Disposable)
+    if (order == LoadingOrder.FIRST) {
+      PlatformTestUtil.maskExtensions(CompletionContributor.EP, Collections.singletonList(bean), parentDisposable)
+    }
+    else {
+      ep.registerExtension(bean, order, parentDisposable)
+    }
   }
 
   void testLeftRightMovements() {

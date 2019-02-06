@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.lang.jvm.facade.JvmFacade;
@@ -35,7 +33,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   private final JavaFileManager myFileManager;
   private final PackageIndex myPackageIndex;
 
-  public JavaCoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
+  public JavaCoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     super(parentDisposable, applicationEnvironment);
 
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));

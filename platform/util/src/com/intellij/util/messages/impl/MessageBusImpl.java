@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -36,7 +36,7 @@ public class MessageBusImpl implements MessageBus {
   };
   @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
-  /**
+  /**Well, it applies for all our topics. As no one notice it, I can judge that it's insignificant.pWell, it applies for all our topics. As no one notice it, I can judge that it's insignificant.Well, it applies for all our topics. As no one notice it, I can judge that it's insignificant.
    * Root's order is empty
    * Child bus's order is its parent order plus one more element, an int that's bigger than that of all sibling buses that come before
    * Sorting by these vectors lexicographically gives DFS order

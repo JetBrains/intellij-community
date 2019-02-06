@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -28,6 +29,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +82,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
   public AllFileTemplatesConfigurable(Project project) {
+    if (PlatformUtils.isDataGrip()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
     myProject = project;
     myManager = FileTemplateManager.getInstance(project);
     myScheme = myManager.getCurrentScheme();

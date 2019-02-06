@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +48,9 @@ public abstract class SmartExtensionPoint<Extension, V> implements ExtensionPoin
       if (result == null) {
         myExtensionPoint = getExtensionPoint();
         // EP will not add duplicated listener, so, it is safe to not care about is already added
-        myExtensionPoint.addExtensionPointListener(this);
+        myExtensionPoint.addExtensionPointListener(this, false, null);
 
-        List<V> registeredExtensions = ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(), this::getExtension);
+        List<V> registeredExtensions = ContainerUtilRt.mapNotNull(myExtensionPoint.getExtensionList(), this::getExtension);
         result = new ArrayList<>(myExplicitExtensions.size() + registeredExtensions.size());
         result.addAll(myExplicitExtensions);
         result.addAll(registeredExtensions);

@@ -25,4 +25,9 @@ public class ServiceDescriptor {
   public String getImplementation() {
     return testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode() ? testServiceImplementation : serviceImplementation;
   }
+
+  @Override
+  public String toString() {
+    return "interface: " + getInterface() + ", implementation: " + getImplementation();
+  }
 }

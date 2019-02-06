@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -31,7 +31,6 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
   private CountDownLatch CONTINUE_MODIFY;
   private CountDownLatch READY_TO_READ;
   private static final String LOCK_ERROR_TEXT = "Possible dead lock occurred!";
-  private VcsRepositoryCreator myMockCreator;
 
   @Override
   protected void setUp() throws Exception {
@@ -44,9 +43,9 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     READY_TO_READ = new CountDownLatch(1);
     CONTINUE_MODIFY = new CountDownLatch(1);
 
-    myMockCreator = createMockRepositoryCreator();
+    VcsRepositoryCreator mockCreator = createMockRepositoryCreator();
     ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
-    point.registerExtension(myMockCreator);
+    point.registerExtension(mockCreator, getTestRootDisposable());
 
     myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
   }
@@ -61,9 +60,6 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     try {
       if (myProjectLevelVcsManager != null) {
         myProjectLevelVcsManager.unregisterVcs(myVcs);
-      }
-      if (myMockCreator != null) {
-        getExtensionPoint().unregisterExtension(myMockCreator);
       }
     }
     catch (Throwable e) {

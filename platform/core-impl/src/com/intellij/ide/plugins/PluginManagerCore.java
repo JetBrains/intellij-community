@@ -1429,14 +1429,12 @@ public class PluginManagerCore {
     }
 
     registerExtensionPointsAndExtensions(Extensions.getRootArea(), result);
-    Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
+    //noinspection deprecation
+    Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
       @Override
       public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
         registerExtensionPointsAndExtensions(Extensions.getArea(areaInstance), result);
       }
-
-      @Override
-      public void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance) { }
     });
 
     ourPlugins = pluginDescriptors;
