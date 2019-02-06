@@ -314,6 +314,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testSuperMethodWithAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }

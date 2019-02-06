@@ -66,6 +66,9 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      String text = superMethod.getName() + superMethod.getParameterList().getText();
+                     if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && superMethod.getAnnotation() != null) {
+                       text += " " + superMethod.getAnnotation().getText();
+                     }
                      LookupElementBuilder element = LookupElementBuilder.create(text);
                      result.addElement(TailTypeDecorator.withTail(element, TailType.CASE_COLON));
                      seenNames.add(superMethod.getName());
