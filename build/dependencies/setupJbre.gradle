@@ -72,7 +72,7 @@ def createUntarJbreTask(File downloadOutputs, String taskName, String platform) 
         include 'lib/tools.jar'
         into 'jre'
       }
-      into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name - '.tar.gz'}/" }
+      into { "${downloadOutputs.parent}/${downloadOutputs.name - '.tar.gz'}/" }
       includeEmptyDirs = false
     }
   }
