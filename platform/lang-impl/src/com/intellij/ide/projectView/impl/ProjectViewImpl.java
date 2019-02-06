@@ -559,7 +559,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void createToolbarActions() {
     if (myActionGroup == null) return;
-    List<AnAction> titleActions = ContainerUtil.newSmartList();
     myActionGroup.removeAll();
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       myActionGroup.addAction(new PaneOptionAction(myFlattenPackages, IdeBundle.message("action.flatten.packages"),
@@ -697,6 +696,19 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myActionGroup.addAction(new FoldersAlwaysOnTopAction()).setAsSecondary(true);
     myActionGroup.addAction(ShowExcludedFilesAction.INSTANCE).setAsSecondary(true);
 
+    getProjectViewPaneById(myCurrentViewId == null ? getDefaultViewId() : myCurrentViewId).addToolbarActions(myActionGroup);
+
+    List<AnAction> titleActions = ContainerUtil.newSmartList();
+    createTitleActions(titleActions);
+    if (!titleActions.isEmpty()) {
+      ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+      if (window != null) {
+        window.setTitleActions(titleActions.toArray(AnAction.EMPTY_ARRAY));
+      }
+    }
+  }
+
+  protected void createTitleActions(@NotNull List<AnAction> titleActions) {
     if (!myAutoScrollFromSourceHandler.isAutoScrollEnabled()) {
       titleActions.add(new ScrollFromSourceAction());
     }
@@ -723,12 +735,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
     collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     titleActions.add(collapseAllAction);
-    getProjectViewPaneById(myCurrentViewId == null ? getDefaultViewId() : myCurrentViewId).addToolbarActions(myActionGroup);
-
-    ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (window != null) {
-      window.setTitleActions(titleActions.toArray(AnAction.EMPTY_ARRAY));
-    }
   }
 
   protected boolean isShowMembersOptionSupported() {
