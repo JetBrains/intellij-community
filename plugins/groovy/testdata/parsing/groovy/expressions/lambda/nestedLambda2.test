@@ -30,5 +30,6 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(->)('->')
           PsiWhiteSpace(' ')
-          Reference expression
-            PsiElement(identifier)('b')
+          Lambda body
+            Reference expression
+              PsiElement(identifier)('b')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
@@ -139,7 +139,7 @@ class ITNProxy {
                         @Nullable String password,
                         @NotNull ErrorBean error,
                         @NotNull IntConsumer onSuccess,
-                        @NotNull Consumer<? super Exception> onError) {
+                        @NotNull Consumer<Exception> onError) {
     if (StringUtil.isEmptyOrSpaces(login)) {
       login = DEFAULT_USER;
       password = DEFAULT_PASS;
@@ -175,6 +175,9 @@ class ITNProxy {
 
     HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), createRequest(login, password, error));
     int responseCode = connection.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST && StringUtil.isEmpty(password)) {
+      throw new NoSuchEAPUserException(login);
+    }
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw new InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode));
     }

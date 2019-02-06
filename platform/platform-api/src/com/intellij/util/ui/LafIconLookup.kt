@@ -42,5 +42,5 @@ object LafIconLookup {
   fun getDisabledIcon(name: String): Icon = getIcon(name, enabled = false)
 
   @JvmStatic
-  fun getSelectedIcon(name: String): Icon = getIcon(name, selected = true)
+  fun getSelectedIcon(name: String): Icon = findIcon(name, selected = true) ?: getIcon(name)
 }

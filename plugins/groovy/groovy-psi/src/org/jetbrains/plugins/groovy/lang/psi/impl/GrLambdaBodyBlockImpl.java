@@ -4,17 +4,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 
-public class GrLambdaBlockImpl extends GrBlockImpl {
+public class GrLambdaBodyBlockImpl extends GrBlockImpl implements GrLambdaBody {
 
-  public GrLambdaBlockImpl(@NotNull IElementType type, CharSequence buffer) {
+  public GrLambdaBodyBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
   }
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
-    visitor.visitLambdaBlock(this);
+    visitor.visitLambdaBody(this);
   }
 
   @Override
