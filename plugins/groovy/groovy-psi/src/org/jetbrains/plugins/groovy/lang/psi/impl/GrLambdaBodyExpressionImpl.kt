@@ -2,15 +2,21 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 
 class GrLambdaBodyExpressionImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrLambdaBody {
+  override fun getReturnType(): PsiType? = getExpression().type
+
+  override fun getLambdaExpression(): GrLambdaExpression = requireNotNull(parentOfType())
 
   fun getExpression() : GrExpression = findNotNullChildByClass(GrExpression::class.java)
 

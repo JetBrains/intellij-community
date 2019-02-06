@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public interface Instruction {
+  Instruction[] EMPTY_ARRAY = new Instruction[0];
 
   @NotNull
   Iterable<Instruction> successors(@NotNull CallEnvironment environment);
