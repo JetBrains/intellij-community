@@ -533,7 +533,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected static class Variable {
+  public static class Variable {
     private final XTestValueNode myValueNode;
 
     public Variable(XValue value) {
