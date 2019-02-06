@@ -254,6 +254,8 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+    <applicationService serviceInterface="com.intellij.ide.CommandLineWaitingManager"
+                        serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -502,6 +504,7 @@
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
 
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 

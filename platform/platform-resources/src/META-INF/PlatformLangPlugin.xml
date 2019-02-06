@@ -23,8 +23,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager"/>
-    <applicationService serviceInterface="com.intellij.ide.CommandLineWaitingManager"
-                        serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
