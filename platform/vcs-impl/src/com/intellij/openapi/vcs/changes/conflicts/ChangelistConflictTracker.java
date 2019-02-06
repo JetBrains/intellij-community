@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author Dmitry Avdeev
- */
 public class ChangelistConflictTracker {
 
   private final Map<String, Conflict> myConflicts = Collections.synchronizedMap(new LinkedHashMap<String, Conflict>());
@@ -86,7 +83,7 @@ public class ChangelistConflictTracker {
         }
         Document document = e.getDocument();
         VirtualFile file = myDocumentManager.getFile(document);
-        if (ProjectUtil.guessProjectForFile(file) == myProject) {
+        if (file != null && ProjectUtil.guessProjectForFile(file) == myProject) {
           synchronized (myCheckSetLock) {
             myCheckSet.add(file);
           }
@@ -131,10 +128,9 @@ public class ChangelistConflictTracker {
     }, InvokeAfterUpdateMode.SILENT, null, null);
   }
 
-  private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null || !shouldDetectConflictsFor(file)) {
-      return;
-    }
+  private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {
+    if (!shouldDetectConflictsFor(file)) return;
+
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
     if (changeList == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
       return;
