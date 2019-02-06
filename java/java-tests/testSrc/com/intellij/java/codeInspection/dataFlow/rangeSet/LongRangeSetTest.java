@@ -765,6 +765,7 @@ public class LongRangeSetTest {
     assertEquals("{-2..100}: even", modRange(0, 100, 2, 0b1).unite(point(-2)).toString());
     assertEquals("{-3, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-3)).toString());
     assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-4)).toString());
+    assertEquals("{Long.MIN_VALUE..9223372036854775744}", range(1, 63).unite(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 64, 0b1)).toString());
   }
   
   @Test
