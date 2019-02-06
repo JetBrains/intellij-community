@@ -55,6 +55,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
@@ -137,9 +138,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               }
             });
           }
-          catch (IOException e) {
-            LOG.warn(e);
-          }
+          catch (UnknownHostException e) { LOG.debug(e); }
+          catch (IOException e) { LOG.warn(e); }
         }
       }.queue();
     }
