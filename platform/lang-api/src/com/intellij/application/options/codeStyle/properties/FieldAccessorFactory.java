@@ -6,11 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-class PropertyAccessorFactory {
+class FieldAccessorFactory {
 
   private final Field myField;
 
-  PropertyAccessorFactory(Field field) {
+  FieldAccessorFactory(Field field) {
     myField = field;
   }
 
@@ -56,7 +56,7 @@ class PropertyAccessorFactory {
   }
 
   @Nullable
-  CodeStylePropertyAccessor createAccessor(@NotNull Object codeStyleObject) {
+  CodeStyleFieldAccessor createAccessor(@NotNull Object codeStyleObject) {
     if (mayHaveAccessor()) {
       switch (getValueType()) {
         case BOOLEAN:
@@ -95,7 +95,7 @@ class PropertyAccessorFactory {
            myField.getAnnotation(Deprecated.class) == null;
   }
 
-  private static class TabCharPropertyAccessor extends CodeStylePropertyAccessor<Boolean,String> {
+  private static class TabCharPropertyAccessor extends CodeStyleFieldAccessor<Boolean,String> {
 
     TabCharPropertyAccessor(@NotNull Object object, @NotNull Field field) {
       super(object, field);

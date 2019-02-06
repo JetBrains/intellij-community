@@ -28,29 +28,20 @@ public abstract class AbstractCodeStylePropertyMapper {
     return getAccessorMap().keySet().stream().sorted().collect(Collectors.toList());
   }
 
-  public List<String> enumPropertiesFor(@NotNull Class... codeStyleClass) {
-    final Map<String, CodeStylePropertyAccessor> accessorMap = myAccessorMap.getValue();
-    return accessorMap.keySet().stream().filter(name -> {
-      CodeStylePropertyAccessor accessor = accessorMap.get(name);
-      for (Class aClass : codeStyleClass) {
-        if (accessor.getObjectClass().equals(aClass)) {
-          return true;
-        }
-      }
-      return false;
-    }).sorted().collect(Collectors.toList());
-  }
-
   private Map<String, CodeStylePropertyAccessor> createMap() {
     Map<String, CodeStylePropertyAccessor> accessorMap = ContainerUtil.newHashMap();
     for (CodeStyleObjectDescriptor descriptor : getSupportedFields()) {
       addAccessorsFor(accessorMap, descriptor.getCodeStyleObject(), descriptor.getSupportedFields());
     }
+    addAdditionalAccessors(accessorMap);
     return accessorMap;
   }
 
   @NotNull
   protected abstract List<CodeStyleObjectDescriptor> getSupportedFields();
+
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+  }
 
   private void addAccessorsFor(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap,
                                @NotNull Object codeStyleObject,
@@ -69,7 +60,7 @@ public abstract class AbstractCodeStylePropertyMapper {
 
   @Nullable
   protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
-    return new PropertyAccessorFactory(field).createAccessor(codeStyleObject);
+    return new FieldAccessorFactory(field).createAccessor(codeStyleObject);
   }
 
   private List<Field> getCodeStyleFields(Class codeStyleClass) {

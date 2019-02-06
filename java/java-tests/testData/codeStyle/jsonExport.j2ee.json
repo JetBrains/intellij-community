@@ -150,6 +150,10 @@
       "place_assignment_sign_on_next_line": false,
       "prefer_longer_names": true,
       "prefer_parameters_wrap": false,
+      "repeat_annotations": [
+        "com.jetbrains.First",
+        "com.jetbrains.Second"
+      ],
       "repeat_synchronized": true,
       "replace_instanceof_and_cast": false,
       "replace_null_check": true,

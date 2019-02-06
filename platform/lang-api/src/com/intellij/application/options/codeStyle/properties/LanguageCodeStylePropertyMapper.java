@@ -22,6 +22,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   private @NotNull final Language myLanguage;
   private @NotNull final String myLanguageDomainId;
   private @Nullable final LanguageCodeStyleSettingsProvider mySettingsProvider;
+  private @NotNull final List<CustomCodeStyleSettings> myCustomSettings;
 
   public LanguageCodeStylePropertyMapper(@NotNull CodeStyleSettings settings,
                                          @NotNull Language language,
@@ -30,6 +31,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     myLanguage = language;
     myLanguageDomainId = languageDomainId == null ? myLanguage.getID().toLowerCase(Locale.ENGLISH) : languageDomainId;
     mySettingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    myCustomSettings = getCustomSettings();
   }
 
   @Nullable
@@ -42,6 +44,17 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
     return super.getAccessor(codeStyleObject, field);
   }
 
+  @Override
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+    if (mySettingsProvider != null) {
+      for (CustomCodeStyleSettings customSettings :  myCustomSettings) {
+        for (CodeStylePropertyAccessor accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
+          accessorMap.put(accessor.getPropertyName(), accessor);
+        }
+      }
+    }
+  }
+
   @NotNull
   @Override
   protected List<CodeStyleObjectDescriptor> getSupportedFields() {
@@ -51,7 +64,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(indentOptions, getSupportedIndentOptions()));
     }
     fieldsDescriptors.add(new CodeStyleObjectDescriptor(getRootSettings().getCommonSettings(myLanguage), getSupportedLanguageFields()));
-    for (CustomCodeStyleSettings customSettings : getCustomSettings()) {
+    for (CustomCodeStyleSettings customSettings : myCustomSettings) {
       fieldsDescriptors.add(new CodeStyleObjectDescriptor(customSettings, null));
     }
     return fieldsDescriptors;
