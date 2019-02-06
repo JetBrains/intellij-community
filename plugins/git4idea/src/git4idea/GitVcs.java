@@ -53,6 +53,7 @@ import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -429,5 +430,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean arePartialChangelistsSupported() {
     return true;
+  }
+
+  @TestOnly
+  public GitVFSListener getVFSListener() {
+    return myVFSListener;
   }
 }
