@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -50,15 +52,22 @@ val latencyMap: MutableMap<LatencyDistributionRecordKey, LatencyDistributionReco
 
 var currentLatencyRecordKey: LatencyDistributionRecordKey? = null
 
-fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
-  val key = currentLatencyRecordKey ?: run {
-    val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
-    LatencyDistributionRecordKey(fileType.name)
+class LatenciometerListener : LatencyListener {
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(LatencyListener.TOPIC, this)
   }
-  val latencyRecord = latencyMap.getOrPut(key) {
-    LatencyDistributionRecord(key)
+
+  override fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
+    val key = currentLatencyRecordKey ?: run {
+      val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+      LatencyDistributionRecordKey(fileType.name)
+    }
+    val latencyRecord = latencyMap.getOrPut(key) {
+      LatencyDistributionRecord(key)
+    }
+    latencyRecord.update(getActionKey(action), latencyInMS)
   }
-  latencyRecord.update(getActionKey(action), latencyInMS)
 }
 
 fun getActionKey(action: String): String =
