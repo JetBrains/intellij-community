@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 @JarTestSuiteRunner.ExcludeClasses({
   PatchApplyingRevertingTest.class, // Abstract test
   UpdaterTestSuite.class, // Self
+  StudioPatchUpdaterIntegrationTest.class, // Separate Bazel target
 })
 public class UpdaterTestSuite {
 

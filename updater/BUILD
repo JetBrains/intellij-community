@@ -1,4 +1,5 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
+load("//tools/base/bazel:coverage.bzl", "coverage_java_test")
 
 # managed by go/iml_to_build
 iml_module(
@@ -36,5 +37,28 @@ iml_module(
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
         "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
+        "//tools/idea/.idea/libraries:Guava[test]",
     ],
+)
+
+java_binary(
+    name = "updater",
+    main_class = "com.intellij.updater.Runner",
+    # This uses the jar rather than the iml_module to avoid packaging jdk langtools
+    # TODO(b/124044861): switch to using the below java_binary with deploy_env once we are on a bazel that supports it.
+    runtime_deps = [
+        ":intellij.platform.updater.jar",
+        "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
+        "//prebuilts/tools/common/m2/repository/it/unimi/dsi/fastutil/7.2.1:jar",
+        "//tools/idea/.idea/libraries:Log4J",
+        "//tools/idea/.idea/libraries:jna",
+    ],
+)
+
+coverage_java_test(
+    name = "integration_test",
+    data = [":updater_deploy.jar"],
+    tags = ["no_test_windows"],  # b/77288863
+    test_class = "com.android.studio.updater.StudioPatchUpdaterIntegrationTest",
+    runtime_deps = [":intellij.platform.updater_testlib"],
 )
