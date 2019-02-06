@@ -46,7 +46,7 @@ public class PresentationTest extends LightPlatformTestCase {
     }
   }
 
-  public void testPresentationSetText() {
+  public void testSetTextWithUnderscores() {
     for (Data testCase : data) {
       Presentation p = new Presentation();
       p.setText(testCase.inputTextsUnderscore);
@@ -55,7 +55,9 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(testCase.index, p.getDisplayedMnemonicIndex());
       assertEquals(testCase.fullMenuText, p.getTextWithMnemonic());
     }
+  }
 
+  public void testSetTextWithAmpersands() {
     for (Data testCase : data) {
       Presentation p = new Presentation();
       p.setText(testCase.inputTextsAmpersand);
@@ -66,7 +68,9 @@ public class PresentationTest extends LightPlatformTestCase {
 
       assertTrue(testCase.menuText.length() > p.getDisplayedMnemonicIndex());
     }
+  }
 
+  public void testGetTextWithMnemonic() {
     for (Data testCase : data) {
       Presentation p1 = new Presentation();
       p1.setText(testCase.inputTextsUnderscore);
@@ -78,12 +82,28 @@ public class PresentationTest extends LightPlatformTestCase {
       assertEquals(p1.getMnemonic(), p2.getMnemonic());
       assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
     }
+  }
 
+  public void testMnemonicCharacters() {
     for (Data testCase : data) {
       Presentation p1 = new Presentation();
       p1.setText(testCase.inputTextsAmpersand);
       Presentation p2 = new Presentation();
       p2.setText(testCase.inputTextsUnderscore);
+
+      assertEquals(p1.getText(), p2.getText());
+      assertEquals(p1.getMnemonic(), p2.getMnemonic());
+      assertEquals(p1.getDisplayedMnemonicIndex(), p2.getDisplayedMnemonicIndex());
+    }
+  }
+
+  public void testPresentationCopying() {
+    for (Data testCase : data) {
+      Presentation p1 = new Presentation();
+      p1.setText(testCase.inputTextsUnderscore);
+
+      Presentation p2 = new Presentation();
+      p2.copyFrom(p1);
 
       assertEquals(p1.getText(), p2.getText());
       assertEquals(p1.getMnemonic(), p2.getMnemonic());

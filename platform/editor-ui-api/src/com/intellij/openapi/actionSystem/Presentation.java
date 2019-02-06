@@ -354,7 +354,7 @@ public final class Presentation implements Cloneable {
     if (!Objects.equals(myText, presentation.myText) ||
         myDisplayedMnemonicIndex != presentation.myDisplayedMnemonicIndex ||
         myMnemonic != presentation.myMnemonic) {
-      setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
+      setText(presentation.getTextWithMnemonic());
     }
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
