@@ -5,6 +5,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsageTriggerCollector;
+import com.intellij.internal.statistic.utils.PluginType;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +17,7 @@ public class SearchEverywhereUsageTriggerCollector extends ProjectUsageTriggerCo
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
-  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "nonPublicContributor";
+  private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
 
   public static final String DIALOG_OPEN = "dialogOpen";
   public static final String TAB_SWITCHED = "tabSwitched";
