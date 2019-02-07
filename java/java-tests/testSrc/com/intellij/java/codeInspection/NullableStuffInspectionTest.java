@@ -11,8 +11,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase {
   private NullableStuffInspection myInspection = new NullableStuffInspection();
@@ -44,7 +47,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   public void setUp() throws Exception {
     super.setUp();
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
-    GeneratedSourcesFilter.EP_NAME.getPoint(null).registerExtension(myGeneratedSourcesFilter, getTestRootDisposable());
+    PlatformTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, Collections.singletonList(myGeneratedSourcesFilter), getTestRootDisposable());
   }
 
   @Override

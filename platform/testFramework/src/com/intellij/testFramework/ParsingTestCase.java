@@ -383,6 +383,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   public void registerMockInjectedLanguageManager() {
     registerExtensionPoint(Extensions.getArea(myProject), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+
     registerExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
     myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
   }

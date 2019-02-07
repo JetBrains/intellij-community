@@ -3,6 +3,7 @@ package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -105,7 +106,8 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
 
   public void testNoSubpackagesAccess() throws Exception {
     PsiElementFinder mock = createMockFinder();
-    PsiElementFinder.EP.getPoint(myProject).registerExtension(mock, getTestRootDisposable());
+    ExtensionPointImpl<PsiElementFinder> point = (ExtensionPointImpl<PsiElementFinder>)PsiElementFinder.EP.getPoint(myProject);
+    point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable());
 
     PsiReference reference = configure();
     assertNull(reference.resolve());

@@ -23,10 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.BaseExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -135,6 +132,10 @@ public class PlatformTestUtil {
 
   public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
     ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
+  }
+
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
   }
 
   public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
