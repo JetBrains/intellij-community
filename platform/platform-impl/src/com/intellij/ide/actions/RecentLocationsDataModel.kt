@@ -5,6 +5,7 @@ import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT
 import com.intellij.ide.actions.RecentLocationsAction.showChanged
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -219,6 +220,10 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
     val endOffset = rangeMarker.endOffset
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, startOffset, endOffset) { info ->
       if (info.startOffset < startOffset || info.endOffset > endOffset) {
+        return@processHighlights true
+      }
+
+      if (info.severity != HighlightSeverity.INFORMATION) {
         return@processHighlights true
       }
 
