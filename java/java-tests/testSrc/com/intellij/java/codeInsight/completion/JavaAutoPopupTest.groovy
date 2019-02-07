@@ -41,7 +41,6 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -640,14 +639,7 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def ep = CompletionContributor.EP.getPoint(null)
-    def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
-    if (order == LoadingOrder.FIRST) {
-      PlatformTestUtil.maskExtensions(CompletionContributor.EP, Collections.singletonList(bean), parentDisposable)
-    }
-    else {
-      ep.registerExtension(bean, order, parentDisposable)
-    }
+    CompletionContributor.EP.getPoint(null).registerExtension(new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name), order, parentDisposable)
   }
 
   void testLeftRightMovements() {

@@ -16,8 +16,7 @@ import org.picocontainer.defaults.DefaultPicoContainer;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author AKireyev
@@ -157,6 +156,21 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testCancelledRegistration() {
+    doTestInterruptedAdapterProcessing(() -> {
+      throw new ProcessCanceledException();
+    }, ProcessCanceledException.class);
+  }
+
+  @Test
+  public void testNotApplicableRegistration() {
+    // ExtensionNotApplicableException doesn't interrupt adapter processing,
+    // so, doTestInterruptedAdapterProcessing here is not truly logical, but still eliminates code duplication
+    doTestInterruptedAdapterProcessing(() -> {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }, null);
+  }
+
+  private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @Nullable Class<? extends Throwable> expectedErrorClass) {
     ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
     MyShootingComponentAdapter adapter = stringAdapter();
 
@@ -166,15 +180,20 @@ public class ExtensionPointImplTest {
     // registers a wrapping adapter
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, null);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
-    adapter.setFire(true);
-    try {
-      extensionPoint.getExtensionList();
-      fail("PCE expected");
+    adapter.setFire(firework);
+
+    if (expectedErrorClass == null) {
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+      adapter.setFire(null);
+      // even if now extension is applicable, adapters is not reprocessed and result is the same
+      assertThat(extensionPoint.getExtensionList()).hasSize(2);
+      return;
     }
-    catch (ProcessCanceledException ignored) {
+    else {
+      assertThatThrownBy(() -> extensionPoint.getExtensionList()).isInstanceOf(expectedErrorClass);
     }
 
-    adapter.setFire(false);
+    adapter.setFire(null);
     List<String> extensions = extensionPoint.getExtensionList();
     assertThat(extensionPoint.getExtensionList()).hasSize(3);
 
@@ -201,7 +220,9 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, null);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
-    adapter.setFire(true);
+    adapter.setFire(() -> {
+      throw new ProcessCanceledException();
+    });
     try {
       extensionPoint.getExtensions();
       fail("PCE expected");
@@ -209,7 +230,7 @@ public class ExtensionPointImplTest {
     catch (ProcessCanceledException ignored) { }
     assertThat(extensions).contains("first", "second");
 
-    adapter.setFire(false);
+    adapter.setFire(null);
     extensionPoint.getExtensions();
     assertThat(extensions).contains("first", "second", "");
   }
@@ -242,26 +263,24 @@ public class ExtensionPointImplTest {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 
-  private static class MyShootingComponentAdapter extends ExtensionComponentAdapter {
-    private boolean myFire;
+  private static final class MyShootingComponentAdapter extends ExtensionComponentAdapter {
+    private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
       super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY);
     }
 
-    public void setFire(boolean fire) {
+    public void setFire(@Nullable Runnable fire) {
       myFire = fire;
     }
 
     @NotNull
     @Override
     public Object createInstance(@Nullable PicoContainer container) {
-      if (myFire) {
-        throw new ProcessCanceledException();
+      if (myFire != null) {
+        myFire.run();
       }
-      else {
-        return super.createInstance(container);
-      }
+      return super.createInstance(container);
     }
   }
 }

@@ -143,12 +143,18 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       @Override
       public void dispose() {
         synchronized (ExtensionPointImpl.this) {
-          int index = ContainerUtil.indexOfIdentity(myLoadedAdapters, adapter);
+          List<ExtensionComponentAdapter> list = myLoadedAdapters;
+          int index = ContainerUtil.indexOfIdentity(list, adapter);
+          if (index < 0) {
+            // if error occurred during processAdapters, adapter maybe moved from myLoadedAdapters to myAdapters
+            list = myAdapters;
+            index = ContainerUtil.indexOfIdentity(list, adapter);
+          }
           if (index < 0) {
             LOG.error("Extension to be removed not found: " + extension);
           }
 
-          myLoadedAdapters.remove(index);
+          list.remove(index);
           clearCache();
           notifyListenersOnRemove(extension, adapter.getPluginDescriptor(), myListeners);
         }
@@ -356,17 +362,15 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (ProcessCanceledException e) {
           // error occurred - remove loaded adapters
-          addBackUnLoadedAdapters(adapters, i);
+          addBackNotLoadedAdapters(adapters, i);
           throw e;
         }
         catch (Throwable e) {
-          // to not add it on ProcessCanceledException
-          adapters[i] = null;
           try {
             LOG.error(e);
           }
           catch (Throwable testError) {
-            addBackUnLoadedAdapters(adapters, i);
+            addBackNotLoadedAdapters(adapters, i);
             throw testError;
           }
         }
@@ -382,12 +386,11 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  private synchronized void addBackUnLoadedAdapters(@NotNull ExtensionComponentAdapter[] allAdapters, int size) {
-    List<ExtensionComponentAdapter> adapters = new ArrayList<>();
-    for (ExtensionComponentAdapter adapter : allAdapters) {
-      if (adapter != null && (myLoadedAdapters.size() < size || !ContainerUtil.containsIdentity(myLoadedAdapters, adapter))) {
-        adapters.add(adapter);
-      }
+  private synchronized void addBackNotLoadedAdapters(@NotNull ExtensionComponentAdapter[] allAdapters, int failedIndex) {
+    List<ExtensionComponentAdapter> adapters = new ArrayList<>(allAdapters.length - failedIndex);
+    //noinspection ManualArrayToCollectionCopy
+    for (int i = failedIndex; i < allAdapters.length; i++) {
+      adapters.add(allAdapters[i]);
     }
     myAdapters = adapters;
   }
