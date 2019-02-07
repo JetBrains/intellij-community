@@ -107,7 +107,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
 
-  @Property(externalName = "replace_int_sum_lambda_with_method_ref")
+  @Property(externalName = "replace_sum_lambda_with_method_ref")
   public boolean REPLACE_SUM = true;
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
