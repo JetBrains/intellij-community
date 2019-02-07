@@ -2,6 +2,7 @@
 package com.intellij.semantic;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.RecursionGuard;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExtensionInstantiator;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author peter
  */
 @SuppressWarnings({"unchecked"})
-public class SemServiceImpl extends SemService{
+public class SemServiceImpl extends SemService {
+  private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
+
   private final AtomicReference<ConcurrentMap<PsiElement, SemCacheChunk>> myCache = new AtomicReference<>();
   private volatile  MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
@@ -92,8 +96,18 @@ public class SemServiceImpl extends SemService{
       }
     };
 
-    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensions(myProject)) {
-      contributor.registerSemProviders(myProject.getPicoContainer(), registrar);
+    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
+      SemContributor semContributor;
+      try {
+        semContributor = ExtensionInstantiator.instantiateWithPicoContainerOnlyIfNeeded(contributor.implementation,
+                                                                                        myProject.getPicoContainer(),
+                                                                                        contributor.getPluginDescriptor());
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        continue;
+      }
+      semContributor.registerSemProviders(registrar, myProject);
     }
 
     return map;

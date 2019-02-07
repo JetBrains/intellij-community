@@ -2,6 +2,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -41,24 +42,19 @@ import static com.intellij.patterns.XmlPatterns.*;
 /**
  * @author peter
  */
-public class DomSemContributor extends SemContributor {
-  private final SemService mySemService;
-
-  public DomSemContributor(SemService semService) {
-    mySemService = semService;
-  }
-
+final class DomSemContributor extends SemContributor {
   @Override
-  public void registerSemProviders(@NotNull SemRegistrar registrar) {
+  public void registerSemProviders(@NotNull SemRegistrar registrar, @NotNull Project project) {
     registrar.registerSemElementProvider(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlFile(), xmlFile -> {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       return new FileDescriptionCachedValueProvider(DomManagerImpl.getDomManager(xmlFile.getProject()), xmlFile);
     });
 
+    final SemService semService = SemService.getSemService(project);
     registrar.registerSemElementProvider(DomManagerImpl.DOM_HANDLER_KEY, xmlTag().withParent(psiElement(XmlElementType.XML_DOCUMENT).withParent(xmlFile())),
                                          xmlTag -> {
                                            final FileDescriptionCachedValueProvider provider =
-                                             mySemService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
+                                             semService.getSemElement(DomManagerImpl.FILE_DESCRIPTION_KEY, xmlTag.getContainingFile());
                                            assert provider != null;
                                            final DomFileElementImpl element = provider.getFileElement();
                                            if (element != null) {
@@ -153,8 +149,8 @@ public class DomSemContributor extends SemContributor {
         final List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
         if (customs.isEmpty()) return null;
 
-        if (mySemService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
-            mySemService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
+        if (semService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
+            semService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
 
           String localName = tag.getLocalName();
           XmlFile file = parent.getFile();
