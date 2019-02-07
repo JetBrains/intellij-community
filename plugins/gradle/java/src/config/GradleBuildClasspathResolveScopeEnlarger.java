@@ -20,7 +20,7 @@ final class GradleBuildClasspathResolveScopeEnlarger extends ResolveScopeEnlarge
   @Override
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, Project project) {
     if (GroovyFileType.DEFAULT_EXTENSION.equals(file.getExtension())) {
-      GradleClassFinder gradleClassFinder = PsiElementFinder.EP.findExtension(GradleClassFinder.class, project);
+      GradleClassFinder gradleClassFinder = PsiElementFinder.EP.findExtensionOrFail(GradleClassFinder.class, project);
       final List<VirtualFile> roots = gradleClassFinder.getClassRoots();
       for (VirtualFile root : roots) {
         if (VfsUtilCore.isAncestor(root, file, true)) {

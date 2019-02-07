@@ -694,7 +694,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void checkReadOnlyMode() {
-    if (POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this)) {
+    if (isInReadOnlyMode()) {
       throw new IllegalStateException(this + " in a read-only mode and cannot be modified");
     }
   }
@@ -788,6 +788,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     public T createInstance(@Nullable PicoContainer container) {
       return myComponentInstance;
     }
+  }
+
+  public synchronized boolean isInReadOnlyMode() {
+    return POINTS_IN_READONLY_MODE != null && POINTS_IN_READONLY_MODE.contains(this);
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
