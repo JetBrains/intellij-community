@@ -31,6 +31,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -251,21 +252,21 @@ public class UrlClassLoaderTest {
   }
 
   /**
-   * IDEA's class loader {@link UrlClassLoader} is optimized for speed but does not works correctly in a few cases.
-   * For example it does not assign {@link java.security.CodeSource} to loaded classes. In such cases should be used
-   * default class loader.
-   *
-   * @see IDEA-181010
+   * IDEA's UrlClassLoader should verify JAR signatures and checksum if they are exists.
    */
   @Test
-  public void testFallbackForBlacklistedPackages() throws Exception {
+  public void testSignedJars() throws Exception {
     String className = "org.bouncycastle.jce.provider.BouncyCastleProvider";
     URL classUrl = UrlClassLoaderTest.class.getClassLoader().getResource(className.replace('.', '/') + ".class");
-    assertEquals("jar", classUrl.getProtocol());
+    assertEquals("jar", Objects.requireNonNull(classUrl).getProtocol());
     classUrl = new URL(classUrl.toExternalForm().split("[!]", 2)[0].substring("jar:".length()));
 
     ClassLoader classLoader;
     Exception error;
+
+    classLoader = new URLClassLoader(new URL[]{classUrl}, null);
+    error = codeThatRegistersSecurityProvider(classLoader, className);
+    assertNull(error == null ? null : error.getClass());
 
     classLoader = UrlClassLoader.build()
       .urls(classUrl)
@@ -275,10 +276,10 @@ public class UrlClassLoaderTest {
 
     classLoader = UrlClassLoader.build()
       .urls(classUrl)
-      .useDefaultClassLoaderForPrefixes("org.bouncycastle.")
+      .urlsWithProtectionDomain(classUrl)
       .get();
     error = codeThatRegistersSecurityProvider(classLoader, className);
-    assertEquals(null, error == null ? null : error.getClass());
+    assertNull(error == null ? null : error.getClass());
   }
 
   @Nullable

@@ -5,15 +5,19 @@ import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.Base64;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.security.util.ManifestDigester;
+import sun.security.util.SignatureFileVerifier;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
@@ -33,16 +37,27 @@ class JarLoader extends Loader {
     pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
     pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
+  private static final Map<String, MessageDigest> ourPristineDigests = ContainerUtil.newHashMap();
+  private static final Object ourPristineDigestsMonitor = new Object();
+
   private final String myFilePath;
   private final ClassPath myConfiguration;
   private final URL myUrl;
+  @Nullable private final MultiMap<String, Map.Entry<String, byte[]>> myDigestByFileName;
+
+  /**
+   * Map from file name inside ZIP archive to collection of code signers.
+   * Implementation via Hashtable is required by {@link SignatureFileVerifier}.
+   */
+  @Nullable private Hashtable<String, CodeSigner[]> myCodeSignersMap;
+  @Nullable private Set<String> myVerifiedEntries;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private volatile Map<Resource.Attribute, String> myAttributes;
   private volatile String myClassPathManifestAttribute;
   private static final String NULL_STRING = "<null>";
 
-  JarLoader(URL url, int index, ClassPath configuration) throws IOException {
+  JarLoader(URL url, int index, ClassPath configuration, boolean secure) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
@@ -62,6 +77,17 @@ class JarLoader extends Loader {
       finally {
         releaseZipFile(zipFile);
       }
+    }
+
+    if (secure) {
+      myCodeSignersMap = new Hashtable<String, CodeSigner[]>();
+      myDigestByFileName = MultiMap.createSmart();
+      myVerifiedEntries = ContainerUtil.newHashSet();
+    }
+    else {
+      myCodeSignersMap = null;
+      myDigestByFileName = null;
+      myVerifiedEntries = null;
     }
   }
 
@@ -111,7 +137,19 @@ class JarLoader extends Loader {
           Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
           if (manifestAttributes == null) {
             ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-            manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
+            boolean digestsRequired = myDigestByFileName != null;
+            Manifest manifest;
+            InputStream zipEntryStream = entry != null ? zipFile.getInputStream(entry) : null;
+            if (digestsRequired) {
+              manifest = loadManifestSecurely(zipFile, zipEntryStream);
+              if (manifest != null) {
+                loadDigests(manifest);
+                manifestAttributes = manifest.getMainAttributes();
+              }
+            }
+            else {
+              manifestAttributes = loadManifestAttributes(zipEntryStream);
+            }
             if (manifestAttributes == null) manifestAttributes = new Attributes(0);
             myConfiguration.cacheManifestData(myUrl, manifestAttributes);
           }
@@ -142,6 +180,141 @@ class JarLoader extends Loader {
     }
     catch (Exception ignored) { }
     return null;
+  }
+
+  /**
+   * Loads MANIFEST.MF and checks that it was correctly signed.
+   *
+   * @param zipFile        ZipFile instance.
+   * @param stream         Opened stream for MANIFEST.MF. Must be closed outside after execution.
+   */
+  @Nullable
+  private Manifest loadManifestSecurely(ZipFile zipFile, InputStream stream) {
+    if (stream == null) return null;
+    byte[] manifestBytes;
+    try {
+      manifestBytes = consumeAndReadFully(stream);
+      verifyManifestAndLoadDigests(zipFile, manifestBytes);
+      return new Manifest(new ByteArrayInputStream(manifestBytes));
+    }
+    catch (IOException e) {
+      return null;
+    }
+    catch (CertificateException e) {
+      throw new SecurityException(e);
+    }
+    catch (NoSuchAlgorithmException e) {
+      throw new SecurityException(e);
+    }
+    catch (SignatureException e) {
+      throw new SecurityException(e);
+    }
+  }
+
+  private static byte[] consumeAndReadFully(@NotNull InputStream stream) throws IOException {
+    try {
+      return FileUtil.loadBytes(stream);
+    }
+    finally {
+      stream.close();
+    }
+  }
+
+  /**
+   * Searches for all signatures in META-INF and applies them to checksum files.
+   */
+  private void verifyManifestAndLoadDigests(ZipFile zipFile, byte[] manifestBytes)
+    throws IOException, CertificateException, NoSuchAlgorithmException, SignatureException {
+    String META_INF = "META-INF/";
+
+    ManifestDigester manifestDigester = new ManifestDigester(manifestBytes);
+    Map<String, byte[]> signatureFiles = ContainerUtil.newHashMap();
+    List<SignatureFileVerifier> pendingVerifiers = ContainerUtil.newArrayList();
+    ArrayList<CodeSigner[]> signerCache = ContainerUtil.newArrayList();
+    List<Object> manifestDigests = ContainerUtil.newArrayList();
+
+    Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    while (entries.hasMoreElements()) {
+      ZipEntry zipEntry = entries.nextElement();
+      String name = zipEntry.getName();
+      String nameUpper = name.toUpperCase();
+      boolean interestingFile = nameUpper.startsWith(META_INF)
+                                && nameUpper.indexOf('/', META_INF.length() + 1) < 0
+                                && !nameUpper.endsWith("/MANIFEST.MF");
+      if (interestingFile) {
+        byte[] entryContents = consumeAndReadFully(zipFile.getInputStream(zipEntry));
+        String pathWithoutExtension = name.substring(0, name.lastIndexOf('.'));
+        if (nameUpper.endsWith(".SF")) {
+          signatureFiles.put(pathWithoutExtension, entryContents);
+          for (SignatureFileVerifier verifier : pendingVerifiers) {
+            if (verifier.needSignatureFile(pathWithoutExtension)) {
+              verifier.setSignatureFile(entryContents);
+              verifier.process(myCodeSignersMap, manifestDigests);
+            }
+          }
+        }
+        else if (nameUpper.endsWith(".DSA") || nameUpper.endsWith(".RSA") || nameUpper.endsWith(".EC")) {
+          SignatureFileVerifier verifier = new SignatureFileVerifier(signerCache, manifestDigester, name, entryContents);
+          if (verifier.needSignatureFileBytes()) {
+            byte[] signature = signatureFiles.get(pathWithoutExtension);
+            if (signature == null) {
+              pendingVerifiers.add(verifier);
+            }
+            else {
+              verifier.setSignatureFile(signature);
+              verifier.process(myCodeSignersMap, manifestDigests);
+            }
+          }
+        }
+      }
+    }
+    for (SignatureFileVerifier sfv : pendingVerifiers) {
+      if (sfv.needSignatureFileBytes()) {
+        throw new SecurityException("Some META-INF/ entries was not verified.");
+      }
+    }
+  }
+
+  private void loadDigests(@NotNull Manifest manifest) {
+    // If got corrupted jar with two different checksums for the same file and algorithm
+    // then SignatureFileVerifier will find this mismatch and will throw SecurityError.
+    // So it is safe to take checksum only from MANIFEST.MF even if it contains broken one.
+    assert myDigestByFileName != null;
+    String suffix = "-DIGEST";
+    Map<String, byte[]> digestByAlgorithm = ContainerUtil.newHashMap();
+    for (Map.Entry<String, Attributes> attributesEntry : manifest.getEntries().entrySet()) {
+      digestByAlgorithm.clear();
+      for (Map.Entry<Object, Object> attribute : attributesEntry.getValue().entrySet()) {
+        assert attribute.getKey() instanceof Attributes.Name;
+        String name = attribute.getKey().toString().toUpperCase();
+        if (name.endsWith(suffix)) {
+          String algorithm = name.substring(0, name.length() - suffix.length()).intern();
+          byte[] newDigest = Base64.decode((String)attribute.getValue());
+          digestByAlgorithm.put(algorithm, newDigest);
+        }
+      }
+      myDigestByFileName.putValues(attributesEntry.getKey(), digestByAlgorithm.entrySet());
+    }
+  }
+
+  private static MessageDigest createMessageDigest(String algorithm) {
+    try {
+      MessageDigest result;
+      synchronized (ourPristineDigestsMonitor) {
+        result = ourPristineDigests.get(algorithm);
+        if (result == null) {
+          result = MessageDigest.getInstance(algorithm);
+          ourPristineDigests.put(algorithm, result);
+        }
+      }
+      return (MessageDigest)result.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new IllegalStateException(e);
+    }
+    catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @NotNull
@@ -264,10 +437,45 @@ class JarLoader extends Loader {
       InputStream stream = null;
       try {
         stream = file.getInputStream(myEntry);
-        return FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+        byte[] contents = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+        if (myDigestByFileName != null) {
+          verifySignature(contents);
+          assert myVerifiedEntries != null;
+          myVerifiedEntries.add(myEntry.getName());
+        }
+        return contents;
       } finally {
         if (stream != null) stream.close();
         releaseZipFile(file);
+      }
+    }
+
+    @Nullable
+    @Override
+    public CodeSigner[] getCodeSigners() {
+      if (myCodeSignersMap != null) {
+        assert myVerifiedEntries != null;
+        if (!myVerifiedEntries.contains(myEntry.getName())) {
+          throw new IllegalStateException("Method `getBytes()` should be called first.");
+        }
+        return myCodeSignersMap.get(myEntry.getName());
+      }
+      return null;
+    }
+
+    @Override
+    public boolean isSigned() {
+      return myCodeSignersMap != null;
+    }
+
+    private void verifySignature(byte[] contents) {
+      assert myDigestByFileName != null;
+      Collection<Map.Entry<String, byte[]>> digests = myDigestByFileName.get(myEntry.getName());
+      for (Map.Entry<String, byte[]> digest : digests) {
+        byte[] actualDigest = createMessageDigest(digest.getKey()).digest(contents);
+        if (!MessageDigest.isEqual(actualDigest, digest.getValue())) {
+          throw new SecurityException(digest.getKey() + " error for " + myEntry.getName());
+        }
       }
     }
 

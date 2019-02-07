@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.Permissions;
+import java.security.ProtectionDomain;
 import java.util.*;
 
 /**
@@ -23,7 +28,6 @@ import java.util.*;
  */
 public class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
-  static final List<String> DEFAULT_PACKAGE_BLACKLIST = Arrays.asList("org.bouncycastle.");
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -85,7 +89,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtilRt.emptyList();
-    private List<String> myPackageBlacklist = ContainerUtil.emptyList();
+    private Set<URL> myURLsWithProtectionDomain = new SmartHashSet<URL>();
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -108,19 +112,16 @@ public class UrlClassLoader extends ClassLoader {
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
 
     /**
-     * {@link UrlClassLoader} is optimized for speed but does not works correctly in a few cases.
-     * Class names mathing any specified prefix will be loaded by default Java class loader.
-     *
-     * @param prefixes List of prefixes of package names.
+     * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
      */
     @NotNull
-    public Builder useDefaultClassLoaderForPrefixes(@NotNull List<String> prefixes) { myPackageBlacklist = prefixes; return this; }
+    public Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
 
     /**
-     * @see {@link #useDefaultClassLoaderForPrefixes(List)}
+     * @see #urlsWithProtectionDomain(Set)
      */
     @NotNull
-    public Builder useDefaultClassLoaderForPrefixes(@NotNull String... prefixes) { return useDefaultClassLoaderForPrefixes(Arrays.asList(prefixes)); }
+    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtil.newHashSet(urls)); }
 
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
@@ -200,8 +201,6 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private final List<URL> myURLs;
-  private final List<String> myPackageBlacklist;
-  private final URLClassLoader myFallbackClassLoader;
   private final ClassPath myClassPath;
   private final ClassLoadingLocks myClassLoadingLocks;
   private final boolean myAllowBootstrapResources;
@@ -211,8 +210,7 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
-           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
-           .useDefaultClassLoaderForPrefixes(DEFAULT_PACKAGE_BLACKLIST));
+           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -234,7 +232,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                                 builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches);
+                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -284,18 +282,6 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected final Class _findClass(@NotNull String name) {
-    // Expected that myPackageBlacklist contains small amount of prefixes
-    // that makes simple loop more quick than complex data structures.
-    for (String prefix : myPackageBlacklist) {
-      if (name.startsWith(prefix)) {
-        try {
-          return myFallbackClassLoader.loadClass(name);
-        }
-        catch (ClassNotFoundException e) {
-          return null;
-        }
-      }
-    }
     Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
@@ -333,11 +319,22 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     byte[] b = res.getBytes();
-    return _defineClass(name, b);
+    if (res.isSigned()) {
+      CodeSigner[] signers = res.getCodeSigners();
+      CodeSource codeSource = new CodeSource(res.getURL(), signers);
+      return _defineClass(name, b, new ProtectionDomain(codeSource, new Permissions()));
+    }
+    else {
+      return _defineClass(name, b);
+    }
   }
 
   protected Class _defineClass(final String name, final byte[] b) {
     return defineClass(name, b, 0, b.length);
+  }
+
+  private Class _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
+    return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
   @Override

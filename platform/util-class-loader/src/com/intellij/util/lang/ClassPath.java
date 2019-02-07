@@ -42,6 +42,7 @@ public class ClassPath {
   private final AtomicInteger myLastLoaderProcessed = new AtomicInteger();
   private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
+  private final Set<URL> myURLsWithProtectionDomain;
 
   final boolean myCanLockJars; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   private final boolean myCanUseCache;
@@ -62,8 +63,8 @@ public class ClassPath {
                    @Nullable CachePoolImpl cachePool,
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
-                   boolean lazyClassloadingCaches
-  ) {
+                   boolean lazyClassloadingCaches,
+                   Set<URL> URLsWithProtectionDomain) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
@@ -73,6 +74,7 @@ public class ClassPath {
     myCachingCondition = cachingCondition;
     myCanHavePersistentIndex = canHavePersistentIndex;
     myLogErrorOnMissingJar = logErrorOnMissingJar;
+    myURLsWithProtectionDomain = URLsWithProtectionDomain;
     push(urls);
   }
 
@@ -209,7 +211,7 @@ public class ClassPath {
       return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      JarLoader loader = new JarLoader(url, index, this);
+      JarLoader loader = new JarLoader(url, index, this, myURLsWithProtectionDomain.contains(url));
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
