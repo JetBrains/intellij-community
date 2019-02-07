@@ -92,7 +92,7 @@ public class SemServiceImpl extends SemService{
       }
     };
 
-    for (SemContributorEP contributor : myProject.getExtensions(SemContributor.EP_NAME)) {
+    for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensions(myProject)) {
       contributor.registerSemProviders(myProject.getPicoContainer(), registrar);
     }
 
