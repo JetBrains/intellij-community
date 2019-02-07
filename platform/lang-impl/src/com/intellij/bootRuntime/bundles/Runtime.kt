@@ -6,9 +6,17 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.SystemInfo
 import java.io.File
 
 abstract class Runtime(initialLocation:File) {
+
+  val JAVA_FILE_NAME by lazy {
+    if (SystemInfo.isWindows) {
+      return@lazy "java.exe"
+    }
+    return@lazy "java"
+  }
 
   open val fileName: String by lazy {
     initialLocation.name
@@ -34,7 +42,7 @@ abstract class Runtime(initialLocation:File) {
   }
 
   protected fun fetchVersion (): String {
-    val javaFile = installationPath.walk().filter { file -> file.nameWithoutExtension == "java" }.first()
+    val javaFile = installationPath.walk().filter { file -> file.name == JAVA_FILE_NAME }.first()
     try {
       val output = ExecUtil.execAndGetOutput(GeneralCommandLine(javaFile.path, "-version"))
       val matchResult: MatchResult? = "version \"(\\d?(.\\d)*(.\\d)*_*\\d*\\d*-*(ea|release|internal)*)\"".toRegex().find(output.stderr)
