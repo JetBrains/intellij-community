@@ -33,6 +33,22 @@ public class SwitchExpressionPostfixTemplateTest extends PostfixTemplateTestCase
     doTest();
   }
 
+  public void testCharExprReturn() {
+    doTest();
+  }
+
+  public void testCharExprArg() {
+    doTest();
+  }
+
+  public void testShortExprReturn() {
+    doTest();
+  }
+
+  public void testShortExprArg() {
+    doTest();
+  }
+
   public void testEnumExprInit() {
     doTest();
   }
