@@ -131,8 +131,10 @@ inline fun <reified V: JComponent> ContainerFixture<*>.containsChildComponent(no
   robot().finder().findAll(target(), GuiTestUtilKt.typeMatcher(V::class.java, predicate)).size == 1
 
 fun <C : Container> ContainerFixture<C>.treeTable(timeout: Timeout = defaultTimeout): TreeTableFixture {
-  val table: TreeTable = findComponentWithTimeout(timeout)
-  return TreeTableFixture(robot(), table)
+  return step("search table") {
+    val table: TreeTable = findComponentWithTimeout(timeout)
+    return@step TreeTableFixture(robot(), table)
+  }
 }
 
 fun <C : Container> ContainerFixture<C>.spinner(boundedLabelText: String, timeout: Timeout = defaultTimeout): JSpinnerFixture {

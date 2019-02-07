@@ -216,7 +216,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
           // second, check status in the Build tool window
           toolwindow(id = "Build") {
             content(tabName = "Sync") {
-              val tree = treeTable().target.tree
+              val tree = treeTable().target().tree
               val pathStrings = listOf(rootPath)
               val treePath = try {
                 ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
