@@ -8,11 +8,12 @@ import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub
 
 class PyTypingNewTypeStubType : CustomTargetExpressionStubType<PyTypingNewTypeStub>() {
 
-  override fun createStub(psi: PyTargetExpression): PyTypingNewTypeStub? {
+  override fun createStub(psi: PyTargetExpression?): PyTypingNewTypeStub? {
     return PyTypingNewTypeStubImpl.create(psi)
   }
 
-  override fun deserializeStub(stream: StubInputStream): PyTypingNewTypeStub? {
+  override fun deserializeStub(stream: StubInputStream?): PyTypingNewTypeStub? {
     return PyTypingNewTypeStubImpl.deserialize(stream)
   }
+
 }
