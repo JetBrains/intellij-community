@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChangelistConflictTracker {
 
@@ -47,6 +48,7 @@ public class ChangelistConflictTracker {
   private final FileStatusManager myFileStatusManager;
   private final Set<VirtualFile> myCheckSet;
   private final Object myCheckSetLock;
+  private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
   public ChangelistConflictTracker(@NotNull Project project,
                                    @NotNull ChangeListManager changeListManager,
@@ -78,7 +80,7 @@ public class ChangelistConflictTracker {
     myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        if (!myOptions.isTrackingEnabled()) {
+        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
           return;
         }
         Document document = e.getDocument();
@@ -117,6 +119,10 @@ public class ChangelistConflictTracker {
         clearChanges(newDefaultList.getChanges());
       }
     };
+  }
+
+  public void setIgnoreModifications(boolean value) {
+    myShouldIgnoreModifications.set(value);
   }
 
   private void checkFiles(final Collection<? extends VirtualFile> files) {
