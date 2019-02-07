@@ -5,6 +5,7 @@ import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -25,23 +26,21 @@ public class Extract extends RuntimeCommand {
       String directoryToExtractName = BinTrayUtil.archveToDirectoryName(archiveFileName);
       File jdkStoragePathFile = BinTrayUtil.getJdkStoragePathFile();
       if (!jdkStoragePathFile.exists()) {
-        jdkStoragePathFile.mkdir();
+        FileUtil.createDirectory(jdkStoragePathFile);
       }
 
       File directoryToExtractFile = new File(jdkStoragePathFile, directoryToExtractName);
-      if (directoryToExtractFile.exists()) {
-        BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
-      } else {
-        directoryToExtractFile.mkdir();
+      if (!directoryToExtractFile.exists()) {
+        FileUtil.createDirectory(directoryToExtractFile);
         try (FileInputStream inputStream = new FileInputStream(myRuntime.getDownloadPath())) {
           unpackTarGz(inputStream, directoryToExtractFile.toPath());
+          FileUtil.delete(myRuntime.getDownloadPath());
         }
         catch (IOException ex) {
           ex.printStackTrace();
         }
-
-        BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
       }
+      BinTrayUtil.updateJdkConfigFileAndRestart(directoryToExtractFile);
     });
   }
 }
