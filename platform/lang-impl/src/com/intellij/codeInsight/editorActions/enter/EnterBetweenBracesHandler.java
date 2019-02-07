@@ -8,7 +8,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @Deprecated Please, use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
+ * @deprecated Please, use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
  */
 @Deprecated
 public class EnterBetweenBracesHandler extends EnterBetweenBracesFinalHandler {

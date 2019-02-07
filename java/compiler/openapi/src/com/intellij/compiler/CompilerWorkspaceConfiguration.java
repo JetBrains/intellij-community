@@ -27,7 +27,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
   public boolean PARALLEL_COMPILATION = false;
   /**
-   * @Deprecated. Use corresponding value from CompilerConfiguration
+   * @deprecated. Use corresponding value from CompilerConfiguration
    * This field is left here for compatibility with older projects
    */
   public int COMPILER_PROCESS_HEAP_SIZE = 700;
