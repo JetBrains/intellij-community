@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.FileContentUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +71,11 @@ public class VFilePropertyChangeEvent extends VFileEvent {
           "Unknown property name '" + propertyName + "'. " +
           "Must be one of VirtualFile.{PROP_NAME|PROP_ENCODING|PROP_WRITABLE|PROP_HIDDEN|PROP_SYMLINK_TARGET}");
     }
+  }
+
+  @ApiStatus.Experimental
+  public boolean isRename() {
+    return myPropertyName == VirtualFile.PROP_NAME && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }
 
   @NotNull
