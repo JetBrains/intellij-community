@@ -25,8 +25,8 @@ class ChangeReminderDialog(private val project: Project, private val files: List
   }
 
   private lateinit var tree: ChangesTree
-  override fun getData(dataId: String) = tree.getData(dataId)
 
+  override fun getData(dataId: String) = tree.getData(dataId)
 
   override fun getDimensionServiceKey() = "com.jetbrains.changeReminder.commit.handle.ui.ChangeReminderDialog"
 
