@@ -98,13 +98,13 @@ class ChangeReminderCheckinHandler(private val panel: CheckinProjectPanel,
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
     try {
-      if (!userSettings.isTurnedOn || panel.gitFiles(project).size > 25) {
+      val rootFiles = panel.getGitRootFiles(project)
+      if (!userSettings.isTurnedOn || rootFiles.size > 25) {
         return ReturnResult.COMMIT
       }
 
       val isAmend = panel.isAmend()
       val threshold = userSettings.threshold
-      val rootFiles = panel.getRootFiles(project)
       val predictedFiles = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(
           ThrowableComputable<List<PredictedFile>, Exception> {
