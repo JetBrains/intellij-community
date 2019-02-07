@@ -66,6 +66,14 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return myVertical;
   }
 
+  public void setVertical(boolean vertical) {
+    if (myVertical == vertical) return;
+    removeAll();
+    myVertical = vertical;
+    setContent(myContent);
+    setToolbar(myToolbar);
+  }
+
   public boolean isToolbarVisible() {
     return myToolbar != null && myToolbar.isVisible();
   }
@@ -80,6 +88,9 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
       remove(myToolbar);
     }
     myToolbar = c;
+    if (myToolbar instanceof ActionToolbar) {
+      ((ActionToolbar)myToolbar).setOrientation(myVertical ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
+    }
 
     if (c != null) {
       if (myVertical) {
