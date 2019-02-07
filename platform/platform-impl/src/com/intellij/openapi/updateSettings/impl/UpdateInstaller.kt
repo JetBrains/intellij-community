@@ -187,7 +187,7 @@ object UpdateInstaller {
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
   private fun getJdkSuffix(): String {
-    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "Contents/jdk" else "jre64")
+    val jreHome = File(PathManager.getHomePath(), if (SystemInfo.isMac) "jdk" else "jre64")
     if (!jreHome.exists()) return "-no-jdk"
     val releaseFile = File(jreHome, if (SystemInfo.isMac) "Contents/Home/release" else "release")
     val version = try {
