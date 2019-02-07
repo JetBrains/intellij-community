@@ -1224,6 +1224,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String repeat(@NotNull String s, int count) {
+    if (count == 0) return "";
     assert count >= 0 : count;
     StringBuilder sb = new StringBuilder(s.length() * count);
     for (int i = 0; i < count; i++) {
